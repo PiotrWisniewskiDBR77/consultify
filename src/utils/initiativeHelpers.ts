@@ -145,7 +145,7 @@ export function getHealthInfo(initiative: {
 
   // Blocked → red
   if (initiative.status === 'BLOCKED') {
-    return { level: 'red', label: 'Blocked', dotClass: 'bg-red-500' };
+    return { level: 'red', label: 'Blocked', dotClass: 'bg-rose-500' };
   }
 
   // Overdue → red
@@ -154,7 +154,7 @@ export function getHealthInfo(initiative: {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     if (end < now) {
-      return { level: 'red', label: 'Overdue', dotClass: 'bg-red-500' };
+      return { level: 'red', label: 'Overdue', dotClass: 'bg-rose-500' };
     }
     // Within 7 days → amber
     const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));

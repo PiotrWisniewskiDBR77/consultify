@@ -6,6 +6,85 @@
 -- 1) V4-INTV-01: Extended question types + branching + quotas
 -- ============================================================
 
+CREATE TABLE IF NOT EXISTS interview_templates (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    category TEXT NOT NULL,
+    status TEXT DEFAULT 'approved',
+    visibility TEXT DEFAULT 'org',
+    is_default INTEGER DEFAULT 0,
+    version INTEGER DEFAULT 1,
+    created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS interview_template_questions (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    template_id TEXT NOT NULL REFERENCES interview_templates(id) ON DELETE CASCADE,
+    category TEXT NOT NULL,
+    question_text TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    answer_type TEXT DEFAULT 'open',
+    is_required INTEGER DEFAULT 0,
+    help_hint TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_interview_templates_org ON interview_templates(organization_id);
+CREATE INDEX IF NOT EXISTS idx_interview_templates_status ON interview_templates(status);
+CREATE INDEX IF NOT EXISTS idx_interview_templates_category ON interview_templates(category);
+CREATE INDEX IF NOT EXISTS idx_interview_template_questions_template ON interview_template_questions(template_id);
+CREATE INDEX IF NOT EXISTS idx_interview_template_questions_category ON interview_template_questions(category);
+
+CREATE TABLE IF NOT EXISTS interview_sessions (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    name TEXT DEFAULT 'Discovery Interview',
+    owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'in_progress',
+    progress_json TEXT DEFAULT '{}',
+    total_questions INTEGER DEFAULT 0,
+    answered_questions INTEGER DEFAULT 0,
+    summary_facts TEXT DEFAULT '[]',
+    summary_gaps TEXT DEFAULT '[]',
+    summary_constraints TEXT DEFAULT '[]',
+    summary_pain_points TEXT DEFAULT '[]',
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
+    last_activity_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_org ON interview_sessions(organization_id);
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_owner ON interview_sessions(owner_id);
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_status ON interview_sessions(status);
+
+CREATE TABLE IF NOT EXISTS interview_questions (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    session_id TEXT NOT NULL REFERENCES interview_sessions(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    category TEXT NOT NULL,
+    question_text TEXT NOT NULL,
+    answer_text TEXT,
+    status TEXT DEFAULT 'not_started',
+    confidence_score INTEGER DEFAULT 0,
+    answered_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    answered_at TIMESTAMP,
+    tags TEXT DEFAULT '[]',
+    sort_order INTEGER DEFAULT 0,
+    is_template INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_interview_questions_session ON interview_questions(session_id);
+CREATE INDEX IF NOT EXISTS idx_interview_questions_org ON interview_questions(organization_id);
+
 ALTER TABLE interview_template_questions ADD COLUMN IF NOT EXISTS answer_options TEXT DEFAULT '[]';
 ALTER TABLE interview_template_questions ADD COLUMN IF NOT EXISTS question_config TEXT DEFAULT '{}';
 ALTER TABLE interview_template_questions ADD COLUMN IF NOT EXISTS branching_rules TEXT DEFAULT '[]';
@@ -93,6 +172,26 @@ CREATE INDEX IF NOT EXISTS idx_intv_reminders_session
 -- ============================================================
 -- 3) V4-INTV-03: Evidence storage governance
 -- ============================================================
+
+CREATE TABLE IF NOT EXISTS interview_evidence (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  session_id TEXT NOT NULL REFERENCES interview_sessions(id) ON DELETE CASCADE,
+  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  question_id TEXT REFERENCES interview_questions(id) ON DELETE SET NULL,
+  evidence_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  file_path TEXT,
+  file_name TEXT,
+  file_size INTEGER,
+  file_type TEXT,
+  url TEXT,
+  uploaded_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_interview_evidence_session ON interview_evidence(session_id);
+CREATE INDEX IF NOT EXISTS idx_interview_evidence_question ON interview_evidence(question_id);
 
 ALTER TABLE interview_evidence ADD COLUMN IF NOT EXISTS storage_backend TEXT DEFAULT 'db';
 ALTER TABLE interview_evidence ADD COLUMN IF NOT EXISTS storage_key TEXT;

@@ -231,7 +231,7 @@ const WebAuthnSettings: React.FC = () => {
   function getDeviceIcon(deviceType: string) {
     switch (deviceType) {
       case 'platform':
-        return <Laptop className="text-violet-400" size={20} />;
+        return <Laptop className="text-primary-400" size={20} />;
       case 'cross-platform':
         return <Key className="text-amber-400" size={20} />;
       default:
@@ -271,7 +271,7 @@ const WebAuthnSettings: React.FC = () => {
         <button
           onClick={handleRegister}
           disabled={registering}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
         >
           {registering ? <RefreshCw className="animate-spin" size={18} /> : <Plus size={18} />}
           {registering ? 'Registering...' : 'Add Passkey'}
@@ -280,12 +280,12 @@ const WebAuthnSettings: React.FC = () => {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center gap-3">
-          <AlertTriangle className="text-red-400 flex-shrink-0" size={20} />
-          <p className="text-red-300 text-sm">{error}</p>
+        <div className="bg-rose-500/10 border border-rose-500/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="text-rose-400 flex-shrink-0" size={20} />
+          <p className="text-rose-300 text-sm">{error}</p>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-red-400 hover:text-red-300"
+            className="ml-auto text-rose-400 hover:text-rose-300"
           >
             <X size={18} />
           </button>
@@ -293,12 +293,12 @@ const WebAuthnSettings: React.FC = () => {
       )}
 
       {/* Info Box */}
-      <div className="bg-violet-500/10 border border-violet-500/30 rounded-xl p-4">
+      <div className="bg-primary-500/10 border border-primary-500/30 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <Fingerprint className="text-violet-400 flex-shrink-0 mt-0.5" size={20} />
+          <Fingerprint className="text-primary-400 flex-shrink-0 mt-0.5" size={20} />
           <div className="text-sm">
-            <p className="text-violet-300 font-medium">What are passkeys?</p>
-            <p className="text-violet-200/70 mt-1">
+            <p className="text-primary-300 font-medium">What are passkeys?</p>
+            <p className="text-primary-200/70 mt-1">
               Passkeys are a secure replacement for passwords. They use your device's biometrics
               (Face ID, Touch ID, fingerprint) or a physical security key to verify your identity.
             </p>
@@ -309,7 +309,7 @@ const WebAuthnSettings: React.FC = () => {
       {/* Credentials List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-violet-500" size={32} />
+          <RefreshCw className="animate-spin text-primary-500" size={32} />
         </div>
       ) : credentials.length === 0 ? (
         <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
@@ -396,7 +396,7 @@ const WebAuthnSettings: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleRevoke(credential.id)}
-                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                        className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>

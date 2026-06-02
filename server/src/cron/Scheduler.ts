@@ -508,6 +508,108 @@ export const Scheduler = {
     });
     this.jobs.push(job28);
 
+    // 29. Organization Context Worker - Run every 30 seconds when enabled.
+    // Off by default: requires ORG_CONTEXT_WORKER_SCHEDULER_ENABLED=true.
+    // Honest degraded UI: when disabled, queue summary surfaces 'scheduler_disabled'.
+    const job29 = cron.schedule('*/30 * * * * *', async () => {
+      if (String(process.env.ORG_CONTEXT_WORKER_SCHEDULER_ENABLED || '').toLowerCase() !== 'true') {
+        return;
+      }
+      try {
+        const limit = Math.max(1, Math.min(Number(process.env.ORG_CONTEXT_WORKER_LIMIT || 5), 25));
+        const contextDocumentService = (
+          await import('../services/organizationContext/ContextDocumentService.js')
+        ).default;
+        const result = await contextDocumentService.processConfiguredContextDocumentWorkerTick({
+          limit,
+        });
+        if (
+          !result.skipped &&
+          (result.processed > 0 ||
+            result.retried > 0 ||
+            result.deadLettered > 0 ||
+            (result.errors && result.errors.length > 0))
+        ) {
+          logger.info('[Scheduler] Organization context worker tick completed', {
+            processed: result.processed,
+            retried: result.retried,
+            deadLettered: result.deadLettered,
+            errors: (result.errors || []).length,
+          });
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Organization context worker tick failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job29);
+
+    // 30. Organization Context External Queue Consumer - Run every 30 seconds when external queue configured.
+    // Off by default: requires ORG_CONTEXT_QUEUE_BACKEND=external + scheduler enabled + pull URL set.
+    const job30 = cron.schedule('*/30 * * * * *', async () => {
+      if (String(process.env.ORG_CONTEXT_WORKER_SCHEDULER_ENABLED || '').toLowerCase() !== 'true') {
+        return;
+      }
+      const backend = String(process.env.ORG_CONTEXT_QUEUE_BACKEND || '').toLowerCase();
+      if (backend !== 'external' && backend !== 'external_queue') {
+        return;
+      }
+      if (!process.env.ORG_CONTEXT_EXTERNAL_QUEUE_PULL_URL) {
+        return;
+      }
+      try {
+        const limit = Math.max(1, Math.min(Number(process.env.ORG_CONTEXT_WORKER_LIMIT || 5), 25));
+        const contextDocumentService = (
+          await import('../services/organizationContext/ContextDocumentService.js')
+        ).default;
+        const result = await contextDocumentService.processExternalContextQueueConsumerTick({
+          limit,
+        });
+        if (
+          !result.skipped &&
+          ((result.pulledMessages || 0) > 0 || (result.errors && result.errors.length > 0))
+        ) {
+          logger.info('[Scheduler] Organization context external queue consumer tick', {
+            pulled: result.pulledMessages || 0,
+            acked: result.ackedMessages || 0,
+            backoff: result.backoffMessages || 0,
+            processed: result.processed,
+            errors: (result.errors || []).length,
+          });
+        }
+      } catch (err: any) {
+        logger.error(
+          '[Scheduler] Organization context external queue consumer failed:',
+          err?.message || err
+        );
+      }
+    });
+    this.jobs.push(job30);
+
+    // 31. Organization Context Retention Purge - Run daily at 3:30 AM.
+    // Honest degradation: only purges documents whose org has retention TTL configured.
+    const job31 = cron.schedule('30 3 * * *', async () => {
+      try {
+        const contextDocumentService = (
+          await import('../services/organizationContext/ContextDocumentService.js')
+        ).default;
+        if (typeof (contextDocumentService as any).purgeExpiredContextDocuments !== 'function') {
+          return;
+        }
+        const result = await (contextDocumentService as any).purgeExpiredContextDocuments({
+          batchLimit: 200,
+        });
+        if (result && (result.softDeleted > 0 || result.hardDeleted > 0)) {
+          logger.info('[Scheduler] Organization context retention purge completed', result);
+        }
+      } catch (err: any) {
+        logger.error(
+          '[Scheduler] Organization context retention purge failed:',
+          err?.message || err
+        );
+      }
+    });
+    this.jobs.push(job31);
+
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM)'
     );

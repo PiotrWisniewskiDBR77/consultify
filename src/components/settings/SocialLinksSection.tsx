@@ -70,7 +70,7 @@ export const SocialLinksSection: React.FC<SocialLinksSectionProps> = ({
           />
         </div>
         <div className="flex items-center gap-3">
-          <ExternalLink className="w-5 h-5 text-purple-600" />
+          <ExternalLink className="w-5 h-5 text-primary-600" />
           <input
             type="url"
             value={links.website || ''}

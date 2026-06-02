@@ -68,7 +68,7 @@ export const ProviderTabs: React.FC<{
           onClick={() => onProviderChange(provider)}
           className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
             activeProvider === provider
-              ? 'bg-purple-600 text-white shadow-lg'
+              ? 'bg-primary-600 text-white shadow-lg'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
           }`}
         >
@@ -102,7 +102,7 @@ export const ModelPreferenceList: React.FC<{
             type="checkbox"
             checked={selectedModelIds.includes(model.id)}
             onChange={(e) => onToggleModel(model.id, e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-900 text-purple-600 dark:text-purple-500 focus:ring-purple-500/50"
+            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-900 text-primary-600 dark:text-primary-500 focus:ring-primary-500/50"
           />
           <div className="flex-1">
             <div className="text-sm text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white">
@@ -112,7 +112,7 @@ export const ModelPreferenceList: React.FC<{
               {model.provider} • {model.model_id}
             </div>
           </div>
-          {selectedModelIds.includes(model.id) && <Check size={14} className="text-purple-500" />}
+          {selectedModelIds.includes(model.id) && <Check size={14} className="text-primary-500" />}
         </label>
       ))}
     </div>
@@ -132,7 +132,7 @@ export const AISystemHealthCard: React.FC<{
       bg: 'bg-yellow-500/10',
       icon: <AlertTriangle size={16} />,
     },
-    error: { color: 'text-red-500', bg: 'bg-red-500/10', icon: <AlertTriangle size={16} /> },
+    error: { color: 'text-rose-500', bg: 'bg-rose-500/10', icon: <AlertTriangle size={16} /> },
     unknown: {
       color: 'text-slate-500 dark:text-slate-400',
       bg: 'bg-slate-500/10',
@@ -164,7 +164,7 @@ export const OrgAIPolicy: React.FC<{
   return (
     <div className="bg-navy-900 border border-white/5 rounded-xl p-6">
       <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-        <Shield className="text-purple-500" size={20} />
+        <Shield className="text-primary-500" size={20} />
         Organization AI Policy
       </h3>
       <div className="space-y-6">
@@ -204,7 +204,7 @@ export const OrgAIPolicy: React.FC<{
             step="1"
             value={orgConfig.assertivenessLevel || 1}
             onChange={(e) => onConfigChange({ assertivenessLevel: parseInt(e.target.value) || 1 })}
-            className="w-full accent-purple-500"
+            className="w-full accent-primary-500"
           />
           <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1">
             <span>Advisory (Passive)</span>
@@ -215,7 +215,7 @@ export const OrgAIPolicy: React.FC<{
 
         <button
           onClick={onSave}
-          className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors"
+          className="w-full py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors"
         >
           Save Policy
         </button>
@@ -330,7 +330,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
       >
         {configMode === 'system' && (
           <div className="text-center py-8 space-y-6">
-            <div className="w-16 h-16 bg-purple-100 dark:bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-600 dark:text-purple-400">
+            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-primary-600 dark:text-primary-400">
               <Cpu size={32} />
             </div>
             <div>
@@ -347,7 +347,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
             {showModelPreferences && (
               <div className="mt-8 pt-8 border-t border-slate-100 dark:border-navy-700 text-left bg-slate-50 dark:bg-navy-950/50 rounded-lg p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
+                  <div className="p-2 rounded bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400">
                     <Sparkles size={16} />
                   </div>
                   <div>
@@ -399,7 +399,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
                   value={customKey}
                   onChange={(e) => setCustomKey(e.target.value)}
                   placeholder="sk-..."
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-800 dark:text-white focus:border-purple-500 outline-none transition-all text-sm font-mono"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-800 dark:text-white focus:border-primary-500 outline-none transition-all text-sm font-mono"
                 />
                 <div className="absolute right-3 top-2.5 text-slate-500 dark:text-slate-400">
                   <Lock size={16} />
@@ -412,7 +412,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
         <div className="pt-6 mt-6 border-t border-slate-100 dark:border-navy-700 flex justify-end">
           <button
             type="submit"
-            className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            className="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
             {isSaved ? <Check size={16} /> : null}
             {isSaved ? 'Configuration Saved' : 'Save Configuration'}

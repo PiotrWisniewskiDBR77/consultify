@@ -21,6 +21,7 @@ export type TeresaVoiceStatus = 'idle' | 'connecting' | 'live' | 'error';
 export interface UseTeresaVoiceOptions {
   apiKey?: string | null;
   voiceName?: string;
+  unavailableReason?: string | null;
   language: string;
   systemInstruction: string;
   enabled: boolean;
@@ -33,6 +34,7 @@ export interface UseTeresaVoiceReturn {
   voiceStatus: TeresaVoiceStatus;
   voiceError: string | null;
   voiceAvailable: boolean;
+  voiceUnavailableReason: string | null;
   isMuted: boolean;
   toggleMute: () => void;
   startVoiceConversation: () => Promise<void>;
@@ -40,16 +42,11 @@ export interface UseTeresaVoiceReturn {
   sendTextHistory: (turns: Array<{ role: string; content: string }>) => void;
 }
 
-const FRONTEND_GEMINI_KEY =
-  process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
-  process.env.GEMINI_API_KEY ||
-  process.env.API_KEY ||
-  null;
-
 export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceReturn {
   const {
     apiKey,
     voiceName = TERESA_VOICE_CONFIG.defaultVoiceName,
+    unavailableReason,
     systemInstruction,
     enabled,
     onTranscriptUpdate,
@@ -57,7 +54,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     onStatusChange,
   } = options;
 
-  const effectiveKey = apiKey || FRONTEND_GEMINI_KEY;
+  const effectiveKey = typeof apiKey === 'string' && apiKey.trim() ? apiKey.trim() : null;
 
   const [voiceStatus, setVoiceStatus] = useState<TeresaVoiceStatus>('idle');
   const [voiceError, setVoiceError] = useState<string | null>(null);
@@ -87,9 +84,9 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   useEffect(() => {
     const browserWindow = window as BrowserWindow;
     const hasAudioContext = !!(window.AudioContext || browserWindow.webkitAudioContext);
-    const hasGetUserMedia = !!(navigator.mediaDevices?.getUserMedia);
-    setVoiceAvailable(hasAudioContext && hasGetUserMedia && !!effectiveKey);
-  }, [effectiveKey]);
+    const hasGetUserMedia = !!navigator.mediaDevices?.getUserMedia;
+    setVoiceAvailable(Boolean(enabled && hasAudioContext && hasGetUserMedia && effectiveKey));
+  }, [effectiveKey, enabled]);
 
   const teardownVoice = useCallback(async () => {
     processorRef.current?.disconnect();
@@ -102,25 +99,48 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     }
 
     activeSourcesRef.current.forEach((source) => {
-      try { source.stop(); } catch { /* already stopped */ }
+      try {
+        source.stop();
+      } catch {
+        /* already stopped */
+      }
     });
     activeSourcesRef.current = [];
     nextPlayTimeRef.current = 0;
 
     if (sessionRef.current) {
-      try { sessionRef.current.close(); } catch { /* already closed */ }
+      try {
+        sessionRef.current.close();
+      } catch {
+        /* already closed */
+      }
       sessionRef.current = null;
     }
 
     if (audioContextRef.current) {
-      try { await audioContextRef.current.close(); } catch { /* already closing */ }
+      try {
+        await audioContextRef.current.close();
+      } catch {
+        /* already closing */
+      }
       audioContextRef.current = null;
     }
   }, []);
 
   useEffect(() => {
-    return () => { void teardownVoice(); };
+    return () => {
+      void teardownVoice();
+    };
   }, [teardownVoice]);
+
+  useEffect(() => {
+    if (enabled) return;
+    attemptRef.current += 1;
+    setVoiceError(null);
+    setIsMuted(false);
+    updateStatus('idle');
+    void teardownVoice();
+  }, [enabled, teardownVoice, updateStatus]);
 
   const startVoiceConversation = useCallback(async () => {
     const token = attemptRef.current + 1;
@@ -128,7 +148,10 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
 
     if (!voiceAvailable || !effectiveKey || typeof window === 'undefined') {
       updateStatus('error');
-      setVoiceError('Voice unavailable — check microphone permissions and API key.');
+      setVoiceError(
+        unavailableReason ||
+          'Voice unavailable — check microphone permissions and server-side voice configuration.'
+      );
       return;
     }
 
@@ -143,7 +166,10 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     try {
       if (!AudioContextCtor) throw new Error('AudioContext unavailable');
 
-      const ai = new GoogleGenAI({ apiKey: effectiveKey });
+      const ai = new GoogleGenAI({
+        apiKey: effectiveKey,
+        httpOptions: { apiVersion: 'v1alpha' },
+      });
       const audioContext = new AudioContextCtor({
         sampleRate: TERESA_VOICE_CONFIG.sampleRateInput,
       });
@@ -192,11 +218,15 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               for (let i = 0; i < bytes.length; i++) {
                 binary += String.fromCharCode(bytes[i]);
               }
-              sessionRef.current?.sendRealtimeInput({
-                media: {
-                  mimeType: `audio/pcm;rate=${TERESA_VOICE_CONFIG.sampleRateInput}`,
-                  data: btoa(binary),
-                },
+              void Promise.resolve(
+                sessionRef.current?.sendRealtimeInput({
+                  media: {
+                    mimeType: `audio/pcm;rate=${TERESA_VOICE_CONFIG.sampleRateInput}`,
+                    data: btoa(binary),
+                  },
+                })
+              ).catch(() => {
+                /* Realtime send failures are surfaced by the Live API error callback. */
               });
             };
 
@@ -209,14 +239,19 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
 
             if (message.serverContent?.interrupted) {
               activeSourcesRef.current.forEach((s) => {
-                try { s.stop(); } catch { /* noop */ }
+                try {
+                  s.stop();
+                } catch {
+                  /* noop */
+                }
               });
               activeSourcesRef.current = [];
               nextPlayTimeRef.current = audioContext.currentTime;
             }
 
             const sc = message.serverContent as Record<string, unknown> | undefined;
-            const userTranscript = (sc?.inputTranscript ?? sc?.outputTranscript) as string | undefined;
+            const transcriptValue = sc?.inputTranscript ?? sc?.outputTranscript;
+            const userTranscript = typeof transcriptValue === 'string' ? transcriptValue : '';
             if (userTranscript && onTranscriptRef.current) {
               onTranscriptRef.current(userTranscript);
             }
@@ -226,12 +261,18 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               onModelAudioTextRef.current(textPart.text);
             }
 
-            const base64Audio = message.serverContent?.modelTurn?.parts?.find(
-              (p) => p.inlineData
-            )?.inlineData?.data;
+            const base64Audio = message.serverContent?.modelTurn?.parts?.find((p) => p.inlineData)
+              ?.inlineData?.data;
             if (!base64Audio) return;
 
-            const binaryString = atob(base64Audio);
+            let binaryString = '';
+            try {
+              binaryString = atob(base64Audio);
+            } catch {
+              return;
+            }
+            if (binaryString.length % 2 !== 0) return;
+
             const bytesArray = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
               bytesArray[i] = binaryString.charCodeAt(i);
@@ -241,7 +282,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
             const audioBuffer = audioContext.createBuffer(
               1,
               pcm16.length,
-              TERESA_VOICE_CONFIG.sampleRateOutput,
+              TERESA_VOICE_CONFIG.sampleRateOutput
             );
             const channelData = audioBuffer.getChannelData(0);
             for (let i = 0; i < pcm16.length; i++) {
@@ -280,7 +321,11 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
 
       const session = await sessionPromise;
       if (attemptRef.current !== token) {
-        try { session.close(); } catch { /* noop */ }
+        try {
+          session.close();
+        } catch {
+          /* noop */
+        }
         return;
       }
       sessionRef.current = session;
@@ -291,7 +336,15 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
       setVoiceError('Could not start voice session.');
       await teardownVoice();
     }
-  }, [effectiveKey, voiceAvailable, voiceName, systemInstruction, teardownVoice, updateStatus]);
+  }, [
+    effectiveKey,
+    voiceAvailable,
+    voiceName,
+    systemInstruction,
+    unavailableReason,
+    teardownVoice,
+    updateStatus,
+  ]);
 
   const stopVoiceConversation = useCallback(async () => {
     attemptRef.current += 1;
@@ -304,38 +357,39 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const toggleMute = useCallback(() => {
     const stream = streamRef.current;
     if (!stream) return;
-    const tracks = stream.getAudioTracks();
-    const nextMuted = !isMuted;
-    tracks.forEach((track) => { track.enabled = !nextMuted; });
-    setIsMuted(nextMuted);
-  }, [isMuted]);
+    const tracks =
+      typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : stream.getTracks();
+    setIsMuted((currentMuted) => {
+      const nextMuted = !currentMuted;
+      tracks.forEach((track) => {
+        track.enabled = !nextMuted;
+      });
+      return nextMuted;
+    });
+  }, []);
 
-  const sendTextHistory = useCallback(
-    (turns: Array<{ role: string; content: string }>) => {
-      const session = sessionRef.current;
-      if (!session || typeof session.sendClientContent !== 'function') return;
+  const sendTextHistory = useCallback((turns: Array<{ role: string; content: string }>) => {
+    const session = sessionRef.current;
+    if (!session || typeof session.sendClientContent !== 'function') return;
 
-      const geminiTurns = turns
-        .filter((t) => t.content.trim())
-        .slice(-TERESA_VOICE_CONFIG.maxHistoryTurns)
-        .map((t) => ({
-          role: t.role === 'assistant' || t.role === 'model' ? 'model' : 'user',
-          parts: [{ text: t.content.trim() }],
-        }));
+    const geminiTurns = turns
+      .filter((t) => t.content.trim())
+      .slice(-TERESA_VOICE_CONFIG.maxHistoryTurns)
+      .map((t) => ({
+        role: t.role === 'assistant' || t.role === 'model' ? 'model' : 'user',
+        parts: [{ text: t.content.trim() }],
+      }));
 
-      if (geminiTurns.length > 0) {
-        void Promise.resolve(
-          session.sendClientContent({ turns: geminiTurns, turnComplete: false }),
-        );
-      }
-    },
-    [],
-  );
+    if (geminiTurns.length > 0) {
+      void Promise.resolve(session.sendClientContent({ turns: geminiTurns, turnComplete: false }));
+    }
+  }, []);
 
   return {
     voiceStatus,
     voiceError,
     voiceAvailable,
+    voiceUnavailableReason: unavailableReason || null,
     isMuted,
     toggleMute,
     startVoiceConversation,

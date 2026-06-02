@@ -74,7 +74,7 @@ export const AnalyticsPanel: React.FC = () => {
 
           <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
             <div className="flex items-center gap-3 mb-2">
-              <TrendingUp size={20} className="text-purple-400" />
+              <TrendingUp size={20} className="text-primary-400" />
               <span className="text-sm text-slate-400 dark:text-slate-500">Database Queries</span>
             </div>
             <div className="text-2xl font-bold text-white">

@@ -26,12 +26,11 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
-
 import type { InitiativeKPI } from '@/types/core';
 
 import { InitiativeStatus } from '../../types';
-import { extractInitiativeKpiRows } from '../Initiatives/initiativeKpiContract';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
+import { extractInitiativeKpiRows } from '../Initiatives/initiativeKpiContract';
 import {
   FilterableTable,
   FilterChip,
@@ -339,7 +338,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
           <div>
             <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
             {(row.blockedReason || row.cancelledReason) && (
-              <p className="text-xs text-red-400 mt-0.5">
+              <p className="text-xs text-rose-400 mt-0.5">
                 {row.blockedReason || row.cancelledReason}
               </p>
             )}
@@ -479,8 +478,8 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Target className="w-5 h-5 text-purple-400" />
+              <div className="p-2 bg-primary-500/20 rounded-lg">
+                <Target className="w-5 h-5 text-primary-400" />
               </div>
               <div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -507,14 +506,14 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
           </div>
           <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-500/20 rounded-lg">
-                <TrendingDown className="w-5 h-5 text-red-400" />
+              <div className="p-2 bg-rose-500/20 rounded-lg">
+                <TrendingDown className="w-5 h-5 text-rose-400" />
               </div>
               <div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {t('benefits.kpiCards.belowTarget', 'Below Target')}
                 </p>
-                <p className="text-2xl font-bold text-red-400">{kpiStats.belowTarget}</p>
+                <p className="text-2xl font-bold text-rose-400">{kpiStats.belowTarget}</p>
               </div>
             </div>
           </div>
@@ -553,7 +552,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                       setSelectedInitiative(initiative);
                       setShowKpiModal(true);
                     }}
-                    className="flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300"
+                    className="flex items-center gap-1 text-sm text-primary-400 hover:text-primary-300"
                   >
                     <Plus size={14} />
                     {t('benefits.kpiActions.addKpi', 'Add KPI')}
@@ -577,12 +576,12 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div
-                              className={`p-2 rounded-lg ${kpi.isOnTarget ? 'bg-green-500/20' : 'bg-red-500/20'}`}
+                              className={`p-2 rounded-lg ${kpi.isOnTarget ? 'bg-green-500/20' : 'bg-rose-500/20'}`}
                             >
                               {kpi.isOnTarget ? (
                                 <TrendingUp className="w-4 h-4 text-green-400" />
                               ) : (
-                                <TrendingDown className="w-4 h-4 text-red-400" />
+                                <TrendingDown className="w-4 h-4 text-rose-400" />
                               )}
                             </div>
                             <div>
@@ -602,7 +601,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                                 {t('benefits.kpiLabels.current', 'Current')}
                               </p>
                               <p
-                                className={`text-lg font-bold ${kpi.isOnTarget ? 'text-green-400' : 'text-red-400'}`}
+                                className={`text-lg font-bold ${kpi.isOnTarget ? 'text-green-400' : 'text-rose-400'}`}
                               >
                                 {kpi.latestValue ?? '-'} {kpi.unit}
                               </p>
@@ -780,7 +779,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                   setShowKpiModal(false);
                   setSelectedInitiative(null);
                 }}
-                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500"
+                className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500"
               >
                 Create KPI
               </button>

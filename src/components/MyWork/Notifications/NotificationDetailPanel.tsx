@@ -56,7 +56,7 @@ const getRelatedObjectIcon = (type?: string) => {
     case 'TASK':
       return <CheckSquare size={14} className="text-blue-500" />;
     case 'INITIATIVE':
-      return <Target size={14} className="text-purple-500" />;
+      return <Target size={14} className="text-blue-500" />;
     case 'DECISION':
       return <AlertCircle size={14} className="text-amber-500" />;
     case 'GATE':
@@ -75,9 +75,9 @@ const getSeverityColors = (severity: string) => {
   switch (severity) {
     case 'CRITICAL':
       return {
-        bg: 'bg-red-50 dark:bg-red-900/20',
-        border: 'border-red-200 dark:border-red-800/50',
-        badge: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
+        bg: 'bg-rose-50 dark:bg-rose-900/20',
+        border: 'border-rose-200 dark:border-rose-800/50',
+        badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
       };
     case 'WARNING':
       return {

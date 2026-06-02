@@ -69,11 +69,11 @@ const PRESET_BG_COLORS = [
 ];
 
 const PRESET_TEXT_COLORS = [
-  '#ef4444',
+  '#f43f5e',
   '#f59e0b',
   '#10b981',
   '#3b82f6',
-  '#8b5cf6',
+  '#6366f1',
   '#ec4899',
   '#334155',
   '#ffffff',
@@ -197,7 +197,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
         </div>
         <button
           onClick={addRule}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
         >
           <Plus size={10} />
           {isPl ? 'Dodaj regułę' : 'Add rule'}
@@ -249,7 +249,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
 
               <button
                 onClick={() => removeRule(rule.id)}
-                className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors"
+                className="p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors"
               >
                 <Trash2 size={12} />
               </button>
@@ -293,7 +293,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     onClick={() => updateStyle(rule.id, { backgroundColor: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
                       rule.style.backgroundColor === c
-                        ? 'border-violet-500 scale-110'
+                        ? 'border-primary-500 scale-110'
                         : 'border-slate-200 dark:border-navy-700'
                     }`}
                     style={{ backgroundColor: c }}
@@ -318,7 +318,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     onClick={() => updateStyle(rule.id, { color: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
                       rule.style.color === c
-                        ? 'border-violet-500 scale-110'
+                        ? 'border-primary-500 scale-110'
                         : 'border-slate-200 dark:border-navy-700'
                     }`}
                     style={{ backgroundColor: c }}
@@ -335,7 +335,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 }
                 className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors ${
                   rule.style.fontWeight === 'bold'
-                    ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
+                    ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
                     : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
@@ -351,7 +351,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 }
                 className={`px-1.5 py-0.5 rounded text-[9px] italic transition-colors ${
                   rule.style.fontStyle === 'italic'
-                    ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
+                    ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
                     : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >

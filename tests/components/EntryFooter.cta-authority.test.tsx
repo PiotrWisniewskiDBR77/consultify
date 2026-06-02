@@ -42,8 +42,8 @@ describe('EntryFooter navigation structure', () => {
   it('renders legal links in the bottom strip', () => {
     renderFooter();
 
-    expect(screen.getByRole('link', { name: /Privacy Policy/i })).toHaveAttribute('href', '/privacy');
-    expect(screen.getByRole('link', { name: /Cookie Policy/i })).toHaveAttribute('href', '/cookies');
-    expect(screen.getByRole('link', { name: /Security Overview/i })).toHaveAttribute('href', '/security');
+    expect(screen.getByRole('link', { name: /Privacy Policy/i })).toHaveAttribute('href', '/legal/privacy');
+    expect(screen.getByRole('link', { name: /Cookie Policy/i })).toHaveAttribute('href', '/legal/cookies');
+    expect(screen.getByRole('link', { name: /Security Overview/i })).toHaveAttribute('href', '/legal/security');
   });
 });

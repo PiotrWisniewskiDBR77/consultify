@@ -13,10 +13,10 @@
 import * as crypto from 'crypto';
 
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as sqliteAsync from '../database/sqliteAsyncAdapter.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES

@@ -6,6 +6,7 @@
 
 import React from 'react';
 
+import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
 import {
   ProposalCardType,
   SessionGenerationStatus,
@@ -14,10 +15,6 @@ import {
   ToolType,
 } from '@/store/useToolStore';
 
-import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
-
-import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
-import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
 import { ContextStep } from './steps/ContextStep';
 import { ImpactHypothesisStep } from './steps/ImpactHypothesisStep';
 import { InitiativesStep } from './steps/InitiativesStep';
@@ -28,12 +25,21 @@ import { ReasoningStep } from './steps/ReasoningStep';
 import { ReportStep } from './steps/ReportStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { SummaryStep } from './steps/SummaryStep';
-import { ToolContextPanel } from './ToolContextPanel';
 import { SWOTBuildPhase } from './tools/DynamicSWOT/SWOTBuildPhase';
 import { SWOTInputExplorationPhase } from './tools/DynamicSWOT/SWOTInputExplorationPhase';
 import { SWOTInsightsPhase } from './tools/DynamicSWOT/SWOTInsightsPhase';
-import { GrowthPathQuadrantStep } from './tools/GrowthPaths/GrowthPathQuadrantStep';
-import { ForceStep } from './tools/MarketForces/ForceStep';
+import {
+  GrowthPathsInputPhase,
+  GrowthPathsInsightsPhase,
+  GrowthPathsOptionsPhase,
+  GrowthPathsOutputsPhase,
+} from './tools/GrowthPaths/GrowthPathsPhases';
+import {
+  MarketForcesBuildPhase,
+  MarketForcesInputPhase,
+  MarketForcesInsightsPhase,
+  MarketForcesOutputsPhase,
+} from './tools/MarketForces/MarketForcesPhases';
 import {
   A3CountermeasuresStep,
   A3ProblemStep,
@@ -48,11 +54,18 @@ import {
   SOPChecklistsStep,
   SOPStandardsStep,
 } from './tools/Operational';
-import { PortfolioItemsStep } from './tools/PortfolioPriority/PortfolioItemsStep';
-import { PortfolioMatrixStep } from './tools/PortfolioPriority/PortfolioMatrixStep';
-import { AssumptionsStep } from './tools/RiskUncertainty/AssumptionsStep';
-import { RisksStep } from './tools/RiskUncertainty/RisksStep';
-import { ScenariosStep } from './tools/RiskUncertainty/ScenariosStep';
+import {
+  PortfolioInputPhase,
+  PortfolioInsightsPhase,
+  PortfolioItemsPhase,
+  PortfolioOutputsPhase,
+} from './tools/PortfolioPriority/PortfolioPriorityPhases';
+import {
+  RiskInputPhase,
+  RiskInsightsPhase,
+  RiskMapPhase,
+  RiskOutputsPhase,
+} from './tools/RiskUncertainty/RiskUncertaintyPhases';
 
 // ==================== TYPES ====================
 
@@ -64,18 +77,10 @@ interface ToolCanvasProps {
   isStreaming: boolean;
   streamedContent: string;
   isPolish: boolean;
-  orgName?: string | null;
   onOpenChat: () => void;
   onOpenInitiatives?: () => void;
   generatedInitiatives?: { id: string; title: string; status?: string }[];
-  recentInitiatives?: { id: string; title: string; status?: string }[];
-  chatSnippets?: { role: string; content: string }[];
-  showContextPanel?: boolean;
   onGenerateFullSession?: () => void;
-  phaseAiActions?: ToolPhaseAiActionDefinition[];
-  activeAiActionId?: ToolPhaseAiActionId | null;
-  onRunPhaseAiAction?: (actionId: ToolPhaseAiActionId) => void;
-  onAbortAi?: () => void;
   missionSuggestion?: Partial<ConsultingMissionContext> | null;
   onApplyMissionSuggestion?: () => void;
   onDismissMissionSuggestion?: () => void;
@@ -96,18 +101,10 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   isStreaming,
   streamedContent,
   isPolish,
-  orgName,
   onOpenChat,
   onOpenInitiatives,
   generatedInitiatives,
-  recentInitiatives,
-  chatSnippets,
-  showContextPanel = true,
   onGenerateFullSession,
-  phaseAiActions = [],
-  activeAiActionId = null,
-  onRunPhaseAiAction,
-  onAbortAi,
   missionSuggestion,
   onApplyMissionSuggestion,
   onDismissMissionSuggestion,
@@ -117,11 +114,6 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
-  const isDynamicSwotSessionPhase =
-    toolType === 'dynamic-swot' &&
-    ['mission', 'input', 'swot', 'insights', 'outputs'].includes(stepDefinition?.id || '');
-  const shouldShowContextPanel = showContextPanel && !isDynamicSwotSessionPhase;
-
   // Render step-specific content
   const renderStepContent = () => {
     if (!stepDefinition) {
@@ -289,72 +281,260 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     }
 
     if (toolType === 'market-forces') {
-      // Porter force steps
-      if (
-        ['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(
-          stepDefinition.id
-        )
-      ) {
+      if (stepDefinition.id === 'mission') {
         return (
-          <ForceStep
-            forceId={
-              stepDefinition.id as
-                | 'rivalry'
-                | 'newEntrants'
-                | 'substitutes'
-                | 'buyerPower'
-                | 'supplierPower'
-            }
+          <ContextStep
+            toolType={toolType}
             session={session}
             isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
           />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <MarketForcesInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'forces') {
+        return (
+          <MarketForcesBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <MarketForcesInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <MarketForcesOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
         );
       }
     }
 
     if (toolType === 'growth-paths') {
-      if (
-        [
-          'market-penetration',
-          'market-development',
-          'product-development',
-          'diversification',
-        ].includes(stepDefinition.id)
-      ) {
+      if (stepDefinition.id === 'mission') {
         return (
-          <GrowthPathQuadrantStep
-            quadrant={
-              stepDefinition.id as
-                | 'market-penetration'
-                | 'market-development'
-                | 'product-development'
-                | 'diversification'
-            }
+          <ContextStep
+            toolType={toolType}
             session={session}
             isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
           />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <GrowthPathsInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'options') {
+        return (
+          <GrowthPathsOptionsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <GrowthPathsInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <GrowthPathsOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
         );
       }
     }
 
     if (toolType === 'portfolio-priority') {
-      if (stepDefinition.id === 'portfolio-items') {
-        return <PortfolioItemsStep session={session} isPolish={isPolish} />;
+      if (stepDefinition.id === 'input') {
+        return (
+          <PortfolioInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
-      if (stepDefinition.id === 'portfolio-matrix') {
-        return <PortfolioMatrixStep session={session} isPolish={isPolish} />;
+      if (stepDefinition.id === 'items') {
+        return (
+          <PortfolioItemsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+      if (stepDefinition.id === 'insights') {
+        return (
+          <PortfolioInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <PortfolioOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
       }
     }
 
     if (toolType === 'risk-uncertainty') {
+      if (stepDefinition.id === 'input') {
+        return (
+          <RiskInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
       if (stepDefinition.id === 'assumptions') {
-        return <AssumptionsStep session={session} isPolish={isPolish} />;
+        return (
+          <RiskMapPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
-      if (stepDefinition.id === 'risks') {
-        return <RisksStep session={session} isPolish={isPolish} />;
+      if (stepDefinition.id === 'insights') {
+        return (
+          <RiskInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
-      if (stepDefinition.id === 'scenarios') {
-        return <ScenariosStep session={session} isPolish={isPolish} />;
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <RiskOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
       }
     }
 
@@ -466,43 +646,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     );
   };
 
-  return (
-    <div className="flex h-full">
-      {/* Main content area */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {(phaseAiActions.length > 0 || isStreaming) && (
-          <div className="mb-4 flex justify-end">
-            <ToolPhaseAiActions
-              actions={phaseAiActions}
-              activeActionId={activeAiActionId}
-              isStreaming={isStreaming}
-              isPolish={isPolish}
-              onRunAction={(actionId) => onRunPhaseAiAction?.(actionId)}
-              onAbort={onAbortAi}
-            />
-          </div>
-        )}
-        {renderStepContent()}
-      </div>
-
-      {shouldShowContextPanel && (
-        <ToolContextPanel
-          toolType={toolType}
-          session={session}
-          currentStepId={stepDefinition?.id}
-          isPolish={isPolish}
-          orgName={orgName}
-          aiContent={isStreaming ? streamedContent : undefined}
-          onOpenChat={onOpenChat}
-          onGenerateFullSession={onGenerateFullSession}
-          onOpenInitiatives={onOpenInitiatives}
-          generatedInitiatives={generatedInitiatives}
-          recentInitiatives={recentInitiatives}
-          chatSnippets={chatSnippets}
-        />
-      )}
-    </div>
-  );
+  return <div className="h-full overflow-y-auto p-6">{renderStepContent()}</div>;
 };
 
 export default ToolCanvas;

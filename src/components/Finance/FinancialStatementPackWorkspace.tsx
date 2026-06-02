@@ -648,7 +648,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 disabled={!hasDocument}
                 className={`relative flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${
                   isActive && hasDocument
-                    ? 'bg-cyan-600 text-white shadow-sm'
+                    ? 'bg-blue-600 text-white shadow-sm'
                     : hasDocument
                       ? 'text-slate-700 hover:bg-slate-100/70 dark:text-slate-200 dark:hover:bg-white/[0.05]'
                       : 'text-slate-400 dark:text-slate-500'
@@ -722,7 +722,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     onClick={() => setAggregationLevel(level)}
                     className={`h-5 min-w-5 rounded px-1.5 text-[10px] font-medium transition-all ${
                       isActive
-                        ? 'bg-cyan-600 text-white shadow-sm'
+                        ? 'bg-blue-600 text-white shadow-sm'
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                     }`}
                   >
@@ -739,7 +739,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             onClick={() => setShowSidePanel((prev) => !prev)}
             className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
               showSidePanel
-                ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300'
                 : 'text-slate-500 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]'
             }`}
             aria-pressed={showSidePanel}
@@ -869,7 +869,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => onAddFile?.(statementPackId)}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-cyan-700"
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
                       >
                         <Upload size={12} />
                         {isPl ? 'Dodaj plik' : 'Add file'}
@@ -907,7 +907,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                               key={file.id}
                               className={`px-4 py-3 transition-colors ${
                                 isActiveFile
-                                  ? 'bg-cyan-50/50 dark:bg-cyan-500/[0.06]'
+                                  ? 'bg-blue-50/50 dark:bg-blue-500/[0.06]'
                                   : 'hover:bg-slate-50/40 dark:hover:bg-white/[0.02]'
                               }`}
                             >
@@ -941,7 +941,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                                   {file.total > 0 && (
                                     <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-200/60 dark:bg-white/[0.06]">
                                       <div
-                                        className="h-full rounded-full bg-cyan-500 transition-all duration-300"
+                                        className="h-full rounded-full bg-blue-500 transition-all duration-300"
                                         style={{
                                           width: `${file.total > 0 ? (file.mapped / file.total) * 100 : 0}%`,
                                         }}

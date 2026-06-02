@@ -373,7 +373,7 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <Layers className="text-orange-500" />
+              <Layers className="text-amber-500" />
               CMMI Assessment
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -381,11 +381,11 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="bg-orange-100 dark:bg-orange-900/30 px-4 py-2 rounded-xl text-center">
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            <div className="bg-amber-100 dark:bg-amber-900/30 px-4 py-2 rounded-xl text-center">
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 Level {stats.maturityLevel}
               </div>
-              <div className="text-xs text-orange-600/70">Maturity</div>
+              <div className="text-xs text-amber-600/70">Maturity</div>
             </div>
             <div className="bg-blue-100 dark:bg-blue-900/30 px-4 py-2 rounded-xl text-center">
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -395,11 +395,11 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
                 {stats.filledPAs}/{stats.totalPAs} PAs
               </div>
             </div>
-            <div className="bg-purple-100 dark:bg-purple-900/30 px-4 py-2 rounded-xl text-center">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            <div className="bg-primary-100 dark:bg-primary-900/30 px-4 py-2 rounded-xl text-center">
+              <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                 {stats.averageScore.toFixed(1)}
               </div>
-              <div className="text-xs text-purple-600/70">Avg Score</div>
+              <div className="text-xs text-primary-600/70">Avg Score</div>
             </div>
           </div>
         </div>
@@ -407,7 +407,7 @@ export const CMPracticeMap: React.FC<CMPracticeMapProps> = ({
         {/* Progress Bar */}
         <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-orange-500 to-orange-600 rounded-full transition-all"
+            className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full transition-all"
             style={{ width: `${stats.progress}%` }}
           />
         </div>

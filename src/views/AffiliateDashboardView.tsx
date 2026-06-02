@@ -107,7 +107,7 @@ export const AffiliateDashboardView: React.FC = () => {
             onClick={handleGenerateCode}
             disabled={isGenerating}
             className="
-                            bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-3 rounded-xl 
+                            bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-3 rounded-xl
                             shadow-lg shadow-brand-600/20 flex items-center gap-2 transition-all active:scale-95
                             disabled:opacity-50 disabled:cursor-not-allowed
                         "
@@ -186,7 +186,7 @@ export const AffiliateDashboardView: React.FC = () => {
                 <Zap size={80} />
               </div>
               <div className="flex items-center justify-between mb-4 relative">
-                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
+                <div className="p-2 rounded-lg bg-primary-500/10 text-primary-500">
                   <TrendingUp size={20} />
                 </div>
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
@@ -235,7 +235,7 @@ export const AffiliateDashboardView: React.FC = () => {
                           Wygasa:{' '}
                           {ref.expires_at ? new Date(ref.expires_at).toLocaleDateString() : 'Nigdy'}
                           {ref.expires_at && new Date(ref.expires_at) < new Date() && (
-                            <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20">
+                            <span className="text-[10px] bg-rose-500/10 text-rose-500 px-1.5 py-0.5 rounded border border-rose-500/20">
                               Wygasł
                             </span>
                           )}

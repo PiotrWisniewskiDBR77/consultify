@@ -137,7 +137,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                 {/* Disconnect button */}
                 <button
                   onClick={onDisconnect}
-                  className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border border-red-200 dark:border-red-900/50 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 border border-rose-200 dark:border-rose-900/50 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                 >
                   {t('settings.integrations.disconnect', 'Disconnect')}
                 </button>
@@ -178,8 +178,8 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 
         {/* Error message */}
         {connection?.lastError && (
-          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            <p className="text-xs text-red-600 dark:text-red-400">{connection.lastError}</p>
+          <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+            <p className="text-xs text-rose-600 dark:text-rose-400">{connection.lastError}</p>
           </div>
         )}
       </div>

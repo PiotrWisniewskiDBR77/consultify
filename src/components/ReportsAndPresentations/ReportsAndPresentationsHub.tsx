@@ -12,19 +12,33 @@ import {
   Filter,
   Inbox,
   LayoutGrid,
+  MessageSquare,
+  Plus,
   Presentation,
   Table2,
   User,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
+
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
+import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
+import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
 import { SheetsTabContent } from './SheetsTabContent';
@@ -37,7 +51,6 @@ import type {
   TemplateStatus,
 } from './types';
 import { PRESENTATION_STATUS_META, REPORT_STATUS_META, SOURCE_TYPE_META } from './types';
-import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import {
   useArtifactOutputsList,
   usePresentations,
@@ -51,9 +64,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const openChatWithContext = useOpenChatWithContext();
   const isPolish = i18n.language?.startsWith('pl');
-  const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
-    useHelpSidePanel();
+  const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
 
   const { initialTab, initialArtifactId } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
@@ -63,13 +80,28 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     else if (location.pathname.startsWith('/reports')) tab = 'outputs_documents';
     else if (location.pathname.startsWith('/presentations')) tab = 'presentations';
     else tab = 'outputs_all';
-    return { initialTab: tab, initialArtifactId: params.get('artifactId') || null };
+    return {
+      initialTab: tab,
+      // Keep backward compatibility with older deep links using ?deck=<id>.
+      initialArtifactId: params.get('artifactId') || params.get('deck') || null,
+    };
   }, [location.pathname, location.search]);
 
   const [activeTab, setActiveTab] = useState<RapTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const artifactId = params.get('artifactId');
+    const deck = params.get('deck');
+    if (!artifactId && deck) {
+      params.set('artifactId', deck);
+      params.delete('deck');
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    }
+  }, [location.pathname, location.search, navigate]);
 
   const openContextualHelp = useCallback(() => {
     setKnowledgeModuleIdOverride(activeTab === 'templates' ? 'templates' : 'outputs');
@@ -161,13 +193,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const ctaLabels: Record<RapTab, string> = useMemo(
     () => ({
-      outputs_all: `+ ${t('rap.outputs.cta.new', 'New output')}`,
-      outputs_mine: `+ ${t('rap.outputs.cta.new', 'New output')}`,
-      outputs_review: `+ ${t('rap.outputs.cta.new', 'New output')}`,
-      outputs_documents: `+ ${t('rap.actions.newReport', 'Nowy raport')}`,
-      presentations: `+ ${t('rap.actions.newPresentation', 'Nowa prezentacja')}`,
+      outputs_all: t('rap.outputs.cta.new', 'New output'),
+      outputs_mine: t('rap.outputs.cta.new', 'New output'),
+      outputs_review: t('rap.outputs.cta.new', 'New output'),
+      outputs_documents: t('rap.actions.newReport', 'Nowy raport'),
+      presentations: t('rap.actions.newPresentation', 'Nowa prezentacja'),
       outputs_sheets: '',
-      templates: `+ ${t('rap.actions.newTemplate', 'Nowy wzorzec')}`,
+      templates: t('rap.actions.newTemplate', 'Nowy wzorzec'),
     }),
     [t]
   );
@@ -198,7 +230,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   React.useEffect(() => {
     setActiveTab(initialTab);
     setActiveFilters([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab]);
 
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
@@ -319,7 +350,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                   {
                     value: 'shared',
                     label: t('rap.filters.status.shared', 'Shared'),
-                    dotColor: 'bg-purple-400',
+                    dotColor: 'bg-blue-400',
                   },
                   {
                     value: 'archived',
@@ -348,7 +379,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           {
             value: 'presentation',
             label: t('rap.outputs.kind.presentation', 'Presentation'),
-            color: 'text-purple-400',
+            color: 'text-blue-400',
           },
           {
             value: 'sheet',
@@ -593,7 +624,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                           <button
                             key={o.value}
                             type="button"
-                            onClick={() => toggleFilter('publishState', o.value, o.label, 'bg-purple-400')}
+                            onClick={() =>
+                              toggleFilter('publishState', o.value, o.label, 'bg-blue-400')
+                            }
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
                                 ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
@@ -664,10 +697,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   }, [activeFilters, activeTab, filtersOpen, setSinglePreset, t, toggleFilter]);
 
   const commandRowContent = useMemo(() => {
-    const chipBase =
-      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
-    const badgeBase =
-      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+    const chipBase = '';
+    const chipActive = MENU_3_CHIP_ACTIVE;
+    const chipInactive = MENU_3_CHIP_INACTIVE;
+    const badgeBase = '';
+    const badgeActive = MENU_3_BADGE_ACTIVE;
+    const badgeInactive = MENU_3_BADGE_INACTIVE;
 
     if (
       activeTab === 'outputs_all' ||
@@ -690,7 +725,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         {
           value: 'presentation',
           label: t('rap.outputs.kind.presentation', 'Presentation'),
-          dot: 'bg-purple-400',
+          dot: 'bg-blue-400',
         },
         {
           value: 'sheet',
@@ -702,24 +737,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         activeFilters.some((f) => f.column === 'outputKind' && f.value === v);
 
       return (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className={MENU_3_LEFT_CLASS}>
           <button
             type="button"
             onClick={() => setSinglePreset('outputKind', null)}
             className={`${chipBase} ${
-              !activeFilters.some((f) => f.column === 'outputKind')
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+              !activeFilters.some((f) => f.column === 'outputKind') ? chipActive : chipInactive
             }`}
             title={t('common.all', 'All')}
           >
-            <span className="w-2 h-2 rounded-full bg-gradient-to-br from-blue-400 via-purple-400 to-emerald-400" />
+            <span className={MENU_3_ALL_DOT_CLASS} />
             <span>{t('common.all', 'All')}</span>
             <span
               className={`${badgeBase} ${
-                !activeFilters.some((f) => f.column === 'outputKind')
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                !activeFilters.some((f) => f.column === 'outputKind') ? badgeActive : badgeInactive
               }`}
             >
               {artifactOutputRows.length}
@@ -735,22 +766,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 onClick={() =>
                   setSinglePreset('outputKind', active ? null : c.value, c.label, c.dot)
                 }
-                className={`${chipBase} ${
-                  active
-                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-                }`}
+                className={`${chipBase} ${active ? chipActive : chipInactive}`}
                 title={c.label}
               >
                 <span className={`w-2 h-2 rounded-full ${c.dot}`} />
                 <span>{c.label}</span>
-                <span
-                  className={`${badgeBase} ${
-                    active
-                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
+                <span className={`${badgeBase} ${active ? badgeActive : badgeInactive}`}>
                   {count}
                 </span>
               </button>
@@ -762,13 +783,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
     if (activeTab === 'outputs_sheets') {
       return (
-        <div className="flex items-center gap-2">
-          <span className={`${chipBase} bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 border-emerald-500/40`}>
+        <div className={MENU_3_LEFT_CLASS}>
+          <span className={MENU_3_CHIP_ACTIVE}>
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span>{t('rap.outputs.kind.sheet', 'Sheets')}</span>
-            <span className={`${badgeBase} bg-emerald-500/30 text-emerald-700 dark:text-emerald-200`}>
-              {sheetRows.length}
-            </span>
+            <span className={MENU_3_BADGE_ACTIVE}>{sheetRows.length}</span>
           </span>
         </div>
       );
@@ -829,23 +848,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       activeFilters.some((f) => f.column === 'status' && String(f.value).toLowerCase() === value);
 
     return (
-      <div className="flex items-center gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
         <button
           type="button"
           onClick={() => setSinglePreset('status', null)}
           className={`${chipBase} ${
-            !activeFilters.some((f) => f.column === 'status')
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            !activeFilters.some((f) => f.column === 'status') ? chipActive : chipInactive
           }`}
           title={t('common.all', 'All')}
         >
+          <span className={MENU_3_ALL_DOT_CLASS} />
           <span>{t('common.all', 'All')}</span>
           <span
             className={`${badgeBase} ${
-              !activeFilters.some((f) => f.column === 'status')
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              !activeFilters.some((f) => f.column === 'status') ? badgeActive : badgeInactive
             }`}
           >
             {items.length}
@@ -861,22 +877,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               key={key}
               type="button"
               onClick={() => setSinglePreset('status', active ? null : key, c.label, c.dot)}
-              className={`${chipBase} ${
-                active
-                  ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-              }`}
+              className={`${chipBase} ${active ? chipActive : chipInactive}`}
               title={c.label}
             >
               <span className={`w-2 h-2 rounded-full ${c.dot}`} />
               <span>{c.label}</span>
-              <span
-                className={`${badgeBase} ${
-                  active
-                    ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                    : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                }`}
-              >
+              <span className={`${badgeBase} ${active ? badgeActive : badgeInactive}`}>
                 {count}
               </span>
             </button>
@@ -894,6 +900,52 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     t,
     templates,
   ]);
+
+  const commandRowRightContent = useMemo(
+    () => (
+      <>
+        <button
+          type="button"
+          onClick={() => navigate('/document-studio')}
+          className={`${getMenu3AiButtonClass(false)} !border-sky-300/60 !bg-sky-500/10 !text-sky-800 dark:!border-sky-400/30 dark:!bg-sky-500/20 dark:!text-sky-200`}
+          title={t('rap.actions.newDocumentStudio', 'New AI document (Document Studio)')}
+        >
+          <Plus size={12} />
+          <span>{t('rap.actions.newDocumentStudio', 'New AI document')}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            openChatWithContext({
+              entityType: 'outputs_module',
+              entityId: activeTab,
+              entityName: t('rap.hub.entityName', 'Reports & Presentations'),
+              contextData: {
+                activeTab,
+                viewMode,
+                activeFiltersCount: activeFilters.length,
+                openDocumentsCount: openDocuments.length,
+              },
+            })
+          }
+          className={getMenu3AiButtonClass(false)}
+          title={t('rap.actions.discuss', 'Discuss')}
+        >
+          <MessageSquare size={12} />
+          <span>{t('rap.actions.discuss', 'Discuss')}</span>
+        </button>
+      </>
+    ),
+    [
+      activeFilters.length,
+      activeTab,
+      navigate,
+      openChatWithContext,
+      openDocuments.length,
+      t,
+      viewMode,
+    ]
+  );
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
@@ -938,6 +990,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             error={templatesError}
             onRefresh={fetchTemplates}
             actions={{ startArtifactReview: actions.startArtifactReview }}
+            initialArtifactId={initialArtifactId}
           />
         );
       case 'outputs_documents':
@@ -982,6 +1035,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             error={sheetsError}
             onRefresh={fetchSheets}
             actions={actions}
+            initialArtifactId={initialArtifactId}
           />
         );
       default:
@@ -1001,7 +1055,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           setActiveFilters([]);
           setFiltersOpen(false);
           const q = RAP_TAB_TO_QUERY[next];
-          navigate(`${location.pathname}?tab=${encodeURIComponent(q)}`, { replace: true });
+          const params = new URLSearchParams(location.search || '');
+          params.set('tab', q);
+          navigate(`${location.pathname}?${params.toString()}`, { replace: true });
         }}
         showTabCounts={false}
         viewMode={viewMode}
@@ -1032,6 +1088,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
+        commandRowRightContent={commandRowRightContent}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>
       </ModuleHub>

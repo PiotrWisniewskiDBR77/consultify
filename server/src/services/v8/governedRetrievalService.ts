@@ -145,19 +145,20 @@ export async function createRetrievalRequest(
   const requestId = uuidv4();
   const createdAt = new Date().toISOString();
 
-  const request: RetrievalRequest = {
+  const request = {
     requestId,
     organizationId: validated.organizationId,
     contextSnapshotId: validated.contextSnapshotId ?? null,
-    retrievalScopeToken: (validated.retrievalScopeToken ?? null) as RetrievalRequest['retrievalScopeToken'],
+    retrievalScopeToken: (validated.retrievalScopeToken ??
+      null) as RetrievalRequest['retrievalScopeToken'],
     consumerClass: validated.consumerClass,
     query: validated.query,
     searchPreset: validated.searchPreset,
-    budgetHint: validated.budgetHint ?? null,
+    budgetHint: (validated.budgetHint ?? null) as RetrievalRequest['budgetHint'],
     workingMemoryContextRef: validated.workingMemoryContextRef ?? null,
-    status: 'pending',
+    status: 'pending' as const,
     createdAt,
-  };
+  } satisfies RetrievalRequest;
 
   await dbRun(
     `INSERT INTO v8_retrieval_requests (

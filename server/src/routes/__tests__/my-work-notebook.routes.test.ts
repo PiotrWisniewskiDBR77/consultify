@@ -117,11 +117,13 @@ describe('legacy my-work notebook routes', () => {
   it('lists the author private note when list rows use aliased owner/organization keys', async () => {
     const app = createApp();
 
-    const createRes = await request(app).post('/api/my-work/notebook/pages').send({
-      title: 'Fresh note',
-      contentJson: { type: 'doc', content: [] },
-      contentText: '',
-    });
+    const createRes = await request(app)
+      .post('/api/my-work/notebook/pages')
+      .send({
+        title: 'Fresh note',
+        contentJson: { type: 'doc', content: [] },
+        contentText: '',
+      });
     expect(createRes.status).toBe(201);
 
     const listRes = await request(app).get('/api/my-work/notebook/pages');

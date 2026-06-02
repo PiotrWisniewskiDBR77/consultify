@@ -8,6 +8,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -30,7 +31,13 @@ export type PriorityLevel = 'P0' | 'P1' | 'P2';
 export type PrimaryDriver = 'deadline' | 'blocker' | 'variance' | 'escalation' | 'opportunity';
 export type TimeWindow = 'next_24h' | 'this_week' | 'this_month';
 export type HandoffIntent = 'open' | 'create' | 'append';
-export type TargetModule = 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
+export type TargetModule =
+  | 'initiatives'
+  | 'execution'
+  | 'notebook'
+  | 'Inicjatywy'
+  | 'Wdrożenia'
+  | 'Notatki';
 
 export type P0Archetype =
   | 'critical_path_blocker'
@@ -51,31 +58,31 @@ export const P0_ARCHETYPES: Record<
   critical_path_blocker: {
     category: 'execution_delivery',
     ownerRole: 'Delivery Lead / PMO',
-    primaryTarget: 'Wdrożenia',
+    primaryTarget: 'execution',
     fallbackTarget: 'Notatki — capture blockers checklist',
   },
   decision_needed: {
     category: 'decision_alignment',
     ownerRole: 'PMO / Initiative Owner',
-    primaryTarget: 'Inicjatywy',
+    primaryTarget: 'initiatives',
     fallbackTarget: 'Notatki',
   },
   stakeholder_escalation: {
     category: 'decision_alignment',
     ownerRole: 'Program Lead / PMO',
-    primaryTarget: 'Notatki',
+    primaryTarget: 'notebook',
     fallbackTarget: 'Inicjatywy — if decision required',
   },
   compliance_deadline: {
     category: 'governance_compliance',
     ownerRole: 'Governance Owner / PMO',
-    primaryTarget: 'Wdrożenia',
+    primaryTarget: 'execution',
     fallbackTarget: 'Notatki',
   },
   kpi_finance_anomaly: {
     category: 'finance_kpi',
     ownerRole: 'Finance Lead / PMO',
-    primaryTarget: 'Inicjatywy',
+    primaryTarget: 'initiatives',
     fallbackTarget: 'Notatki — analysis',
   },
 };
@@ -198,7 +205,11 @@ function checkHardGates(category: RadarCategory, bands: RadarBands): string[] {
   return rules;
 }
 
-function determinePriority(score: number, bands: RadarBands, hardGateRules: string[]): PriorityLevel {
+function determinePriority(
+  score: number,
+  bands: RadarBands,
+  hardGateRules: string[]
+): PriorityLevel {
   if (hardGateRules.length > 0) return 'P0';
   if (
     bands.impact >= 2 &&
@@ -239,19 +250,22 @@ function determineTriageState(signal: Partial<RadarTriageSignal>): TriageState {
   return 'ready';
 }
 
-function determineTargetModule(category: RadarCategory, archetype: P0Archetype | null): TargetModule {
+function determineTargetModule(
+  category: RadarCategory,
+  archetype: P0Archetype | null
+): TargetModule {
   if (archetype) return P0_ARCHETYPES[archetype].primaryTarget;
   switch (category) {
     case 'execution_delivery':
-      return 'Wdrożenia';
+      return 'execution';
     case 'decision_alignment':
-      return 'Inicjatywy';
+      return 'initiatives';
     case 'governance_compliance':
-      return 'Wdrożenia';
+      return 'execution';
     case 'finance_kpi':
-      return 'Inicjatywy';
+      return 'initiatives';
     case 'external_change':
-      return 'Notatki';
+      return 'notebook';
   }
 }
 
@@ -317,13 +331,14 @@ export async function createTriageSignal(params: {
   const hardGateRules = checkHardGates(params.category, params.bands);
 
   // §2.3.7: near-duplicate detection — check for same category + similar rationale in last 24h
+  const duplicateCutoffIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const recentDuplicates = await dbAll<any>(
     `SELECT signal_id, why_now_json FROM v8_radar_triage_signals 
      WHERE organization_id = ? AND category = ? 
-     AND created_at > datetime('now', '-24 hours')
+     AND created_at >= ?
      ORDER BY created_at DESC LIMIT 5`,
-    [params.organizationId, params.category],
-    { fallback: true },
+    [params.organizationId, params.category, duplicateCutoffIso],
+    { fallback: true }
   );
 
   let isDuplicate = false;
@@ -332,7 +347,7 @@ export async function createTriageSignal(params: {
       params.whyNow.rationaleText
         .toLowerCase()
         .split(/\s+/)
-        .filter((w) => w.length > 3),
+        .filter((w) => w.length > 3)
     );
     for (const dup of recentDuplicates) {
       const dupWhyNow = safeJsonParse<any>(dup.why_now_json, {});
@@ -340,7 +355,7 @@ export async function createTriageSignal(params: {
         String(dupWhyNow.rationaleText || '')
           .toLowerCase()
           .split(/\s+/)
-          .filter((w: string) => w.length > 3),
+          .filter((w: string) => w.length > 3)
       );
       const overlap = [...inputWords].filter((w) => dupWords.has(w)).length;
       if (inputWords.size > 0 && overlap / inputWords.size > 0.6) {
@@ -357,7 +372,10 @@ export async function createTriageSignal(params: {
   let archetype: P0Archetype | null = null;
   if (priorityLevel === 'P0') {
     if (params.category === 'execution_delivery') archetype = 'critical_path_blocker';
-    else if (params.category === 'decision_alignment' && params.whyNow.primaryDriver === 'escalation')
+    else if (
+      params.category === 'decision_alignment' &&
+      params.whyNow.primaryDriver === 'escalation'
+    )
       archetype = 'stakeholder_escalation';
     else if (params.category === 'decision_alignment') archetype = 'decision_needed';
     else if (params.category === 'governance_compliance') archetype = 'compliance_deadline';
@@ -426,16 +444,18 @@ export async function createTriageSignal(params: {
       signal.triageState,
       signal.createdAt,
       signal.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created triage signal ${signalId} P=${priorityLevel} cat=${params.category}`);
+  logger.info(
+    `${LOG_PREFIX} Created triage signal ${signalId} P=${priorityLevel} cat=${params.category}`
+  );
   return signal;
 }
 
 export async function getTriageSignals(
   organizationId: string,
-  filters?: { category?: RadarCategory; priorityLevel?: PriorityLevel; triageState?: TriageState },
+  filters?: { category?: RadarCategory; priorityLevel?: PriorityLevel; triageState?: TriageState }
 ): Promise<RadarTriageSignal[]> {
   let sql = `SELECT * FROM v8_radar_triage_signals WHERE organization_id = ?`;
   const params: unknown[] = [organizationId];
@@ -451,26 +471,24 @@ export async function getTriageSignals(
     sql += ` AND triage_state = ?`;
     params.push(filters.triageState);
   }
-  sql += ` ORDER BY priority_level ASC, 
-  CASE WHEN json_extract(triggered_rules_json, '$[0]') IS NOT NULL THEN 0 ELSE 1 END ASC,
-  json_extract(bands_json, '$.urgency') DESC,
-  json_extract(bands_json, '$.impact') DESC,
-  json_extract(bands_json, '$.actionability') DESC,
-  score DESC,
-  created_at DESC`;
+  // Cross-DB ordering (Postgres + SQLite): avoid json_extract/sqlite-only functions in runtime query.
+  sql += ` ORDER BY 
+    CASE priority_level WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 ELSE 2 END ASC,
+    score DESC,
+    created_at DESC`;
 
-  const rows = await dbAll<any>(sql, params, { fallback: true });
+  const rows = await dbAll<any>(sql, params, { fallback: false });
   return (rows || []).map(rowToTriageSignal);
 }
 
 export async function getTriageSignal(
   signalId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RadarTriageSignal | null> {
   const row = await dbGet<any>(
     `SELECT * FROM v8_radar_triage_signals WHERE signal_id = ? AND organization_id = ?`,
     [signalId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) return null;
   return rowToTriageSignal(row);
@@ -495,7 +513,7 @@ export function buildHandoffContext(signal: RadarTriageSignal): RadarHandoffCont
 
 export async function executeHandoff(
   signalId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<{
   handoffContext: RadarHandoffContext;
   targetModule: TargetModule;
@@ -512,7 +530,7 @@ export async function executeHandoff(
     radar_handoff_context: handoffContext,
   };
 
-  if (targetModule === 'Inicjatywy') {
+  if (targetModule === 'initiatives' || targetModule === 'Inicjatywy') {
     targetPayload = {
       ...targetPayload,
       initiative_suggestion: {
@@ -523,11 +541,12 @@ export async function executeHandoff(
         open_questions: signal.uncertaintyBoundary.missingInputs,
       },
     };
-  } else if (targetModule === 'Wdrożenia') {
+  } else if (targetModule === 'execution' || targetModule === 'Wdrożenia') {
     targetPayload = {
       ...targetPayload,
       deployment_suggestion: {
-        affected_milestone_area: signal.evidence.evidencePointers.map((p) => p.ref).join(', ') || 'TBD',
+        affected_milestone_area:
+          signal.evidence.evidencePointers.map((p) => p.ref).join(', ') || 'TBD',
         blocker_summary: signal.whyNow.rationaleText,
         next_step: `Resolve ${signal.category} issue`,
         expected_unblock: signal.whyNow.timeWindow,
@@ -548,7 +567,7 @@ export async function executeHandoff(
   const now = new Date().toISOString();
   await dbRun(
     `UPDATE v8_radar_triage_signals SET updated_at = ? WHERE signal_id = ? AND organization_id = ?`,
-    [now, signalId, organizationId],
+    [now, signalId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Executed handoff for signal ${signalId} → ${targetModule}`);

@@ -95,7 +95,12 @@ export async function postMessage(
 
   if (!resp.ok) return { ok: false, error: `Slack API ${resp.status}` };
 
-  const data = (await resp.json()) as { ok: boolean; ts?: string; channel?: string; error?: string };
+  const data = (await resp.json()) as {
+    ok: boolean;
+    ts?: string;
+    channel?: string;
+    error?: string;
+  };
   if (!data.ok) {
     logger.warn('[SlackIntegration] postMessage failed', { error: data.error, channelId });
   }

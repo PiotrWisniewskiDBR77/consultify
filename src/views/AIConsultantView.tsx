@@ -1,20 +1,12 @@
-import {
-  Activity,
-  Bot,
-  DollarSign,
-  Send,
-  Sparkles,
-  TrendingUp,
-  User as UserIcon,
-} from 'lucide-react';
+import { Activity, DollarSign, Send, Sparkles, TrendingUp, User as UserIcon } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { formatChatError } from '@/services/ai/errorMessages';
 import { sendMessageToAI } from '@/services/ai/gemini';
 
+import TeresaMark from '../components/shared/TeresaMark';
 import { useAppStore } from '../store/useAppStore';
 import { AIMessageHistory, FullSession } from '../types';
-
 interface AIConsultantViewProps {
   session: FullSession;
 }
@@ -126,7 +118,7 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
       <div className="p-4 border-b border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-            <Bot size={20} />
+            <TeresaMark size={20} />
           </div>
           <div>
             <h2 className="font-bold text-navy-900 dark:text-white">AI Consultant Insights</h2>
@@ -162,7 +154,7 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-slate-200 text-slate-600 dark:text-slate-400' : 'bg-indigo-600 text-white'}`}
             >
-              {msg.role === 'user' ? <UserIcon size={16} /> : <Bot size={16} />}
+              {msg.role === 'user' ? <UserIcon size={16} /> : <TeresaMark size={16} />}
             </div>
             <div
               className={`max-w-[80%] rounded-xl p-4 ${msg.role === 'user' ? 'bg-white border border-slate-200 text-navy-900 dark:bg-navy-800 dark:border-navy-700 dark:text-white rounded-tr-none' : 'bg-indigo-600 text-white shadow-md rounded-tl-none'}`}
@@ -185,7 +177,7 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
         {isBotTyping && (
           <div className="flex gap-4">
             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
-              <Bot size={16} className="text-white" />
+              <TeresaMark size={16} className="text-white" />
             </div>
             <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 rounded-tl-none flex items-center gap-2">
               <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>

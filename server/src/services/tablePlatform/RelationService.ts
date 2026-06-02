@@ -95,15 +95,19 @@ const relationService = {
       }
 
       // Cardinality enforcement
-      const cardinality = (fieldOpts.options as Record<string, unknown>)?.cardinality as string | undefined ?? 'many-to-many';
+      const cardinality =
+        ((fieldOpts.options as Record<string, unknown>)?.cardinality as string | undefined) ??
+        'many-to-many';
       if (cardinality === 'one-to-one' || cardinality === 'one-to-many') {
         const existingCount = await db.query(
           'SELECT COUNT(*)::int AS cnt FROM tp_record_links WHERE from_record_id = $1 AND from_field_id = $2',
           [fromRecordId, fromFieldId]
         );
         const cnt = (existingCount.rows[0] as { cnt: number }).cnt;
-        if (cardinality === 'one-to-one' && (cnt + toRecordIds.length) > 1) {
-          throw new Error(`Cardinality violation: field ${fromFieldId} allows only one-to-one links (existing: ${cnt}, adding: ${toRecordIds.length})`);
+        if (cardinality === 'one-to-one' && cnt + toRecordIds.length > 1) {
+          throw new Error(
+            `Cardinality violation: field ${fromFieldId} allows only one-to-one links (existing: ${cnt}, adding: ${toRecordIds.length})`
+          );
         }
         if (cardinality === 'one-to-many' && toRecordIds.length > 0) {
           for (const toRecordId of toRecordIds) {
@@ -112,7 +116,9 @@ const relationService = {
               [toRecordId, fromFieldId, fromRecordId]
             );
             if ((reverseCount.rows[0] as { cnt: number }).cnt > 0) {
-              throw new Error(`Cardinality violation: target record ${toRecordId} is already linked from another record (one-to-many constraint on field ${fromFieldId})`);
+              throw new Error(
+                `Cardinality violation: target record ${toRecordId} is already linked from another record (one-to-many constraint on field ${fromFieldId})`
+              );
             }
           }
         }
@@ -561,11 +567,11 @@ const relationService = {
     try {
       const linksFrom = await db.query(
         `SELECT DISTINCT from_record_id FROM tp_record_links WHERE from_record_id = $1 OR to_record_id = $1`,
-        [recordId, recordId]
+        [recordId]
       );
       const linksTo = await db.query(
         `SELECT DISTINCT to_record_id, from_record_id FROM tp_record_links WHERE from_record_id = $1 OR to_record_id = $1`,
-        [recordId, recordId]
+        [recordId]
       );
 
       const affected = new Set<string>();

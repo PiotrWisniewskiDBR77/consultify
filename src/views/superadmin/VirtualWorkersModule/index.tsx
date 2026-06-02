@@ -1,6 +1,5 @@
 import {
   BarChart3,
-  Bot,
   Brain,
   Eye,
   FlaskConical,
@@ -11,10 +10,10 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import TeresaMark from '../../../components/shared/TeresaMark';
 import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
 import { WorkerDetail } from './WorkerDetail';
 import { WorkersList } from './WorkersList';
-
 export interface VirtualWorkersModuleProps {
   initialTab?: string;
 }
@@ -27,7 +26,7 @@ export const VirtualWorkersModule: React.FC<VirtualWorkersModuleProps> = ({ init
     { id: 'workers', label: 'Workers', icon: <Users size={16} /> },
     ...(selectedWorkerId
       ? [
-          { id: 'profile', label: 'Profile', icon: <Bot size={16} /> },
+          { id: 'profile', label: 'Profile', icon: <TeresaMark size={16} /> },
           { id: 'knowledge', label: 'Knowledge', icon: <Brain size={16} /> },
           { id: 'preview', label: 'Preview', icon: <Eye size={16} /> },
           { id: 'conversations', label: 'Conversations', icon: <MessageSquare size={16} /> },

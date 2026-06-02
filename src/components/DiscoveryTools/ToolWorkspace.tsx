@@ -16,6 +16,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ProposalCardType, ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
 
+import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
@@ -274,6 +275,23 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       Object.values(data.forces || {}).forEach((force: any) => {
         if (!force?.drivers?.length) gaps.push(`Missing drivers for ${force?.name}`);
       });
+    }
+    if (toolType === 'growth-paths') {
+      if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
+        gaps.push('Missing growth mission');
+      }
+      if (!data.signals?.length) gaps.push('Missing growth signals');
+      const options = Object.values(data.quadrants || {}).flat();
+      if (!accepted(options).length) gaps.push('Missing accepted growth options');
+      if (!accepted(data.comparisons).length) gaps.push('Missing strategic comparison');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
     }
     return gaps;
   }, [currentSession, toolType]);
@@ -557,6 +575,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     );
   }
 
+  const aiCardStatusCounts = countAiCardStatuses(currentSession.inputData);
+  const aiReviewCount = getAiReviewTotal(aiCardStatusCounts);
+
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       {/* Tool Header */}
@@ -622,10 +643,6 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 content: m.content,
               })),
               onGenerateFullSession: generateFullSession,
-              phaseAiActions,
-              activeAiActionId,
-              onRunPhaseAiAction: (actionId: any) => void runPhaseAiAction(actionId),
-              onAbortAi: abortStream,
               missionSuggestion,
               onApplyMissionSuggestion: applyMissionSuggestion,
               onDismissMissionSuggestion: dismissMissionSuggestion,
@@ -653,10 +670,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             onPrevStep: handlePrevStep,
             onNextStep: handleNextStep,
             isPolish,
+            phaseAiActions,
+            activeAiActionId,
             isStreaming,
-            onRequestSuggestions: () => {},
-            onGenerateAnalysis: () => {},
-            onAbort: abortStream,
+            onRunPhaseAiAction: (actionId: any) => void runPhaseAiAction(actionId),
+            onAbortAi: abortStream,
+            aiReviewCount,
+            onReviewAiCards: scrollToAiCards,
           } as any)}
         />
       )}

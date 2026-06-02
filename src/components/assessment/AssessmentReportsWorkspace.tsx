@@ -142,7 +142,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
           <div>
             <button
               onClick={() => setSelectedReport(null)}
-              className="text-sm text-purple-600 dark:text-purple-400 hover:underline mb-2"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:underline mb-2"
             >
               ← {t('common.back', 'Back to reports')}
             </button>
@@ -172,7 +172,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                   toast.error('Failed to export PDF');
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-semibold transition-colors"
             >
               <FileText size={16} />
               {t('assessment.reports.exportPDF', 'Export PDF')}
@@ -227,7 +227,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
               <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                 {t('assessment.reports.avgTarget', 'Average Target Level')}
               </div>
-              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+              <div className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                 {selectedReport.avg_target?.toFixed(1) || '0.0'}
               </div>
             </div>
@@ -235,7 +235,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
               <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                 {t('assessment.reports.gapPoints', 'Gap Points')}
               </div>
-              <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+              <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
                 {selectedReport.gap_points || 0}
               </div>
             </div>
@@ -262,7 +262,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                       {axis.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
                     <div
-                      className={`flex items-center gap-1 text-xs font-medium ${gap > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
+                      className={`flex items-center gap-1 text-xs font-medium ${gap > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}
                     >
                       {gap > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                       Gap: {gap.toFixed(1)}
@@ -277,7 +277,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                     </div>
                     <div>
                       <span className="text-slate-500 dark:text-slate-400">Target:</span>{' '}
-                      <span className="text-purple-600 dark:text-purple-400 font-bold">
+                      <span className="text-primary-600 dark:text-primary-400 font-bold">
                         {data.target}
                       </span>
                     </div>
@@ -338,7 +338,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
               }
             }}
             disabled={generating}
-            className="flex items-center gap-2 p-4 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-purple-500/20"
+            className="flex items-center gap-2 p-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-primary-500/20"
           >
             {generating ? (
               <>
@@ -359,12 +359,12 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             placeholder={t('common.search', 'Search reports...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="date">{t('common.sortByDate', 'Sort by Date')}</option>
             <option value="title">{t('common.sortByTitle', 'Sort by Title')}</option>
@@ -374,7 +374,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             onClick={() => setShowArchived(!showArchived)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               showArchived
-                ? 'bg-purple-600 text-white'
+                ? 'bg-primary-600 text-white'
                 : 'bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700'
             }`}
           >
@@ -401,7 +401,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
           </div>
         ) : loading ? (
           <div className="flex items-center justify-center h-48">
-            <Loader2 className="animate-spin text-purple-600" size={32} />
+            <Loader2 className="animate-spin text-primary-600" size={32} />
           </div>
         ) : reports.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-center">
@@ -424,13 +424,13 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             {filteredReports.map((report) => (
               <div
                 key={report.id}
-                className="bg-white dark:bg-navy-950 rounded-lg p-4 border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 transition-all group"
+                className="bg-white dark:bg-navy-950 rounded-lg p-4 border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700 transition-all group"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <FileText size={16} className="text-purple-600 dark:text-purple-400" />
-                      <h4 className="text-base font-semibold text-navy-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      <FileText size={16} className="text-primary-600 dark:text-primary-400" />
+                      <h4 className="text-base font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                         {report.title}
                       </h4>
                       {report.status === 'draft' && (
@@ -453,13 +453,13 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                     </div>
                     <div className="text-center">
                       <div className="text-xs text-slate-500 dark:text-slate-400">Target</div>
-                      <div className="text-base font-bold text-purple-600 dark:text-purple-400">
+                      <div className="text-base font-bold text-primary-600 dark:text-primary-400">
                         {report.avg_target.toFixed(1)}
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xs text-slate-500 dark:text-slate-400">Gap</div>
-                      <div className="text-base font-bold text-orange-600 dark:text-orange-400">
+                      <div className="text-base font-bold text-amber-600 dark:text-amber-400">
                         {report.gap_points}
                       </div>
                     </div>

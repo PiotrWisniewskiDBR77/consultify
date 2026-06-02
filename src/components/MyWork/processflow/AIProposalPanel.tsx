@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
-  Bot,
   Building2,
   Check,
   ChevronRight,
@@ -12,7 +10,9 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
+import TeresaMark from '../../shared/TeresaMark';
 export interface AIProposalOp {
   action: 'create' | 'delete' | 'connect' | 'move' | 'update_label';
   target_id?: string;
@@ -108,8 +108,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
 
   const pending = proposal?.status === 'pending';
   const improved =
-    proposal &&
-    proposal.validation_after.issue_count < proposal.validation_before.issue_count;
+    proposal && proposal.validation_after.issue_count < proposal.validation_before.issue_count;
 
   return (
     <div className={`flex flex-col gap-3 ${panelShell}`}>
@@ -138,12 +137,12 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
       </div>
 
       {error ? (
-        <p className="text-xs font-medium text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-xs font-medium text-rose-600 dark:text-rose-400">{error}</p>
       ) : null}
 
       {isGenerating ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-slate-600 dark:text-slate-300">
-          <Bot size={28} className="animate-spin text-primary-600 dark:text-primary-400" />
+          <TeresaMark size={28} className="animate-spin text-primary-600 dark:text-primary-400" />
           <span className="text-xs font-medium">{t.generating}</span>
         </div>
       ) : proposal ? (
@@ -168,9 +167,13 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
                     className="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-slate-50/80 px-2 py-1.5 text-[11px] dark:border-navy-700 dark:bg-navy-900/40"
                   >
                     <Icon size={14} className="shrink-0 text-slate-600 dark:text-slate-300" />
-                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{op.action}</span>
+                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                      {op.action}
+                    </span>
                     {op.target_id ? (
-                      <span className="truncate text-slate-600 dark:text-slate-300">{op.target_id}</span>
+                      <span className="truncate text-slate-600 dark:text-slate-300">
+                        {op.target_id}
+                      </span>
                     ) : null}
                   </li>
                 );
@@ -193,7 +196,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
                 </span>
               ))}
               {destructiveCount(proposal.operations) > 0 ? (
-                <span className="inline-flex items-center rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:text-red-300">
+                <span className="inline-flex items-center rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-300">
                   {t.destructive}: {destructiveCount(proposal.operations)}
                 </span>
               ) : null}
@@ -228,13 +231,17 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             <span className="text-slate-400">→</span>
             <span
               className={`font-semibold ${
-                improved ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-100'
+                improved
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-slate-800 dark:text-slate-100'
               }`}
             >
               {t.issues(proposal.validation_after.issue_count)}
             </span>
             {improved ? (
-              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">({t.improved})</span>
+              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                ({t.improved})
+              </span>
             ) : null}
           </div>
 
@@ -252,7 +259,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
               type="button"
               disabled={!pending}
               onClick={onReject}
-              className="inline-flex flex-1 min-w-[100px] items-center justify-center gap-1.5 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-500/40 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/50"
+              className="inline-flex flex-1 min-w-[100px] items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-rose-500/40 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50"
             >
               <X size={14} />
               {t.reject}
@@ -285,7 +292,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             disabled={!draftPrompt.trim() || isGenerating}
             className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-primary-500 dark:hover:bg-primary-400"
           >
-            <Bot size={14} />
+            <TeresaMark size={14} />
             {t.generate}
           </button>
         </div>

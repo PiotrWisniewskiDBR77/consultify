@@ -62,7 +62,10 @@ router.use(defaultRateLimiter);
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
   return (
-    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+    msg.includes('no such table') ||
+    msg.includes('no such column') ||
+    msg.includes('does not exist') ||
+    msg.includes('relation')
   );
 }
 
@@ -83,8 +86,13 @@ interface InvoiceRow {
   id: string;
   organization_id: string;
   organization_name?: string;
+  invoice_number?: string;
   status: string;
-  amount: number;
+  amount?: number;
+  subtotal?: number;
+  tax_amount?: number;
+  total?: number;
+  amount_due?: number;
   amount_paid: number;
   currency: string;
   due_date: string;
@@ -95,12 +103,89 @@ interface InvoiceRow {
   updated_at: string;
 }
 
+function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeInvoiceLineItems(lineItems: any[]) {
+  return lineItems.map((item) => {
+    const quantity = Number(item.quantity ?? 1);
+    const unitPrice = Number(item.unitPrice ?? item.amount);
+    const amount = Number((quantity * unitPrice).toFixed(2));
+    return {
+      description: String(item.description || 'Invoice item').trim(),
+      quantity,
+      unitPrice,
+      amount,
+    };
+  });
+}
+
+function mapInvoiceRow(inv: InvoiceRow) {
+  const lineItems = parseJsonField<any[]>(inv.line_items, []);
+  const metadata = parseJsonField<Record<string, unknown>>(inv.metadata, {});
+  const subtotal = Number(inv.subtotal ?? inv.amount ?? 0);
+  const taxAmount = Number(inv.tax_amount ?? 0);
+  const total = Number(inv.total ?? subtotal + taxAmount);
+
+  return {
+    ...inv,
+    line_items: lineItems,
+    lineItems,
+    items: lineItems,
+    metadata,
+    invoiceNumber: inv.invoice_number,
+    organizationId: inv.organization_id,
+    organizationName: inv.organization_name,
+    amount: subtotal,
+    tax: taxAmount,
+    total,
+    amountDue: Number(inv.amount_due ?? total),
+    amountPaid: Number(inv.amount_paid ?? 0),
+    dueDate: inv.due_date,
+    paidAt: inv.paid_at,
+    createdAt: inv.created_at,
+    updatedAt: inv.updated_at,
+  };
+}
+
+async function fetchInvoiceById(id: string) {
+  const invoice = await dbGet<InvoiceRow>(
+    `
+      SELECT i.*, o.name as organization_name
+      FROM invoices i
+      LEFT JOIN organizations o ON i.organization_id = o.id
+      WHERE i.id = ?
+    `,
+    [id]
+  );
+  return invoice ? mapInvoiceRow(invoice) : null;
+}
+
+async function organizationExists(organizationId: string) {
+  const organization = await dbGet<{ id: string }>(`SELECT id FROM organizations WHERE id = ?`, [
+    organizationId,
+  ]);
+  return Boolean(organization);
+}
+
 // Billing access middleware
 const hasBillingAccess = (req: AuthRequest): boolean => {
   const role = String(req.user?.role || '')
     .trim()
     .toLowerCase();
-  const allowedRoles = new Set(['superadmin', 'admin', 'administrator', 'billing_manager', 'owner']);
+  const allowedRoles = new Set([
+    'superadmin',
+    'admin',
+    'administrator',
+    'billing_manager',
+    'owner',
+  ]);
   return Boolean(req.user && (req.user.isSuperAdmin || allowedRoles.has(role)));
 };
 
@@ -131,24 +216,29 @@ router.get(
         ORDER BY sp.price_monthly DESC
       `)) as any[];
 
-      const mrr = plans.reduce(
-        (sum: number, p: any) => sum + (p.price_monthly || 0) * (p.subscriber_count || 0),
-        0
-      );
+      const mrr = plans.reduce((sum: number, p: any) => {
+        const priceMonthly = Number(p.price_monthly || 0);
+        const subscriberCount = Number(p.subscriber_count || 0);
+        return sum + priceMonthly * subscriberCount;
+      }, 0);
 
       return res.json({
         mrr,
         arr: mrr * 12,
         activeSubscriptions: plans.reduce(
-          (sum: number, p: any) => sum + (p.subscriber_count || 0),
+          (sum: number, p: any) => sum + Number(p.subscriber_count || 0),
           0
         ),
-        planDistribution: plans.map((p: any) => ({
-          plan: p.name,
-          price: p.price_monthly,
-          subscribers: p.subscriber_count,
-          revenue: (p.price_monthly || 0) * (p.subscriber_count || 0),
-        })),
+        planDistribution: plans.map((p: any) => {
+          const priceMonthly = Number(p.price_monthly || 0);
+          const subscriberCount = Number(p.subscriber_count || 0);
+          return {
+            plan: p.name,
+            price: priceMonthly,
+            subscribers: subscriberCount,
+            revenue: priceMonthly * subscriberCount,
+          };
+        }),
       });
     } catch {
       return res.json({ mrr: 0, arr: 0, activeSubscriptions: 0, planDistribution: [] });
@@ -175,9 +265,9 @@ router.get(
       `)) as any;
 
       return res.json({
-        totalTokensThisMonth: tokenRow?.total_tokens || 0,
+        totalTokensThisMonth: Number(tokenRow?.total_tokens || 0),
         totalStorageGB: 0,
-        activeOrganizations: orgRow?.active_orgs || 0,
+        activeOrganizations: Number(orgRow?.active_orgs || 0),
       });
     } catch {
       return res.json({ totalTokensThisMonth: 0, totalStorageGB: 0, activeOrganizations: 0 });
@@ -244,13 +334,17 @@ router.get(
                 GROUP BY sp.id
             `);
 
-      const byPlan = (subscriptions || []).map((s: any) => ({
-        plan_id: s.plan_id,
-        plan_name: s.plan_name,
-        price_monthly: s.price_monthly || 0,
-        subscriber_count: s.subscriber_count || 0,
-        plan_mrr: (s.price_monthly || 0) * (s.subscriber_count || 0),
-      }));
+      const byPlan = (subscriptions || []).map((s: any) => {
+        const priceMonthly = Number(s.price_monthly || 0);
+        const subscriberCount = Number(s.subscriber_count || 0);
+        return {
+          plan_id: s.plan_id,
+          plan_name: s.plan_name,
+          price_monthly: priceMonthly,
+          subscriber_count: subscriberCount,
+          plan_mrr: priceMonthly * subscriberCount,
+        };
+      });
 
       const totalMRR = byPlan.reduce((sum: number, p: any) => sum + p.plan_mrr, 0);
       const activeSubscriptions = byPlan.reduce(
@@ -663,7 +757,7 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const plans = await dbAll<any>(
-        `SELECT * FROM subscription_plans ORDER BY sort_order ASC`,
+        `SELECT * FROM subscription_plans ORDER BY price_monthly ASC`,
         [],
         { fallback: false }
       );
@@ -836,6 +930,14 @@ router.delete(
 
 router.get(
   '/admin/user-plans',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return respondSchemaUnavailable(res, 'User seat plans');
+  })
+);
+router.get(
+  '/user-plans',
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
@@ -1021,11 +1123,7 @@ router.get(
       }
       const total = (await dbGet(countQuery, countParams)) as { total: number } | null;
 
-      const mapped = invoices.map((inv) => ({
-        ...inv,
-        line_items: inv.line_items ? JSON.parse(inv.line_items) : [],
-        metadata: inv.metadata ? JSON.parse(inv.metadata) : {},
-      }));
+      const mapped = invoices.map(mapInvoiceRow);
 
       return res.json({
         invoices: mapped,
@@ -1071,13 +1169,7 @@ router.get(
         return res.status(403).json({ error: 'Access denied' });
       }
 
-      return res.json({
-        invoice: {
-          ...invoice,
-          line_items: invoice.line_items ? JSON.parse(invoice.line_items) : [],
-          metadata: invoice.metadata ? JSON.parse(invoice.metadata) : {},
-        },
-      });
+      return res.json({ invoice: mapInvoiceRow(invoice) });
     } catch (error: unknown) {
       logger.error('[Billing] Get invoice error:', error);
       return res.status(500).json({ error: 'Failed to get invoice' });
@@ -1152,8 +1244,13 @@ router.post(
     try {
       const { organizationId, lineItems, currency, dueDate, metadata } = req.body;
 
-      const subtotal = lineItems.reduce(
-        (sum: number, item: { amount: number }) => sum + (item.amount || 0),
+      if (!(await organizationExists(organizationId))) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+
+      const normalizedLineItems = normalizeInvoiceLineItems(lineItems);
+      const subtotal = normalizedLineItems.reduce(
+        (sum: number, item: { amount: number }) => sum + item.amount,
         0
       );
       const taxAmount = 0;
@@ -1183,12 +1280,13 @@ router.post(
           total,
           total,
           dueDate,
-          JSON.stringify(lineItems),
+          JSON.stringify(normalizedLineItems),
           JSON.stringify(metadata || {}),
         ]
       );
 
-      return res.json({ success: true, id, invoiceNumber });
+      const invoice = await fetchInvoiceById(id);
+      return res.status(201).json({ success: true, id, invoiceNumber, invoice });
     } catch (error: unknown) {
       logger.error('[Billing] Create invoice error:', error);
       return res.status(500).json({ error: 'Failed to create invoice' });
@@ -1222,12 +1320,13 @@ router.put(
       }
 
       if (lineItems) {
-        const subtotal = lineItems.reduce(
-          (sum: number, item: { amount: number }) => sum + (item.amount || 0),
+        const normalizedLineItems = normalizeInvoiceLineItems(lineItems);
+        const subtotal = normalizedLineItems.reduce(
+          (sum: number, item: { amount: number }) => sum + item.amount,
           0
         );
         updates.push('line_items = ?');
-        params.push(JSON.stringify(lineItems));
+        params.push(JSON.stringify(normalizedLineItems));
         updates.push('subtotal = ?');
         params.push(subtotal);
         updates.push('total = subtotal + tax_amount');
@@ -1307,10 +1406,10 @@ router.get(
       }
 
       const billing = await dbGet(
-        `SELECT subscription_plan_id, status, current_period_end, billing_rail, contract_status,
-                renewal_at, grace_until, access_expires_at, managed_by_user_id, is_manual_override
+        `SELECT *
          FROM organization_billing
          WHERE organization_id = ?
+         ORDER BY CASE WHEN subscription_plan_id IS NULL THEN 1 ELSE 0 END
          LIMIT 1`,
         [orgId]
       );

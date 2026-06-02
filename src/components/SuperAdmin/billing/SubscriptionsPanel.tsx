@@ -174,14 +174,14 @@ export const SubscriptionsPanel: React.FC = () => {
         bg: 'bg-emerald-500/20',
         text: 'text-emerald-400',
       },
-      trialing: { icon: <Zap size={14} />, bg: 'bg-violet-500/20', text: 'text-violet-400' },
+      trialing: { icon: <Zap size={14} />, bg: 'bg-primary-500/20', text: 'text-primary-400' },
       past_due: {
         icon: <AlertTriangle size={14} />,
         bg: 'bg-amber-500/20',
         text: 'text-amber-400',
       },
-      canceled: { icon: <XCircle size={14} />, bg: 'bg-red-500/20', text: 'text-red-400' },
-      unpaid: { icon: <AlertTriangle size={14} />, bg: 'bg-red-500/20', text: 'text-red-400' },
+      canceled: { icon: <XCircle size={14} />, bg: 'bg-rose-500/20', text: 'text-rose-400' },
+      unpaid: { icon: <AlertTriangle size={14} />, bg: 'bg-rose-500/20', text: 'text-rose-400' },
       paused: {
         icon: <Pause size={14} />,
         bg: 'bg-slate-500/20',
@@ -224,14 +224,14 @@ export const SubscriptionsPanel: React.FC = () => {
               placeholder="Search subscriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
             />
           </div>
 
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -254,7 +254,7 @@ export const SubscriptionsPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 rounded-lg text-white font-medium transition-colors"
           >
             <Plus size={18} />
             New Subscription
@@ -265,7 +265,7 @@ export const SubscriptionsPanel: React.FC = () => {
       {/* Subscriptions List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredSubscriptions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
@@ -278,7 +278,7 @@ export const SubscriptionsPanel: React.FC = () => {
             <div key={sub.id} className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-fuchsia-500 flex items-center justify-center">
                     <CreditCard size={24} className="text-white" />
                   </div>
                   <div>
@@ -288,7 +288,7 @@ export const SubscriptionsPanel: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-4 mt-1 text-sm text-slate-400 dark:text-slate-500">
                       <span className="flex items-center gap-1.5">
-                        <Zap size={14} className="text-violet-400" />
+                        <Zap size={14} className="text-primary-400" />
                         {sub.plan_name}
                       </span>
                       <span>{formatCurrency(sub.price_monthly)}/mo</span>
@@ -308,7 +308,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       </p>
                     )}
                     {sub.trial_end && sub.status === 'trialing' && (
-                      <p className="text-sm text-violet-400">
+                      <p className="text-sm text-primary-400">
                         Trial ends {new Date(sub.trial_end).toLocaleDateString()}
                       </p>
                     )}
@@ -325,7 +325,7 @@ export const SubscriptionsPanel: React.FC = () => {
                     {sub.status === 'active' && !sub.cancel_at_period_end && (
                       <button
                         onClick={() => handleCancelSubscription(sub.id, false)}
-                        className="p-2 hover:bg-red-500/10 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+                        className="p-2 hover:bg-rose-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors"
                         title="Cancel"
                       >
                         <XCircle size={16} />
@@ -355,7 +355,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -371,7 +371,7 @@ export const SubscriptionsPanel: React.FC = () => {
                 <select
                   value={createForm.planId}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, planId: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
                 >
                   <option value="">Select plan</option>
                   {plans
@@ -396,7 +396,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       onClick={() => setCreateForm((prev) => ({ ...prev, billingCycle: cycle }))}
                       className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
                         createForm.billingCycle === cycle
-                          ? 'bg-violet-500/20 border-violet-500/50 text-violet-400'
+                          ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
                           : 'bg-slate-800 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/20'
                       }`}
                     >
@@ -418,7 +418,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, trialDays: parseInt(e.target.value) || 0 }))
                   }
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
                 />
               </div>
             </div>
@@ -433,7 +433,7 @@ export const SubscriptionsPanel: React.FC = () => {
               <button
                 onClick={handleCreateSubscription}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
               >
                 {saving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                 Create
@@ -458,7 +458,7 @@ export const SubscriptionsPanel: React.FC = () => {
                   <p className="text-sm text-slate-400 dark:text-slate-500">Current Plan</p>
                   <p className="font-medium text-white">{selectedSubscription.plan_name}</p>
                 </div>
-                <p className="text-lg font-semibold text-violet-400">
+                <p className="text-lg font-semibold text-primary-400">
                   {formatCurrency(selectedSubscription.price_monthly)}/mo
                 </p>
               </div>
@@ -472,7 +472,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       handleChangePlan(selectedSubscription.id, e.target.value);
                     }
                   }}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
                 >
                   {plans
                     .filter((p) => p.is_active)
@@ -503,7 +503,7 @@ export const SubscriptionsPanel: React.FC = () => {
                           handleCancelSubscription(selectedSubscription.id, true);
                           setSelectedSubscription(null);
                         }}
-                        className="flex-1 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
+                        className="flex-1 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors"
                       >
                         Cancel Immediately
                       </button>

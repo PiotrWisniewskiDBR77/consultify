@@ -167,7 +167,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Zapytaj',
     description: "Ask AI about your note's context",
     descriptionPl: 'Zapytaj AI o kontekst notatki',
-    icon: <MessageCircle size={ICON_SIZE} className="text-violet-500" />,
+    icon: <MessageCircle size={ICON_SIZE} className="text-primary-500" />,
     keywords: ['ask', 'ai', 'question', 'pytanie', 'zapytaj'],
     action: () => {},
     aiCommand: 'ask',
@@ -178,7 +178,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Rozwiń',
     description: 'AI expands and elaborates on your content',
     descriptionPl: 'AI rozwija i wzbogaca Twoją treść',
-    icon: <Sparkles size={ICON_SIZE} className="text-violet-500" />,
+    icon: <Sparkles size={ICON_SIZE} className="text-primary-500" />,
     keywords: ['expand', 'ai', 'elaborate', 'rozwin', 'wzbogac'],
     action: () => {},
     aiCommand: 'expand',
@@ -189,7 +189,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Podważ',
     description: 'AI asks critical questions about your content',
     descriptionPl: 'AI zadaje krytyczne pytania o Twoją treść',
-    icon: <ShieldQuestion size={ICON_SIZE} className="text-violet-500" />,
+    icon: <ShieldQuestion size={ICON_SIZE} className="text-primary-500" />,
     keywords: ['challenge', 'ai', 'critical', 'question', 'podwaz', 'krytyczne'],
     action: () => {},
     aiCommand: 'challenge',
@@ -200,7 +200,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Następne kroki',
     description: 'AI proposes concrete next steps',
     descriptionPl: 'AI proponuje konkretne następne kroki',
-    icon: <Zap size={ICON_SIZE} className="text-violet-500" />,
+    icon: <Zap size={ICON_SIZE} className="text-primary-500" />,
     keywords: ['action', 'ai', 'next', 'steps', 'kroki', 'plan'],
     action: () => {},
     aiCommand: 'action',
@@ -315,7 +315,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   const [selectedIdx, setSelectedIdx] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const filtered = useMemo(() => {
+  const filterose = useMemo(() => {
     const q = state.query.toLowerCase();
     if (!q) return COMMANDS;
     return COMMANDS.filter(
@@ -358,20 +358,20 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev + 1) % Math.max(filtered.length, 1));
+        setSelectedIdx((prev) => (prev + 1) % Math.max(filterose.length, 1));
         return;
       }
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev - 1 + filtered.length) % Math.max(filtered.length, 1));
+        setSelectedIdx((prev) => (prev - 1 + filterose.length) % Math.max(filterose.length, 1));
         return;
       }
 
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (filtered[selectedIdx]) {
-          executeCommand(filtered[selectedIdx]);
+        if (filterose[selectedIdx]) {
+          executeCommand(filterose[selectedIdx]);
         }
         return;
       }
@@ -379,9 +379,9 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [state.open, filtered, selectedIdx, executeCommand, onClose]);
+  }, [state.open, filterose, selectedIdx, executeCommand, onClose]);
 
-  if (!state.open || filtered.length === 0) return null;
+  if (!state.open || filterose.length === 0) return null;
 
   const containerRect = containerRef.current?.getBoundingClientRect();
   const top = state.coords.top - (containerRect?.top ?? 0);
@@ -394,7 +394,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
       style={{ top, left }}
     >
       <div className="p-1">
-        {filtered.map((cmd, idx) => (
+        {filterose.map((cmd, idx) => (
           <button
             key={cmd.id}
             onMouseDown={(e) => {
@@ -416,7 +416,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
               </div>
             </div>
             {cmd.aiCommand ? (
-              <span className="ml-auto shrink-0 text-[10px] font-medium text-violet-500 dark:text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded">
+              <span className="ml-auto shrink-0 text-[10px] font-medium text-primary-500 dark:text-primary-400 bg-primary-500/10 px-1.5 py-0.5 rounded">
                 AI
               </span>
             ) : cmd.id === 'h1' ||

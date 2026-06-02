@@ -106,7 +106,7 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
                       <button
                         type="button"
                         onClick={() => onRemove({ type: link.type, id: link.id })}
-                        className="p-0.5 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-500"
+                        className="p-0.5 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-500"
                         title={isPl ? 'Usuń' : 'Remove'}
                       >
                         <X size={8} />

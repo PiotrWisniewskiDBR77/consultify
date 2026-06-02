@@ -23,10 +23,10 @@ const CATEGORY_LABELS: Record<PulseCategory, { en: string; pl: string }> = {
 };
 
 const CATEGORY_BADGE_STYLES: Record<string, string> = {
-  ai_tech: 'bg-gradient-to-br from-indigo-500/20 to-cyan-500/20',
+  ai_tech: 'bg-gradient-to-br from-indigo-500/20 to-blue-500/20',
   industry: 'bg-gradient-to-br from-emerald-500/20 to-amber-500/20',
   consulting: 'bg-gradient-to-br from-primary-500/20 to-fuchsia-500/20',
-  clients: 'bg-gradient-to-br from-rose-500/20 to-orange-500/20',
+  clients: 'bg-gradient-to-br from-rose-500/20 to-amber-500/20',
 };
 
 const CATEGORY_TEXT_STYLES: Record<string, string> = {
@@ -62,7 +62,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
     <div className="p-8 bg-gradient-to-b from-navy-900/60 to-navy-800/40 border border-white/[0.06] rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
             <Globe size={16} className="text-white" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">World Pulse</h3>

@@ -123,11 +123,7 @@ describe('AssessmentAuditLogger', () => {
             expect(JSON.parse(detailsParam)).toMatchObject(details);
         });
 
-        it.skip('should reject on database error - implementation catches errors silently', async () => {
-            // NOTE: The actual implementation catches errors and logs them,
-            // rather than rejecting. This test documents expected behavior for future.
-            // If implementation changes to reject on errors, this test should be restored.
-        });
+        it.todo('should reject on database error (implementation currently catches errors silently)');
 
         it('should include timestamp in log', async () => {
             mockDb.run.mockImplementation((sql, params, callback) => {
@@ -223,148 +219,31 @@ describe('AssessmentAuditLogger', () => {
     // =========================================================================
 
     // NOTE: getAuditLog, getAuditLogByOrganization, exportAuditLog are not implemented yet
-    // These tests are skipped until implementation is completed
-    describe.skip('getAuditLog (NOT IMPLEMENTED)', () => {
-        it('should retrieve audit logs for assessment', async () => {
-            const mockLogs = [
-                { id: 'log-1', action: 'ASSESSMENT_CREATED', timestamp: '2024-01-01' },
-                { id: 'log-2', action: 'ASSESSMENT_APPROVED', timestamp: '2024-01-02' }
-            ];
-
-            mockDb.all.mockResolvedValue($2);
-
-            const result = await AssessmentAuditLogger.getAuditLog('assessment-123');
-
-            expect(result).toHaveLength(2);
-            expect(result[0].action).toBe('ASSESSMENT_CREATED');
-        });
-
-        it('should filter by date range', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                expect(sql).toContain('timestamp');
-                callback(null, []);
-            });
-
-            await AssessmentAuditLogger.getAuditLog('assessment-123', {
-                startDate: '2024-01-01',
-                endDate: '2024-01-31'
-            });
-
-            expect(mockDb.all).toHaveBeenCalled();
-        });
-
-        it('should filter by action type', async () => {
-            mockDb.all.mockResolvedValue($2);
-
-            await AssessmentAuditLogger.getAuditLog('assessment-123', {
-                action: 'ASSESSMENT_APPROVED'
-            });
-
-            expect(mockDb.all).toHaveBeenCalledWith(
-                expect.stringContaining('action'),
-                expect.any(Array),
-                expect.any(Function)
-            );
-        });
-
-        it('should filter by user', async () => {
-            mockDb.all.mockResolvedValue($2);
-
-            await AssessmentAuditLogger.getAuditLog('assessment-123', {
-                userId: 'user-456'
-            });
-
-            expect(mockDb.all).toHaveBeenCalled();
-        });
-
-        it('should return empty array for no logs', async () => {
-            mockDb.all.mockResolvedValue($2);
-
-            const result = await AssessmentAuditLogger.getAuditLog('assessment-123');
-
-            expect(result).toEqual([]);
-        });
-
-        it('should handle database error', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(new Error('Query failed'));
-            });
-
-            await expect(
-                AssessmentAuditLogger.getAuditLog('assessment-123')
-            ).rejects.toThrow('Query failed');
-        });
+    describe('getAuditLog (NOT IMPLEMENTED)', () => {
+        it.todo('should retrieve audit logs for assessment');
+        it.todo('should filter by date range');
+        it.todo('should filter by action type');
+        it.todo('should filter by user');
+        it.todo('should return empty array for no logs');
+        it.todo('should handle database error');
     });
 
     // =========================================================================
     // getAuditLogByOrganization() TESTS
     // =========================================================================
 
-    describe.skip('getAuditLogByOrganization (NOT IMPLEMENTED)', () => {
-        it('should retrieve audit logs for organization', async () => {
-            const mockLogs = [
-                { id: 'log-1', resource_id: 'assessment-1' },
-                { id: 'log-2', resource_id: 'assessment-2' }
-            ];
-
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                expect(params).toContain('org-123');
-                callback(null, mockLogs);
-            });
-
-            const result = await AssessmentAuditLogger.getAuditLogByOrganization('org-123');
-
-            expect(result).toHaveLength(2);
-        });
-
-        it('should support pagination', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                expect(sql).toContain('LIMIT');
-                expect(sql).toContain('OFFSET');
-                callback(null, []);
-            });
-
-            await AssessmentAuditLogger.getAuditLogByOrganization('org-123', {
-                limit: 10,
-                offset: 20
-            });
-
-            expect(mockDb.all).toHaveBeenCalled();
-        });
+    describe('getAuditLogByOrganization (NOT IMPLEMENTED)', () => {
+        it.todo('should retrieve audit logs for organization');
+        it.todo('should support pagination');
     });
 
     // =========================================================================
     // exportAuditLog() TESTS
     // =========================================================================
 
-    describe.skip('exportAuditLog (NOT IMPLEMENTED)', () => {
-        it('should export audit log as JSON', async () => {
-            const mockLogs = [
-                { id: 'log-1', action: 'TEST', timestamp: '2024-01-01' }
-            ];
-
-            mockDb.all.mockResolvedValue($2);
-
-            const result = await AssessmentAuditLogger.exportAuditLog('assessment-123', 'json');
-
-            expect(result).toBeDefined();
-            expect(typeof result).toBe('string');
-            expect(JSON.parse(result)).toHaveLength(1);
-        });
-
-        it('should export audit log as CSV', async () => {
-            const mockLogs = [
-                { id: 'log-1', action: 'TEST', timestamp: '2024-01-01', user_id: 'user-1' }
-            ];
-
-            mockDb.all.mockResolvedValue($2);
-
-            const result = await AssessmentAuditLogger.exportAuditLog('assessment-123', 'csv');
-
-            expect(result).toBeDefined();
-            expect(result).toContain('action');
-            expect(result).toContain('TEST');
-        });
+    describe('exportAuditLog (NOT IMPLEMENTED)', () => {
+        it.todo('should export audit log as JSON');
+        it.todo('should export audit log as CSV');
     });
 
     // =========================================================================

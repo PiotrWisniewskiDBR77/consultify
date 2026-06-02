@@ -367,7 +367,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
     return (
       <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Status Card */}
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-6 text-white shadow-lg shadow-emerald-500/25">
+        <div className="bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl p-6 text-white shadow-lg shadow-emerald-500/25">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
               <ShieldCheck className="w-7 h-7" />
@@ -435,14 +435,14 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             {/* Disable 2FA */}
             <button
               onClick={() => setDisableConfirm(true)}
-              className="w-full p-4 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-left"
+              className="w-full p-4 flex items-center justify-between hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 dark:bg-red-500/20 rounded-lg">
-                  <ShieldOff className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <div className="p-2 bg-rose-100 dark:bg-rose-500/20 rounded-lg">
+                  <ShieldOff className="w-5 h-5 text-rose-600 dark:text-rose-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-red-600 dark:text-red-400">
+                  <p className="font-medium text-rose-600 dark:text-rose-400">
                     {t('security.mfa.disable', 'Disable 2FA')}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -475,7 +475,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={6}
                 placeholder="000000"
-                className="w-32 px-4 py-2 text-center text-lg font-mono tracking-widest border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="w-32 px-4 py-2 text-center text-lg font-mono tracking-widest border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
               />
               <button
                 onClick={regenerateBackupCodes}
@@ -490,7 +490,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 {t('security.mfa.regenerate', 'Regenerate')}
               </button>
             </div>
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            {error && <p className="text-rose-500 text-sm mb-4">{error}</p>}
             {backupCodes.length > 0 && (
               <div className="mt-6">
                 <BackupCodesDisplay
@@ -522,40 +522,40 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
   // Disable Confirmation
   if (disableConfirm) {
     return (
-      <div className="max-w-md mx-auto bg-red-50 dark:bg-red-900/10 rounded-xl p-6 border border-red-200 dark:border-red-500/30 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="max-w-md mx-auto bg-rose-50 dark:bg-rose-900/10 rounded-xl p-6 border border-rose-200 dark:border-rose-500/30 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-red-100 dark:bg-red-500/20 rounded-lg">
-            <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+          <div className="p-2 bg-rose-100 dark:bg-rose-500/20 rounded-lg">
+            <AlertTriangle className="w-6 h-6 text-rose-600 dark:text-rose-400" />
           </div>
-          <h3 className="text-lg font-bold text-red-700 dark:text-red-400">
+          <h3 className="text-lg font-bold text-rose-700 dark:text-rose-400">
             {t('security.mfa.disableTitle', 'Disable Two-Factor Authentication?')}
           </h3>
         </div>
-        <p className="text-sm text-red-600/80 dark:text-red-300 mb-6">
+        <p className="text-sm text-rose-600/80 dark:text-rose-300 mb-6">
           {t(
             'security.mfa.disableConfirmText',
             'This will remove the extra security layer from your account. You will only need your password to sign in.'
           )}
         </p>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-red-700 dark:text-red-400 mb-2">
+          <label className="block text-sm font-medium text-rose-700 dark:text-rose-400 mb-2">
             {t('security.mfa.enterCode', 'Enter your 2FA code to confirm')}
           </label>
           <input
             type="text"
             placeholder="000000"
             maxLength={6}
-            className="w-full px-4 py-3 text-center text-lg font-mono tracking-widest border border-red-200 dark:border-red-500/30 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500"
+            className="w-full px-4 py-3 text-center text-lg font-mono tracking-widest border border-rose-200 dark:border-rose-500/30 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500"
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
           />
         </div>
-        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+        {error && <p className="text-rose-600 text-sm mb-4">{error}</p>}
         <div className="flex gap-3">
           <button
             onClick={disableMFA}
             disabled={loading || verificationCode.length !== 6}
-            className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -587,7 +587,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="p-6 border-b border-slate-100 dark:border-navy-700">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
                 <Lock className="w-7 h-7 text-white" />
               </div>
               <div>
@@ -624,7 +624,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             <button
               onClick={startSetup}
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25"
+              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-primary-600 hover:from-indigo-500 hover:to-primary-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -633,7 +633,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
               )}
               {t('security.mfa.enable', 'Enable Two-Factor Authentication')}
             </button>
-            {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
+            {error && <p className="text-rose-500 text-sm mt-4 text-center">{error}</p>}
           </div>
         </div>
       )}
@@ -660,14 +660,14 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                   disabled={loading}
                   className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
                     selectedMethod === method.id
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                      : 'border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                      : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
                   }`}
                 >
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                       method.recommended
-                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                        ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400'
                         : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400'
                     }`}
                   >
@@ -679,7 +679,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                         {method.name}
                       </span>
                       {method.recommended && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-full">
+                        <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-full">
                           {t('security.mfa.recommended', 'Recommended')}
                         </span>
                       )}
@@ -692,7 +692,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 </button>
               ))}
           </div>
-          {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
+          {error && <p className="text-rose-500 text-sm mt-4 text-center">{error}</p>}
           <button
             onClick={() => setStep('initial')}
             className="mt-6 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-300"
@@ -737,7 +737,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="+1234567890"
-              className="w-full px-4 py-3 border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 placeholder-slate-400"
+              className="w-full px-4 py-3 border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 placeholder-slate-400"
             />
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               {t(
@@ -770,7 +770,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             {t('security.mfa.sendCode', 'Send Verification Code')}
           </button>
 
-          {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
+          {error && <p className="text-rose-500 text-sm mt-4 text-center">{error}</p>}
 
           <button
             onClick={() => (smsAvailable ? setStep('method-select') : setStep('initial'))}
@@ -814,13 +814,13 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
               onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
               maxLength={6}
               placeholder="000000"
-              className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
               onKeyDown={(e) => e.key === 'Enter' && verifySMSAndEnable()}
             />
             <button
               onClick={verifySMSAndEnable}
               disabled={loading || verificationCode.length !== 6}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -835,13 +835,13 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             <button
               onClick={startSMSSetup}
               disabled={loading}
-              className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
             >
               {t('security.mfa.resendCode', 'Resend code')}
             </button>
           </div>
 
-          {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+          {error && <p className="text-rose-500 text-sm mt-4">{error}</p>}
 
           <button
             onClick={() => setStep('setup-sms')}
@@ -928,7 +928,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 <div className="flex gap-3">
                   <input
                     type="text"
-                    className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     placeholder="000000"
                     maxLength={6}
                     value={verificationCode}
@@ -938,7 +938,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                   <button
                     onClick={verifyAndEnable}
                     disabled={loading || verificationCode.length !== 6}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                    className="px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {loading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -948,7 +948,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                     {t('security.mfa.verify', 'Verify')}
                   </button>
                 </div>
-                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                {error && <p className="text-rose-500 text-sm mt-2">{error}</p>}
               </div>
             </div>
           </div>
@@ -1057,7 +1057,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ number, label, active, co
         completed
           ? 'bg-emerald-500 text-white'
           : active
-            ? 'bg-purple-600 text-white'
+            ? 'bg-primary-600 text-white'
             : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
       }`}
     >

@@ -14,7 +14,7 @@ import { useHelpSidePanel } from '../../contexts/HelpContext';
 const widgetAnimationStyle = `
 @keyframes widgetColorPulse {
     0%, 100% {
-        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+        background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
         box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
     }
     50% {

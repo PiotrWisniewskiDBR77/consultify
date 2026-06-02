@@ -49,6 +49,13 @@ vi.mock('../../../server/src/services/ragService.js', () => ({
   },
 }));
 
+vi.mock('mammoth', () => ({
+  default: {
+    extractRawText: vi.fn().mockResolvedValue({ value: 'DOCX extracted text\nSecond paragraph' }),
+  },
+  extractRawText: vi.fn().mockResolvedValue({ value: 'DOCX extracted text\nSecond paragraph' }),
+}));
+
 const { default: aiRouter } = await import('../../../server/src/routes/ai.routes.ts');
 
 describe('AI attachments ingest (REAL integration)', () => {
@@ -99,6 +106,69 @@ describe('AI attachments ingest (REAL integration)', () => {
         filename: 'note.txt',
         mimeType: 'text/plain',
         extractedText: 'Hello attachment\n\nSecond paragraph',
+      }),
+    });
+  });
+
+  it('returns a concrete extraction status for unreadable PDFs', async () => {
+    const app = makeApp();
+    const res = await request(app)
+      .post('/api/ai/attachments/ingest')
+      .attach('file', Buffer.from('%PDF-1.4\n% unreadable fixture', 'utf8'), {
+        filename: 'scanned.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        code: 'PDF_TEXT_EXTRACTION_FAILED',
+        extractionStatus: 'ocr_required_or_unreadable',
+        attachmentState: 'ocr_required',
+        sourceClass: 'attachment',
+        recoverable: true,
+        filename: 'scanned.pdf',
+      })
+    );
+  });
+
+  it('extracts DOCX attachments through the document parser', async () => {
+    const app = makeApp();
+    const { Document, Packer, Paragraph } = await import('docx');
+    const docxBuffer = await Packer.toBuffer(
+      new Document({
+        sections: [
+          {
+            children: [
+              new Paragraph('DOCX extracted text'),
+              new Paragraph('Second paragraph'),
+            ],
+          },
+        ],
+      })
+    );
+    const res = await request(app)
+      .post('/api/ai/attachments/ingest')
+      .attach('file', docxBuffer, {
+        filename: 'research.docx',
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: true,
+        filename: 'research.docx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        extractionStatus: 'extracted',
+      })
+    );
+    expect(recordAttachmentExtraction).toHaveBeenCalledWith({
+      organizationId: 'e2e-org-id',
+      userId: 'e2e-user-id',
+      payload: expect.objectContaining({
+        filename: 'research.docx',
+        extractedText: expect.stringContaining('DOCX extracted text'),
       }),
     });
   });

@@ -7,10 +7,7 @@ export const ProblemPlatformSection: React.FC = () => {
   const { t } = useTranslation();
 
   const problemPoints = [
-    t(
-      'landing.problemPlatform.problem.points.0',
-      'Consulting remains inaccessible to most firms.'
-    ),
+    t('landing.problemPlatform.problem.points.0', 'Consulting remains inaccessible to most firms.'),
     t(
       'landing.problemPlatform.problem.points.1',
       'Large language models are not specialists and do not understand company context.'
@@ -92,7 +89,10 @@ export const ProblemPlatformSection: React.FC = () => {
             className="flex flex-col rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] p-8 backdrop-blur-xl"
           >
             <div className="flex items-start gap-4 mb-6">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shrink-0" style={{ boxShadow: '0 4px 20px -4px rgba(245,158,11,0.30)' }}>
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shrink-0"
+                style={{ boxShadow: '0 4px 20px -4px rgba(245,158,11,0.30)' }}
+              >
                 <LockKeyhole size={18} className="text-white" />
               </div>
               <div>
@@ -121,13 +121,21 @@ export const ProblemPlatformSection: React.FC = () => {
                   key={point}
                   className="flex h-full items-start gap-3 rounded-xl border border-slate-200 dark:border-white/[0.05] bg-slate-100 dark:bg-white/[0.02] px-4 py-3"
                 >
-                  <Lightbulb size={14} className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0" />
-                  <span className="text-sm text-slate-600 dark:text-white/60 leading-relaxed">{point}</span>
+                  <Lightbulb
+                    size={14}
+                    className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0"
+                  />
+                  <span className="text-sm text-slate-600 dark:text-white/60 leading-relaxed">
+                    {point}
+                  </span>
                 </div>
               ))}
               <div className="rounded-xl border border-amber-500/25 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/[0.06] px-4 py-3">
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                  {t('landing.problemPlatform.problem.solve', 'That is exactly the gap Consultify closes.')}
+                  {t(
+                    'landing.problemPlatform.problem.solve',
+                    'That is exactly the gap Consultify closes.'
+                  )}
                 </p>
               </div>
             </div>
@@ -142,11 +150,14 @@ export const ProblemPlatformSection: React.FC = () => {
             className="flex flex-col rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] p-8 backdrop-blur-xl"
           >
             <div className="flex items-start gap-4 mb-6">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shrink-0" style={{ boxShadow: '0 4px 20px -4px rgba(6,182,212,0.30)' }}>
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shrink-0"
+                style={{ boxShadow: '0 4px 20px -4px rgba(6,182,212,0.30)' }}
+              >
                 <Globe2 size={18} className="text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400 mb-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 mb-1">
                   {t('landing.problemPlatform.pattern.badge', 'The category shift')}
                 </p>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
@@ -175,8 +186,8 @@ export const ProblemPlatformSection: React.FC = () => {
                 </div>
               ))}
 
-              <div className="rounded-xl border border-violet-500/25 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-500/[0.06] px-4 py-3">
-                <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+              <div className="rounded-xl border border-primary-500/25 dark:border-primary-500/20 bg-primary-50 dark:bg-primary-500/[0.06] px-4 py-3">
+                <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">
                   {t(
                     'landing.problemPlatform.pattern.summary',
                     'Access. Quality. Trust. That is the shift.'

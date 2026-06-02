@@ -56,11 +56,11 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header / Context */}
-      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-primary-900 to-indigo-900 rounded-xl p-6 text-white shadow-lg">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <SparklesIcon /> Strategic AI Synthesis
         </h2>
-        <p className="mt-2 text-purple-100 max-w-2xl">
+        <p className="mt-2 text-primary-100 max-w-2xl">
           By analyzing {megatrends.length} global megatrends against your industry profile, I've
           identified the following priority areas for your 3-5 year roadmap.
         </p>
@@ -70,7 +70,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
         {/* 1. Critical Megatrends */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-100 dark:border-navy-700 col-span-1 md:col-span-2">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <AlertTriangle className="text-red-500" size={20} />
+            <AlertTriangle className="text-rose-500" size={20} />
             Top 5 Critical Megatrends (3-5 Years)
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
@@ -85,7 +85,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
                 <div className="font-bold text-sm text-navy-900 dark:text-gray-100 leading-tight mb-2 h-10 overflow-hidden">
                   {trend.label}
                 </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-purple-600">
+                <div className="flex items-center gap-1 text-xs font-bold text-primary-600">
                   Impact: {trend.impactScore}/7
                 </div>
               </div>
@@ -96,13 +96,13 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
         {/* 2. Top External Risks */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-100 dark:border-navy-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <AlertTriangle className="text-orange-500" size={20} />
+            <AlertTriangle className="text-amber-500" size={20} />
             Top 3 External Risks
           </h3>
           <ul className="space-y-3">
             {analytics.risks.map((risk) => (
               <li key={risk.id} className="flex items-start gap-3">
-                <span className="bg-orange-100 text-orange-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">
+                <span className="bg-amber-100 text-amber-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">
                   !
                 </span>
                 <div>
@@ -145,8 +145,8 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
       </div>
 
       {/* 4. Recommended Actions */}
-      <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-6 border border-purple-100 dark:border-navy-700">
-        <h3 className="text-lg font-bold text-purple-900 dark:text-purple-300 mb-4 flex items-center gap-2">
+      <div className="bg-primary-50 dark:bg-primary-900/10 rounded-xl p-6 border border-primary-100 dark:border-navy-700">
+        <h3 className="text-lg font-bold text-primary-900 dark:text-primary-300 mb-4 flex items-center gap-2">
           <CheckCircle size={20} />
           Recommended Next Steps
         </h3>
@@ -180,17 +180,17 @@ const SparklesIcon = () => (
 );
 
 const ActionCard = ({ title, desc, label }: { title: string; desc: string; label: string }) => (
-  <div className="bg-white dark:bg-navy-800 p-4 rounded-lg shadow-sm border border-purple-100 dark:border-navy-700 flex flex-col justify-between">
+  <div className="bg-white dark:bg-navy-800 p-4 rounded-lg shadow-sm border border-primary-100 dark:border-navy-700 flex flex-col justify-between">
     <div>
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-bold text-navy-900 dark:text-white">{title}</h4>
-        <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded">
+        <span className="bg-primary-100 text-primary-700 text-[10px] font-bold px-2 py-0.5 rounded">
           {label}
         </span>
       </div>
       <p className="text-sm text-slate-600 dark:text-slate-300 leading-snug">{desc}</p>
     </div>
-    <button className="mt-4 text-xs font-bold text-purple-600 flex items-center gap-1 hover:underline">
+    <button className="mt-4 text-xs font-bold text-primary-600 flex items-center gap-1 hover:underline">
       Add to Roadmap <ArrowRight size={12} />
     </button>
   </div>

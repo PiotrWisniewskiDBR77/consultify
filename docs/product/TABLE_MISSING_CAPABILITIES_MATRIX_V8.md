@@ -4,6 +4,8 @@
 > Owner: Product + Engineering
 > Scope: exhaustive missing-capabilities matrix for the `Table` package, covering everything still required for Consultify to behave like a truly complete Airtable/Coda-class relational work system inside `Idea Workspace`
 
+> 2026-05-07 update: `TABLE_STUDIO_FOUNDATION_BLOCK` moved three lane-integration gaps to delivered: Schema Governance proposal queue integration, Relation explainability surface, and the Tabele KIMI artifact lane. See §16.
+
 ---
 
 ## 1. Why this document exists
@@ -187,6 +189,25 @@ What is still missing is a product experience where relation logic feels native 
 ### What this closes
 
 This closes the gap between technical relation support and real relational trust.
+
+---
+
+## 16. Delivered by Table Studio Foundation block — 2026-05-07
+
+The following items are no longer tracked as missing in the foundation lane scope:
+
+- `DELIVERED`: Schema Governance proposal queue integration into the Tabele lane. The underlying proposal services existed already; this block added route-level ACL hotfixing, typed client wiring, chat intent routing, proposal-status preview surfaces, and tests.
+- `DELIVERED`: Relation explainability surface. This block added `RelationExplainabilityService`, `GET /api/table-platform/tables/:tableId/records/:recordId/relations/explain`, ACL-filtered rationale tests, and relation chip UI.
+- `DELIVERED`: Tabele KIMI artifact lane. This block added `/tabele`, sidebar/route integration, KIMI shell support, Word-canvas preview, orchestrator, EN/PL i18n, intent routing, builder deep-link, and focused smoke tests.
+
+Remaining adjacent gaps still open:
+
+- dedicated schema review queue UI inside the canvas
+- persistent relation explainability cache backing
+- formula/computed-column explanation beyond relation rationale
+- full base-first Table Builder productization
+
+Evidence: `docs/product/work-packets/table-studio-foundation/evidence/sprint-6/qa-report.md`.
 
 ---
 

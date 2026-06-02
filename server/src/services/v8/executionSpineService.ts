@@ -696,24 +696,23 @@ export async function replanFromRejection(
 export async function getRunsByOrg(
   organizationId: string,
   stateFilter?: RunState,
-  limit: number = 50
+  limit: number = 50,
+  initiativeId?: string
 ): Promise<ExecutionAgentRun[]> {
-  let sql: string;
-  let params: unknown[];
+  let sql = `SELECT * FROM v8_execution_runs
+             WHERE organization_id = ?`;
+  const params: unknown[] = [organizationId];
 
   if (stateFilter) {
-    sql = `SELECT * FROM v8_execution_runs
-           WHERE organization_id = ? AND state = ?
-           ORDER BY updated_at DESC
-           LIMIT ?`;
-    params = [organizationId, stateFilter, limit];
-  } else {
-    sql = `SELECT * FROM v8_execution_runs
-           WHERE organization_id = ?
-           ORDER BY updated_at DESC
-           LIMIT ?`;
-    params = [organizationId, limit];
+    sql += ` AND state = ?`;
+    params.push(stateFilter);
   }
+  if (initiativeId) {
+    sql += ` AND json_extract(metadata, '$.initiativeId') = ?`;
+    params.push(initiativeId);
+  }
+  sql += ` ORDER BY updated_at DESC LIMIT ?`;
+  params.push(limit);
 
   const rows = await dbAll<RunRow>(sql, params, { fallback: true });
   return (rows || []).map(rowToRun);
@@ -722,15 +721,20 @@ export async function getRunsByOrg(
 /**
  * Return all runs NOT in terminal states for an organization.
  */
-export async function getActiveRuns(organizationId: string): Promise<ExecutionAgentRun[]> {
-  const rows = await dbAll<RunRow>(
-    `SELECT * FROM v8_execution_runs
-     WHERE organization_id = ?
-       AND state NOT IN ('completed', 'cancelled', 'expired')
-     ORDER BY created_at DESC`,
-    [organizationId],
-    { fallback: true }
-  );
+export async function getActiveRuns(
+  organizationId: string,
+  initiativeId?: string
+): Promise<ExecutionAgentRun[]> {
+  let sql = `SELECT * FROM v8_execution_runs
+             WHERE organization_id = ?
+               AND state NOT IN ('completed', 'cancelled', 'expired')`;
+  const params: unknown[] = [organizationId];
+  if (initiativeId) {
+    sql += ` AND json_extract(metadata, '$.initiativeId') = ?`;
+    params.push(initiativeId);
+  }
+  sql += ` ORDER BY created_at DESC`;
+  const rows = await dbAll<RunRow>(sql, params, { fallback: true });
 
   return (rows || []).map(rowToRun);
 }

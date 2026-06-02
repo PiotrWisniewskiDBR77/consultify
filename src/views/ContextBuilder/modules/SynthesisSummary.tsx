@@ -72,7 +72,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-3">
-            <Sparkles className="text-purple-500" size={28} />
+            <Sparkles className="text-primary-500" size={28} />
             Executive Strategic Summary
           </h2>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
@@ -83,7 +83,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           <button
             onClick={handleExportPDF}
             disabled={isExporting}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-900 dark:bg-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 dark:bg-primary-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <FileDown size={16} />
             {isExporting ? 'Exporting...' : 'Export PDF'}
@@ -101,7 +101,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
 
       {/* Company Overview Card */}
       <div className="bg-white dark:bg-navy-800 rounded-xl shadow-lg border border-slate-100 dark:border-navy-700 overflow-hidden">
-        <div className="bg-gradient-to-r from-navy-900 to-navy-800 dark:from-purple-900 dark:to-purple-800 p-6">
+        <div className="bg-gradient-to-r from-navy-900 to-navy-800 dark:from-primary-900 dark:to-primary-800 p-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center">
               <Building2 className="text-white" size={32} />
@@ -130,7 +130,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             <div className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
               Target Maturity
             </div>
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {companyProfile.targetMaturityLevel || 'Level 4'}
             </div>
           </div>
@@ -159,11 +159,11 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
         <div className="bg-white dark:bg-navy-800 rounded-xl shadow-md border border-slate-100 dark:border-navy-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <AlertTriangle className="text-red-500" size={18} />
+              <AlertTriangle className="text-rose-500" size={18} />
               Risk Profile
             </h4>
             <span
-              className={`px-2 py-1 rounded text-xs font-bold ${criticalRisks.length > 2 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}
+              className={`px-2 py-1 rounded text-xs font-bold ${criticalRisks.length > 2 ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}
             >
               {criticalRisks.length > 2 ? 'High Risk' : 'Manageable'}
             </span>
@@ -260,9 +260,9 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
 
       {/* Selected Scenario */}
       {selectedScenario && (
-        <div className="bg-gradient-to-r from-purple-50 to-white dark:from-purple-900/20 dark:to-navy-800 rounded-xl border border-purple-100 dark:border-purple-500/20 p-6">
+        <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-800 rounded-xl border border-primary-100 dark:border-primary-500/20 p-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center shrink-0">
               <GitMerge className="text-white" size={24} />
             </div>
             <div className="flex-1">
@@ -270,7 +270,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                 <h4 className="font-bold text-navy-900 dark:text-white text-lg">
                   Selected Transformation Scenario
                 </h4>
-                <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-xs font-bold uppercase rounded-full">
+                <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold uppercase rounded-full">
                   {selectedScenario.id}
                 </span>
               </div>
@@ -321,7 +321,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       {/* Goals Progress */}
       <div className="bg-white dark:bg-navy-800 rounded-xl shadow-md border border-slate-100 dark:border-navy-700 p-6">
         <h4 className="font-bold text-navy-900 dark:text-white text-lg mb-4 flex items-center gap-2">
-          <CheckCircle className="text-purple-500" size={20} />
+          <CheckCircle className="text-primary-500" size={20} />
           Strategic Goals & Success Metrics
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -375,7 +375,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       </div>
 
       {/* AI Recommendations */}
-      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-primary-900 to-indigo-900 rounded-xl p-6 text-white">
         <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
           <Sparkles className="text-yellow-300" size={24} />
           AI Strategic Recommendations

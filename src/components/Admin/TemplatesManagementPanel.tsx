@@ -464,8 +464,8 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
       >
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30">
-              <FolderOpen className="text-violet-500" size={20} />
+            <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+              <FolderOpen className="text-primary-500" size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -506,7 +506,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => startEditing(template)}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title={t('common.edit', 'Edit')}
             >
               <Edit size={16} />
@@ -528,7 +528,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             {!template.isDefault && (
               <button
                 onClick={() => deleteTemplate(template)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                 title={t('common.delete', 'Delete')}
               >
                 <Trash2 size={16} />
@@ -595,7 +595,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             </label>
             <button
               onClick={addPhase}
-              className="px-3 py-1 text-sm text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg flex items-center gap-1"
+              className="px-3 py-1 text-sm text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg flex items-center gap-1"
             >
               <Plus size={14} />
               {t('admin.templates.addPhase', 'Add Phase')}
@@ -630,7 +630,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                   />
                   <button
                     onClick={() => removePhase(phase.id)}
-                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500"
+                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
                   >
                     <X size={16} />
                   </button>
@@ -689,14 +689,14 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
           <button
             onClick={loadTemplates}
             disabled={loading}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors disabled:opacity-50"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
           <button
             onClick={startCreating}
-            className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
           >
             <Plus size={18} />
             {t('admin.templates.create', 'Create Template')}
@@ -732,7 +732,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`px-3 py-1.5 text-sm rounded-md flex items-center gap-1 transition-colors ${
                       selectedCategory === cat.id
-                        ? 'bg-white dark:bg-navy-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                        ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -748,7 +748,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
           <div className="space-y-3">
             {loading ? (
               <div className="text-center py-8">
-                <RefreshCw className="animate-spin mx-auto text-violet-500 mb-2" size={24} />
+                <RefreshCw className="animate-spin mx-auto text-primary-500 mb-2" size={24} />
                 <p className="text-slate-500 dark:text-slate-400">
                   {t('common.loading', 'Loading...')}
                 </p>
@@ -787,7 +787,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
               <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
                 <button
                   onClick={saveTemplate}
-                  className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <Check size={16} />
                   {t('common.save', 'Save')}
@@ -814,7 +814,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
               </p>
               <button
                 onClick={startCreating}
-                className="px-4 py-2 border border-violet-500 text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg flex items-center gap-2 mx-auto transition-colors"
+                className="px-4 py-2 border border-primary-500 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg flex items-center gap-2 mx-auto transition-colors"
               >
                 <Plus size={16} />
                 {t('admin.templates.create', 'Create Template')}

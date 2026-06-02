@@ -12,7 +12,10 @@ vi.mock('../managerProblemsService.js', () => ({
   getManagerProblems: (...args: unknown[]) => mockGetManagerProblems(...args),
 }));
 
-import { applyManagerSuggestion, executeManagerProblemAction } from '../managerActionExecutionService.js';
+import {
+  applyManagerSuggestion,
+  executeManagerProblemAction,
+} from '../managerActionExecutionService.js';
 
 const ORG = 'org-test-001';
 const UID = 'user-test-001';

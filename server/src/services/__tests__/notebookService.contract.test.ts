@@ -5,7 +5,7 @@
  * the pure/testable surface first, with todo stubs for DB-heavy methods.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import notebookService, { buildNotebookContextSnapshot } from '../notebookService.js';
 

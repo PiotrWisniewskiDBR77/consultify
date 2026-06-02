@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 const PERSONA_KEYS = ['founders', 'executives', 'consultingFirms', 'aiLeaders'] as const;
 
 const PERSONA_VISUALS = [
-  { icon: Rocket,    color: '#7c3aed', glow: 'rgba(124,58,237,0.28)' },
-  { icon: Users,     color: '#0891b2', glow: 'rgba(8,145,178,0.25)' },
+  { icon: Rocket, color: '#7c3aed', glow: 'rgba(124,58,237,0.28)' },
+  { icon: Users, color: '#0891b2', glow: 'rgba(8,145,178,0.25)' },
   { icon: Building2, color: '#059669', glow: 'rgba(5,150,105,0.25)' },
-  { icon: Brain,     color: '#c026d3', glow: 'rgba(192,38,211,0.25)' },
+  { icon: Brain, color: '#c026d3', glow: 'rgba(192,38,211,0.25)' },
 ];
 
 export const ForWhomSection: React.FC = () => {
@@ -133,7 +133,9 @@ export const ForWhomSection: React.FC = () => {
                           className="w-1.5 h-1.5 rounded-full shrink-0"
                           style={{ background: visual.color }}
                         />
-                        <span className="text-xs text-slate-500 dark:text-white/55 font-medium">{point}</span>
+                        <span className="text-xs text-slate-500 dark:text-white/55 font-medium">
+                          {point}
+                        </span>
                       </div>
                     ))}
                   </div>

@@ -24,8 +24,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { ToolVideoModal } from '@/components/Education/ToolVideoModal';
 import { ToolsV8CanonPanel } from '@/components/Discovery/ToolsV8CanonPanel';
+import { ToolVideoModal } from '@/components/Education/ToolVideoModal';
 import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
 import { DemoModeModal } from '@/components/Landing/DemoModeModal';
 import { EntryFooter } from '@/components/Landing/EntryFooter';
@@ -35,7 +35,7 @@ import {
   EducationBlock,
   EducationTool,
   getFeaturedToolsByBlock,
-} from '@/data/toolEducationData';
+} from '@/data/toolEducationData.ts';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, SessionMode } from '@/types';
@@ -93,10 +93,10 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
         hover: 'hover:border-blue-400',
       },
       violet: {
-        bg: 'bg-violet-100 dark:bg-violet-900/30',
-        text: 'text-violet-600 dark:text-violet-400',
-        border: 'border-violet-200 dark:border-violet-800',
-        hover: 'hover:border-violet-400',
+        bg: 'bg-primary-100 dark:bg-primary-900/30',
+        text: 'text-primary-600 dark:text-primary-400',
+        border: 'border-primary-200 dark:border-primary-800',
+        hover: 'hover:border-primary-400',
       },
       amber: {
         bg: 'bg-amber-100 dark:bg-amber-900/30',
@@ -133,7 +133,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
         {/* Play Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
           <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <Play size={24} className="text-purple-600 ml-1" />
+            <Play size={24} className="text-primary-600 ml-1" />
           </div>
         </div>
 
@@ -155,7 +155,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
             <DynamicIcon name={tool.icon} size={20} className={colors.text} />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+            <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
               {t(`showcase.tools.items.${tool.id}.name`)}
             </h3>
           </div>
@@ -188,7 +188,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
           </button>
           <button
             onClick={onTryTool}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-primary-700 hover:to-indigo-700 transition-all"
           >
             {t('showcase.common.tryFree')}
             <ArrowRight size={14} />
@@ -274,7 +274,7 @@ export const ToolsShowcasePage: React.FC = () => {
   };
 
   const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
-    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setCurrentUser({ ...user, hasWorkspace: true, isAuthenticated: true } as any);
     setIsDemoModalOpen(false);
     setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
     if (mode === 'demo') setDemoMode(true);
@@ -318,7 +318,7 @@ export const ToolsShowcasePage: React.FC = () => {
 
       {/* Advanced Background Effects */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-purple-600/5 dark:bg-purple-600/15 rounded-full blur-[120px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary-600/5 dark:bg-primary-600/15 rounded-full blur-[120px]" />
         <div className="absolute top-[20%] -right-[10%] w-[35%] h-[45%] bg-indigo-600/5 dark:bg-indigo-600/10 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[30%] bg-emerald-600/5 dark:bg-emerald-600/15 rounded-full blur-[80px]" />
 
@@ -333,7 +333,7 @@ export const ToolsShowcasePage: React.FC = () => {
       <section className="relative overflow-hidden bg-slate-900 dark:bg-navy-950 text-white pt-36 border-b border-slate-800 dark:border-navy-900">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl opacity-50" />
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl opacity-50" />
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl opacity-50" />
         </div>
 
@@ -345,14 +345,14 @@ export const ToolsShowcasePage: React.FC = () => {
             transition={{ duration: 0.5 }}
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-sm font-medium mb-6">
-              <Sparkles size={16} className="text-purple-400" />
+              <Sparkles size={16} className="text-primary-400" />
               {t('showcase.tools.hero.badge')}
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-6">
               {t('showcase.tools.hero.title1')}
               <br />
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-400 to-pink-400 bg-clip-text text-transparent">
                 {t('showcase.tools.hero.title2')}
               </span>
             </h1>
@@ -364,7 +364,7 @@ export const ToolsShowcasePage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigate('/trial')}
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg text-lg"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all shadow-lg text-lg"
               >
                 {t('showcase.common.startTrial')}
                 <ArrowRight size={20} />
@@ -411,7 +411,7 @@ export const ToolsShowcasePage: React.FC = () => {
       </div>
 
       {/* Bottom CTA */}
-      <section className="bg-gradient-to-r from-purple-600 to-indigo-600 py-16">
+      <section className="bg-gradient-to-r from-primary-600 to-indigo-600 py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
             {t('showcase.common.readyToTry')}
@@ -422,7 +422,7 @@ export const ToolsShowcasePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/trial')}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-purple-700 font-semibold rounded-xl hover:bg-slate-100 transition-all shadow-lg text-lg"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-slate-100 transition-all shadow-lg text-lg"
             >
               {t('showcase.common.startTrial')}
               <ArrowRight size={20} />

@@ -138,7 +138,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
               {hoveredId === item.id && !locked && (
                 <button
                   onClick={() => onRemove(item.id)}
-                  className="p-0.5 text-slate-300 hover:text-red-500 transition-colors flex-shrink-0"
+                  className="p-0.5 text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"
                 >
                   <Trash2 size={11} />
                 </button>
@@ -162,7 +162,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
           <button
             onClick={onAIGenerate}
             disabled={locked || isGeneratingAI}
-            className="inline-flex items-center gap-1 text-xs font-medium text-purple-500 dark:text-purple-400 hover:text-purple-600 transition-colors disabled:opacity-40"
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 dark:text-primary-400 hover:text-primary-600 transition-colors disabled:opacity-40"
           >
             {isGeneratingAI ? (
               <Loader2 size={12} className="animate-spin" />

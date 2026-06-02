@@ -51,7 +51,7 @@ export const InlineAIFill: React.FC<InlineAIFillProps> = ({ node, column, ideaId
     <button
       onClick={handleFill}
       disabled={loading}
-      className="opacity-0 group-hover/cell:opacity-70 hover:!opacity-100 p-0.5 rounded transition-all flex-shrink-0 text-violet-400 hover:text-violet-500 hover:bg-violet-500/10"
+      className="opacity-0 group-hover/cell:opacity-70 hover:!opacity-100 p-0.5 rounded transition-all flex-shrink-0 text-primary-400 hover:text-primary-500 hover:bg-primary-500/10"
       title={i18n.language?.startsWith('pl') ? 'AI wypełnij' : 'AI fill'}
     >
       {loading ? <Loader2 size={9} className="animate-spin" /> : <Wand2 size={9} />}
@@ -132,7 +132,7 @@ export const BatchAIFillButton: React.FC<BatchAIFillButtonProps> = ({
     <button
       onClick={handleBatchFill}
       disabled={loading}
-      className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+      className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
       title={
         isPl ? `AI wypełnij ${emptyCount} pustych komórek` : `AI fill ${emptyCount} empty cells`
       }

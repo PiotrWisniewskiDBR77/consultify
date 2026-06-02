@@ -14,6 +14,7 @@ import {
   FileCheck,
   FileText,
   HeadphonesIcon,
+  KeyRound,
   ListTodo,
   Mail,
   MessageSquare,
@@ -25,6 +26,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
@@ -39,6 +41,7 @@ import {
   CustomerLifecycleView,
   CustomerSuccessPlaybooksView,
 } from './customers';
+import { ModuleAccessControlView } from './ModuleAccessControlView';
 import { ModuleWaitlistView } from './ModuleWaitlistView';
 import { OrganizationResourceManager } from './OrganizationResourceManager';
 import { OrganizationsView } from './OrganizationsView';
@@ -60,16 +63,37 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
   initialTab,
   initialCommercialTab,
 }) => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState(initialTab || 'command-center');
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
 
+  const resolveRequestedTab = React.useCallback(() => {
+    const params = new URLSearchParams(location.search);
+    const rawTab = String(params.get('tab') || initialTab || '')
+      .trim()
+      .toLowerCase();
+    if (!rawTab) return null;
+
+    if (rawTab === 'backlog' || rawTab === 'feedback_backlog') {
+      return 'feedback-backlog';
+    }
+
+    return rawTab;
+  }, [initialTab, location.search]);
+
   useEffect(() => {
+    const requestedTab = resolveRequestedTab();
+    if (requestedTab) {
+      setActiveTab(requestedTab);
+      return;
+    }
     if (initialTab) {
       setActiveTab(initialTab);
     }
-  }, [initialTab]);
+  }, [initialTab, resolveRequestedTab]);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -119,6 +143,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
       communication: 'superadmin_customers_communication',
       'bulk-ops': 'superadmin_customers_bulk_ops',
       waitlist: 'superadmin_customers_waitlist',
+      'module-access': 'superadmin_customers_module_access',
     };
     setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_customers');
     return () => setHelpDocumentIdOverride(null);
@@ -149,6 +174,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
     { id: 'communication', label: 'Communication', icon: <Mail size={16} /> },
     { id: 'bulk-ops', label: 'Bulk Ops', icon: <Upload size={16} /> },
     { id: 'waitlist', label: 'Module Waitlist', icon: <Bell size={16} /> },
+    { id: 'module-access', label: 'Module Access', icon: <KeyRound size={16} /> },
   ];
 
   const renderContent = () => {
@@ -156,9 +182,22 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
       case 'command-center':
         return <TenantCommandCenterView />;
       case 'organizations':
-        return <OrganizationsView />;
+        return (
+          <OrganizationsView
+            onViewUsers={(organizationId) => {
+              setSelectedOrganizationId(organizationId);
+              setActiveTab('users');
+            }}
+          />
+        );
       case 'users':
-        return <SuperAdminUserManagement organizations={organizations} />;
+        return (
+          <SuperAdminUserManagement
+            organizations={organizations}
+            selectedOrganizationId={selectedOrganizationId}
+            onSelectedOrganizationChange={setSelectedOrganizationId}
+          />
+        );
       case 'lifecycle':
         return (
           <div className="p-6 overflow-y-auto h-full">
@@ -235,6 +274,8 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
         );
       case 'waitlist':
         return <ModuleWaitlistView />;
+      case 'module-access':
+        return <ModuleAccessControlView />;
       default:
         return null;
     }

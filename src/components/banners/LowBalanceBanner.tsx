@@ -34,10 +34,10 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
   };
 
   const bannerColor = isZeroBalance
-    ? 'from-red-500 to-orange-500 border-red-400/50'
-    : 'from-amber-500 to-orange-500 border-amber-400/50';
+    ? 'from-rose-500 to-amber-500 border-rose-400/50'
+    : 'from-amber-500 to-amber-500 border-amber-400/50';
 
-  const iconBg = isZeroBalance ? 'bg-red-600/20' : 'bg-amber-600/20';
+  const iconBg = isZeroBalance ? 'bg-rose-600/20' : 'bg-amber-600/20';
 
   return (
     <>
@@ -47,7 +47,7 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center`}>
               {isZeroBalance ? (
-                <AlertTriangle className="w-5 h-5 text-red-500" />
+                <AlertTriangle className="w-5 h-5 text-rose-500" />
               ) : (
                 <Coins className="w-5 h-5 text-amber-500" />
               )}
@@ -68,7 +68,7 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowModal(true)}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-medium hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-500/25 flex items-center gap-2"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-sm font-medium hover:from-primary-500 hover:to-indigo-500 transition-all shadow-lg shadow-primary-500/25 flex items-center gap-2"
             >
               <CreditCard className="w-4 h-4" />
               {t('billing.buyTokens', 'Buy Tokens')}

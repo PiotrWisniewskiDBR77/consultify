@@ -20,7 +20,7 @@ export const CalloutBlock: React.FC<CalloutBlockProps> = ({ block, onUpdate }) =
       case 'success':
         return 'bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 text-green-800 dark:text-green-200';
       case 'error':
-        return 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-800 dark:text-red-200';
+        return 'bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 text-rose-800 dark:text-rose-200';
       default:
         return 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200';
     }

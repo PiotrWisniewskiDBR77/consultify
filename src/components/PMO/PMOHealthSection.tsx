@@ -111,13 +111,13 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Activity size={18} className="text-purple-500" />
+          <Activity size={18} className="text-primary-500" />
           <h3 className="font-semibold text-slate-900 dark:text-white text-sm">PMO Health</h3>
         </div>
         {onExplainClick && (
           <button
             onClick={() => onExplainClick(snapshot)}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
             title="Ask AI to explain current PMO status"
           >
             <HelpCircle size={12} />
@@ -165,14 +165,14 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
         <div
           className={`rounded-lg p-2 text-center ${
             snapshot.tasks.overdueCount > 0
-              ? 'bg-red-50 dark:bg-red-900/20'
+              ? 'bg-rose-50 dark:bg-rose-900/20'
               : 'bg-slate-50 dark:bg-navy-900'
           }`}
         >
           <div
             className={`text-lg font-bold ${
               snapshot.tasks.overdueCount > 0
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-rose-600 dark:text-rose-400'
                 : 'text-slate-900 dark:text-white'
             }`}
           >
@@ -203,14 +203,14 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
         <div
           className={`rounded-lg p-2 text-center ${
             snapshot.blockers.length > 0
-              ? 'bg-purple-50 dark:bg-purple-900/20'
+              ? 'bg-primary-50 dark:bg-primary-900/20'
               : 'bg-slate-50 dark:bg-navy-900'
           }`}
         >
           <div
             className={`text-lg font-bold ${
               snapshot.blockers.length > 0
-                ? 'text-purple-600 dark:text-purple-400'
+                ? 'text-primary-600 dark:text-primary-400'
                 : 'text-slate-900 dark:text-white'
             }`}
           >
@@ -235,7 +235,7 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                       : blocker.type === 'DECISION'
                         ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                        : 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                   }`}
                 >
                   {blocker.type}

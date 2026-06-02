@@ -13,13 +13,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import UserControllerRaw from '../../controllers/UserController.js';
 const UserController = UserControllerRaw as any;
-import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
-import { UpdateUserRoleSchema, UpdateUserSchema } from '../../validators/user.validators.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { UpdateUserRoleSchema, UpdateUserSchema } from '../../validators/user.validators.js';
 
 const router = Router();
 
@@ -122,10 +122,14 @@ router.post(
 
       const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
-      await dbRun('UPDATE users SET avatar_url = ?, updated_at = datetime("now") WHERE id = ?', [
-        avatarUrl,
-        id,
-      ]);
+      const result = await dbRun(
+        'UPDATE users SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [avatarUrl, id],
+        { fallback: false }
+      );
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to persist avatar');
+      }
 
       if (oldUser?.avatar_url && oldUser.avatar_url.startsWith('/uploads/')) {
         const oldPath = path.join(process.cwd(), oldUser.avatar_url);
@@ -180,9 +184,14 @@ router.delete(
         }
       }
 
-      await dbRun('UPDATE users SET avatar_url = NULL, updated_at = datetime("now") WHERE id = ?', [
-        id,
-      ]);
+      const result = await dbRun(
+        'UPDATE users SET avatar_url = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [id],
+        { fallback: false }
+      );
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to remove avatar');
+      }
 
       logger.info(`[users] Avatar removed for user ${id}`);
       return res.json({ success: true });

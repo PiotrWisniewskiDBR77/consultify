@@ -87,7 +87,7 @@ function getStatusIcon(status?: string) {
     case 'in_progress':
       return <Clock className="w-5 h-5 text-blue-500 animate-pulse" />;
     case 'at_risk':
-      return <Flag className="w-5 h-5 text-red-500" />;
+      return <Flag className="w-5 h-5 text-rose-500" />;
     default:
       return <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />;
   }
@@ -96,13 +96,13 @@ function getStatusIcon(status?: string) {
 function getPhaseColor(index: number, status?: string): string {
   if (status === 'completed') return 'from-emerald-500 to-emerald-600';
   if (status === 'in_progress') return 'from-blue-500 to-blue-600';
-  if (status === 'at_risk') return 'from-red-500 to-red-600';
+  if (status === 'at_risk') return 'from-rose-500 to-rose-600';
 
   const colors = [
     'from-blue-500 to-blue-600',
-    'from-purple-500 to-purple-600',
+    'from-primary-500 to-primary-600',
     'from-indigo-500 to-indigo-600',
-    'from-cyan-500 to-cyan-600',
+    'from-blue-500 to-blue-600',
     'from-emerald-500 to-emerald-600',
     'from-amber-500 to-amber-600',
   ];

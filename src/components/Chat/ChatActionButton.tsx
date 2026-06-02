@@ -26,6 +26,8 @@ const MODULE_ICONS: Record<TargetModule, React.ElementType> = {
   interview: ExternalLink,
   mywork: ExternalLink,
   economics: ExternalLink,
+  excele: ExternalLink,
+  process_flow: ExternalLink,
 };
 
 export interface ChatActionButtonProps {
@@ -76,11 +78,11 @@ export const ChatActionButton: React.FC<ChatActionButtonProps> = ({
   if (error) {
     return (
       <div className="inline-flex flex-col gap-1">
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        <span className="text-xs text-rose-600 dark:text-rose-400">{error}</span>
         <button
           type="button"
           onClick={handleClick}
-          className="inline-flex h-9 items-center gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/20 px-3 text-xs font-medium text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+          className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-900/20 px-3 text-xs font-medium text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors"
         >
           {t('chat.navigate.retry', 'Try again')}
         </button>

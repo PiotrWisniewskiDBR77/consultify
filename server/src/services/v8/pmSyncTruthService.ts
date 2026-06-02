@@ -587,7 +587,11 @@ export async function recordConflict(params: RecordConflictParams): Promise<Conf
     `${LOG_PREFIX} Recorded conflict ${conflictId}: ${validated.conflictClass} (${validated.severity})`
   );
 
-  if (['schema_mismatch_conflict', 'custom_field_conflict', 'stale_snapshot_conflict'].includes(validated.conflictClass)) {
+  if (
+    ['schema_mismatch_conflict', 'custom_field_conflict', 'stale_snapshot_conflict'].includes(
+      validated.conflictClass
+    )
+  ) {
     try {
       await dbRun(
         `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
@@ -690,12 +694,20 @@ export async function getConflictsByObject(
 // ==========================================
 
 const PROVIDER_LIFECYCLE_STATES = [
-  'draft', 'connected', 'degraded', 'requires_action', 'recovered', 'blocked',
+  'draft',
+  'connected',
+  'degraded',
+  'requires_action',
+  'recovered',
+  'blocked',
 ] as const;
 
 type ProviderLifecycleState = (typeof PROVIDER_LIFECYCLE_STATES)[number];
 
-export const PROVIDER_STATE_TRANSITIONS: Record<ProviderLifecycleState, readonly ProviderLifecycleState[]> = {
+export const PROVIDER_STATE_TRANSITIONS: Record<
+  ProviderLifecycleState,
+  readonly ProviderLifecycleState[]
+> = {
   draft: ['connected', 'blocked'],
   connected: ['degraded', 'requires_action', 'blocked'],
   degraded: ['connected', 'recovered', 'requires_action', 'blocked'],
@@ -773,10 +785,11 @@ export async function setProviderCatalogState(params: {
     ? (currentRow.lifecycle_state as ProviderLifecycleState)
     : 'draft';
 
-  if (currentState !== params.targetState && !isValidProviderStateTransition(currentState, params.targetState)) {
-    throw new Error(
-      `Invalid provider state transition: ${currentState} → ${params.targetState}`
-    );
+  if (
+    currentState !== params.targetState &&
+    !isValidProviderStateTransition(currentState, params.targetState)
+  ) {
+    throw new Error(`Invalid provider state transition: ${currentState} → ${params.targetState}`);
   }
 
   const stateId = uuidv4();
@@ -873,9 +886,7 @@ export async function getProviderCatalogState(
   return rowToProviderCatalogState(row);
 }
 
-export async function listProviderCatalogStates(
-  orgId: string
-): Promise<ProviderCatalogState[]> {
+export async function listProviderCatalogStates(orgId: string): Promise<ProviderCatalogState[]> {
   const rows = await dbAll<ProviderCatalogStateRow>(
     `SELECT * FROM v8_provider_catalog_states
      WHERE organization_id = ?

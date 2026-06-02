@@ -19,7 +19,16 @@
 import 'reactflow/dist/style.css';
 
 import * as dagre from 'dagre';
-import { AlertTriangle, Bot, GitMerge, Lightbulb, Loader2, MessageSquare, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  GitMerge,
+  Lightbulb,
+  Loader2,
+  MessageSquare,
+  Plus,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +46,6 @@ import ReactFlow, {
   type NodeChange,
   type NodeProps,
   ReactFlowProvider,
-  type ReactFlowInstance,
 } from 'reactflow';
 
 import { Api } from '@/services/api';
@@ -49,6 +57,8 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
+import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
+import TeresaMark from '../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
@@ -56,6 +66,7 @@ import {
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
@@ -69,46 +80,60 @@ import {
   CollaborationOverlay,
   type CollaborationSessionState,
 } from './mindmap/CollaborationOverlay';
-
-import { FlowNodeComponent, type FlowShape, SHAPE_CONFIG, LANE_HEIGHT } from './processflow/FlowNodeComponent';
+import { AIProposalPanel } from './processflow/AIProposalPanel';
+import { ExportDialog } from './processflow/ExportDialog';
 import { FlowEdgeComponent } from './processflow/FlowEdgeComponent';
-import { type Lane, LANE_COLORS, DEFAULT_LANES, FLOW_THEME_PRESETS } from './processflow/LaneSystem';
-import { LaneSystem } from './processflow/LaneSystem';
 import {
-  type ProcessFlowMode,
-  FLOW_MODE_LABELS,
+  FlowNodeComponent,
+  type FlowShape,
+  LANE_HEIGHT,
+  SHAPE_CONFIG,
+} from './processflow/FlowNodeComponent';
+import {
+  DEFAULT_LANES,
+  FLOW_THEME_PRESETS,
+  type Lane,
+  LANE_COLORS,
+} from './processflow/LaneSystem';
+import { LaneSystem } from './processflow/LaneSystem';
+import { MessageFlowEdge } from './processflow/MessageFlowEdge';
+import { ActivityNode } from './processflow/nodes/ActivityNode';
+import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
+import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
+import { DataObjectNode } from './processflow/nodes/DataObjectNode';
+import { GatewayNode } from './processflow/nodes/GatewayNode';
+import { PoolNode } from './processflow/nodes/PoolNode';
+import { SubprocessNode } from './processflow/nodes/SubprocessNode';
+import {
+  getCanvasContextActions,
+  getNodeContextActions,
+  ProcessFlowContextMenu,
+} from './processflow/ProcessFlowContextMenu';
+import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
+import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
+import {
   FLOW_MODE_GUIDANCE,
+  FLOW_MODE_LABELS,
+  type ProcessFlowMode,
   SHAPES_BY_MODE,
   SHAPES_BY_SEMANTIC_KIT,
 } from './processflow/ProcessFlowToolbar';
 import { ProcessFlowToolbar } from './processflow/ProcessFlowToolbar';
+import { ReadbackPanel } from './processflow/ReadbackPanel';
+import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
+import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
+import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
+import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
-import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
-import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
-import { useProcessFlowExport } from './processflow/useProcessFlowExport';
-import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
-import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
 import { ValidationResultsPanel } from './processflow/ValidationResultsPanel';
-import { AIProposalPanel } from './processflow/AIProposalPanel';
-import { ReadbackPanel } from './processflow/ReadbackPanel';
-import { ExportDialog } from './processflow/ExportDialog';
-import { ProcessFlowContextMenu, getNodeContextActions, getCanvasContextActions } from './processflow/ProcessFlowContextMenu';
-import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
-import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
-import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
-import { ActivityNode } from './processflow/nodes/ActivityNode';
-import { GatewayNode } from './processflow/nodes/GatewayNode';
-import { DataObjectNode } from './processflow/nodes/DataObjectNode';
-import { SubprocessNode } from './processflow/nodes/SubprocessNode';
-import { PoolNode } from './processflow/nodes/PoolNode';
-import { MessageFlowEdge } from './processflow/MessageFlowEdge';
 import { ProcessKPIDashboard } from './ProcessKPIDashboard';
-import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { vsmNodeTypes } from './VSMNodeComponent';
 import { VSMTimelineBar } from './VSMTimelineBar';
+
+type ReactFlowInstance = any;
 
 // Types, constants, and components imported from extracted modules:
 // Lane, LANE_COLORS, DEFAULT_LANES, FLOW_THEME_PRESETS from ./processflow/LaneSystem
@@ -522,16 +547,41 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── New hooks: validation, AI proposal, readback, export, degraded ──────
   const processId = ideaId;
-  const { result: validationResult, isValidating: isBackendValidating, validate: runBackendValidation, issuesForObject } =
-    useProcessFlowValidation({ processId, nodes, edges, autoValidate: false });
-  const { activeProposal, isGenerating: isAIGenerating, error: aiError, createProposal, resolveProposal, dismiss: dismissProposal } =
-    useProcessFlowAIProposal({ processId });
-  const { result: readbackResult, isLoading: isReadbackLoading, fetchReadback } =
-    useProcessFlowReadback({ processId });
-  const { isExporting, exportAs } =
-    useProcessFlowExport({ processId, canvasRef: flowContainerRef as React.RefObject<HTMLDivElement | null> });
-  const { isDegraded, activeScenarios: degradedScenarios, checkHealth } =
-    useProcessFlowDegraded({ processId });
+  const {
+    result: validationResult,
+    isValidating: isBackendValidating,
+    validate: runBackendValidation,
+    issuesForObject,
+  } = useProcessFlowValidation({
+    processId,
+    nodes,
+    edges,
+    autoValidate: false,
+    onError: (message) =>
+      toast.error(isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message),
+  });
+  const {
+    activeProposal,
+    isGenerating: isAIGenerating,
+    error: aiError,
+    createProposal,
+    resolveProposal,
+    dismiss: dismissProposal,
+  } = useProcessFlowAIProposal({ processId });
+  const {
+    result: readbackResult,
+    isLoading: isReadbackLoading,
+    fetchReadback,
+  } = useProcessFlowReadback({ processId });
+  const { isExporting, exportAs } = useProcessFlowExport({
+    processId,
+    canvasRef: flowContainerRef as React.RefObject<HTMLDivElement | null>,
+  });
+  const {
+    isDegraded,
+    activeScenarios: degradedScenarios,
+    checkHealth,
+  } = useProcessFlowDegraded({ processId });
 
   // ── New UI state: panels, context menu, export dialog ─────────────────
   const [showValidationPanel, setShowValidationPanel] = useState(false);
@@ -539,7 +589,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [showReadbackPanel, setShowReadbackPanel] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId?: string; edgeId?: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    nodeId?: string;
+    edgeId?: string;
+  } | null>(null);
 
   const didPersistRef = useRef(false);
   const selectedNodeId = useMemo(() => nodes.find((node) => node.selected)?.id ?? null, [nodes]);
@@ -604,9 +659,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   }, [flowMode]);
 
   // ── Undo/Redo (via extracted hook) ──────────────────────────────────
-  const { pushUndo, undo, redo, resetUndo, canUndo, canRedo, undoRedoTick } = useProcessFlowUndoRedo({
-    nodes, edges, lanes, setNodes, setEdges, setLanes,
-  });
+  const { pushUndo, undo, redo, resetUndo, canUndo, canRedo, undoRedoTick } =
+    useProcessFlowUndoRedo({
+      nodes,
+      edges,
+      lanes,
+      setNodes,
+      setEdges,
+      setLanes,
+    });
   const dragSnapshotTakenRef = useRef(false);
 
   // ── Selection tracking ─────────────────────────────────────────────────
@@ -1481,12 +1542,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── Chat integration ───────────────────────────────────────────────────
 
-  const handleConvert = useCallback((action: string) => {
-    if (onQuickAction) {
-      const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
-      onQuickAction(action, { selectedIds, activeTool: 'process_flow' });
-    }
-  }, [nodes, onQuickAction]);
+  const handleConvert = useCallback(
+    (action: string) => {
+      if (onQuickAction) {
+        const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
+        onQuickAction(action, { selectedIds, activeTool: 'process_flow' });
+      }
+    },
+    [nodes, onQuickAction]
+  );
 
   const handleOpenChatWithContext = useCallback(() => {
     if (!onOpenChat) return;
@@ -1497,7 +1561,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const parts: string[] = [];
 
     if (isPl) {
-      parts.push(`Analizuję przepływ procesu (tryb: ${modeLabel}, ${flowNodeCount} kroków, ${lanes.length} torów).`);
+      parts.push(
+        `Analizuję przepływ procesu (tryb: ${modeLabel}, ${flowNodeCount} kroków, ${lanes.length} torów).`
+      );
       if (selectedNodes.length > 0) {
         const names = selectedNodes.map((n) => n.data?.label || n.id).join(', ');
         parts.push(`Zaznaczone elementy: ${names}.`);
@@ -1507,7 +1573,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       }
       parts.push('Pomóż mi ulepszyć ten proces.');
     } else {
-      parts.push(`I'm working on a process flow (mode: ${modeLabel}, ${flowNodeCount} steps, ${lanes.length} lanes).`);
+      parts.push(
+        `I'm working on a process flow (mode: ${modeLabel}, ${flowNodeCount} steps, ${lanes.length} lanes).`
+      );
       if (selectedNodes.length > 0) {
         const names = selectedNodes.map((n) => n.data?.label || n.id).join(', ');
         parts.push(`Selected elements: ${names}.`);
@@ -1582,6 +1650,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       if (isInput) return;
 
+      // A6: Shift+1 = zoom to fit (shared cross-tool shortcut). e.code is
+      // layout-independent (Shift+1 yields "!" on most layouts).
+      if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        e.preventDefault();
+        reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
+        return;
+      }
+
       if (e.key === 'F2') {
         e.preventDefault();
         setShowPropertiesPanel(true);
@@ -1621,7 +1697,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [addNode, duplicateSelected, flowMode, handleAutoLayout, handleSave, onSelectionChange, open, redo, runBackendValidation, undo]);
+  }, [
+    addNode,
+    duplicateSelected,
+    flowMode,
+    handleAutoLayout,
+    handleSave,
+    onSelectionChange,
+    open,
+    redo,
+    runBackendValidation,
+    undo,
+  ]);
 
   // ── Graph update listener (from workspace proposals) ───────────────────
   useEffect(() => {
@@ -1653,7 +1740,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   useEffect(() => {
     if (!open) return;
     const handler = (e: Event) => {
-      const detail = ((e as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail & { edges?: any[] };
+      const detail = ((e as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail & {
+        edges?: any[];
+      };
       if (detail.ideaId && detail.ideaId !== ideaId) return;
 
       if (Array.isArray(detail.items) && detail.items.length > 0) {
@@ -1877,7 +1966,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="mx-3 mb-2 rounded-xl border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/50 dark:bg-indigo-950/20 p-3 max-h-48 overflow-y-auto">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
-              <Bot size={14} />
+              <TeresaMark size={14} />
               {isPl ? 'AI Coach — Analiza procesu' : 'AI Coach — Process Analysis'}
             </div>
             <button
@@ -1892,7 +1981,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             {coachInsights.map((insight: any, idx: number) => (
               <li key={idx} className="flex items-start gap-2 text-[11px]">
                 <span
-                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-red-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}
+                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-rose-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}
                 >
                   {insight.type === 'bottleneck' ? (
                     <AlertTriangle size={12} />
@@ -1922,8 +2011,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {processBriefData && (
-        <div className="mx-3 mb-2 rounded-xl border border-violet-200/60 dark:border-violet-800/40 bg-violet-50/50 dark:bg-violet-950/20 p-3">
-          <div className="text-[11px] font-bold text-violet-700 dark:text-violet-300">
+        <div className="mx-3 mb-2 rounded-xl border border-primary-200/60 dark:border-primary-800/40 bg-primary-50/50 dark:bg-primary-950/20 p-3">
+          <div className="text-[11px] font-bold text-primary-700 dark:text-primary-300">
             {isPl ? 'Structured brief' : 'Structured brief'}
           </div>
           <div className="mt-1 text-[10px] text-slate-700 dark:text-slate-300">
@@ -2057,14 +2146,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           )}
           {summaryData.risks?.length > 0 && (
             <div className="mt-1.5">
-              <div className="text-[9px] font-bold text-red-600 dark:text-red-400 mb-0.5">
+              <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 mb-0.5">
                 {isPl ? 'Ryzyka:' : 'Risks:'}
               </div>
               <ul className="space-y-0.5">
                 {summaryData.risks.map((r: string, i: number) => (
                   <li
                     key={i}
-                    className="text-[9px] text-red-600/80 dark:text-red-400/80 flex items-start gap-1"
+                    className="text-[9px] text-rose-600/80 dark:text-rose-400/80 flex items-start gap-1"
                   >
                     <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" /> {r}
                   </li>
@@ -2157,7 +2246,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               edgesReconnectable={!locked}
-              onReconnect={(oldEdge, newConnection) => {
+              onReconnect={(oldEdge: Edge, newConnection: Connection) => {
                 if (locked) return;
                 pushUndo();
                 setEdges((prev) => {
@@ -2165,17 +2254,22 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   return addEdge({ ...newConnection, type: 'flowEdge' }, filtered);
                 });
               }}
-              onNodeContextMenu={(event, node) => {
+              onNodeContextMenu={(event: React.MouseEvent, node: Node) => {
                 event.preventDefault();
                 setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
               }}
-              onPaneContextMenu={(event) => {
+              onPaneContextMenu={(event: React.MouseEvent) => {
                 event.preventDefault();
-                setContextMenu({ x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY });
+                setContextMenu({
+                  x: event.clientX,
+                  y: event.clientY,
+                });
               }}
-              onInit={(instance) => { reactFlowInstanceRef.current = instance; }}
+              {...getIdeasToolInteractionProps('processflow', { locked })}
+              onInit={(instance: ReactFlowInstance) => {
+                reactFlowInstanceRef.current = instance;
+              }}
               fitView
-              deleteKeyCode={locked ? null : 'Delete'}
               className="bg-transparent"
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
@@ -2232,7 +2326,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               nodeId={selectedNode.id}
               nodeData={selectedNode.data}
               position={{
-                x: (selectedNode.position?.x ?? 0) + ((selectedNode.width ?? 140) / 2),
+                x: (selectedNode.position?.x ?? 0) + (selectedNode.width ?? 140) / 2,
                 y: selectedNode.position?.y ?? 0,
               }}
               locked={locked}
@@ -2265,7 +2359,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? 'Walidacja' : 'Validation'}
             </span>
-            <button onClick={() => setShowValidationPanel(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+            <button
+              onClick={() => setShowValidationPanel(false)}
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            >
               <X size={14} className="text-slate-400" />
             </button>
           </div>
@@ -2288,7 +2385,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? 'Propozycja AI' : 'AI Proposal'}
             </span>
-            <button onClick={() => setShowAIPanel(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+            <button
+              onClick={() => setShowAIPanel(false)}
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            >
               <X size={14} className="text-slate-400" />
             </button>
           </div>
@@ -2299,7 +2399,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             isPl={!!isPl}
             onAccept={() => resolveProposal('accept')}
             onReject={() => resolveProposal('reject')}
-            onEditPrompt={(prompt) => { dismissProposal(); createProposal(prompt); }}
+            onEditPrompt={(prompt) => {
+              dismissProposal();
+              createProposal(prompt);
+            }}
             onDismiss={dismissProposal}
             onGenerate={createProposal}
           />
@@ -2312,7 +2415,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? 'Odczyt semantyczny' : 'Semantic Readback'}
             </span>
-            <button onClick={() => setShowReadbackPanel(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+            <button
+              onClick={() => setShowReadbackPanel(false)}
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            >
               <X size={14} className="text-slate-400" />
             </button>
           </div>
@@ -2334,7 +2440,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
               {isPl ? 'Właściwości' : 'Properties'}
             </span>
-            <button onClick={() => setShowPropertiesPanel(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+            <button
+              onClick={() => setShowPropertiesPanel(false)}
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            >
               <X size={14} className="text-slate-400" />
             </button>
           </div>
@@ -2345,22 +2454,38 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             isPl={!!isPl}
             locked={locked}
             onNodeLabelChange={(nodeId, label) => {
-              setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, label } } : n));
+              setNodes((prev) =>
+                prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, label } } : n))
+              );
             }}
             onGatewayKindChange={(nodeId, kind) => {
-              setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, gatewayKind: kind } } : n));
+              setNodes((prev) =>
+                prev.map((n) =>
+                  n.id === nodeId ? { ...n, data: { ...n.data, gatewayKind: kind } } : n
+                )
+              );
             }}
             onLaneChange={(nodeId, laneId) => {
               const lane = lanes.find((l) => l.id === laneId);
               if (lane) {
-                setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, laneId, laneColor: lane.color } } : n));
+                setNodes((prev) =>
+                  prev.map((n) =>
+                    n.id === nodeId
+                      ? { ...n, data: { ...n.data, laneId, laneColor: lane.color } }
+                      : n
+                  )
+                );
               }
             }}
             onEdgeLabelChange={(edgeId, label) => {
-              setEdges((prev) => prev.map((e) => e.id === edgeId ? { ...e, label, data: { ...e.data, label } } : e));
+              setEdges((prev) =>
+                prev.map((e) => (e.id === edgeId ? { ...e, label, data: { ...e.data, label } } : e))
+              );
             }}
             onNodeMetricsChange={(nodeId, metrics) => {
-              setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, ...metrics } } : n));
+              setNodes((prev) =>
+                prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...metrics } } : n))
+              );
             }}
           />
         </div>
@@ -2387,17 +2512,23 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   onEditLabel: () => {
                     const node = nodes.find((n) => n.id === contextMenu.nodeId);
                     if (node?.data?.onLabelChange) {
-                      setNodes((prev) => prev.map((n) => n.id === contextMenu.nodeId ? { ...n, selected: true } : n));
+                      setNodes((prev) =>
+                        prev.map((n) =>
+                          n.id === contextMenu.nodeId ? { ...n, selected: true } : n
+                        )
+                      );
                     }
                   },
                   onDuplicate: () => duplicateSelected(),
                   onDelete: () => deleteSelected(),
-                  onOpenProperties: () => { setShowPropertiesPanel(true); },
+                  onOpenProperties: () => {
+                    setShowPropertiesPanel(true);
+                  },
                 })
               : getCanvasContextActions({
                   isPl: !!isPl,
                   locked,
-                  onAddNode: (shape) => addNode(shape),
+                  onAddNode: (shape) => addNode(shape as FlowShape),
                   onPaste: () => duplicateSelected(),
                   onAutoLayout: () => handleAutoLayout(),
                 })
@@ -2414,7 +2545,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <div className="text-xs text-amber-800 dark:text-amber-300 flex-1">
               {degradedScenarios.map((s) => s.scenario).join(', ')}
             </div>
-            <button onClick={checkHealth} className="text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline flex-shrink-0">
+            <button
+              onClick={checkHealth}
+              className="text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline flex-shrink-0"
+            >
               {isPl ? 'Sprawdź ponownie' : 'Retry'}
             </button>
           </div>

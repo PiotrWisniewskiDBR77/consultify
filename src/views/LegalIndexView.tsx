@@ -1,7 +1,6 @@
 import {
   ArrowLeft,
   ArrowRight,
-  Bot,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -24,8 +23,8 @@ import {
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import TeresaMark from '../components/shared/TeresaMark';
 import { ROUTES } from '../routes/routeConfig';
-
 interface LegalDocumentCard {
   slug: string;
   title: string;
@@ -42,7 +41,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Terms of Service',
     description: 'The main agreement governing your use of the Consultify platform.',
     icon: <Scale className="w-5 h-5" />,
-    iconBg: 'from-purple-500 to-indigo-600',
+    iconBg: 'from-primary-500 to-indigo-600',
     required: true,
     category: 'core',
   },
@@ -51,7 +50,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Privacy Policy',
     description: 'How we collect, use, store, and protect your personal data under GDPR.',
     icon: <Shield className="w-5 h-5" />,
-    iconBg: 'from-blue-500 to-cyan-600',
+    iconBg: 'from-blue-500 to-blue-600',
     required: true,
     category: 'core',
   },
@@ -60,7 +59,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Cookie Policy',
     description: 'Information about cookies and similar tracking technologies.',
     icon: <Cookie className="w-5 h-5" />,
-    iconBg: 'from-amber-500 to-orange-600',
+    iconBg: 'from-amber-500 to-amber-600',
     required: false,
     category: 'core',
   },
@@ -77,8 +76,8 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     slug: 'ai-policy',
     title: 'AI Usage Policy',
     description: 'Transparency about our AI features, BYOK, data handling, and your controls.',
-    icon: <Bot className="w-5 h-5" />,
-    iconBg: 'from-violet-500 to-purple-600',
+    icon: <TeresaMark className="w-5 h-5" />,
+    iconBg: 'from-primary-500 to-primary-600',
     required: false,
     category: 'core',
   },
@@ -87,7 +86,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Subscription Agreement',
     description: 'Pricing plans, AI Credits, billing terms, and seat licensing.',
     icon: <Receipt className="w-5 h-5" />,
-    iconBg: 'from-emerald-500 to-teal-600',
+    iconBg: 'from-emerald-500 to-blue-600',
     required: false,
     category: 'business',
   },
@@ -132,7 +131,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Customer Data Security',
     description: 'How we protect your data: encryption, isolation, and incident response.',
     icon: <ShieldCheck className="w-5 h-5" />,
-    iconBg: 'from-indigo-500 to-violet-600',
+    iconBg: 'from-indigo-500 to-primary-600',
     required: false,
     category: 'reference',
   },
@@ -150,7 +149,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
 const DocumentCard: React.FC<{ doc: LegalDocumentCard }> = ({ doc }) => (
   <Link
     to={`/legal/${doc.slug}`}
-    className="group relative overflow-hidden p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200/80 dark:border-navy-700 
+    className="group relative overflow-hidden p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200/80 dark:border-navy-700
                    hover:border-slate-300 dark:border-navy-700 dark:hover:border-white/20 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/20
                    transition-all duration-300 hover:-translate-y-1"
   >
@@ -167,11 +166,11 @@ const DocumentCard: React.FC<{ doc: LegalDocumentCard }> = ({ doc }) => (
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5">
-          <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+          <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
             {doc.title}
           </h3>
           {doc.required && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-md">
+            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-md">
               Required
             </span>
           )}
@@ -180,7 +179,7 @@ const DocumentCard: React.FC<{ doc: LegalDocumentCard }> = ({ doc }) => (
           {doc.description}
         </p>
       </div>
-      <ArrowRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-purple-500 dark:group-hover:text-purple-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+      <ArrowRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
     </div>
   </Link>
 );
@@ -210,7 +209,7 @@ export const LegalIndexView: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* Navigation Bar */}
-      <nav className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 border-b border-white/10 sticky top-0 z-50 backdrop-blur-xl">
+      <nav className="bg-gradient-to-r from-slate-900 via-primary-900 to-slate-900 border-b border-white/10 sticky top-0 z-50 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Link
@@ -229,7 +228,7 @@ export const LegalIndexView: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <header className="relative bg-gradient-to-br from-slate-900 via-purple-900/90 to-indigo-900 text-white overflow-hidden">
+      <header className="relative bg-gradient-to-br from-slate-900 via-primary-900/90 to-indigo-900 text-white overflow-hidden">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div
@@ -248,7 +247,7 @@ export const LegalIndexView: React.FC = () => {
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">Legal Center</h1>
-              <p className="text-purple-200 text-lg mt-1">Consultify by DBR77 Robotics</p>
+              <p className="text-primary-200 text-lg mt-1">Consultify by DBR77 Robotics</p>
             </div>
           </div>
           <p className="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
@@ -277,11 +276,11 @@ export const LegalIndexView: React.FC = () => {
           {/* Company Info Badges */}
           <div className="mt-10 flex flex-wrap gap-4">
             <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-white/10">
-              <Building2 className="w-4 h-4 text-purple-300" />
+              <Building2 className="w-4 h-4 text-primary-300" />
               <span className="text-sm">DBR77 Robotics Sp. z o.o.</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-white/10">
-              <Globe className="w-4 h-4 text-purple-300" />
+              <Globe className="w-4 h-4 text-primary-300" />
               <span className="text-sm">Toruń, Poland</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 rounded-full backdrop-blur-sm border border-emerald-400/20">
@@ -309,7 +308,7 @@ export const LegalIndexView: React.FC = () => {
             <a
               key={item.anchor}
               href={item.anchor}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-purple-300 hover:text-purple-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-purple-500/50 dark:hover:text-purple-400"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-primary-500/50 dark:hover:text-primary-400"
             >
               <ChevronRight className="w-3.5 h-3.5" />
               {item.label}
@@ -323,7 +322,7 @@ export const LegalIndexView: React.FC = () => {
             title="Core Agreements"
             description="Fundamental documents for all users of Consultify."
             icon={<FileText className="w-6 h-6" />}
-            gradient="from-purple-500 to-indigo-600"
+            gradient="from-primary-500 to-indigo-600"
           />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {coreDocuments.map((doc) => (
@@ -338,7 +337,7 @@ export const LegalIndexView: React.FC = () => {
             title="Commercial, Billing & Procurement"
             description="Commercial terms for pricing, subscriptions, enterprise procurement, and paid plans."
             icon={<CreditCard className="w-6 h-6" />}
-            gradient="from-emerald-500 to-teal-600"
+            gradient="from-emerald-500 to-blue-600"
           />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {businessDocuments.map((doc) => (
@@ -363,7 +362,10 @@ export const LegalIndexView: React.FC = () => {
         </section>
 
         {/* Contact Section */}
-        <section id="contact" className="scroll-mt-24 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 sm:p-10 shadow-sm">
+        <section
+          id="contact"
+          className="scroll-mt-24 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 sm:p-10 shadow-sm"
+        >
           <div className="flex items-start gap-4 mb-8">
             <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
               <Mail className="w-6 h-6" />
@@ -380,12 +382,12 @@ export const LegalIndexView: React.FC = () => {
             <ContactCard
               label="Legal Inquiries"
               email="legal@dbr77.com"
-              gradient="from-purple-500 to-indigo-600"
+              gradient="from-primary-500 to-indigo-600"
             />
             <ContactCard
               label="Privacy Matters"
               email="privacy@dbr77.com"
-              gradient="from-blue-500 to-cyan-600"
+              gradient="from-blue-500 to-blue-600"
             />
             <ContactCard
               label="Security Issues"
@@ -395,7 +397,7 @@ export const LegalIndexView: React.FC = () => {
             <ContactCard
               label="Billing Questions"
               email="billing@dbr77.com"
-              gradient="from-emerald-500 to-teal-600"
+              gradient="from-emerald-500 to-blue-600"
             />
           </div>
         </section>
@@ -437,7 +439,7 @@ export const LegalIndexView: React.FC = () => {
                 href="https://dbr77.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline"
+                className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline"
               >
                 dbr77.com
                 <ExternalLink className="w-3 h-3" />
@@ -471,7 +473,7 @@ const ContactCard: React.FC<{ label: string; email: string; gradient: string }> 
       <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${gradient}`} />
       <p className="text-sm font-semibold text-slate-900 dark:text-white">{label}</p>
     </div>
-    <p className="text-sm text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+    <p className="text-sm text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
       {email}
     </p>
   </a>

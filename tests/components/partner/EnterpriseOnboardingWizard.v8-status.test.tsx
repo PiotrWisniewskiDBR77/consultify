@@ -103,7 +103,7 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Step 3 of 4')).toBeInTheDocument();
-      expect(screen.getByText('Payment Setup')).toBeInTheDocument();
+      expect(screen.getByText('Payout and billing readiness')).toBeInTheDocument();
     });
 
     expect(V8PartnerApi.getOnboardingStatus).toHaveBeenCalled();
@@ -132,7 +132,7 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Welcome Aboard!')).toBeInTheDocument();
+      expect(screen.getByText('Partner application completed')).toBeInTheDocument();
     });
 
     expect(Api.get).toHaveBeenCalledWith('/onboarding/status');
@@ -149,9 +149,9 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
       expect(screen.getByText('Step 1 of 4')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByLabelText('I have read and accept the Terms & Conditions'));
-    fireEvent.click(screen.getByLabelText('I have read and accept the Privacy Policy'));
-    fireEvent.click(screen.getByRole('button', { name: 'Accept & Continue' }));
+    fireEvent.click(screen.getByLabelText('Akceptuje warunki programu partnerskiego'));
+    fireEvent.click(screen.getByLabelText('Akceptuje polityke prywatnosci'));
+    fireEvent.click(screen.getByRole('button', { name: /Potwierdz i przejdz dalej/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
@@ -183,9 +183,9 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
       expect(screen.getByText('Step 1 of 4')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByLabelText('I have read and accept the Terms & Conditions'));
-    fireEvent.click(screen.getByLabelText('I have read and accept the Privacy Policy'));
-    fireEvent.click(screen.getByRole('button', { name: 'Accept & Continue' }));
+    fireEvent.click(screen.getByLabelText('Akceptuje warunki programu partnerskiego'));
+    fireEvent.click(screen.getByLabelText('Akceptuje polityke prywatnosci'));
+    fireEvent.click(screen.getByRole('button', { name: /Potwierdz i przejdz dalej/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
@@ -292,7 +292,7 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
       expect(screen.getByText('Step 3 of 4')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Skip for Now' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue and finish later' }));
 
     await waitFor(() => {
       expect(V8PartnerApi.completeOnboarding).toHaveBeenCalled();
@@ -330,7 +330,7 @@ describe('EnterpriseOnboardingWizard onboarding status seam', () => {
       expect(screen.getByText('Step 3 of 4')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Skip for Now' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue and finish later' }));
 
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith('/onboarding/complete', {});

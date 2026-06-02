@@ -44,8 +44,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
   if (!steps || steps.length === 0) return null;
 
   const fallbackLabel =
-    richSteps[richSteps.length - 1]?.label ||
-    t('thinking.processing', 'Thinking…');
+    richSteps[richSteps.length - 1]?.label || t('thinking.processing', 'Thinking…');
 
   return (
     <div className={`mb-2 ${className}`}>

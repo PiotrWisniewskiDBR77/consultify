@@ -187,8 +187,8 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-            <Paperclip className="text-purple-500" size={20} />
+          <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center">
+            <Paperclip className="text-primary-500" size={20} />
           </div>
           <div>
             <h2 className="font-bold text-navy-900 dark:text-white">Evidence & Justification</h2>
@@ -296,7 +296,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                         )}
                         <button
                           onClick={() => handleDeleteEvidence(item.id)}
-                          className="p-1.5 hover:bg-red-100 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-500"
+                          className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-500"
                           title="Delete"
                         >
                           <Trash2 size={16} />

@@ -1,18 +1,8 @@
-import {
-  Bot,
-  CheckCircle2,
-  ChevronRight,
-  Circle,
-  Flag,
-  Info,
-  Map,
-  Play,
-  Target,
-} from 'lucide-react';
+import { CheckCircle2, ChevronRight, Circle, Flag, Info, Map, Play, Target } from 'lucide-react';
 import React from 'react';
 
 import { AppView, FullSession } from '../../types';
-
+import TeresaMark from '../shared/TeresaMark';
 interface OnboardingDashboardProps {
   onStartModule1: () => void;
   session?: FullSession;
@@ -50,7 +40,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
 
   const steps = [
     { id: 1, label: 'Expectations & Challenges', icon: <Target size={18} /> },
-    { id: 2, label: 'Assessment', icon: <Bot size={18} /> },
+    { id: 2, label: 'Assessment', icon: <TeresaMark size={18} /> },
     { id: 3, label: 'Initiatives & Roadmap', icon: <Map size={18} /> },
     { id: 4, label: 'Pilot Execution', icon: <Flag size={18} /> },
     { id: 5, label: 'Full Rollout (+ Economics & Reports)', icon: <CheckCircle2 size={18} /> },
@@ -72,7 +62,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
         {/* Left: The Process (1-5) */}
         <div className="lg:col-span-2 bg-white dark:bg-navy-900 rounded-xl p-5 border border-slate-200 dark:border-white/10 shadow-sm">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-6 flex items-center gap-2">
-            <Map size={20} className="text-purple-500" />
+            <Map size={20} className="text-primary-500" />
             Process Overview
           </h3>
 
@@ -88,7 +78,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                   key={step.id}
                   className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                     isCurrent
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md ring-1 ring-purple-500/20'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-md ring-1 ring-primary-500/20'
                       : status === 'completed'
                         ? 'border-green-200 bg-green-50/50 dark:bg-green-900/10'
                         : 'border-slate-100 bg-slate-50 dark:bg-navy-950 dark:border-white/5 opacity-60'
@@ -99,7 +89,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                       status === 'completed'
                         ? 'bg-green-500 text-white'
                         : isCurrent
-                          ? 'bg-purple-600 text-white'
+                          ? 'bg-primary-600 text-white'
                           : 'bg-slate-200 text-slate-400 dark:bg-slate-800'
                     }`}
                   >
@@ -114,14 +104,14 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                     <h4
                       className={`font-semibold text-lg ${
                         isCurrent
-                          ? 'text-purple-900 dark:text-purple-100'
+                          ? 'text-primary-900 dark:text-primary-100'
                           : 'text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       {step.label}
                     </h4>
                     {isCurrent && (
-                      <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                      <p className="text-sm text-primary-700 dark:text-primary-300 mt-1">
                         Current Phase • In Progress
                       </p>
                     )}
@@ -131,7 +121,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                   </div>
 
                   {isCurrent && (
-                    <div className="bg-purple-100 dark:bg-purple-500/30 text-purple-700 dark:text-purple-200 p-2 rounded-lg">
+                    <div className="bg-primary-100 dark:bg-primary-500/30 text-primary-700 dark:text-primary-200 p-2 rounded-lg">
                       {step.icon}
                     </div>
                   )}
@@ -149,14 +139,14 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
               <Info size={32} />
             </div>
             <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Current Status</h3>
-            <div className="text-purple-600 dark:text-purple-400 font-medium bg-purple-50 dark:bg-purple-900/20 py-2 px-4 rounded-full inline-block mb-6">
+            <div className="text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20 py-2 px-4 rounded-full inline-block mb-6">
               Step {currentStep} in progress
             </div>
 
             {(currentStep === 1 || !session?.step1Completed) && (
               <button
                 onClick={onStartModule1}
-                className="w-full group flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/30 transition-all transform hover:-translate-y-0.5"
+                className="w-full group flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white px-6 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-primary-500/30 transition-all transform hover:-translate-y-0.5"
               >
                 <Play size={20} className="fill-current" />
                 Start with Expectations & Challenges
@@ -173,7 +163,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
           {/* Quick Tip */}
           <div className="bg-blue-50 dark:bg-navy-800/50 rounded-2xl p-6 border border-blue-100 dark:border-white/5">
             <h4 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-              <Bot size={16} className="text-blue-500" />
+              <TeresaMark size={16} className="text-blue-500" />
               AI Assistant
             </h4>
             <p className="text-sm text-slate-600 dark:text-slate-300">

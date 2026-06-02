@@ -38,6 +38,7 @@ interface ToolsMenuProps {
   onToolSelect: (tool: string) => void;
   disabled?: boolean;
   icon?: React.ElementType;
+  hasActiveConversation?: boolean;
 }
 
 interface ToolMode {
@@ -120,6 +121,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   onToolSelect,
   disabled = false,
   icon: IconComponent = Brain,
+  hasActiveConversation = true,
 }) => {
   const { t } = useTranslation();
   const { aiConfig, setAIConfig } = useAppStore();
@@ -374,6 +376,17 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           {/* Add to project */}
           <button
             onClick={() => {
+              if (!hasActiveConversation) {
+                toast.error(
+                  t(
+                    'aiChat.conversation.addToProjectRequiresConversation',
+                    'Najpierw wyślij pierwszą wiadomość, aby dodać rozmowę do projektu.'
+                  )
+                );
+                onToolSelect('addToProject');
+                setIsOpen(false);
+                return;
+              }
               onToolSelect('addToProject');
               setIsOpen(false);
               toast(t('aiChat.conversation.addToProject', 'Add to project'), {
@@ -383,6 +396,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               });
             }}
             className="w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
+            aria-disabled={!hasActiveConversation}
           >
             <FolderPlus size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
             <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">

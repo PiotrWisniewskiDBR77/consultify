@@ -48,7 +48,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                               isActual || isTarget
                                 ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 shadow-lg'
                                 : isInGap
-                                  ? 'bg-navy-900/40 border-purple-500/10'
+                                  ? 'bg-navy-900/40 border-primary-500/10'
                                   : 'bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-navy-800/20 active:bg-white/10'
                             }
                         `}
@@ -103,8 +103,8 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                                                 px-4 py-3 text-xs font-bold rounded-xl border transition-all
                                                 ${
                                                   isTarget
-                                                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/20'
-                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-purple-600/20 active:border-purple-500/50'
+                                                    ? 'bg-primary-600 border-primary-500 text-white shadow-lg shadow-primary-600/20'
+                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-primary-600/20 active:border-primary-500/50'
                                                 }
                                             `}
                     >
@@ -150,7 +150,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                     <button
                       onClick={() => onSelect('target', levelNum)}
                       disabled={readOnly}
-                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-purple-500/50 hover:text-purple-400 opacity-0 group-hover:opacity-100'}`}
+                      className={`px-3 py-1 text-xs font-bold rounded-full border transition-all flex items-center gap-1 ${isTarget ? getAssessmentButtonClasses('target', true).replace('px-6 py-3', 'px-3 py-1').replace('text-sm', 'text-xs') : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-primary-500/50 hover:text-primary-400 opacity-0 group-hover:opacity-100'}`}
                     >
                       {isTarget && <Check size={12} />}
                       TARGET

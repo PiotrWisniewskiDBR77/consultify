@@ -171,7 +171,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
         return {
           icon: Eye,
           label: t('admin.compliance.dataRequests.access', 'Data Access'),
-          color: 'text-violet-600 dark:text-violet-400',
+          color: 'text-primary-600 dark:text-primary-400',
         };
       case 'rectification':
         return {
@@ -476,7 +476,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                           'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
                           request.type === 'export' && 'bg-blue-100 dark:bg-blue-900/30',
                           request.type === 'delete' && 'bg-rose-100 dark:bg-rose-900/30',
-                          request.type === 'access' && 'bg-violet-100 dark:bg-violet-900/30',
+                          request.type === 'access' && 'bg-primary-100 dark:bg-primary-900/30',
                           request.type === 'rectification' && 'bg-amber-100 dark:bg-amber-900/30'
                         )}
                       >

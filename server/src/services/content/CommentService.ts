@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import type { IDatabase, RunResult } from '../../database/IDatabase.js';
+import logger from '../../utils/Logger.js';
 
 export interface CommentRecord {
   id: string;
@@ -80,6 +81,23 @@ export class CommentService {
     };
   }
 
+  private _isMissingCommentsTableError(error: unknown): boolean {
+    const message = String((error as any)?.message || error || '').toLowerCase();
+    const code = String((error as any)?.code || '');
+    return (
+      code === '42P01' ||
+      message.includes('relation "content_comments" does not exist') ||
+      message.includes('no such table: content_comments')
+    );
+  }
+
+  private _commentsUnavailableError(): Error {
+    const err = new Error('Content comments are not available in this environment yet.');
+    (err as any).code = 'CONTENT_COMMENTS_UNAVAILABLE';
+    (err as any).statusCode = 503;
+    return err;
+  }
+
   async createComment(data: CreateCommentData): Promise<Comment> {
     const {
       contentId,
@@ -104,26 +122,37 @@ export class CommentService {
       threadId = parent?.threadId || parentCommentId;
     }
 
-    await this.deps.db.run(
-      `INSERT INTO content_comments (
-                id, content_id, content_type, user_id, comment_text,
-                parent_comment_id, thread_id, position_ref, mentioned_user_ids,
-                is_resolved, is_edited, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)`,
-      [
-        id,
-        contentId,
-        contentType,
-        userId,
-        commentText,
-        parentCommentId,
-        threadId,
-        positionRef,
-        JSON.stringify(mentionedUserIds),
-        now,
-        now,
-      ]
-    );
+    try {
+      await this.deps.db.run(
+        `INSERT INTO content_comments (
+                  id, content_id, content_type, user_id, comment_text,
+                  parent_comment_id, thread_id, position_ref, mentioned_user_ids,
+                  is_resolved, is_edited, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)`,
+        [
+          id,
+          contentId,
+          contentType,
+          userId,
+          commentText,
+          parentCommentId,
+          threadId,
+          positionRef,
+          JSON.stringify(mentionedUserIds),
+          now,
+          now,
+        ]
+      );
+    } catch (error) {
+      if (this._isMissingCommentsTableError(error)) {
+        logger.warn('[CommentService] content_comments table missing; create rejected gracefully', {
+          contentId,
+          contentType,
+        });
+        throw this._commentsUnavailableError();
+      }
+      throw error;
+    }
 
     // Fetch to return complete object including user details if available
     const created = await this.getCommentById(id);
@@ -153,13 +182,24 @@ export class CommentService {
   }
 
   async getCommentById(id: string): Promise<Comment | null> {
-    const row = (await this.deps.db.get<CommentRecord>(
-      `SELECT cc.*, u.first_name, u.last_name, u.avatar_url as avatar
-             FROM content_comments cc
-             LEFT JOIN users u ON cc.user_id = u.id
-             WHERE cc.id = ?`,
-      [id]
-    )) as CommentRecord | null;
+    let row: CommentRecord | null;
+    try {
+      row = (await this.deps.db.get<CommentRecord>(
+        `SELECT cc.*, u.first_name, u.last_name, u.avatar_url as avatar
+               FROM content_comments cc
+               LEFT JOIN users u ON cc.user_id = u.id
+               WHERE cc.id = ?`,
+        [id]
+      )) as CommentRecord | null;
+    } catch (error) {
+      if (this._isMissingCommentsTableError(error)) {
+        logger.warn('[CommentService] content_comments table missing; returning null comment', {
+          id,
+        });
+        return null;
+      }
+      throw error;
+    }
 
     if (!row) return null;
     return this._mapCommentRow(row);
@@ -178,14 +218,26 @@ export class CommentService {
       conditions.push('cc.is_resolved = 0');
     }
 
-    const rows = (await this.deps.db.all<CommentRecord>(
-      `SELECT cc.*, u.first_name, u.last_name, u.avatar_url as avatar
-             FROM content_comments cc
-             LEFT JOIN users u ON cc.user_id = u.id
-             WHERE ${conditions.join(' AND ')}
-             ORDER BY cc.created_at ASC`,
-      params
-    )) as CommentRecord[];
+    let rows: CommentRecord[];
+    try {
+      rows = (await this.deps.db.all<CommentRecord>(
+        `SELECT cc.*, u.first_name, u.last_name, u.avatar_url as avatar
+               FROM content_comments cc
+               LEFT JOIN users u ON cc.user_id = u.id
+               WHERE ${conditions.join(' AND ')}
+               ORDER BY cc.created_at ASC`,
+        params
+      )) as CommentRecord[];
+    } catch (error) {
+      if (this._isMissingCommentsTableError(error)) {
+        logger.warn('[CommentService] content_comments table missing; returning empty comments', {
+          contentId,
+          contentType,
+        });
+        return [];
+      }
+      throw error;
+    }
 
     const comments = (rows || []).map((row) => this._mapCommentRow(row));
 
@@ -219,10 +271,18 @@ export class CommentService {
 
     const now = new Date().toISOString();
 
-    const result = (await this.deps.db.run(
-      `UPDATE content_comments SET comment_text = ?, is_edited = 1, edited_at = ?, updated_at = ? WHERE id = ?`,
-      [commentText, now, now, id]
-    )) as RunResult;
+    let result: RunResult;
+    try {
+      result = (await this.deps.db.run(
+        `UPDATE content_comments SET comment_text = ?, is_edited = 1, edited_at = ?, updated_at = ? WHERE id = ?`,
+        [commentText, now, now, id]
+      )) as RunResult;
+    } catch (error) {
+      if (this._isMissingCommentsTableError(error)) {
+        throw this._commentsUnavailableError();
+      }
+      throw error;
+    }
 
     if (result.changes === 0) {
       throw new Error(`Comment ${id} not found`);
@@ -238,10 +298,18 @@ export class CommentService {
   async resolveComment(id: string, userId: string): Promise<Comment> {
     const now = new Date().toISOString();
 
-    const result = (await this.deps.db.run(
-      `UPDATE content_comments SET is_resolved = 1, resolved_by = ?, resolved_at = ?, updated_at = ? WHERE id = ?`,
-      [userId, now, now, id]
-    )) as RunResult;
+    let result: RunResult;
+    try {
+      result = (await this.deps.db.run(
+        `UPDATE content_comments SET is_resolved = 1, resolved_by = ?, resolved_at = ?, updated_at = ? WHERE id = ?`,
+        [userId, now, now, id]
+      )) as RunResult;
+    } catch (error) {
+      if (this._isMissingCommentsTableError(error)) {
+        throw this._commentsUnavailableError();
+      }
+      throw error;
+    }
 
     if (result.changes === 0) {
       throw new Error(`Comment ${id} not found`);
@@ -261,9 +329,23 @@ export class CommentService {
     // FOREIGN KEY (parent_comment_id) REFERENCES content_comments(id) ON DELETE CASCADE
     // Yes, so deleting parent deletes children.
 
-    const result = (await this.deps.db.run('DELETE FROM content_comments WHERE id = ?', [
-      id,
-    ])) as RunResult;
+    let result: RunResult;
+    try {
+      result = (await this.deps.db.run('DELETE FROM content_comments WHERE id = ?', [
+        id,
+      ])) as RunResult;
+    } catch (error) {
+      if (this._isMissingCommentsTableError(error)) {
+        logger.warn(
+          '[CommentService] content_comments table missing; delete treated as not found',
+          {
+            id,
+          }
+        );
+        return false;
+      }
+      throw error;
+    }
     return result.changes > 0;
   }
 

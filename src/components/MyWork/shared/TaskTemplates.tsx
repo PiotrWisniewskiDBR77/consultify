@@ -108,8 +108,8 @@ const DAYS_OF_WEEK = [
 const PRIORITY_OPTIONS = [
   { value: 'low', label: { en: 'Low', pl: 'Niski' }, color: 'text-slate-500' },
   { value: 'medium', label: { en: 'Medium', pl: 'Średni' }, color: 'text-blue-500' },
-  { value: 'high', label: { en: 'High', pl: 'Wysoki' }, color: 'text-orange-500' },
-  { value: 'critical', label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-red-500' },
+  { value: 'high', label: { en: 'High', pl: 'Wysoki' }, color: 'text-amber-500' },
+  { value: 'critical', label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-rose-500' },
 ];
 
 export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
@@ -482,7 +482,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                           </button>
                           <button
                             onClick={() => handleDelete(template.id)}
-                            className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors"
+                            className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={16} />

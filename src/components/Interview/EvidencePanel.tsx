@@ -457,7 +457,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                           onDeleteEvidence(item.id);
                           setShowMenuId(null);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                       >
                         <Trash2 size={14} />
                         {isPolish ? 'Usuń' : 'Delete'}

@@ -26,8 +26,8 @@ import multiplayerRoutes from './multiplayer.routes.js';
 import myWorkRoutes from './my-work.routes.js';
 import notebookRoutes from './notebook.routes.js';
 import partnerRoutes from './partner.routes.js';
-import processFlowRoutes from './processFlow.routes.js';
 import planningRoutes from './planning.routes.js';
+import processFlowRoutes from './processFlow.routes.js';
 import promptOsRoutes from './prompt-os.routes.js';
 import radarTriageRoutes from './radar-triage.routes.js';
 import resultsRoutes from './results.routes.js';
@@ -46,6 +46,11 @@ v8Router.use('/admin/flags', featureFlagRoutes);
 v8Router.use('/admin/health', adminHealthRoutes);
 v8Router.use('/admin/metrics', adminMetricsRoutes);
 v8Router.use('/admin/shadow', shadowRoutes);
+
+// Partner Portal has its own partner-org authorization boundary. Keep the V8
+// partner bridge available even when the tenant-wide V8 flag is disabled, so
+// partner reads do not degrade to 404 before partner scope can be resolved.
+v8Router.use('/partner', attachV8Context, v8MetricsMiddleware, partnerRoutes);
 
 // Non-admin routes require org-level V8 enablement
 v8Router.use(v8OrgGate);
@@ -74,7 +79,6 @@ v8Router.use('/interview', interviewInsightsRoutes);
 v8Router.use('/planning', planningRoutes);
 v8Router.use('/radar-triage', radarTriageRoutes);
 v8Router.use('/results', resultsRoutes);
-v8Router.use('/partner', partnerRoutes);
 v8Router.use('/process-flow', processFlowRoutes);
 v8Router.use('/sync', syncRoutes);
 v8Router.use('/teresa', teresaRoutes);

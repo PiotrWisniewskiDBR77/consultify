@@ -56,4 +56,15 @@ describe('useAppStore (src/store/useAppStore.ts)', () => {
     expect(useAppStore.getState().aiConfig.webSearch).toBe(false);
     expect(useAppStore.getState().aiConfig.responseStyle).toBe('concise');
   });
+
+  it('mirrors currentUser to dedicated auth storage', () => {
+    useAppStore.getState().setCurrentUser({ id: 'u-1', email: 'u@example.com' } as any);
+    expect(JSON.parse(localStorage.getItem('user') || '{}')).toMatchObject({
+      id: 'u-1',
+      email: 'u@example.com',
+    });
+
+    useAppStore.getState().setCurrentUser(null);
+    expect(localStorage.getItem('user')).toBeNull();
+  });
 });

@@ -307,7 +307,16 @@ export interface V8PartnerPayoutSettingsUpdatePayload {
 }
 
 export const shouldFallbackToLegacyPartner = (error: unknown): boolean => {
-  const status = Number((error as { status?: number })?.status);
+  const directStatus = Number((error as { status?: number })?.status);
+  const nestedStatus = Number((error as { response?: { status?: number } })?.response?.status);
+  const status = Number.isFinite(directStatus) && directStatus > 0 ? directStatus : nestedStatus;
+  const data =
+    (error as { data?: { code?: string } })?.data ||
+    (error as { response?: { data?: { code?: string } } })?.response?.data;
+  const code = String(data?.code || '').toUpperCase();
+  if (status === 403 && code === 'PARTNER_ORG_REQUIRED') {
+    return true;
+  }
   return [400, 404, 405, 501].includes(status);
 };
 

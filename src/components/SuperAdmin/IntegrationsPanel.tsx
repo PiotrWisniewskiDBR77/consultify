@@ -179,7 +179,7 @@ export const IntegrationsPanel: React.FC = () => {
                       {integration.enabled ? (
                         <CheckCircle size={16} className="text-emerald-600 dark:text-emerald-400" />
                       ) : (
-                        <XCircle size={16} className="text-red-600 dark:text-red-400" />
+                        <XCircle size={16} className="text-rose-600 dark:text-rose-400" />
                       )}
                     </div>
                     {integration.last_sync_at && (
@@ -190,7 +190,7 @@ export const IntegrationsPanel: React.FC = () => {
                             className={`ml-2 ${
                               integration.last_sync_status === 'success'
                                 ? 'text-emerald-700 dark:text-emerald-400'
-                                : 'text-red-700 dark:text-red-400'
+                                : 'text-rose-700 dark:text-rose-400'
                             }`}
                           >
                             ({integration.last_sync_status})
@@ -209,7 +209,7 @@ export const IntegrationsPanel: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDelete(integration.type, 'integration')}
-                      className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                      className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={16} />
@@ -242,7 +242,7 @@ export const IntegrationsPanel: React.FC = () => {
                       {webhook.is_active ? (
                         <CheckCircle size={16} className="text-emerald-600 dark:text-emerald-400" />
                       ) : (
-                        <XCircle size={16} className="text-red-600 dark:text-red-400" />
+                        <XCircle size={16} className="text-rose-600 dark:text-rose-400" />
                       )}
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 break-all">
@@ -264,7 +264,7 @@ export const IntegrationsPanel: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleDelete(webhook.id, 'webhook')}
-                      className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                      className="p-2 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={16} />

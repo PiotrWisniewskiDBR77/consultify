@@ -202,7 +202,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Clock size={20} className="text-violet-500" />
+            <Clock size={20} className="text-primary-500" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white">
               {userName
                 ? t('admin.team.workingHours.titleUser', "{{name}}'s Working Hours", {
@@ -222,7 +222,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
             </Tooltip>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+            <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {totalWeeklyHours.toFixed(1)}h
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -241,7 +241,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
             <select
               value={config.timezone}
               onChange={(e) => updateTimezone(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
             >
               {TIMEZONES.map((tz) => (
                 <option key={tz.value} value={tz.value}>
@@ -264,7 +264,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                 className={cn(
                   'flex items-center gap-4 p-3 rounded-lg transition-all',
                   schedule.enabled
-                    ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800'
                     : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700'
                 )}
               >
@@ -275,7 +275,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                     className={cn(
                       'w-5 h-5 rounded flex items-center justify-center transition-all',
                       schedule.enabled
-                        ? 'bg-violet-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
                     )}
                   >
@@ -298,7 +298,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                     <select
                       value={schedule.start}
                       onChange={(e) => updateDaySchedule(day.key, { start: e.target.value })}
-                      className="px-2 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-sm text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="px-2 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-sm text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       {TIME_OPTIONS.map((time) => (
                         <option key={time} value={time}>
@@ -310,7 +310,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                     <select
                       value={schedule.end}
                       onChange={(e) => updateDaySchedule(day.key, { end: e.target.value })}
-                      className="px-2 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-sm text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+                      className="px-2 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded text-sm text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                     >
                       {TIME_OPTIONS.map((time) => (
                         <option key={time} value={time}>
@@ -339,7 +339,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                       >
                         <button
                           onClick={() => copyToWeekdays(day.key)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-violet-600 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded transition-colors"
+                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary-600 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded transition-colors"
                         >
                           <Copy size={14} />
                         </button>
@@ -380,7 +380,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                 },
               });
             }}
-            className="px-3 py-1.5 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-violet-300 dark:hover:border-violet-700 text-navy-900 dark:text-white transition-colors"
+            className="px-3 py-1.5 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-700 text-navy-900 dark:text-white transition-colors"
           >
             <Sun size={12} className="inline mr-1" />
             9-5 Weekdays (40h)
@@ -402,7 +402,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                 },
               });
             }}
-            className="px-3 py-1.5 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-violet-300 dark:hover:border-violet-700 text-navy-900 dark:text-white transition-colors"
+            className="px-3 py-1.5 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-700 text-navy-900 dark:text-white transition-colors"
           >
             <Clock size={12} className="inline mr-1" />
             8-4 Weekdays (40h)
@@ -424,7 +424,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                 },
               });
             }}
-            className="px-3 py-1.5 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-violet-300 dark:hover:border-violet-700 text-navy-900 dark:text-white transition-colors"
+            className="px-3 py-1.5 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-700 text-navy-900 dark:text-white transition-colors"
           >
             <Moon size={12} className="inline mr-1" />
             Part-time (20h)

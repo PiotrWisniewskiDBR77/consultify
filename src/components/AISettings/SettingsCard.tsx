@@ -26,12 +26,12 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
   title,
   description,
   icon: Icon,
-  iconColor = 'text-violet-400',
+  iconColor = 'text-primary-400',
   children,
   collapsible = false,
   defaultExpanded = true,
   badge,
-  badgeColor = 'bg-violet-500/20 text-violet-300',
+  badgeColor = 'bg-primary-500/20 text-primary-300',
   infoTooltip,
   className = '',
 }) => {
@@ -42,8 +42,8 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-                rounded-xl border 
-                border-slate-200 dark:border-slate-700/50 
+                rounded-xl border
+                border-slate-200 dark:border-slate-700/50
                 bg-white dark:bg-gradient-to-br dark:from-slate-800/50 dark:to-slate-900/50
                 backdrop-blur-sm overflow-hidden shadow-sm dark:shadow-none
                 ${className}
@@ -52,7 +52,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
       {/* Header */}
       <div
         className={`
-                    flex items-center gap-3 p-4 
+                    flex items-center gap-3 p-4
                     ${collapsible ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors' : ''}
                 `}
         onClick={() => collapsible && setExpanded(!expanded)}

@@ -293,7 +293,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
 
                     {/* AI indicator */}
                     {section.isAiGenerated ? (
-                      <Sparkles className="w-3 h-3 text-purple-500 flex-shrink-0" />
+                      <Sparkles className="w-3 h-3 text-primary-500 flex-shrink-0" />
                     ) : (
                       <Edit3 className="w-3 h-3 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                     )}
@@ -310,7 +310,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
         <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border-t border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400">
+              <span className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400">
                 <Sparkles className="w-3 h-3" />
                 {sections.filter((s) => s.isAiGenerated).length} {t('reports.aiGenerated', 'AI')}
               </span>

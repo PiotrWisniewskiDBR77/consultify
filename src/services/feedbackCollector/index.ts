@@ -9,11 +9,7 @@
 import type { AppUserContext } from './AppContext';
 import { installAppContext, snapshotAppContext } from './AppContext';
 import type { BreadcrumbEntry } from './BreadcrumbBuffer';
-import {
-  addBreadcrumb,
-  installBreadcrumbBuffer,
-  snapshotBreadcrumbs,
-} from './BreadcrumbBuffer';
+import { addBreadcrumb, installBreadcrumbBuffer, snapshotBreadcrumbs } from './BreadcrumbBuffer';
 import type { CaptureResult } from './captureScreenshot';
 import { captureScreenshot } from './captureScreenshot';
 import type { ConsoleEntry } from './ConsoleBuffer';
@@ -69,7 +65,8 @@ export function installFeedbackCollector(options: InstallOptions = {}): void {
       options.onGlobalError?.({ message: String(message), stack });
     });
     window.addEventListener('unhandledrejection', (event) => {
-      const reason = (event.reason && (event.reason.message || event.reason)) || 'Unhandled rejection';
+      const reason =
+        (event.reason && (event.reason.message || event.reason)) || 'Unhandled rejection';
       const stack = (event.reason && event.reason.stack) || undefined;
       lastUncaughtError = {
         at: new Date().toISOString(),
@@ -107,9 +104,8 @@ export async function buildFeedbackDossier(options: {
   const networkErrors = snapshotNetworkErrors(20);
   const breadcrumbs = snapshotBreadcrumbs(30);
 
-  const screenshot = options.includeScreenshot !== false
-    ? await captureScreenshot(options.screenshotTarget)
-    : null;
+  const screenshot =
+    options.includeScreenshot !== false ? await captureScreenshot(options.screenshotTarget) : null;
 
   const topConsoleError = [...consoleLogs].reverse().find((e) => e.level === 'error');
   const signatureHash = computeSignatureHash({
@@ -139,9 +135,7 @@ export function getLastUncaughtError() {
   return lastUncaughtError;
 }
 
-export function addFeedbackBreadcrumb(
-  entry: Omit<BreadcrumbEntry, 'at'> & { at?: string }
-): void {
+export function addFeedbackBreadcrumb(entry: Omit<BreadcrumbEntry, 'at'> & { at?: string }): void {
   addBreadcrumb(entry);
 }
 

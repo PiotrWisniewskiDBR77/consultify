@@ -190,12 +190,14 @@ describe('UnifiedSyncHub V8 health continuity', () => {
       expect(V8SyncApi.getHubHealth).toHaveBeenCalled();
       expect(V8SyncApi.getErrors).toHaveBeenCalled();
       expect(V8SyncApi.getAuditLog).toHaveBeenCalled();
-      expect(screen.getByText('Connect your first integration')).toBeInTheDocument();
+      expect(screen.getByText('Integrations Hub')).toBeInTheDocument();
+      expect(
+        screen.getByText('Connect, monitor, and manage all your external integrations'),
+      ).toBeInTheDocument();
+      expect(screen.getByText('No integrations connected')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('One tenant operator cockpit')).toBeInTheDocument();
-    expect(screen.getByText('One canonical provider connect journey')).toBeInTheDocument();
-    expect(screen.getByText('Setup closure rules')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Manage in Settings' }).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: /Sync Health/i }));
 
     await waitFor(() => {
@@ -693,20 +695,15 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     render(<UnifiedSyncHub />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Connect your first integration/i })).toBeInTheDocument();
+      expect(screen.getByText('Available connectors')).toBeInTheDocument();
     });
-
-    fireEvent.click(screen.getByRole('button', { name: /Connect your first integration/i }));
 
     await waitFor(() => {
       expect(screen.getAllByRole('button', { name: /^Connect$/i }).length).toBeGreaterThan(0);
     });
 
-    expect(screen.getByText('site url')).toBeInTheDocument();
-    expect(screen.getByText('cloud id')).toBeInTheDocument();
-
     const connectButtons = screen.getAllByRole('button', { name: /^Connect$/i });
-    fireEvent.click(connectButtons[connectButtons.length - 1]);
+    fireEvent.click(connectButtons[0]);
 
     await waitFor(() => {
       expect(V8SyncApi.connectIntegration).toHaveBeenCalledWith('jira');

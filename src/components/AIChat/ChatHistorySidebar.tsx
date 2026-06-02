@@ -25,7 +25,6 @@ import {
   Folder,
   FolderPlus,
   MoreHorizontal,
-  Plus,
   Search,
   Trash2,
   Users,
@@ -33,6 +32,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { useAppStore } from '../../store/useAppStore';
 import {
@@ -281,7 +281,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                 onDeleteProject(project.id);
                                 setMenuId(null);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                             >
                               <Trash2 size={13} />
                               {t('common.delete', 'Delete')}
@@ -360,6 +360,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   // App store - for sidebar position awareness
   const { isSidebarCollapsed } = useAppStore();
@@ -511,7 +512,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     clearActiveChat();
     if (activeFolderId) {
       try {
-        const conv = await createConversation({ projectId: activeFolderId });
+        const conv = await createConversation({ chatProjectId: activeFolderId });
         if (conv?.id) {
           setActiveConversation(conv.id);
           return;
@@ -526,10 +527,11 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   // Handle select conversation
   const handleSelectConversation = useCallback(
     (id: string) => {
+      navigate(`/chat/${id}`, { replace: false });
       setActiveConversation(id);
       if (window.innerWidth < 1024) toggleSidebar();
     },
-    [setActiveConversation, toggleSidebar]
+    [navigate, setActiveConversation, toggleSidebar]
   );
 
   // Handle create folder with scope
@@ -650,7 +652,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           }}
           className={`
                 fixed top-0 h-full z-40
-                bg-slate-50 dark:bg-navy-900 
+                bg-slate-50 dark:bg-navy-900
                 border-r border-slate-200 dark:border-navy-800
                 shadow-2xl
                 flex flex-col
@@ -684,7 +686,6 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               data-testid="chat-history-new-chat"
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
             >
-              <Plus size={18} />
               {t('aiChat.newChat', 'Nowy czat')}
             </button>
           </div>
@@ -773,7 +774,11 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   {searchScopeBlocked > 0 && (
                     <div className="mb-2 px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {t('aiChat.scopeBlocked', '{{count}} result(s) hidden due to access restrictions.', { count: searchScopeBlocked })}
+                        {t(
+                          'aiChat.scopeBlocked',
+                          '{{count}} result(s) hidden due to access restrictions.',
+                          { count: searchScopeBlocked }
+                        )}
                       </p>
                     </div>
                   )}

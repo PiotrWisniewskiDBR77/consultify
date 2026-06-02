@@ -118,7 +118,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
       <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center gap-2">
-            <Code size={16} className="text-orange-500" />
+            <Code size={16} className="text-amber-500" />
             <h3 className="text-sm font-bold text-slate-800 dark:text-white">
               {isPl ? 'Eksport diagramu' : 'Export Diagram Code'}
             </h3>
@@ -140,7 +140,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
                   setFormat(f);
                   setCopied(false);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f ? 'bg-orange-500/15 text-orange-700 dark:text-orange-300' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
               >
                 {f === 'mermaid' ? 'Mermaid' : 'PlantUML'}
               </button>
@@ -153,7 +153,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
             </pre>
             <button
               onClick={handleCopy}
-              className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 dark:bg-navy-800/80 text-slate-500 hover:text-orange-600 transition-colors"
+              className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 dark:bg-navy-800/80 text-slate-500 hover:text-amber-600 transition-colors"
             >
               {copied ? (
                 <CheckCircle2 size={14} className="text-emerald-500" />

@@ -728,7 +728,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                       const ok = window.confirm(isPolish ? 'Usunąć to KPI?' : 'Delete this KPI?');
                       if (ok) removeKpi(row.id);
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                   >
                     <Trash2 size={13} />
                     {isPolish ? 'Usuń' : 'Delete'}
@@ -972,7 +972,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
               <button
                 onClick={() => void applyAIProposal()}
                 disabled={isAIApplying}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {isAIApplying ? (
                   <Loader2 size={13} className="animate-spin" />
@@ -989,8 +989,8 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
       <CollapsibleSection
         id="kpis"
         title={isPolish ? 'KPI i korzyści' : 'KPIs & Benefits'}
-        icon={<TrendingUp size={18} className="text-cyan-500 dark:text-cyan-400" />}
-        iconBg="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20"
+        icon={<TrendingUp size={18} className="text-blue-500 dark:text-blue-400" />}
+        iconBg="bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20"
         expanded={expanded}
         onToggle={onToggle}
         badge={
@@ -1034,7 +1034,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl border border-cyan-300/70 dark:border-cyan-500/50 bg-cyan-50/30 dark:bg-cyan-500/5 space-y-3"
+              className="p-4 rounded-xl border border-blue-300/70 dark:border-blue-500/50 bg-blue-50/30 dark:bg-blue-500/5 space-y-3"
             >
               <div className="flex items-center gap-2">
                 <input
@@ -1099,7 +1099,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                 <button
                   onClick={() => void addKpi()}
                   disabled={!newName.trim() || !newUnit.trim() || isSubmitting}
-                  className="px-3 py-1.5 text-xs bg-cyan-500 text-white rounded-lg disabled:opacity-50 hover:bg-cyan-600 transition-colors"
+                  className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-lg disabled:opacity-50 hover:bg-blue-600 transition-colors"
                 >
                   {isSubmitting
                     ? isPolish

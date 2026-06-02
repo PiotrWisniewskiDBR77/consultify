@@ -6,13 +6,14 @@
  * Exceptions from RecurrenceModel.exceptions[] override/cancel specific instances.
  */
 
-// @ts-ignore — optional dependency, may not have type declarations
-import { RRule, RRuleSet, rrulestr } from 'rrule';
+import type { RRule } from 'rrule';
+import RRulePackage from 'rrule';
 
-import type { RecurrenceModel } from './calendarInteropService.js';
 import logger from '../../utils/Logger.js';
+import type { RecurrenceModel } from './calendarInteropService.js';
 
 const LOG_PREFIX = '[P02-RecurrenceEngine]';
+const { rrulestr } = (RRulePackage as any).default || (RRulePackage as any);
 
 export interface MaterializedInstance {
   startAt: string;
@@ -33,46 +34,54 @@ export function materializeInstances(
   seriesEndAt: string | null,
   recurrence: RecurrenceModel,
   windowStart: string,
-  windowEnd: string,
+  windowEnd: string
 ): MaterializedInstance[] {
   const wStart = new Date(windowStart);
   const wEnd = new Date(windowEnd);
   const eventStart = new Date(seriesStartAt);
-  const durationMs = seriesEndAt
-    ? new Date(seriesEndAt).getTime() - eventStart.getTime()
-    : 0;
+  const durationMs = seriesEndAt ? new Date(seriesEndAt).getTime() - eventStart.getTime() : 0;
 
   if (!recurrence.rrule) {
-    return [{
-      startAt: seriesStartAt,
-      endAt: seriesEndAt,
-      recurrenceId: seriesStartAt,
-      isException: false,
-      isCancelled: false,
-    }];
+    return [
+      {
+        startAt: seriesStartAt,
+        endAt: seriesEndAt,
+        recurrenceId: seriesStartAt,
+        isException: false,
+        isCancelled: false,
+      },
+    ];
   }
 
   try {
-    const ruleSet = new RRuleSet();
+    const rule = rrulestr(`DTSTART:${formatRRuleDate(eventStart)}\nRRULE:${recurrence.rrule}`, {
+      forceset: false,
+    });
+    const generatedOccurrences = (rule as RRule).between(wStart, wEnd, true);
 
-    const rule = rrulestr(
-      `DTSTART:${formatRRuleDate(eventStart)}\nRRULE:${recurrence.rrule}`,
-      { forceset: false },
+    // Keep recurrence expansion compatible with older/newer `rrule` builds that may
+    // not export RRuleSet in ESM. We merge explicit RDATE/EXDATE manually.
+    const exdateSet = new Set(
+      (recurrence.exdate ?? []).map((value) => new Date(value).toISOString())
     );
-    ruleSet.rrule(rule as RRule);
+    const occurrenceMap = new Map<string, Date>();
 
-    if (recurrence.rdate) {
-      for (const rd of recurrence.rdate) {
-        ruleSet.rdate(new Date(rd));
+    for (const occ of generatedOccurrences) {
+      const iso = occ.toISOString();
+      if (!exdateSet.has(iso)) {
+        occurrenceMap.set(iso, occ);
       }
     }
-    if (recurrence.exdate) {
-      for (const ex of recurrence.exdate) {
-        ruleSet.exdate(new Date(ex));
+    for (const rdate of recurrence.rdate ?? []) {
+      const date = new Date(rdate);
+      if (date >= wStart && date <= wEnd) {
+        const iso = date.toISOString();
+        if (!exdateSet.has(iso)) {
+          occurrenceMap.set(iso, date);
+        }
       }
     }
-
-    const occurrences = ruleSet.between(wStart, wEnd, true);
+    const occurrences = [...occurrenceMap.values()].sort((a, b) => a.getTime() - b.getTime());
 
     const exceptionMap = new Map<string, RecurrenceModel['exceptions'][number]>();
     for (const exc of recurrence.exceptions) {
@@ -123,18 +132,23 @@ export function materializeInstances(
     return instances;
   } catch (err) {
     logger.error(`${LOG_PREFIX} Failed to materialize recurrence: ${(err as Error).message}`);
-    return [{
-      startAt: seriesStartAt,
-      endAt: seriesEndAt,
-      recurrenceId: seriesStartAt,
-      isException: false,
-      isCancelled: false,
-    }];
+    return [
+      {
+        startAt: seriesStartAt,
+        endAt: seriesEndAt,
+        recurrenceId: seriesStartAt,
+        isException: false,
+        isCancelled: false,
+      },
+    ];
   }
 }
 
 function formatRRuleDate(d: Date): string {
-  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return d
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '');
 }
 
 /**

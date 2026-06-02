@@ -18,7 +18,9 @@ function loadEnv() {
     const p = path.resolve(process.cwd(), extra);
     if (fs.existsSync(p)) dotenv.config({ path: p, override: true });
   }
-  dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: false });
+  if (!extra) {
+    dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: false });
+  }
   dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
 }
 

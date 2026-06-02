@@ -197,7 +197,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
             <>
               <div className="h-px bg-slate-200 dark:bg-navy-700 my-1" />
               <button
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600"
                 onClick={() => {
                   onDeleteTable(contextMenu.tableId);
                   setContextMenu(null);

@@ -10,25 +10,29 @@ const FLOWS = [
   {
     id: 'internal',
     title: 'Internal discussion -> work',
-    description: 'Internal messages should route into tasks, decisions, approvals, and execution signals.',
+    description:
+      'Internal messages should route into tasks, decisions, approvals, and execution signals.',
     icon: MessageSquare,
   },
   {
     id: 'external',
     title: 'External delivery -> context',
-    description: 'Client-facing updates must stay tied to business context, artifacts, and delivery state.',
+    description:
+      'Client-facing updates must stay tied to business context, artifacts, and delivery state.',
     icon: Mail,
   },
   {
     id: 'routing',
     title: 'Policy-aware channel routing',
-    description: 'The product must show which channels are allowed, who can send, and what path owns delivery.',
+    description:
+      'The product must show which channels are allowed, who can send, and what path owns delivery.',
     icon: ShieldCheck,
   },
   {
     id: 'conversion',
     title: 'Message -> action conversion',
-    description: 'Communication becomes governed work when extraction, triage, and follow-up are explicit.',
+    description:
+      'Communication becomes governed work when extraction, triage, and follow-up are explicit.',
     icon: Workflow,
   },
 ];
@@ -56,13 +60,17 @@ export const CommunicationSurfaceModelPanel: React.FC<CommunicationSurfaceModelP
           >
             One governed communication family, not a chat clone
           </h2>
-          <p className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
+          >
             Communication should preserve context, separate internal from external channels, and
             convert messages into visible governed work.
           </p>
         </div>
 
-        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}>
+        <div
+          className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}
+        >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
               Canonical communication flows

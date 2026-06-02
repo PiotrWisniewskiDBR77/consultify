@@ -15,11 +15,16 @@ import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
+import { canUseInternalTools } from '../../../utils/internalToolsAccess';
 import {
   dispatchPilotAccessBlocked,
   getPilotLockedAreaDetail,
   isPilotAllowedMenuId,
 } from '../../../utils/pilotAccess';
+import {
+  lockMainMenuForPublicProduction,
+  shouldLockNonCoreModulesInPublicProduction,
+} from '../../../utils/publicProduction';
 import {
   isAdminOwnerOrSuperAdminRole,
   isPilotRestrictedRole,
@@ -29,6 +34,7 @@ import { PhaseIndicator } from '../../PMO/PhaseIndicator';
 import { FloatingSubmenu } from './FloatingSubmenu';
 import {
   getAdminMenuItem,
+  getInternalToolsMenuItem,
   getMenuStructure,
   getOrganizationMenuItem,
   getSettingsMenuItem,
@@ -52,6 +58,8 @@ export const Sidebar: React.FC = () => {
   // because it can trigger "getSnapshot should be cached" warnings/loops.
   const currentView = useAppStore((s) => s.currentView);
   const setCurrentView = useAppStore((s) => s.setCurrentView);
+  const navigateWithChatContext = useAppStore((s) => s.navigateWithChatContext);
+  const returnToFullChat = useAppStore((s) => s.returnToFullChat);
   const logout = useAppStore((s) => s.logout);
   const isSidebarOpen = useAppStore((s) => s.isSidebarOpen);
   const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
@@ -86,11 +94,28 @@ export const Sidebar: React.FC = () => {
   // That made "expanded" mode effectively impossible in narrower desktop windows / split-screen.
   // We now allow expanded mode anywhere except mobile.
   const showFull = !isSidebarCollapsed && !isMobile;
+  const lockNonCoreModulesOnPublicProduction = React.useMemo(
+    () => shouldLockNonCoreModulesInPublicProduction(),
+    []
+  );
+  const publicProductionLockedMessage =
+    'This module is visible in the platform overview, but access is disabled on public production. Please use Chat or Interview.';
 
   // Menu configuration
   const menuStructure = React.useMemo(
-    () => getMenuStructure(t, currentUser?.journeyState),
-    [t, currentUser?.journeyState]
+    () =>
+      lockMainMenuForPublicProduction(
+        getMenuStructure(t, currentUser?.journeyState),
+        lockNonCoreModulesOnPublicProduction,
+        publicProductionLockedMessage,
+        '/interview'
+      ),
+    [
+      t,
+      currentUser?.journeyState,
+      lockNonCoreModulesOnPublicProduction,
+      publicProductionLockedMessage,
+    ]
   );
   const visibleMenuStructure = React.useMemo(() => {
     if (!isPilotRestrictedRole(currentUser?.role)) {
@@ -121,9 +146,16 @@ export const Sidebar: React.FC = () => {
   }, [currentUser?.role, menuStructure]);
   const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
   const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
+  const internalToolsMenuItem = React.useMemo(() => getInternalToolsMenuItem(t), [t]);
   const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
   const superAdminMenuItem = React.useMemo(() => getSuperAdminMenuItem(t), [t]);
+  const showInternalToolsMenu = canUseInternalTools(currentUser);
   const shouldLockFooterAdminMenus = !isSuperAdminRole(currentUser?.role);
+  const canAttemptPartnerPortal = React.useMemo(
+    () => !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role),
+    [currentUser?.role]
+  );
+  const [hasPartnerPortalAccess, setHasPartnerPortalAccess] = React.useState(false);
   const lockedOrganizationMenuItem = React.useMemo<MenuItem>(() => {
     if (!shouldLockFooterAdminMenus) return organizationMenuItem;
     return {
@@ -170,8 +202,12 @@ export const Sidebar: React.FC = () => {
 
   const navigateToFullChat = React.useCallback(() => {
     setDisplayMode('full');
+    if (typeof returnToFullChat === 'function') {
+      returnToFullChat();
+      return;
+    }
     setCurrentView(AppView.AI_CHAT);
-  }, [setCurrentView, setDisplayMode]);
+  }, [returnToFullChat, setCurrentView, setDisplayMode]);
 
   const navigateToView = React.useCallback(
     (viewId: AppView) => {
@@ -181,9 +217,12 @@ export const Sidebar: React.FC = () => {
         projectId: currentProjectId || undefined,
       });
       setWorkspaceContext(context);
-      setCurrentView(viewId);
+      navigateWithChatContext(viewId, {
+        preserveChat: true,
+        workspaceContext: context,
+      });
     },
-    [currentProjectId, setCurrentView, setDisplayMode, setWorkspaceContext]
+    [currentProjectId, navigateWithChatContext, setDisplayMode, setWorkspaceContext]
   );
 
   const handleItemClick = React.useCallback(
@@ -374,6 +413,35 @@ export const Sidebar: React.FC = () => {
   const sidebarWidthClass = showFull ? 'w-64' : 'w-16';
 
   React.useEffect(() => {
+    let isMounted = true;
+
+    const refreshPartnerPortalAccess = async () => {
+      if (!canAttemptPartnerPortal || !currentUser?.id) {
+        if (isMounted) setHasPartnerPortalAccess(false);
+        return;
+      }
+
+      try {
+        const response = await Api.get('/api/partners/connection');
+        const payload = (response as { data?: unknown })?.data;
+        const resolvedData =
+          payload && typeof payload === 'object' && 'data' in (payload as Record<string, unknown>)
+            ? (payload as { data?: { connected?: unknown } })?.data
+            : (payload as { connected?: unknown } | null);
+        const connected = Boolean(resolvedData?.connected);
+        if (isMounted) setHasPartnerPortalAccess(connected);
+      } catch {
+        if (isMounted) setHasPartnerPortalAccess(false);
+      }
+    };
+
+    void refreshPartnerPortalAccess();
+    return () => {
+      isMounted = false;
+    };
+  }, [canAttemptPartnerPortal, currentUser?.id]);
+
+  React.useEffect(() => {
     if (!isSidebarOpen || (!isMobile && !isTablet)) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -457,13 +525,13 @@ export const Sidebar: React.FC = () => {
           onLogout={logout}
           onNavigate={handleFooterNavigate}
           t={t as any}
-          showPartnerPortal={
-            !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role)
-          }
+          showPartnerPortal={canAttemptPartnerPortal && hasPartnerPortalAccess}
         >
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedOrganizationMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
+            renderNavItem(lockedOrganizationMenuItem)}
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedAdminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
+          {showInternalToolsMenu && renderNavItem(internalToolsMenuItem)}
           {renderNavItem(settingsMenuItem)}
         </SidebarFooter>
       </motion.div>

@@ -165,9 +165,9 @@ export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
   },
   [InitiativeStatus.PENDING_REVIEW]: {
     label: 'Pending Review',
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-500/10',
-    dotColor: 'bg-orange-400',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500/10',
+    dotColor: 'bg-amber-400',
     description: 'Awaiting PM/Lead review',
   },
   [InitiativeStatus.REVIEW]: {
@@ -200,23 +200,23 @@ export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
   },
   [InitiativeStatus.SCHEDULED]: {
     label: 'Scheduled',
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10',
-    dotColor: 'bg-purple-400',
+    color: 'text-primary-500',
+    bgColor: 'bg-primary-500/10',
+    dotColor: 'bg-primary-400',
     description: 'Scheduled in roadmap',
   },
   [InitiativeStatus.EXECUTING]: {
     label: 'Executing',
-    color: 'text-cyan-500',
-    bgColor: 'bg-cyan-500/10',
-    dotColor: 'bg-cyan-400',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    dotColor: 'bg-blue-400',
     description: 'Currently being implemented',
   },
   [InitiativeStatus.BLOCKED]: {
     label: 'Blocked',
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10',
-    dotColor: 'bg-red-400',
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-500/10',
+    dotColor: 'bg-rose-400',
     description: 'Blocked by an issue',
   },
   [InitiativeStatus.DONE]: {
@@ -228,9 +228,9 @@ export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
   },
   [InitiativeStatus.TRACKING]: {
     label: 'Tracking',
-    color: 'text-teal-500',
-    bgColor: 'bg-teal-500/10',
-    dotColor: 'bg-teal-400',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    dotColor: 'bg-blue-400',
     description: 'Benefits tracking in progress',
   },
   [InitiativeStatus.CANCELLED]: {

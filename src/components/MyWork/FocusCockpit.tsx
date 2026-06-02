@@ -51,7 +51,7 @@ const PRIORITY_STYLES: Record<FocusTask['priority'], string> = {
   LOW: 'bg-slate-500/20 text-slate-400 dark:text-slate-500',
   MEDIUM: 'bg-slate-400/20 text-slate-300 dark:text-slate-400',
   HIGH: 'bg-amber-500/20 text-amber-500 dark:text-amber-400',
-  CRITICAL: 'bg-red-500/20 text-red-500 dark:text-red-400',
+  CRITICAL: 'bg-rose-500/20 text-rose-500 dark:text-rose-400',
 };
 
 const STATUS_DOT_STYLES: Record<FocusTask['status'], string> = {

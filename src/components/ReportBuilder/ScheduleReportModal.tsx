@@ -180,7 +180,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               value={scheduleName}
               onChange={(e) => setScheduleName(e.target.value)}
               placeholder={isPl ? 'np. Tygodniowy raport statusu' : 'e.g. Weekly Status Report'}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition-colors"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none transition-colors"
             />
           </div>
 
@@ -197,7 +197,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
                   onClick={() => setFrequency(opt.value)}
                   className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                     frequency === opt.value
-                      ? 'border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-400 font-medium'
+                      ? 'border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium'
                       : 'border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
                 >
@@ -216,7 +216,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               <select
                 value={dayOfWeek}
                 onChange={(e) => setDayOfWeek(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition-colors"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none transition-colors"
               >
                 {DAYS_OF_WEEK.map((d) => (
                   <option key={d.value} value={d.value}>
@@ -236,7 +236,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               <select
                 value={dayOfMonth}
                 onChange={(e) => setDayOfMonth(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition-colors"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none transition-colors"
               >
                 {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                   <option key={d} value={d}>
@@ -257,7 +257,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 outline-none transition-colors"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none transition-colors"
             />
           </div>
 
@@ -272,7 +272,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
                   type="checkbox"
                   checked={deliveryEmail}
                   onChange={(e) => setDeliveryEmail(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-violet-600 focus:ring-violet-500/50"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-primary-500/50"
                 />
                 <Mail size={16} className="text-slate-500 dark:text-slate-400" />
                 <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -284,7 +284,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
                   type="checkbox"
                   checked={deliveryDashboard}
                   onChange={(e) => setDeliveryDashboard(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-violet-600 focus:ring-violet-500/50"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-primary-500/50"
                 />
                 <Bell size={16} className="text-slate-500 dark:text-slate-400" />
                 <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -307,7 +307,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/50 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-500 disabled:bg-primary-600/50 text-white rounded-lg transition-colors"
           >
             {isSubmitting ? (
               <>

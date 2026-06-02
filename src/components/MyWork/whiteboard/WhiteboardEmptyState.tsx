@@ -20,8 +20,8 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
       <div className="text-center pointer-events-auto">
-        <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-violet-500/10 flex items-center justify-center">
-          <StickyNote size={24} className="text-violet-500" />
+        <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-primary-500/10 flex items-center justify-center">
+          <StickyNote size={24} className="text-primary-500" />
         </div>
         <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
           {t('myWork.whiteboard.empty.title')}
@@ -37,7 +37,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
             >
               <button
                 onClick={() => onSeedQuickStart('brainstorm')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
               >
                 <Sparkles size={14} />
                 Brainstorm
@@ -59,7 +59,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
             </div>
             <button
               onClick={onAddSticky}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
             >
               <Plus size={14} />
               {t('myWork.whiteboard.empty.addSticky')}

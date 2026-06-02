@@ -165,11 +165,14 @@ export const AdminApi = {
     organizationId: string,
     payload: { toUserId: string; reason?: string }
   ): Promise<unknown> => {
-    const res = await fetchWithRetry(`${API_URL}/organizations/${organizationId}/ownership/transfer`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(payload),
-    });
+    const res = await fetchWithRetry(
+      `${API_URL}/organizations/${organizationId}/ownership/transfer`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
     return handleResponse(res, 'Failed to initiate ownership transfer');
   },
 
@@ -196,10 +199,13 @@ export const AdminApi = {
   },
 
   scheduleOrganizationDeletion: async (organizationId: string): Promise<unknown> => {
-    const res = await fetchWithRetry(`${API_URL}/organizations/${organizationId}/schedule-deletion`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
+    const res = await fetchWithRetry(
+      `${API_URL}/organizations/${organizationId}/schedule-deletion`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to schedule organization deletion');
   },
 
@@ -259,7 +265,6 @@ export const AdminApi = {
       headers: getHeaders(),
     });
     const data = await res.json().catch(() => null);
-
     if (!res.ok) throw new Error('Failed to fetch users');
     if (Array.isArray(data)) return data as User[];
     if (data && typeof data === 'object' && Array.isArray((data as { users?: unknown }).users)) {

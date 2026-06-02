@@ -118,7 +118,8 @@ const DecisionItem: React.FC<{
             {!isOverdue && (
               <span className="flex items-center gap-1">
                 <Clock size={10} />
-                {decision.daysWaiting}{t('executive.actions.days', 'd')} {t('executive.decisions.waiting', 'waiting')}
+                {decision.daysWaiting}
+                {t('executive.actions.days', 'd')} {t('executive.decisions.waiting', 'waiting')}
               </span>
             )}
           </div>
@@ -216,8 +217,8 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-            <FileQuestion size={16} className="text-violet-500" />
+          <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center">
+            <FileQuestion size={16} className="text-primary-500" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">

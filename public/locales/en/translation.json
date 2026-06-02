@@ -183,31 +183,17 @@
         {
           "title": "Financial Intelligence",
           "description": "Consultify extends classic consulting with financial models, analysis, valuation, and forecasting.",
-          "bullets": [
-            "Financial models",
-            "Financial analysis",
-            "Company valuation",
-            "Forecasting"
-          ]
+          "bullets": ["Financial models", "Financial analysis", "Company valuation", "Forecasting"]
         },
         {
           "title": "Reports & Presentations",
           "description": "Consultify turns live work into reports, executive presentations, and consulting deliverables.",
-          "bullets": [
-            "Reports",
-            "Executive presentations",
-            "Notes"
-          ]
+          "bullets": ["Reports", "Executive presentations", "Notes"]
         },
         {
           "title": "My Work",
           "description": "Consultify gives teams a personal and shared workspace for follow-through after strategy work starts.",
-          "bullets": [
-            "Tasks",
-            "Decisions",
-            "Ideas",
-            "Initiatives"
-          ]
+          "bullets": ["Tasks", "Decisions", "Ideas", "Initiatives"]
         }
       ]
     },
@@ -366,61 +352,37 @@
           "badge": "AI Core",
           "title": "Strategic AI Advisor",
           "description": "AI analyzes your organization, identifies gaps, and generates a prioritized strategic roadmap — in minutes, not months.",
-          "highlights": [
-            "Diagnostic Assessment",
-            "Gap Analysis",
-            "Benchmark vs. Industry"
-          ]
+          "highlights": ["Diagnostic Assessment", "Gap Analysis", "Benchmark vs. Industry"]
         },
         "economics": {
           "badge": "Economics",
           "title": "Financial Modeling & ROI",
           "description": "Build business cases, model NPV / IRR scenarios, and track actual vs. projected returns across every initiative.",
-          "highlights": [
-            "NPV / IRR Modeling",
-            "Sensitivity Analysis",
-            "Live ROI Tracking"
-          ]
+          "highlights": ["NPV / IRR Modeling", "Sensitivity Analysis", "Live ROI Tracking"]
         },
         "execution": {
           "badge": "Execution",
           "title": "Initiative Management",
           "description": "Turn strategy into execution. Manage workstreams, milestones, and governance — with AI nudging you toward impact.",
-          "highlights": [
-            "Initiative Roadmap",
-            "Human Approval Gates",
-            "Risk Flagging"
-          ]
+          "highlights": ["Initiative Roadmap", "Human Approval Gates", "Risk Flagging"]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Report & Presentation Builder",
           "description": "Generate board-ready reports and investor decks from your live data. One click from analysis to polished output.",
-          "highlights": [
-            "Auto-Generated Decks",
-            "Narrative Engine",
-            "Source Traceability"
-          ]
+          "highlights": ["Auto-Generated Decks", "Narrative Engine", "Source Traceability"]
         },
         "chat": {
           "badge": "Chat",
           "title": "AI Expert Interview",
           "description": "Ask anything about your business context. AI draws on 10,000+ frameworks and your internal data to answer precisely.",
-          "highlights": [
-            "Context-Aware Chat",
-            "Framework Library",
-            "Cited Answers"
-          ]
+          "highlights": ["Context-Aware Chat", "Framework Library", "Cited Answers"]
         },
         "results": {
           "badge": "Results",
           "title": "Impact Tracking",
           "description": "Connect initiatives to real KPIs. Measure actual delivered value and automatically flag deviations before they become problems.",
-          "highlights": [
-            "KPI Dashboard",
-            "Deviation Alerts",
-            "Value Attribution"
-          ]
+          "highlights": ["KPI Dashboard", "Deviation Alerts", "Value Attribution"]
         }
       }
     },
@@ -807,42 +769,27 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": [
-          "Basic tools",
-          "Directory listing"
-        ]
+        "benefits": ["Basic tools", "Directory listing"]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": [
-          "Priority support",
-          "Training materials"
-        ]
+        "benefits": ["Priority support", "Training materials"]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": [
-          "Dedicated manager",
-          "Beta feature access"
-        ]
+        "benefits": ["Dedicated manager", "Beta feature access"]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": [
-          "Co-marketing",
-          "Conference speaking"
-        ]
+        "benefits": ["Co-marketing", "Conference speaking"]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": [
-          "Revenue share boost",
-          "Executive partnership"
-        ]
+        "benefits": ["Revenue share boost", "Executive partnership"]
       }
     },
     "onboarding": {
@@ -991,6 +938,8 @@
   },
   "common": {
     "save": "Save",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
     "cancel": "Cancel",
     "delete": "Delete",
     "duplicate": "Duplicate",
@@ -1011,6 +960,10 @@
     "view": "View",
     "refresh": "Refresh",
     "refreshFailed": "Failed to refresh",
+    "all": "All",
+    "skip": "Skip",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
     "download": "Download",
     "upload": "Upload",
     "submit": "Submit",
@@ -1093,6 +1046,69 @@
       "bootstrapLabel": "Bootstrap Test Tenant",
       "cleanupLabel": "Cleanup Test Data",
       "gatingNotice": "Available only in test environment with proper credentials."
+    },
+    "customers": {
+      "playbooks": {
+        "title": "Customer Success Playbooks",
+        "subtitle": "Automate customer success workflows and interventions",
+        "newPlaybook": "New Playbook",
+        "execute": "Execute",
+        "confirmDelete": "Delete this playbook?",
+        "status": {
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "actionTypes": {
+          "sendEmail": "Send Email",
+          "createTask": "Create Task",
+          "notifyCsm": "Notify CSM",
+          "scheduleCall": "Schedule Call",
+          "updateHealth": "Update Health",
+          "custom": "Custom"
+        },
+        "triggerTypes": {
+          "onboardingComplete": "Onboarding Complete",
+          "trialEnding": "Trial Ending",
+          "lowEngagement": "Low Engagement",
+          "healthScoreDrop": "Health Score Drop",
+          "subscriptionChange": "Subscription Change",
+          "milestoneReached": "Milestone Reached"
+        },
+        "fields": {
+          "name": "Name",
+          "description": "Description",
+          "trigger": "Trigger",
+          "actions": "Actions",
+          "organizationId": "Organization ID"
+        },
+        "placeholders": {
+          "name": "Enter playbook name",
+          "organizationId": "Enter organization ID"
+        },
+        "modals": {
+          "createTitle": "Create Playbook",
+          "editTitle": "Edit Playbook",
+          "createCta": "Create Playbook",
+          "editCta": "Save Playbook",
+          "executeTitle": "Execute Playbook",
+          "executeSubtitle": "Run {{name}} for an organization.",
+          "executeCta": "Execute"
+        },
+        "empty": {
+          "selectTitle": "Select a Playbook",
+          "selectSubtitle": "Choose a playbook from the list to view details."
+        },
+        "validation": {
+          "nameRequired": "Playbook name is required",
+          "actionsRequired": "Add at least one action"
+        },
+        "toasts": {
+          "created": "Playbook created",
+          "updated": "Playbook updated",
+          "deleted": "Playbook deleted",
+          "executed": "Playbook executed"
+        }
+      }
     },
     "playbookTemplates": {
       "title": "Playbook Templates",
@@ -1267,12 +1283,14 @@
     "reportsBuilder": "Report Builder",
     "reportsManagement": "Management Reports",
     "presentations": "Presentations",
+    "outputsLibrary": "Documents",
     "partnerPortal": "Partner Portal",
     "tasks": "Tasks",
     "toolsLibrary": "Library",
     "wordy": "Documents",
-    "excele": "Tables",
-    "prezentacje": "Presentations"
+    "excele": "Table Studio",
+    "prezentacje": "Presentations",
+    "tabele": "Table Studio"
   },
   "widgets": {
     "help": {
@@ -2214,7 +2232,14 @@
     "hub": {
       "failedToLoad": "Failed to load initiatives.",
       "retry": "Retry",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "noInitiativesFound": "No initiatives found"
+    },
+    "document": {
+      "failedToLoad": "Failed to load initiative card.",
+      "notFound": "Initiative not found",
+      "retry": "Retry",
+      "goBack": "Go back"
     },
     "empty": {
       "title": "No initiatives yet",
@@ -2371,6 +2396,11 @@
     "calendar": "Calendar",
     "decisions": "Decisions",
     "heatmap": "Workload Heatmap",
+    "hub": {
+      "failedToLoad": "Failed to load execution initiatives.",
+      "retry": "Retry",
+      "dismiss": "Dismiss"
+    },
     "demo": {
       "label": "Demo",
       "toggleHint": "Toggle demo data for Execution Center (local only)",
@@ -3094,19 +3124,119 @@
       "helpful": "Was this helpful?",
       "suggestions": "Suggested questions",
       "poweredBy": "Knowledge-grounded AI"
+    },
+    "feedback": {
+      "title": "Was this helpful?",
+      "yes": "Yes",
+      "no": "No",
+      "addComment": "Tell us what was missing",
+      "commentPlaceholder": "What should we improve?",
+      "submit": "Send feedback",
+      "skip": "Skip",
+      "thanks": "Thanks for the feedback",
+      "error": "Could not send feedback. Please try again."
     }
   },
   "settings": {
     "title": "Settings",
+    "saved": "Settings saved",
+    "saveError": "Failed to save settings",
+    "sectionNotFound": "Section not found",
+    "taxonomy": {
+      "badge": "Settings taxonomy",
+      "title": "One settings root with clear ownership",
+      "subtitle": "Users should understand what changes only their experience, what belongs to the tenant, and what stays inside a specific module.",
+      "scopeTitle": "Canonical settings scopes",
+      "impactTitle": "Runtime-impact controls",
+      "scopes": {
+        "personal": {
+          "title": "Personal settings",
+          "description": "Profile, preferences, security, and AI behavior that affect only the current user."
+        },
+        "tenant": {
+          "title": "Tenant handoff",
+          "description": "Organization and admin defaults own branding, locale, trust boundaries, and shared operating rules."
+        },
+        "module": {
+          "title": "Module settings",
+          "description": "Notifications, integrations, and similar controls should stay discoverable but inherit the root ownership model."
+        }
+      },
+      "impacts": {
+        "regional": "Language, timezone, and regional defaults should visibly change runtime behavior.",
+        "automation": "Notifications, memory, and AI controls should explain what signals and automations they affect.",
+        "tenantOwned": "Tenant-owned defaults should hand off to organization and admin surfaces instead of duplicating them here."
+      }
+    },
+    "ownership": {
+      "readOnly": "Read-only",
+      "source": "Source",
+      "unavailable": "Settings ownership data is temporarily unavailable.",
+      "loadError": "Failed to load settings ownership data.",
+      "openOrganization": "Open Organization",
+      "openBranding": "Open Branding",
+      "openAdminSecurity": "Open Admin Security",
+      "minutes": "{{count}} minutes",
+      "value": {
+        "notConfigured": "Not configured",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "tenantDefaults": {
+        "title": "Tenant defaults",
+        "subtitle": "Organization defaults are visible in Settings, but their source of truth stays in Organization or tenant-level policy."
+      },
+      "branding": {
+        "title": "Branding reuse from P30",
+        "subtitle": "Branding fields are consumed read-only from the organization context. Settings does not write organization branding."
+      },
+      "security": {
+        "title": "Security handoff to Admin",
+        "subtitle": "Security policy remains visible here with clear impact, but all writes route to Admin."
+      },
+      "modulePreferences": {
+        "title": "Module preferences",
+        "subtitle": "Module settings stay discoverable under one Settings root while inheriting the same ownership model."
+      },
+      "modules": {
+        "interview": "Interview",
+        "tools": "Tools",
+        "outputs": "Outputs",
+        "assessment": "Assessment",
+        "copilot": "AI / Copilot"
+      },
+      "defaultLanguage": "Default language",
+      "defaultTimezone": "Default timezone",
+      "defaultCurrency": "Default currency",
+      "defaultSharingMode": "Default sharing mode",
+      "brandColor": "Brand color",
+      "accentColor": "Accent color",
+      "customDomain": "Custom domain",
+      "mfaRequired": "MFA required",
+      "ssoEnforced": "SSO enforced",
+      "sessionTimeout": "Session timeout",
+      "guestAccess": "Guest access",
+      "externalLinkSharing": "External link sharing",
+      "toolApprovalRequired": "Tool approval required",
+      "recordingAutoStart": "Recording auto-start",
+      "aiTranscription": "AI transcription",
+      "defaultToolVisibility": "Default tool visibility",
+      "toolApproval": "Tool approval",
+      "defaultExportFormat": "Default export format",
+      "scoringScale": "Scoring scale",
+      "modelPreference": "Model preference",
+      "citationStyle": "Citation style"
+    },
     "menu": {
       "preferences": "Preferences",
       "theme": "Theme",
       "language": "Language",
-      "demoMode": "Open Demo",
+      "demoMode": "Open Sample Workspace",
       "demoModeExit": "Exit Demo",
-      "demoModeOn": "Demo mode is on - you are exploring Atelier Toys",
-      "demoModeOff": "Open the Atelier Toys demo workspace",
-      "demoReadOnly": "Demo data - read only",
+      "demoModeExitWorkspace": "Exit Sample Workspace",
+      "demoModeOn": "Sample workspace is on - you are exploring Atelier Toys",
+      "demoModeOff": "Open the Atelier Toys sample workspace",
+      "demoReadOnly": "Sample data - read only",
       "myProfile": "My Profile",
       "billing": "Billing & Plans",
       "aiConfig": "AI Configuration",
@@ -3136,6 +3266,7 @@
       "save": "Save Changes",
       "saved": "Saved!",
       "changePhoto": "Change Photo",
+      "defaultDemoName": "Professional",
       "publicProfile": "PUBLIC PROFILE",
       "displayName": "Display Name",
       "displayNameHint": "This is how your name will appear to other users. Leave empty to use your full name.",
@@ -3172,6 +3303,63 @@
       "system": "System",
       "language": "Language",
       "languageHint": "Select your preferred language.",
+      "jobTitleSuggestions": {
+        "ceo": "CEO",
+        "cto": "CTO",
+        "cfo": "CFO",
+        "coo": "COO",
+        "cmo": "CMO",
+        "vpEngineering": "VP of Engineering",
+        "vpProduct": "VP of Product",
+        "vpOperations": "VP of Operations",
+        "director": "Director",
+        "seniorManager": "Senior Manager",
+        "manager": "Manager",
+        "projectManager": "Project Manager",
+        "productManager": "Product Manager",
+        "programManager": "Program Manager",
+        "teamLead": "Team Lead",
+        "techLead": "Tech Lead",
+        "engineeringLead": "Engineering Lead",
+        "seniorDeveloper": "Senior Developer",
+        "developer": "Developer",
+        "softwareEngineer": "Software Engineer",
+        "businessAnalyst": "Business Analyst",
+        "dataAnalyst": "Data Analyst",
+        "dataScientist": "Data Scientist",
+        "consultant": "Consultant",
+        "seniorConsultant": "Senior Consultant",
+        "principalConsultant": "Principal Consultant",
+        "designer": "Designer",
+        "uxDesigner": "UX Designer",
+        "productDesigner": "Product Designer",
+        "other": "Other"
+      },
+      "timezones": {
+        "Europe/Warsaw": "Warsaw (CET/CEST)",
+        "Europe/London": "London (GMT/BST)",
+        "Europe/Berlin": "Berlin (CET/CEST)",
+        "Europe/Paris": "Paris (CET/CEST)",
+        "America/New_York": "New York (EST/EDT)",
+        "America/Chicago": "Chicago (CST/CDT)",
+        "America/Denver": "Denver (MST/MDT)",
+        "America/Los_Angeles": "Los Angeles (PST/PDT)",
+        "Asia/Tokyo": "Tokyo (JST)",
+        "Asia/Shanghai": "Shanghai (CST)",
+        "Asia/Dubai": "Dubai (GST)",
+        "Australia/Sydney": "Sydney (AEST/AEDT)",
+        "UTC": "UTC"
+      },
+      "dateFormats": {
+        "DD_slash_MM_slash_YYYY": "DD/MM/YYYY (31/12/2024)",
+        "MM_slash_DD_slash_YYYY": "MM/DD/YYYY (12/31/2024)",
+        "YYYY_dash_MM_dash_DD": "YYYY-MM-DD (2024-12-31)",
+        "DD_dot_MM_dot_YYYY": "DD.MM.YYYY (31.12.2024)"
+      },
+      "timeFormats": {
+        "24h": "24-hour (14:30)",
+        "12h": "12-hour (2:30 PM)"
+      },
       "pronounsOptions": {
         "preferNotToSay": "Prefer not to say",
         "heHim": "He/Him",
@@ -3196,6 +3384,228 @@
         "other": "Other"
       }
     },
+    "signatures": {
+      "title": "Email Signatures",
+      "description": "Create and manage your email signatures",
+      "defaultDemoName": "Professional",
+      "add": "Add Signature",
+      "empty": "No signatures yet",
+      "createFirst": "Create your first signature",
+      "default": "Default",
+      "setDefault": "Set as default",
+      "copy": "Copy",
+      "edit": "Edit",
+      "delete": "Delete",
+      "editTitle": "Edit Signature",
+      "createTitle": "Create Signature",
+      "dialogDesc": "This signature will be available for use in emails",
+      "name": "Signature Name",
+      "namePlaceholder": "e.g., Professional, Casual",
+      "content": "Signature Content",
+      "contentPlaceholder": "Enter your signature...",
+      "preview": "Preview",
+      "error": "Error",
+      "loadFailed": "Failed to load signatures. Please try again later.",
+      "fillFields": "Please fill in all fields",
+      "updated": "Signature Updated",
+      "updatedDesc": "Your signature has been updated",
+      "created": "Signature Created",
+      "createdDesc": "Your new signature has been created",
+      "saveFailed": "Failed to save signature",
+      "deleted": "Signature Deleted",
+      "deletedDesc": "The signature has been removed",
+      "defaultSet": "Default Updated",
+      "defaultSetDesc": "Default signature has been updated",
+      "copied": "Copied",
+      "copiedDesc": "Signature copied to clipboard"
+    },
+    "work": {
+      "title": "Work Preferences",
+      "description": "Customize how you view and manage your tasks and projects",
+      "saved": "Work preferences saved successfully",
+      "error": "Failed to save preferences",
+      "defaultView": "Default Project View",
+      "defaultViewDescription": "Choose how projects are displayed by default when you open them",
+      "taskDefaults": "Task Defaults",
+      "taskDefaultsDescription": "Set default values for new tasks",
+      "defaultPriority": "Default Task Priority",
+      "defaultReminder": "Default Reminder",
+      "defaultReminderDescription": "When to remind you before task due date",
+      "snoozeAndFocus": "Snooze & Focus",
+      "defaultSnooze": "Default Snooze Duration",
+      "defaultSnoozeDescription": "How long to snooze notifications by default",
+      "autoSnoozeOverdue": "Auto-Snooze Overdue Tasks",
+      "autoSnoozeOverdueDescription": "Automatically snooze notifications for overdue tasks",
+      "enableFocusMode": "Enable Focus Mode",
+      "enableFocusModeDescription": "Allow activating focus mode for distraction-free work",
+      "focusBlocksNotifications": "Block Notifications During Focus",
+      "focusBlocksNotificationsDescription": "Pause all notifications when focus mode is active",
+      "defaultFocusDuration": "Default Focus Duration",
+      "defaultFocusDurationDescription": "Default timer length for focus sessions",
+      "taskDisplay": "Task Display & Sorting",
+      "defaultSort": "Default Sort Order",
+      "defaultSortDescription": "How tasks are sorted by default in lists",
+      "weekStart": "Week Start Day",
+      "weekStartDescription": "For calendar views and weekly reports",
+      "monday": "Monday",
+      "sunday": "Sunday",
+      "showCompleted": "Show Completed Tasks",
+      "showCompletedDescription": "Display completed tasks in project views by default",
+      "showSubtasks": "Show Subtasks by Default",
+      "showSubtasksDescription": "Automatically expand subtasks in task lists",
+      "automation": "Automation & Defaults",
+      "autoArchive": "Auto-Archive Completed Tasks",
+      "autoArchiveDescription": "Automatically archive tasks after completion",
+      "never": "Never",
+      "days": "{{count}} days",
+      "defaultDue": "Default Task Due Date",
+      "defaultDueDescription": "Days from creation for new tasks",
+      "noDueDate": "No default",
+      "tomorrow": "Tomorrow",
+      "timeTracking": "Time Tracking Mode",
+      "timeTrackingDescription": "Default time tracking behavior",
+      "timeNone": "Disabled",
+      "timeManual": "Manual Entry",
+      "timeAuto": "Automatic Timer",
+      "views": {
+        "kanban": "Kanban Board",
+        "kanbanDesc": "Drag and drop cards",
+        "list": "List View",
+        "listDesc": "Traditional table format",
+        "timeline": "Timeline",
+        "timelineDesc": "Gantt-style view",
+        "calendar": "Calendar",
+        "calendarDesc": "Calendar layout"
+      },
+      "sort": {
+        "priority": "Priority",
+        "dueDate": "Due Date",
+        "created": "Created Date",
+        "alphabetical": "Alphabetical"
+      },
+      "priority": {
+        "none": "No Priority",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent"
+      },
+      "reminder": {
+        "none": "No reminder",
+        "15min": "15 minutes before",
+        "30min": "30 minutes before",
+        "1hour": "1 hour before",
+        "3hours": "3 hours before",
+        "1day": "1 day before",
+        "3days": "3 days before"
+      },
+      "snooze": {
+        "15min": "15 minutes",
+        "30min": "30 minutes",
+        "1hour": "1 hour",
+        "3hours": "3 hours",
+        "tomorrow": "Tomorrow morning",
+        "nextWeek": "Next week"
+      },
+      "focus": {
+        "15min": "15 minutes",
+        "25min": "25 minutes (Pomodoro)",
+        "45min": "45 minutes",
+        "60min": "1 hour",
+        "90min": "90 minutes"
+      }
+    },
+    "regional": {
+      "title": "Regional Settings",
+      "description": "Configure your locale, timezone, and format preferences",
+      "saved": "Regional preferences saved",
+      "error": "Failed to save preferences",
+      "tenantDefaultsHint": "Organization defaults stay read-only here. Your personal preference can override them only for your own experience.",
+      "tenantTimezone": "Tenant timezone: {{timezone}}",
+      "tenantCurrency": "Tenant currency: {{currency}}",
+      "timezone": "Timezone",
+      "timezoneDescription": "Set your local timezone for accurate dates and times across the platform.",
+      "currentTime": "Current time:",
+      "dateTimeTitle": "Date & Time Format",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "firstDayOfWeek": "First Day of Week",
+      "monday": "Monday",
+      "sunday": "Sunday",
+      "currencyTitle": "Currency & Numbers",
+      "currency": "Currency",
+      "currencyExample": "Example:",
+      "numberFormat": "Number Format",
+      "numberExample": "Large number example:",
+      "measurementTitle": "Measurement System",
+      "measurementDescription": "Choose your preferred system for weights, distances, and temperatures.",
+      "metric": "Metric",
+      "imperial": "Imperial",
+      "metricDetails": "meters, kilograms, °C",
+      "imperialDetails": "feet, pounds, °F",
+      "preview": "Preview of Your Settings",
+      "dateLabel": "Date",
+      "timeLabel": "Time",
+      "currencyLabel": "Currency",
+      "numberLabel": "Number",
+      "currencies": {
+        "USD": "US Dollar",
+        "EUR": "Euro",
+        "GBP": "British Pound",
+        "PLN": "Polish Zloty",
+        "CHF": "Swiss Franc",
+        "JPY": "Japanese Yen",
+        "CAD": "Canadian Dollar",
+        "AUD": "Australian Dollar",
+        "CNY": "Chinese Yuan",
+        "INR": "Indian Rupee"
+      },
+      "numberFormats": {
+        "en-US": "English (US)",
+        "de-DE": "German",
+        "pl-PL": "Polish",
+        "fr-FR": "French"
+      },
+      "dateFormats": {
+        "DD/MM/YYYY": "Day/Month/Year",
+        "MM/DD/YYYY": "Month/Day/Year",
+        "YYYY-MM-DD": "ISO (Year-Month-Day)",
+        "DD.MM.YYYY": "Day.Month.Year"
+      },
+      "timeFormats": {
+        "24h": "24-hour",
+        "12h": "12-hour"
+      }
+    },
+    "workingHours": {
+      "title": "Working Hours",
+      "description": "Set your availability for meetings and work",
+      "saved": "Working hours saved",
+      "error": "Failed to save working hours",
+      "workingDays": "Working Days",
+      "weeklyHours": "Weekly Hours",
+      "timezone": "Timezone",
+      "scheduleType": "Schedule Type",
+      "scheduleTypeDescription": "Choose how you want to set your working hours",
+      "sameEveryDay": "Same every day",
+      "sameEveryDayDescription": "Use the same hours for all weekdays",
+      "customPerDay": "Custom per day",
+      "customPerDayDescription": "Set different hours for each day",
+      "weeklySchedule": "Weekly Schedule",
+      "to": "to",
+      "notWorking": "Not working",
+      "note": "Note",
+      "noteText": "Your working hours are used for scheduling features like meeting availability, out-of-office notifications, and focus time suggestions.",
+      "days": {
+        "monday": { "full": "Monday", "short": "Mon" },
+        "tuesday": { "full": "Tuesday", "short": "Tue" },
+        "wednesday": { "full": "Wednesday", "short": "Wed" },
+        "thursday": { "full": "Thursday", "short": "Thu" },
+        "friday": { "full": "Friday", "short": "Fri" },
+        "saturday": { "full": "Saturday", "short": "Sat" },
+        "sunday": { "full": "Sunday", "short": "Sun" }
+      }
+    },
     "billing": "Billing",
     "financeDefaults": "Finance Defaults",
     "financeDefaultsDesc": "Default values for new valuations, budgets, and financial models across the organization.",
@@ -3204,11 +3614,1078 @@
     "defaultHorizon": "Default Horizon (years)",
     "financeSaved": "Finance defaults saved",
     "financeError": "Failed to save finance defaults",
-    "ai": "AI Settings",
-    "notifications": "Notifications",
-    "integrations": "Integrations",
+    "ai": {
+      "title": "AI Settings",
+      "promptLibraryTitle": "Prompt Library",
+      "promptLibraryDesc": "Save and organize reusable prompts for different contexts — interviews, analysis, reports, and more.",
+      "newPrompt": "New Prompt",
+      "noPrompts": "No prompts in this category.",
+      "promptSaveError": "Failed to save prompt library",
+      "loadError": "Failed to load settings",
+      "configurationSaved": "Configuration saved",
+      "configurationSaveError": "Failed to save configuration",
+      "providerSaveError": "Failed to save provider",
+      "behaviorSaved": "AI behavior settings saved",
+      "behaviorError": "Failed to save AI behavior settings",
+      "templateApplied": "{{name}} template applied",
+      "behaviorTemplates": {
+        "professional": {
+          "name": "Professional",
+          "prompt": "I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology."
+        },
+        "creative": {
+          "name": "Creative",
+          "prompt": "Be creative and think outside the box. Suggest innovative solutions. Use analogies and examples."
+        },
+        "technical": {
+          "name": "Technical",
+          "prompt": "Provide detailed technical explanations. Include code examples when relevant. Be precise with specifications."
+        },
+        "concise": {
+          "name": "Concise",
+          "prompt": "Keep responses brief and to the point. Use bullet points. Avoid unnecessary explanations."
+        }
+      },
+      "style": {
+        "concise": "Concise",
+        "balanced": "Balanced",
+        "detailed": "Detailed"
+      },
+      "tone": {
+        "professional": "Professional",
+        "friendly": "Friendly",
+        "casual": "Casual",
+        "academic": "Academic"
+      },
+      "formality": {
+        "formal": "Formal",
+        "balanced": "Balanced",
+        "informal": "Informal"
+      },
+      "verbosity": {
+        "minimal": "Minimal",
+        "concise": "Concise",
+        "detailed": "Detailed",
+        "comprehensive": "Comprehensive"
+      },
+      "promptRequired": "Name and prompt text are required",
+      "promptUpdated": "Prompt updated",
+      "promptCreated": "Prompt created",
+      "promptDeleted": "Prompt deleted",
+      "promptCopied": "Prompt copied to clipboard",
+      "cantDeleteBuiltin": "Built-in prompts cannot be deleted",
+      "editPrompt": "Edit Prompt",
+      "createPrompt": "Create Prompt",
+      "promptName": "Name",
+      "promptCategory": "Category",
+      "promptText": "Prompt Text",
+      "promptNamePlaceholder": "e.g., Interview Deep-Dive",
+      "promptTextPlaceholder": "Write your reusable prompt here...",
+      "builtIn": "Built-in",
+      "promptCategories": {
+        "interview": "Interview",
+        "analysis": "Analysis",
+        "report": "Report",
+        "general": "General"
+      },
+      "builtins": {
+        "professional": {
+          "name": "Professional",
+          "prompt": "I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology."
+        },
+        "interviewPrep": {
+          "name": "Interview Preparation",
+          "prompt": "Help me prepare structured interview questions. Focus on behavioral and competency-based questions. Suggest follow-ups for each main question."
+        },
+        "dataAnalysis": {
+          "name": "Data Analysis",
+          "prompt": "Analyze data thoroughly. Present findings with clear structure: key metrics, trends, anomalies, and actionable recommendations. Use tables when helpful."
+        },
+        "executiveReport": {
+          "name": "Executive Report",
+          "prompt": "Write in executive summary style. Lead with conclusions, then supporting evidence. Keep paragraphs short. Use bullet points for key takeaways."
+        }
+      }
+    },
+    "aiUsage": {
+      "title": "AI Usage Overview",
+      "subtitle": "Monitor your AI usage and token consumption",
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "totalRequests": "Total Requests",
+      "tokensUsed": "Tokens Used",
+      "estimatedCost": "Est. Cost",
+      "avgResponseTime": "Avg Response",
+      "usageLimit": "Usage Limit",
+      "nearLimit": "You are approaching your usage limit",
+      "overLimit": "You have exceeded your usage limit",
+      "byFeature": "Usage by Feature",
+      "byFeatureDesc": "Breakdown of AI usage across different features",
+      "usageTrend": "Usage Trend",
+      "usageTrendDesc": "Daily token usage over time",
+      "successRate": "Success Rate",
+      "successRateDesc": "Percentage of successful AI requests without errors",
+      "performance": "Performance Metrics",
+      "features": {
+        "chat": "AI Chat",
+        "ai_chat": "AI Chat",
+        "document": "Document Analysis",
+        "document_analysis": "Document Analysis",
+        "search": "Smart Search",
+        "smart_search": "Smart Search",
+        "autocomplete": "Autocomplete",
+        "summary": "Summaries",
+        "general": "General"
+      }
+    },
+    "notifications": {
+      "label": "Notifications",
+      "title": "Notification Preferences",
+      "description": "Manage how and when you receive notifications across all channels",
+      "saved": "Notification preferences saved",
+      "error": "Failed to save preferences",
+      "activity": "Activity",
+      "inApp": "In-App",
+      "email": "Email",
+      "taskAssignment": "Task Assignments",
+      "taskAssignmentDesc": "When a new task is assigned to you",
+      "taskUpdates": "Task Updates",
+      "taskUpdatesDesc": "When status changes or comments are added",
+      "mentions": "Mentions",
+      "mentionsDesc": "When someone mentions you in a comment",
+      "milestones": "Project Milestones",
+      "milestonesDesc": "Major project updates and completions",
+      "enableAll": "Enable All",
+      "minimal": "Minimal",
+      "integrationNote": "You have {{count}} connected integration(s). Notifications can be sent to these channels as well.",
+      "provider": {
+        "slack": "Slack",
+        "teams": "Teams",
+        "whatsapp": "WhatsApp",
+        "trello": "Trello",
+        "jira": "Jira",
+        "clickup": "ClickUp"
+      },
+      "channels": {
+        "title": "Notification Channels",
+        "description": "Choose where to receive notifications",
+        "connected": "Connected",
+        "verified": "Verified",
+        "channelsSaved": "Notification channels saved",
+        "channelsError": "Failed to save notification channels",
+        "authStarted": "Authorization started. Finish the external auth step to complete setup.",
+        "setupStarted": "Setup started. Complete the required configuration fields to continue.",
+        "validationPending": "Configuration submitted. Validation is still pending.",
+        "connectedToast": "{{channel}} connected successfully",
+        "connectError": "Failed to connect {{channel}}",
+        "disconnectedToast": "{{channel}} disconnected",
+        "disconnectError": "Failed to disconnect {{channel}}",
+        "smsCodeSent": "Verification code sent to your phone",
+        "smsCodeError": "Failed to send verification code",
+        "phoneVerified": "Phone number verified",
+        "invalidCode": "Invalid verification code",
+        "enableNotifications": "Enable notifications",
+        "slackDescription": "Receive notifications in Slack",
+        "teamsDescription": "Receive notifications in Teams",
+        "smsTitle": "SMS Notifications",
+        "smsDescription": "Receive critical notifications via SMS",
+        "sendCode": "Send Verification Code",
+        "enterCode": "Enter the verification code sent to your phone",
+        "verify": "Verify",
+        "enableSms": "Enable SMS notifications",
+        "criticalOnly": "Critical notifications only (urgent tasks, security alerts)",
+        "whatsappDescription": "Receive notifications via WhatsApp",
+        "inAppTitle": "In-App Notification Center",
+        "inAppDescription": "Configure the in-app notification experience",
+        "showUnreadBadge": "Show Unread Badge",
+        "showUnreadBadgeDesc": "Display count of unread notifications",
+        "autoMarkAsRead": "Auto Mark as Read",
+        "autoMarkAsReadDesc": "Mark notifications as read when viewed",
+        "groupByType": "Group by Type",
+        "groupByTypeDesc": "Group similar notifications together",
+        "maxToKeep": "Max Notifications to Keep",
+        "notificationCount": "{{count}} notifications",
+        "emailTitle": "Email Notifications",
+        "channel": {
+          "slack": "Slack",
+          "teams": "Microsoft Teams",
+          "sms": "SMS",
+          "whatsapp": "WhatsApp",
+          "email": "Email",
+          "inApp": "In-App"
+        }
+      },
+      "digest": {
+        "title": "Email Digest",
+        "subtitle": "Configure how often you receive email summaries",
+        "frequency": "Digest Frequency",
+        "content": "Digest Content",
+        "format": "Email Format",
+        "saved": "Digest preferences saved",
+        "error": "Failed to save digest preferences",
+        "freq_instant": "Instant",
+        "freq_instant_desc": "Receive notifications immediately",
+        "freq_hourly": "Hourly",
+        "freq_hourly_desc": "Receive a summary every hour",
+        "freq_daily": "Daily",
+        "freq_daily_desc": "Receive a summary once per day",
+        "freq_weekly": "Weekly",
+        "freq_weekly_desc": "Receive a summary once per week",
+        "content_summary": "Summary",
+        "content_summary_desc": "Brief overview only",
+        "content_full": "Full Details",
+        "content_full_desc": "Complete notification content",
+        "format_html": "HTML",
+        "format_html_desc": "Rich formatting",
+        "format_plain": "Plain Text",
+        "format_plain_desc": "Simple text format"
+      },
+      "sounds": {
+        "title": "Sound & Desktop Notifications",
+        "subtitle": "Configure sound alerts and desktop notification settings",
+        "saved": "Sound preferences saved",
+        "error": "Failed to save sound preferences",
+        "enableSounds": "Enable Sounds",
+        "enableSoundsDesc": "Play sound alerts for notifications",
+        "soundPerType": "Sound per Notification Type",
+        "desktopPosition": "Desktop Notification Position",
+        "desktopDuration": "Desktop Notification Duration",
+        "type_task_assigned": "Task Assigned",
+        "type_task_updated": "Task Updated",
+        "type_mention": "Mentions",
+        "type_milestone": "Milestones",
+        "sound_default": "Default",
+        "sound_chime": "Chime",
+        "sound_bell": "Bell",
+        "sound_pop": "Pop",
+        "sound_none": "None",
+        "pos_top-right": "Top Right",
+        "pos_top-left": "Top Left",
+        "pos_bottom-right": "Bottom Right",
+        "pos_bottom-left": "Bottom Left"
+      }
+    },
+    "integrations": {
+      "title": "Integrations",
+      "description": "Connect external tools and configure webhooks.",
+      "calendarTitle": "Calendar Sync",
+      "calendarDesc": "Sync your tasks and deadlines with external calendars.",
+      "syncOptions": "Sync Options",
+      "syncTasks": "Sync Tasks",
+      "syncTasksDesc": "Add task deadlines to your calendar",
+      "syncMeetings": "Sync Meetings",
+      "syncMeetingsDesc": "Add project meetings to your calendar",
+      "connected": "Calendar connected",
+      "disconnected": "Calendar disconnected",
+      "connectError": "Failed to connect calendar",
+      "disconnectError": "Failed to disconnect",
+      "disconnectConfirm": "Disconnect this calendar?",
+      "calendarProviders": {
+        "google": "Google Calendar",
+        "outlook": "Outlook",
+        "apple": "Apple Calendar"
+      },
+      "appsTitle": "Connected Apps",
+      "appsDesc": "Connect your favourite tools. We use secure OAuth — we never store your passwords.",
+      "searchPlaceholder": "Search apps...",
+      "noResults": "No apps found",
+      "testSuccess": "Connection working!",
+      "testFailed": "Connection test failed",
+      "fieldRequired": "Please fill in {{field}}",
+      "note": "Note:",
+      "notePersonal": "These are your personal connections — only you can see and manage them.",
+      "noteOAuth": "We use secure OAuth 2.0 — we never store your passwords.",
+      "noteAdmin": "Your admin can see which apps you have connected, but not your credentials.",
+      "cat": {
+        "all": "All",
+        "email": "Email & Communication",
+        "calendar": "Calendar",
+        "taskMgmt": "Task Management",
+        "cloud": "Cloud Storage"
+      }
+    },
+    "availability": {
+      "title": "Availability & Focus",
+      "description": "Control when notifications reach you - temporary mute or recurring schedule",
+      "saved": "Availability settings saved",
+      "error": "Failed to save availability settings",
+      "dnd": "Do Not Disturb",
+      "dndDesc": "Temporarily pause all notifications",
+      "dndActive": "DND is active",
+      "until": "Until",
+      "preset1h": "1 hour",
+      "preset2h": "2 hours",
+      "preset4h": "4 hours",
+      "presetTomorrow": "Until tomorrow 9 AM",
+      "customEndTime": "Custom End Time",
+      "quietHours": "Scheduled Quiet Hours",
+      "quietActive": "Quiet Hours are currently active",
+      "activeUntil": "Active until",
+      "enableQuiet": "Enable Quiet Hours",
+      "enableQuietDesc": "Pause notifications during scheduled times",
+      "schedule": "Schedule",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "activeDays": "Active on these days",
+      "preset_nights": "Nights (10pm-8am)",
+      "preset_weekends": "Weekends only",
+      "preset_afterWork": "After work (6pm-9am, weekdays)",
+      "exceptions": "Exceptions",
+      "exceptionsDesc": "Allow certain notifications even during quiet hours",
+      "allowUrgent": "Allow urgent notifications",
+      "allowUrgentDesc": "High-priority alerts will still come through",
+      "allowMentions": "Allow @mentions",
+      "allowMentionsDesc": "Get notified when someone mentions you",
+      "allowDMs": "Allow direct messages",
+      "allowDMsDesc": "Private messages will still notify you",
+      "autoReply": "Auto Reply",
+      "enableAutoReply": "Enable auto-reply",
+      "enableAutoReplyDesc": "Automatically respond to messages during quiet hours",
+      "autoReplyMessage": "Auto-reply message",
+      "autoReplyPlaceholder": "I'm currently unavailable. I'll respond when I return.",
+      "days": {
+        "sun": { "short": "Sun", "full": "Sunday" },
+        "mon": { "short": "Mon", "full": "Monday" },
+        "tue": { "short": "Tue", "full": "Tuesday" },
+        "wed": { "short": "Wed", "full": "Wednesday" },
+        "thu": { "short": "Thu", "full": "Thursday" },
+        "fri": { "short": "Fri", "full": "Friday" },
+        "sat": { "short": "Sat", "full": "Saturday" }
+      }
+    },
+    "data": {
+      "title": "Data Controls",
+      "description": "Manage how your data is collected, used, and stored",
+      "saved": "Data control preferences saved",
+      "saveError": "Failed to save preferences",
+      "gdprTitle": "GDPR Compliant",
+      "gdprDesc": "We comply with GDPR regulations. You have full control over your personal data, including the right to access, export, and delete it.",
+      "consentsTitle": "Consent Management",
+      "consentsDesc": "Choose how we can use your data",
+      "analytics": "Usage Analytics",
+      "analyticsDesc": "Help improve the product by sharing anonymous usage data",
+      "personalization": "Personalization",
+      "personalizationDesc": "Use your data to personalize your experience and recommendations",
+      "marketing": "Marketing Communications",
+      "marketingDesc": "Receive product updates, tips, and promotional offers",
+      "thirdParty": "Third-Party Data Sharing",
+      "thirdPartyDesc": "Share data with trusted partners for enhanced features",
+      "aiTraining": "AI Model Training",
+      "aiTrainingDesc": "Allow your anonymized data to improve our AI models",
+      "retentionTitle": "Data Retention",
+      "retentionDesc": "Choose how long we keep your data",
+      "retention30": "30 days",
+      "retention90": "90 days",
+      "retention180": "6 months",
+      "retention365": "1 year",
+      "retentionForever": "Forever",
+      "retentionNote": "After this period, inactive data will be automatically anonymized or deleted.",
+      "portabilityTitle": "Data Portability",
+      "exportData": "Export Your Data",
+      "exportDataDesc": "Download a copy of all your personal data including profile, settings, activity history, and documents. Processing typically takes 24-48 hours.",
+      "exporting": "Exporting...",
+      "requestExport": "Request Export",
+      "exportRequested": "Data export requested. You will be notified when ready.",
+      "exportSuccess": "Data exported successfully",
+      "exportError": "Failed to request data export",
+      "dangerZone": "Danger Zone",
+      "deleteAccount": "Delete Account & Data",
+      "deleteAccountDesc": "Permanently delete your account and all associated data. This action cannot be undone. A 30-day grace period applies before final deletion.",
+      "requestDeletion": "Delete Account",
+      "deleteConfirmTitle": "Are you absolutely sure?",
+      "deleteConfirmDesc": "This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.",
+      "deleteConfirmPhrase": "delete my data",
+      "deleteConfirmType": "Type \"{{phrase}}\" to confirm:",
+      "deleteConfirmError": "Please type \"{{phrase}}\" to confirm",
+      "confirmDelete": "Delete Everything",
+      "deletionRequested": "Account deletion scheduled. You will receive a confirmation email.",
+      "deletionError": "Failed to request account deletion",
+      "relatedDocs": "Legal Documents",
+      "privacyPolicy": "Privacy Policy",
+      "privacyPolicyDesc": "How we handle your data",
+      "terms": "Terms of Service",
+      "termsDesc": "Core product and account terms",
+      "subscription": "Subscription & Pricing",
+      "subscriptionDesc": "Plans, billing, seats, and AI budget",
+      "dpa": "Data Processing",
+      "dpaDesc": "GDPR DPA terms",
+      "sla": "Service Levels",
+      "slaDesc": "Support response and service commitments",
+      "security": "Security Overview",
+      "securityDesc": "Security controls and review information",
+      "subprocessors": "Sub-processors",
+      "subprocessorsDesc": "Third-party services and data flow",
+      "legalCenter": "Legal Center",
+      "legalCenterDesc": "All legal and compliance documents"
+    },
+    "importExport": {
+      "title": "Settings Export & Import",
+      "subtitle": "Backup and restore your settings configuration",
+      "exportTitle": "Export Settings",
+      "exportDesc": "Download your settings as JSON file",
+      "exportSelected": "Export Selected",
+      "exportSuccess": "Settings exported successfully",
+      "exportError": "Failed to export settings",
+      "noData": "No data received",
+      "selectAll": "Select All",
+      "importTitle": "Import Settings",
+      "importDesc": "Restore settings from a JSON file",
+      "dropFile": "Drop settings file here or click to browse",
+      "acceptsJson": "Accepts .json files exported from Consultify",
+      "exportedAt": "Exported",
+      "errorsFound": "Errors Found",
+      "warnings": "Warnings",
+      "fileValid": "File validated successfully",
+      "settingsToImport": "Settings to import:",
+      "importButton": "Import Settings",
+      "importSuccess": "Settings imported successfully",
+      "importSuccessWithCount": "Settings imported successfully ({{count}} categories)",
+      "importError": "Failed to import settings",
+      "lastImportTitle": "Last import result",
+      "lastImportSummary": "Imported: {{imported}}. Skipped: {{skipped}}.",
+      "tipsTitle": "Tips",
+      "tipBackup": "Export settings before making major changes",
+      "tipPortable": "Settings files are portable between devices",
+      "tipSensitive": "Sensitive data (passwords, tokens) is not exported",
+      "tipIntegrations": "Integration credentials need to be re-authenticated after import",
+      "categories": {
+        "profile": "Profile & Contact",
+        "security": "Security Settings",
+        "privacy": "Privacy Settings",
+        "aiPreferences": "AI Preferences",
+        "notifications": "Notifications",
+        "integrations": "Integrations",
+        "appearance": "Appearance",
+        "keyboard": "Keyboard Shortcuts"
+      },
+      "validation": {
+        "missingVersion": "Missing version information",
+        "missingSettings": "Missing settings data",
+        "versionWarning": "Different settings version - some options may not apply",
+        "differentUser": "Settings from different user account",
+        "invalidJson": "Invalid JSON file"
+      }
+    },
+    "emailDigest": {
+      "title": "Email & Digest",
+      "description": "Choose which emails you receive and how they are summarized",
+      "categories": "Email Categories",
+      "digestSettings": "Digest Settings",
+      "frequency": "Digest Frequency",
+      "content": "Digest Content",
+      "format": "Email Format",
+      "saved": "Email & digest settings saved",
+      "error": "Failed to save email settings",
+      "cat_taskUpdates": "Task Updates",
+      "cat_taskUpdates_desc": "Updates on tasks assigned to you",
+      "cat_projectAlerts": "Project Alerts",
+      "cat_projectAlerts_desc": "Important project notifications",
+      "cat_weeklyDigest": "Weekly Digest",
+      "cat_weeklyDigest_desc": "Weekly summary of activity",
+      "cat_marketing": "Marketing",
+      "cat_marketing_desc": "Product updates and tips",
+      "freq_instant": "Instant",
+      "freq_instant_desc": "Receive notifications immediately",
+      "freq_hourly": "Hourly",
+      "freq_hourly_desc": "Receive a summary every hour",
+      "freq_daily": "Daily",
+      "freq_daily_desc": "Receive a summary once per day",
+      "freq_weekly": "Weekly",
+      "freq_weekly_desc": "Receive a summary once per week",
+      "content_summary": "Summary",
+      "content_summary_desc": "Brief overview only",
+      "content_full": "Full Details",
+      "content_full_desc": "Complete notification content",
+      "format_html": "HTML",
+      "format_html_desc": "Rich formatting",
+      "format_plain": "Plain Text",
+      "format_plain_desc": "Simple text format"
+    },
+    "desktopSounds": {
+      "title": "Desktop & Sounds",
+      "description": "Configure how notifications appear on your screen and what sounds they play",
+      "saved": "Desktop & sound settings saved",
+      "error": "Failed to save settings",
+      "pushEnabled": "Push notifications enabled",
+      "pushDenied": "Permission denied by browser",
+      "desktopNotifications": "Desktop Notifications",
+      "showDesktop": "Show desktop notifications",
+      "showDesktopDesc": "Display notifications in your browser",
+      "enablePush": "Enable Push Notifications",
+      "position": "Notification Position",
+      "pos_top-right": "Top Right",
+      "pos_top-left": "Top Left",
+      "pos_bottom-right": "Bottom Right",
+      "pos_bottom-left": "Bottom Left",
+      "duration": "Notification Duration",
+      "soundAlerts": "Sound Alerts",
+      "enableSounds": "Enable Sounds",
+      "enableSoundsDesc": "Play sound alerts for notifications",
+      "soundPerType": "Sound per Notification Type",
+      "type_task_assigned": "Task Assigned",
+      "type_task_updated": "Task Updated",
+      "type_mention": "Mentions",
+      "type_milestone": "Milestones",
+      "sound_default": "Default",
+      "sound_chime": "Chime",
+      "sound_bell": "Bell",
+      "sound_pop": "Pop",
+      "sound_none": "None"
+    },
+    "privacy": {
+      "title": "Privacy & Visibility",
+      "description": "Control who can see your information and activity",
+      "saved": "Privacy settings saved",
+      "error": "Failed to save preferences",
+      "statusTitle": "Online Status",
+      "showOnlineStatus": "Show Online Status",
+      "showOnlineStatusDescription": "Let others see when you are online",
+      "showInDirectory": "Show in Team Directory",
+      "showInDirectoryDescription": "Appear in the organization member directory",
+      "activityTitle": "Activity Visibility",
+      "activityDescription": "Choose who can see your recent activity and contributions",
+      "profileTitle": "Profile Visibility",
+      "profileDescription": "Control who can view your profile information",
+      "communicationTitle": "Communication & AI",
+      "allowMentions": "Allow @Mentions",
+      "allowMentionsDescription": "Let others mention you in comments and discussions",
+      "shareWithAI": "Share Activity with AI",
+      "shareWithAIDescription": "Allow AI assistant to use your activity for personalized recommendations",
+      "visibility": {
+        "all": "Everyone",
+        "allDesc": "All users can see your activity",
+        "team": "Team Only",
+        "teamDesc": "Only your team members",
+        "private": "Private",
+        "privateDesc": "Only you can see"
+      },
+      "profile": {
+        "public": "Public",
+        "publicDesc": "Anyone can view your profile",
+        "organization": "Organization",
+        "organizationDesc": "Only organization members",
+        "private": "Private",
+        "privateDesc": "Profile hidden from others"
+      }
+    },
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "description": "Customize keyboard shortcuts to boost your productivity",
+      "saved": "Keyboard shortcuts saved",
+      "error": "Failed to save shortcuts",
+      "reset": "Reset",
+      "enable": "Enable Keyboard Shortcuts",
+      "enableDesc": "Use keyboard shortcuts throughout the app",
+      "showHints": "Show Shortcut Hints",
+      "showHintsDesc": "Display keyboard shortcut hints next to actions",
+      "preset": "Shortcut Preset",
+      "search": "Search shortcuts...",
+      "pressKeysPlaceholder": "Press keys...",
+      "tip": "Tip",
+      "tipText": "Press \"?\" anywhere in the app to see available shortcuts. Sequences like \"g h\" mean press g, release, then press h.",
+      "presets": {
+        "default": { "label": "Default", "description": "Consultify default shortcuts" },
+        "vscode": { "label": "VS Code", "description": "Visual Studio Code style" },
+        "sublime": { "label": "Sublime Text", "description": "Sublime Text style" },
+        "vim": { "label": "Vim", "description": "Vim-style navigation" },
+        "custom": { "label": "Custom", "description": "Your custom configuration" }
+      },
+      "categories": {
+        "navigation": "NAVIGATION",
+        "editing": "EDITING",
+        "task_management": "TASK MANAGEMENT",
+        "search": "SEARCH",
+        "ai": "AI FEATURES",
+        "general": "GENERAL"
+      },
+      "editor": {
+        "subtitle": "Customize keyboard shortcuts for quick navigation",
+        "resetAll": "Reset All",
+        "allCategories": "All Categories",
+        "actionHeader": "Action",
+        "shortcutHeader": "Shortcut",
+        "actionsHeader": "Actions",
+        "custom": "Custom",
+        "conflict": "Conflict",
+        "tipsTitle": "Keyboard Shortcut Tips",
+        "tipEdit": "• Click \"Edit\" and press your desired key combination",
+        "tipSystem": "• Use Cmd/Ctrl + other keys for system shortcuts",
+        "tipSequences": "• Two-key sequences (like G I) work for navigation",
+        "tipConflicts": "• Conflicts are highlighted in red - resolve before saving",
+        "conflictWith": "Conflict with: {{shortcut}}",
+        "resetToDefault": "Reset to default",
+        "resetAllConfirm": "Reset all shortcuts to defaults?",
+        "allReset": "All shortcuts reset",
+        "categories": {
+          "navigation": "Navigation",
+          "editing": "Editing",
+          "views": "Views",
+          "actions": "Actions",
+          "ai": "AI",
+          "system": "System"
+        },
+        "actions": {
+          "go_home": "Go to Dashboard",
+          "go_inbox": "Go to Inbox",
+          "go_projects": "Go to Projects",
+          "new_task": "Create New Task",
+          "new_project": "Create New Project",
+          "search": "Open Search",
+          "command_palette": "Command Palette",
+          "ai_assist": "Open AI Assistant",
+          "save": "Save Current",
+          "toggle_sidebar": "Toggle Sidebar"
+        }
+      },
+      "actions": {
+        "go_home": { "name": "Go to Home", "description": "Navigate to dashboard" },
+        "go_tasks": { "name": "Go to Tasks", "description": "Navigate to my tasks" },
+        "go_inbox": { "name": "Go to Inbox", "description": "Navigate to inbox" },
+        "go_settings": { "name": "Go to Settings", "description": "Navigate to settings" },
+        "search_global": { "name": "Global Search", "description": "Open global search" },
+        "search_tasks": { "name": "Search Tasks", "description": "Search in tasks" },
+        "new_task": { "name": "New Task", "description": "Create a new task" },
+        "complete_task": { "name": "Complete Task", "description": "Mark selected task as done" },
+        "edit_task": { "name": "Edit Task", "description": "Edit selected task" },
+        "delete_task": { "name": "Delete Task", "description": "Delete selected task" },
+        "assign_task": { "name": "Assign Task", "description": "Assign selected task" },
+        "save": { "name": "Save", "description": "Save current changes" },
+        "undo": { "name": "Undo", "description": "Undo last action" },
+        "redo": { "name": "Redo", "description": "Redo last action" },
+        "ai_assist": { "name": "AI Assistant", "description": "Open AI assistant" },
+        "ai_summarize": { "name": "AI Summarize", "description": "Summarize selected text" },
+        "toggle_sidebar": { "name": "Toggle Sidebar", "description": "Show/hide sidebar" },
+        "notifications": { "name": "Notifications", "description": "Open notifications" },
+        "help": { "name": "Help", "description": "Show keyboard shortcuts" }
+      }
+    },
+    "developer": {
+      "tab": "Developer Mode",
+      "warning": "Developer Mode",
+      "warningDesc": "These settings are intended for developers and may affect app performance.",
+      "options": "Developer Options",
+      "optionsDesc": "Configure developer-specific settings",
+      "mode": "Developer Mode",
+      "modeDesc": "Enable developer tools and debugging features",
+      "apiLogging": "API Logging",
+      "apiLoggingDesc": "Log all API requests to the browser console",
+      "verboseErrors": "Verbose Errors",
+      "verboseErrorsDesc": "Show detailed error messages and stack traces",
+      "showDebug": "Show Debug Info",
+      "showDebugDesc": "Display debug panel in the app footer",
+      "debugInfo": "Debug Information",
+      "debugInfoDesc": "Current session and environment details",
+      "save": "Save Developer Settings",
+      "saved": "Settings Saved",
+      "savedDesc": "Developer settings have been saved to your account",
+      "error": "Error",
+      "errorDesc": "Failed to save developer settings",
+      "copied": "Copied",
+      "copiedDesc": "Debug info copied to clipboard"
+    },
+    "beta": {
+      "tab": "Beta Features",
+      "title": "Beta Features",
+      "description": "Try out new features before they are released. Beta features may be unstable or change without notice.",
+      "expectedRelease": "Expected release: {{date}}",
+      "updated": "Feature Updated",
+      "updatedDesc": "Beta feature setting has been saved",
+      "error": "Error",
+      "errorDesc": "Failed to save beta feature setting",
+      "features": {
+        "ai-v2": {
+          "name": "AI Chat V2",
+          "description": "New conversational AI interface with enhanced context awareness"
+        },
+        "collaborative-editing": {
+          "name": "Collaborative Editing",
+          "description": "Real-time collaborative document editing with presence indicators"
+        },
+        "smart-scheduling": {
+          "name": "Smart Scheduling",
+          "description": "AI-powered task scheduling based on your work patterns"
+        },
+        "voice-commands": {
+          "name": "Voice Commands",
+          "description": "Control the app using voice commands"
+        }
+      }
+    },
+    "flags": {
+      "tab": "Feature Flags",
+      "title": "Feature Flags",
+      "description": "Current feature flag configuration. These are managed by administrators and cannot be changed here.",
+      "current": "Current Configuration",
+      "descriptions": {
+        "ENABLE_ANALYTICS": "Enable analytics tracking",
+        "MAX_UPLOAD_SIZE_MB": "Maximum file upload size",
+        "API_VERSION": "Current API version",
+        "ENABLE_WEBSOCKETS": "Enable real-time updates",
+        "DEBUG_MODE": "Enable debug mode"
+      }
+    },
+    "advanced": {
+      "saved": "Advanced settings saved",
+      "error": "Failed to save settings",
+      "shortcuts": {
+        "newTask": "New Task",
+        "search": "Search",
+        "quickSwitchProject": "Quick Switch Project",
+        "toggleSidebar": "Toggle Sidebar",
+        "openSettings": "Open Settings",
+        "toggleDarkMode": "Toggle Dark Mode",
+        "markTaskComplete": "Mark Task Complete",
+        "openAiAssistant": "Open AI Assistant",
+        "focusMode": "Focus Mode"
+      },
+      "shortcutCategories": {
+        "tasks": "Tasks",
+        "navigation": "Navigation",
+        "general": "General",
+        "ai": "AI",
+        "focus": "Focus"
+      }
+    },
+    "accessibility": {
+      "saved": "Accessibility preferences saved",
+      "error": "Failed to save preferences",
+      "typographyTitle": "Typography",
+      "typographyDesc": "Font size, family, and readability preferences",
+      "fontSizeTitle": "Font Size",
+      "fontSize": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "extraLarge": "Extra Large"
+      },
+      "fontFamilyTitle": "Font Family",
+      "fontFamily": {
+        "system": "System Default",
+        "inter": "Inter",
+        "roboto": "Roboto",
+        "openSans": "Open Sans",
+        "lato": "Lato",
+        "dyslexic": "OpenDyslexic",
+        "mono": "Monospace"
+      },
+      "lineHeightTitle": "Line Height",
+      "lineHeightDescription": "Space between lines of text",
+      "letterSpacingTitle": "Letter Spacing",
+      "letterSpacingDescription": "Space between characters",
+      "caretWidthTitle": "Text Cursor Width",
+      "caretWidthDescription": "Make the blinking text cursor more visible",
+      "visualTitle": "Visual Settings",
+      "visualDesc": "Contrast, motion, color vision, and focus indicators",
+      "highContrast": "High Contrast Mode",
+      "highContrastDescription": "Increase contrast for better visibility",
+      "reduceMotion": "Reduce Motion",
+      "reduceMotionDescription": "Disable animations and transitions",
+      "underlineLinks": "Underline Links",
+      "underlineLinksDescription": "Always show underlines on clickable links",
+      "textSpacing": "Text Spacing",
+      "textSpacingDescription": "Adjust spacing between lines and letters",
+      "colorVisionTitle": "Color Vision",
+      "colorVisionDescription": "Adjust colors for different types of color blindness",
+      "focusStyleTitle": "Focus Indicator Style",
+      "focusStyleDescription": "Choose how focused elements are highlighted when using keyboard navigation",
+      "navigationTitle": "Navigation & Input",
+      "navigationDesc": "Keyboard hints, focus rings, and cursor preferences",
+      "keyboardShortcuts": "Show Keyboard Shortcuts",
+      "keyboardShortcutsDescription": "Display keyboard shortcut hints in tooltips",
+      "focusHighlight": "Enhanced Focus Indicator",
+      "focusHighlightDescription": "Show clear visual focus rings when navigating with keyboard",
+      "cursorSize": "Cursor Size",
+      "cursorSizeDescription": "Increase cursor visibility",
+      "assistiveTitle": "Assistive Technology",
+      "assistiveDesc": "Screen reader, voice control, and speech features",
+      "screenReaderOptimized": "Screen Reader Optimizations",
+      "screenReaderOptimizedDescription": "Improve compatibility with screen readers like NVDA and VoiceOver",
+      "textToSpeech": "Text to Speech",
+      "textToSpeechDescription": "Read selected text aloud",
+      "speechToText": "Speech to Text",
+      "speechToTextDescription": "Use voice dictation for text input",
+      "voiceCommands": "Voice Commands",
+      "voiceCommandsDescription": "Control the app using voice commands",
+      "spacing": {
+        "default": "Default",
+        "relaxed": "Relaxed",
+        "spacious": "Spacious"
+      },
+      "lineHeight": {
+        "default": "Default",
+        "relaxed": "Relaxed",
+        "loose": "Loose"
+      },
+      "letterSpacing": {
+        "default": "Default",
+        "wide": "Wide",
+        "wider": "Wider"
+      },
+      "caretWidth": {
+        "default": "Default",
+        "thick": "Thick"
+      },
+      "focusStyle": {
+        "default": "Default",
+        "highContrast": "High Contrast",
+        "animated": "Animated"
+      },
+      "cursor": {
+        "default": "Default",
+        "large": "Large"
+      },
+      "colorVision": {
+        "none": "None",
+        "noneDesc": "No color adjustments",
+        "protanopia": "Protanopia",
+        "protanopiaDesc": "Red-blind (1% of males)",
+        "deuteranopia": "Deuteranopia",
+        "deuteranopiaDesc": "Green-blind (6% of males)",
+        "tritanopia": "Tritanopia",
+        "tritanopiaDesc": "Blue-blind (rare)"
+      }
+    },
+    "templates": {
+      "title": "Settings Templates",
+      "subtitle": "Apply predefined configurations or save your own",
+      "saveCurrent": "Save Current as Template",
+      "systemTemplates": "System Templates",
+      "recommended": "Recommended",
+      "applying": "Applying...",
+      "applyTemplate": "Apply Template",
+      "apply": "Apply",
+      "myTemplates": "My Templates",
+      "noCustomTemplates": "No custom templates yet",
+      "noCustomTemplatesHint": "Save your current settings as a template to use later",
+      "saveAsTemplate": "Save as Template",
+      "templateName": "Template Name",
+      "namePlaceholder": "My Settings Template",
+      "descriptionOptional": "Description (optional)",
+      "descriptionPlaceholder": "Describe this template...",
+      "saveTemplate": "Save Template",
+      "applyConfirm": "Apply \"{{name}}\" template? This will overwrite your current settings.",
+      "applied": "Applied \"{{name}}\" template",
+      "applyError": "Failed to apply template",
+      "customDescriptionFallback": "Custom settings template",
+      "created": "Template created from current settings",
+      "createError": "Failed to create template",
+      "deleteConfirm": "Delete this template?",
+      "deleted": "Template deleted",
+      "deleteError": "Failed to delete template",
+      "categories": {
+        "all": "All",
+        "security": "Security",
+        "productivity": "Productivity",
+        "ai": "AI",
+        "privacy": "Privacy"
+      },
+      "system": {
+        "security_focused": {
+          "name": "Security focused",
+          "description": "Stricter security, privacy, and access defaults."
+        },
+        "productivity": {
+          "name": "Productivity",
+          "description": "Optimized settings for faster day-to-day work."
+        },
+        "ai_power_user": {
+          "name": "AI power user",
+          "description": "AI-heavy configuration for advanced workflows."
+        }
+      }
+    },
+    "personalAutomation": {
+      "title": "Personal Automations",
+      "subtitle": "Automate repetitive tasks and workflows",
+      "createAutomation": "Create Automation",
+      "paused": "Automation paused",
+      "enabled": "Automation enabled",
+      "updateError": "Failed to update automation",
+      "deleteConfirm": "Delete this automation?",
+      "deleted": "Automation deleted",
+      "deleteError": "Failed to delete automation",
+      "empty": "No automations yet",
+      "createFirst": "Create your first automation",
+      "useTemplate": "Use Template",
+      "lastRun": "Last run: {{date}} • {{count}} total runs",
+      "stats": {
+        "active": "Active Automations",
+        "totalRuns": "Total Runs",
+        "successful24h": "Successful (24h)"
+      },
+      "tabs": {
+        "rules": "My Automations",
+        "templates": "Templates",
+        "logs": "History"
+      },
+      "categories": {
+        "tasks": "Tasks",
+        "reports": "Reports",
+        "team": "Team"
+      },
+      "templates": {
+        "t1": {
+          "name": "Auto-assign tasks",
+          "description": "Assign new tasks based on keywords"
+        },
+        "t2": {
+          "name": "Due date reminder",
+          "description": "Send reminder before due date"
+        },
+        "t3": {
+          "name": "Archive completed",
+          "description": "Auto-archive completed tasks"
+        },
+        "t4": {
+          "name": "Daily standup",
+          "description": "Generate daily standup report"
+        },
+        "t5": {
+          "name": "Welcome new members",
+          "description": "Send welcome message to new team members"
+        }
+      },
+      "triggers": {
+        "task_created": "When a task is created",
+        "task_completed": "When a task is completed",
+        "task_assigned": "When a task is assigned",
+        "due_date_approaching": "When due date is approaching",
+        "project_created": "When a project is created",
+        "comment_added": "When a comment is added",
+        "schedule": "On a schedule"
+      },
+      "actions": {
+        "send_notification": "Send notification",
+        "assign_user": "Assign to user",
+        "change_status": "Change status",
+        "add_tag": "Add tag",
+        "move_to_project": "Move to project",
+        "archive_task": "Archive item",
+        "send_email": "Send email",
+        "create_task": "Create task"
+      }
+    },
     "security": "Security",
-    "appearance": "Appearance",
+    "appearance": {
+      "label": "Appearance",
+      "title": "Theme & Appearance",
+      "description": "Customize how the application looks and feels",
+      "saved": "Appearance settings saved",
+      "error": "Failed to save settings",
+      "theme": "Theme",
+      "themeDescription": "Choose your preferred color scheme",
+      "light": "Light",
+      "lightDesc": "Bright theme for daytime",
+      "dark": "Dark",
+      "darkDesc": "Easy on the eyes",
+      "system": "System",
+      "systemDesc": "Match your device",
+      "uiDensity": "UI Density",
+      "uiDensityDescription": "Control spacing and padding throughout the interface",
+      "startPage": "Start Page",
+      "startPageDescription": "Choose which page to show when you open Consultify",
+      "fontScale": "Font Scale",
+      "fontScaleDescription": "Adjust the overall text size throughout the application",
+      "preview": "Preview:",
+      "previewSentence": "The quick brown fox jumps over the lazy dog.",
+      "previewScale": "This is how body text will appear at {{scale}}% scale.",
+      "language": "Language",
+      "languageDescription": "Select your preferred interface language",
+      "themeLabel": "Color Theme",
+      "themeDesc": "Choose your preferred color scheme",
+      "accentColor": "Accent Color",
+      "accentColorDesc": "Choose a color for buttons, links, and highlights",
+      "customColor": "Custom color",
+      "currentAccent": "Current accent color",
+      "densityLabel": "UI Density",
+      "densityDesc": "Control the spacing and compactness of the interface",
+      "previewNote": "Changes are previewed instantly and saved to your account",
+      "accent": {
+        "violet": "Violet",
+        "blue": "Blue",
+        "emerald": "Emerald",
+        "rose": "Rose",
+        "amber": "Amber",
+        "cyan": "Cyan"
+      },
+      "density": {
+        "compact": "Compact",
+        "compactDesc": "More content, less spacing",
+        "comfortable": "Comfortable",
+        "comfortableDesc": "Balanced layout",
+        "spacious": "Spacious",
+        "spaciousDesc": "More breathing room"
+      },
+      "uiDensityOptions": {
+        "compact": "Compact",
+        "compactDesc": "Minimal spacing, more content visible",
+        "comfortable": "Comfortable",
+        "comfortableDesc": "Balanced spacing (default)",
+        "spacious": "Spacious",
+        "spaciousDesc": "More breathing room"
+      },
+      "startPageOptions": {
+        "chat": "AI Chat",
+        "chatDesc": "Start with AI assistant",
+        "myTasks": "My Tasks",
+        "myTasksDesc": "Jump straight to your tasks",
+        "inbox": "Inbox",
+        "inboxDesc": "Start with notifications",
+        "lastVisited": "Last Visited",
+        "lastVisitedDesc": "Continue where you left off"
+      },
+      "visual": {
+        "title": "Visual Customization",
+        "description": "Personalize how Consultify looks",
+        "reset": "Reset",
+        "resetToast": "Settings reset to defaults",
+        "previewCharacters": "ABCDEFGHIJKLMNOPQRSTUVWXYZ - 0123456789",
+        "displayDensity": "Display Density",
+        "densityCompactDesc": "More content visible",
+        "densitySpaciousDesc": "Relaxed spacing",
+        "additionalOptions": "Additional Options",
+        "sidebarWidth": "Sidebar Width",
+        "borderRadius": "Border Radius",
+        "enableAnimations": "Enable Animations",
+        "enableAnimationsDesc": "Smooth transitions and effects",
+        "customCss": "Custom CSS",
+        "showCss": "Show",
+        "hideCss": "Hide",
+        "customCssDesc": "Advanced: Add custom CSS rules (use with caution)",
+        "customCssPlaceholder": "/* Your custom CSS here */\n.my-class {\n  color: red;\n}",
+        "accent": {
+          "violet": "Violet",
+          "purple": "Purple",
+          "indigo": "Indigo",
+          "blue": "Blue",
+          "cyan": "Cyan",
+          "teal": "Teal",
+          "green": "Green",
+          "emerald": "Emerald",
+          "amber": "Amber",
+          "orange": "Orange",
+          "red": "Red",
+          "pink": "Pink"
+        },
+        "font": {
+          "system": "System Default",
+          "inter": "Inter",
+          "roboto": "Roboto",
+          "opensans": "Open Sans",
+          "lato": "Lato",
+          "poppins": "Poppins",
+          "jetbrains": "JetBrains Mono",
+          "fira": "Fira Code"
+        },
+        "radius": {
+          "none": "None",
+          "small": "Small",
+          "medium": "Medium",
+          "large": "Large"
+        }
+      }
+    },
     "sidebar": {
       "title": "SETTINGS",
       "subtitle": "Personal preferences",
@@ -3233,12 +4710,16 @@
       "regional": "Regional",
       "language": "Language",
       "aiInstructions": "AI Instructions",
+      "aiBehavior": "Behavior & Instructions",
       "aiModel": "Model Selection",
+      "aiModelParams": "Model & Parameters",
       "aiParameters": "Parameters",
       "aiUsage": "Usage Dashboard",
       "aiPersonality": "Personality",
       "aiAutocomplete": "Autocomplete",
       "aiMemory": "Memory",
+      "aiPrivacy": "Data & Privacy",
+      "aiPromptLibrary": "Prompt Library",
       "aiVoice": "Voice & TTS",
       "notificationsOverview": "Overview",
       "notificationsEmail": "Email",
@@ -3272,6 +4753,26 @@
       "settingsHistory": "History"
     },
     "sections": {
+      "overview": {
+        "title": "Settings Overview",
+        "subtitle": "One root for personal settings, tenant handoff, and module preferences"
+      },
+      "tenant-defaults": {
+        "title": "Tenant Defaults",
+        "subtitle": "Review organization defaults and shared runtime impact"
+      },
+      "tenant-branding": {
+        "title": "Branding Handoff",
+        "subtitle": "Branding is consumed read-only from Organization and linked to the owning surface"
+      },
+      "tenant-security": {
+        "title": "Security Handoff",
+        "subtitle": "Security policy stays visible here, but all writes route to Admin"
+      },
+      "module-preferences": {
+        "title": "Module Preferences",
+        "subtitle": "Discover module-level defaults and where they inherit from the root ownership model"
+      },
       "profile": {
         "title": "Profile",
         "subtitle": "Manage your personal information and account"
@@ -3308,13 +4809,29 @@
         "title": "AI Instructions",
         "subtitle": "Customize how AI responds to you"
       },
+      "ai-behavior": {
+        "title": "Behavior & Instructions",
+        "subtitle": "Define how the AI communicates — prompt, tone, style, and context"
+      },
       "ai-model": {
         "title": "Model Selection",
         "subtitle": "Choose your preferred AI model"
       },
+      "ai-model-params": {
+        "title": "Model & Parameters",
+        "subtitle": "Choose AI models and fine-tune generation parameters"
+      },
       "ai-parameters": {
         "title": "AI Parameters",
         "subtitle": "Fine-tune AI response parameters"
+      },
+      "ai-privacy": {
+        "title": "AI Data & Privacy",
+        "subtitle": "Control data access, retention, and compliance settings"
+      },
+      "ai-prompt-library": {
+        "title": "Prompt Library",
+        "subtitle": "Save and organize reusable prompts for different contexts"
       },
       "ai-usage": {
         "title": "AI Usage Dashboard",
@@ -3360,6 +4877,18 @@
         "title": "Notification Digest",
         "subtitle": "Configure notification summary emails"
       },
+      "notifications-email-digest": {
+        "title": "Email & Digest",
+        "subtitle": "Choose which emails you receive and how they are summarized"
+      },
+      "notifications-desktop-sounds": {
+        "title": "Desktop & Sounds",
+        "subtitle": "Configure how notifications appear on screen and what sounds they play"
+      },
+      "notifications-availability": {
+        "title": "Availability",
+        "subtitle": "Control when notifications reach you"
+      },
       "notifications-dnd": {
         "title": "Do Not Disturb",
         "subtitle": "Temporarily pause all notifications"
@@ -3383,6 +4912,14 @@
       "recovery": {
         "title": "Recovery Options",
         "subtitle": "Configure account recovery methods"
+      },
+      "security-overview": {
+        "title": "Security Overview",
+        "subtitle": "Password, two-factor authentication, and recovery options"
+      },
+      "sessions-activity": {
+        "title": "Sessions & Activity",
+        "subtitle": "Monitor active sessions and review login history"
       },
       "security-dashboard": {
         "title": "Security Overview",
@@ -3843,7 +5380,13 @@
     "sourceDisconnected": "Cloud source disconnected",
     "connectFailed": "Failed to connect cloud source",
     "disconnectFailed": "Failed to disconnect",
-    "openInProvider": "Open in provider"
+    "openInProvider": "Open in provider",
+    "providers": {
+      "google_drive": "Google Drive",
+      "onedrive": "OneDrive",
+      "dropbox": "Dropbox",
+      "sharepoint": "SharePoint"
+    }
   },
   "chat": {
     "business": "Business actions",
@@ -5000,6 +6543,7 @@
       },
       "empty": {
         "library": "No tools available.",
+        "librarySearchNoResults": "No results for \"{{query}}\". Try a different phrase or clear filters.",
         "sessions": "No active sessions. Start from the Library.",
         "outputs": "No outputs yet. Generate reports or presentations from your sessions.",
         "initiatives": "No draft initiatives yet. Run a tool or assessment to generate initiatives."
@@ -5748,6 +7292,35 @@
     "plan": "Communication Plan"
   },
   "demo": {
+    "tourComplete": {
+      "message": "You're ready to explore the sample workspace. Use it as a safe reference before repeating the workflow in your own environment."
+    },
+    "banner": {
+      "mode": "Demo Mode",
+      "sampleWorkspace": "Sample Workspace",
+      "exit": "Exit Demo",
+      "exitWorkspace": "Exit Sample Workspace",
+      "exitShort": "Exit",
+      "startTrial": "Start Trial",
+      "restartLocale": "Reload demo in {{locale}}",
+      "projects": "projects",
+      "initiatives": "initiatives",
+      "hints": "Hints",
+      "readOnlyTitle": "Read-only mode",
+      "readOnlyDesc": "Changes are not saved and the sample can be explored safely",
+      "exploreTitle": "Understand the workflow",
+      "exploreDesc": "See how dashboards, initiatives, and AI fit together",
+      "hintTitle": "What to review next",
+      "defaultHint": "Open one initiative and trace the linked tasks, decisions, and AI context",
+      "help": "Help",
+      "backToWorkspace": "Back to my workspace",
+      "readyForMore": "Ready for your own data?",
+      "readyForMoreWorkspace": "Ready to try the same flow in your own workspace?"
+    },
+    "session": {
+      "returnWorkspace": "Back to my workspace",
+      "fullAccess": "Get Full Access"
+    },
     "conversion": {
       "startTrial": "Start Free Trial",
       "persistentCta": "Start Free Trial",
@@ -6371,6 +7944,11 @@
   },
   "results": {
     "moduleName": "Results",
+    "hub": {
+      "failedToLoadKpis": "Failed to load KPI catalog.",
+      "retry": "Retry",
+      "dismiss": "Dismiss"
+    },
     "kpi": {
       "ai": {
         "summarizePrompt": "Summarize this KPI: meaning, current status, and suggested next actions.",
@@ -6895,38 +8473,19 @@
           "registered": {
             "title": "Registered",
             "description": "For those starting the partnership",
-            "requirements": [
-              "Registration",
-              "Basic training"
-            ],
-            "benefits": [
-              "10% discount",
-              "Access to materials",
-              "Email support"
-            ]
+            "requirements": ["Registration", "Basic training"],
+            "benefits": ["10% discount", "Access to materials", "Email support"]
           },
           "certified": {
             "title": "Certified",
             "description": "For experienced consultants",
-            "requirements": [
-              "Certification exam",
-              "Min. 3 projects"
-            ],
-            "benefits": [
-              "12% discount",
-              "Partner logo",
-              "Dedicated support",
-              "Catalog listing"
-            ]
+            "requirements": ["Certification exam", "Min. 3 projects"],
+            "benefits": ["12% discount", "Partner logo", "Dedicated support", "Catalog listing"]
           },
           "premier": {
             "title": "Premier",
             "description": "For strategic partners",
-            "requirements": [
-              "10+ projects",
-              "Case study",
-              "References"
-            ],
+            "requirements": ["10+ projects", "Case study", "References"],
             "benefits": [
               "14% discount",
               "Dedicated account manager",
@@ -6976,18 +8535,21 @@
     "generatingDoc": "Building your document",
     "generatingSheet": "Building your spreadsheet",
     "generatingDeck": "Building your presentation",
+    "generatingTable": "Building your operational table",
     "emptyWordy": "Your document will appear here",
     "emptyExcele": "Your spreadsheet will appear here",
     "emptyDeck": "Your presentation will appear here",
+    "emptyTabele": "Your operational table will appear here",
     "emptyHint": "Describe what you need and click Generate",
     "generateDoc": "Generate Document",
     "generateSheet": "Generate Spreadsheet",
     "generateDeck": "Generate Presentation",
+    "generateTable": "Generate Table",
     "docReady": "Document ready — use Preview File or Download",
     "showingRows": "Showing 25 of {{total}} rows",
     "xlsxPreview": "Spreadsheet preview",
     "deckPreview": "Presentation preview",
-    "openInBuilder": "Open in Deck Builder",
+    "openInBuilder": "Open in Builder",
     "previewFile": "Preview File",
     "allFiles": "All files",
     "viewOrDownload": "View or download files",
@@ -6997,6 +8559,7 @@
     "laneWordy": "Documents",
     "laneExcele": "Tables",
     "lanePrezentacje": "Presentations",
+    "laneTabele": "Tabele",
     "stepSnapshot": "Capture context snapshot",
     "stepPlan": "Create artifact plan",
     "stepPreflight": "Validate preflight checks",
@@ -7005,7 +8568,110 @@
     "stepApprove": "Approve execution",
     "stepMaterialize": "Materialize artifact",
     "stepGenerate": "Generate content",
-    "sheetReady": "Spreadsheet ready — use Preview File or Download"
+    "sheetReady": "Spreadsheet ready — use Preview File or Download",
+    "tableReady": "Table ready — use Preview File or Download",
+    "tabele": {
+      "preview": {
+        "documentLabel": "Tabele operational table preview",
+        "subtitle": "Operational Table",
+        "untitled": "Untitled table",
+        "coverDescription": "A Word-style document canvas for reviewing schema, sample records, relations, and governance rationale before opening the Table Builder.",
+        "livePreview": "Live preview",
+        "rowsKpi": "Rows",
+        "columnsKpi": "Columns",
+        "statusKpi": "Status",
+        "formatKpi": "Format",
+        "statusGoverned": "Governed",
+        "statusPreview": "Preview",
+        "formatOperational": "Operational",
+        "formatDraft": "Draft",
+        "schemaTitle": "Schema",
+        "schemaMeta": "{{count}} fields in the preview schema",
+        "emptySchema": "No schema fields are available in this preview yet.",
+        "schemaCollapsed": "Schema is collapsed for compact review.",
+        "recordsTitle": "Records",
+        "recordsMeta": "Showing sample records from the generated table",
+        "emptyRecords": "No record sample is available in this preview yet.",
+        "showingRows": "Showing 25 of {{total}} rows",
+        "relationsTitle": "Relations",
+        "relationsMeta": "{{count}} relation chips available",
+        "emptyRelations": "No table relations are available in this preview yet.",
+        "relationsCollapsed": "Relations are collapsed for compact review.",
+        "noRelationsCollapsed": "Relations are collapsed because no relations are available.",
+        "expandSection": "Expand",
+        "collapseSection": "Collapse",
+        "rationaleTitle": "AI Rationale",
+        "openGrid": "Open grid editor",
+        "openGridEmpty": "Open grid editor to add records"
+      },
+      "schema": {
+        "committed": "Committed",
+        "proposed": "Proposed",
+        "rejected": "Rejected",
+        "caption": "Schema field rendered as an operational table document block",
+        "proposalCaption": "Linked to schema proposal {{proposalId}}",
+        "unnamedField": "unnamed_field",
+        "defaultType": "text"
+      },
+      "relations": {
+        "loadingRationale": "Loading relation rationale...",
+        "noRationale": "Relation rationale is not available in this preview.",
+        "tooltipTitle": "Relation explainability",
+        "tooltipSource": "Source: ACL-filtered table relation metadata"
+      },
+      "rationale": {
+        "proposalPending": "Pending",
+        "proposalApproved": "Approved",
+        "proposalRejected": "Rejected",
+        "proposalNone": "None",
+        "proposalStatus": "Proposal status: {{status}}",
+        "emptySummary": "No rationale summary was provided for this preview.",
+        "points": "Rationale points",
+        "showLess": "Show less",
+        "showMore": "Show {{count}} more",
+        "citedSources": "Cited sources",
+        "noSources": "No cited sources",
+        "reviewProposals": "Review proposals"
+      }
+    }
+  },
+  "tabele": {
+    "defaultTitle": "Operational table",
+    "loadPreviewFailed": "Could not load table preview.",
+    "builderUnreachable": "Could not resolve workspace for this table",
+    "openingBuilder": "Opening Table Builder...",
+    "intentRouted": {
+      "exportCsv": "CSV export started",
+      "exportXlsx": "XLSX export started",
+      "exportJson": "JSON export started",
+      "schemaProposalCreated": "Schema proposal created: {{proposalId}}",
+      "explainRelation": "Relation rationale loaded",
+      "relationRecordMissing": "No record is available to explain",
+      "workspaceMissing": "Workspace context is required",
+      "failed": "Could not process that instruction"
+    },
+    "fieldTypes": {
+      "risk_score": {
+        "label": "Risk Score",
+        "description": "Likelihood × impact on a 3, 5, or 25 scale. Severity tone derives from the percentage of scale."
+      },
+      "priority": {
+        "label": "Priority",
+        "description": "Priority level (P0–P3 or critical/high/medium/low). Highest level uses the most prominent tone."
+      },
+      "ai_generated_summary": {
+        "label": "AI Summary",
+        "description": "AI-derived record summary. Manual edits are allowed and audited as manual override."
+      },
+      "ai_classification": {
+        "label": "AI Classification",
+        "description": "AI-derived class from a configured list. Manual edits are allowed and audited."
+      },
+      "source_reference": {
+        "label": "Source Reference",
+        "description": "Provenance link to a record source (UUID) or external URL when allowed."
+      }
+    }
   },
   "contact": {
     "badge": "Get in touch",

@@ -3,12 +3,12 @@ import {
   getGateForTransition,
   VALID_TRANSITIONS,
 } from '../../constants/initiativeStatuses.js';
-import logger from '../../utils/Logger.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import { listInitiativeKpiAssignments } from '../initiative/initiativeKpiAssignmentService.js';
 import { resolveInitiativeAccessContext } from '../initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
+import { listInitiativeKpiAssignments } from '../initiative/initiativeKpiAssignmentService.js';
 import {
   hasInitiativeStatusSchemaDrift,
   mapDbStatusToP11Lifecycle,
@@ -225,6 +225,8 @@ export async function getPortfolioRead(
       plannedEndDate: initiative.planned_end_date,
       actualStartDate: initiative.actual_start_date,
       actualEndDate: initiative.actual_end_date,
+      ownerId: initiative.owner_execution_id ?? initiative.owner_id ?? null,
+      sponsorId: initiative.sponsor_id ?? null,
       priority: String(initiative.priority || 'MEDIUM').toUpperCase(),
       sourceId: initiative.source_id,
       sourceType: initiative.source_type,

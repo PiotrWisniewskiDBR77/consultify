@@ -27,7 +27,24 @@ vi.mock('@/utils/artifactLinks', () => ({
 }));
 
 vi.mock('@/components/shared/NModeLayout/NModeHeader', () => ({
+  default: ({ title }: any) => <div data-testid="nmode-header">{title}</div>,
   NModeHeader: ({ title }: any) => <div data-testid="nmode-header">{title}</div>,
+}));
+
+vi.mock('@/components/shared/NModeLayout/NModeShell', () => ({
+  NModeShell: ({ header, sections, renderActionBar }: any) => (
+    <div>
+      <div data-testid="nmode-header">{header?.title}</div>
+      <div>{renderActionBar?.()}</div>
+      <div data-testid="nmode-canvas">
+        {sections?.map((section: any, index: number) => (
+          <div key={section.id || index} data-testid={`section-${section.id}`}>
+            {section.component}
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/shared/NModeLayout/NModeCanvas', () => ({
@@ -112,6 +129,12 @@ vi.mock('@/services/api/v8/interview', () => ({
     deleteInsightComment: vi.fn().mockResolvedValue({ success: true }),
     deleteInsight: vi.fn().mockResolvedValue({ success: true }),
     getInsights: vi.fn().mockResolvedValue({ insights: [] }),
+  },
+}));
+
+vi.mock('@/services/api', () => ({
+  Api: {
+    post: vi.fn(),
   },
 }));
 

@@ -202,7 +202,7 @@
 }
 
 .premium-metric-card.danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: linear-gradient(135deg, #f43f5e 0%, #dc2626 100%);
 }
 
 /* Callout */
@@ -230,7 +230,7 @@
 
 .premium-callout.danger {
     background: #fee2e2;
-    border-left-color: #ef4444;
+    border-left-color: #f43f5e;
 }
 
 .dark .premium-callout.info {
@@ -270,7 +270,7 @@
 }
 
 .premium-recommendation-card.priority-critical {
-    border-left: 4px solid #ef4444;
+    border-left: 4px solid #f43f5e;
 }
 
 .premium-recommendation-card.priority-high {

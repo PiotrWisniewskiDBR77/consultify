@@ -154,8 +154,8 @@ const LEVEL_OPTIONS: {
     value: 'enterprise',
     label: 'Enterprise',
     icon: Target,
-    color: 'text-violet-500',
-    bg: 'bg-violet-500/15 border-violet-500/30',
+    color: 'text-primary-500',
+    bg: 'bg-primary-500/15 border-primary-500/30',
     desc: 'Full governance',
   },
   {
@@ -177,7 +177,7 @@ const SOURCE_OPTIONS = [
 
 const CATEGORY_COLORS: Record<string, { color: string; bg: string }> = {
   content: { color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  control: { color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  control: { color: 'text-primary-500', bg: 'bg-primary-500/10' },
   meta: { color: 'text-slate-500', bg: 'bg-slate-500/10' },
 };
 
@@ -295,7 +295,7 @@ const Toggle: React.FC<{ value: boolean; onChange: (v: boolean) => void; size?: 
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`relative ${w} rounded-full transition-colors duration-200 ${value ? 'bg-purple-500' : 'bg-slate-300 dark:bg-navy-600'}`}
+      className={`relative ${w} rounded-full transition-colors duration-200 ${value ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'}`}
     >
       <div
         className={`absolute top-0.5 ${dot} rounded-full bg-white shadow-sm transition-transform duration-200 ${value ? translate : 'translate-x-0.5'}`}
@@ -340,7 +340,7 @@ const PillSelect: React.FC<{
           onClick={() => onToggle(opt)}
           className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${
             isActive
-              ? color || 'bg-violet-500/15 border-violet-500/30 text-violet-500'
+              ? color || 'bg-primary-500/15 border-primary-500/30 text-primary-500'
               : 'border-slate-200 dark:border-navy-700 text-slate-400 hover:border-slate-300'
           }`}
         >
@@ -363,7 +363,7 @@ const InlineInput: React.FC<{
     value={value}
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
-    className={`px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all ${className || ''}`}
+    className={`px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all ${className || ''}`}
   />
 );
 
@@ -376,7 +376,7 @@ const InlineSelect: React.FC<{
   <select
     value={value}
     onChange={(e) => onChange(e.target.value)}
-    className={`px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-purple-500 transition-all ${className || ''}`}
+    className={`px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition-all ${className || ''}`}
   >
     {options.map((o) => (
       <option key={o} value={o}>
@@ -768,7 +768,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
       >
         <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
         <div className="relative ml-auto w-full max-w-4xl bg-white dark:bg-navy-900 shadow-2xl flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
         </div>
       </motion.div>
     );
@@ -803,7 +803,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50"
             >
               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               <span>Save</span>
@@ -827,7 +827,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-1.5 px-3 py-3 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                     : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
@@ -854,7 +854,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Enterprise Transformation Blueprint"
-                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all text-sm"
+                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all text-sm"
                 />
               </div>
               <div>
@@ -866,7 +866,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the purpose of this template..."
                   rows={3}
-                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all text-sm resize-none"
+                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all text-sm resize-none"
                 />
               </div>
               <div>
@@ -911,7 +911,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                     <button
                       key={src.value}
                       onClick={() => toggleSource(src.value)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${sourceTypes.includes(src.value) ? 'bg-purple-500/15 border-purple-500/30 text-purple-500' : 'border-slate-200 dark:border-navy-700 text-slate-400 hover:border-slate-300'}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${sourceTypes.includes(src.value) ? 'bg-primary-500/15 border-primary-500/30 text-primary-500' : 'border-slate-200 dark:border-navy-700 text-slate-400 hover:border-slate-300'}`}
                     >
                       {src.label}
                     </button>
@@ -927,7 +927,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="e.g. transformation, optimization, digital"
-                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all text-sm"
+                  className="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all text-sm"
                 />
               </div>
             </div>
@@ -938,10 +938,10 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
           {/* ════════════════════════════════════════ */}
           {activeTab === 'sections' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20">
                 <div className="flex items-center gap-3">
-                  <Layers size={18} className="text-purple-500" />
-                  <span className="text-sm text-purple-700 dark:text-purple-300">
+                  <Layers size={18} className="text-primary-500" />
+                  <span className="text-sm text-primary-700 dark:text-primary-300">
                     <strong>{enabledCount}</strong> of {sectionTypes.length} sections enabled
                   </span>
                 </div>
@@ -995,7 +995,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         'tags',
                       ],
                       color:
-                        'bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20',
+                        'bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20',
                     },
                     {
                       label: 'Full',
@@ -1202,7 +1202,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           })
                         }
                         placeholder="name, summary, owner_business_id..."
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-purple-500 transition-all"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 transition-all"
                       />
                     </div>
                   ))}
@@ -1273,7 +1273,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         onClick={() =>
                           setSuggestedTasks(suggestedTasks.filter((_, i) => i !== idx))
                         }
-                        className="p-1 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1292,7 +1292,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         },
                       ])
                     }
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 hover:bg-purple-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 hover:bg-primary-500/10 transition-colors"
                   >
                     <Plus size={13} /> Add Task
                   </button>
@@ -1332,7 +1332,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                             n[idx] = { ...n[idx], isGate: e.target.checked };
                             setSuggestedMilestones(n);
                           }}
-                          className="rounded border-slate-300 text-purple-500 focus:ring-purple-500/50"
+                          className="rounded border-slate-300 text-primary-500 focus:ring-primary-500/50"
                         />
                         Gate
                       </label>
@@ -1340,7 +1340,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         onClick={() =>
                           setSuggestedMilestones(suggestedMilestones.filter((_, i) => i !== idx))
                         }
-                        className="p-1 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1358,7 +1358,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         },
                       ])
                     }
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 hover:bg-purple-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 hover:bg-primary-500/10 transition-colors"
                   >
                     <Plus size={13} /> Add Milestone
                   </button>
@@ -1418,7 +1418,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         onClick={() =>
                           setSuggestedDecisions(suggestedDecisions.filter((_, i) => i !== idx))
                         }
-                        className="p-1 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1437,7 +1437,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         },
                       ])
                     }
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 hover:bg-purple-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 hover:bg-primary-500/10 transition-colors"
                   >
                     <Plus size={13} /> Add Decision
                   </button>
@@ -1494,7 +1494,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                     }
                     min={0}
                     step={0.5}
-                    className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-900 dark:text-white focus:border-purple-500 transition-all"
+                    className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-sm text-slate-900 dark:text-white focus:border-primary-500 transition-all"
                   />
                 </div>
               </SettingCard>
@@ -1539,7 +1539,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                             n[idx] = { ...n[idx], required: e.target.checked };
                             setTeamConfig({ ...teamConfig, requiredRoles: n });
                           }}
-                          className="rounded border-slate-300 text-purple-500"
+                          className="rounded border-slate-300 text-primary-500"
                         />
                         Required
                       </label>
@@ -1550,7 +1550,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           );
                           setTeamConfig({ ...teamConfig, requiredRoles: n });
                         }}
-                        className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1566,7 +1566,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         ],
                       })
                     }
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 hover:bg-purple-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 hover:bg-primary-500/10 transition-colors"
                   >
                     <Plus size={13} /> Add Role
                   </button>
@@ -1607,7 +1607,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           );
                           setTeamConfig({ ...teamConfig, suggestedRaci: n });
                         }}
-                        className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1623,7 +1623,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         ],
                       })
                     }
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 hover:bg-purple-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 hover:bg-primary-500/10 transition-colors"
                   >
                     <Plus size={13} /> Add RACI Entry
                   </button>
@@ -1648,7 +1648,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                       key={kpi.id}
                       className="flex items-center gap-2 p-2.5 rounded-lg bg-white dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50"
                     >
-                      <TrendingUp size={13} className="text-cyan-500 flex-shrink-0" />
+                      <TrendingUp size={13} className="text-blue-500 flex-shrink-0" />
                       <InlineInput
                         value={kpi.name}
                         onChange={(v) => {
@@ -1680,7 +1680,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           setSuggestedKpis(n);
                         }}
                         placeholder="Target"
-                        className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-purple-500 transition-all"
+                        className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-primary-500 transition-all"
                       />
                       <InlineSelect
                         value={kpi.measurementFrequency}
@@ -1693,7 +1693,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                       />
                       <button
                         onClick={() => setSuggestedKpis(suggestedKpis.filter((_, i) => i !== idx))}
-                        className="p-1 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1712,7 +1712,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         },
                       ])
                     }
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 hover:bg-purple-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 hover:bg-primary-500/10 transition-colors"
                   >
                     <Plus size={13} /> Add KPI
                   </button>
@@ -1759,7 +1759,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           })
                         }
                         placeholder="—"
-                        className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-purple-500 transition-all"
+                        className="w-20 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition-all"
                       />
                     </div>
                   </div>
@@ -1799,7 +1799,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                             trackingDurationMonths: parseInt(e.target.value) || 12,
                           })
                         }
-                        className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-purple-500 transition-all"
+                        className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition-all"
                       />
                     </div>
                     <div className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50 col-span-2">
@@ -1875,12 +1875,12 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           amberThresholdDays: parseInt(e.target.value) || 3,
                         })
                       }
-                      className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-purple-500 transition-all"
+                      className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition-all"
                     />
                     <span className="text-xs text-slate-400">days</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-red-500 font-medium">Red:</span>
+                    <span className="text-xs text-rose-500 font-medium">Red:</span>
                     <input
                       type="number"
                       value={escalationConfig.redThresholdDays || 7}
@@ -1890,7 +1890,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                           redThresholdDays: parseInt(e.target.value) || 7,
                         })
                       }
-                      className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-purple-500 transition-all"
+                      className="w-16 px-2 py-1 rounded bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-xs text-slate-900 dark:text-white focus:border-primary-500 transition-all"
                     />
                     <span className="text-xs text-slate-400">days</span>
                   </div>
@@ -1966,12 +1966,12 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         size={13}
                         className={
                           raid.type === 'RISK'
-                            ? 'text-red-500'
+                            ? 'text-rose-500'
                             : raid.type === 'ASSUMPTION'
                               ? 'text-blue-500'
                               : raid.type === 'ISSUE'
                                 ? 'text-amber-500'
-                                : 'text-purple-500'
+                                : 'text-primary-500'
                         }
                       />
                       <InlineSelect
@@ -2017,7 +2017,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                       )}
                       <button
                         onClick={() => setRaidTemplates(raidTemplates.filter((_, i) => i !== idx))}
-                        className="p-1 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        className="p-1 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -2036,7 +2036,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
                         },
                       ])
                     }
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 hover:bg-purple-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 hover:bg-primary-500/10 transition-colors"
                   >
                     <Plus size={13} /> Add RAID Item
                   </button>
@@ -2090,7 +2090,7 @@ const SectionRow: React.FC<SectionRowProps> = ({
       <div className="flex items-center gap-2 px-3 py-2">
         <button
           onClick={onToggle}
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${isEnabled ? 'bg-purple-500 border-purple-500 text-white' : 'border-slate-300 dark:border-navy-600 hover:border-purple-400'}`}
+          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${isEnabled ? 'bg-primary-500 border-primary-500 text-white' : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'}`}
         >
           {isEnabled && <Check size={12} />}
         </button>
@@ -2122,7 +2122,7 @@ const SectionRow: React.FC<SectionRowProps> = ({
         </div>
         <button
           onClick={onConfigToggle}
-          className="p-0.5 rounded text-slate-400 hover:text-purple-500 transition-colors flex-shrink-0"
+          className="p-0.5 rounded text-slate-400 hover:text-primary-500 transition-colors flex-shrink-0"
         >
           {isConfigExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>

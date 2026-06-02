@@ -48,19 +48,19 @@ const COLOR_CONFIG = {
     gradient: ['#f59e0b', '#fbbf24'],
   },
   red: {
-    stroke: '#ef4444',
+    stroke: '#f43f5e',
     bg: '#fee2e2',
-    gradient: ['#ef4444', '#f87171'],
+    gradient: ['#f43f5e', '#f87171'],
   },
   purple: {
-    stroke: '#8b5cf6',
+    stroke: '#6366f1',
     bg: '#ede9fe',
-    gradient: ['#8b5cf6', '#a78bfa'],
+    gradient: ['#6366f1', '#a78bfa'],
   },
   gradient: {
     stroke: 'url(#progressGradient)',
     bg: '#e0e7ff',
-    gradient: ['#3b82f6', '#8b5cf6'],
+    gradient: ['#3b82f6', '#6366f1'],
   },
 };
 

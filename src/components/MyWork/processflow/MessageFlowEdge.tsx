@@ -1,7 +1,7 @@
-import React from 'react';
-import type { EdgeProps } from 'reactflow';
 // @ts-ignore — getSmoothStepPath is exported at runtime but types re-export may not resolve
 import { getSmoothStepPath } from '@reactflow/core';
+import React from 'react';
+import type { EdgeProps } from 'reactflow';
 
 /**
  * MessageFlowEdge — BPMN-style message flow (dashed, different color).
@@ -73,14 +73,7 @@ export const MessageFlowEdge: React.FC<EdgeProps> = ({
         }}
       />
       {/* Open circle at source (BPMN message flow convention) */}
-      <circle
-        cx={sourceX}
-        cy={sourceY}
-        r={4}
-        fill="white"
-        stroke={strokeColor}
-        strokeWidth={1.5}
-      />
+      <circle cx={sourceX} cy={sourceY} r={4} fill="white" stroke={strokeColor} strokeWidth={1.5} />
       {/* Filled circle at target */}
       <circle
         cx={targetX}

@@ -1,0 +1,77 @@
+/**
+ * Chat V9 / ADMIN AG1 v1.5 — feature flag for the admin panel
+ * filter input.
+ *
+ * What this gates
+ * ---------------
+ * When on (default), the flag control panel renders a small search
+ * input in its sub-header. Typing filters the visible flag rows by
+ * title, ticket, block, id, and localStorage key (case-insensitive
+ * substring match). When off, the input disappears and every
+ * registered flag is listed as before.
+ *
+ * Resolution order (highest wins):
+ *   1. URL `?ff_flagsPanelFilter=0|1`.
+ *   2. `localStorage["ff.flags_panel_filter"]`.
+ *   3. `import.meta.env.VITE_FLAGS_PANEL_FILTER`.
+ *   4. Default ON.
+ *
+ * Rationale for the kill-switch: the filter is purely additive and
+ * local (no state escapes the panel), but keeping a flag around
+ * means we can collapse the header chrome if a future layout change
+ * breaks the search row's alignment without waiting for a deploy.
+ */
+
+const LS_KEY = 'ff.flags_panel_filter';
+const QUERY_KEY = 'ff_flagsPanelFilter';
+const ENV_KEY = 'VITE_FLAGS_PANEL_FILTER';
+
+function parseFlag(raw: string | null | undefined): boolean | null {
+  if (raw === null || raw === undefined) return null;
+  const normalized = String(raw).trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'on') return true;
+  if (normalized === '0' || normalized === 'false' || normalized === 'off') return false;
+  return null;
+}
+
+function readEnvFlag(): boolean {
+  try {
+    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
+    return parsed === null ? true : parsed;
+  } catch {
+    return true;
+  }
+}
+
+function readQueryOverride(): boolean | null {
+  if (typeof window === 'undefined' || !window.location) return null;
+  try {
+    return parseFlag(new URLSearchParams(window.location.search).get(QUERY_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function readLocalStorage(): boolean | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    return parseFlag(window.localStorage.getItem(LS_KEY));
+  } catch {
+    return null;
+  }
+}
+
+export function isFlagsPanelFilterEnabled(): boolean {
+  const fromQuery = readQueryOverride();
+  if (fromQuery !== null) return fromQuery;
+  const fromLs = readLocalStorage();
+  if (fromLs !== null) return fromLs;
+  return readEnvFlag();
+}
+
+export const FLAGS_PANEL_FILTER_FLAG_KEYS = {
+  localStorage: LS_KEY,
+  query: QUERY_KEY,
+  env: ENV_KEY,
+} as const;

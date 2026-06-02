@@ -94,6 +94,18 @@ Main remaining risk:
 
 - runtime and gate-policy alignment for rework and resubmission
 
+### 4.3.2 AI quality governance in runtime
+
+Readiness:
+
+`medium`
+
+Main remaining risks:
+
+- AI quality evaluation exists, but can remain weak if it is not attached to the real submit/review workflow
+- organization learning can drift if non-approved interview meaning is treated as reusable truth
+- reviewer decisions are valuable feedback, but this loop is not yet consistently captured as AI-learning memory
+
 ### 4.4 Analytics and reporting
 
 Readiness:
@@ -149,6 +161,7 @@ Main implementation-facing risks after documentation:
 - external distribution depth
 - semantic retrieval and knowledge reuse
 - evidence confidence and contradiction handling must stay aligned with downstream consulting outputs
+- AI quality signals and human approval must stay separated so the system never confuses machine confidence with accepted truth
 
 ---
 

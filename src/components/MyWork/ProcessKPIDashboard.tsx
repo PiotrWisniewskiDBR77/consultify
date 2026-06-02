@@ -172,10 +172,10 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
         />
 
         <KPICard
-          icon={<Layers size={14} className="text-violet-600 dark:text-violet-400" />}
+          icon={<Layers size={14} className="text-primary-600 dark:text-primary-400" />}
           label={isPl ? 'Ścieżki (lanes)' : 'Lanes'}
           value={kpis.lanesCount}
-          color="bg-violet-100 dark:bg-violet-900/40"
+          color="bg-primary-100 dark:bg-primary-900/40"
         />
 
         <KPICard
@@ -195,10 +195,10 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
         )}
 
         <KPICard
-          icon={<ArrowRightLeft size={14} className="text-orange-600 dark:text-orange-400" />}
+          icon={<ArrowRightLeft size={14} className="text-amber-600 dark:text-amber-400" />}
           label={isPl ? 'Przekazania' : 'Handoffs'}
           value={kpis.handoffs}
-          color="bg-orange-100 dark:bg-orange-900/40"
+          color="bg-amber-100 dark:bg-amber-900/40"
           subtitle={
             kpis.handoffs > 3 ? (isPl ? '⚠ Dużo przekazań' : '⚠ High handoff count') : undefined
           }
@@ -206,10 +206,10 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
 
         {kpis.bottleneckLabel && (
           <KPICard
-            icon={<Target size={14} className="text-red-600 dark:text-red-400" />}
+            icon={<Target size={14} className="text-rose-600 dark:text-rose-400" />}
             label={isPl ? 'Wąskie gardło' : 'Bottleneck'}
             value={kpis.bottleneckLabel}
-            color="bg-red-100 dark:bg-red-900/40"
+            color="bg-rose-100 dark:bg-rose-900/40"
             subtitle={`${kpis.bottleneckScore} ${isPl ? 'wejść' : 'incoming'}`}
           />
         )}

@@ -106,7 +106,7 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     knowledgeSources: {
       pmoDocuments: true,
       projectData: true,
-      organizationData: false,
+      organizationData: true,
     },
     // Response Style (default: normal)
     responseStyle: 'normal',

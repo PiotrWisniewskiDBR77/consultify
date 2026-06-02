@@ -15,15 +15,26 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { CompetencyCatalog } from './CompetencyCatalog';
 import type { OrganizationSection } from './OrganizationSidebar';
+
+type ApprovedDomainRow = {
+  id?: string;
+  domain?: string;
+};
+
+type OrganizationDomainSnapshot = {
+  customDomain: string;
+  customDomainVerified: boolean;
+};
 
 interface OrganizationAdminPanelProps {
   section: OrganizationSection;
@@ -301,7 +312,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
         </div>
         <div className="mt-3 h-2 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${usagePercent > 95 ? 'bg-red-500' : usagePercent > 80 ? 'bg-amber-500' : 'bg-slate-400'}`}
+            className={`h-full rounded-full transition-all ${usagePercent > 95 ? 'bg-rose-500' : usagePercent > 80 ? 'bg-amber-500' : 'bg-slate-400'}`}
             style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
         </div>
@@ -366,7 +377,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 </div>
                 <div className="h-1.5 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${isCrit ? 'bg-red-500' : isWarn ? 'bg-amber-500' : 'bg-slate-400'}`}
+                    className={`h-full rounded-full ${isCrit ? 'bg-rose-500' : isWarn ? 'bg-amber-500' : 'bg-slate-400'}`}
                     style={{ width: `${Math.min(pct, 100)}%` }}
                   />
                 </div>
@@ -393,11 +404,164 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
 const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   const { t } = useTranslation();
-  const domain = orgData?.custom_domain || null;
-  const verified = orgData?.domain_verified || false;
+  const [customDomain, setCustomDomain] = useState(orgData?.custom_domain || '');
+  const [customDomainVerified, setCustomDomainVerified] = useState(
+    Boolean(orgData?.domain_verified)
+  );
+  const [customDomainDraft, setCustomDomainDraft] = useState(orgData?.custom_domain || '');
+  const [savingCustomDomain, setSavingCustomDomain] = useState(false);
+  const [approvedDomains, setApprovedDomains] = useState<ApprovedDomainRow[]>([]);
+  const [newApprovedDomain, setNewApprovedDomain] = useState('');
+  const [savingDomain, setSavingDomain] = useState(false);
+  const [domainActionError, setDomainActionError] = useState<string | null>(null);
+
+  const normalizeApprovedDomains = (rows: unknown): ApprovedDomainRow[] =>
+    Array.isArray(rows)
+      ? rows.reduce<ApprovedDomainRow[]>((acc, row) => {
+          if (!row || typeof row !== 'object') return acc;
+          const candidate = row as { id?: unknown; domain?: unknown };
+          const normalized = {
+            id: candidate.id ? String(candidate.id) : undefined,
+            domain: candidate.domain ? String(candidate.domain).trim().toLowerCase() : undefined,
+          };
+          if (normalized.domain) acc.push(normalized);
+          return acc;
+        }, [])
+      : [];
+
+  const loadOrganizationDomainSnapshot =
+    useCallback(async (): Promise<OrganizationDomainSnapshot | null> => {
+      if (!orgData?.id) return null;
+      const orgs = await Api.getUserOrganizations();
+      const org = Array.isArray(orgs)
+        ? orgs.find((candidate) => {
+            if (!candidate || typeof candidate !== 'object') return false;
+            return String((candidate as { id?: unknown }).id) === String(orgData.id);
+          })
+        : null;
+      if (!org) return null;
+      return {
+        customDomain: String(org.custom_domain || org.customDomain || '')
+          .trim()
+          .toLowerCase(),
+        customDomainVerified: Boolean(org.domain_verified || org.customDomainVerified),
+      };
+    }, [orgData?.id]);
+
+  useEffect(() => {
+    setCustomDomain(orgData?.custom_domain || '');
+    setCustomDomainDraft(orgData?.custom_domain || '');
+    setCustomDomainVerified(Boolean(orgData?.domain_verified));
+  }, [orgData?.custom_domain, orgData?.domain_verified]);
+
+  const loadApprovedDomains = useCallback(async (): Promise<ApprovedDomainRow[]> => {
+    if (!orgData?.id) return [];
+    try {
+      const rows = await Api.get(`/organizations/${orgData.id}/approved-domains`);
+      const normalizedRows = normalizeApprovedDomains(rows);
+      setApprovedDomains(normalizedRows);
+      return normalizedRows;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load approved domains');
+      setApprovedDomains([]);
+      setDomainActionError(message);
+      toast.error(message);
+      return [];
+    }
+  }, [orgData?.id]);
+
+  useEffect(() => {
+    void loadApprovedDomains();
+  }, [loadApprovedDomains]);
+
+  const handleAddApprovedDomain = async () => {
+    if (!orgData?.id) return;
+    if (!newApprovedDomain.trim()) {
+      toast.error('Enter a domain, for example company.com');
+      return;
+    }
+    try {
+      setSavingDomain(true);
+      setDomainActionError(null);
+      const expectedDomain = newApprovedDomain.trim().toLowerCase();
+      await Api.post(`/organizations/${orgData.id}/approved-domains`, {
+        domain: expectedDomain,
+        autoJoin: true,
+      });
+      const refreshedDomains = await loadApprovedDomains();
+      if (!refreshedDomains.some((domain) => domain.domain === expectedDomain)) {
+        throw new Error('Approved email domain was not confirmed by the server');
+      }
+      setNewApprovedDomain('');
+      toast.success('Approved domain added');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to add approved domain');
+      setDomainActionError(message);
+      toast.error(message);
+    } finally {
+      setSavingDomain(false);
+    }
+  };
+
+  const handleRemoveApprovedDomain = async (domainId: string) => {
+    if (!orgData?.id) return;
+    try {
+      setDomainActionError(null);
+      const target = approvedDomains.find((domain) => domain.id === domainId);
+      await Api.delete(`/organizations/${orgData.id}/approved-domains/${domainId}`);
+      const refreshedDomains = await loadApprovedDomains();
+      if (target?.domain && refreshedDomains.some((domain) => domain.domain === target.domain)) {
+        throw new Error('Approved email domain removal was not confirmed by the server');
+      }
+      toast.success('Approved domain removed');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to remove approved domain');
+      setDomainActionError(message);
+      toast.error(message);
+    }
+  };
+
+  const handleSaveCustomDomain = async () => {
+    if (!orgData?.id) return;
+    const nextDomain = customDomainDraft.trim().toLowerCase();
+    if (!nextDomain) {
+      toast.error('Enter a custom domain, for example app.company.com');
+      return;
+    }
+    try {
+      setSavingCustomDomain(true);
+      setDomainActionError(null);
+      await Api.patch(`/branding/${orgData.id}`, {
+        customDomain: nextDomain,
+        customDomainVerified: false,
+        customDomainSslStatus: 'pending',
+      });
+      const persisted = await loadOrganizationDomainSnapshot();
+      if (!persisted || persisted.customDomain !== nextDomain) {
+        throw new Error('Custom domain save was not confirmed by the server');
+      }
+      setCustomDomain(nextDomain);
+      setCustomDomainVerified(persisted.customDomainVerified);
+      toast.success('Custom domain saved. Verify DNS before using it in production.');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to save custom domain');
+      setDomainActionError(message);
+      toast.error(message);
+    } finally {
+      setSavingCustomDomain(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {domainActionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {domainActionError}
+        </div>
+      )}
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-start gap-3">
           <Globe size={18} className="text-slate-400 mt-0.5" strokeWidth={1.5} />
@@ -405,31 +569,57 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('organization.domains.title', 'Custom Domain')}
             </h3>
-            {domain ? (
-              <div className="mt-2 flex items-center gap-2">
-                <code className="text-sm bg-slate-100 dark:bg-navy-800 px-2 py-1 rounded text-slate-800 dark:text-slate-200">
-                  {domain}
-                </code>
-                <span
-                  className={`flex items-center gap-1 text-xs font-medium ${verified ? 'text-green-600' : 'text-amber-500'}`}
+            <div className="mt-2 space-y-3">
+              {customDomain ? (
+                <div className="flex items-center gap-2">
+                  <code className="text-sm bg-slate-100 dark:bg-navy-800 px-2 py-1 rounded text-slate-800 dark:text-slate-200">
+                    {customDomain}
+                  </code>
+                  <span
+                    className={`flex items-center gap-1 text-xs font-medium ${customDomainVerified ? 'text-green-600' : 'text-amber-500'}`}
+                  >
+                    {customDomainVerified ? (
+                      <>
+                        <CheckCircle size={12} /> {t('organization.domains.verified', 'Verified')}
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle size={12} />{' '}
+                        {t('organization.domains.pending', 'Pending verification')}
+                      </>
+                    )}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  {t('organization.domains.noDomain', 'No custom domain configured.')}
+                </p>
+              )}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  value={customDomainDraft}
+                  onChange={(event) => setCustomDomainDraft(event.target.value)}
+                  placeholder="app.company.com"
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleSaveCustomDomain()}
+                  disabled={savingCustomDomain}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-300"
                 >
-                  {verified ? (
-                    <>
-                      <CheckCircle size={12} /> {t('organization.domains.verified', 'Verified')}
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={12} />{' '}
-                      {t('organization.domains.pending', 'Pending verification')}
-                    </>
-                  )}
-                </span>
+                  <Plus size={14} />
+                  {savingCustomDomain
+                    ? t('common.saving', 'Saving...')
+                    : t('organization.domains.saveCustomDomain', 'Save domain')}
+                </button>
               </div>
-            ) : (
-              <p className="mt-2 text-sm text-slate-500">
-                {t('organization.domains.noDomain', 'No custom domain configured.')}
+              <p className="text-xs text-slate-500">
+                DNS verification remains a separate operator step before the domain can be marked
+                verified.
               </p>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -443,15 +633,40 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             'Users with these email domains can auto-join your organization.'
           )}
         </p>
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+          <input
+            type="text"
+            value={newApprovedDomain}
+            onChange={(event) => setNewApprovedDomain(event.target.value)}
+            placeholder="company.com"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+          />
+          <button
+            type="button"
+            onClick={() => void handleAddApprovedDomain()}
+            disabled={savingDomain}
+            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          >
+            {savingDomain ? t('common.saving', 'Saving...') : t('common.add', 'Add')}
+          </button>
+        </div>
         <div className="flex flex-wrap gap-2">
-          {(orgData?.approved_domains || []).length > 0 ? (
-            (orgData.approved_domains as string[]).map((d: string) => (
+          {approvedDomains.length > 0 ? (
+            approvedDomains.map((d) => (
               <span
-                key={d}
+                key={d.id || d.domain}
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300"
               >
-                @{d}
-                <button className="text-slate-400 hover:text-red-500">
+                @{d.domain}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (d.id) void handleRemoveApprovedDomain(d.id);
+                  }}
+                  disabled={!d.id}
+                  title={!d.id ? 'Cannot remove a domain without a server id' : undefined}
+                  className="text-slate-400 hover:text-rose-500"
+                >
                   <Trash2 size={12} />
                 </button>
               </span>
@@ -469,6 +684,79 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
 const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   const { t } = useTranslation();
+  const [primaryColor, setPrimaryColor] = useState(orgData?.brand_color || '#6366f1');
+  const [logoUrl, setLogoUrl] = useState(orgData?.logo_url || '');
+  const [savingColor, setSavingColor] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBranding = async () => {
+      if (!orgData?.id) {
+        setPrimaryColor('#6366f1');
+        setLogoUrl('');
+        return;
+      }
+
+      try {
+        const response = await Api.get(`/branding/${orgData.id}`);
+        if (cancelled) return;
+        const payload = response?.data ?? response;
+        const branding = payload?.branding;
+        const defaults = payload?.defaults;
+        setPrimaryColor(
+          branding?.primaryColor || defaults?.primaryColor || orgData?.brand_color || '#6366f1'
+        );
+        setLogoUrl(branding?.logoLightUrl || orgData?.logo_url || '');
+      } catch {
+        if (cancelled) return;
+        setPrimaryColor(orgData?.brand_color || '#6366f1');
+        setLogoUrl(orgData?.logo_url || '');
+      }
+    };
+
+    void loadBranding();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orgData?.brand_color, orgData?.id, orgData?.logo_url]);
+
+  const savePrimaryColor = async (nextColor: string) => {
+    if (!orgData?.id) return;
+    try {
+      setSavingColor(true);
+      setPrimaryColor(nextColor);
+      await Api.patch(`/branding/${orgData.id}`, { primaryColor: nextColor });
+      toast.success('Brand color updated');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to update brand color');
+      setPrimaryColor(orgData?.brand_color || '#6366f1');
+    } finally {
+      setSavingColor(false);
+    }
+  };
+
+  const handleLogoSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !orgData?.id) return;
+
+    try {
+      setUploadingLogo(true);
+      const upload = await Api.upload(file, { orgId: orgData.id, type: 'light' });
+      await Api.patch(`/branding/${orgData.id}`, { logoLightUrl: upload.url });
+      setLogoUrl(upload.url);
+      toast.success('Logo updated');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to upload logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
@@ -483,30 +771,45 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             <label className="block text-xs font-medium text-slate-500 mb-2">
               {t('organization.branding.logo', 'Logo')}
             </label>
-            <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-400 hover:border-slate-300 transition-colors cursor-pointer">
-              {orgData?.logo_url ? (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingLogo}
+              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-400 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {uploadingLogo ? (
+                <Loader2 size={24} className="animate-spin" />
+              ) : logoUrl ? (
                 <img
-                  src={orgData.logo_url}
+                  src={logoUrl}
                   alt="Org logo"
                   className="w-full h-full object-contain rounded-xl"
                 />
               ) : (
                 <Plus size={24} />
               )}
-            </div>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
+              className="hidden"
+              onChange={handleLogoSelected}
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-2">
               {t('organization.branding.primaryColor', 'Primary Color')}
             </label>
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-lg border border-slate-200 dark:border-navy-700"
-                style={{ backgroundColor: orgData?.brand_color || '#6366f1' }}
+              <input
+                type="color"
+                value={primaryColor}
+                disabled={savingColor}
+                onChange={(event) => void savePrimaryColor(event.target.value)}
+                className="h-10 w-10 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0 dark:border-navy-700 disabled:opacity-50"
               />
-              <code className="text-sm text-slate-600 dark:text-slate-400">
-                {orgData?.brand_color || '#6366f1'}
-              </code>
+              <code className="text-sm text-slate-600 dark:text-slate-400">{primaryColor}</code>
             </div>
           </div>
         </div>

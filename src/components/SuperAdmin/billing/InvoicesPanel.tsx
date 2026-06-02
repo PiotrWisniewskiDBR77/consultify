@@ -146,7 +146,7 @@ export const InvoicesPanel: React.FC = () => {
       },
       open: { icon: <Clock size={14} />, bg: 'bg-blue-500/20', text: 'text-blue-400' },
       paid: { icon: <CheckCircle2 size={14} />, bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-      void: { icon: <XCircle size={14} />, bg: 'bg-red-500/20', text: 'text-red-400' },
+      void: { icon: <XCircle size={14} />, bg: 'bg-rose-500/20', text: 'text-rose-400' },
       uncollectible: {
         icon: <AlertTriangle size={14} />,
         bg: 'bg-amber-500/20',
@@ -189,14 +189,14 @@ export const InvoicesPanel: React.FC = () => {
               placeholder="Search invoices..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
             />
           </div>
 
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           >
             <option value="all">All Status</option>
             <option value="draft">Draft</option>
@@ -208,7 +208,7 @@ export const InvoicesPanel: React.FC = () => {
           <select
             value={filterOrgId}
             onChange={(e) => setFilterOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           >
             <option value="">All Organizations</option>
             {organizations.map((org) => (
@@ -231,7 +231,7 @@ export const InvoicesPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 rounded-lg text-white font-medium transition-colors"
           >
             <Plus size={18} />
             Create Invoice
@@ -242,7 +242,7 @@ export const InvoicesPanel: React.FC = () => {
       {/* Invoices Table */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredInvoices.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">

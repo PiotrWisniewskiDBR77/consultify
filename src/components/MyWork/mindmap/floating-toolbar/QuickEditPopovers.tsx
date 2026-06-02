@@ -134,7 +134,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
             >
               {tag}
-              <button onClick={() => removeTag(tag)} className="hover:text-red-500">
+              <button onClick={() => removeTag(tag)} className="hover:text-rose-500">
                 <X size={10} />
               </button>
             </span>

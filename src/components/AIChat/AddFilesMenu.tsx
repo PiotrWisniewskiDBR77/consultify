@@ -108,15 +108,15 @@ const DropboxIcon = () => (
 const FileIcon: React.FC<{ name: string }> = ({ name }) => {
   const ext = name.split('.').pop()?.toLowerCase() || '';
   const colorMap: Record<string, string> = {
-    pdf: 'text-red-400',
+    pdf: 'text-rose-400',
     docx: 'text-blue-400',
     doc: 'text-blue-400',
     xlsx: 'text-emerald-400',
     xls: 'text-emerald-400',
     csv: 'text-emerald-400',
-    png: 'text-violet-400',
-    jpg: 'text-violet-400',
-    jpeg: 'text-violet-400',
+    png: 'text-primary-400',
+    jpg: 'text-primary-400',
+    jpeg: 'text-primary-400',
     txt: 'text-slate-400',
     md: 'text-slate-400',
     json: 'text-amber-400',
@@ -148,6 +148,7 @@ const FileIcon: React.FC<{ name: string }> = ({ name }) => {
 interface AddFilesMenuProps {
   onFileSelect: (files: File[]) => void;
   onUrlAdd?: (url: string) => void;
+  onRecentSelect?: (recent: { name: string; url?: string }) => void;
   onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
   onConnectCloud?: (provider: CloudProviderId) => void;
   connectedProviders?: CloudProviderId[];
@@ -172,6 +173,7 @@ const PROVIDERS: ProviderDef[] = [
 export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   onFileSelect,
   onUrlAdd,
+  onRecentSelect,
   onCloudFileSelect,
   onConnectCloud,
   connectedProviders = [],
@@ -324,11 +326,11 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className="absolute left-0 bottom-full mb-2 z-50 w-[250px] py-1.5
+          className="absolute left-0 top-full mt-2 z-50 w-[250px] py-1.5
             bg-white/95 dark:bg-[#1a1d2e]/95 backdrop-blur-xl
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
-            animate-in fade-in-0 slide-in-from-bottom-2 duration-150"
+            animate-in fade-in-0 slide-in-from-top-2 duration-150"
         >
           {/* Upload file */}
           <MenuItem
@@ -426,6 +428,17 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                       className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors group"
                       title={r.name}
                       onClick={() => {
+                        onRecentSelect?.({ name: r.name });
+                        toast(
+                          t(
+                            'aiChat.menu.recentNotReusable',
+                            'Recent item cannot be reattached automatically yet.'
+                          ),
+                          {
+                            icon: 'ℹ️',
+                            duration: 2500,
+                          }
+                        );
                         setIsOpen(false);
                       }}
                     >

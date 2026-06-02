@@ -1,0 +1,44 @@
+{
+  "status": {
+    "draft": "Draft",
+    "approved": "Approved",
+    "deprecated": "Deprecated"
+  },
+  "filter": {
+    "ariaLabel": "Template status filter",
+    "approved": "Approved",
+    "draft": "Draft",
+    "deprecated": "Deprecated"
+  },
+  "badge": {
+    "ariaPrefix": "Template status"
+  },
+  "actions": {
+    "approve": "Approve",
+    "deprecate": "Deprecate",
+    "approveTitle": "Approve template",
+    "deprecateTitle": "Deprecate template",
+    "approveBody": "Approving makes this template visible to all tenants. The action is logged in approval_history.",
+    "deprecateBody": "Deprecating hides the template from new users. Existing bases that already used it remain untouched. The action is logged in approval_history.",
+    "noteLabel": "Note (optional)",
+    "submitApprove": "Approve",
+    "submitDeprecate": "Deprecate",
+    "cancel": "Cancel",
+    "errorGeneric": "Operation failed."
+  },
+  "governance": {
+    "drawerTitle": "Template governance",
+    "approvalHistory": "Approval history",
+    "approvalHistoryEmpty": "No entries yet.",
+    "rules": "Governance rules",
+    "actor": "Actor",
+    "previousStatus": "Previous status",
+    "loading": "Loading…",
+    "event": {
+      "approved": "Approved",
+      "deprecated": "Deprecated",
+      "reverted_to_draft": "Reverted to draft",
+      "auto_promoted_from_legacy_featured": "Auto-promoted (legacy featured)"
+    }
+  }
+}

@@ -143,7 +143,7 @@ export const OnboardingWizard = () => {
                 />
                 <input
                   type="text"
-                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
                   placeholder="e.g. Program Manager, CTO"
                   value={context.role}
                   onChange={(e) => setContext({ ...context, role: e.target.value })}
@@ -161,7 +161,7 @@ export const OnboardingWizard = () => {
                 />
                 <input
                   type="text"
-                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
                   placeholder="e.g. Fintech, Manufacturing"
                   value={context.industry}
                   onChange={(e) => setContext({ ...context, industry: e.target.value })}
@@ -178,7 +178,7 @@ export const OnboardingWizard = () => {
                   size={18}
                 />
                 <textarea
-                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
                   placeholder="e.g. Deadlines are slipping, team communication is siloed..."
                   rows={3}
                   value={context.problems}
@@ -191,7 +191,7 @@ export const OnboardingWizard = () => {
                 Urgency Level
               </label>
               <select
-                className="w-full p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                className="w-full p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
                 value={context.urgency}
                 onChange={(e) => setContext({ ...context, urgency: e.target.value })}
               >
@@ -212,7 +212,7 @@ export const OnboardingWizard = () => {
                 />
                 <input
                   type="text"
-                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                  className="w-full pl-10 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
                   placeholder="e.g. Launch in Q1, Reduce bugs by 50%"
                   value={context.targets}
                   onChange={(e) => setContext({ ...context, targets: e.target.value })}
@@ -225,7 +225,7 @@ export const OnboardingWizard = () => {
             <button
               onClick={handleGeneratePlan}
               disabled={loading}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-purple-500/30 flex items-center gap-2 transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100"
+              className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-primary-500/30 flex items-center gap-2 transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100"
             >
               {loading ? (
                 <Loader2 className="animate-spin" />
@@ -246,9 +246,9 @@ export const OnboardingWizard = () => {
       <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center p-8">
         <div className="relative w-24 h-24 mb-8">
           <div className="absolute inset-0 border-4 border-slate-200 dark:border-navy-700 rounded-full"></div>
-          <div className="absolute inset-0 border-4 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
+          <div className="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <Zap className="text-purple-500" size={32} />
+            <Zap className="text-primary-500" size={32} />
           </div>
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
@@ -318,9 +318,9 @@ export const OnboardingWizard = () => {
 
           {/* Right Col: Actionable Initiatives */}
           <div className="space-y-6">
-            <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-6 border border-purple-100 dark:border-purple-500/20">
+            <div className="bg-primary-50 dark:bg-primary-900/10 rounded-xl p-6 border border-primary-100 dark:border-primary-500/20">
               <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-sm font-bold">
+                <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center text-sm font-bold">
                   2
                 </div>
                 Suggested Initiatives
@@ -336,7 +336,7 @@ export const OnboardingWizard = () => {
                     onClick={() => toggleInitiative(init.id)}
                     className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
                       selectedInitiativeIds.includes(init.id)
-                        ? 'bg-white dark:bg-navy-800 border-purple-500 shadow-md'
+                        ? 'bg-white dark:bg-navy-800 border-primary-500 shadow-md'
                         : 'bg-transparent border-transparent hover:bg-white/50 dark:hover:bg-white/5'
                     }`}
                   >
@@ -344,7 +344,7 @@ export const OnboardingWizard = () => {
                       <div
                         className={`mt-1 flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
                           selectedInitiativeIds.includes(init.id)
-                            ? 'bg-purple-500 border-purple-500'
+                            ? 'bg-primary-500 border-primary-500'
                             : 'border-slate-300 dark:border-navy-700'
                         }`}
                       >
@@ -365,11 +365,11 @@ export const OnboardingWizard = () => {
                 ))}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-purple-200 dark:border-purple-500/20">
+              <div className="mt-6 pt-6 border-t border-primary-200 dark:border-primary-500/20">
                 <button
                   onClick={handleAcceptPlan}
                   disabled={loading || selectedInitiativeIds.length === 0 || isConsultant}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
                 >
                   {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
                   {isConsultant ? 'Read-Only Mode' : 'Accept & Start Execution'}

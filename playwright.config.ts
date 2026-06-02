@@ -2,15 +2,18 @@ import path from 'node:path';
 
 import { defineConfig, devices } from '@playwright/test';
 
+import { STORAGE_STATE_PATH } from './tests/e2e/_helpers/testSupportState';
+
 const backendUrl = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const frontendUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';
 const useWebServer = process.env.E2E_USE_WEB_SERVER === 'true';
+const enableGlobalTestSupport = process.env.E2E_REQUIRE_TEST_SUPPORT === 'true' || useWebServer;
 const backendRunner = process.env.E2E_BACKEND_RUNNER || 'tsx'; // 'tsx' | 'build'
 const testSupportKey = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 const e2eTmpDir = path.resolve(process.cwd(), '.tmp', 'e2e');
 const allowLocalhostRemote = process.env.E2E_ALLOW_LOCALHOST_REMOTE === 'true';
 const e2eDatabaseUrl =
-  process.env.DATABASE_URL || 'postgresql://user:pass@external-db-host:5432/consultify';
+  process.env.DATABASE_URL || 'postgresql://user:pass@127.0.0.1:5432/consultify';
 const backendPort = (() => {
   try {
     return new URL(backendUrl).port || '3001';
@@ -30,16 +33,29 @@ const backendEnv = [
   'NODE_ENV=test',
   `PORT=${backendPort}`,
   `DATABASE_URL=${e2eDatabaseUrl}`,
+  'DB_TYPE=postgres',
+  'DB_MANAGED_SCHEMA=off',
   'MOCK_DB=true',
   'MOCK_REDIS=true',
+  'DB_QUERY_TIMEOUT=15000',
+  'DB_STATEMENT_TIMEOUT=30000',
   'ENABLE_TEST_GATEWAY=true',
   'ENABLE_TEST_SUPPORT=true',
+  'POSTGRES_SKIP_INIT_IN_TEST=1',
+  'DISABLE_CONNECTION_POOL=true',
+  'DISABLE_SCHEDULER=true',
+  'DISABLE_AI_PROVIDER_SENTINEL=true',
+  'DISABLE_AI_HEALTH_MONITOR=true',
+  'DISABLE_STARTUP_HEALTH_MONITOR=true',
+  'SKIP_STARTUP_VALIDATOR=true',
   `TEST_SUPPORT_KEY=${testSupportKey}`,
   `E2E_MODE=${process.env.E2E_MODE || 'false'}`,
 ].join(' ');
 
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: enableGlobalTestSupport ? './tests/e2e/smoke/global-setup.ts' : undefined,
+  globalTeardown: enableGlobalTestSupport ? './tests/e2e/smoke/global-teardown.ts' : undefined,
   // Some legacy/spec files under tests/e2e are written for Vitest (not Playwright).
   // Ignore them so `npm run test:e2e` stays deterministic.
   testIgnore: [
@@ -62,6 +78,7 @@ export default defineConfig({
   reporter: [['list'], ['junit', { outputFile: 'e2e-results.xml' }]],
   use: {
     baseURL: frontendUrl,
+    storageState: enableGlobalTestSupport ? STORAGE_STATE_PATH : undefined,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     actionTimeout: 15000, // 15 seconds for actions
@@ -93,16 +110,17 @@ export default defineConfig({
           command:
             backendRunner === 'build'
               ? `mkdir -p "${e2eTmpDir}" && cd server && npm run build && TMPDIR="${e2eTmpDir}" ${backendEnv} node dist/src/index.js`
-              : `mkdir -p "${e2eTmpDir}" && cd server && TMPDIR="${e2eTmpDir}" ${backendEnv} npx tsx src/index.ts`,
+              : `mkdir -p "${e2eTmpDir}" && cd server && TMPDIR="${e2eTmpDir}" ${backendEnv} tsx src/index.ts`,
           url: `${backendUrl.replace(/\/$/, '')}/api/health/ping`,
-          reuseExistingServer: !process.env.CI,
-          timeout: backendRunner === 'build' ? 600000 : 120000,
+          reuseExistingServer: false,
+          // Cold starts on shared machines can exceed 4 minutes.
+          timeout: backendRunner === 'build' ? 600000 : 420000,
         },
         {
-          command: `VITE_API_TARGET=${backendUrl} npx vite --port ${frontendPort} --strictPort`,
+          command: `VITE_API_TARGET=${backendUrl} npm run build && VITE_API_TARGET=${backendUrl} npx vite preview --port ${frontendPort} --strictPort`,
           url: frontendUrl,
-          reuseExistingServer: !process.env.CI,
-          timeout: 120000,
+          reuseExistingServer: false,
+          timeout: 420000,
         },
       ]
     : undefined,

@@ -16,7 +16,17 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-const ALLOWED_MODULES = ['meeting', 'iris', 'marketplace'];
+const ALLOWED_MODULES = [
+  'meeting',
+  'iris',
+  'marketplace',
+  // KIMI lanes (legacy route keys used by the frontend)
+  'wordy',
+  'excele',
+  'prezentacje',
+  // keep canonical english alias for future clients
+  'presentations',
+];
 
 /**
  * POST /api/module-interest
@@ -92,10 +102,7 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user?.id;
-    const rows = await dbAll(
-      'SELECT module_key FROM module_interest WHERE user_id = $1',
-      [userId]
-    );
+    const rows = await dbAll('SELECT module_key FROM module_interest WHERE user_id = $1', [userId]);
     const modules = (rows as any[]).map((r: any) => r.module_key);
     return res.json({ modules });
   })
@@ -112,17 +119,17 @@ router.delete(
     const { moduleKey } = req.params;
     const userId = req.user?.id;
 
-    await dbRun(
-      'DELETE FROM module_interest WHERE user_id = $1 AND module_key = $2',
-      [userId, moduleKey]
-    );
+    await dbRun('DELETE FROM module_interest WHERE user_id = $1 AND module_key = $2', [
+      userId,
+      moduleKey,
+    ]);
 
     return res.json({ ok: true });
   })
 );
 
 /**
- * GET /api/superadmin/module-interest
+ * GET /api/module-interest/admin/all
  * List all interest registrations (SuperAdmin only)
  */
 router.get(

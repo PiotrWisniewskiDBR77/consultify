@@ -38,6 +38,7 @@ import { Callout, EmptyStateInline, ToggleBlock } from '@/components/shared/NMod
 import { Api } from '@/services/api';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
+import TeresaMark from '../../shared/TeresaMark';
 import { AddEvidenceModal } from './AddEvidenceModal';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -151,7 +152,7 @@ const STATUS_CONFIG: Record<
   converted: {
     labelPl: 'Skonwertowany',
     labelEn: 'Converted',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
     icon: ArrowRight,
   },
 };
@@ -380,7 +381,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {isAI ? (
-              <Bot size={14} className="text-purple-500 shrink-0" />
+              <TeresaMark size={14} className="text-primary-500 shrink-0" />
             ) : (
               <Lightbulb size={14} className="text-amber-500 shrink-0" />
             )}
@@ -568,7 +569,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     type="button"
                     disabled={locked || isProtected}
                     onClick={() => handleRemoveTag(tag)}
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
                   >
                     <Hash size={9} className="shrink-0" />
                     <span>{tag}</span>
@@ -719,14 +720,14 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             <button
               onClick={handleAIExpand}
               disabled={locked || aiExpanding}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-500/10 to-indigo-500/8 hover:from-violet-500/15 hover:to-indigo-500/12 transition-all disabled:opacity-40"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/10 to-indigo-500/8 hover:from-primary-500/15 hover:to-indigo-500/12 transition-all disabled:opacity-40"
             >
               {aiExpanding ? (
-                <Loader2 size={14} className="animate-spin text-violet-500" />
+                <Loader2 size={14} className="animate-spin text-primary-500" />
               ) : (
-                <Sparkles size={14} className="text-violet-500" />
+                <Sparkles size={14} className="text-primary-500" />
               )}
-              <span className="text-[11px] font-bold text-violet-700 dark:text-violet-300">
+              <span className="text-[11px] font-bold text-primary-700 dark:text-primary-300">
                 {aiExpanding
                   ? isPl
                     ? 'Generuję pomysły...'
@@ -742,15 +743,15 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 {aiSuggestions.map((s, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 p-2 rounded-xl bg-violet-500/5 border border-violet-400/10 hover:bg-violet-500/10 transition-colors"
+                    className="flex items-center gap-2 p-2 rounded-xl bg-primary-500/5 border border-primary-400/10 hover:bg-primary-500/10 transition-colors"
                   >
-                    <Zap size={10} className="text-violet-500 shrink-0" />
+                    <Zap size={10} className="text-primary-500 shrink-0" />
                     <span className="text-[11px] text-slate-700 dark:text-slate-200 flex-1">
                       {s}
                     </span>
                     <button
                       onClick={() => handleApplyAISuggestion(s)}
-                      className="text-[9px] font-bold text-violet-600 dark:text-violet-400 hover:underline shrink-0"
+                      className="text-[9px] font-bold text-primary-600 dark:text-primary-400 hover:underline shrink-0"
                     >
                       {isPl ? 'Dodaj' : 'Add'}
                     </button>
@@ -793,7 +794,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     <div className="flex items-start gap-2">
                       <div className="mt-0.5 shrink-0">
                         {item.type === 'assessment' && (
-                          <Target size={11} className="text-red-500" />
+                          <Target size={11} className="text-rose-500" />
                         )}
                         {item.type === 'interview' && (
                           <MessageSquare size={11} className="text-blue-500" />
@@ -803,7 +804,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                           <Rocket size={11} className="text-amber-500" />
                         )}
                         {item.type === 'similar_idea' && (
-                          <Lightbulb size={11} className="text-violet-500" />
+                          <Lightbulb size={11} className="text-primary-500" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -819,7 +820,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                           <div className="flex items-center gap-1 mt-1">
                             <div className="w-8 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                               <div
-                                className={`h-full rounded-full ${item.confidence >= 0.7 ? 'bg-emerald-500' : item.confidence >= 0.4 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                className={`h-full rounded-full ${item.confidence >= 0.7 ? 'bg-emerald-500' : item.confidence >= 0.4 ? 'bg-amber-500' : 'bg-rose-500'}`}
                                 style={{ width: `${Math.round(item.confidence * 100)}%` }}
                               />
                             </div>
@@ -871,7 +872,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
             <button
               onClick={() => onDrillDown(nodeData.nodeId)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/8 hover:from-amber-500/15 hover:to-orange-500/12 transition-all"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-500/8 hover:from-amber-500/15 hover:to-amber-500/12 transition-all"
             >
               <ChevronRight size={14} className="text-amber-600" />
               <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
@@ -927,7 +928,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             title={isPl ? 'Historia AI' : 'AI history'}
             badge={String(nodeData.aiExpansionHistory?.length || 0)}
             defaultOpen={(nodeData.aiExpansionHistory?.length || 0) > 0}
-            icon={<Bot size={14} />}
+            icon={<TeresaMark size={14} />}
           >
             {nodeData.aiExpansionHistory?.length ? (
               <div className="space-y-2 mt-1">
@@ -966,7 +967,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           <button
             onClick={() => onConvertNode(nodeData.nodeId, 'initiative')}
             disabled={locked}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-orange-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-amber-500/15 to-amber-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-amber-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
           >
             <Rocket size={12} />
             {isPl ? 'Konwertuj → Inicjatywa' : 'Convert → Initiative'}
@@ -974,7 +975,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           <button
             onClick={() => onConvertNode(nodeData.nodeId, 'decision')}
             disabled={locked}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-blue-500/15 to-cyan-500/10 text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-cyan-500/15 border border-blue-500/10 transition-all disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-blue-500/15 to-blue-500/10 text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-blue-500/15 border border-blue-500/10 transition-all disabled:opacity-40"
           >
             <Star size={12} />
             {isPl ? 'Decyzja' : 'Decision'}

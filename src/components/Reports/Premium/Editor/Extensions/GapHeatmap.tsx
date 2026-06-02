@@ -35,16 +35,16 @@ const getGapColor = (gap: number, scheme: 'redGreen' | 'blueOrange'): string => 
     if (gap <= 0.5) return 'bg-green-100 text-green-800';
     if (gap <= 1.0) return 'bg-green-200 text-green-900';
     if (gap <= 1.5) return 'bg-yellow-100 text-yellow-800';
-    if (gap <= 2.0) return 'bg-orange-200 text-orange-900';
-    if (gap <= 2.5) return 'bg-red-200 text-red-900';
-    return 'bg-red-400 text-white';
+    if (gap <= 2.0) return 'bg-amber-200 text-amber-900';
+    if (gap <= 2.5) return 'bg-rose-200 text-rose-900';
+    return 'bg-rose-400 text-white';
   } else {
     if (gap <= 0.5) return 'bg-blue-100 text-blue-800';
     if (gap <= 1.0) return 'bg-blue-200 text-blue-900';
     if (gap <= 1.5) return 'bg-blue-300 text-blue-900';
-    if (gap <= 2.0) return 'bg-orange-200 text-orange-900';
-    if (gap <= 2.5) return 'bg-orange-300 text-orange-900';
-    return 'bg-orange-500 text-white';
+    if (gap <= 2.0) return 'bg-amber-200 text-amber-900';
+    if (gap <= 2.5) return 'bg-amber-300 text-amber-900';
+    return 'bg-amber-500 text-white';
   }
 };
 
@@ -276,7 +276,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
         </span>
         <span className="flex items-center gap-1">
           <span
-            className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-red-300' : 'bg-orange-400'}`}
+            className={`w-4 h-4 rounded ${colorScheme === 'redGreen' ? 'bg-rose-300' : 'bg-amber-400'}`}
           ></span>
           Duża luka (2+)
         </span>
@@ -311,7 +311,7 @@ export const GapHeatmapExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(GapHeatmapComponent);
+    return ReactNodeViewRenderer(GapHeatmapComponent) as any;
   },
 });
 

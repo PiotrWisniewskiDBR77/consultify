@@ -97,11 +97,14 @@ const permissionsService = {
     // Fallback: no tp_base_members entries — check legacy org/creator access
     const hasLegacyAccess = await this.canAccessBase(userId, orgId, baseId);
     if (hasLegacyAccess) {
-      logger.warn('[Permissions] Legacy fallback used — user has no tp_base_members entry, granting base_owner via org/creator access', {
-        userId,
-        baseId,
-        allowedRoles,
-      });
+      logger.warn(
+        '[Permissions] Legacy fallback used — user has no tp_base_members entry, granting base_owner via org/creator access',
+        {
+          userId,
+          baseId,
+          allowedRoles,
+        }
+      );
       return { allowed: true, role: 'base_owner' };
     }
     return { allowed: false, role: null };
@@ -330,24 +333,21 @@ const permissionsService = {
 
         const interfaceId = authReq.params?.interfaceId;
         if (interfaceId) {
-          const r = await db.query(
-            'SELECT base_id FROM tp_interfaces WHERE id = $1',
-            [interfaceId]
-          );
+          const r = await db.query('SELECT base_id FROM tp_interfaces WHERE id = $1', [
+            interfaceId,
+          ]);
           return (r.rows[0] as { base_id?: string })?.base_id ?? null;
         }
 
         const proposalId = authReq.params?.proposalId;
         if (proposalId) {
-          const r = await db.query(
-            'SELECT operations FROM tp_schema_proposals WHERE id = $1',
-            [proposalId]
-          );
+          const r = await db.query('SELECT operations FROM tp_schema_proposals WHERE id = $1', [
+            proposalId,
+          ]);
           const row = r.rows[0] as { operations?: string | unknown[] } | undefined;
           if (row?.operations) {
-            const ops = typeof row.operations === 'string'
-              ? JSON.parse(row.operations)
-              : row.operations;
+            const ops =
+              typeof row.operations === 'string' ? JSON.parse(row.operations) : row.operations;
             if (Array.isArray(ops) && ops.length > 0) {
               return (ops[0] as any)?.target?.base_id ?? null;
             }

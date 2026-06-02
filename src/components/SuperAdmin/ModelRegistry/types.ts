@@ -1,6 +1,13 @@
 export type ModelKind = 'TEXT_LLM' | 'IMAGE_MODEL' | 'BUSINESS_MODEL';
 export type ProviderType = 'direct' | 'aggregator' | 'local' | 'customer_managed';
 export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+export type ErrorCategory =
+  | 'missing_key'
+  | 'auth'
+  | 'billing'
+  | 'rate_limit'
+  | 'network'
+  | 'unknown';
 export type DataClass = 'no_pii' | 'pii' | 'confidential';
 export type PriceSource = 'api_sync' | 'manual' | 'contract';
 
@@ -23,6 +30,10 @@ export interface RegistryModel {
   isActive: boolean;
   healthStatus: HealthStatus;
   lastHealthCheck?: string;
+  lastErrorCategory?: ErrorCategory;
+  lastErrorHttpStatus?: number;
+  lastErrorMessage?: string;
+  lastErrorAt?: string;
   avgLatencyMs?: number;
   costPer1k?: number;
   capabilities: ModelCapabilities;
@@ -214,7 +225,7 @@ export const PURPOSE_KIND_MAP: Record<Purpose, ModelKind> = {
 
 export const KIND_BADGE_STYLES: Record<ModelKind, { bg: string; text: string }> = {
   TEXT_LLM: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
-  IMAGE_MODEL: { bg: 'bg-purple-500/10', text: 'text-purple-400' },
+  IMAGE_MODEL: { bg: 'bg-primary-500/10', text: 'text-primary-400' },
   BUSINESS_MODEL: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
 };
 
@@ -228,6 +239,6 @@ export const PROVIDER_TYPE_STYLES: Record<ProviderType, { bg: string; text: stri
 export const HEALTH_STYLES: Record<HealthStatus, { bg: string; text: string; dot: string }> = {
   healthy: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
   degraded: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
-  unhealthy: { bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400' },
+  unhealthy: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400' },
   unknown: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
 };

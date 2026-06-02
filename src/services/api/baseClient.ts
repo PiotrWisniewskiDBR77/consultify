@@ -3,6 +3,12 @@
  * Core utilities for making API requests
  */
 
+import {
+  dispatchAccessBlocked,
+  getAccessBlockedCode,
+  isAccessBlockedCode,
+} from '../../utils/accessBlocked';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { tokenService } from '../tokenService';
 
 export const API_URL = '/api';
@@ -14,13 +20,26 @@ if (!correlationId) {
   sessionStorage.setItem('correlationId', correlationId);
 }
 
+const getStoredOrganizationContextId = (): string => {
+  try {
+    return localStorage.getItem('consultify_current_org_id') || '';
+  } catch {
+    return '';
+  }
+};
+
 export const getHeaders = (): Record<string, string> => {
   const token = tokenService.getToken();
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Authorization: token ? `Bearer ${token}` : '',
     'X-Correlation-ID': correlationId as string,
   };
+  const orgContextId = getStoredOrganizationContextId();
+  if (orgContextId) {
+    headers['x-org-context'] = orgContextId;
+  }
+  return headers;
 };
 
 /**
@@ -39,7 +58,8 @@ export const fetchWithRetry = async (
     ? { ...((requestOptions.headers as Record<string, string>) || {}) }
     : { ...getHeaders(), ...((requestOptions.headers as Record<string, string>) || {}) };
 
-  const doFetch = () => fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+  const doFetch = () =>
+    fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
 
   let res: Response;
   try {
@@ -62,7 +82,11 @@ export const fetchWithRetry = async (
     const newToken = await tokenService.refreshToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+      res = await fetch(url, {
+        ...requestOptions,
+        headers,
+        credentials: options.credentials ?? 'include',
+      });
     } else {
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
     }
@@ -106,6 +130,7 @@ export const handleResponse = async <T = unknown>(
   })();
 
   const data = parsed.kind === 'json' ? parsed.json : {};
+  const errorInput = parsed.kind === 'json' ? data : parsed.kind === 'text' ? parsed.text : {};
 
   // Check for Demo Block
   if (
@@ -136,15 +161,36 @@ export const handleResponse = async <T = unknown>(
   }
 
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-  const message = (data as any)?.error || (data as any)?.message || fallbackHttp || defaultError;
+  const message = normalizeApiErrorMessage(errorInput, fallbackHttp || defaultError);
+
+  if (res.status === 403) {
+    const code = getAccessBlockedCode(data);
+    if (isAccessBlockedCode(code)) {
+      dispatchAccessBlocked(data, message || defaultError);
+      throw new Error(message);
+    }
+  }
 
   const err: any = new Error(message);
   err.status = res.status;
   err.url = res.url;
   err.data = data;
   if (parsed.kind === 'text') err.bodyText = parsed.text;
+  if (res.status === 403 && typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('api:forbidden', {
+        detail: {
+          status: res.status,
+          url: res.url,
+          message,
+        },
+      })
+    );
+  }
   throw err;
 };
+
+export const handleDataResponse = handleResponse;
 
 /**
  * HTTP method helpers

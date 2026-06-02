@@ -177,7 +177,7 @@ export const ReportTemplatesView: React.FC = () => {
           className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <Wand2 size={18} className="text-violet-500" />
+            <Wand2 size={18} className="text-primary-500" />
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
               Template Builder
             </h2>
@@ -242,14 +242,14 @@ export const ReportTemplatesView: React.FC = () => {
                       onClick={() => handleToggleSection(section.id)}
                       className={`flex items-center gap-2 p-2 rounded-lg text-left border text-sm transition-colors ${
                         isSelected
-                          ? 'border-violet-400 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
+                          ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                           : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400'
                       }`}
                     >
                       <span
                         className={`w-4 h-4 rounded border flex items-center justify-center ${
                           isSelected
-                            ? 'bg-violet-500 border-violet-500 text-white'
+                            ? 'bg-primary-500 border-primary-500 text-white'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}
                       >
@@ -258,7 +258,7 @@ export const ReportTemplatesView: React.FC = () => {
                       {section.icon && (
                         <span
                           className={
-                            isSelected ? 'text-violet-500' : 'text-slate-400 dark:text-slate-500'
+                            isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
                           }
                         >
                           {section.icon}
@@ -273,8 +273,8 @@ export const ReportTemplatesView: React.FC = () => {
 
             {/* B7.6: Live preview — template creator influences card shape */}
             {selectedSections.length > 0 && (
-              <div className="mt-4 p-3 rounded-xl border border-dashed border-violet-300 dark:border-violet-700 bg-violet-50/50 dark:bg-violet-900/10">
-                <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wider mb-2">
+              <div className="mt-4 p-3 rounded-xl border border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-900/10">
+                <p className="text-[10px] font-bold text-primary-500 uppercase tracking-wider mb-2">
                   Card Preview
                 </p>
                 <div className="bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 p-3 space-y-1.5">
@@ -306,7 +306,7 @@ export const ReportTemplatesView: React.FC = () => {
             <div className="mt-6">
               <button
                 onClick={handleCreateTemplate}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium"
               >
                 <Plus size={16} />
                 Create template

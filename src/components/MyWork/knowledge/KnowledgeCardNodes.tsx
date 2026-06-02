@@ -180,7 +180,7 @@ const EvidenceCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
       </div>
 
       {data?.url && (
-        <div className="mt-1 text-[8px] text-cyan-500 truncate flex items-center gap-0.5">
+        <div className="mt-1 text-[8px] text-blue-500 truncate flex items-center gap-0.5">
           <ExternalLink size={8} />
           {data.url}
         </div>

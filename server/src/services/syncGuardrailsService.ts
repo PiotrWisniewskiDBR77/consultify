@@ -159,15 +159,15 @@ export async function recordRequest(
 // ── Error Handling & Retry ─────────────────────────────────────
 
 export type ErrorPostureScenario =
-  | 'reauth_required'        // §2.3.8 #1
-  | 'rate_limit'             // §2.3.8 #2
-  | 'permission_revoked'     // §2.3.8 #3
-  | 'mapping_drift'          // §2.3.8 #4
-  | 'run_failed_transient'   // §2.3.8 #5
-  | 'run_failed_permanent'   // §2.3.8 #6
-  | 'provider_outage'        // §2.3.8 #7
-  | 'webhook_delivery_fail'  // §2.3.8 #8
-  | 'org_policy_block'       // §2.3.8 #9
+  | 'reauth_required' // §2.3.8 #1
+  | 'rate_limit' // §2.3.8 #2
+  | 'permission_revoked' // §2.3.8 #3
+  | 'mapping_drift' // §2.3.8 #4
+  | 'run_failed_transient' // §2.3.8 #5
+  | 'run_failed_permanent' // §2.3.8 #6
+  | 'provider_outage' // §2.3.8 #7
+  | 'webhook_delivery_fail' // §2.3.8 #8
+  | 'org_policy_block' // §2.3.8 #9
   | 'unknown';
 
 export function classifyError(error: Error | string): {
@@ -178,7 +178,11 @@ export function classifyError(error: Error | string): {
   const msg = typeof error === 'string' ? error : error.message;
   const lower = msg.toLowerCase();
 
-  if (lower.includes('invalid_grant') || lower.includes('consent') || lower.includes('revoked token')) {
+  if (
+    lower.includes('invalid_grant') ||
+    lower.includes('consent') ||
+    lower.includes('revoked token')
+  ) {
     return { type: 'AUTH', isRetryable: false, scenario: 'reauth_required' };
   }
   if (lower.includes('403') || lower.includes('forbidden') || lower.includes('scope')) {
@@ -196,7 +200,11 @@ export function classifyError(error: Error | string): {
   if (lower.includes('webhook') || lower.includes('delivery') || lower.includes('410')) {
     return { type: 'NETWORK', isRetryable: true, scenario: 'webhook_delivery_fail' };
   }
-  if (lower.includes('org_disabled') || lower.includes('policy') || lower.includes('blocked by org')) {
+  if (
+    lower.includes('org_disabled') ||
+    lower.includes('policy') ||
+    lower.includes('blocked by org')
+  ) {
     return { type: 'AUTH', isRetryable: false, scenario: 'org_policy_block' };
   }
   if (lower.includes('drift') || lower.includes('schema_mismatch') || lower.includes('mapping')) {
@@ -293,9 +301,15 @@ export async function logSyncError(
       await dbRun(
         `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
          VALUES (gen_random_uuid()::TEXT, ?, ?, 'provider_outage_detected', 'system', 'system', ?::JSONB)`,
-        [organizationId, integrationId, JSON.stringify({ errorId: id, errorType: type, message: msg })]
+        [
+          organizationId,
+          integrationId,
+          JSON.stringify({ errorId: id, errorType: type, message: msg }),
+        ]
       );
-    } catch { /* non-blocking */ }
+    } catch {
+      /* non-blocking */
+    }
   }
 
   if (scenario === 'webhook_delivery_fail') {
@@ -303,9 +317,15 @@ export async function logSyncError(
       await dbRun(
         `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
          VALUES (gen_random_uuid()::TEXT, ?, ?, 'webhook_delivery_failure', 'system', 'system', ?::JSONB)`,
-        [organizationId, integrationId, JSON.stringify({ errorId: id, errorType: type, message: msg })]
+        [
+          organizationId,
+          integrationId,
+          JSON.stringify({ errorId: id, errorType: type, message: msg }),
+        ]
       );
-    } catch { /* non-blocking */ }
+    } catch {
+      /* non-blocking */
+    }
   }
 
   if (scenario === 'org_policy_block') {
@@ -313,9 +333,15 @@ export async function logSyncError(
       await dbRun(
         `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
          VALUES (gen_random_uuid()::TEXT, ?, ?, 'org_policy_blocked', 'system', 'system', ?::JSONB)`,
-        [organizationId, integrationId, JSON.stringify({ errorId: id, errorType: type, message: msg })]
+        [
+          organizationId,
+          integrationId,
+          JSON.stringify({ errorId: id, errorType: type, message: msg }),
+        ]
       );
-    } catch { /* non-blocking */ }
+    } catch {
+      /* non-blocking */
+    }
   }
 
   return {

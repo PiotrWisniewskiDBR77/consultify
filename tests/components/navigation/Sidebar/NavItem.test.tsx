@@ -106,7 +106,7 @@ describe('NavItem (L2)', () => {
     expect(screen.getByRole('button')).toHaveAttribute('data-chat-toggle', 'true');
   });
 
-  it('disables click and shows locked tooltip when requiresView is not completed', () => {
+  it('blocks click and shows locked tooltip when requiresView is not completed', () => {
     const onClick = vi.fn();
     render(
       <NavItem
@@ -132,7 +132,7 @@ describe('NavItem (L2)', () => {
     );
 
     const btn = screen.getByRole('button');
-    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
     expect(btn.getAttribute('title')).toContain('common.locked');
     fireEvent.click(btn);
     expect(onClick).not.toHaveBeenCalled();
@@ -223,7 +223,7 @@ describe('NavItem (L2)', () => {
       />
     );
 
-    expect(screen.getByText('In development')).toBeInTheDocument();
+    expect(screen.getByText('Wkrótce')).toBeInTheDocument();
     expect(container.querySelectorAll('svg').length).toBeGreaterThan(0);
   });
 

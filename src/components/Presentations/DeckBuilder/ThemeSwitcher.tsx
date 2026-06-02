@@ -75,22 +75,22 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
                 id: 'brand_kit',
                 name: 'Brand Kit',
                 colors: {
-                  primary: brandKit.primary_color.startsWith('#')
-                    ? brandKit.primary_color
-                    : `#${brandKit.primary_color}`,
-                  secondary: brandKit.secondary_color.startsWith('#')
-                    ? brandKit.secondary_color
-                    : `#${brandKit.secondary_color}`,
-                  accent: brandKit.accent_color.startsWith('#')
-                    ? brandKit.accent_color
-                    : `#${brandKit.accent_color}`,
+                  primary: brandKit.primaryColor.startsWith('#')
+                    ? brandKit.primaryColor
+                    : `#${brandKit.primaryColor}`,
+                  secondary: brandKit.secondaryColor.startsWith('#')
+                    ? brandKit.secondaryColor
+                    : `#${brandKit.secondaryColor}`,
+                  accent: brandKit.accentColor.startsWith('#')
+                    ? brandKit.accentColor
+                    : `#${brandKit.accentColor}`,
                   background: '#FAFBFC',
                   surface: '#FFFFFF',
                   textPrimary: '#0F172A',
                   textSecondary: '#64748B',
-                  heading: brandKit.primary_color.startsWith('#')
-                    ? brandKit.primary_color
-                    : `#${brandKit.primary_color}`,
+                  heading: brandKit.primaryColor.startsWith('#')
+                    ? brandKit.primaryColor
+                    : `#${brandKit.primaryColor}`,
                 },
                 chartPalette: [],
                 styleTags: ['branded'],
@@ -128,7 +128,7 @@ const ThemeCard: React.FC<{
     onClick={onSelect}
     className={`relative p-2 rounded-lg border-2 text-left transition-all w-full ${
       isSelected
-        ? 'border-purple-500 shadow-md shadow-purple-500/10'
+        ? 'border-primary-500 shadow-md shadow-primary-500/10'
         : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
     }`}
   >
@@ -143,7 +143,7 @@ const ThemeCard: React.FC<{
       <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{colorSet.name}</p>
     </div>
     {isSelected && (
-      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-500 flex items-center justify-center">
         <Check size={10} className="text-white" />
       </div>
     )}

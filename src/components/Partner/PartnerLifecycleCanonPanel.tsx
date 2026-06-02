@@ -1,4 +1,12 @@
-import { ArrowRight, CreditCard, GraduationCap, ShieldCheck, Sparkles, UserCheck, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  CreditCard,
+  GraduationCap,
+  ShieldCheck,
+  Sparkles,
+  UserCheck,
+  Users,
+} from 'lucide-react';
 import React from 'react';
 
 import type { V8PartnerOnboardingStatus } from '@/services/api/v8';
@@ -28,28 +36,32 @@ function buildSteps(status?: V8PartnerOnboardingStatus | null): StepCopy[] {
     {
       id: 'apply',
       title: 'Apply and qualify',
-      description: 'Application, fit review, and first ecosystem qualification happen before activation.',
+      description:
+        'Application, fit review, and first ecosystem qualification happen before activation.',
       icon: Users,
       completed: hasPortalState,
     },
     {
       id: 'activate',
       title: 'Activate partner profile',
-      description: 'Accept the agreement and lock the commercial tier before deeper workspace access.',
+      description:
+        'Accept the agreement and lock the commercial tier before deeper workspace access.',
       icon: UserCheck,
       completed: agreementReady && tierReady,
     },
     {
       id: 'workspace',
       title: 'Finish workspace and payouts',
-      description: 'Enable onboarding operations, payout readiness, and partner workspace ownership.',
+      description:
+        'Enable onboarding operations, payout readiness, and partner workspace ownership.',
       icon: CreditCard,
       completed: payoutReady,
     },
     {
       id: 'grow',
       title: 'Grow through academy and progression',
-      description: 'Enablement, certification, and tier progression turn activation into an active partner lifecycle.',
+      description:
+        'Enablement, certification, and tier progression turn activation into an active partner lifecycle.',
       icon: GraduationCap,
       completed: activeReady,
     },
@@ -84,13 +96,17 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
           >
             One path from application to active partner
           </h2>
-          <p className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
+          >
             Recruitment, activation, enablement, and earnings should read as one governed ecosystem
             lifecycle rather than separate partner pages.
           </p>
         </div>
 
-        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}>
+        <div
+          className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}
+        >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
               Canonical partner journey
@@ -169,11 +185,13 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
               <div className="mt-2 flex items-center gap-3">
                 <div className="h-2 flex-1 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"
+                    className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">{progress}%</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {progress}%
+                </span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {['Application', 'Activation', 'Academy', 'Earnings'].map((item) => (

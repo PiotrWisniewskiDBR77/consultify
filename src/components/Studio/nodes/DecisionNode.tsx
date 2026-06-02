@@ -60,9 +60,9 @@ export const DecisionNode: React.FC<NodeProps<DecisionData>> = memo(
           position={Position.Bottom}
           id="no"
           isConnectable={isConnectable}
-          className="!w-3 !h-3 !bg-red-500 !border-2 !border-slate-800"
+          className="!w-3 !h-3 !bg-rose-500 !border-2 !border-slate-800"
         />
-        <span className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 text-[10px] text-red-400 font-medium">
+        <span className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 text-[10px] text-rose-400 font-medium">
           {noLabel}
         </span>
       </div>

@@ -74,7 +74,7 @@ interface CloudFilePickerProps {
 // Get icon for file type
 const getFileIcon = (mimeType: string, isFolder: boolean) => {
   if (isFolder) return <Folder size={20} className="text-yellow-500" />;
-  if (mimeType.startsWith('image/')) return <Image size={20} className="text-purple-500" />;
+  if (mimeType.startsWith('image/')) return <Image size={20} className="text-primary-500" />;
   if (mimeType.includes('spreadsheet') || mimeType.includes('excel'))
     return <Table size={20} className="text-green-500" />;
   if (mimeType.includes('document') || mimeType.includes('word') || mimeType === 'application/pdf')

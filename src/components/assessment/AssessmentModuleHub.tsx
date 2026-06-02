@@ -755,7 +755,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
           return (
             <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950/50">
               <div className="text-center">
-                <Loader2 className="w-8 h-8 text-purple-500 animate-spin mx-auto mb-3" />
+                <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto mb-3" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {isPolish ? 'Ładowanie danych assessmentu...' : 'Loading assessment data...'}
                 </p>
@@ -786,7 +786,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                         key={item.id}
                         className={`flex items-center justify-between gap-2 px-2 py-2 rounded-md text-xs transition-colors ${
                           isActive
-                            ? 'bg-purple-600 text-white'
+                            ? 'bg-primary-600 text-white'
                             : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                         }`}
                       >
@@ -1023,8 +1023,8 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     return (
       <SplitLayout title="Assessment" currentView={AppView.ASSESSMENT}>
         <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
-          <div className="text-center max-w-md bg-white dark:bg-navy-900 p-8 rounded-xl shadow-lg border border-red-200 dark:border-red-900/30">
-            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-400">
+          <div className="text-center max-w-md bg-white dark:bg-navy-900 p-8 rounded-xl shadow-lg border border-rose-200 dark:border-rose-900/30">
+            <div className="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-900/20 flex items-center justify-center mx-auto mb-4 text-rose-600 dark:text-rose-400">
               <AlertCircle size={32} />
             </div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
@@ -1048,7 +1048,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         >
           <div className="flex items-center gap-3">
             <div
-              className={`rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 ${isCompact ? 'w-10 h-10' : 'w-12 h-12'}`}
+              className={`rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 ${isCompact ? 'w-10 h-10' : 'w-12 h-12'}`}
             >
               {React.cloneElement(frameworkConfig.icon as React.ReactElement<{ size?: number }>, {
                 size: isCompact ? 20 : 24,
@@ -1081,7 +1081,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   className={`
-                                    scroll-snap-item touch-target touch-ripple flex items-center justify-center gap-2 
+                                    scroll-snap-item touch-target touch-ripple flex items-center justify-center gap-2
                                     rounded-lg font-medium transition-all whitespace-nowrap shrink-0
                                     ${
                                       isCompact
@@ -1090,7 +1090,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                     }
                                     ${
                                       isActive
-                                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                                        ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20'
                                         : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-slate-100 dark:active:bg-white/10 border border-slate-200 dark:border-navy-700'
                                     }
                                 `}
@@ -1121,13 +1121,13 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   <button
                     onClick={() => setSelectedAxis('dashboard')}
                     className={`
-                                        scroll-snap-item touch-target touch-ripple flex items-center gap-1 
+                                        scroll-snap-item touch-target touch-ripple flex items-center gap-1
                                         rounded-md font-medium transition-all whitespace-nowrap shrink-0
                                         ${isCompact ? 'px-2.5 py-1' : 'px-3 py-1'} text-xs
                                         ${
                                           selectedAxis === 'dashboard'
-                                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
-                                            : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-purple-50 dark:active:bg-purple-900/20 border border-slate-200 dark:border-navy-700'
+                                            ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
+                                            : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-primary-50 dark:active:bg-primary-900/20 border border-slate-200 dark:border-navy-700'
                                         }
                                     `}
                   >
@@ -1149,7 +1149,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                         case 'partial':
                           return 'bg-yellow-500 text-white';
                         default:
-                          return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
+                          return 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400';
                       }
                     };
 
@@ -1158,17 +1158,17 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                         key={axis.id}
                         onClick={() => setSelectedAxis(axis.id)}
                         className={`
-                                                scroll-snap-item touch-target touch-ripple flex items-center gap-1 
+                                                scroll-snap-item touch-target touch-ripple flex items-center gap-1
                                                 rounded-md font-medium transition-all whitespace-nowrap shrink-0
                                                 ${isCompact ? 'px-2.5 py-1' : 'px-3 py-1'} text-xs
                                                 ${
                                                   isActive
-                                                    ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
+                                                    ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20'
                                                     : progressStatus === 'complete'
                                                       ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30'
                                                       : progressStatus === 'partial'
                                                         ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/30'
-                                                        : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-purple-50 dark:active:bg-purple-900/20 border border-slate-200 dark:border-navy-700'
+                                                        : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 active:bg-primary-50 dark:active:bg-primary-900/20 border border-slate-200 dark:border-navy-700'
                                                 }
                                             `}
                       >
@@ -1258,7 +1258,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                 </span>
                 <div className="w-32 h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-purple-500 rounded-full transition-all duration-300"
+                    className="h-full bg-primary-500 rounded-full transition-all duration-300"
                     style={{ width: `${calculateProgress()}%` }}
                   />
                 </div>
@@ -1286,7 +1286,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               {/* Save Button & Status */}
               <div className="flex items-center gap-3">
                 {saveError && (
-                  <span className="text-xs text-red-500 dark:text-red-400">{saveError}</span>
+                  <span className="text-xs text-rose-500 dark:text-rose-400">{saveError}</span>
                 )}
                 {lastSaved && !saveError && (
                   <span className="text-xs text-slate-400 dark:text-slate-500">

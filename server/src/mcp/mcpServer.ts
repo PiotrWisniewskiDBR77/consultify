@@ -13,9 +13,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import logger from '../utils/Logger.js';
-
 import { getDatabase } from '../src/database/index.js';
+import logger from '../utils/Logger.js';
 const db = getDatabase();
 
 // MCP Protocol Version

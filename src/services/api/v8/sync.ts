@@ -349,6 +349,7 @@ export const V8SyncApi = {
     v8Post<{
       integration: V8SyncInitiatedIntegration;
       onboardingStatus: 'pending_external_auth_or_configuration';
+      externalAuth?: V8SyncExternalAuthSession;
     }>(`/sync/connectors/${encodeURIComponent(connectorId)}/connect`, payload ?? {}),
   configureIntegration: (integrationId: string, payload: { config?: Record<string, unknown> }) =>
     v8Post<{
@@ -481,7 +482,12 @@ export const V8SyncApi = {
       `/sync/runs/${encodeURIComponent(runId)}/replay`,
       {}
     ),
-  getRuns: (params?: { integrationId?: string; status?: string; limit?: number; offset?: number }) =>
+  getRuns: (params?: {
+    integrationId?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
     v8Get<{ runs: V8SyncRunRecord[]; total: number }>('/sync/runs', {
       ...(params?.integrationId ? { integrationId: params.integrationId } : {}),
       ...(params?.status ? { status: params.status } : {}),
@@ -498,8 +504,7 @@ export const V8SyncApi = {
       { fieldMappings }
     ),
 
-  getSecretsStatus: () =>
-    v8Get<V8SyncSecretsStatusData>('/sync/secrets/status'),
+  getSecretsStatus: () => v8Get<V8SyncSecretsStatusData>('/sync/secrets/status'),
 
   rotateSecret: (secretId: string) =>
     v8Post<{ success: true; secretId: string; rotatedAt: string }>(

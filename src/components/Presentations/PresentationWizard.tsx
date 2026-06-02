@@ -75,7 +75,9 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
     const templateArtifactId = params.get('templateArtifactId');
     const cloneTemplateArtifactId = params.get('cloneTemplateArtifactId');
 
-    async function resolveLegacyTemplateIdFromArtifactId(artifactId: string): Promise<string | null> {
+    async function resolveLegacyTemplateIdFromArtifactId(
+      artifactId: string
+    ): Promise<string | null> {
       try {
         const res = await Api.get(`/artifacts/${artifactId}`);
         const data = unwrap(res);
@@ -157,11 +159,12 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
     }
   };
 
-  const toggleSource = useCallback((type: string) => {
+  const toggleSource = useCallback((source: SourceArtifact) => {
     setSelectedSources((prev) => {
-      const exists = prev.find((s) => s.type === type);
-      if (exists) return prev.filter((s) => s.type !== type);
-      return [...prev, { type, label: type.replace(/_/g, ' ') }];
+      const key = source.artifactId || source.id || source.type;
+      const exists = prev.find((s) => (s.artifactId || s.id || s.type) === key);
+      if (exists) return prev.filter((s) => (s.artifactId || s.id || s.type) !== key);
+      return [...prev, source];
     });
   }, []);
 

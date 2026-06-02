@@ -99,7 +99,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
           title="Team Adoption Rate"
           value={`${teamMetrics?.invitations?.acceptanceRate || 0}%`}
           subtitle={`${teamMetrics?.invitations?.accepted || 0} / ${teamMetrics?.invitations?.sent || 0} accepted`}
-          icon={<Users className="text-purple-400" />}
+          icon={<Users className="text-primary-400" />}
           trend={
             teamMetrics?.seatManagement
               ? `${teamMetrics.seatManagement.seatsUsed}/${teamMetrics.seatManagement.totalSeats} seats`
@@ -113,7 +113,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
           title="Playbook Completion"
           value={`${helpMetrics?.byPlaybook?.length > 0 ? Math.round(helpMetrics.byPlaybook.reduce((acc: any, p: any) => acc + p.completionRate, 0) / helpMetrics.byPlaybook.length) : 0}%`}
           subtitle="Avg. Help Effectiveness"
-          icon={<BookOpen className="text-cyan-400" />}
+          icon={<BookOpen className="text-blue-400" />}
           trend={
             helpMetrics?.byPlaybook?.length > 0
               ? `${helpMetrics.byPlaybook.length} playbooks`
@@ -147,7 +147,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
               : 'Paid'
           }
           subtitle="Current Status"
-          icon={<Target className="text-orange-400" />}
+          icon={<Target className="text-amber-400" />}
           trend={
             overview?.orgStatus === 'trial' ? `${overview?.daysLeft || 0} days left` : 'ON TRACK'
           }
@@ -161,8 +161,8 @@ export const AdminMetricsDashboardView: React.FC = () => {
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-8 shadow-sm dark:shadow-xl">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Users className="text-purple-400" size={24} />
+                <div className="p-2 bg-primary-500/10 rounded-lg">
+                  <Users className="text-primary-400" size={24} />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-navy-900 dark:text-white">
@@ -183,16 +183,16 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 color="bg-slate-700"
               />
               <div className="h-8 flex justify-center py-1">
-                <div className="w-0.5 bg-gradient-to-b from-slate-700 to-purple-600 opacity-50" />
+                <div className="w-0.5 bg-gradient-to-b from-slate-700 to-primary-600 opacity-50" />
               </div>
               <FunnelStep
                 label="Invitations Accepted"
                 value={teamMetrics?.invitations?.accepted || 0}
                 percent={teamMetrics?.invitations?.acceptanceRate || 0}
-                color="bg-purple-600"
+                color="bg-primary-600"
               />
               <div className="h-8 flex justify-center py-1">
-                <div className="w-0.5 bg-gradient-to-b from-purple-600 to-green-600 opacity-50" />
+                <div className="w-0.5 bg-gradient-to-b from-primary-600 to-green-600 opacity-50" />
               </div>
               <FunnelStep
                 label="Self-Service Users"
@@ -221,7 +221,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest">
                   Pending
                 </p>
-                <p className="text-xl font-bold text-orange-400 mt-1">
+                <p className="text-xl font-bold text-amber-400 mt-1">
                   {teamMetrics?.invitations?.pending || 0}
                 </p>
               </div>
@@ -239,8 +239,8 @@ export const AdminMetricsDashboardView: React.FC = () => {
           {/* Playbook Adoption */}
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-8 shadow-sm dark:shadow-xl">
             <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 bg-cyan-500/10 rounded-lg">
-                <BookOpen className="text-cyan-400" size={24} />
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <BookOpen className="text-blue-400" size={24} />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-navy-900 dark:text-white">
@@ -261,7 +261,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-navy-900 dark:text-white truncate group-hover:text-secondary-600 dark:group-hover:text-cyan-400 transition-colors">
+                        <h3 className="text-sm font-bold text-navy-900 dark:text-white truncate group-hover:text-secondary-600 dark:group-hover:text-blue-400 transition-colors">
                           {playbook.playbookKey.replace(/_/g, ' ')}
                         </h3>
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -269,7 +269,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-black text-secondary-600 dark:text-cyan-400">
+                        <p className="text-lg font-black text-secondary-600 dark:text-blue-400">
                           {playbook.completionRate}%
                         </p>
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-tighter">
@@ -279,7 +279,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                     </div>
                     <div className="h-1.5 bg-slate-200 dark:bg-navy-900 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-secondary-600 to-primary-500 dark:from-cyan-600 dark:to-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+                        className="h-full bg-gradient-to-r from-secondary-600 to-primary-500 dark:from-blue-600 dark:to-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
                         style={{ width: `${playbook.completionRate}%` }}
                       />
                     </div>
@@ -375,12 +375,12 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon, t
   const colorClasses = {
     blue: 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/30 dark:border-blue-500/20',
     purple:
-      'text-primary-600 dark:text-purple-400 bg-primary-500/10 border-primary-500/30 dark:border-purple-500/20',
-    cyan: 'text-secondary-600 dark:text-cyan-400 bg-secondary-500/10 border-secondary-500/30 dark:border-cyan-500/20',
+      'text-primary-600 dark:text-primary-400 bg-primary-500/10 border-primary-500/30 dark:border-primary-500/20',
+    cyan: 'text-secondary-600 dark:text-blue-400 bg-secondary-500/10 border-secondary-500/30 dark:border-blue-500/20',
     green:
       'text-success-600 dark:text-green-400 bg-success-500/10 border-success-500/30 dark:border-green-500/20',
     orange:
-      'text-primary-600 dark:text-orange-400 bg-primary-500/10 border-primary-500/30 dark:border-orange-500/20',
+      'text-primary-600 dark:text-amber-400 bg-primary-500/10 border-primary-500/30 dark:border-amber-500/20',
   };
 
   return (
@@ -425,7 +425,7 @@ const FunnelStep: React.FC<{ label: string; value: number; percent: number; colo
     <div className="flex items-center gap-4 mb-2 px-2">
       <div className="w-24 text-right">
         <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{label}</p>
-        <p className="text-[10px] text-primary-600 dark:text-orange-400 font-black">
+        <p className="text-[10px] text-primary-600 dark:text-amber-400 font-black">
           {Math.round(percent)}% COV
         </p>
       </div>
@@ -449,8 +449,8 @@ const EventRow: React.FC<{ event: any }> = ({ event }) => {
   const isTrial = event.event_type.includes('trial');
 
   const getIcon = () => {
-    if (isHelp) return <BookOpen size={14} className="text-cyan-400" />;
-    if (isInvite) return <Mail size={14} className="text-purple-400" />;
+    if (isHelp) return <BookOpen size={14} className="text-blue-400" />;
+    if (isInvite) return <Mail size={14} className="text-primary-400" />;
     if (isTrial) return <Clock size={14} className="text-blue-400" />;
     return <Activity size={14} className="text-slate-400 dark:text-slate-500" />;
   };

@@ -174,14 +174,14 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
   const cardClass =
     'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl';
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
   const textareaClass =
-    'w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none transition-all resize-none font-mono text-sm';
+    'w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all resize-none font-mono text-sm';
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -206,7 +206,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
         {!isCreating && !editingId && (
           <button
             onClick={handleCreateNew}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             New Signature
@@ -267,7 +267,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -299,7 +299,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
           </p>
           <button
             onClick={handleCreateNew}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             Create First Signature
@@ -348,14 +348,14 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   )}
                   <button
                     onClick={() => handleEdit(signature)}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
                     title="Edit"
                   >
                     <Edit2 size={16} />
                   </button>
                   <button
                     onClick={() => handleDelete(signature.id)}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

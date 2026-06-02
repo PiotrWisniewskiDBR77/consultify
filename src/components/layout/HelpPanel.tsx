@@ -85,7 +85,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
     if (snapshot?.isDemo)
       return {
         text: t('demo.indicator'),
-        color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+        color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
       };
     if (snapshot?.isTrial)
       return {
@@ -346,7 +346,7 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onClick, onDismis
           className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:bg-navy-800 dark:hover:bg-gray-700 rounded transition-all"
           title={t('help.panel.dismiss')}
         >
-          <XCircle className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-red-500" />
+          <XCircle className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500" />
         </button>
       )}
     </div>

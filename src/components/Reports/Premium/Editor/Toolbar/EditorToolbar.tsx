@@ -222,7 +222,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
       {/* AI Assistant */}
       <button
         onClick={onAIClick}
-        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all text-sm font-medium"
+        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-blue-600 text-white rounded-lg hover:from-primary-700 hover:to-blue-700 transition-all text-sm font-medium"
       >
         <Sparkles className="w-4 h-4" />
         Asystent AI

@@ -14,10 +14,18 @@ export function analyzeBlockers(input: HeuristicInput): HeuristicOutput {
 
   const blockedItems = controlTowerQueues['blocked'] || [];
   const blockedCount = controlTowerCounts['blocked'] || 0;
-  const highRisks = riskSignals.filter((r: any) => r.severity === 'CRITICAL' || r.severity === 'HIGH');
+  const highRisks = riskSignals.filter(
+    (r: any) => r.severity === 'CRITICAL' || r.severity === 'HIGH'
+  );
 
   // Classify blocker types
-  const byType: Record<string, any[]> = { dependency: [], decision: [], owner_gap: [], status: [], external: [] };
+  const byType: Record<string, any[]> = {
+    dependency: [],
+    decision: [],
+    owner_gap: [],
+    status: [],
+    external: [],
+  };
   for (const item of blockedItems) {
     for (const w of item.why || []) {
       if (w.kind === 'dependency') {
@@ -99,8 +107,10 @@ export function analyzeBlockers(input: HeuristicInput): HeuristicOutput {
       confidence: 'high',
     });
 
-    const totalAffected = blockedItems.reduce((sum: number, i: any) =>
-      sum + (i.affectsNext?.length || 0), 0);
+    const totalAffected = blockedItems.reduce(
+      (sum: number, i: any) => sum + (i.affectsNext?.length || 0),
+      0
+    );
     effects.push({
       id: uid('eff-blk'),
       insightId: insId,
@@ -110,7 +120,7 @@ export function analyzeBlockers(input: HeuristicInput): HeuristicOutput {
     });
   } else if (blockedCount > 3) {
     const insId = uid('ins-blk');
-    const primaryType = Object.entries(byType).sort(([,a],[,b]) => b.length - a.length)[0];
+    const primaryType = Object.entries(byType).sort(([, a], [, b]) => b.length - a.length)[0];
     insights.push({
       id: insId,
       observationIds: observations.map((o) => o.id),

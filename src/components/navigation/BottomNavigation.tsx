@@ -34,8 +34,14 @@ interface NavItem {
 export const BottomNavigation: React.FC = () => {
   const { t } = useTranslation();
   const { isMobile } = useDeviceType();
-  const { currentView, setCurrentView, setIsSidebarOpen, toggleChatCollapse, isChatCollapsed } =
-    useAppStore();
+  const {
+    currentView,
+    setCurrentView,
+    setIsSidebarOpen,
+    toggleChatCollapse,
+    isChatCollapsed,
+    returnToFullChat,
+  } = useAppStore();
   const setDisplayMode = useConversationStore((state) => state.setDisplayMode);
 
   // Don't render on non-mobile devices
@@ -79,7 +85,11 @@ export const BottomNavigation: React.FC = () => {
       setIsSidebarOpen(true);
     } else if (item.action === 'openChat') {
       setDisplayMode('full');
-      setCurrentView(AppView.AI_CHAT);
+      if (typeof returnToFullChat === 'function') {
+        returnToFullChat();
+      } else {
+        setCurrentView(AppView.AI_CHAT);
+      }
     } else if (item.view) {
       setCurrentView(item.view);
     }
@@ -116,7 +126,10 @@ export const BottomNavigation: React.FC = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb">
+    <nav
+      aria-label={t('navigation.bottom.primary', 'Primary mobile navigation')}
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-area-pb"
+    >
       {/* Background with blur */}
       <div className="absolute inset-0 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-navy-700 shadow-2xl shadow-black/10" />
 
@@ -128,21 +141,30 @@ export const BottomNavigation: React.FC = () => {
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => handleNavClick(item)}
               data-testid={`bottom-nav-${item.id}`}
+              aria-current={active ? 'page' : undefined}
+              aria-label={
+                item.action === 'openChat'
+                  ? t('navigation.bottom.openChat', 'Open AI chat')
+                  : item.action === 'openSidebar'
+                    ? t('navigation.bottom.openMenu', 'Open menu')
+                    : item.label
+              }
               className={`
-                                flex-1 flex flex-col items-center justify-center gap-0.5 
+                                flex-1 flex flex-col items-center justify-center gap-0.5
                                 transition-all duration-200 relative touch-target no-select
                                 ${
                                   active
-                                    ? 'text-purple-600 dark:text-purple-400'
-                                    : 'text-slate-400 dark:text-slate-500 active:text-purple-600 dark:active:text-purple-400'
+                                    ? 'text-primary-600 dark:text-primary-400'
+                                    : 'text-slate-400 dark:text-slate-500 active:text-primary-600 dark:active:text-primary-400'
                                 }
                             `}
             >
               {/* Active Indicator */}
               {active && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-purple-600 dark:bg-purple-400 rounded-b-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary-600 dark:bg-primary-400 rounded-b-full" />
               )}
 
               {/* Icon Container with pulse effect for AI */}
@@ -156,7 +178,7 @@ export const BottomNavigation: React.FC = () => {
 
                 {/* Badge */}
                 {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}

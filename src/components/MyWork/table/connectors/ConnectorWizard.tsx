@@ -605,7 +605,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             {sourceFields.length > 0 && ` (${sourceFields.length} ${isPl ? 'pól' : 'fields'})`}
           </span>
         )}
-        {testStatus === 'failed' && <span className="text-xs text-red-500">{testError}</span>}
+        {testStatus === 'failed' && <span className="text-xs text-rose-500">{testError}</span>}
       </div>
     </div>
   );

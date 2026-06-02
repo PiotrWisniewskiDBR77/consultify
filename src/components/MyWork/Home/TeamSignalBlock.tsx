@@ -29,7 +29,9 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
             {t('myWork.radar.teamReadout')}
           </div>
           <div className="mt-1 text-sm font-semibold text-white">{payload.headline}</div>
-          <div className="mt-0.5 text-[11px] leading-relaxed text-slate-300/75">{payload.summary}</div>
+          <div className="mt-0.5 text-[11px] leading-relaxed text-slate-300/75">
+            {payload.summary}
+          </div>
         </div>
 
         <div className="space-y-1.5">

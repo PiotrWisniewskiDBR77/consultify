@@ -95,7 +95,10 @@ export const AIAutomationSettings: React.FC<{ className?: string }> = ({ classNa
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
-  const updateModuleDefault = (module: keyof AIAutomationPreferences['moduleDefaults'], value: string) => {
+  const updateModuleDefault = (
+    module: keyof AIAutomationPreferences['moduleDefaults'],
+    value: string
+  ) => {
     setPreferences((prev) => ({
       ...prev,
       moduleDefaults: { ...prev.moduleDefaults, [module]: value },
@@ -137,9 +140,7 @@ export const AIAutomationSettings: React.FC<{ className?: string }> = ({ classNa
             />
             {preferences.autoSummarize && (
               <div className="ml-8">
-                <SettingsFormRow
-                  label={t('settings.ai.summarizeTarget', 'Apply to')}
-                >
+                <SettingsFormRow label={t('settings.ai.summarizeTarget', 'Apply to')}>
                   <SettingsButtonGroup
                     options={summarizeTargetOptions}
                     value={preferences.autoSummarizeTarget}
@@ -194,7 +195,7 @@ export const AIAutomationSettings: React.FC<{ className?: string }> = ({ classNa
           {/* Per-Module Model Defaults */}
           <div>
             <h4 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
-              <Sparkles size={14} className="text-violet-400" />
+              <Sparkles size={14} className="text-primary-400" />
               {t('settings.ai.moduleRouting', 'Module AI Routing')}
             </h4>
             <p className="text-xs text-slate-500 mb-4">

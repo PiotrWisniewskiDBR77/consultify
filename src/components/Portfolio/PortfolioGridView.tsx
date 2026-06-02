@@ -38,8 +38,8 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
   return (
     <div
       onClick={onClick}
-      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 
-                p-5 cursor-pointer group hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-600 
+      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700
+                p-5 cursor-pointer group hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600
                 transition-all duration-200"
     >
       {/* Priority bar */}
@@ -49,8 +49,8 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex-1 min-w-0">
           <h4
-            className="font-semibold text-navy-900 dark:text-white text-base line-clamp-2 
-                        group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors"
+            className="font-semibold text-navy-900 dark:text-white text-base line-clamp-2
+                        group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors"
           >
             {initiative.name}
           </h4>
@@ -79,7 +79,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
           {initiative.priority}
         </span>
         {initiative.isCriticalPath && (
-          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
             Critical Path
           </span>
         )}
@@ -89,8 +89,8 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
       {initiative.ownerBusiness && (
         <div className="flex items-center gap-2 mb-4">
           <div
-            className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center 
-                          text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden"
+            className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center
+                          text-xs font-medium text-primary-700 dark:text-primary-300 overflow-hidden"
           >
             {initiative.ownerBusiness.avatarUrl ? (
               <img
@@ -124,7 +124,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
         </div>
         <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all"
+            className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all"
             style={{ width: `${initiative.progress || 0}%` }}
           />
         </div>

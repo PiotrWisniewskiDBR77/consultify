@@ -54,11 +54,12 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
   const [selectedRole, setSelectedRole] = useState<string | null>(initialRole);
   const [selectedScenario, setSelectedScenario] = useState<string | null>(scenarios[0]?.id || null);
   const [isRoleSelected, setIsRoleSelected] = useState(false);
-  const canStartTour = Boolean(selectedRole) && (scenarios.length === 0 || Boolean(selectedScenario));
+  const canStartTour =
+    Boolean(selectedRole) && (scenarios.length === 0 || Boolean(selectedScenario));
   const sourceLabel =
     entrySource === 'profile_menu'
-      ? t('tour.entrySource.profile', 'Started from your live workspace')
-      : t('tour.entrySource.landing', 'Started from the landing page demo');
+      ? t('tour.entrySource.profile', 'Opened from your workspace menu')
+      : t('tour.entrySource.landing', 'Opened from the public demo entry');
 
   const ROLES = [
     {
@@ -93,7 +94,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
       title: t('tour.steps.dashboard.title', 'Your Command Center'),
       description: t(
         'tour.steps.dashboard.description',
-        'Get a 360° view of your transformation progress. Real-time metrics, AI insights, and action items—all in one place.'
+        'Start here to understand the operating rhythm: priorities, signals, and next actions visible in one place.'
       ),
       icon: Target,
       highlight: 'dashboard',
@@ -103,7 +104,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
       title: t('tour.steps.assessment.title', 'AI-Powered Assessment'),
       description: t(
         'tour.steps.assessment.description',
-        "Our AI analyzes your organization like a Harvard MBA graduate who's read every business book. Get instant maturity scores and gap analysis."
+        'Use assessments to review maturity, identify gaps, and see how findings can feed concrete follow-up work.'
       ),
       icon: Brain,
       highlight: 'assessment',
@@ -113,7 +114,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
       title: t('tour.steps.roadmap.title', 'Strategic Roadmap'),
       description: t(
         'tour.steps.roadmap.description',
-        'Built on McKinsey, BCG, and Bain methodologies. AI generates transformation roadmaps with clear ROI, priorities, and timelines.'
+        'Roadmaps connect insight to execution: priorities, owners, and timing you can later mirror in your own workspace.'
       ),
       icon: FileText,
       highlight: 'roadmap',
@@ -123,7 +124,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
       title: t('tour.steps.collaboration.title', 'Team Collaboration'),
       description: t(
         'tour.steps.collaboration.description',
-        'Tasks, decisions, and accountability—all tracked. Your team stays aligned with AI-managed workflows and reminders.'
+        'Tasks, decisions, and accountability stay connected so you can see how teams move from recommendation to follow-through.'
       ),
       icon: Users,
       highlight: 'mywork',
@@ -133,7 +134,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
       title: t('tour.steps.complete.title', "You're All Set!"),
       description: t(
         'tour.steps.complete.description',
-        'Explore freely. Remember: AI recommends, but you decide. Every strategic decision remains in your hands.'
+        'Use this sample workspace as a safe reference. Once the flow is clear, return to your own workspace and repeat it on live data.'
       ),
       icon: CheckCircle2,
       highlight: undefined,
@@ -220,12 +221,12 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                     <Sparkles size={32} className="text-slate-400" />
                   </div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                    {t('tour.welcome.title', 'Welcome to the Atelier Toys story')}
+                    {t('tour.welcome.title', 'Open the sample workspace walkthrough')}
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
                     {t(
                       'tour.welcome.subtitle',
-                      'Pick the lens and guided scenario you want to explore first.'
+                      'Choose the perspective and scenario that best matches the workflow you want to understand first.'
                     )}
                   </p>
                   <div className="mt-3 inline-flex items-center rounded-full border border-slate-200 dark:border-white/10 px-3 py-1 text-xs text-slate-500 dark:text-slate-400">
@@ -298,7 +299,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                     disabled={!canStartTour}
                     className="px-6 py-3 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-150 flex items-center gap-2"
                   >
-                    {t('tour.startScenario', 'Start guided demo')}
+                    {t('tour.startScenario', 'Start walkthrough')}
                     <ArrowRight size={18} />
                   </button>
                 </div>

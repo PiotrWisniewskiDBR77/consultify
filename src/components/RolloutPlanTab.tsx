@@ -68,10 +68,10 @@ export const RolloutPlanTab: React.FC<RolloutPlanTabProps> = ({ data, initiative
               return (
                 <div
                   key={q}
-                  className={`p-2 relative group min-h-[300px] ${isOverloaded ? 'bg-red-50/30' : ''}`}
+                  className={`p-2 relative group min-h-[300px] ${isOverloaded ? 'bg-rose-50/30' : ''}`}
                 >
                   {isOverloaded && (
-                    <div className="absolute top-0 left-0 right-0 bg-red-100 text-red-600 text-[10px] font-bold text-center py-0.5 border-b border-red-200">
+                    <div className="absolute top-0 left-0 right-0 bg-rose-100 text-rose-600 text-[10px] font-bold text-center py-0.5 border-b border-rose-200">
                       <AlertCircle size={10} className="inline mr-1" /> Overloaded
                     </div>
                   )}
@@ -85,7 +85,7 @@ export const RolloutPlanTab: React.FC<RolloutPlanTabProps> = ({ data, initiative
                         <div
                           className={`w-1.5 h-1.5 rounded-full mb-1 ${
                             init.priority === 'High'
-                              ? 'bg-red-500'
+                              ? 'bg-rose-500'
                               : init.priority === 'Medium'
                                 ? 'bg-yellow-500'
                                 : 'bg-blue-500'
@@ -108,7 +108,7 @@ export const RolloutPlanTab: React.FC<RolloutPlanTabProps> = ({ data, initiative
       {/* Legend / Stats */}
       <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-navy-900 p-3 rounded-lg border border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-red-500"></span> High Priority
+          <span className="w-2 h-2 rounded-full bg-rose-500"></span> High Priority
         </div>
         <div className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-yellow-500"></span> Medium Priority

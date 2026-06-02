@@ -43,6 +43,117 @@ let _inflightFetchConversations: Promise<void> | null = null;
 let _lastFetchConversationsAt = 0;
 const _inflightFetchConversationById: Record<string, Promise<void>> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
+const _conversationMessagesCache: Record<string, ConversationMessage[]> = {};
+const MISSING_CONVERSATIONS_STORAGE_KEY = 'consultify-missing-conversations';
+
+function readMissingConversationIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(MISSING_CONVERSATIONS_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(
+      parsed.map((value) => String(value || '').trim()).filter((value) => value.length > 0)
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function writeMissingConversationIds(ids: Set<string>) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(MISSING_CONVERSATIONS_STORAGE_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // no-op
+  }
+}
+
+export function markConversationAsMissing(conversationId: string) {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  const ids = readMissingConversationIds();
+  ids.add(normalized);
+  writeMissingConversationIds(ids);
+}
+
+export function clearMissingConversationMark(conversationId: string) {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  const ids = readMissingConversationIds();
+  if (!ids.delete(normalized)) return;
+  writeMissingConversationIds(ids);
+}
+
+export function isConversationMarkedMissing(conversationId: string): boolean {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return false;
+  return readMissingConversationIds().has(normalized);
+}
+
+function isChatRootPath(): boolean {
+  if (typeof window === 'undefined') return false;
+  const normalized = window.location.pathname.replace(/\/+$/, '') || '/';
+  return normalized === '/chat';
+}
+
+function getChatRouteConversationId(): string | null {
+  if (typeof window === 'undefined') return null;
+  const normalized = window.location.pathname.replace(/\/+$/, '') || '/';
+  const match = normalized.match(/^\/chat\/([^/]+)$/);
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
+}
+
+function logConversationStabilityMarker(marker: string, details: Record<string, unknown> = {}) {
+  if (typeof console === 'undefined') return;
+  console.info('[stability:conversation]', { marker, ...details });
+}
+
+function replaceChatRoute() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.history.replaceState(null, '', '/chat');
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    window.dispatchEvent(new CustomEvent('consultify:chat-route-replaced'));
+  } catch {
+    // ignore navigation failures
+  }
+}
+
+function quarantineMissingConversationPointer(conversationId: string, reason: string) {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  markConversationAsMissing(normalized);
+  delete _conversationMessagesCache[normalized];
+  logConversationStabilityMarker('session_quarantine', {
+    conversationId: normalized,
+    reason,
+  });
+  replaceChatRoute();
+}
+
+function applyMissingConversationState(state: ConversationState) {
+  state.activeConversationId = null;
+  state.activeMessages = [];
+  state.isLoading = false;
+  state._activeConversationState = 'not_found';
+  state._activeConversationStateMessage = 'This conversation does not exist.';
+}
+
+function normalizePersistedMessages(
+  rawMessages: any,
+  conversationId: string
+): ConversationMessage[] {
+  if (!Array.isArray(rawMessages)) return [];
+  return rawMessages
+    .filter((message) => message?.conversationId === conversationId && message?.content)
+    .map((message) => ({
+      ...message,
+      metadata: normalizeApiMetadata(message.metadata),
+      createdAt: message.createdAt ? new Date(message.createdAt) : new Date(),
+    }));
+}
 
 function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -202,6 +313,10 @@ export interface ConversationMessage {
     // Interactive options
     options?: Array<{ id: string; label: string; value: string }>;
     multiSelect?: boolean;
+    canvasCommand?: {
+      starterId?: string;
+      cleanPrompt?: string;
+    };
     /**
      * Optional diagnostics for persisted AI/system messages.
      * Useful for debugging stream failures without polluting message content.
@@ -336,7 +451,13 @@ interface ConversationState {
   chatLanguageByConversationId: Record<string, SupportedLanguage>;
 
   // Deep-link / lifecycle state for the active conversation (§2.3.5)
-  _activeConversationState: 'active' | 'archived' | 'deleted' | 'not_found' | 'permission_denied' | null;
+  _activeConversationState:
+    | 'active'
+    | 'archived'
+    | 'deleted'
+    | 'not_found'
+    | 'permission_denied'
+    | null;
   _activeConversationStateMessage: string | null;
 
   // UI State
@@ -374,6 +495,7 @@ interface ConversationState {
   createConversation: (options?: {
     title?: string;
     projectId?: string;
+    chatProjectId?: string;
     pmoContext?: {
       assessmentId?: string;
       initiativeIds?: string[];
@@ -446,11 +568,14 @@ interface ConversationState {
   /**
    * Export a conversation (§2.3.5 E10).
    */
-  exportConversation: (id: string, params?: {
-    from?: string;
-    to?: string;
-    format?: 'json' | 'markdown' | 'text';
-  }) => Promise<any>;
+  exportConversation: (
+    id: string,
+    params?: {
+      from?: string;
+      to?: string;
+      format?: 'json' | 'markdown' | 'text';
+    }
+  ) => Promise<any>;
 
   /**
    * Purge own data — hard-delete a conversation (§2.3.3 delete-my-data).
@@ -597,6 +722,17 @@ export const useConversationStore = create<ConversationState>()(
       },
 
       fetchConversation: async (id: string) => {
+        if (isConversationMarkedMissing(id)) {
+          set({
+            activeConversationId: null,
+            activeMessages: [],
+            isLoading: false,
+            _activeConversationState: 'not_found',
+            _activeConversationStateMessage: 'This conversation does not exist.',
+          });
+          return;
+        }
+
         const now = Date.now();
 
         // Feedback #2ee998d3 / #53cc607e — always sync activeConversationId to the
@@ -617,9 +753,18 @@ export const useConversationStore = create<ConversationState>()(
 
         if (_inflightFetchConversationById[id]) return _inflightFetchConversationById[id];
         if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) {
-          // Dedupe: a recent successful fetch for this id is in cache. If the id
-          // is now the active one we already synced above; otherwise the call was
-          // preemptive and we can safely return.
+          // Dedupe: a recent successful fetch for this id is in cache. Make the
+          // terminal state explicit so setActiveConversation cannot leave the UI
+          // stuck in "Loading conversation…" after it eagerly set isLoading=true.
+          const cachedMessages = _conversationMessagesCache[id];
+          if (cachedMessages && get().activeConversationId === id) {
+            set({
+              activeMessages: cachedMessages,
+              isLoading: false,
+            });
+          } else {
+            set({ isLoading: false });
+          }
           return;
         }
         _lastFetchConversationAt[id] = now;
@@ -627,7 +772,12 @@ export const useConversationStore = create<ConversationState>()(
         set({ isLoading: true });
         _inflightFetchConversationById[id] = (async () => {
           try {
-            const result = await Api.getConversation(id);
+            const result = await withDeadline(
+              Api.getConversation(id),
+              FETCH_HARD_TIMEOUT_MS,
+              'fetchConversation'
+            );
+            clearMissingConversationMark(id);
 
             // Handle deep-link states: deleted conversation
             if (result?._state === 'deleted') {
@@ -636,7 +786,8 @@ export const useConversationStore = create<ConversationState>()(
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'deleted',
-                _activeConversationStateMessage: result?._stateMessage || 'This conversation has been deleted.',
+                _activeConversationStateMessage:
+                  result?._stateMessage || 'This conversation has been deleted.',
               });
               return;
             }
@@ -658,6 +809,18 @@ export const useConversationStore = create<ConversationState>()(
             }
 
             const messages = (result?.messages || []).map(mapApiMessage);
+            const existingActiveMessages = get().activeMessages.filter(
+              (message) => message.conversationId === id
+            );
+            const shouldKeepLocalMessages =
+              messages.length === 0 &&
+              existingActiveMessages.some(
+                (message) =>
+                  String(message.id || '').startsWith('local-') ||
+                  Date.now() - new Date(message.createdAt).getTime() < 30_000
+              );
+            const nextMessages = shouldKeepLocalMessages ? existingActiveMessages : messages;
+            _conversationMessagesCache[id] = nextMessages;
             set((state) => {
               const fromApiRaw = result?.language;
               const fromApiBase = fromApiRaw ? String(fromApiRaw).split('-')[0] : null;
@@ -667,7 +830,7 @@ export const useConversationStore = create<ConversationState>()(
                 (fromApi as any) || existing || state.draftChatLanguage || getAppLanguageFallback();
               return {
                 activeConversationId: id,
-                activeMessages: messages,
+                activeMessages: nextMessages,
                 isLoading: false,
                 draftChatLanguage: resolved,
                 chatLanguageByConversationId: {
@@ -679,24 +842,45 @@ export const useConversationStore = create<ConversationState>()(
           } catch (err: any) {
             console.error('[ConversationStore] Fetch conversation error:', err);
             const status = err?.response?.status || err?.status;
-            if (status === 403) {
+            if (status === 401 || status === 403) {
               const reason = err?.response?.data?.reason || err?.data?.reason || '';
+              logConversationStabilityMarker('rehydrate_hard_stop', {
+                conversationId: id,
+                status,
+              });
               set({
-                activeConversationId: id,
+                activeConversationId: null,
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'permission_denied',
-                _activeConversationStateMessage: reason || 'You do not have access to this conversation.',
+                _activeConversationStateMessage:
+                  reason ||
+                  (status === 401
+                    ? 'Your session is no longer authorized for this conversation.'
+                    : 'You do not have access to this conversation.'),
               });
+              replaceChatRoute();
               return;
             }
             if (status === 404) {
-              set({
-                activeConversationId: id,
-                activeMessages: [],
-                isLoading: false,
-                _activeConversationState: 'not_found',
-                _activeConversationStateMessage: 'This conversation does not exist.',
+              quarantineMissingConversationPointer(id, 'fetch_404');
+              logConversationStabilityMarker('rehydrate_hard_stop', {
+                conversationId: id,
+                status,
+              });
+              set((state) => {
+                const nextConversations = state.conversations.filter(
+                  (conversation) => conversation.id !== id
+                );
+                return {
+                  conversations: nextConversations,
+                  groupedConversations: groupConversations(nextConversations),
+                  activeConversationId: null,
+                  activeMessages: [],
+                  isLoading: false,
+                  _activeConversationState: 'not_found',
+                  _activeConversationStateMessage: 'This conversation does not exist.',
+                };
               });
               return;
             }
@@ -717,6 +901,7 @@ export const useConversationStore = create<ConversationState>()(
           const result = await Api.createConversation({
             title: options?.title,
             projectId: options?.projectId,
+            chatProjectId: options?.chatProjectId,
             pmoContext: options?.pmoContext,
             language,
           });
@@ -753,12 +938,15 @@ export const useConversationStore = create<ConversationState>()(
             ? { ...updates, expectedVersion: current.version }
             : updates;
 
-          await Api.updateConversation(id, payload);
+          const updated = await Api.updateConversation(id, payload);
+          const mappedUpdated = updated?.id ? mapApiConversation(updated) : null;
 
           set((state) => {
             const newConversations = state.conversations.map((c) =>
               c.id === id
-                ? { ...c, ...updates, updatedAt: new Date(), version: (c.version || 1) + 1 }
+                ? mappedUpdated
+                  ? { ...c, ...mappedUpdated }
+                  : { ...c, ...updates, updatedAt: new Date(), version: (c.version || 1) + 1 }
                 : c
             );
             return {
@@ -786,7 +974,9 @@ export const useConversationStore = create<ConversationState>()(
                   };
                 });
               }
-            } catch { /* best effort refresh */ }
+            } catch {
+              /* best effort refresh */
+            }
           }
           console.error('[ConversationStore] Update error:', err);
           throw err;
@@ -822,13 +1012,14 @@ export const useConversationStore = create<ConversationState>()(
 
         // Optimistic UI: append immediately so chat feels responsive (especially in split mode).
         const optimisticId = `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const messageMetadata = normalizeApiMetadata(message.metadata);
         const optimisticMessage: ConversationMessage = {
           id: optimisticId,
           conversationId,
           role: message.role,
           content: message.content,
           messageType: message.messageType || 'text',
-          metadata: { ...(message.metadata || {}), local: true } as any,
+          metadata: { ...messageMetadata, local: true } as any,
           tokenCount: message.tokenCount,
           modelUsed: message.modelUsed,
           createdAt: new Date(),
@@ -856,16 +1047,56 @@ export const useConversationStore = create<ConversationState>()(
         });
 
         try {
-          const result = await Api.addConversationMessage(conversationId, {
-            role: message.role,
-            content: message.content,
-            messageType: message.messageType,
-            metadata: message.metadata,
-            tokenCount: message.tokenCount,
-            modelUsed: message.modelUsed,
-          });
+          // Persist with bounded retry. Safe because the server dedupes on clientMessageId,
+          // so a retried POST never creates a duplicate row — it just returns the existing one.
+          const persistMessage = async () => {
+            const maxAttempts = 3;
+            let lastErr: unknown;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              try {
+                return await Api.addConversationMessage(conversationId, {
+                  role: message.role,
+                  content: message.content,
+                  messageType: message.messageType,
+                  metadata: messageMetadata,
+                  tokenCount: message.tokenCount,
+                  modelUsed: message.modelUsed,
+                  // Reuse the optimistic id as the idempotency key so a network-retried POST
+                  // (fetchWithRetry) or a double-trigger collapses to a single server row.
+                  clientMessageId: optimisticId,
+                });
+              } catch (e) {
+                lastErr = e;
+                if (attempt < maxAttempts) {
+                  await new Promise((r) => setTimeout(r, 600 * attempt));
+                }
+              }
+            }
+            throw lastErr;
+          };
+          const result = await persistMessage();
 
-          const newMessage = mapApiMessage(result);
+          const newMessage =
+            result && typeof result === 'object'
+              ? mapApiMessage(result)
+              : ({
+                  ...optimisticMessage,
+                  metadata: {
+                    ...optimisticMessage.metadata,
+                    local: true,
+                    serverAckMissing: true,
+                  },
+                } as ConversationMessage);
+
+          const cachedForConversation = _conversationMessagesCache[conversationId] || [];
+          const optimisticIndex = cachedForConversation.findIndex((m) => m.id === optimisticId);
+          if (optimisticIndex >= 0) {
+            _conversationMessagesCache[conversationId] = cachedForConversation.map((m) =>
+              m.id === optimisticId ? newMessage : m
+            );
+          } else {
+            _conversationMessagesCache[conversationId] = [...cachedForConversation, newMessage];
+          }
 
           // Persist attachment pointers if message had attachments in metadata (§2.3.1)
           const msgAttachments = message.metadata?.attachments;
@@ -892,7 +1123,9 @@ export const useConversationStore = create<ConversationState>()(
           set((state) => {
             const isActive = state.activeConversationId === conversationId;
             const nextActiveMessages = isActive
-              ? state.activeMessages.map((m) => (m.id === optimisticId ? newMessage : m))
+              ? state.activeMessages.some((m) => m.id === optimisticId)
+                ? state.activeMessages.map((m) => (m.id === optimisticId ? newMessage : m))
+                : [...state.activeMessages, newMessage]
               : state.activeMessages;
             return {
               activeMessages: nextActiveMessages,
@@ -988,6 +1221,17 @@ export const useConversationStore = create<ConversationState>()(
 
       setActiveConversation: (id) => {
         if (id) {
+          if (isConversationMarkedMissing(id)) {
+            quarantineMissingConversationPointer(id, 'set_active_missing');
+            set({
+              activeConversationId: null,
+              activeMessages: [],
+              isLoading: false,
+              _activeConversationState: 'not_found',
+              _activeConversationStateMessage: 'This conversation does not exist.',
+            });
+            return;
+          }
           const existing = get().chatLanguageByConversationId[id];
           if (existing) {
             set({ draftChatLanguage: existing });
@@ -998,15 +1242,16 @@ export const useConversationStore = create<ConversationState>()(
           // net, but doing it here avoids a one-frame delay on every click.
           const prev = get().activeConversationId;
           if (prev !== id) {
+            const cachedMessages = _conversationMessagesCache[id] || [];
             set({
               activeConversationId: id,
-              activeMessages: [],
-              isLoading: true,
+              activeMessages: cachedMessages,
+              isLoading: cachedMessages.length === 0,
               _activeConversationState: null,
               _activeConversationStateMessage: null,
             });
           }
-          get().fetchConversation(id);
+          void get().fetchConversation(id);
         } else {
           set({
             activeConversationId: null,
@@ -1170,6 +1415,7 @@ export const useConversationStore = create<ConversationState>()(
 
       renameConversation: async (id, title) => {
         // Mark titleSource as 'user' so auto-title generation won't overwrite
+        const previous = get().conversations.find((c) => c.id === id) || null;
         set((state) => {
           const next = state.conversations.map((c) =>
             c.id === id ? { ...c, title, titleSource: 'user' as const } : c
@@ -1179,7 +1425,20 @@ export const useConversationStore = create<ConversationState>()(
             groupedConversations: groupConversations(next),
           };
         });
-        await get().updateConversation(id, { title, titleSource: 'user' } as any);
+        try {
+          await get().updateConversation(id, { title, titleSource: 'user' } as any);
+        } catch (err) {
+          if (previous) {
+            set((state) => {
+              const next = state.conversations.map((c) => (c.id === id ? previous : c));
+              return {
+                conversations: next,
+                groupedConversations: groupConversations(next),
+              };
+            });
+          }
+          throw err;
+        }
       },
 
       // ==================== BULK ====================
@@ -1285,7 +1544,7 @@ export const useConversationStore = create<ConversationState>()(
 
       getConversationsByProject: (projectId) => {
         const { conversations } = get();
-        return conversations.filter((c) => c.projectId === projectId);
+        return conversations.filter((c) => c.chatProjectId === projectId);
       },
 
       serverSearch: async (params) => {
@@ -1312,9 +1571,22 @@ export const useConversationStore = create<ConversationState>()(
           console.error('[ConversationStore] Server search error:', err);
           const status = err?.response?.status || err?.status;
           if (status === 429) {
-            return { conversations: [], nextCursor: null, hasMore: false, partial: true, rateLimited: true, scopeBlocked: 0 };
+            return {
+              conversations: [],
+              nextCursor: null,
+              hasMore: false,
+              partial: true,
+              rateLimited: true,
+              scopeBlocked: 0,
+            };
           }
-          return { conversations: [], nextCursor: null, hasMore: false, partial: true, scopeBlocked: 0 };
+          return {
+            conversations: [],
+            nextCursor: null,
+            hasMore: false,
+            partial: true,
+            scopeBlocked: 0,
+          };
         }
       },
 
@@ -1351,9 +1623,11 @@ export const useConversationStore = create<ConversationState>()(
             return {
               conversations: newConversations,
               groupedConversations: groupConversations(newConversations),
-              activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
+              activeConversationId:
+                state.activeConversationId === id ? null : state.activeConversationId,
               activeMessages: state.activeConversationId === id ? [] : state.activeMessages,
-              _activeConversationState: state.activeConversationId === id ? null : state._activeConversationState,
+              _activeConversationState:
+                state.activeConversationId === id ? null : state._activeConversationState,
             };
           });
         } catch (err) {
@@ -1470,11 +1744,69 @@ export const useConversationStore = create<ConversationState>()(
         showArchived: state.showArchived,
         collapsedConversationGroups: state.collapsedConversationGroups,
         displayMode: state.displayMode,
-        activeConversationId: state.activeConversationId, // Persist active conversation across screens
+        activeMessages: state.activeConversationId
+          ? state.activeMessages
+              .filter((message) => message.conversationId === state.activeConversationId)
+              .slice(-50)
+          : [],
         draftChatLanguage: state.draftChatLanguage,
         chatLanguageByConversationId: state.chatLanguageByConversationId,
       }),
-      onRehydrate: () => {
+      merge: (persistedState: any, currentState) => {
+        const persisted = persistedState?.state || persistedState || {};
+        const chatRouteConversationId = getChatRouteConversationId();
+        if (chatRouteConversationId) {
+          if (isConversationMarkedMissing(chatRouteConversationId)) {
+            quarantineMissingConversationPointer(chatRouteConversationId, 'merge_missing_route');
+            return {
+              ...currentState,
+              ...persisted,
+              activeConversationId: null,
+              activeMessages: [],
+              _activeConversationState: 'not_found',
+              _activeConversationStateMessage: 'This conversation does not exist.',
+              isLoading: false,
+            };
+          }
+          const activeMessages = normalizePersistedMessages(
+            persisted.activeMessages,
+            chatRouteConversationId
+          );
+          _conversationMessagesCache[chatRouteConversationId] = activeMessages;
+          return {
+            ...currentState,
+            ...persisted,
+            activeConversationId: chatRouteConversationId,
+            activeMessages,
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+            isLoading: false,
+          };
+        }
+
+        if (!isChatRootPath()) {
+          return {
+            ...currentState,
+            ...persisted,
+            activeConversationId: null,
+            activeMessages: [],
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+            isLoading: false,
+          };
+        }
+
+        return {
+          ...currentState,
+          ...persisted,
+          activeConversationId: null,
+          activeMessages: [],
+          _activeConversationState: null,
+          _activeConversationStateMessage: null,
+          isLoading: false,
+        };
+      },
+      onRehydrateStorage: () => {
         // When store rehydrates, we need to fetch messages for active conversation
         return (state) => {
           // Migration: Reset isSidebarOpen to false to prevent blocking main content
@@ -1483,15 +1815,33 @@ export const useConversationStore = create<ConversationState>()(
             state.isSidebarOpen = false;
           }
 
-          if (state?.activeConversationId) {
-            console.log(
-              '[ConversationStore] Rehydrating active conversation:',
-              state.activeConversationId
-            );
+          const chatRouteConversationId = getChatRouteConversationId();
+          if (state && isChatRootPath()) {
+            state.clearActiveChat();
+            return;
+          }
 
+          if (chatRouteConversationId && state) {
+            if (isConversationMarkedMissing(chatRouteConversationId)) {
+              quarantineMissingConversationPointer(
+                chatRouteConversationId,
+                'rehydrate_missing_route'
+              );
+              applyMissingConversationState(state);
+              return;
+            }
+            state.activeConversationId = chatRouteConversationId;
+          }
+
+          if (state?.activeConversationId) {
             // Wait for auth to be ready instead of using a magic timeout.
             // Poll every 200ms up to 5 seconds for auth token availability.
             const convId = state.activeConversationId;
+            if (isConversationMarkedMissing(convId)) {
+              quarantineMissingConversationPointer(convId, 'rehydrate_missing_active');
+              applyMissingConversationState(state);
+              return;
+            }
             const maxAttempts = 25;
             let attempt = 0;
 
@@ -1500,7 +1850,12 @@ export const useConversationStore = create<ConversationState>()(
               const token = localStorage.getItem('token');
 
               if (token) {
-                state.fetchConversation(convId);
+                if (isConversationMarkedMissing(convId)) {
+                  quarantineMissingConversationPointer(convId, 'rehydrate_missing_before_fetch');
+                  applyMissingConversationState(state);
+                  return;
+                }
+                void state.fetchConversation(convId);
               } else if (attempt < maxAttempts) {
                 setTimeout(tryFetch, 200);
               } else {
@@ -1552,14 +1907,33 @@ function mapApiConversation(api: any): Conversation {
   };
 }
 
+function normalizeApiMetadata(rawMetadata: any): Record<string, any> {
+  if (typeof rawMetadata === 'string') {
+    try {
+      const parsed = JSON.parse(rawMetadata);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  return rawMetadata && typeof rawMetadata === 'object' ? rawMetadata : {};
+}
+
 function mapApiMessage(api: any): ConversationMessage {
+  if (!api || typeof api !== 'object') {
+    throw new Error('Invalid conversation message response');
+  }
+
+  const metadata = normalizeApiMetadata(api.metadata);
+
   return {
     id: api.id,
     conversationId: api.conversation_id,
     role: api.role,
     content: api.content,
     messageType: api.message_type || 'text',
-    metadata: api.metadata,
+    metadata,
     tokenCount: api.token_count,
     modelUsed: api.model_used,
     authorUserId: api.author_user_id || null,

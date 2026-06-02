@@ -20,8 +20,11 @@ import { useTranslation } from 'react-i18next';
 
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { cn } from '../../lib/utils';
+import { Api } from '../../services/api';
 import { User } from '../../types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import {
   Dialog,
   DialogContent,
@@ -61,58 +64,64 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
   const [editingSignature, setEditingSignature] = useState<EmailSignature | null>(null);
   const [formData, setFormData] = useState({ name: '', content: '' });
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const normalizeSignatures = (rows: unknown): EmailSignature[] =>
+    Array.isArray(rows)
+      ? rows
+          .map((signature) => ({
+            id: String(signature?.id || ''),
+            name: String(signature?.name || ''),
+            content: String(signature?.content || ''),
+            isDefault: Boolean(signature?.isDefault),
+            createdAt: String(signature?.createdAt || ''),
+          }))
+          .filter((signature) => signature.id)
+      : [];
+
+  const loadSignatures = useCallback(async (): Promise<EmailSignature[]> => {
+    const data = await Api.get('/settings/signatures');
+    const nextSignatures = normalizeSignatures(data.signatures);
+    setSignatures(nextSignatures);
+    return nextSignatures;
+  }, []);
+
+  const signatureMatchesForm = (
+    signature: EmailSignature | undefined,
+    expected: { name: string; content: string }
+  ) =>
+    !!signature &&
+    signature.name === expected.name.trim() &&
+    signature.content === expected.content.trim();
 
   const buildDefaultDemoSignature = useCallback((): EmailSignature => {
     return {
       id: 'demo-1',
-      name: 'Professional',
+      name: t('settings.signatures.defaultDemoName', 'Professional'),
       content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.jobTitle || ''}\n${currentUser.email}`,
       isDefault: true,
       createdAt: new Date().toISOString(),
     };
-  }, [currentUser]);
+  }, [currentUser, t]);
 
   // Fetch signatures
   useEffect(() => {
     const fetchSignatures = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/settings/signatures', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setSignatures(data.signatures || []);
-        } else {
-          if (isDemo) {
-            setSignatures([buildDefaultDemoSignature()]);
-          } else {
-            setSignatures([]);
-            toast({
-              title: t('settings.signatures.error', 'Error'),
-              description: t(
-                'settings.signatures.loadFailed',
-                'Failed to load signatures. Please try again later.'
-              ),
-              variant: 'destructive',
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch signatures:', error);
+        setLoadError(null);
+        await loadSignatures();
+      } catch (error: unknown) {
         if (isDemo) {
           setSignatures([buildDefaultDemoSignature()]);
         } else {
+          const message = normalizeApiErrorMessage(error, 'Failed to load signatures');
           setSignatures([]);
+          setLoadError(message);
           toast({
             title: t('settings.signatures.error', 'Error'),
-            description: t(
-              'settings.signatures.loadFailed',
-              'Failed to load signatures. Please try again later.'
-            ),
+            description: message,
             variant: 'destructive',
           });
         }
@@ -122,7 +131,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
     };
 
     fetchSignatures();
-  }, [buildDefaultDemoSignature, currentUser, isDemo, t, toast]);
+  }, [buildDefaultDemoSignature, currentUser, isDemo, loadSignatures, t, toast]);
 
   // Handle create/edit signature
   const handleSave = async () => {
@@ -137,61 +146,55 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
 
     setSaving(true);
     try {
+      setActionError(null);
+      const expected = {
+        name: formData.name.trim(),
+        content: formData.content.trim(),
+      };
       if (editingSignature) {
         // Update existing
-        const response = await fetch(`/api/settings/signatures/${editingSignature.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(formData),
-        });
-
-        if (response.ok) {
-          setSignatures((prev) =>
-            prev.map((sig) => (sig.id === editingSignature.id ? { ...sig, ...formData } : sig))
-          );
-          toast({
-            title: t('settings.signatures.updated', 'Signature Updated'),
-            description: t('settings.signatures.updatedDesc', 'Your signature has been updated'),
-          });
+        await Api.put(`/settings/signatures/${editingSignature.id}`, expected);
+        const refreshed = await loadSignatures();
+        if (
+          !signatureMatchesForm(
+            refreshed.find((item) => item.id === editingSignature.id),
+            expected
+          )
+        ) {
+          throw new Error('Email signature update was not confirmed by the server');
         }
+        toast({
+          title: t('settings.signatures.updated', 'Signature Updated'),
+          description: t('settings.signatures.updatedDesc', 'Your signature has been updated'),
+        });
       } else {
         // Create new
-        const response = await fetch('/api/settings/signatures', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify({
-            ...formData,
-            isDefault: signatures.length === 0,
-          }),
+        await Api.post('/settings/signatures', {
+          ...expected,
+          isDefault: signatures.length === 0,
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setSignatures((prev) => [...prev, data.signature]);
-          toast({
-            title: t('settings.signatures.created', 'Signature Created'),
-            description: t(
-              'settings.signatures.createdDesc',
-              'Your new signature has been created'
-            ),
-          });
+        const refreshed = await loadSignatures();
+        if (!refreshed.some((signature) => signatureMatchesForm(signature, expected))) {
+          throw new Error('Email signature creation was not confirmed by the server');
         }
+        toast({
+          title: t('settings.signatures.created', 'Signature Created'),
+          description: t('settings.signatures.createdDesc', 'Your new signature has been created'),
+        });
       }
 
       setIsDialogOpen(false);
       setEditingSignature(null);
       setFormData({ name: '', content: '' });
-    } catch (error) {
-      console.error('Failed to save signature:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.signatures.saveFailed', 'Failed to save signature')
+      );
+      setActionError(message);
       toast({
         title: t('settings.signatures.error', 'Error'),
-        description: t('settings.signatures.saveFailed', 'Failed to save signature'),
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -202,55 +205,70 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
   // Handle delete signature
   const handleDelete = async (id: string) => {
     try {
-      await fetch(`/api/settings/signatures/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      setActionError(null);
+      await Api.delete(`/settings/signatures/${id}`);
+      const refreshed = await loadSignatures();
+      if (refreshed.some((signature) => signature.id === id)) {
+        throw new Error('Email signature deletion was not confirmed by the server');
+      }
 
-      setSignatures((prev) => prev.filter((sig) => sig.id !== id));
       toast({
         title: t('settings.signatures.deleted', 'Signature Deleted'),
         description: t('settings.signatures.deletedDesc', 'The signature has been removed'),
       });
-    } catch (error) {
-      console.error('Failed to delete signature:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to delete signature');
+      setActionError(message);
+      toast({
+        title: t('settings.signatures.error', 'Error'),
+        description: message,
+        variant: 'destructive',
+      });
     }
   };
 
   // Handle set default
   const handleSetDefault = async (id: string) => {
     try {
-      await fetch(`/api/settings/signatures/${id}/default`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      setActionError(null);
+      await Api.put(`/settings/signatures/${id}/default`, {});
+      const refreshed = await loadSignatures();
+      if (!refreshed.some((signature) => signature.id === id && signature.isDefault)) {
+        throw new Error('Default email signature was not confirmed by the server');
+      }
 
-      setSignatures((prev) =>
-        prev.map((sig) => ({
-          ...sig,
-          isDefault: sig.id === id,
-        }))
-      );
       toast({
         title: t('settings.signatures.defaultSet', 'Default Updated'),
         description: t('settings.signatures.defaultSetDesc', 'Default signature has been updated'),
       });
-    } catch (error) {
-      console.error('Failed to set default:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to set default signature');
+      setActionError(message);
+      toast({
+        title: t('settings.signatures.error', 'Error'),
+        description: message,
+        variant: 'destructive',
+      });
     }
   };
 
   // Copy signature to clipboard
-  const handleCopy = (content: string) => {
-    navigator.clipboard.writeText(content);
-    toast({
-      title: t('settings.signatures.copied', 'Copied'),
-      description: t('settings.signatures.copiedDesc', 'Signature copied to clipboard'),
-    });
+  const handleCopy = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({
+        title: t('settings.signatures.copied', 'Copied'),
+        description: t('settings.signatures.copiedDesc', 'Signature copied to clipboard'),
+      });
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to copy signature');
+      setActionError(message);
+      toast({
+        title: t('settings.signatures.error', 'Error'),
+        description: message,
+        variant: 'destructive',
+      });
+    }
   };
 
   // Open edit dialog
@@ -290,14 +308,25 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
             {t('settings.signatures.description', 'Create and manage your email signatures')}
           </p>
         </div>
-        <Button onClick={() => openEditDialog()}>
+        <Button onClick={() => openEditDialog()} disabled={!!loadError}>
           <Plus className="w-4 h-4 mr-2" />
           {t('settings.signatures.add', 'Add Signature')}
         </Button>
       </div>
 
+      {loadError && <DegradedState title="Email signatures unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* Signatures List */}
-      {signatures.length === 0 ? (
+      {signatures.length === 0 && !loadError ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileSignature className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-4" />
@@ -310,14 +339,14 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
             </Button>
           </CardContent>
         </Card>
-      ) : (
+      ) : !loadError ? (
         <div className="space-y-3">
           {signatures.map((signature) => (
             <Card
               key={signature.id}
               className={cn(
                 'transition-all',
-                signature.isDefault && 'ring-2 ring-violet-500 dark:ring-violet-400'
+                signature.isDefault && 'ring-2 ring-primary-500 dark:ring-primary-400'
               )}
             >
               <CardHeader className="pb-2">
@@ -325,7 +354,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                   <div className="flex items-center gap-2">
                     <CardTitle className="text-base">{signature.name}</CardTitle>
                     {signature.isDefault && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 rounded-full">
                         {t('settings.signatures.default', 'Default')}
                       </span>
                     )}
@@ -361,7 +390,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(signature.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                       title={t('settings.signatures.delete', 'Delete')}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -377,7 +406,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
             </Card>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

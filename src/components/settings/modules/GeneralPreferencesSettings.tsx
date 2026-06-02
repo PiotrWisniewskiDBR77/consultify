@@ -350,7 +350,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       {/* Tooltips & Hints */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <HelpCircle size={20} className="text-purple-500" />
+          <HelpCircle size={20} className="text-primary-500" />
           Tooltips & Hints
         </h3>
 
@@ -390,7 +390,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
                   setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  (settings as any)[item.key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                  (settings as any)[item.key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >
                 <span
@@ -405,7 +405,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
 
         <button
           onClick={resetOnboarding}
-          className="w-full p-3 text-center text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
+          className="w-full p-3 text-center text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
         >
           Reset Onboarding Tutorial
         </button>

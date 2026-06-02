@@ -34,7 +34,7 @@ interface GaugeChartProps {
 // Default colors (BCG style)
 const defaultColors = {
   excellent: '#10B981', // Emerald
-  good: '#06B6D4', // Cyan
+  good: '#3B82F6', // Cyan
   warning: '#F59E0B', // Amber
   critical: '#F43F5E', // Rose
   background: 'rgba(255, 255, 255, 0.1)',

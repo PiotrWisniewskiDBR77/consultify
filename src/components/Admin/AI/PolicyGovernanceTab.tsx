@@ -52,8 +52,8 @@ const POLICY_LEVELS = [
     title: 'Proactive',
     description: 'AI can execute low-risk actions automatically.',
     icon: Zap,
-    color: 'text-violet-400',
-    bgColor: 'from-violet-700 to-violet-800',
+    color: 'text-primary-400',
+    bgColor: 'from-primary-700 to-primary-800',
   },
   {
     id: 'AUTOPILOT',
@@ -150,7 +150,7 @@ export const PolicyGovernanceTab: React.FC = () => {
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -161,7 +161,7 @@ export const PolicyGovernanceTab: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Shield className="text-primary-600 dark:text-violet-400" size={20} />
+            <Shield className="text-primary-600 dark:text-primary-400" size={20} />
             AI Policy & Governance
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -200,7 +200,7 @@ export const PolicyGovernanceTab: React.FC = () => {
             title="AI Policy Level"
             description="Controls what actions AI can perform in your organization"
             icon={Shield}
-            iconColor="text-violet-400"
+            iconColor="text-primary-400"
           >
             <div className="grid grid-cols-2 gap-3">
               {POLICY_LEVELS.map((level) => {
@@ -347,14 +347,14 @@ export const PolicyGovernanceTab: React.FC = () => {
               <div className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-700/50">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-primary-500/20 rounded-lg">
-                    <ListChecks size={16} className="text-primary-600 dark:text-violet-400" />
+                    <ListChecks size={16} className="text-primary-600 dark:text-primary-400" />
                   </div>
                   <div>
                     <h4 className="font-medium text-navy-900 dark:text-white">Project Overrides</h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Individual projects can override organization AI policy settings.
                     </p>
-                    <button className="mt-3 text-sm text-primary-600 dark:text-violet-400 hover:text-primary-700 dark:hover:text-violet-300 font-medium">
+                    <button className="mt-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
                       View Project Overrides →
                     </button>
                   </div>

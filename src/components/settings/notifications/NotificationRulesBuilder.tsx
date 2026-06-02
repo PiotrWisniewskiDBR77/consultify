@@ -233,7 +233,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-orange-600" />
+        <Loader2 size={32} className="animate-spin text-amber-600" />
       </div>
     );
   }
@@ -246,7 +246,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Bell size={28} className="text-orange-500" />
+            <Bell size={28} className="text-amber-500" />
             {t('settings.notifications.rules.title', 'Notification Rules')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -259,7 +259,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           Save Changes
@@ -282,7 +282,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-orange-600 text-white'
+                  ? 'bg-amber-600 text-white'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
               }`}
             >
@@ -302,7 +302,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             </h3>
             <button
               onClick={addRule}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors"
             >
               <Plus size={16} />
               Add Rule
@@ -315,7 +315,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 key={rule.id}
                 className={`border rounded-lg transition-all ${
                   rule.enabled
-                    ? 'border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5'
+                    ? 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/5'
                     : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 opacity-60'
                 }`}
               >
@@ -337,7 +337,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                         updateRule(rule.id, { name: e.target.value });
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="font-medium text-slate-900 dark:text-white bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-orange-500 rounded px-2 py-1"
+                      className="font-medium text-slate-900 dark:text-white bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-amber-500 rounded px-2 py-1"
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -348,7 +348,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       }}
                       className={`p-2 rounded-lg transition-colors ${
                         rule.enabled
-                          ? 'text-orange-600 hover:bg-orange-100'
+                          ? 'text-amber-600 hover:bg-amber-100'
                           : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30'
                       }`}
                     >
@@ -359,7 +359,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                         e.stopPropagation();
                         deleteRule(rule.id);
                       }}
-                      className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg"
+                      className="p-2 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-lg"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -417,7 +417,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                 <Bell size={32} className="mx-auto mb-2 opacity-30" />
                 <p>No custom rules configured</p>
-                <button onClick={addRule} className="mt-2 text-orange-600 hover:underline text-sm">
+                <button onClick={addRule} className="mt-2 text-amber-600 hover:underline text-sm">
                   Add your first rule
                 </button>
               </div>
@@ -437,7 +437,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <button
               onClick={() => setQuietHours({ ...quietHours, enabled: !quietHours.enabled })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                quietHours.enabled ? 'bg-orange-600' : 'bg-slate-300 dark:bg-slate-600'
+                quietHours.enabled ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <span
@@ -491,7 +491,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       }}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-all ${
                         quietHours.days.includes(day)
-                          ? 'bg-orange-600 text-white'
+                          ? 'bg-amber-600 text-white'
                           : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
                       }`}
                     >
@@ -608,7 +608,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Monitor size={20} className="text-purple-500" />
+                <Monitor size={20} className="text-primary-500" />
                 Desktop Notifications
               </h3>
               <button
@@ -623,7 +623,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   deviceSettings.desktop.enabled
-                    ? 'bg-purple-600'
+                    ? 'bg-primary-600'
                     : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >

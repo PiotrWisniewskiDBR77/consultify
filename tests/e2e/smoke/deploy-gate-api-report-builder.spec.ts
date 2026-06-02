@@ -249,6 +249,30 @@ test.describe('L4 Smoke — deploy gate API (report builder + public report)', (
     expect([400, 404]).toContain(res.status());
   });
 
+  test('POST /api/report-builder with interview source and missing template returns 4xx (no 5xx)', async ({
+    request,
+  }) => {
+    const sourcesRes = await request.get(`${API_BASE_URL}/api/report-builder/sources/interview`, {
+      headers: authHeaders(token),
+    });
+    await assertNo5xx(sourcesRes, 'GET /api/report-builder/sources/interview');
+    expect(sourcesRes.status()).toBe(200);
+    const sourcesData = await sourcesRes.json().catch(() => null);
+    const firstSourceId = String(sourcesData?.sources?.[0]?.id || '');
+    expect(firstSourceId, 'No interview sources available in this environment.').toBeTruthy();
+
+    const res = await request.post(`${API_BASE_URL}/api/report-builder`, {
+      headers: { ...authHeaders(token), 'content-type': 'application/json' },
+      data: {
+        sourceType: 'INTERVIEW',
+        sourceId: firstSourceId,
+        title: `E2E Interview Report ${Date.now()}`,
+      },
+    });
+    await assertNo5xx(res, 'POST /api/report-builder (interview source)');
+    expect([200, 201, 400, 404]).toContain(res.status());
+  });
+
   test('GET /api/report-builder/does-not-exist returns 404 (no 5xx)', async ({ request }) => {
     const res = await request.get(`${API_BASE_URL}/api/report-builder/does-not-exist`, {
       headers: authHeaders(token),

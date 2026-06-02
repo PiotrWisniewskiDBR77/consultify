@@ -102,7 +102,13 @@ const getMissingItemBlockers = (items: ToolMissingItem[]): string[] =>
 const getRuntimeGateBlockers = (
   session: Pick<
     ToolSessionRow,
-    'id' | 'organization_id' | 'runtime_contract_json' | 'answers_json' | 'dod_status' | 'completion_percent' | 'confidence_avg'
+    | 'id'
+    | 'organization_id'
+    | 'runtime_contract_json'
+    | 'answers_json'
+    | 'dod_status'
+    | 'completion_percent'
+    | 'confidence_avg'
   >
 ): string[] => {
   if (session.runtime_contract_json) {
@@ -119,10 +125,10 @@ const getRuntimeGateBlockers = (
 
   const blockers: string[] = [];
   if ((session.completion_percent || 0) < 100) {
-    blockers.push(`completion ${(session.completion_percent || 0)}% < 100%`);
+    blockers.push(`completion ${session.completion_percent || 0}% < 100%`);
   }
   if ((session.confidence_avg || 0) < 3) {
-    blockers.push(`confidence ${(session.confidence_avg || 0)} < 3`);
+    blockers.push(`confidence ${session.confidence_avg || 0} < 3`);
   }
   return blockers;
 };
@@ -130,7 +136,13 @@ const getRuntimeGateBlockers = (
 const getPromotionBlockers = (
   session: Pick<
     ToolSessionRow,
-    'id' | 'organization_id' | 'runtime_contract_json' | 'answers_json' | 'dod_status' | 'completion_percent' | 'confidence_avg'
+    | 'id'
+    | 'organization_id'
+    | 'runtime_contract_json'
+    | 'answers_json'
+    | 'dod_status'
+    | 'completion_percent'
+    | 'confidence_avg'
   >,
   missingItemsValue: unknown
 ): { missingItems: string[]; runtime: string[]; all: string[] } => {
@@ -378,9 +390,7 @@ const ensureToolsSchema = async (): Promise<void> => {
       { name: 'last_generation_batch_id', def: 'TEXT' },
     ]) {
       try {
-        await queryHelpers.queryRun(
-          `ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`
-        );
+        await queryHelpers.queryRun(`ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`);
       } catch {
         // column already exists
       }
@@ -460,6 +470,20 @@ const ensureToolsSchema = async (): Promise<void> => {
   } catch {
     // no-op: schema might be managed elsewhere
   }
+};
+
+const ensureToolCommentsSchema = async (): Promise<void> => {
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS tool_comments (
+      id TEXT PRIMARY KEY,
+      tool_session_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      content TEXT NOT NULL,
+      priority TEXT DEFAULT 'normal',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
 };
 
 const createDecisionRecord = async (params: {
@@ -945,8 +969,14 @@ export class ToolController {
       }
 
       const {
-        answers, completionPercent, confidenceAvg, contextSnapshot,
-        status: requestedStatus, wizardState, missingItems, failureReason,
+        answers,
+        completionPercent,
+        confidenceAvg,
+        contextSnapshot,
+        status: requestedStatus,
+        wizardState,
+        missingItems,
+        failureReason,
       } = req.body;
 
       const existing = (await queryHelpers.queryOne(
@@ -1037,8 +1067,13 @@ export class ToolController {
 
       const now = new Date().toISOString();
       const setClauses = [
-        'answers_json = ?', 'context_snapshot = ?', 'completion_percent = ?',
-        'confidence_avg = ?', 'status = ?', 'updated_by = ?', 'updated_at = ?',
+        'answers_json = ?',
+        'context_snapshot = ?',
+        'completion_percent = ?',
+        'confidence_avg = ?',
+        'status = ?',
+        'updated_by = ?',
+        'updated_at = ?',
       ];
       const params: unknown[] = [
         JSON.stringify(answers || {}),
@@ -1696,7 +1731,9 @@ export class ToolController {
 
       const validOutputTypes = ['initiative', 'report', 'presentation', 'idea'];
       if (!validOutputTypes.includes(outputType)) {
-        res.status(400).json({ error: `Invalid outputType. Must be one of: ${validOutputTypes.join(', ')}` });
+        res
+          .status(400)
+          .json({ error: `Invalid outputType. Must be one of: ${validOutputTypes.join(', ')}` });
         return;
       }
 
@@ -1795,11 +1832,18 @@ export class ToolController {
               uploaded_by, uploaded_at, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              outputId, session.organization_id, session.project_id || null,
-              title, 'tool_session_report',
+              outputId,
+              session.organization_id,
+              session.project_id || null,
+              title,
+              'tool_session_report',
               JSON.stringify(toolTrace),
-              'completed', 'completed',
-              user.id, now, now, now,
+              'completed',
+              'completed',
+              user.id,
+              now,
+              now,
+              now,
             ]
           );
         } catch {
@@ -1815,7 +1859,11 @@ export class ToolController {
               config_json, result_json, created_by, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              outputId, session.organization_id, 'tool_promotion', 'presentation', 'completed',
+              outputId,
+              session.organization_id,
+              'tool_promotion',
+              'presentation',
+              'completed',
               JSON.stringify({ ...toolTrace, title }),
               JSON.stringify({
                 title,
@@ -1823,7 +1871,9 @@ export class ToolController {
                 promoted_from_session: toolId,
                 tool_trace: toolTrace,
               }),
-              user.id, now, now,
+              user.id,
+              now,
+              now,
             ]
           );
         } catch {
@@ -1942,6 +1992,130 @@ export class ToolController {
       );
 
       res.json({ initiatives });
+    }
+  );
+
+  static listComments = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureToolCommentsSchema();
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const comments = await queryHelpers.queryAll(
+        `SELECT
+          c.id,
+          c.content,
+          c.priority,
+          c.user_id as "authorId",
+          COALESCE(NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), ''), u.email, 'User') as "authorName",
+          c.created_at as "createdAt"
+         FROM tool_comments c
+         LEFT JOIN users u ON u.id = c.user_id
+         WHERE c.tool_session_id = ? AND c.organization_id = ?
+         ORDER BY c.created_at DESC`,
+        [toolId, user.organizationId]
+      );
+
+      res.json(comments);
+    }
+  );
+
+  static addComment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const content = String(req.body?.content || req.body?.text || '').trim();
+      if (!content) {
+        res.status(400).json({ error: 'Comment content is required' });
+        return;
+      }
+
+      await ensureToolCommentsSchema();
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const id = uuidv4();
+      const priority = String(req.body?.priority || 'normal');
+
+      await queryHelpers.queryRun(
+        `INSERT INTO tool_comments (id, tool_session_id, organization_id, user_id, content, priority, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, toolId, user.organizationId, user.id, content, priority, now]
+      );
+
+      await logAudit(user.organizationId, user.id, 'tool_comment_added', toolId, { commentId: id });
+
+      res.status(201).json({
+        id,
+        content,
+        priority,
+        authorId: user.id,
+        authorName:
+          [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'User',
+        createdAt: now,
+      });
+    }
+  );
+
+  static deleteComment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId, commentId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureToolCommentsSchema();
+
+      const comment = (await queryHelpers.queryOne(
+        `SELECT id, user_id FROM tool_comments WHERE id = ? AND tool_session_id = ? AND organization_id = ?`,
+        [commentId, toolId, user.organizationId]
+      )) as { id: string; user_id: string } | null;
+
+      if (!comment) {
+        res.status(404).json({ error: 'Comment not found' });
+        return;
+      }
+
+      if (comment.user_id !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER') {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      await queryHelpers.queryRun(`DELETE FROM tool_comments WHERE id = ?`, [commentId]);
+      await logAudit(user.organizationId, user.id, 'tool_comment_deleted', toolId, { commentId });
+
+      res.json({ ok: true });
     }
   );
 }

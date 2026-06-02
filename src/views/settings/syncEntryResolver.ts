@@ -8,9 +8,7 @@ export function resolveLegacySyncSettingsEntry(
   const normalized = pathname.replace(/\/+$/, '') || '/';
   switch (normalized) {
     case ROUTES.SETTINGS.BILLING:
-      return isAdminOrSuperAdminRole(role)
-        ? ROUTES.ADMIN.BILLING
-        : ROUTES.ORGANIZATION.BILLING;
+      return isAdminOrSuperAdminRole(role) ? ROUTES.ADMIN.BILLING : ROUTES.ORGANIZATION.BILLING;
     case ROUTES.SETTINGS.AI:
       return `${ROUTES.SETTINGS.ROOT}/ai-behavior`;
     case ROUTES.SETTINGS.NOTIFICATIONS:
@@ -33,6 +31,7 @@ const LEGACY_AI_SECTION_MAP: Record<string, string> = {
   'ai-personality': 'ai-behavior',
   'ai-model': 'ai-model-params',
   'ai-parameters': 'ai-model-params',
+  'ai-history': 'ai-chat-history',
 };
 
 export function normalizeSettingsSectionFromPath(pathname: string): string {

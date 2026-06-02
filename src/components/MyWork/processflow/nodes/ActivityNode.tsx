@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 
 const STATUS_COLORS: Record<string, string> = {
   todo: 'bg-slate-300',
   in_progress: 'bg-blue-500',
   done: 'bg-green-500',
-  blocked: 'bg-red-500',
+  blocked: 'bg-rose-500',
 };
 
 export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
@@ -92,7 +92,8 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
         <div className="flex items-center gap-1 mt-1">
           {data?.duration && (
             <span className="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[8px] font-bold text-blue-700 dark:text-blue-300">
-              {data.duration}{data.durationUnit || 'h'}
+              {data.duration}
+              {data.durationUnit || 'h'}
             </span>
           )}
           {data?.cost && (
@@ -101,7 +102,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
             </span>
           )}
           {data?.fteCount && (
-            <span className="px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-[8px] font-bold text-violet-700 dark:text-violet-300">
+            <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-[8px] font-bold text-primary-700 dark:text-primary-300">
               {data.fteCount} FTE
             </span>
           )}

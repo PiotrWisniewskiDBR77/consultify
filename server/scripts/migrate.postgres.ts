@@ -124,6 +124,8 @@ function isSqliteOnlyMigration(m: Migration): boolean {
   if (f.startsWith('000_initdb_')) return true;
   // explicit sqlite-only naming
   if (f.includes('_sqlite')) return true;
+  // SQLite FTS virtual tables are not valid Postgres migrations.
+  if (f.includes('fts5')) return true;
   // helper/repair files explicitly targeting sqlite
   if (f.includes('repair_sqlite')) return true;
   // any file that explicitly mentions sqlite but isn't postgres-specific

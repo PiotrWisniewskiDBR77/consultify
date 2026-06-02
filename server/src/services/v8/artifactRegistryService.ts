@@ -5,8 +5,8 @@ import type {
   ArtifactFamily,
   ArtifactListFilters,
   ArtifactListItem,
-  ArtifactOriginRuntime,
   ArtifactOriginLink,
+  ArtifactOriginRuntime,
   ArtifactPlanningRequest,
   ArtifactPlanningResult,
   ArtifactRecord,
@@ -27,8 +27,14 @@ import {
   MaterializeArtifactRunParamsSchema,
   RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
+import type { RunState } from '../../types/executionSpine.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
+import {
+  buildWave5LineDiffForPreview,
+  mirrorLegacyArtifactIntoWave5,
+} from '../wave5ArtifactRuntimeService.js';
 import * as chatExecutionService from './chatExecutionService.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
@@ -38,11 +44,21 @@ import {
   updateOperationContractLinks,
 } from './operationContractService.js';
 import * as publishReviewService from './publishReviewService.js';
-import type { RunState } from '../../types/executionSpine.js';
 
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
 const BACKFILL_TTL_MS = 30_000;
+
+type StarterTableField = {
+  name: string;
+  fieldType: string;
+  options?: Record<string, unknown>;
+};
+
+type StarterTableSeed = {
+  fields: StarterTableField[];
+  records: Array<Record<string, unknown>>;
+};
 
 type AuditAction =
   | 'created'
@@ -282,6 +298,7 @@ interface PresentationBackfillRow {
   presentation_mode: string | null;
   slide_count: number | null;
   export_format: string | null;
+  generated_by: string | null;
   created_at: string | null;
   updated_at: string | null;
   source_id: string | null;
@@ -390,7 +407,10 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
   });
 
   const preflight = safeJsonParse<ArtifactRunPreflight | null>(row.preflight_json, null);
-  const failurePackage = safeJsonParse<ArtifactRunFailurePackage | null>(row.failure_package_json, null);
+  const failurePackage = safeJsonParse<ArtifactRunFailurePackage | null>(
+    row.failure_package_json,
+    null
+  );
   const originRuntimeRaw = String(row.materialization_origin_runtime || '').trim();
   const originRecordIdRaw = String(row.materialization_origin_record_id || '').trim();
   const materializationOrigin =
@@ -511,7 +531,11 @@ export function deriveArtifactRunStatusFromExecutionState(params: {
 export function deriveArtifactValidationSnapshot(params: {
   artifact: Pick<
     ArtifactRecord,
-    'titleSnapshot' | 'contextSnapshotId' | 'executionRunId' | 'sourceInitiativeId' | 'originSummary'
+    | 'titleSnapshot'
+    | 'contextSnapshotId'
+    | 'executionRunId'
+    | 'sourceInitiativeId'
+    | 'originSummary'
   >;
   executionState?: RunState | null;
   sourceRefs?: unknown[];
@@ -523,7 +547,9 @@ export function deriveArtifactValidationSnapshot(params: {
     message: string;
   }>;
 } {
-  const artifactFamily = String((params.artifact as any)?.artifactFamily || '').trim().toLowerCase();
+  const artifactFamily = String((params.artifact as any)?.artifactFamily || '')
+    .trim()
+    .toLowerCase();
 
   const sourceRefs =
     params.sourceRefs && Array.isArray(params.sourceRefs)
@@ -687,6 +713,189 @@ export async function registerGovernedTableSheetArtifact(params: {
   return artifact;
 }
 
+function buildStarterTableSeed(params: {
+  goal?: string | null;
+  title?: string | null;
+  explicitColumns?: unknown;
+  explicitRows?: unknown;
+}): StarterTableSeed {
+  const explicitFields = Array.isArray(params.explicitColumns)
+    ? params.explicitColumns
+        .map((column) => {
+          if (typeof column === 'string') {
+            const name = column.trim();
+            return name ? { name, fieldType: 'singleLineText' } : null;
+          }
+          if (!column || typeof column !== 'object') return null;
+          const raw = column as Record<string, unknown>;
+          const name = String(raw.name || raw.label || '').trim();
+          if (!name || name.toLowerCase() === 'name') return null;
+          return {
+            name,
+            fieldType:
+              String(raw.fieldType || raw.type || 'singleLineText').trim() || 'singleLineText',
+            options:
+              raw.options && typeof raw.options === 'object'
+                ? (raw.options as Record<string, unknown>)
+                : undefined,
+          };
+        })
+        .filter((field): field is StarterTableField => Boolean(field))
+    : [];
+
+  if (explicitFields.length > 0) {
+    return {
+      fields: explicitFields,
+      records: Array.isArray(params.explicitRows)
+        ? params.explicitRows
+            .filter((row): row is Record<string, unknown> =>
+              Boolean(row && typeof row === 'object')
+            )
+            .slice(0, 10)
+        : [],
+    };
+  }
+
+  const goal = `${params.goal || ''} ${params.title || ''}`.toLowerCase();
+  if (
+    goal.includes('crm') ||
+    goal.includes('lead') ||
+    goal.includes('klient') ||
+    goal.includes('customer') ||
+    goal.includes('sprzeda')
+  ) {
+    return {
+      fields: [
+        { name: 'Company', fieldType: 'singleLineText' },
+        { name: 'Contact', fieldType: 'singleLineText' },
+        { name: 'Email', fieldType: 'email' },
+        {
+          name: 'Status',
+          fieldType: 'singleSelect',
+          options: { options: [{ value: 'New' }, { value: 'Qualified' }, { value: 'Won' }] },
+        },
+        { name: 'Deal Value', fieldType: 'number' },
+        { name: 'Next Step', fieldType: 'longText' },
+      ],
+      records: [
+        {
+          Name: 'Acme pilot',
+          Company: 'Acme Manufacturing',
+          Contact: 'Anna Nowak',
+          Email: 'anna.nowak@example.com',
+          Status: 'New',
+          'Deal Value': 45000,
+          'Next Step': 'Schedule discovery call',
+        },
+        {
+          Name: 'Beta rollout',
+          Company: 'Beta Logistics',
+          Contact: 'Jan Kowalski',
+          Email: 'jan.kowalski@example.com',
+          Status: 'Qualified',
+          'Deal Value': 82000,
+          'Next Step': 'Prepare ROI estimate',
+        },
+      ],
+    };
+  }
+
+  return {
+    fields: [
+      { name: 'Owner', fieldType: 'singleLineText' },
+      {
+        name: 'Status',
+        fieldType: 'singleSelect',
+        options: { options: [{ value: 'New' }, { value: 'In Progress' }, { value: 'Done' }] },
+      },
+      {
+        name: 'Priority',
+        fieldType: 'singleSelect',
+        options: { options: [{ value: 'Low' }, { value: 'Medium' }, { value: 'High' }] },
+      },
+      { name: 'Due Date', fieldType: 'date' },
+      { name: 'Notes', fieldType: 'longText' },
+    ],
+    records: [
+      {
+        Name: 'Initial item',
+        Owner: 'Team',
+        Status: 'New',
+        Priority: 'Medium',
+        'Due Date': new Date().toISOString().slice(0, 10),
+        Notes: 'Generated starter record for Table Studio validation.',
+      },
+    ],
+  };
+}
+
+async function ensureStarterTableData(params: {
+  tableId: string;
+  seed: StarterTableSeed;
+  actorUserId: string;
+}): Promise<void> {
+  const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
+  const recordsService = (await import('../tablePlatform/RecordsService.js')).default;
+
+  const table = await metadataService.getTable(params.tableId);
+  if (!table) {
+    throw new Error(`Table Studio materialization table ${params.tableId} was not persisted`);
+  }
+
+  const existingFields = Array.isArray((table as any).fields) ? (table as any).fields : [];
+  const fieldNames = new Set(
+    existingFields
+      .map((field: any) =>
+        String(field?.name || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  );
+
+  for (const field of params.seed.fields) {
+    const name = field.name.trim();
+    if (!name || fieldNames.has(name.toLowerCase())) continue;
+    const created = await metadataService.createField(
+      params.tableId,
+      name,
+      field.fieldType || 'singleLineText',
+      field.options || {},
+      params.actorUserId
+    );
+    if (created) fieldNames.add(name.toLowerCase());
+  }
+
+  for (const record of params.seed.records) {
+    await recordsService.createRecord(params.tableId, { ...record }, params.actorUserId);
+  }
+}
+
+async function assertMaterializedTableReady(params: {
+  tableId: string;
+  organizationId: string;
+}): Promise<void> {
+  const ready = await dbGet<{ table_id: string; field_count: number }>(
+    `SELECT t.id AS table_id, COUNT(f.id) AS field_count
+       FROM tp_tables t
+       JOIN tp_bases b ON b.id = t.base_id
+       LEFT JOIN tp_fields f ON f.table_id = t.id
+      WHERE t.id = ? AND b.organization_id = ?
+      GROUP BY t.id
+      LIMIT 1`,
+    [params.tableId, params.organizationId],
+    { fallback: false }
+  );
+  if (!ready?.table_id) {
+    throw new Error(`Table Studio materialization failed: table ${params.tableId} does not exist`);
+  }
+  if (Number(ready.field_count || 0) < 2) {
+    throw new Error(
+      `Table Studio materialization failed: table ${params.tableId} has no usable schema`
+    );
+  }
+}
+
 async function getOriginLinkByOrigin(
   organizationId: string,
   originRuntime: string,
@@ -699,6 +908,25 @@ async function getOriginLinkByOrigin(
     { fallback: true }
   );
   return row ? mapOriginLinkRow(row) : null;
+}
+
+export async function hasArtifactOriginLink(params: {
+  organizationId: string;
+  originRuntime:
+    | 'report'
+    | 'presentation'
+    | 'sheet'
+    | 'native_artifact'
+    | 'report_template'
+    | 'presentation_template';
+  originRecordId: string;
+}): Promise<boolean> {
+  const link = await getOriginLinkByOrigin(
+    params.organizationId,
+    params.originRuntime,
+    params.originRecordId
+  );
+  return !!link;
 }
 
 async function getArtifactRow(
@@ -777,27 +1005,29 @@ async function cleanupGhostOutputsByOrigin(params: {
     `DELETE FROM v8_artifact_access_grants WHERE organization_id = ? AND artifact_id = ?`,
     [params.organizationId, artifactId]
   );
-  await dbRun(
-    `DELETE FROM v8_review_gates WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
-  await dbRun(
-    `DELETE FROM v8_publish_records WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
+  await dbRun(`DELETE FROM v8_review_gates WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
+  await dbRun(`DELETE FROM v8_publish_records WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
   await dbRun(
     `DELETE FROM v8_artifact_origin_links WHERE organization_id = ? AND artifact_id = ?`,
     [params.organizationId, artifactId]
   );
-  await dbRun(
-    `DELETE FROM v8_output_artifacts WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
+  await dbRun(`DELETE FROM v8_output_artifacts WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
 
   return { cleanedUp: true, notes: null };
 }
 
-async function mapArtifactRunRowWithEffectiveStatus(row: ArtifactRunRow): Promise<ArtifactRunRecord> {
+async function mapArtifactRunRowWithEffectiveStatus(
+  row: ArtifactRunRow
+): Promise<ArtifactRunRecord> {
   const mapped = mapArtifactRunRow(row);
   const spineRun = await executionSpineService.getRun(mapped.executionRunId, mapped.organizationId);
   const effectiveStatus = deriveArtifactRunStatusFromExecutionState({
@@ -944,7 +1174,9 @@ export async function registerArtifactOrigin(
 
   const row = await getArtifactRow(artifactId, validated.organizationId);
   if (!row) {
-    logger.warn(`${LOG_PREFIX} Artifact ${artifactId} was not found after registration — DB constraint may have rejected the insert`);
+    logger.warn(
+      `${LOG_PREFIX} Artifact ${artifactId} was not found after registration — DB constraint may have rejected the insert`
+    );
     return null;
   }
   const record = mapArtifactRow(row);
@@ -1064,7 +1296,9 @@ export async function startArtifactReview(params: {
     executionState: executionRun?.state,
   });
   if (validation.state !== 'validated') {
-    throw new Error(`Artifact ${params.artifactId} cannot enter review before artifact validation passes`);
+    throw new Error(
+      `Artifact ${params.artifactId} cannot enter review before artifact validation passes`
+    );
   }
 
   let record = await publishReviewService.getPublishRecord(
@@ -1144,7 +1378,15 @@ export async function addSecondaryOriginLink(params: {
     `INSERT INTO v8_artifact_origin_links (
       link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [linkId, params.artifactId, params.organizationId, params.originRuntime, params.originRecordId, 0, now]
+    [
+      linkId,
+      params.artifactId,
+      params.organizationId,
+      params.originRuntime,
+      params.originRecordId,
+      0,
+      now,
+    ]
   );
 }
 
@@ -1233,7 +1475,7 @@ async function backfillReportsForOrg(organizationId: string): Promise<number> {
 async function backfillPresentationsForOrg(organizationId: string): Promise<number> {
   const rows = await dbAll<PresentationBackfillRow>(
     `SELECT d.id, d.title, d.status, d.deck_type, d.presentation_mode, d.slide_count,
-            d.export_format, d.created_at, d.updated_at, d.source_id,
+            d.export_format, d.generated_by, d.created_at, d.updated_at, d.source_id,
             COALESCE(d.source_artifacts, '[]') AS source_refs_json
      FROM presentation_decks d
      LEFT JOIN v8_artifact_origin_links l
@@ -1249,6 +1491,7 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
   let inserted = 0;
   for (const row of rows || []) {
     try {
+      const ownerUserId = row.generated_by || null;
       const result = await registerArtifactOrigin({
         organizationId,
         outputType: 'presentation',
@@ -1256,13 +1499,11 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
         originRuntime: 'presentation',
         originRecordId: row.id,
         titleSnapshot: row.title || 'Untitled presentation',
-        ownerUserId: null,
-        createdBy: FALLBACK_ACTOR,
+        ownerUserId,
+        createdBy: ownerUserId || FALLBACK_ACTOR,
         deliveryState: mapPresentationStatusToDeliveryState(row.status),
-        visibilityScope: deriveArtifactVisibilityScope({
-          outputType: 'presentation',
-          isBackfill: true,
-        }),
+        // Backfill must never create inaccessible private artifacts without an owner.
+        visibilityScope: ownerUserId ? 'private' : 'organization',
         originSummary: {
           deckType: row.deck_type,
           presentationMode: row.presentation_mode,
@@ -1395,7 +1636,9 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
       });
       if (result) inserted++;
     } catch (err: any) {
-      logger.warn(`${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`);
+      logger.warn(
+        `${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`
+      );
     }
   }
   return inserted;
@@ -1406,8 +1649,12 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
   const now = Date.now();
   if (now - last < BACKFILL_TTL_MS) return;
 
-  const [reportsInserted, presentationsInserted, reportTemplatesInserted, presentationTemplatesInserted] =
-    await Promise.all([
+  const [
+    reportsInserted,
+    presentationsInserted,
+    reportTemplatesInserted,
+    presentationTemplatesInserted,
+  ] = await Promise.all([
     backfillReportsForOrg(organizationId),
     backfillPresentationsForOrg(organizationId),
     backfillReportTemplatesForOrg(organizationId),
@@ -1858,6 +2105,28 @@ export async function getArtifactByOrigin(params: {
   });
 }
 
+export async function getArtifactByOriginUnscoped(params: {
+  organizationId: string;
+  originRuntime:
+    | 'report'
+    | 'presentation'
+    | 'sheet'
+    | 'native_artifact'
+    | 'report_template'
+    | 'presentation_template';
+  originRecordId: string;
+}): Promise<ArtifactListItem | null> {
+  await ensureBackfilledOutputsForOrg(params.organizationId);
+  const link = await getOriginLinkByOrigin(
+    params.organizationId,
+    params.originRuntime,
+    params.originRecordId
+  );
+  if (!link) return null;
+  const row = await getArtifactListItemRow(link.artifactId, params.organizationId);
+  return row ? rowToListItem(row) : null;
+}
+
 export async function listMyWorkArtifacts(params: {
   organizationId: string;
   userId: string;
@@ -1910,7 +2179,8 @@ function inferArtifactPlan(
     goal.includes('wzorzec') ||
     goal.includes('szablon')
   ) {
-    const isPresentation = goal.includes('deck') || goal.includes('presentation') || goal.includes('prezentacj');
+    const isPresentation =
+      goal.includes('deck') || goal.includes('presentation') || goal.includes('prezentacj');
     return {
       artifactFamily: 'template',
       outputType: isPresentation ? 'presentation' : 'report',
@@ -1931,7 +2201,7 @@ function inferArtifactPlan(
     return {
       artifactFamily: 'sheet',
       outputType: 'sheet',
-      titleHint: 'Structured sheet draft',
+      titleHint: request.goal.trim() || 'Structured sheet draft',
       governancePath: 'execution_spine',
       visibilityScope: 'organization',
     };
@@ -2365,21 +2635,26 @@ function computeArtifactRunPreflight(params: {
     checks.push({
       id: 'materialization_target',
       status: 'pending',
-      message: 'Sheet materialization requires a governed table target (tableId) at materialize time',
+      message:
+        'Sheet materialization requires a governed table target (tableId) at materialize time',
     });
   } else if (params.run.plan.outputType === 'report') {
+    const hasGroundedSource = Boolean(params.run.contextSnapshotId);
     checks.push({
       id: 'materialization_inputs',
-      status: 'pending',
-      message:
-        'Report materialization may require explicit sourceType/sourceId unless snapshot grounding is available',
+      status: hasGroundedSource ? 'passed' : 'pending',
+      message: hasGroundedSource
+        ? 'Report materialization inputs are grounded by context snapshot'
+        : 'Report materialization may require explicit sourceType/sourceId unless snapshot grounding is available',
     });
   } else if (params.run.plan.outputType === 'presentation') {
+    const hasGroundedSource = Boolean(params.run.contextSnapshotId);
     checks.push({
       id: 'materialization_inputs',
-      status: 'pending',
-      message:
-        'Presentation materialization may require explicit sourceType/sourceId unless snapshot grounding is available',
+      status: hasGroundedSource ? 'passed' : 'pending',
+      message: hasGroundedSource
+        ? 'Presentation materialization inputs are grounded by context snapshot'
+        : 'Presentation materialization may require explicit sourceType/sourceId unless snapshot grounding is available',
     });
   }
 
@@ -2471,8 +2746,25 @@ export async function acceptArtifactRunPlan(params: {
     riskClass: current.artifactId ? 'safe_update' : 'safe_additive',
     approvalClass: 'requires_human_approval',
     previewPayload: {
-      diff: null,
-      beforeState: null,
+      diff: {
+        lineDiff: buildWave5LineDiffForPreview(
+          current.artifactId
+            ? `Existing artifact ${current.artifactId} will be updated by ArtifactRun ${current.runId}.`
+            : '',
+          [
+            `ArtifactRun ${current.runId} will create ${current.plan.outputType}.`,
+            `Family: ${current.plan.artifactFamily}`,
+            `Title: ${current.plan.titleHint}`,
+            `Visibility: ${current.plan.visibilityScope}`,
+          ].join('\n')
+        ),
+      },
+      beforeState: current.artifactId
+        ? {
+            artifactId: current.artifactId,
+            governance: 'existing_artifact_update_requires_review',
+          }
+        : null,
       afterState: {
         artifactFamily: current.plan.artifactFamily,
         outputType: current.plan.outputType,
@@ -2713,13 +3005,15 @@ export async function materializeArtifactRun(
       const presentationGeneratorService = await import('../presentationGeneratorService.js');
       const outlined = await presentationGeneratorService.generateOutline(
         presentationParams.setup as any,
-        validated.organizationId
+        validated.organizationId,
+        validated.actorUserId
       );
       await presentationGeneratorService.generateDeck(
         outlined.deckId,
         outlined.outline,
         presentationParams.setup as any,
-        validated.organizationId
+        validated.organizationId,
+        validated.actorUserId
       );
       await registerArtifactOrigin({
         organizationId: validated.organizationId,
@@ -2764,23 +3058,59 @@ export async function materializeArtifactRun(
         typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';
       const tableName =
         typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
+      const workspaceId =
+        typeof validated.config?.workspaceId === 'string' && validated.config.workspaceId.trim()
+          ? validated.config.workspaceId.trim()
+          : '';
+      const workspaceTarget = workspaceId || validated.organizationId;
+
+      // Hardening (P1): never trust incoming tableId blindly.
+      // If the provided table is missing or belongs to another organization,
+      // fall back to deterministic auto-create flow below.
+      if (tableId) {
+        const existingTable = await dbGet<{ table_id: string }>(
+          `SELECT t.id AS table_id
+             FROM tp_tables t
+             JOIN tp_bases b ON b.id = t.base_id
+            WHERE t.id = ? AND b.organization_id = ?
+            LIMIT 1`,
+          [tableId, validated.organizationId],
+          { fallback: true }
+        );
+        if (!existingTable?.table_id) {
+          logger.warn(
+            `${LOG_PREFIX} Ignoring invalid sheet tableId from materialize config; auto-create fallback will run`,
+            {
+              runId: validated.runId,
+              organizationId: validated.organizationId,
+              providedTableId: tableId,
+            }
+          );
+          tableId = '';
+        }
+      }
 
       // Auto-create table when Excele pipeline doesn't provide one
       if (!tableId) {
         try {
           const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
 
-          // Find or create a base for this org's Excele artifacts
+          // Find or create a base for this org/workspace sheet artifacts.
           let baseId: string | null = null;
-          const existingBases = await dbAll(
-            `SELECT id FROM tp_bases WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
-            [validated.organizationId]
+          const workspaceScopedBase = await dbGet<{ id: string }>(
+            `SELECT id
+               FROM tp_bases
+              WHERE organization_id = ? AND workspace_id = ?
+              ORDER BY created_at DESC
+              LIMIT 1`,
+            [validated.organizationId, workspaceTarget],
+            { fallback: true }
           );
-          if (existingBases && (existingBases as any[]).length > 0) {
-            baseId = (existingBases as any[])[0].id;
+          if (workspaceScopedBase?.id) {
+            baseId = workspaceScopedBase.id;
           } else {
             const newBase = await metadataService.createBase(
-              validated.organizationId,
+              workspaceTarget,
               validated.organizationId,
               'Excele Workspace',
               validated.actorUserId
@@ -2792,13 +3122,16 @@ export async function materializeArtifactRun(
             const newTable = await metadataService.createTable(
               baseId,
               tableName || validated.title || current.plan.titleHint || 'Generated Sheet',
-              `Auto-created by Excele pipeline for artifact run ${validated.runId}`,
+              `Auto-created by Table Studio pipeline for artifact run ${validated.runId}`,
               validated.actorUserId
             );
             tableId = (newTable as any)?.id || '';
           }
         } catch (tableCreateErr) {
-          logger.warn('[ArtifactRegistry] Auto-create table failed, falling back to error:', tableCreateErr);
+          logger.warn(
+            '[ArtifactRegistry] Auto-create table failed, falling back to error:',
+            tableCreateErr
+          );
         }
 
         if (!tableId) {
@@ -2807,6 +3140,25 @@ export async function materializeArtifactRun(
           );
         }
       }
+
+      const tableSeed = buildStarterTableSeed({
+        goal:
+          typeof validated.config?.goal === 'string'
+            ? validated.config.goal
+            : current.plan.titleHint,
+        title: tableName || validated.title || current.plan.titleHint,
+        explicitColumns: validated.config?.columns,
+        explicitRows: validated.config?.rows,
+      });
+      await ensureStarterTableData({
+        tableId,
+        seed: tableSeed,
+        actorUserId: validated.actorUserId,
+      });
+      await assertMaterializedTableReady({
+        tableId,
+        organizationId: validated.organizationId,
+      });
 
       const artifact = await registerGovernedTableSheetArtifact({
         organizationId: validated.organizationId,
@@ -2875,6 +3227,26 @@ export async function materializeArtifactRun(
       },
     });
 
+    if (resolvedArtifactId) {
+      await mirrorLegacyArtifactIntoWave5({
+        organizationId: validated.organizationId,
+        userId: validated.actorUserId,
+        legacyArtifactId: resolvedArtifactId,
+        outputType: current.plan.outputType,
+        title: current.plan.titleHint,
+        originRuntime: materializationOrigin?.originRuntime || null,
+        originRecordId: materializationOrigin?.originRecordId || null,
+        executionRunId: current.executionRunId,
+        contextSnapshotId: current.contextSnapshotId,
+      }).catch((err) => {
+        logger.warn(`${LOG_PREFIX} Wave 5 mirror failed after materialization`, {
+          runId: validated.runId,
+          artifactId: resolvedArtifactId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
+
     const completed = await getArtifactRun(validated.runId, validated.organizationId);
     if (!completed) {
       throw new Error(`ArtifactRun ${validated.runId} not found after materialization`);
@@ -2898,8 +3270,7 @@ export async function materializeArtifactRun(
         cleanupNotes = cleanup.notes;
       } catch (cleanupError) {
         ghostArtifactsCleanedUp = false;
-        cleanupNotes =
-          cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+        cleanupNotes = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
       }
     }
 
@@ -2960,6 +3331,15 @@ export async function materializeArtifactRun(
       detail: { failureReason, stage: 'materialize', ghostArtifactsCleanedUp },
     });
 
-    throw error;
+    // Surface a controlled operational error to the API layer so the UI
+    // gets a meaningful materialization message instead of a generic 500.
+    throw new AppError(failureReason, 409, 'ARTIFACT_MATERIALIZE_FAILED', {
+      runId: validated.runId,
+      outputType: current.plan.outputType,
+      executionRunId: current.executionRunId,
+      stage: 'materialize',
+      ghostArtifactsCleanedUp,
+      cleanupNotes,
+    });
   }
 }

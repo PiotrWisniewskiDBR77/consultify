@@ -48,9 +48,7 @@ const AIPlaybookRoutingEngine = {
     const { mode = 'first_match', rules = [], else_goto } = branchRules;
 
     if (mode !== 'first_match') {
-      logger.warn(
-        `[AIPlaybookRoutingEngine] Unsupported mode: ${mode}, defaulting to first_match`
-      );
+      logger.warn(`[AIPlaybookRoutingEngine] Unsupported mode: ${mode}, defaulting to first_match`);
     }
 
     const trace = {

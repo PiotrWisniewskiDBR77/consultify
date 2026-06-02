@@ -50,6 +50,12 @@ const radarActionSchema = z.object({
   payload: z.record(z.string(), z.unknown()).optional(),
 });
 
+const targetModuleNormalization = {
+  Inicjatywy: 'initiatives',
+  Wdrożenia: 'execution',
+  Notatki: 'notebook',
+} as const;
+
 router.get(
   '/radar',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -82,6 +88,39 @@ router.get(
     });
 
     return res.json(payload);
+  })
+);
+
+router.get(
+  '/radar/preview',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    if (
+      !(await requireTables(res, [
+        'radar_sources',
+        'radar_processed_signals',
+        'user_radar_profiles',
+      ]))
+    )
+      return;
+    const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
+    const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
+    const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');
+    const isPolish = langRaw.trim().toLowerCase().startsWith('pl');
+    const payload = await radarService.buildView({
+      userId: identity.userId,
+      orgId: identity.orgId,
+      role: req.user?.role,
+      industry: orgContext.profile.industry || null,
+      isPolish,
+    });
+    return res.json({
+      generatedAt: payload.generatedAt,
+      radarMap: payload.radarMap || { signals: [] },
+      dailyBriefing: payload.dailyBriefing,
+      localization: payload.localization,
+    });
   })
 );
 

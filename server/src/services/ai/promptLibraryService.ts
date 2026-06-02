@@ -95,7 +95,8 @@ class PromptLibraryService {
       conditions += ' AND scope = ? AND is_published = 1';
       params.push('marketplace');
     } else {
-      conditions += ' AND ((scope = ? AND user_id = ?) OR (scope = ? AND organization_id = ? AND is_published = 1))';
+      conditions +=
+        ' AND ((scope = ? AND user_id = ?) OR (scope = ? AND organization_id = ? AND is_published = 1))';
       params.push('personal', input.userId, 'organization', input.organizationId);
     }
 
@@ -109,19 +110,16 @@ class PromptLibraryService {
       params.push(`%${input.search}%`, `%${input.search}%`);
     }
 
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT * FROM prompt_library WHERE ${conditions} ORDER BY usage_count DESC, updated_at DESC LIMIT 100`,
       params
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     return (rows || []).map(this.mapRow);
   }
 
   async usePrompt(promptId: string, userId: string): Promise<PromptTemplate | null> {
-    const row = await dbGet(
-      `SELECT * FROM prompt_library WHERE id = ?`,
-      [promptId]
-    ) as any;
+    const row = (await dbGet(`SELECT * FROM prompt_library WHERE id = ?`, [promptId])) as any;
 
     if (!row) return null;
 
@@ -142,10 +140,10 @@ class PromptLibraryService {
     tags?: string[];
     isPublished?: boolean;
   }): Promise<PromptTemplate | null> {
-    const existing = await dbGet(
-      `SELECT * FROM prompt_library WHERE id = ? AND user_id = ?`,
-      [input.promptId, input.userId]
-    ) as any;
+    const existing = (await dbGet(`SELECT * FROM prompt_library WHERE id = ? AND user_id = ?`, [
+      input.promptId,
+      input.userId,
+    ])) as any;
 
     if (!existing) return null;
 
@@ -168,15 +166,14 @@ class PromptLibraryService {
       ]
     );
 
-    const updated = await dbGet(`SELECT * FROM prompt_library WHERE id = ?`, [input.promptId]) as any;
+    const updated = (await dbGet(`SELECT * FROM prompt_library WHERE id = ?`, [
+      input.promptId,
+    ])) as any;
     return updated ? this.mapRow(updated) : null;
   }
 
   async deletePrompt(promptId: string, userId: string): Promise<boolean> {
-    await dbRun(
-      `DELETE FROM prompt_library WHERE id = ? AND user_id = ?`,
-      [promptId, userId]
-    );
+    await dbRun(`DELETE FROM prompt_library WHERE id = ? AND user_id = ?`, [promptId, userId]);
     return true;
   }
 

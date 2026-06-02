@@ -336,7 +336,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                 <span className="text-sm text-slate-500 dark:text-slate-400">
                   {t('settings.analytics.avgLatency', 'Avg Latency')}
                 </span>
-                <Clock size={16} className="text-purple-500" />
+                <Clock size={16} className="text-primary-500" />
               </div>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {Math.round(stats.avg_response_time_ms)}ms
@@ -367,12 +367,12 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                 <span className="text-sm text-slate-500 dark:text-slate-400">
                   {t('settings.analytics.errors', 'Errors')}
                 </span>
-                <AlertCircle size={16} className="text-red-500" />
+                <AlertCircle size={16} className="text-rose-500" />
               </div>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {formatNumber(stats.failed_requests)}
               </p>
-              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
                 {stats.total_requests > 0
                   ? ((stats.failed_requests / stats.total_requests) * 100).toFixed(1)
                   : 0}
@@ -432,14 +432,14 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                     <Line
                       type="monotone"
                       dataKey="avg_latency"
-                      stroke="#8b5cf6"
+                      stroke="#6366f1"
                       strokeWidth={2}
                       dot={{ r: 4 }}
                     />
                     <Line
                       type="monotone"
                       dataKey="max_latency"
-                      stroke="#ef4444"
+                      stroke="#f43f5e"
                       strokeWidth={1}
                       strokeDasharray="5 5"
                     />
@@ -472,7 +472,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                     />
                     <Bar
                       dataKey="failures"
-                      fill="#ef4444"
+                      fill="#f43f5e"
                       name={t('settings.analytics.failures', 'Failures')}
                     />
                   </BarChart>
@@ -558,7 +558,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                                 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                                 : log.method === 'POST'
                                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                  : 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
                             }`}
                           >
                             {log.method}
@@ -569,13 +569,13 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                             {log.status_code >= 200 && log.status_code < 300 ? (
                               <CheckCircle size={14} className="text-green-500" />
                             ) : (
-                              <XCircle size={14} className="text-red-500" />
+                              <XCircle size={14} className="text-rose-500" />
                             )}
                             <span
                               className={`font-medium ${
                                 log.status_code >= 200 && log.status_code < 300
                                   ? 'text-green-600 dark:text-green-400'
-                                  : 'text-red-600 dark:text-red-400'
+                                  : 'text-rose-600 dark:text-rose-400'
                               }`}
                             >
                               {log.status_code}
@@ -585,7 +585,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                         <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
                           {log.response_time_ms}ms
                         </td>
-                        <td className="px-4 py-3 text-xs text-red-600 dark:text-red-400 max-w-xs truncate">
+                        <td className="px-4 py-3 text-xs text-rose-600 dark:text-rose-400 max-w-xs truncate">
                           {log.error_message || '-'}
                         </td>
                       </tr>

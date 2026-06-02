@@ -113,9 +113,7 @@ export function useFinanceLane(options: UseFinanceLaneOptions = {}) {
       const runs = Array.isArray(res?.data) ? res.data.map((run) => normalizeLaneRun(run)) : [];
       setLaneHistory(runs);
 
-      const active = runs.find(
-        (r) => r.currentStep !== 'readback' || !r.readbackConfirmed
-      ) || null;
+      const active = runs.find((r) => r.currentStep !== 'readback' || !r.readbackConfirmed) || null;
       setActiveLaneRun(active);
 
       if (active) {
@@ -157,58 +155,64 @@ export function useFinanceLane(options: UseFinanceLaneOptions = {}) {
     }
   }, [activeLaneRun, enabled, onUnavailable]);
 
-  const startRun = useCallback(async (versionType?: FinanceVersionType) => {
-    if (!enabled) {
-      throw new Error('Finance lane is unavailable for the current organization.');
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await V8FinanceApi.startLaneRun(versionType);
-      const run = res?.data;
-      if (run) {
-        setActiveLaneRun(run);
-        setLaneHistory((prev) => [run, ...prev]);
+  const startRun = useCallback(
+    async (versionType?: FinanceVersionType) => {
+      if (!enabled) {
+        throw new Error('Finance lane is unavailable for the current organization.');
       }
-      return run;
-    } catch (err: any) {
-      setError(getFinanceErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [enabled]);
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await V8FinanceApi.startLaneRun(versionType);
+        const run = res?.data;
+        if (run) {
+          setActiveLaneRun(run);
+          setLaneHistory((prev) => [run, ...prev]);
+        }
+        return run;
+      } catch (err: any) {
+        setError(getFinanceErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [enabled]
+  );
 
-  const advanceStep = useCallback(async (outcome: string, detail?: string) => {
-    if (!enabled) {
-      throw new Error('Finance lane is unavailable for the current organization.');
-    }
-    if (!activeLaneRun) throw new Error('No active lane run');
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await V8FinanceApi.advanceLaneStep(activeLaneRun.runId, outcome, detail);
-      const run = res?.data;
-      if (run) {
-        setActiveLaneRun(run);
-        setLaneHistory((prev) => prev.map((r) => (r.runId === run.runId ? run : r)));
+  const advanceStep = useCallback(
+    async (outcome: string, detail?: string) => {
+      if (!enabled) {
+        throw new Error('Finance lane is unavailable for the current organization.');
       }
-      return run;
-    } catch (err: any) {
-      setError(getFinanceErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [activeLaneRun, enabled]);
+      if (!activeLaneRun) throw new Error('No active lane run');
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await V8FinanceApi.advanceLaneStep(activeLaneRun.runId, outcome, detail);
+        const run = res?.data;
+        if (run) {
+          setActiveLaneRun(run);
+          setLaneHistory((prev) => prev.map((r) => (r.runId === run.runId ? run : r)));
+        }
+        return run;
+      } catch (err: any) {
+        setError(getFinanceErrorMessage(err));
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activeLaneRun, enabled]
+  );
 
   const degradedAlerts: DegradedAlert[] = activeLaneRun
     ? mapDegradedToAlerts(activeLaneRun.degraded || [])
     : [];
 
-  const isRunInProgress = !!activeLaneRun && (
-    activeLaneRun.currentStep !== 'readback' || !activeLaneRun.readbackConfirmed
-  );
+  const isRunInProgress =
+    !!activeLaneRun &&
+    (activeLaneRun.currentStep !== 'readback' || !activeLaneRun.readbackConfirmed);
 
   useEffect(() => {
     refreshLane();

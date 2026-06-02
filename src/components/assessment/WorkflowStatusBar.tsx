@@ -121,10 +121,10 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         };
       case 'current':
         return {
-          bg: 'bg-purple-500',
-          text: 'text-purple-600 dark:text-purple-400',
-          border: 'border-purple-500',
-          connector: 'bg-purple-200 dark:bg-purple-900/50',
+          bg: 'bg-primary-500',
+          text: 'text-primary-600 dark:text-primary-400',
+          border: 'border-primary-500',
+          connector: 'bg-primary-200 dark:bg-primary-900/50',
         };
       default:
         return {
@@ -139,7 +139,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-2">
-        <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+        <Loader2 className="w-4 h-4 text-primary-500 animate-spin" />
       </div>
     );
   }
@@ -170,7 +170,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
                                         w-8 h-8 rounded-full flex items-center justify-center transition-all
                                         ${
                                           state === 'current'
-                                            ? 'bg-purple-100 dark:bg-purple-900/30 ring-2 ring-purple-500 ring-offset-2 ring-offset-slate-50 dark:ring-offset-navy-950'
+                                            ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500 ring-offset-2 ring-offset-slate-50 dark:ring-offset-navy-950'
                                             : state === 'completed'
                                               ? 'bg-green-100 dark:bg-green-900/30'
                                               : 'bg-slate-100 dark:bg-navy-800'
@@ -210,9 +210,9 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
 
         {/* Rejected Badge (if applicable) */}
         {actualStatus === 'REJECTED' && (
-          <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900/20 rounded-full">
-            <XCircle size={14} className="text-red-500" />
-            <span className="text-xs font-medium text-red-600 dark:text-red-400">Odrzucony</span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-rose-100 dark:bg-rose-900/20 rounded-full">
+            <XCircle size={14} className="text-rose-500" />
+            <span className="text-xs font-medium text-rose-600 dark:text-rose-400">Odrzucony</span>
           </div>
         )}
 

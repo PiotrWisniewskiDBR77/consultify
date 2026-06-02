@@ -60,9 +60,9 @@ const CATEGORY_CONFIG: Record<
   SCOPE: { label: 'Scope Change', icon: FileText, color: 'text-blue-500' },
   SCHEDULE: { label: 'Schedule Change', icon: Clock, color: 'text-amber-500' },
   BUDGET: { label: 'Budget Change', icon: DollarSign, color: 'text-green-500' },
-  QUALITY: { label: 'Quality Change', icon: CheckCircle2, color: 'text-purple-500' },
-  RESOURCE: { label: 'Resource Change', icon: Users, color: 'text-cyan-500' },
-  RISK: { label: 'Risk Response', icon: AlertTriangle, color: 'text-red-500' },
+  QUALITY: { label: 'Quality Change', icon: CheckCircle2, color: 'text-primary-500' },
+  RESOURCE: { label: 'Resource Change', icon: Users, color: 'text-blue-500' },
+  RISK: { label: 'Risk Response', icon: AlertTriangle, color: 'text-rose-500' },
 };
 
 export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
@@ -110,7 +110,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Brief title for this change request"
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           required
         />
       </div>
@@ -131,8 +131,8 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
                 onClick={() => setFormData({ ...formData, category: key })}
                 className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
                   formData.category === key
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                 }`}
               >
                 <Icon size={20} className={config.color} />
@@ -153,7 +153,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
             onChange={(e) =>
               setFormData({ ...formData, priority: e.target.value as ChangePriority })
             }
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="CRITICAL">Critical - Immediate Action</option>
             <option value="HIGH">High - This Week</option>
@@ -168,7 +168,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
           <select
             value={formData.impact}
             onChange={(e) => setFormData({ ...formData, impact: e.target.value as ChangeImpact })}
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="MAJOR">Major - Significant Impact</option>
             <option value="MODERATE">Moderate - Some Impact</option>
@@ -185,7 +185,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
           <select
             value={formData.linkedInitiativeId}
             onChange={(e) => setFormData({ ...formData, linkedInitiativeId: e.target.value })}
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">Select an initiative...</option>
             {initiatives.map((i) => (
@@ -210,7 +210,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Detailed description of the proposed change..."
           rows={4}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           required
         />
       </div>
@@ -224,7 +224,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
           onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
           placeholder="Why is this change necessary? What problem does it solve?"
           rows={3}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           required
         />
       </div>
@@ -238,7 +238,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
           onChange={(e) => setFormData({ ...formData, alternatives: e.target.value })}
           placeholder="What alternatives were considered and why were they rejected?"
           rows={2}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
     </div>
@@ -267,7 +267,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
             onChange={(e) => setFormData({ ...formData, impactOnSchedule: e.target.value })}
             placeholder="e.g., +2 weeks to Phase 2"
             rows={2}
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
         <div>
@@ -280,7 +280,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
             onChange={(e) => setFormData({ ...formData, impactOnBudget: e.target.value })}
             placeholder="e.g., +50,000 PLN"
             rows={2}
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
       </div>
@@ -295,7 +295,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
           onChange={(e) => setFormData({ ...formData, impactOnScope: e.target.value })}
           placeholder="What deliverables or features are added/removed?"
           rows={2}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
     </div>
@@ -330,7 +330,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
               <div
                 key={s}
                 className={`flex-1 h-2 rounded-full transition-colors ${
-                  s <= step ? 'bg-purple-500' : 'bg-slate-200 dark:bg-navy-800'
+                  s <= step ? 'bg-primary-500' : 'bg-slate-200 dark:bg-navy-800'
                 }`}
               />
             ))}
@@ -365,7 +365,7 @@ export const ChangeRequestModal: React.FC<ChangeRequestModalProps> = ({
             disabled={
               !formData.title || (step === 2 && (!formData.description || !formData.justification))
             }
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+            className="px-6 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
           >
             {step === 3 ? 'Submit Request' : 'Next'}
           </button>

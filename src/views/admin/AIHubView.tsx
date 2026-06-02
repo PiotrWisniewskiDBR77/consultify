@@ -44,7 +44,7 @@ const AI_CAPABILITIES = [
     icon: Wand2,
     description: 'Sugestie dla pól formularzy',
     promptKey: 'system_magic_wand',
-    color: 'from-purple-500 to-purple-600',
+    color: 'from-primary-500 to-primary-600',
   },
   {
     id: 'reports',
@@ -76,7 +76,7 @@ const AI_CAPABILITIES = [
     icon: Brain,
     description: 'Coaching i mentoring PMO',
     promptKey: 'system_coach',
-    color: 'from-cyan-500 to-cyan-600',
+    color: 'from-blue-500 to-blue-600',
   },
 ];
 
@@ -264,9 +264,9 @@ PODEJŚCIE:
   return (
     <div className="h-full flex flex-col bg-slate-950">
       {/* Header */}
-      <div className="shrink-0 px-6 py-4 border-b border-white/10 bg-gradient-to-r from-purple-900/20 to-blue-900/20">
+      <div className="shrink-0 px-6 py-4 border-b border-white/10 bg-gradient-to-r from-primary-900/20 to-blue-900/20">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500 to-blue-500">
             <Brain className="text-white" size={24} />
           </div>
           <div>
@@ -286,7 +286,7 @@ PODEJŚCIE:
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.id
-                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                ? 'bg-primary-500/20 text-primary-300 border border-primary-500/30'
                 : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
@@ -315,7 +315,7 @@ PODEJŚCIE:
                       onClick={() => selectCapability(cap.id)}
                       className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
                         selectedCapability === cap.id
-                          ? 'bg-white/10 border border-purple-500/50'
+                          ? 'bg-white/10 border border-primary-500/50'
                           : 'hover:bg-white/5 border border-transparent'
                       }`}
                     >
@@ -353,7 +353,7 @@ PODEJŚCIE:
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         Prompt key:{' '}
-                        <code className="text-purple-400">
+                        <code className="text-primary-400">
                           {AI_CAPABILITIES.find((c) => c.id === selectedCapability)?.promptKey}
                         </code>
                       </p>
@@ -361,7 +361,7 @@ PODEJŚCIE:
                     <button
                       onClick={savePrompt}
                       disabled={saving}
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                     >
                       {saving ? (
                         <RefreshCw size={14} className="animate-spin" />
@@ -376,14 +376,14 @@ PODEJŚCIE:
                       value={editingPrompt}
                       onChange={(e) => setEditingPrompt(e.target.value)}
                       placeholder="Wpisz instrukcje dla AI..."
-                      className="w-full h-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white text-sm font-mono resize-none focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20"
+                      className="w-full h-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white text-sm font-mono resize-none focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20"
                     />
                   </div>
                   <div className="shrink-0 p-4 border-t border-white/5 text-xs text-slate-500 dark:text-slate-400">
                     💡 Tip: Użyj placeholderów jak{' '}
-                    <code className="text-purple-400">{'{{project_name}}'}</code>,{' '}
-                    <code className="text-purple-400">{'{{user_role}}'}</code>,{' '}
-                    <code className="text-purple-400">{'{{screen_context}}'}</code>
+                    <code className="text-primary-400">{'{{project_name}}'}</code>,{' '}
+                    <code className="text-primary-400">{'{{user_role}}'}</code>,{' '}
+                    <code className="text-primary-400">{'{{screen_context}}'}</code>
                   </div>
                 </>
               ) : (
@@ -543,7 +543,7 @@ PODEJŚCIE:
                 icon={TrendingUp}
                 label="Cache Hit Rate"
                 value={`${usageStats?.cache?.hitRate || 0}%`}
-                color="text-purple-400"
+                color="text-primary-400"
               />
             </div>
 
@@ -628,7 +628,7 @@ PODEJŚCIE:
                       key={cap.id}
                       className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors"
                     >
-                      <cap.icon size={20} className="text-purple-400" />
+                      <cap.icon size={20} className="text-primary-400" />
                       <span className="text-sm text-white">{cap.label}</span>
                     </button>
                   ))}

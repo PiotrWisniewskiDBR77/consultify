@@ -164,13 +164,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 
   const getBarColor = useCallback(
     (record: TableNode): string => {
-      if (!colorCol) return '#8b5cf6';
+      if (!colorCol) return '#6366f1';
       const val = String(record.data?.[colorCol.key] || '');
-      if (!val) return '#8b5cf6';
+      if (!val) return '#6366f1';
       return (
         colorCol.optionColors?.[val] ||
         SELECT_COLORS[(colorCol.options || []).indexOf(val) % SELECT_COLORS.length] ||
-        '#8b5cf6'
+        '#6366f1'
       );
     },
     [colorCol]
@@ -375,7 +375,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 key={i}
                 className={`flex-shrink-0 flex items-center justify-center border-r border-slate-100/60 dark:border-navy-800/40 text-[9px] font-medium ${
                   slot.isToday
-                    ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-500/5'
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-500/5'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
                 style={{ width: colWidth }}
@@ -402,10 +402,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             {/* Today marker */}
             {todayOffset >= 0 && todayOffset <= totalWidth && (
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-violet-500/60 z-20"
+                className="absolute top-0 bottom-0 w-0.5 bg-primary-500/60 z-20"
                 style={{ left: todayOffset }}
               >
-                <div className="absolute -top-1 -left-1.5 w-3 h-3 rounded-full bg-violet-500" />
+                <div className="absolute -top-1 -left-1.5 w-3 h-3 rounded-full bg-primary-500" />
               </div>
             )}
 

@@ -73,7 +73,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
       {/* Stage Gate Status */}
       <div className="bg-navy-900 rounded-xl border border-white/10 p-6">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <Shield size={20} className="text-purple-400" />
+          <Shield size={20} className="text-primary-400" />
           Current Stage Gate
         </h3>
         <GateStatus projectId={projectId} />
@@ -247,7 +247,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
       {/* Header */}
       <div className="h-16 border-b border-white/10 px-6 flex items-center justify-between bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
         <h1 className="text-xl font-bold flex items-center gap-2">
-          <CheckCircle2 className="text-purple-500" size={24} />
+          <CheckCircle2 className="text-primary-500" size={24} />
           Implementation - Full PMO
         </h1>
         <div className="flex items-center gap-3">
@@ -274,7 +274,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as RolloutTab)}
-            className={`pb-3 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-white'}`}
+            className={`pb-3 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-white'}`}
           >
             <tab.icon size={16} />
             {tab.label}

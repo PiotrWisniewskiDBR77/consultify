@@ -91,10 +91,10 @@ const STATUS_COLORS: Record<
   { bg: string; border: string; text: string; progress: string }
 > = {
   [InitiativeStatus.PENDING_REVIEW]: {
-    bg: 'bg-orange-500/20',
-    border: 'border-orange-500/50',
-    text: 'text-orange-400',
-    progress: 'bg-orange-500',
+    bg: 'bg-amber-500/20',
+    border: 'border-amber-500/50',
+    text: 'text-amber-400',
+    progress: 'bg-amber-500',
   },
   [InitiativeStatus.PROMOTED]: {
     bg: 'bg-blue-500/20',
@@ -109,22 +109,22 @@ const STATUS_COLORS: Record<
     progress: 'bg-emerald-500',
   },
   [InitiativeStatus.SCHEDULED]: {
-    bg: 'bg-purple-500/20',
-    border: 'border-purple-500/50',
-    text: 'text-purple-400',
-    progress: 'bg-purple-500',
+    bg: 'bg-primary-500/20',
+    border: 'border-primary-500/50',
+    text: 'text-primary-400',
+    progress: 'bg-primary-500',
   },
   [InitiativeStatus.EXECUTING]: {
-    bg: 'bg-cyan-500/20',
-    border: 'border-cyan-500/50',
-    text: 'text-cyan-400',
-    progress: 'bg-cyan-500',
+    bg: 'bg-blue-500/20',
+    border: 'border-blue-500/50',
+    text: 'text-blue-400',
+    progress: 'bg-blue-500',
   },
   [InitiativeStatus.BLOCKED]: {
-    bg: 'bg-red-500/20',
-    border: 'border-red-500/50',
-    text: 'text-red-400',
-    progress: 'bg-red-500',
+    bg: 'bg-rose-500/20',
+    border: 'border-rose-500/50',
+    text: 'text-rose-400',
+    progress: 'bg-rose-500',
   },
   [InitiativeStatus.DONE]: {
     bg: 'bg-green-500/20',
@@ -133,10 +133,10 @@ const STATUS_COLORS: Record<
     progress: 'bg-green-500',
   },
   [InitiativeStatus.TRACKING]: {
-    bg: 'bg-teal-500/20',
-    border: 'border-teal-500/50',
-    text: 'text-teal-400',
-    progress: 'bg-teal-500',
+    bg: 'bg-blue-500/20',
+    border: 'border-blue-500/50',
+    text: 'text-blue-400',
+    progress: 'bg-blue-500',
   },
   [InitiativeStatus.DRAFT]: {
     bg: 'bg-slate-500/20',
@@ -477,7 +477,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
       className={`
         absolute top-2 h-10 rounded-lg group transition-shadow hover:shadow-lg hover:z-10
         ${colors.bg} border ${colors.border}
-        ${isOnCriticalPath ? 'ring-2 ring-red-500/50' : ''}
+        ${isOnCriticalPath ? 'ring-2 ring-rose-500/50' : ''}
         ${hasWarning ? 'ring-1 ring-amber-400/70' : ''}
         ${onDragEnd ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
       `}
@@ -497,9 +497,9 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
         <div
           className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center z-20 ${
             riskSeverity === 'CRITICAL'
-              ? 'bg-red-600'
+              ? 'bg-rose-600'
               : riskSeverity === 'HIGH'
-                ? 'bg-orange-500'
+                ? 'bg-amber-500'
                 : 'bg-yellow-500'
           }`}
           title={`Risk: ${riskSeverity}`}
@@ -511,7 +511,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
         <div
           className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold z-20 whitespace-nowrap ${
             delaySignal.severity === 'CRITICAL'
-              ? 'bg-red-600 text-white'
+              ? 'bg-rose-600 text-white'
               : 'bg-amber-500 text-slate-900'
           }`}
           title={`${delaySignal.deviationType}: ${delaySignal.daysDeviation}d${delaySignal.whySlipReasons.length > 0 ? ' — ' + delaySignal.whySlipReasons.map((r) => r.detail).join(', ') : ''}`}
@@ -538,7 +538,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
         <div className={`w-2 h-2 rounded-full ${colors.progress} shrink-0`} />
         <span className={`text-sm font-medium truncate ${colors.text}`}>{initiative.name}</span>
         {initiative.priority === 'Critical' && (
-          <AlertTriangle size={14} className="shrink-0 text-red-500" />
+          <AlertTriangle size={14} className="shrink-0 text-rose-500" />
         )}
         <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 shrink-0">
           {progress}%
@@ -560,8 +560,8 @@ const WarningsStrip: React.FC<{
   if (warnings.length === 0) return null;
 
   const sevColors = {
-    critical: 'bg-red-500/20 text-red-400 border-red-500/30',
-    high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    critical: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+    high: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
     medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
     low: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
   };
@@ -1082,7 +1082,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           {riskSignals && riskSignals.length > 0 && (
             <>
               <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-1" />
-              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-900/30 text-red-400">
+              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-rose-900/30 text-rose-400">
                 <Shield size={11} /> {riskSignals.length}{' '}
                 {t('execution.riskSignals.title').toLowerCase()}
               </span>
@@ -1100,7 +1100,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           </button>
           <button
             onClick={() => setShowFilters((v) => !v)}
-            className={`p-1.5 rounded-lg transition-colors ${showFilters || activeFilters ? 'bg-cyan-900/30 text-cyan-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'}`}
+            className={`p-1.5 rounded-lg transition-colors ${showFilters || activeFilters ? 'bg-blue-900/30 text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'}`}
             title={
               showFilters
                 ? t('execution.timeline.filters.hide', 'Hide filters')
@@ -1111,7 +1111,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           </button>
           <button
             onClick={() => setShowCriticalPath((v) => !v)}
-            className={`p-1.5 rounded-lg transition-colors ${showCriticalPath ? 'bg-red-900/30 text-red-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'}`}
+            className={`p-1.5 rounded-lg transition-colors ${showCriticalPath ? 'bg-rose-900/30 text-rose-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10'}`}
             title={
               showCriticalPath
                 ? t('execution.timeline.hideCriticalPath')
@@ -1126,7 +1126,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               <button
                 key={w}
                 onClick={() => setViewWeeks(w)}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${viewWeeks === w ? 'bg-cyan-500/20 text-cyan-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${viewWeeks === w ? 'bg-blue-500/20 text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 {w}W
               </button>
@@ -1170,7 +1170,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
                 <div className="flex items-center gap-2">
-                  <Route size={16} className="text-cyan-500" />
+                  <Route size={16} className="text-blue-500" />
                   <span className="text-sm font-semibold text-slate-900 dark:text-white">
                     {t('execution.timeline.deps.title', 'Dependencies')}
                   </span>
@@ -1224,7 +1224,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                   <button
                     onClick={handleCreateDependency}
                     disabled={!newDepFrom || !newDepTo}
-                    className="h-9 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-semibold"
+                    className="h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold"
                     data-testid="timeline-deps-add"
                   >
                     {t('execution.timeline.deps.add', 'Add')}
@@ -1315,10 +1315,10 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           <div className="relative">
             {todayPosition !== null && (
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
+                className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-20"
                 style={{ left: `${todayPosition}%` }}
               >
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-medium rounded shadow-lg">
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-rose-500 text-white text-[10px] font-medium rounded shadow-lg">
                   {t('execution.timeline.today')}
                 </div>
               </div>
@@ -1355,7 +1355,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                     refY="3"
                     orient="auto"
                   >
-                    <polygon points="0 0, 8 3, 0 6" fill="#ef4444" />
+                    <polygon points="0 0, 8 3, 0 6" fill="#f43f5e" />
                   </marker>
                   <marker
                     id="exec-arrow-warn"
@@ -1372,7 +1372,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
                   const y1 = line.y1Row * ROW_HEIGHT + ROW_HEIGHT / 2;
                   const y2 = line.y2Row * ROW_HEIGHT + ROW_HEIGHT / 2;
                   const stroke = line.isCritical
-                    ? '#ef4444'
+                    ? '#f43f5e'
                     : line.isConflict
                       ? '#f59e0b'
                       : '#64748b';
@@ -1462,12 +1462,12 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           ))}
         </div>
         <div className="flex items-center gap-1.5 ml-auto">
-          <div className="w-3 h-3 rounded ring-2 ring-red-500/50 bg-red-500/20" />
+          <div className="w-3 h-3 rounded ring-2 ring-rose-500/50 bg-rose-500/20" />
           <span className="text-slate-500 dark:text-slate-400">Critical/Overdue</span>
         </div>
         {riskSignals && riskSignals.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <Shield size={12} className="text-red-500" />
+            <Shield size={12} className="text-rose-500" />
             <span className="text-slate-500 dark:text-slate-400">
               {t('execution.riskSignals.title')}
             </span>
@@ -1482,7 +1482,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
           </div>
         )}
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-0.5 bg-red-500" />
+          <div className="w-3 h-0.5 bg-rose-500" />
           <span className="text-slate-500 dark:text-slate-400">
             {t('execution.timeline.today')}
           </span>

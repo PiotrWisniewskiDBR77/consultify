@@ -1,0 +1,126 @@
+{
+  "tabele": {
+    "template": {
+      "tab-init-reg": {
+        "title": "Initiative Register",
+        "description": "Operational initiative register with owner, scoring and status."
+      },
+      "tab-risk-reg-ops": {
+        "title": "Risk Register (operational)",
+        "description": "Operational risk register with likelihood, impact and mitigation owner."
+      },
+      "tab-action-plan": {
+        "title": "Action Plan",
+        "description": "Action items with owner, due date, dependency and status."
+      },
+      "tab-stake-map": {
+        "title": "Stakeholder Map",
+        "description": "Stakeholders with influence, interest, sentiment and engagement plan."
+      },
+      "tab-decision-log": {
+        "title": "Decision Log",
+        "description": "Steering-committee decisions with context, rationale and consequence."
+      },
+      "tab-issue-log": {
+        "title": "Issue Log",
+        "description": "Issues with severity, owner, mitigation and status."
+      },
+      "tab-meddpicc": {
+        "title": "MEDDPICC Qualification Sheet",
+        "description": "Sales opportunity qualification using the MEDDPICC framework."
+      },
+      "tab-icp-fit": {
+        "title": "ICP Fit Score Sheet",
+        "description": "Score accounts against the Ideal Customer Profile."
+      },
+      "tab-map": {
+        "title": "Mutual Action Plan",
+        "description": "Joint customer + seller action plan toward signature."
+      },
+      "tab-sales-pipe": {
+        "title": "Sales Pipeline",
+        "description": "Pipeline of open deals with stage, value, close date and confidence."
+      },
+      "tab-kpi-matrix": {
+        "title": "KPI Matrix",
+        "description": "KPI definitions with target, actual, owner and frequency."
+      },
+      "tab-impl-tracker": {
+        "title": "Implementation Tracker",
+        "description": "Track go-live activities, blockers and adoption signals."
+      },
+      "tab-proj-backlog": {
+        "title": "Project Backlog",
+        "description": "Backlog of project tasks with priority, estimate and owner."
+      },
+      "tab-interview-tracker": {
+        "title": "Interview Tracker",
+        "description": "Discovery interviews with respondent, theme and key findings."
+      },
+      "tab-workshop-output": {
+        "title": "Workshop Output Table",
+        "description": "Workshop session outputs grouped by exercise and decision owner."
+      },
+      "tab-dt-roadmap": {
+        "title": "Digital Transformation Roadmap",
+        "description": "Sequence of digital transformation initiatives with horizon and budget."
+      },
+      "tab-ai-uc-reg": {
+        "title": "AI Use Case Register",
+        "description": "AI use cases with feasibility, value and risk score."
+      },
+      "tab-auto-opp-reg": {
+        "title": "Automation Opportunity Register",
+        "description": "Process automation opportunities with effort and saving estimates."
+      },
+      "tab-bizcase": {
+        "title": "Business Case Table",
+        "description": "Business case rows with cost, benefit and NPV."
+      },
+      "tab-vendor-comp": {
+        "title": "Vendor Comparison Table",
+        "description": "Compare vendors on price, capability fit and risk."
+      },
+      "tab-research-source": {
+        "title": "Research Source Table",
+        "description": "Sources used in a research synthesis with credibility rating."
+      },
+      "tab-sop-reg": {
+        "title": "SOP Register",
+        "description": "Standard operating procedures with owner and review cadence."
+      },
+      "tab-change-tracker": {
+        "title": "Change Management Tracker",
+        "description": "Change initiatives with adoption signals and risk score."
+      },
+      "tab-train-plan": {
+        "title": "Training Plan Table",
+        "description": "Training plan rows with audience, format and completion."
+      },
+      "tab-gov-reg": {
+        "title": "Governance Register",
+        "description": "Governance items (policies, controls) with owner and review cadence."
+      },
+      "tab-audit-find": {
+        "title": "Audit Findings Table",
+        "description": "Audit findings with severity, owner and remediation due date."
+      },
+      "tab-req-table": {
+        "title": "Requirements Table",
+        "description": "Product requirements with type, priority and acceptance criteria."
+      },
+      "tab-feat-prio": {
+        "title": "Feature Prioritization Table",
+        "description": "Score features using RICE-like inputs."
+      },
+      "tab-roi-calc": {
+        "title": "ROI Calculation Table",
+        "description": "Per-initiative ROI with horizon and net benefit."
+      },
+      "tab-client-disc": {
+        "title": "Client Discovery Table",
+        "description": "Discovery findings per client interaction."
+      }
+    }
+  }
+}

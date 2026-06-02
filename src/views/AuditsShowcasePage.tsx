@@ -77,9 +77,9 @@ const AuditSection: React.FC<AuditSectionProps> = ({ audit, index, onStartAssess
       muted: 'bg-emerald-50 dark:bg-emerald-900/10',
     },
     violet: {
-      text: 'text-violet-600 dark:text-violet-400',
-      accent: 'bg-violet-600',
-      muted: 'bg-violet-50 dark:bg-violet-900/10',
+      text: 'text-primary-600 dark:text-primary-400',
+      accent: 'bg-primary-600',
+      muted: 'bg-primary-50 dark:bg-primary-900/10',
     },
     amber: {
       text: 'text-amber-600 dark:text-amber-400',
@@ -216,7 +216,7 @@ export const AuditsShowcasePage: React.FC = () => {
   const [demoModalMode, setDemoModalMode] = React.useState<'demo' | 'trial'>('trial');
 
   const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
-    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setCurrentUser({ ...user, hasWorkspace: true, isAuthenticated: true } as any);
     setIsDemoModalOpen(false);
     setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
     if (mode === 'demo') setDemoMode(true);
@@ -238,7 +238,7 @@ export const AuditsShowcasePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 relative selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-white dark:bg-navy-950 relative selection:bg-primary-500 selection:text-white">
       <EntryTopBar
         onTrialClick={() => {
           setDemoModalMode('trial');
@@ -256,7 +256,7 @@ export const AuditsShowcasePage: React.FC = () => {
 
       {/* Advanced Background Effects for Hero */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden h-[90vh]">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-purple-600/5 dark:bg-purple-600/15 rounded-full blur-[120px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary-600/5 dark:bg-primary-600/15 rounded-full blur-[120px]" />
         <div className="absolute top-[20%] -right-[10%] w-[35%] h-[45%] bg-indigo-600/5 dark:bg-indigo-600/10 rounded-full blur-[100px]" />
         <div className="absolute bottom-[20%] left-[20%] w-[50%] h-[30%] bg-emerald-600/5 dark:bg-emerald-600/15 rounded-full blur-[80px]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(255,255,255,0.4)_100%)] dark:bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.6)_100%)]" />
@@ -271,14 +271,14 @@ export const AuditsShowcasePage: React.FC = () => {
           className="max-w-4xl mx-auto"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-[0.2em] mb-8">
-            <Map size={14} className="text-purple-400" />
+            <Map size={14} className="text-primary-400" />
             {t('showcase.audits.hero.badge')}
           </div>
 
           <h1 className="text-5xl lg:text-8xl font-black tracking-tight text-navy-950 dark:text-white mb-8 uppercase leading-[1] text-center">
             {t('showcase.audits.hero.title1')}
             <br />
-            <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent">
               {t('showcase.audits.hero.title2')}
             </span>
           </h1>
@@ -318,14 +318,14 @@ export const AuditsShowcasePage: React.FC = () => {
       {/* Unified Bottom CTA */}
       <section className="relative z-10 py-32 px-4 bg-slate-900 dark:bg-black overflow-hidden">
         {/* Visual Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 via-pink-600 to-indigo-600" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary-600/10 rounded-full blur-[120px]" />
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <h2 className="text-4xl lg:text-6xl font-black text-white mb-8 uppercase tracking-tight">
             {t('showcase.audits.cta.header')}
             <br />
-            <span className="text-purple-400">{t('showcase.audits.cta.headerAccent')}</span>
+            <span className="text-primary-400">{t('showcase.audits.cta.headerAccent')}</span>
           </h2>
 
           <p className="text-xl text-white/60 mb-16 max-w-2xl mx-auto leading-relaxed">
@@ -341,7 +341,7 @@ export const AuditsShowcasePage: React.FC = () => {
             </button>
             <button
               onClick={handleToolsHubClick}
-              className="px-12 py-6 bg-purple-600 text-white font-black rounded-2xl hover:bg-purple-500 transition-all text-xl uppercase tracking-widest shadow-xl shadow-purple-600/30 flex items-center justify-center gap-3"
+              className="px-12 py-6 bg-primary-600 text-white font-black rounded-2xl hover:bg-primary-500 transition-all text-xl uppercase tracking-widest shadow-xl shadow-primary-600/30 flex items-center justify-center gap-3"
             >
               {t('showcase.common.moreTools')}
               <ChevronRight size={24} />
@@ -353,7 +353,7 @@ export const AuditsShowcasePage: React.FC = () => {
       {/* Discovery Integration Hint */}
       <div className="py-12 bg-slate-50 dark:bg-navy-950 text-center border-t border-slate-200 dark:border-navy-900">
         <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-3">
-          <Sparkles size={20} className="text-purple-500" />
+          <Sparkles size={20} className="text-primary-500" />
           {t('showcase.common.integratedHint')}
         </p>
       </div>

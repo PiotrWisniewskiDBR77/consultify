@@ -354,9 +354,9 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                 <div
                   className={`p-1.5 rounded ${
                     option.format === 'pdf'
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-600'
+                      ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600'
                       : option.format === 'pptx'
-                        ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600'
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600'
                         : 'bg-green-100 dark:bg-green-900/30 text-green-600'
                   }`}
                 >
@@ -371,7 +371,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
                   </div>
                 </div>
                 {isExporting === option.format && (
-                  <Loader2 size={14} className="animate-spin text-purple-500 mt-1" />
+                  <Loader2 size={14} className="animate-spin text-primary-500 mt-1" />
                 )}
               </button>
             ))}
@@ -389,7 +389,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
             </div>
             <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-purple-500 rounded-full transition-all duration-300"
+                className="h-full bg-primary-500 rounded-full transition-all duration-300"
                 style={{ width: `${exportProgress}%` }}
               />
             </div>

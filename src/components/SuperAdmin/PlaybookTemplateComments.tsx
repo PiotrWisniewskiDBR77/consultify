@@ -187,7 +187,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
               {comment.user ? (
                 <span className="text-xs font-medium text-white">
                   {comment.user.firstName?.[0]}
@@ -252,7 +252,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
                 )}
                 <button
                   onClick={() => handleDeleteComment(comment.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
                 >
                   <Trash2 size={14} />
                   Delete
@@ -268,7 +268,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               rows={3}
             />
             <div className="flex justify-end gap-2">
@@ -284,7 +284,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
               <button
                 onClick={() => handleEditComment(comment.id)}
                 disabled={submitting}
-                className="px-3 py-1.5 bg-violet-500 text-white text-sm rounded-lg hover:bg-violet-600 disabled:opacity-50"
+                className="px-3 py-1.5 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 disabled:opacity-50"
               >
                 Save
               </button>
@@ -299,7 +299,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
           <div className="mt-3 flex items-center gap-4">
             <button
               onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-              className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 hover:text-violet-400"
+              className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-400"
             >
               <Reply size={14} />
               Reply
@@ -315,13 +315,13 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
-              className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+              className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply(comment.id)}
             />
             <button
               onClick={() => handleSubmitReply(comment.id)}
               disabled={submitting || !replyText.trim()}
-              className="px-3 py-2 bg-violet-500 text-white rounded-lg hover:bg-violet-600 disabled:opacity-50"
+              className="px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50"
             >
               <Send size={16} />
             </button>
@@ -343,7 +343,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-violet-400" />
+          <MessageSquare className="w-5 h-5 text-primary-400" />
           <h3 className="font-semibold text-white">Comments</h3>
           <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
             {comments.length}
@@ -354,7 +354,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             type="checkbox"
             checked={showResolved}
             onChange={(e) => setShowResolved(e.target.checked)}
-            className="rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500/50"
+            className="rounded border-slate-600 bg-slate-800 text-primary-500 focus:ring-primary-500/50"
           />
           Show resolved
         </label>
@@ -362,7 +362,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
 
       {/* New comment form */}
       <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0">
           <User size={14} className="text-white" />
         </div>
         <div className="flex-1">
@@ -371,13 +371,13 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
             rows={3}
-            className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
           />
           <div className="flex justify-end mt-2">
             <button
               onClick={handleSubmitComment}
               disabled={submitting || !newComment.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg font-medium hover:from-violet-600 hover:to-purple-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg font-medium hover:from-primary-600 hover:to-primary-700 disabled:opacity-50"
             >
               {submitting ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
               Comment

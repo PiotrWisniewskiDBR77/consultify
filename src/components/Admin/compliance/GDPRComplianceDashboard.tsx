@@ -219,7 +219,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
         <div className="mb-6">
           <button
             onClick={() => setShowImpact(!showImpact)}
-            className="flex items-center gap-2 text-sm font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+            className="flex items-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
           >
             {showImpact ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             {t('admin.compliance.gdpr.whatWillHappen', 'What will happen?')}
@@ -405,7 +405,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
               href="https://gdpr.eu/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 mt-2 text-sm text-violet-600 hover:text-violet-700 dark:text-violet-400"
+              className="inline-flex items-center gap-1 mt-2 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
             >
               <Link size={14} />
               {t('admin.compliance.gdpr.visitGDPR', 'Visit gdpr.eu')}

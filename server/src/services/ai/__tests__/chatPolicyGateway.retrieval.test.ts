@@ -41,9 +41,7 @@ describe('chatPolicyGateway retrieval bypass-proofing (P34)', () => {
     });
 
     expect(
-      decision.scopeResolution.blockedScopes.find(
-        (b) => b.category === 'other_user_private'
-      )
+      decision.scopeResolution.blockedScopes.find((b) => b.category === 'other_user_private')
     ).toBeDefined();
   });
 

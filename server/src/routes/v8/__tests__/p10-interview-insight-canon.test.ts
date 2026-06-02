@@ -8,23 +8,23 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  P10_INSIGHT_ARTIFACT_CONTRACT,
-  P10_INSIGHT_ARTIFACT_STRUCTURE,
+  buildP10HandoffToInitiativesSkeleton,
+  canPublishFinding,
+  isValidP10ConfidenceLevel,
+  isValidP10EvidencePointerType,
+  P10_ACCEPTANCE_CHECKLIST,
+  P10_ANTI_DUPLICATE_RULES,
   P10_ARTIFACT_RULE_NO_FINDING_WITHOUT_CONFIDENCE,
   P10_CONFIDENCE_LEVELS,
   P10_CONFIDENCE_SEMANTICS,
-  P10_EXTENDED_CONFIDENCE_LEVELS,
-  P10_NO_OVERCLAIM_RULES,
-  P10_EVIDENCE_POINTER_TYPES,
-  P10_SOURCE_LOSS_RULES,
-  P10_HANDOFF_TO_INITIATIVES,
-  P10_ANTI_DUPLICATE_RULES,
   P10_DEGRADED_SCENARIOS,
-  P10_ACCEPTANCE_CHECKLIST,
-  isValidP10ConfidenceLevel,
-  isValidP10EvidencePointerType,
-  canPublishFinding,
-  buildP10HandoffToInitiativesSkeleton,
+  P10_EVIDENCE_POINTER_TYPES,
+  P10_EXTENDED_CONFIDENCE_LEVELS,
+  P10_HANDOFF_TO_INITIATIVES,
+  P10_INSIGHT_ARTIFACT_CONTRACT,
+  P10_INSIGHT_ARTIFACT_STRUCTURE,
+  P10_NO_OVERCLAIM_RULES,
+  P10_SOURCE_LOSS_RULES,
 } from '../../../services/v8/interviewInsightCanon.js';
 
 describe('P10 Interview Insight Artifact Canon', () => {
@@ -73,15 +73,16 @@ describe('P10 Interview Insight Artifact Canon', () => {
 
   // ── §2.3.2 Confidence semantics ────────────────────────────────
   describe('Confidence semantics (§2.3.2)', () => {
-    it('has exactly 4 core confidence levels', () => {
-      expect(P10_CONFIDENCE_LEVELS).toHaveLength(4);
+    it('has exactly 5 core confidence levels', () => {
+      expect(P10_CONFIDENCE_LEVELS).toHaveLength(5);
     });
 
-    it('includes high, medium, low, insufficient', () => {
+    it('includes high, medium, low, insufficient, and contradicted', () => {
       expect(P10_CONFIDENCE_LEVELS).toContain('high');
       expect(P10_CONFIDENCE_LEVELS).toContain('medium');
       expect(P10_CONFIDENCE_LEVELS).toContain('low');
       expect(P10_CONFIDENCE_LEVELS).toContain('insufficient');
+      expect(P10_CONFIDENCE_LEVELS).toContain('contradicted');
     });
 
     it('has extended levels including unknown and contradicted', () => {
@@ -116,6 +117,7 @@ describe('P10 Interview Insight Artifact Canon', () => {
       expect(isValidP10ConfidenceLevel('medium')).toBe(true);
       expect(isValidP10ConfidenceLevel('low')).toBe(true);
       expect(isValidP10ConfidenceLevel('insufficient')).toBe(true);
+      expect(isValidP10ConfidenceLevel('contradicted')).toBe(true);
     });
 
     it('isValidP10ConfidenceLevel rejects invalid levels', () => {
@@ -295,11 +297,15 @@ describe('P10 Interview Insight Artifact Canon', () => {
     });
 
     it('includes missing evidence scenario', () => {
-      expect(P10_DEGRADED_SCENARIOS.find((s) => s.degradedReason === 'missing_evidence')).toBeDefined();
+      expect(
+        P10_DEGRADED_SCENARIOS.find((s) => s.degradedReason === 'missing_evidence')
+      ).toBeDefined();
     });
 
     it('includes broken pointer scenario', () => {
-      expect(P10_DEGRADED_SCENARIOS.find((s) => s.degradedReason === 'broken_pointer')).toBeDefined();
+      expect(
+        P10_DEGRADED_SCENARIOS.find((s) => s.degradedReason === 'broken_pointer')
+      ).toBeDefined();
     });
 
     it('includes source drift scenario', () => {
@@ -307,11 +313,15 @@ describe('P10 Interview Insight Artifact Canon', () => {
     });
 
     it('includes contradictory evidence scenario', () => {
-      expect(P10_DEGRADED_SCENARIOS.find((s) => s.degradedReason === 'contradictory_evidence')).toBeDefined();
+      expect(
+        P10_DEGRADED_SCENARIOS.find((s) => s.degradedReason === 'contradictory_evidence')
+      ).toBeDefined();
     });
 
     it('includes redaction event scenario', () => {
-      expect(P10_DEGRADED_SCENARIOS.find((s) => s.degradedReason === 'redaction_event')).toBeDefined();
+      expect(
+        P10_DEGRADED_SCENARIOS.find((s) => s.degradedReason === 'redaction_event')
+      ).toBeDefined();
     });
   });
 

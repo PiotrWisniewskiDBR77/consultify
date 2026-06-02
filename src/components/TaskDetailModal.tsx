@@ -113,9 +113,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
       switch (val) {
         case 'critical':
-          return 'text-red-500 bg-red-500/10 border-red-500/20';
+          return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
         case 'high':
-          return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
+          return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
         case 'medium':
           return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
         case 'low':
@@ -132,7 +132,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
           {/* Initiative Context Banner */}
           {initiative && (
-            <div className="px-4 py-2.5 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-blue-50 via-purple-50/50 to-transparent dark:from-blue-900/20 dark:via-purple-900/10 dark:to-transparent flex items-center gap-3 shrink-0">
+            <div className="px-4 py-2.5 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-blue-50 via-primary-50/50 to-transparent dark:from-blue-900/20 dark:via-primary-900/10 dark:to-transparent flex items-center gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
                   <Target size={12} className="text-slate-900 dark:text-white" />
@@ -152,9 +152,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     : initiative.status === 'PLANNING'
                       ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
                       : initiative.status === 'REVIEW'
-                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400'
+                        ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-400'
                         : initiative.status === 'APPROVED'
-                          ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400'
+                          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
                           : initiative.status === 'EXECUTING'
                             ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
                             : initiative.status === 'DONE'
@@ -262,15 +262,15 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
               <div className="mt-auto p-4 space-y-4 border-t border-slate-200 dark:border-navy-700">
                 {/* AI Insight Card (Mini) */}
-                <div className="bg-gradient-to-br from-purple-100 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-navy-700 rounded p-3">
+                <div className="bg-gradient-to-br from-primary-100 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border border-primary-200 dark:border-navy-700 rounded p-3">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                    <span className="text-xs font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1">
                       <Sparkles size={12} /> AI Insight
                     </span>
                     <button
                       onClick={generateAiInsight}
                       disabled={aiLoading}
-                      className="text-[10px] bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/20 px-2 py-0.5 rounded text-purple-600 dark:text-white transition-colors border border-purple-100 dark:border-transparent"
+                      className="text-[10px] bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/20 px-2 py-0.5 rounded text-primary-600 dark:text-white transition-colors border border-primary-100 dark:border-transparent"
                     >
                       {aiLoading ? 'Thinking...' : 'Refresh'}
                     </button>
@@ -359,8 +359,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 <div className="space-y-6 max-w-3xl animate-in slide-in-from-right-4 duration-300">
                   <div>
                     <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-1 flex items-center gap-2">
-                      <Target size={16} className="text-purple-600 dark:text-purple-400" /> Expected
-                      Strategic Outcome
+                      <Target size={16} className="text-primary-600 dark:text-primary-400" />{' '}
+                      Expected Strategic Outcome
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                       What specifically will change in the business once this task is done?
@@ -368,7 +368,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     <textarea
                       value={task.expectedOutcome || ''}
                       onChange={(e) => setTask({ ...task, expectedOutcome: e.target.value })}
-                      className="w-full h-24 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 focus:border-purple-500/50 outline-none resize-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                      className="w-full h-24 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 focus:border-primary-500/50 outline-none resize-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                       placeholder="e.g., Reduce customer onboarding time by 20%..."
                     />
                   </div>
@@ -454,12 +454,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                   </div>
 
                   {/* Task Weight for Progress Calculation */}
-                  <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-500/20">
+                  <div className="p-4 rounded-lg bg-primary-50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-500/20">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-bold text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                      <h3 className="text-xs font-bold text-primary-700 dark:text-primary-400 flex items-center gap-2">
                         <Target size={14} /> Task Weight (Progress Impact)
                       </h3>
-                      <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                      <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
                         {task.weight || 1}x
                       </span>
                     </div>
@@ -473,8 +473,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                           onClick={() => setTask({ ...task, weight: w })}
                           className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
                             (task.weight || 1) === w
-                              ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
-                              : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-purple-500/30'
+                              ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
+                              : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-primary-500/30'
                           }`}
                         >
                           {w}x
@@ -485,19 +485,19 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       type="text"
                       value={task.weightReason || ''}
                       onChange={(e) => setTask({ ...task, weightReason: e.target.value })}
-                      className="mt-3 w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-xs text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-purple-500/30"
+                      className="mt-3 w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-xs text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-primary-500/30"
                       placeholder="Reason for weight (e.g., Critical path item, High risk...)"
                     />
                   </div>
 
-                  <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/10">
-                    <h3 className="text-xs font-bold text-red-600 dark:text-red-400 mb-2 flex items-center gap-2">
+                  <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/10">
+                    <h3 className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-2 flex items-center gap-2">
                       <AlertTriangle size={14} /> Blocking Issues / Risks
                     </h3>
                     <textarea
                       value={task.blockingIssues || ''}
                       onChange={(e) => setTask({ ...task, blockingIssues: e.target.value })}
-                      className="w-full h-20 bg-transparent border-none text-sm text-navy-900 dark:text-slate-300 placeholder:text-red-400/50 dark:placeholder:text-red-500/30 outline-none resize-none"
+                      className="w-full h-20 bg-transparent border-none text-sm text-navy-900 dark:text-slate-300 placeholder:text-rose-400/50 dark:placeholder:text-rose-500/30 outline-none resize-none"
                       placeholder="Describe any critical blockers..."
                     />
                   </div>
@@ -631,7 +631,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                         }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                           task.signedOff
-                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600'
+                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 hover:text-rose-600'
                             : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-500/30'
                         }`}
                       >

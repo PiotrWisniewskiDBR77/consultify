@@ -104,7 +104,7 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({ workerId, activeTab,
           <ArrowLeft size={18} className="text-slate-500" />
         </button>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
             {worker.name.charAt(0)}
           </div>
           <div>
@@ -134,7 +134,11 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({ workerId, activeTab,
       {activeTab === 'insights' && <InsightsPanel workerId={worker.id} />}
       {activeTab === 'evaluations' && <EvaluationsPanel workerId={worker.id} />}
       {activeTab === 'release' && (
-        <ReleasePanel workerId={worker.id} profileId={profile?.id} profileVersion={profile?.version} />
+        <ReleasePanel
+          workerId={worker.id}
+          profileId={profile?.id}
+          profileVersion={profile?.version}
+        />
       )}
     </div>
   );

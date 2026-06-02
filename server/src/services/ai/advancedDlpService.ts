@@ -43,29 +43,43 @@ const BUILTIN_PATTERNS: Array<{
   pattern: RegExp;
   severity: 'high' | 'critical';
 }> = [
-  { name: 'credit_card', pattern: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/, severity: 'critical' },
+  {
+    name: 'credit_card',
+    pattern: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/,
+    severity: 'critical',
+  },
   { name: 'ssn', pattern: /\b\d{3}-\d{2}-\d{4}\b/, severity: 'critical' },
-  { name: 'email_address', pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, severity: 'high' },
-  { name: 'phone_number', pattern: /\b(?:\+\d{1,3}[\s-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/, severity: 'high' },
+  {
+    name: 'email_address',
+    pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
+    severity: 'high',
+  },
+  {
+    name: 'phone_number',
+    pattern: /\b(?:\+\d{1,3}[\s-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/,
+    severity: 'high',
+  },
   { name: 'pesel', pattern: /\b\d{11}\b/, severity: 'critical' },
   { name: 'nip', pattern: /\b\d{3}-?\d{3}-?\d{2}-?\d{2}\b/, severity: 'high' },
-  { name: 'iban', pattern: /\b[A-Z]{2}\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/, severity: 'critical' },
+  {
+    name: 'iban',
+    pattern: /\b[A-Z]{2}\d{2}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}\b/,
+    severity: 'critical',
+  },
   { name: 'ip_address', pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/, severity: 'high' },
-  { name: 'api_key_pattern', pattern: /\b(sk|pk|api|key|secret|token|Bearer)[-_]?[A-Za-z0-9]{16,}\b/i, severity: 'critical' },
+  {
+    name: 'api_key_pattern',
+    pattern: /\b(sk|pk|api|key|secret|token|Bearer)[-_]?[A-Za-z0-9]{16,}\b/i,
+    severity: 'critical',
+  },
 ];
 
 class AdvancedDlpService {
-  async scanInput(
-    content: string,
-    organizationId: string
-  ): Promise<DlpScanResult> {
+  async scanInput(content: string, organizationId: string): Promise<DlpScanResult> {
     return this.scan(content, organizationId, 'input');
   }
 
-  async scanOutput(
-    content: string,
-    organizationId: string
-  ): Promise<DlpScanResult> {
+  async scanOutput(content: string, organizationId: string): Promise<DlpScanResult> {
     return this.scan(content, organizationId, 'output');
   }
 
@@ -181,10 +195,10 @@ class AdvancedDlpService {
   }
 
   async listRules(organizationId: string): Promise<DlpRule[]> {
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT * FROM ai_dlp_rules WHERE organization_id = ? ORDER BY created_at DESC`,
       [organizationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     return (rows || []).map((r: any) => ({
       id: r.id,
@@ -208,17 +222,17 @@ class AdvancedDlpService {
   }
 
   async deleteRule(ruleId: string, organizationId: string): Promise<void> {
-    await dbRun(
-      `DELETE FROM ai_dlp_rules WHERE id = ? AND organization_id = ?`,
-      [ruleId, organizationId]
-    );
+    await dbRun(`DELETE FROM ai_dlp_rules WHERE id = ? AND organization_id = ?`, [
+      ruleId,
+      organizationId,
+    ]);
   }
 
   private async loadOrgRules(organizationId: string): Promise<DlpRule[]> {
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT * FROM ai_dlp_rules WHERE organization_id = ? AND is_active = 1`,
       [organizationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     return (rows || []).map((r: any) => ({
       id: r.id,

@@ -25,7 +25,7 @@ export function resolveArtifactOpenPath(params: {
 export function resolveTemplateUsePath(templateId: string, templateType: TemplateType): string {
   const routeMap: Record<TemplateType, string> = {
     report: '/wordy',
-    sheet: '/excele',
+    sheet: '/tabele',
     presentation: '/prezentacje',
   };
   const base = routeMap[templateType] || '/wordy';

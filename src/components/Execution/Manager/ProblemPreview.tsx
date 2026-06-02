@@ -6,13 +6,7 @@
  * Footer: action buttons matching the problem's actions list
  */
 
-import {
-  ChevronRight,
-  ExternalLink,
-  Info,
-  Link2,
-  X,
-} from 'lucide-react';
+import { ChevronRight, ExternalLink, Info, Link2, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -25,7 +19,10 @@ interface ProblemPreviewProps {
   onOpenEntity?: (type: string, id: string) => void;
 }
 
-const SEVERITY_COLORS: Record<ProblemSeverity, { bg: string; text: string; border: string; label: string }> = {
+const SEVERITY_COLORS: Record<
+  ProblemSeverity,
+  { bg: string; text: string; border: string; label: string }
+> = {
   critical: {
     bg: 'bg-rose-50 dark:bg-rose-900/20',
     text: 'text-rose-700 dark:text-rose-400',
@@ -57,22 +54,19 @@ const SOURCE_ICONS: Record<string, React.ReactNode> = {
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-2 py-1.5">
-      <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap">{label}</span>
+      <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap">
+        {label}
+      </span>
       <span className="text-xs text-right text-slate-700 dark:text-slate-300">{value}</span>
     </div>
   );
 }
 
-function ActionButton({
-  action,
-  onClick,
-}: {
-  action: ProblemAction;
-  onClick: () => void;
-}) {
-  const base = 'h-8 px-3 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5';
+function ActionButton({ action, onClick }: { action: ProblemAction; onClick: () => void }) {
+  const base =
+    'h-8 px-3 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5';
   const variants: Record<string, string> = {
-    primary: `${base} bg-cyan-600 text-white hover:bg-cyan-700`,
+    primary: `${base} bg-blue-600 text-white hover:bg-blue-700`,
     danger: `${base} bg-rose-600 text-white hover:bg-rose-700`,
     default: `${base} bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700`,
   };
@@ -99,7 +93,9 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
       <div className={`p-4 ${sev.bg} border-b ${sev.border}`}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded ${sev.bg} ${sev.text} border ${sev.border}`}>
+            <span
+              className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded ${sev.bg} ${sev.text} border ${sev.border}`}
+            >
               {sev.label}
             </span>
             <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
@@ -145,7 +141,10 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
                 {problem.sourceEntityType.replace(/_/g, ' ')}
               </p>
             </div>
-            <ExternalLink size={12} className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors shrink-0" />
+            <ExternalLink
+              size={12}
+              className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors shrink-0"
+            />
           </button>
         </div>
 
@@ -155,35 +154,37 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
             {t('manager.preview.details', 'Details')}
           </h4>
           <div className="divide-y divide-slate-100 dark:divide-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
-            {problem.ownerName && (
-              <DetailRow label="Owner" value={problem.ownerName} />
-            )}
+            {problem.ownerName && <DetailRow label="Owner" value={problem.ownerName} />}
             {problem.daysOverdue !== null && (
               <DetailRow
                 label="Deadline"
                 value={
-                  problem.daysOverdue > 0
-                    ? <span className="text-rose-600 dark:text-rose-400 font-medium">{problem.daysOverdue} days overdue</span>
-                    : problem.daysOverdue < 0
-                    ? <span className="text-slate-500">In {Math.abs(problem.daysOverdue)} days</span>
-                    : <span className="text-amber-600 dark:text-amber-400">Due today</span>
+                  problem.daysOverdue > 0 ? (
+                    <span className="text-rose-600 dark:text-rose-400 font-medium">
+                      {problem.daysOverdue} days overdue
+                    </span>
+                  ) : problem.daysOverdue < 0 ? (
+                    <span className="text-slate-500">In {Math.abs(problem.daysOverdue)} days</span>
+                  ) : (
+                    <span className="text-amber-600 dark:text-amber-400">Due today</span>
+                  )
                 }
               />
             )}
             <DetailRow
               label="Impact"
               value={
-                problem.impactCount > 0
-                  ? <span className="text-amber-600 dark:text-amber-400 font-medium">{problem.impactCount} downstream affected</span>
-                  : '—'
+                problem.impactCount > 0 ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                    {problem.impactCount} downstream affected
+                  </span>
+                ) : (
+                  '—'
+                )
               }
             />
             {metaEntries.map(([key, val]) => (
-              <DetailRow
-                key={key}
-                label={key.replace(/_/g, ' ')}
-                value={String(val)}
-              />
+              <DetailRow key={key} label={key.replace(/_/g, ' ')} value={String(val)} />
             ))}
           </div>
         </div>
@@ -192,7 +193,8 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
         {problem.affectedEntities.length > 0 && (
           <div>
             <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-              {t('manager.preview.affected', 'Affected Entities')} ({problem.affectedEntities.length})
+              {t('manager.preview.affected', 'Affected Entities')} (
+              {problem.affectedEntities.length})
             </h4>
             <div className="space-y-1">
               {problem.affectedEntities.map((ent) => (
@@ -203,8 +205,13 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
                   className="w-full flex items-center gap-2 p-2 rounded-lg border border-slate-100 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group text-left"
                 >
                   {SOURCE_ICONS[ent.type] || <Link2 size={12} />}
-                  <span className="text-xs text-slate-700 dark:text-slate-300 truncate flex-1">{ent.name}</span>
-                  <ChevronRight size={12} className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 shrink-0" />
+                  <span className="text-xs text-slate-700 dark:text-slate-300 truncate flex-1">
+                    {ent.name}
+                  </span>
+                  <ChevronRight
+                    size={12}
+                    className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 shrink-0"
+                  />
                 </button>
               ))}
             </div>

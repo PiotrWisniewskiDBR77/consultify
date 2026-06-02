@@ -21,9 +21,9 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface SCIMToken {
   id: string;
@@ -84,8 +84,65 @@ interface ServiceProvider {
 
 type TabType = 'overview' | 'tokens' | 'mappings' | 'logs' | 'conflicts';
 
+interface SCIMDataSnapshot {
+  serviceProvider: ServiceProvider | null;
+  tokens: SCIMToken[];
+  groupMappings: GroupMapping[];
+  conflicts: SCIMConflict[];
+}
+
+const mappingMatchesCreate = (
+  mapping: GroupMapping,
+  expected: { externalGroupId: string; externalGroupName: string; internalRole: string }
+) =>
+  mapping.externalGroupId === expected.externalGroupId &&
+  mapping.externalGroupName === expected.externalGroupName &&
+  mapping.internalRole === expected.internalRole;
+
+const tokenMatchesCreate = (token: SCIMToken, expected: { id?: string; name: string }) =>
+  token.name === expected.name && (!expected.id || token.id === expected.id);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const unwrapApiPayload = (value: unknown): unknown => {
+  if (!isRecord(value)) return value;
+  const first = isRecord(value.data) ? value.data : value;
+  return isRecord(first) && 'data' in first ? first.data : first;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  const payload = unwrapApiPayload(value);
+  if (Array.isArray(payload)) return payload as T[];
+  if (!isRecord(payload)) return [];
+  for (const key of keys) {
+    if (Array.isArray(payload[key])) return payload[key] as T[];
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  const payload = unwrapApiPayload(value);
+  return (
+    Array.isArray(payload) ||
+    (isRecord(payload) &&
+      (Array.isArray(payload.data) || keys.some((key) => Array.isArray(payload[key]))))
+  );
+};
+
+const getObjectPayload = <T,>(value: unknown, keys: string[] = []): T | null => {
+  const payload = unwrapApiPayload(value);
+  if (!isRecord(payload)) return null;
+  for (const key of keys) {
+    if (isRecord(payload[key])) return payload[key] as T;
+  }
+  return payload as T;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  normalizeApiErrorMessage(error, fallback);
+
 const SCIMProvisioningView: React.FC = () => {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [loading, setLoading] = useState(false);
 
@@ -109,6 +166,8 @@ const SCIMProvisioningView: React.FC = () => {
   );
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [newMapping, setNewMapping] = useState({
     externalGroupId: '',
     externalGroupName: '',
@@ -118,23 +177,61 @@ const SCIMProvisioningView: React.FC = () => {
   // Fetch data
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [spResponse, tokensResponse, mappingsResponse, logsResponse, conflictsResponse] =
         await Promise.all([
-          api.get('/scim/admin/service-provider').catch(() => ({ data: { data: null } })),
-          api.get('/scim/admin/tokens').catch(() => ({ data: { data: [] } })),
-          api.get('/scim/admin/group-mappings').catch(() => ({ data: { data: [] } })),
-          api.get('/scim/admin/sync-logs?limit=50').catch(() => ({ data: { data: [] } })),
-          api.get('/scim/admin/conflicts').catch(() => ({ data: { data: [] } })),
+          api.get('/scim/admin/service-provider'),
+          api.get('/scim/admin/tokens'),
+          api.get('/scim/admin/group-mappings'),
+          api.get('/scim/admin/sync-logs?limit=50'),
+          api.get('/scim/admin/conflicts'),
         ]);
 
-      setServiceProvider(spResponse.data.data);
-      setTokens(tokensResponse.data.data || []);
-      setGroupMappings(mappingsResponse.data.data || []);
-      setSyncLogs(logsResponse.data.data || []);
-      setConflicts(conflictsResponse.data.data || []);
+      const nextServiceProvider = getObjectPayload<ServiceProvider>(spResponse, [
+        'serviceProvider',
+      ]);
+      const nextTokens = getListPayload<SCIMToken>(tokensResponse, ['tokens', 'items']);
+      const nextGroupMappings = getListPayload<GroupMapping>(mappingsResponse, [
+        'groupMappings',
+        'mappings',
+        'items',
+      ]);
+      const nextSyncLogs = getListPayload<SyncLog>(logsResponse, ['logs', 'syncLogs', 'items']);
+      const nextConflicts = getListPayload<SCIMConflict>(conflictsResponse, ['conflicts', 'items']);
+
+      if (!hasListShape(tokensResponse, ['tokens', 'items'])) {
+        throw new Error('SCIM tokens response was not a list');
+      }
+      if (!hasListShape(mappingsResponse, ['groupMappings', 'mappings', 'items'])) {
+        throw new Error('SCIM group mappings response was not a list');
+      }
+      if (!hasListShape(logsResponse, ['logs', 'syncLogs', 'items'])) {
+        throw new Error('SCIM sync logs response was not a list');
+      }
+      if (!hasListShape(conflictsResponse, ['conflicts', 'items'])) {
+        throw new Error('SCIM conflicts response was not a list');
+      }
+
+      setServiceProvider(nextServiceProvider);
+      setTokens(nextTokens);
+      setGroupMappings(nextGroupMappings);
+      setSyncLogs(nextSyncLogs);
+      setConflicts(nextConflicts);
+      return {
+        serviceProvider: nextServiceProvider,
+        tokens: nextTokens,
+        groupMappings: nextGroupMappings,
+        conflicts: nextConflicts,
+      } as SCIMDataSnapshot;
     } catch (error) {
-      console.error('[SCIM] Fetch data error:', error);
+      setServiceProvider(null);
+      setTokens([]);
+      setGroupMappings([]);
+      setSyncLogs([]);
+      setConflicts([]);
+      setLoadError(getErrorMessage(error, 'Failed to load SCIM data'));
+      return null;
     } finally {
       setLoading(false);
     }
@@ -146,11 +243,15 @@ const SCIMProvisioningView: React.FC = () => {
 
   // Enable SCIM
   const handleEnableSCIM = async () => {
+    setActionError(null);
     try {
       await api.post('/scim/admin/service-provider', { isActive: true });
-      fetchData();
+      const refreshed = await fetchData();
+      if (!refreshed?.serviceProvider?.isActive) {
+        throw new Error('SCIM enablement was not confirmed by the server');
+      }
     } catch (error) {
-      console.error('[SCIM] Enable error:', error);
+      setActionError(getErrorMessage(error, 'Failed to enable SCIM service provider'));
     }
   };
 
@@ -158,12 +259,20 @@ const SCIMProvisioningView: React.FC = () => {
   const handleGenerateToken = async () => {
     if (!newToken.name) return;
 
+    setActionError(null);
     try {
       const response = await api.post('/scim/admin/tokens', newToken);
-      setGeneratedToken(response.data.data.token);
-      setTokens([...tokens, response.data.data]);
+      const createdToken = getObjectPayload<SCIMToken & { token?: string }>(response, ['token']);
+      if (!createdToken?.name) {
+        throw new Error('SCIM token generation response was incomplete');
+      }
+      const refreshed = await fetchData();
+      if (!refreshed?.tokens.some((token) => tokenMatchesCreate(token, createdToken))) {
+        throw new Error('SCIM token generation was not confirmed by the server');
+      }
+      setGeneratedToken(createdToken.token ?? null);
     } catch (error) {
-      console.error('[SCIM] Generate token error:', error);
+      setActionError(getErrorMessage(error, 'Failed to generate SCIM token'));
     }
   };
 
@@ -172,11 +281,15 @@ const SCIMProvisioningView: React.FC = () => {
     if (!confirm('Are you sure you want to revoke this token? This action cannot be undone.'))
       return;
 
+    setActionError(null);
     try {
       await api.delete(`/scim/admin/tokens/${tokenId}`);
-      setTokens(tokens.filter((t) => t.id !== tokenId));
+      const refreshed = await fetchData();
+      if (!refreshed || refreshed.tokens.some((token) => token.id === tokenId)) {
+        throw new Error('SCIM token revocation was not confirmed by the server');
+      }
     } catch (error) {
-      console.error('[SCIM] Revoke token error:', error);
+      setActionError(getErrorMessage(error, 'Failed to revoke SCIM token'));
     }
   };
 
@@ -184,13 +297,18 @@ const SCIMProvisioningView: React.FC = () => {
   const handleCreateMapping = async () => {
     if (!newMapping.externalGroupId || !newMapping.externalGroupName) return;
 
+    setActionError(null);
     try {
-      const response = await api.post('/scim/admin/group-mappings', newMapping);
-      fetchData();
+      const expected = { ...newMapping };
+      await api.post('/scim/admin/group-mappings', expected);
+      const refreshed = await fetchData();
+      if (!refreshed?.groupMappings.some((mapping) => mappingMatchesCreate(mapping, expected))) {
+        throw new Error('SCIM group mapping was not confirmed by the server');
+      }
       setShowMappingModal(false);
       setNewMapping({ externalGroupId: '', externalGroupName: '', internalRole: 'member' });
     } catch (error) {
-      console.error('[SCIM] Create mapping error:', error);
+      setActionError(getErrorMessage(error, 'Failed to create SCIM group mapping'));
     }
   };
 
@@ -198,22 +316,30 @@ const SCIMProvisioningView: React.FC = () => {
   const handleDeleteMapping = async (mappingId: string) => {
     if (!confirm('Delete this group mapping?')) return;
 
+    setActionError(null);
     try {
       await api.delete(`/scim/admin/group-mappings/${mappingId}`);
-      setGroupMappings(groupMappings.filter((m) => m.id !== mappingId));
+      const refreshed = await fetchData();
+      if (!refreshed || refreshed.groupMappings.some((mapping) => mapping.id === mappingId)) {
+        throw new Error('SCIM group mapping deletion was not confirmed by the server');
+      }
     } catch (error) {
-      console.error('[SCIM] Delete mapping error:', error);
+      setActionError(getErrorMessage(error, 'Failed to delete SCIM group mapping'));
     }
   };
 
   // Trigger Full Sync
   const handleTriggerSync = async () => {
+    setActionError(null);
     setSyncing(true);
     try {
       await api.post('/scim/admin/sync', {});
-      fetchData();
+      const refreshed = await fetchData();
+      if (!refreshed) {
+        throw new Error('SCIM sync was not confirmed by read-back');
+      }
     } catch (error) {
-      console.error('[SCIM] Sync error:', error);
+      setActionError(getErrorMessage(error, 'Failed to trigger SCIM sync'));
     } finally {
       setSyncing(false);
     }
@@ -224,15 +350,16 @@ const SCIMProvisioningView: React.FC = () => {
     conflictId: string,
     resolution: 'merge' | 'skip' | 'overwrite'
   ) => {
+    setActionError(null);
     try {
       await api.post(`/scim/admin/conflicts/${conflictId}/resolve`, { resolution });
-      setConflicts(
-        conflicts.map((c) =>
-          c.id === conflictId ? { ...c, resolution, resolvedAt: new Date().toISOString() } : c
-        )
-      );
+      const refreshed = await fetchData();
+      const refreshedConflict = refreshed?.conflicts.find((conflict) => conflict.id === conflictId);
+      if (!refreshed || (refreshedConflict && refreshedConflict.resolution !== resolution)) {
+        throw new Error('SCIM conflict resolution was not confirmed by the server');
+      }
     } catch (error) {
-      console.error('[SCIM] Resolve conflict error:', error);
+      setActionError(getErrorMessage(error, 'Failed to resolve SCIM conflict'));
     }
   };
 
@@ -284,7 +411,7 @@ const SCIMProvisioningView: React.FC = () => {
           {!serviceProvider?.isActive && (
             <button
               onClick={handleEnableSCIM}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
             >
               Enable SCIM
             </button>
@@ -327,7 +454,7 @@ const SCIMProvisioningView: React.FC = () => {
               <button
                 onClick={handleTriggerSync}
                 disabled={syncing}
-                className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
                 {syncing ? 'Syncing...' : 'Trigger Full Sync'}
@@ -346,7 +473,7 @@ const SCIMProvisioningView: React.FC = () => {
           <div>
             <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Base URL</label>
             <div className="flex items-center gap-2">
-              <code className="flex-1 px-3 py-2 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-violet-300 font-mono border border-slate-200 dark:border-gray-700">
+              <code className="flex-1 px-3 py-2 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-primary-300 font-mono border border-slate-200 dark:border-gray-700">
                 {window.location.origin}/api/scim/v2
               </code>
               <button
@@ -360,15 +487,15 @@ const SCIMProvisioningView: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-slate-600 dark:text-gray-400">Users Endpoint:</span>
-              <code className="ml-2 text-violet-700 dark:text-violet-300">/Users</code>
+              <code className="ml-2 text-primary-700 dark:text-primary-300">/Users</code>
             </div>
             <div>
               <span className="text-slate-600 dark:text-gray-400">Groups Endpoint:</span>
-              <code className="ml-2 text-violet-700 dark:text-violet-300">/Groups</code>
+              <code className="ml-2 text-primary-700 dark:text-primary-300">/Groups</code>
             </div>
             <div>
               <span className="text-slate-600 dark:text-gray-400">Authentication:</span>
-              <code className="ml-2 text-violet-700 dark:text-violet-300">Bearer Token</code>
+              <code className="ml-2 text-primary-700 dark:text-primary-300">Bearer Token</code>
             </div>
             <div>
               <span className="text-slate-600 dark:text-gray-400">PATCH Support:</span>
@@ -439,7 +566,7 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowTokenModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={18} />
           Generate Token
@@ -465,10 +592,13 @@ const SCIMProvisioningView: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      token.isActive ? 'bg-green-500/20' : 'bg-red-500/20'
+                      token.isActive ? 'bg-green-500/20' : 'bg-rose-500/20'
                     }`}
                   >
-                    <Key className={token.isActive ? 'text-green-400' : 'text-red-400'} size={20} />
+                    <Key
+                      className={token.isActive ? 'text-green-400' : 'text-rose-400'}
+                      size={20}
+                    />
                   </div>
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-white">{token.name}</h4>
@@ -485,7 +615,8 @@ const SCIMProvisioningView: React.FC = () => {
                   </span>
                   <button
                     onClick={() => handleRevokeToken(token.id)}
-                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                    title={`Revoke token ${token.name}`}
+                    className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -529,7 +660,7 @@ const SCIMProvisioningView: React.FC = () => {
                   </div>
                 </div>
                 <div className="relative mb-4">
-                  <code className="block w-full p-3 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-violet-300 font-mono break-all border border-slate-200 dark:border-gray-700">
+                  <code className="block w-full p-3 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-primary-300 font-mono break-all border border-slate-200 dark:border-gray-700">
                     {generatedToken}
                   </code>
                   <button
@@ -610,7 +741,7 @@ const SCIMProvisioningView: React.FC = () => {
                                 });
                               }
                             }}
-                            className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
+                            className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-primary-600"
                           />
                           {scope}
                         </label>
@@ -628,7 +759,7 @@ const SCIMProvisioningView: React.FC = () => {
                   <button
                     onClick={handleGenerateToken}
                     disabled={!newToken.name}
-                    className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                    className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
                   >
                     Generate
                   </button>
@@ -652,7 +783,7 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowMappingModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
         >
           <Plus size={18} />
           Add Mapping
@@ -701,14 +832,15 @@ const SCIMProvisioningView: React.FC = () => {
                     <ChevronRight className="text-slate-400 dark:text-gray-400" size={18} />
                   </td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-1 bg-violet-500/15 text-violet-700 dark:text-violet-200 rounded text-sm">
+                    <span className="px-2 py-1 bg-primary-500/15 text-primary-700 dark:text-primary-200 rounded text-sm">
                       {mapping.internalRole}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDeleteMapping(mapping.id)}
-                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                      title={`Delete mapping ${mapping.externalGroupName}`}
+                      className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -782,7 +914,7 @@ const SCIMProvisioningView: React.FC = () => {
               <button
                 onClick={handleCreateMapping}
                 disabled={!newMapping.externalGroupId || !newMapping.externalGroupName}
-                className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="flex-1 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg transition-colors"
               >
                 Add Mapping
               </button>
@@ -833,7 +965,7 @@ const SCIMProvisioningView: React.FC = () => {
                       log.status === 'success'
                         ? 'bg-green-400'
                         : log.status === 'error'
-                          ? 'bg-red-400'
+                          ? 'bg-rose-400'
                           : 'bg-yellow-400'
                     }`}
                   />
@@ -852,7 +984,7 @@ const SCIMProvisioningView: React.FC = () => {
                 </span>
               </div>
               {log.errorMessage && (
-                <div className="mt-2 text-sm text-red-700 dark:text-red-300 bg-red-500/10 rounded px-3 py-1">
+                <div className="mt-2 text-sm text-rose-700 dark:text-rose-300 bg-rose-500/10 rounded px-3 py-1">
                   {log.errorMessage}
                 </div>
               )}
@@ -948,7 +1080,7 @@ const SCIMProvisioningView: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleResolveConflict(conflict.id, 'overwrite')}
-                            className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-700 dark:text-violet-300 hover:bg-violet-500/25 rounded-lg transition-colors"
+                            className="px-3 py-1.5 text-xs bg-primary-500/15 text-primary-700 dark:text-primary-300 hover:bg-primary-500/25 rounded-lg transition-colors"
                           >
                             Overwrite
                           </button>
@@ -1027,7 +1159,7 @@ const SCIMProvisioningView: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-violet-600 text-slate-900 dark:text-white'
+                    ? 'border-primary-600 text-slate-900 dark:text-white'
                     : 'border-transparent text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -1040,9 +1172,39 @@ const SCIMProvisioningView: React.FC = () => {
       </div>
 
       {/* Content */}
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <span>{actionError}</span>
+            <button
+              onClick={() => setActionError(null)}
+              className="font-medium hover:text-amber-900 dark:hover:text-amber-200"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-violet-500" size={32} />
+          <RefreshCw className="animate-spin text-primary-500" size={32} />
+        </div>
+      ) : loadError ? (
+        <div className="rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-6 text-rose-700 dark:text-rose-300">
+          <div className="flex items-center gap-2 font-medium">
+            <AlertTriangle size={18} />
+            Failed to load SCIM data
+          </div>
+          <p className="mt-2 text-sm">{loadError}</p>
+          <button
+            onClick={fetchData}
+            className="mt-4 px-4 py-2 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-sm font-medium"
+          >
+            Retry
+          </button>
         </div>
       ) : (
         <>

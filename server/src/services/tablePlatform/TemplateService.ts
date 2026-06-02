@@ -1,5 +1,6 @@
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import tabeleConsultingTemplatesSeeder from './seeds/tabeleConsultingTemplatesSeeder.js';
 
 const templateService = {
   async listTemplates(category?: string) {
@@ -102,10 +103,32 @@ const templateService = {
     return r.rows[0];
   },
 
+  /**
+   * Idempotent re-seeder for the 30-template Tabele consulting catalog
+   * (Block A · EPIC-T5). Runs INSERT/UPDATE per `governance_rules.seed_id`
+   * and is safe to call on every boot. Returns the seeder tally so callers
+   * can log / report.
+   */
+  async seedTabeleConsultingTemplates() {
+    return tabeleConsultingTemplatesSeeder.seed();
+  },
+
   async seedDefaultTemplates() {
     const db = getDatabase();
     const existing = await db.query('SELECT COUNT(*) as count FROM tp_base_templates');
-    if (parseInt((existing.rows[0] as any).count) > 0) return;
+    if (parseInt((existing.rows[0] as any).count) > 0) {
+      // Legacy seed already ran. Still apply the Tabele consulting catalog —
+      // it is idempotent (keyed on governance_rules.seed_id) and additive
+      // relative to the legacy 6 entries.
+      try {
+        await tabeleConsultingTemplatesSeeder.seed();
+      } catch (err) {
+        logger.error('[TemplateService] Tabele consulting seeder failed (post-legacy)', {
+          error: (err as Error).message,
+        });
+      }
+      return;
+    }
 
     const defaults = [
       {
@@ -423,6 +446,15 @@ const templateService = {
       );
     }
     logger.info('[TemplateService] Seeded 6 default templates');
+
+    try {
+      const tally = await tabeleConsultingTemplatesSeeder.seed();
+      logger.info('[TemplateService] Tabele consulting seeder applied', tally);
+    } catch (err) {
+      logger.error('[TemplateService] Tabele consulting seeder failed (post-legacy fresh)', {
+        error: (err as Error).message,
+      });
+    }
   },
 };
 

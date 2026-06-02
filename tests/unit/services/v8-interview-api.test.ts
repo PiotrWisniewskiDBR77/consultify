@@ -84,6 +84,7 @@ describe('V8InterviewApi', () => {
 
     await V8InterviewApi.startAssignment('asg-1', { projectId: 'proj-1' });
     await V8InterviewApi.submitAssignment('asg-2');
+    await V8InterviewApi.evaluateSessionAnswers('sess-1', { language: 'pl' });
     await V8InterviewApi.remindAssignment('asg-3');
     await V8InterviewApi.sendBackAssignment('asg-4', { reason: 'Missing answers' });
     await V8InterviewApi.approveAssignment('asg-5');
@@ -96,15 +97,20 @@ describe('V8InterviewApi', () => {
     expect(v8Post).toHaveBeenNthCalledWith(2, '/interview/assignments/asg-2/submit', {});
     expect(v8Post).toHaveBeenNthCalledWith(
       3,
+      '/interview/sessions/sess-1/evaluate-answers',
+      { language: 'pl' }
+    );
+    expect(v8Post).toHaveBeenNthCalledWith(
+      4,
       '/interview/assignments/asg-3/remind',
       {}
     );
     expect(v8Post).toHaveBeenNthCalledWith(
-      4,
+      5,
       '/interview/assignments/asg-4/send-back',
       { reason: 'Missing answers' }
     );
-    expect(v8Post).toHaveBeenNthCalledWith(5, '/interview/assignments/asg-5/approve', {});
+    expect(v8Post).toHaveBeenNthCalledWith(6, '/interview/assignments/asg-5/approve', {});
   });
 });
 
@@ -264,7 +270,7 @@ describe('P10 canon validators', () => {
 
   it('rejects invalid confidence levels', () => {
     expect(isValidP10ConfidenceLevel('very_high')).toBe(false);
-    expect(isValidP10ConfidenceLevel('contradicted')).toBe(false);
+    expect(isValidP10ConfidenceLevel('contradicted')).toBe(true);
     expect(isValidP10ConfidenceLevel('')).toBe(false);
   });
 

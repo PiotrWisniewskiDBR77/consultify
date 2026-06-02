@@ -395,7 +395,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       {/* Data Sharing & Analytics */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <BarChart3 size={20} className="text-purple-500" />
+          <BarChart3 size={20} className="text-primary-500" />
           {t('settings.privacy.dataSharing', 'Data Sharing')}
         </h3>
 
@@ -416,7 +416,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('shareAnalytics', !preferences.shareAnalytics)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.shareAnalytics ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.shareAnalytics ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -441,7 +441,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('improveAI', !preferences.improveAI)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.improveAI ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.improveAI ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -473,7 +473,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 preferences.allowThirdPartyIntegrations
-                  ? 'bg-purple-600'
+                  ? 'bg-primary-600'
                   : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
@@ -572,7 +572,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       {/* Data Export & Deletion */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Download size={20} className="text-cyan-500" />
+          <Download size={20} className="text-blue-500" />
           {t('settings.privacy.dataManagement', 'Data Management')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
@@ -586,8 +586,8 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           {/* Export Data */}
           <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-cyan-100 dark:bg-cyan-500/20 rounded-lg">
-                <FileDown size={20} className="text-cyan-600 dark:text-cyan-400" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-lg">
+                <FileDown size={20} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
                 <h4 className="font-medium text-slate-900 dark:text-white">
@@ -610,7 +610,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={handleExportData}
               disabled={exportingData}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {exportingData ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -624,23 +624,23 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           </div>
 
           {/* Delete Account */}
-          <div className="p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-500/20">
+          <div className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-500/20">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-red-100 dark:bg-red-500/20 rounded-lg">
-                <Trash2 size={20} className="text-red-600 dark:text-red-400" />
+              <div className="p-2 bg-rose-100 dark:bg-rose-500/20 rounded-lg">
+                <Trash2 size={20} className="text-rose-600 dark:text-rose-400" />
               </div>
               <div>
-                <h4 className="font-medium text-red-900 dark:text-red-300">
+                <h4 className="font-medium text-rose-900 dark:text-rose-300">
                   {t('settings.privacy.deleteAccount', 'Delete Account')}
                 </h4>
-                <p className="text-xs text-red-700 dark:text-red-400">
+                <p className="text-xs text-rose-700 dark:text-rose-400">
                   {t('settings.privacy.deleteAccountWarning', 'This action is irreversible')}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors"
             >
               <Trash2 size={16} />
               {t('settings.privacy.requestDeletion', 'Request Deletion')}
@@ -654,8 +654,8 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-red-100 dark:bg-red-500/20 rounded-full">
-                <AlertTriangle size={24} className="text-red-600 dark:text-red-400" />
+              <div className="p-3 bg-rose-100 dark:bg-rose-500/20 rounded-full">
+                <AlertTriangle size={24} className="text-rose-600 dark:text-rose-400" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -670,8 +670,8 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
               </div>
             </div>
 
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-700 dark:text-red-300">
+            <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg p-4 mb-4">
+              <p className="text-sm text-rose-700 dark:text-rose-300">
                 {t(
                   'settings.privacy.deletionConsequences',
                   'You will lose access to all your projects, tasks, and data. This action cannot be undone.'
@@ -705,7 +705,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
               <button
                 onClick={handleDeleteAccount}
                 disabled={deletingAccount || deleteConfirmation !== currentUser.email}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 disabled:opacity-50 font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500 disabled:opacity-50 font-medium flex items-center gap-2"
               >
                 {deletingAccount && <Loader2 size={16} className="animate-spin" />}
                 {deletingAccount

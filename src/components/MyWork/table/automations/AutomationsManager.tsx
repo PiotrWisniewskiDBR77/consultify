@@ -342,7 +342,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                     {run.status === 'completed' && (
                       <CheckCircle2 size={16} className="text-emerald-500" />
                     )}
-                    {run.status === 'failed' && <XCircle size={16} className="text-red-500" />}
+                    {run.status === 'failed' && <XCircle size={16} className="text-rose-500" />}
                     {run.status === 'running' && (
                       <Loader2 size={16} className="animate-spin text-blue-500" />
                     )}
@@ -370,7 +370,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                       {formatTime(run.started_at)}
                     </div>
                     {run.error && (
-                      <div className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[11px] text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                      <div className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-[11px] text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">
                         <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
                         <span className="break-all">{run.error}</span>
                       </div>
@@ -565,7 +565,7 @@ const MenuBtn: React.FC<{
     onClick={onClick}
     className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium transition-colors ${
       danger
-        ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10'
+        ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10'
         : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-navy-800'
     }`}
   >

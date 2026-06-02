@@ -22,8 +22,8 @@ import NotificationService from '../services/notificationService.js';
 import { hasPermission } from '../services/permissionService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { assessmentAuditLogger } from '../utils/AssessmentAuditLogger.js';
-import logger from '../utils/Logger.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 // Types
@@ -754,7 +754,9 @@ export class AssessmentController {
       );
 
       // Log activity (non-blocking)
-      assessmentAuditLogger.logCreation(req, id, assessmentType).catch((err: unknown) => logger.warn('[Assessment] audit logCreation failed', err));
+      assessmentAuditLogger
+        .logCreation(req, id, assessmentType)
+        .catch((err: unknown) => logger.warn('[Assessment] audit logCreation failed', err));
 
       res.json({ id, status: 'DRAFT' });
     }
@@ -1736,7 +1738,9 @@ export class AssessmentController {
       // Log activity for timeline (non-blocking)
       assessmentAuditLogger
         .logInitiativesGenerated(req, assessmentId, initiatives.length)
-        .catch((err: unknown) => logger.warn('[Assessment] audit logInitiativesGenerated failed', err));
+        .catch((err: unknown) =>
+          logger.warn('[Assessment] audit logInitiativesGenerated failed', err)
+        );
 
       res.json({ batchId, initiatives: created });
     }

@@ -14,7 +14,6 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-
 import { requireTables, requireUser } from './_helpers.js';
 
 const router = Router();

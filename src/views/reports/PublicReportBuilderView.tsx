@@ -546,13 +546,13 @@ export const PublicReportBuilderView: React.FC = () => {
                 placeholder={isPl ? 'Hasło' : 'Password'}
                 className={`w-full px-4 py-3 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                   passwordError
-                    ? 'border-red-400 ring-2 ring-red-100'
+                    ? 'border-rose-400 ring-2 ring-rose-100'
                     : 'border-gray-200 dark:border-gray-600'
                 }`}
                 autoFocus
               />
               {passwordError && (
-                <p className="mt-2 text-sm text-red-500">
+                <p className="mt-2 text-sm text-rose-500">
                   {isPl ? 'Nieprawidłowe hasło' : 'Invalid password'}
                 </p>
               )}
@@ -576,10 +576,10 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (error === 'notfound') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-red-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-rose-50 dark:from-gray-900 dark:to-gray-800">
         <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Clock className="w-8 h-8 text-red-500" />
+          <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Clock className="w-8 h-8 text-rose-500" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {isPl ? 'Link wygasł lub nie istnieje' : 'Link Expired or Not Found'}
@@ -604,7 +604,7 @@ export const PublicReportBuilderView: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center max-w-md mx-auto p-8">
-          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <AlertTriangle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             {isPl ? 'Wystąpił błąd' : 'An Error Occurred'}
           </h1>

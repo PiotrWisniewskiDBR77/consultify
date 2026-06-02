@@ -136,7 +136,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
               value={twitter.replace('https://twitter.com/', '').replace('@', '')}
               onChange={(e) => setTwitter(e.target.value.replace('@', ''))}
               placeholder={t('settings.profile.social.twitterPlaceholder', 'username')}
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
             />
           </div>
         </div>
@@ -154,7 +154,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
               value={github.replace('https://github.com/', '')}
               onChange={(e) => setGithub(e.target.value)}
               placeholder={t('settings.profile.social.githubPlaceholder', 'username')}
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
             />
           </div>
         </div>
@@ -170,7 +170,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             placeholder={t('settings.profile.social.websitePlaceholder', 'https://example.com')}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
           />
         </div>
       </div>
@@ -193,20 +193,22 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
                                     flex flex-col items-start gap-2 p-4 rounded-lg border-2 transition-all text-left
                                     ${
                                       isSelected
-                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
+                                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                                     }
                                 `}
               >
                 <Icon
                   size={20}
-                  className={isSelected ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400'}
+                  className={
+                    isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400'
+                  }
                 />
                 <div>
                   <div
                     className={`text-sm font-medium ${
                       isSelected
-                        ? 'text-purple-700 dark:text-purple-300'
+                        ? 'text-primary-700 dark:text-primary-300'
                         : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
@@ -227,7 +229,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -251,7 +253,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.profile.social.error', 'Failed to update social links')}
         </div>

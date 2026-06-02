@@ -56,7 +56,7 @@ const OUTCOME_COLORS: Record<string, string> = {
   trial_started: 'bg-blue-500',
   question_answered: 'bg-slate-400',
   escalated: 'bg-amber-500',
-  abandoned: 'bg-red-400',
+  abandoned: 'bg-rose-400',
   unknown: 'bg-slate-300',
 };
 
@@ -170,13 +170,13 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
               icon={<BarChart3 size={18} />}
               label="Widget Opens"
               value={String(annaByEvent.landing_anna_widget_opened || 0)}
-              color="text-cyan-500"
+              color="text-blue-500"
             />
             <KpiCard
               icon={<MessageSquare size={18} />}
               label="Messages Sent"
               value={String(annaByEvent.landing_anna_message_sent || 0)}
-              color="text-violet-500"
+              color="text-primary-500"
             />
             <KpiCard
               icon={<TrendingUp size={18} />}
@@ -354,7 +354,9 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
           className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6"
         />
         <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Top Products</h4>
+          <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+            Top Products
+          </h4>
           {data.topProducts.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">No product data yet.</p>
           ) : (

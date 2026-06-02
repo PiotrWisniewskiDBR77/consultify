@@ -91,7 +91,11 @@ const canAccessNotebookRow = async (
   if (String(row.organization_id ?? row.organizationId ?? '') !== String(orgId)) return false;
   const owner = String(row.owner_user_id ?? row.ownerUserId ?? '');
   const vis = String(row.visibility || 'private').toLowerCase() as NotebookVisibility;
-  const projectId = row.project_id ? String(row.project_id) : row.projectId ? String(row.projectId) : null;
+  const projectId = row.project_id
+    ? String(row.project_id)
+    : row.projectId
+      ? String(row.projectId)
+      : null;
 
   if (owner === userId) return true;
   if (vis !== 'project' || !projectId) return false;
@@ -330,27 +334,75 @@ router.post(
       typeof req.body?.status === 'string' && ['inbox', 'active'].includes(req.body.status)
         ? req.body.status
         : 'active';
+    const sourcePack =
+      req.body?.sourcePack &&
+      typeof req.body.sourcePack === 'object' &&
+      !Array.isArray(req.body.sourcePack)
+        ? req.body.sourcePack
+        : {};
+    const actionContract =
+      req.body?.actionContract &&
+      typeof req.body.actionContract === 'object' &&
+      !Array.isArray(req.body.actionContract)
+        ? req.body.actionContract
+        : {};
+    const evidenceRefs = Array.isArray(req.body?.evidenceRefs)
+      ? req.body.evidenceRefs.map((ref: unknown) => String(ref || '').trim()).filter(Boolean)
+      : [];
+    const captureMetadata = {
+      sourceType: req.body?.sourceType ? String(req.body.sourceType) : null,
+      sourceId: req.body?.sourceId ? String(req.body.sourceId) : null,
+      sourcePack,
+      actionContract,
+      evidenceRefs,
+    };
+
+    const insertColumns = [
+      'id',
+      'owner_user_id',
+      'organization_id',
+      'project_id',
+      'visibility',
+      'title',
+      'content_json',
+      'content_text',
+      'tags_json',
+      'icon',
+      'maturity',
+      'status',
+      'created_at',
+      'updated_at',
+    ];
+    const insertValues: unknown[] = [
+      id,
+      userId,
+      orgId,
+      projectId,
+      visibility,
+      title,
+      contentJson,
+      contentText,
+      tags,
+      icon,
+      maturity,
+      status,
+      now,
+      now,
+    ];
+    if (nbCols.has('capture_source')) {
+      insertColumns.push('capture_source');
+      insertValues.push('interview_insight');
+    }
+    if (nbCols.has('capture_metadata')) {
+      insertColumns.push('capture_metadata');
+      insertValues.push(JSON.stringify(captureMetadata));
+    }
 
     await queryHelpers.queryRun(
       `INSERT INTO notebook_pages
-        (id, owner_user_id, organization_id, project_id, visibility, title, content_json, content_text, tags_json, icon, maturity, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        userId,
-        orgId,
-        projectId,
-        visibility,
-        title,
-        contentJson,
-        contentText,
-        tags,
-        icon,
-        maturity,
-        status,
-        now,
-        now,
-      ]
+        (${insertColumns.join(', ')})
+       VALUES (${insertColumns.map(() => '?').join(', ')})`,
+      insertValues
     );
 
     const row = await queryHelpers.queryOne<any>(
@@ -597,13 +649,15 @@ router.post(
         userId,
       });
     } catch (error) {
-      return res.status(error instanceof NotebookAttachmentMutationError ? error.status : 400).json({
-        error: error instanceof Error ? error.message : 'Attachment upload failed',
-        code:
-          error instanceof NotebookAttachmentMutationError
-            ? error.code
-            : 'NOTEBOOK_ATTACHMENT_UPLOAD_FAILED',
-      });
+      return res
+        .status(error instanceof NotebookAttachmentMutationError ? error.status : 400)
+        .json({
+          error: error instanceof Error ? error.message : 'Attachment upload failed',
+          code:
+            error instanceof NotebookAttachmentMutationError
+              ? error.code
+              : 'NOTEBOOK_ATTACHMENT_UPLOAD_FAILED',
+        });
     }
 
     const row = await queryHelpers.queryOne<any>(
@@ -703,7 +757,11 @@ router.delete(
     if (String(existing.owner_user_id || '') !== String(userId))
       return res.status(403).json({ error: 'Owner-only' });
 
-    if (!parseNotebookAttachments(existing.attachmentsJson).some((attachment) => attachment.id === attachmentId)) {
+    if (
+      !parseNotebookAttachments(existing.attachmentsJson).some(
+        (attachment) => attachment.id === attachmentId
+      )
+    ) {
       return res.status(404).json({ error: 'Attachment not found' });
     }
 
@@ -713,13 +771,15 @@ router.delete(
         attachmentId,
       });
     } catch (error) {
-      return res.status(error instanceof NotebookAttachmentMutationError ? error.status : 400).json({
-        error: error instanceof Error ? error.message : 'Attachment delete failed',
-        code:
-          error instanceof NotebookAttachmentMutationError
-            ? error.code
-            : 'NOTEBOOK_ATTACHMENT_DELETE_FAILED',
-      });
+      return res
+        .status(error instanceof NotebookAttachmentMutationError ? error.status : 400)
+        .json({
+          error: error instanceof Error ? error.message : 'Attachment delete failed',
+          code:
+            error instanceof NotebookAttachmentMutationError
+              ? error.code
+              : 'NOTEBOOK_ATTACHMENT_DELETE_FAILED',
+        });
     }
 
     const row = await queryHelpers.queryOne<any>(
@@ -1022,9 +1082,8 @@ router.post(
     }
 
     try {
-      const { convertNotebookPage: v8Convert } = await import(
-        '../../services/notebookConversionService.js'
-      );
+      const { convertNotebookPage: v8Convert } =
+        await import('../../services/notebookConversionService.js');
       const result = await v8Convert({
         pageId,
         orgId,

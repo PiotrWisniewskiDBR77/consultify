@@ -349,7 +349,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                             e.stopPropagation();
                             handleRemoveLink(link.id);
                           }}
-                          className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
+                          className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-900/30"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -486,14 +486,14 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                 onClick={onCreateNew}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                   highlightIdx === filteredCandidates.length
-                    ? 'bg-violet-50 dark:bg-violet-900/20'
+                    ? 'bg-primary-50 dark:bg-primary-900/20'
                     : 'hover:bg-slate-50 dark:hover:bg-zinc-800'
                 }`}
               >
-                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
-                  <Plus className="h-3 w-3 text-violet-600 dark:text-violet-400" />
+                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
+                  <Plus className="h-3 w-3 text-primary-600 dark:text-primary-400" />
                 </div>
-                <span className="font-medium text-violet-600 dark:text-violet-400">
+                <span className="font-medium text-primary-600 dark:text-primary-400">
                   {isPl ? 'Utwórz nowy rekord' : 'Create new record'}
                 </span>
               </button>

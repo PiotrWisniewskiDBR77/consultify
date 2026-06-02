@@ -129,7 +129,7 @@ export const CompanyProfileModule: React.FC = () => {
   }) => (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        {Icon && <Icon size={14} className="text-purple-500" />}
+        {Icon && <Icon size={14} className="text-primary-500" />}
         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           {label}
         </label>
@@ -138,7 +138,7 @@ export const CompanyProfileModule: React.FC = () => {
         {options.map((opt) => (
           <label
             key={opt}
-            className="relative flex items-center p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 cursor-pointer hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all group"
+            className="relative flex items-center p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all group"
           >
             <input
               type="radio"
@@ -147,13 +147,13 @@ export const CompanyProfileModule: React.FC = () => {
               checked={value === opt}
               onChange={() => onChange(opt)}
             />
-            <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-500 mr-3 peer-checked:border-purple-600 peer-checked:bg-purple-600 relative flex items-center justify-center transition-colors">
+            <div className="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-500 mr-3 peer-checked:border-primary-600 peer-checked:bg-primary-600 relative flex items-center justify-center transition-colors">
               <div className="w-1.5 h-1.5 bg-white dark:bg-navy-900 rounded-full opacity-0 peer-checked:opacity-100" />
             </div>
-            <span className="text-sm text-slate-700 dark:text-slate-200 font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+            <span className="text-sm text-slate-700 dark:text-slate-200 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
               {opt}
             </span>
-            <div className="absolute inset-0 rounded-xl ring-2 ring-transparent peer-checked:ring-purple-500/50 pointer-events-none transition-all" />
+            <div className="absolute inset-0 rounded-xl ring-2 ring-transparent peer-checked:ring-primary-500/50 pointer-events-none transition-all" />
           </label>
         ))}
       </div>
@@ -179,7 +179,7 @@ export const CompanyProfileModule: React.FC = () => {
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-shadow"
+          className="w-full appearance-none px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-shadow"
         >
           <option value="" disabled>
             Select...
@@ -225,7 +225,7 @@ export const CompanyProfileModule: React.FC = () => {
                             flex items-center gap-2 pb-3 text-sm font-medium transition-all border-b-2 whitespace-nowrap px-1
                             ${
                               activeTab === tab.id
-                                ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                                ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:border-navy-700 dark:hover:border-white/20'
                             }
                         `}
@@ -238,17 +238,17 @@ export const CompanyProfileModule: React.FC = () => {
 
       {/* AI Context Banner - Placed BELOW tabs */}
       {showContextBanner && activeTab === 'snapshot' && (
-        <div className="bg-gradient-to-r from-purple-50 to-white dark:from-purple-900/20 dark:to-navy-900 border border-purple-100 dark:border-purple-800/50 rounded-xl p-4 flex items-start gap-4 shadow-sm relative overflow-hidden animate-in fade-in slide-in-from-top-2">
+        <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-900 border border-primary-100 dark:border-primary-800/50 rounded-xl p-4 flex items-start gap-4 shadow-sm relative overflow-hidden animate-in fade-in slide-in-from-top-2">
           <div className="absolute top-0 right-0 p-2 opacity-10">
             <Sparkles size={100} />
           </div>
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-600 shrink-0">
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 shrink-0">
             <Sparkles size={20} />
           </div>
           <div className="flex-1 z-10 min-w-0">
             <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2 flex-wrap">
               AI Insight
-              <span className="text-[10px] font-normal px-2 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 rounded-full whitespace-nowrap">
+              <span className="text-[10px] font-normal px-2 py-0.5 bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-300 rounded-full whitespace-nowrap">
                 High Confidence
               </span>
             </h4>
@@ -257,7 +257,7 @@ export const CompanyProfileModule: React.FC = () => {
               classification seems more specific.
               <br />
               Suggestion: Change <strong>Industry</strong> to{' '}
-              <strong className="text-purple-600 dark:text-purple-400">
+              <strong className="text-primary-600 dark:text-primary-400">
                 Automotive Parts Manufacturing
               </strong>
               .
@@ -269,7 +269,7 @@ export const CompanyProfileModule: React.FC = () => {
                 setCompanyProfile({ industry: 'Manufacturing', subIndustry: 'Automotive Parts' });
                 setShowContextBanner(false);
               }}
-              className="px-4 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 shadow-sm transition-all shadow-purple-200 dark:shadow-none whitespace-nowrap"
+              className="px-4 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 shadow-sm transition-all shadow-primary-200 dark:shadow-none whitespace-nowrap"
             >
               Accept
             </button>
@@ -301,7 +301,7 @@ export const CompanyProfileModule: React.FC = () => {
               {/* Column 1: Firm Context */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-navy-700">
-                  <Briefcase size={18} className="text-purple-500" />
+                  <Briefcase size={18} className="text-primary-500" />
                   <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                     Firm Context
                   </h3>
@@ -347,7 +347,7 @@ export const CompanyProfileModule: React.FC = () => {
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Globe size={14} className="text-purple-500" />
+                    <Globe size={14} className="text-primary-500" />
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Target Markets
                     </label>
@@ -362,7 +362,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.targetMarkets.includes(m)}
                           onChange={() => setCompanyProfile({ targetMarkets: [m] })} // Doing simple radio for now
                         />
-                        <div className="text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:border-purple-600 transition-all shadow-sm hover:shadow">
+                        <div className="text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 transition-all shadow-sm hover:shadow">
                           {m}
                         </div>
                       </label>
@@ -372,7 +372,7 @@ export const CompanyProfileModule: React.FC = () => {
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Award size={14} className="text-purple-500" />
+                    <Award size={14} className="text-primary-500" />
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Certifications
                     </label>
@@ -391,12 +391,12 @@ export const CompanyProfileModule: React.FC = () => {
                             setCompanyProfile({ certifications: newCerts });
                           }}
                         />
-                        <div className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-purple-100 peer-checked:text-purple-700 peer-checked:border-purple-200 dark:peer-checked:bg-purple-900/30 dark:peer-checked:text-purple-300 dark:peer-checked:border-purple-500/50 transition-all select-none">
+                        <div className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-primary-100 peer-checked:text-primary-700 peer-checked:border-primary-200 dark:peer-checked:bg-primary-900/30 dark:peer-checked:text-primary-300 dark:peer-checked:border-primary-500/50 transition-all select-none">
                           {cert}
                         </div>
                       </label>
                     ))}
-                    <button className="px-3 py-1.5 rounded-full border border-dashed border-slate-300 dark:border-navy-700 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-purple-600 hover:border-purple-300 transition-colors">
+                    <button className="px-3 py-1.5 rounded-full border border-dashed border-slate-300 dark:border-navy-700 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-600 hover:border-primary-300 transition-colors">
                       + Add Custom
                     </button>
                   </div>
@@ -406,7 +406,7 @@ export const CompanyProfileModule: React.FC = () => {
               {/* Column 2: Scale & Reach */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-navy-700">
-                  <MapPin size={18} className="text-purple-500" />
+                  <MapPin size={18} className="text-primary-500" />
                   <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                     Scale & Reach
                   </h3>
@@ -441,7 +441,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.operationalFootprint === opt}
                           onChange={() => setCompanyProfile({ operationalFootprint: opt })}
                         />
-                        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 peer-checked:ring-2 peer-checked:ring-purple-500 peer-checked:border-purple-500 transition-all text-center">
+                        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-primary-500 transition-all text-center">
                           <div className="font-bold text-navy-900 dark:text-white mb-1">{opt}</div>
                           <div className="text-[10px] text-slate-500 dark:text-slate-400">
                             {opt === 'Single Site' ? 'Centralized ops' : 'Distributed ops'}
@@ -453,7 +453,7 @@ export const CompanyProfileModule: React.FC = () => {
 
                   <div className="relative group">
                     <MapPin
-                      className="absolute top-3 left-3 text-slate-400 dark:text-slate-500 group-focus-within:text-purple-500 transition-colors z-10"
+                      className="absolute top-3 left-3 text-slate-400 dark:text-slate-500 group-focus-within:text-primary-500 transition-colors z-10"
                       size={16}
                     />
                     <AITextArea
@@ -489,7 +489,7 @@ export const CompanyProfileModule: React.FC = () => {
             {/* Production System Section */}
             <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-purple-600">
+                <div className="p-2 bg-primary-50 dark:bg-primary-900/30 rounded-lg text-primary-600">
                   <Factory size={20} />
                 </div>
                 <div>
@@ -517,7 +517,7 @@ export const CompanyProfileModule: React.FC = () => {
                       checked={companyProfile.productionSystem === model.id}
                       onChange={() => setCompanyProfile({ productionSystem: model.id })}
                     />
-                    <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-navy-950/50 hover:bg-white dark:hover:bg-navy-800 hover:border-purple-300 transition-all flex flex-col items-center text-center peer-checked:bg-white dark:peer-checked:bg-navy-800 peer-checked:ring-2 peer-checked:ring-purple-500 peer-checked:border-transparent shadow-sm">
+                    <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-navy-950/50 hover:bg-white dark:hover:bg-navy-800 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:bg-white dark:peer-checked:bg-navy-800 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent shadow-sm">
                       <div className="text-2xl mb-2 grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all">
                         {model.icon}
                       </div>
@@ -526,7 +526,7 @@ export const CompanyProfileModule: React.FC = () => {
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{model.sub}</div>
                     </div>
-                    <div className="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity text-purple-600">
+                    <div className="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity text-primary-600">
                       <Check size={16} strokeWidth={3} />
                     </div>
                   </label>
@@ -552,7 +552,7 @@ export const CompanyProfileModule: React.FC = () => {
                             checked={companyProfile.shiftPattern === shift}
                             onChange={() => setCompanyProfile({ shiftPattern: shift })}
                           />
-                          <div className="py-2 px-1 text-center text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-300 peer-checked:bg-purple-100 dark:peer-checked:bg-purple-900/40 peer-checked:text-purple-700 dark:peer-checked:text-purple-300 peer-checked:border-purple-300 transition-all hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                          <div className="py-2 px-1 text-center text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-300 peer-checked:bg-primary-100 dark:peer-checked:bg-primary-900/40 peer-checked:text-primary-700 dark:peer-checked:text-primary-300 peer-checked:border-primary-300 transition-all hover:bg-slate-50 dark:hover:bg-navy-800/20">
                             {shift}
                           </div>
                         </label>
@@ -568,7 +568,7 @@ export const CompanyProfileModule: React.FC = () => {
                     </div>
                     <input
                       type="range"
-                      className="w-full accent-purple-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700"
+                      className="w-full accent-primary-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700"
                       min="0"
                       max="100"
                       value={companyProfile.automationLevel}
@@ -627,7 +627,7 @@ export const CompanyProfileModule: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 h-full">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="p-1.5 bg-purple-50 dark:bg-purple-900/30 rounded text-purple-600">
+                  <div className="p-1.5 bg-primary-50 dark:bg-primary-900/30 rounded text-primary-600">
                     <Users size={16} />
                   </div>
                   <h4 className="font-bold text-navy-900 dark:text-white">Decision Making</h4>
@@ -680,8 +680,8 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.decisionMaking === opt.id}
                           onChange={() => setCompanyProfile({ decisionMaking: opt.id })}
                         />
-                        <div className="p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/20 peer-checked:border-purple-500 peer-checked:ring-1 peer-checked:ring-purple-500/50 transition-all flex flex-col h-full">
-                          <div className="flex items-center gap-2 mb-1.5 text-slate-500 dark:text-slate-400 peer-checked:text-purple-600 transition-colors">
+                        <div className="p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 transition-all flex flex-col h-full">
+                          <div className="flex items-center gap-2 mb-1.5 text-slate-500 dark:text-slate-400 peer-checked:text-primary-600 transition-colors">
                             {opt.icon}
                           </div>
                           <div className="font-bold text-sm text-navy-900 dark:text-white leading-tight mb-1">
@@ -691,7 +691,7 @@ export const CompanyProfileModule: React.FC = () => {
                             {opt.sub}
                           </div>
                         </div>
-                        <div className="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity text-purple-600">
+                        <div className="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 transition-opacity text-primary-600">
                           <Check size={14} strokeWidth={3} />
                         </div>
                       </label>
@@ -955,9 +955,9 @@ export const CompanyProfileModule: React.FC = () => {
                     }}
                   />
 
-                  <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-purple-300 dark:hover:border-purple-500/50 transition-all peer-checked:border-purple-500 peer-checked:ring-1 peer-checked:ring-purple-500/50 peer-checked:bg-purple-50/30 dark:peer-checked:bg-purple-900/10 shadow-sm">
+                  <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 peer-checked:bg-primary-50/30 dark:peer-checked:bg-primary-900/10 shadow-sm">
                     <div className="flex items-start gap-4">
-                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 peer-checked:bg-purple-100 peer-checked:text-purple-600 dark:peer-checked:bg-purple-500/20 dark:peer-checked:text-purple-300 transition-colors">
+                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 peer-checked:bg-primary-100 peer-checked:text-primary-600 dark:peer-checked:bg-primary-500/20 dark:peer-checked:text-primary-300 transition-colors">
                         {constraint.icon}
                       </div>
                       <div className="flex-1">
@@ -965,7 +965,7 @@ export const CompanyProfileModule: React.FC = () => {
                           <h4 className="font-bold text-navy-900 dark:text-white leading-tight">
                             {constraint.label}
                           </h4>
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center peer-checked:border-purple-600 peer-checked:bg-purple-600 transition-all">
+                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center peer-checked:border-primary-600 peer-checked:bg-primary-600 transition-all">
                             <Check
                               size={12}
                               className="text-white opacity-0 peer-checked:opacity-100"

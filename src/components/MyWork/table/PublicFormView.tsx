@@ -182,8 +182,8 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
   if (error && !form) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-950">
-        <div className="mx-4 max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center dark:border-red-800 dark:bg-navy-900">
-          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+        <div className="mx-4 max-w-md rounded-2xl border border-rose-200 bg-white p-8 text-center dark:border-rose-800 dark:bg-navy-900">
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-rose-500" />
           <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
             Form not found
           </h2>
@@ -234,7 +234,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
 
           {/* Error banner */}
           {error && (
-            <div className="mb-6 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+            <div className="mb-6 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-400">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {error}
             </div>
@@ -293,7 +293,7 @@ function FormField({ field, config, value, error, onChange }: FormFieldProps) {
     <div>
       <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
         {label}
-        {config.required && <span className="ml-1 text-red-500">*</span>}
+        {config.required && <span className="ml-1 text-rose-500">*</span>}
       </label>
       {config.helpText && (
         <p className="mb-1.5 text-xs text-gray-400 dark:text-gray-500">{config.helpText}</p>
@@ -305,7 +305,7 @@ function FormField({ field, config, value, error, onChange }: FormFieldProps) {
         onChange={onChange}
         hasError={!!error}
       />
-      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
     </div>
   );
 }
@@ -320,7 +320,7 @@ interface FieldInputProps {
 
 function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInputProps) {
   const baseClass = `w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-navy-900 dark:text-white ${
-    hasError ? 'border-red-300 dark:border-red-700' : 'border-gray-200 dark:border-navy-600'
+    hasError ? 'border-rose-300 dark:border-rose-700' : 'border-gray-200 dark:border-navy-600'
   }`;
 
   switch (fieldType) {

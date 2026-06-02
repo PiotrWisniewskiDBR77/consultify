@@ -24,14 +24,14 @@ const ROLE_GUIDANCE: Array<{
   {
     role: 'ADMIN',
     title: 'Admin',
-    description: 'Can manage members, security, collaboration, integrations, and audit.',
+    description: 'Can manage team members, member roles, and team invite codes.',
     denial: 'Cannot change owner membership or bypass owner protections.',
   },
   {
     role: 'MEMBER',
     title: 'Member',
-    description: 'Standard workspace access without admin cockpit permissions.',
-    denial: 'Cannot open Admin cockpit or change tenant-wide policy.',
+    description: 'Standard workspace access without team administration permissions.',
+    denial: 'Cannot open Team Admin or change membership.',
   },
   {
     role: 'GUEST',
@@ -59,7 +59,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
     () => members.find((member) => member.user_id === currentUser?.id),
     [members, currentUser?.id]
   );
-  const isOwner = String(viewerMembership?.role || '').toUpperCase() === 'OWNER';
+  const canManageTeam = ['OWNER', 'ADMIN'].includes(
+    String(viewerMembership?.role || '').toUpperCase()
+  );
 
   const loadMembers = useCallback(async () => {
     if (!orgId) {
@@ -85,7 +87,19 @@ export const AdminMembersRolesPanel: React.FC = () => {
   }, [loadMembers]);
 
   const handleInvite = async () => {
-    if (!orgId || !inviteEmail.trim()) return;
+    if (!orgId) return;
+    if (!canManageTeam) {
+      toast.error('Only a team owner or admin can add members');
+      return;
+    }
+    if (inviteRole === 'OWNER') {
+      toast.error('Owner changes must use the ownership transfer flow');
+      return;
+    }
+    if (!inviteEmail.trim()) {
+      toast.error('Enter an email address before adding a member');
+      return;
+    }
     try {
       setInviting(true);
       await Api.addOrganizationMember(orgId, inviteEmail.trim(), inviteRole);
@@ -102,6 +116,14 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
   const handleRoleChange = async (memberId: string, role: RoleOption) => {
     if (!orgId) return;
+    if (!canManageTeam) {
+      toast.error('Only a team owner or admin can change member roles');
+      return;
+    }
+    if (role === 'OWNER') {
+      toast.error('Owner changes must use the ownership transfer flow');
+      return;
+    }
     try {
       setSavingMemberId(memberId);
       await Api.updateOrganizationMemberRole(orgId, memberId, role);
@@ -133,14 +155,13 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
     try {
       setIsGeneratingCode(true);
-      const response = await Api.post('/access-control/codes', {
-        organizationId: orgId,
+      const response = await Api.post('/admin/access-codes', {
         role: generatedInviteRole,
         maxUses: generatedInviteMaxUses,
         expiresInDays: 7,
       });
 
-      const code = response?.code?.code;
+      const code = response?.code?.code || response?.code;
       if (!code) {
         throw new Error('Code was not returned by the server');
       }
@@ -179,7 +200,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
               {item.role === 'OWNER' ? (
                 <Crown className="h-4 w-4 text-amber-500" />
               ) : item.role === 'ADMIN' ? (
-                <Shield className="h-4 w-4 text-violet-500" />
+                <Shield className="h-4 w-4 text-primary-500" />
               ) : (
                 <Users className="h-4 w-4 text-slate-500" />
               )}
@@ -217,16 +238,17 @@ export const AdminMembersRolesPanel: React.FC = () => {
               <option value="MEMBER">Member</option>
               <option value="ADMIN">Admin</option>
               <option value="GUEST">Guest</option>
-              <option value="OWNER" disabled={!isOwner}>
-                Owner
-              </option>
             </select>
             <button
               onClick={handleInvite}
-              disabled={inviting || !inviteEmail.trim()}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              disabled={inviting}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              {inviting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
               Add member
             </button>
           </div>
@@ -264,7 +286,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                     member.email?.split('@')[0] ||
                     'Unknown member';
                   const isBusy = savingMemberId === member.user_id;
-                  const ownerProtected = memberRole === 'OWNER' && !isOwner;
+                  const ownerProtected = memberRole === 'OWNER';
                   const selfProtected = member.user_id === currentUser?.id;
 
                   return (
@@ -287,7 +309,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                             (isBusy || ownerProtected) && 'opacity-60'
                           )}
                         >
-                          <option value="OWNER" disabled={!isOwner}>
+                          <option value="OWNER" disabled>
                             Owner
                           </option>
                           <option value="ADMIN">Admin</option>
@@ -325,15 +347,15 @@ export const AdminMembersRolesPanel: React.FC = () => {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Pilot Access Code
+              Team Invite Code
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Generate one shared code for tomorrow's VTS onboarding. The default limit is set to
-              50 participants and you can copy the ready registration link below.
+              Generate one shared code for team onboarding. The default limit is set to 50 members
+              and you can copy the ready registration link below.
             </p>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              Participants register with email and password after opening the invite link. Phone
-              number is optional.
+              Team members register with email and password after opening the invite link. Phone
+              number remains optional.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-[160px,120px,auto]">
@@ -342,7 +364,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
               onChange={(event) => setGeneratedInviteRole(event.target.value as RoleOption)}
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
             >
-              <option value="MEMBER">Participant</option>
+              <option value="MEMBER">Member</option>
               <option value="GUEST">Guest</option>
               <option value="ADMIN">Admin</option>
             </select>
@@ -351,9 +373,11 @@ export const AdminMembersRolesPanel: React.FC = () => {
               min={1}
               max={500}
               value={generatedInviteMaxUses}
-              aria-label="Maximum participant registrations"
+              aria-label="Maximum team registrations"
               onChange={(event) =>
-                setGeneratedInviteMaxUses(Math.min(500, Math.max(1, Number(event.target.value || 1))))
+                setGeneratedInviteMaxUses(
+                  Math.min(500, Math.max(1, Number(event.target.value || 1)))
+                )
               }
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
             />
@@ -375,7 +399,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
         {generatedInviteCode && (
           <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
             <div className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
-              Ready for tomorrow
+              Ready for team onboarding
             </div>
             <div className="mt-2 flex flex-col gap-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

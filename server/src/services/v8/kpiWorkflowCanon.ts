@@ -218,12 +218,7 @@ export function computeKpiHealthPosture(kpi: {
 // §8.1B — KPI→Finance linkage boundary types
 // ────────────────────────────────────────────────────────────────
 
-export const LINKAGE_PATTERNS = [
-  'interpretation',
-  'driver',
-  'review',
-  'realization',
-] as const;
+export const LINKAGE_PATTERNS = ['interpretation', 'driver', 'review', 'realization'] as const;
 
 export type LinkagePattern = (typeof LINKAGE_PATTERNS)[number];
 
@@ -293,25 +288,61 @@ export const KPI_ANTI_DUPLICATE_RULES = {
 // ────────────────────────────────────────────────────────────────
 
 export const P04_ACCEPTANCE_CHECKLIST = [
-  { id: 1, requirement: 'Vocabulary frozen: signal/target/trend/report/reconciliation/next-action', section: '§8.1A' },
+  {
+    id: 1,
+    requirement: 'Vocabulary frozen: signal/target/trend/report/reconciliation/next-action',
+    section: '§8.1A',
+  },
   { id: 2, requirement: 'KPI is closed-loop lane, not BI suite', section: '§8.1E' },
   { id: 3, requirement: 'KPI truth vs finance model truth boundary explicit', section: '§8.1B' },
-  { id: 4, requirement: 'Linkage optional, supports interpretation/driver/review/realization', section: '§8.1B' },
-  { id: 5, requirement: 'Reconciliation ownership: Results starts, Finance resolves', section: '§8.1B' },
+  {
+    id: 4,
+    requirement: 'Linkage optional, supports interpretation/driver/review/realization',
+    section: '§8.1B',
+  },
+  {
+    id: 5,
+    requirement: 'Reconciliation ownership: Results starts, Finance resolves',
+    section: '§8.1B',
+  },
   { id: 6, requirement: 'Permissions frozen and enforced on all write routes', section: '§8.1C' },
   { id: 7, requirement: 'Permission denied has explicit degraded posture', section: '§8.1F' },
   { id: 8, requirement: 'Missing data has explicit degraded posture', section: '§8.1F' },
   { id: 9, requirement: 'Discrepancy unresolved has explicit degraded posture', section: '§8.1F' },
   { id: 10, requirement: 'Linkage unavailable has explicit degraded posture', section: '§8.1F' },
   { id: 11, requirement: 'Anti-duplicate gates explicit', section: '§8.1E' },
-  { id: 12, requirement: 'Canonical workflow: signal→inspect→report→reconcile→next-action', section: '§8.1D' },
+  {
+    id: 12,
+    requirement: 'Canonical workflow: signal→inspect→report→reconcile→next-action',
+    section: '§8.1D',
+  },
   { id: 13, requirement: 'Operator cockpit: Overview/Queue/Catalog modes', section: 'P04-D' },
-  { id: 14, requirement: 'Queue semantics: needs-entry/below-target/discrepancy/requires-review', section: 'P04-D' },
-  { id: 15, requirement: 'Template-first reports with snapshot refresh and task materialization', section: 'P04-D' },
+  {
+    id: 14,
+    requirement: 'Queue semantics: needs-entry/below-target/discrepancy/requires-review',
+    section: 'P04-D',
+  },
+  {
+    id: 15,
+    requirement: 'Template-first reports with snapshot refresh and task materialization',
+    section: 'P04-D',
+  },
   { id: 16, requirement: 'Batch measurement via signal sheets', section: 'P04-D' },
-  { id: 17, requirement: 'Distribution surfaces: Schedules/Wallboards/Connectors', section: 'P04-E' },
-  { id: 18, requirement: 'Goals/Scorecards: create, link initiatives, rollup, progress', section: 'P04-E' },
-  { id: 19, requirement: 'Full 7-tab KPI drawer with deviation lifecycle and metric audit', section: 'P04-F' },
+  {
+    id: 17,
+    requirement: 'Distribution surfaces: Schedules/Wallboards/Connectors',
+    section: 'P04-E',
+  },
+  {
+    id: 18,
+    requirement: 'Goals/Scorecards: create, link initiatives, rollup, progress',
+    section: 'P04-E',
+  },
+  {
+    id: 19,
+    requirement: 'Full 7-tab KPI drawer with deviation lifecycle and metric audit',
+    section: 'P04-F',
+  },
   { id: 20, requirement: 'AI-assisted operations without silent truth mutation', section: 'P04-G' },
   { id: 21, requirement: 'KPI attribution and showcase/demo data layer', section: 'P04-H' },
 ] as const;

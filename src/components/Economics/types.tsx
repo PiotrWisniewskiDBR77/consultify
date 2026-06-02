@@ -220,9 +220,9 @@ export const MATURITY_LEVELS = [
     level: 1,
     name: 'Basic Data Registration',
     namePl: 'Rejestracja data podstawowych',
-    color: '#ef4444',
+    color: '#f43f5e',
   },
-  { level: 2, name: 'Workstation Control', namePl: 'Kontrola stanowiska', color: '#f97316' },
+  { level: 2, name: 'Workstation Control', namePl: 'Kontrola stanowiska', color: '#f59e0b' },
   { level: 3, name: 'Process Control', namePl: 'Kontrola procesu', color: '#f59e0b' },
   { level: 4, name: 'Automation', namePl: 'Automatyzacja', color: '#eab308' },
   { level: 5, name: 'MES Integration', namePl: 'MES', color: '#84cc16' },
@@ -232,11 +232,11 @@ export const MATURITY_LEVELS = [
 
 export const AXIS_COLORS: Record<string, string> = {
   digital_processes: '#3b82f6',
-  digital_products: '#8b5cf6',
+  digital_products: '#6366f1',
   digital_business_models: '#ec4899',
   big_data: '#f59e0b',
   transformation_culture: '#10b981',
-  cybersecurity: '#ef4444',
+  cybersecurity: '#f43f5e',
 };
 
 export const AXIS_ICONS: Record<string, string> = {

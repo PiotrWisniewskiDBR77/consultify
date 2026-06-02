@@ -219,7 +219,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
           onClick={() => setActiveTab('rates')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'rates'
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
           }`}
         >
@@ -230,7 +230,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
           onClick={() => setActiveTab('validation')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'validation'
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
           }`}
         >
@@ -241,7 +241,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
           onClick={() => setActiveTab('calculator')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'calculator'
-              ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
           }`}
         >
@@ -252,12 +252,12 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
 
       {/* Error Display */}
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-red-500" />
-          <p className="text-red-700 dark:text-red-400">{error}</p>
+        <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-rose-500" />
+          <p className="text-rose-700 dark:text-rose-400">{error}</p>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-red-500 hover:text-red-700"
+            className="ml-auto text-rose-500 hover:text-rose-700"
           >
             <XCircle className="w-4 h-4" />
           </button>
@@ -303,7 +303,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                   setEditingRate(null);
                   setShowEditModal(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
               >
                 <Plus className="w-4 h-4" />
                 Add Tax Rate
@@ -315,7 +315,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <RefreshCw className="w-6 h-6 animate-spin text-purple-600" />
+                <RefreshCw className="w-6 h-6 animate-spin text-primary-600" />
               </div>
             ) : filteredRates.length === 0 ? (
               <div className="text-center py-12">
@@ -408,7 +408,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                             </button>
                             <button
                               onClick={() => handleDeleteRate(rate.id)}
-                              className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -476,7 +476,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                 <div className="relative group">
                   <button
                     disabled
-                    className="px-6 py-2 rounded-lg bg-purple-600 text-white opacity-50 cursor-not-allowed"
+                    className="px-6 py-2 rounded-lg bg-primary-600 text-white opacity-50 cursor-not-allowed"
                   >
                     Verify
                   </button>
@@ -494,18 +494,18 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
               className={`p-4 rounded-lg ${
                 validation.is_valid
                   ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                  : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                  : 'bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800'
               }`}
             >
               <div className="flex items-start gap-3">
                 {validation.is_valid ? (
                   <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-red-500 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-rose-500 mt-0.5" />
                 )}
                 <div>
                   <p
-                    className={`font-medium ${validation.is_valid ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}
+                    className={`font-medium ${validation.is_valid ? 'text-green-700 dark:text-green-400' : 'text-rose-700 dark:text-rose-400'}`}
                   >
                     {validation.is_valid ? 'Valid VAT Number' : 'Invalid VAT Number'}
                   </p>
@@ -520,7 +520,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                     </p>
                   )}
                   {validation.error && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                    <p className="text-sm text-rose-600 dark:text-rose-400 mt-1">
                       {validation.error}
                     </p>
                   )}
@@ -591,7 +591,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
               <button
                 onClick={handleCalculateTax}
                 disabled={!calcAmount || !calcCountry || calculating}
-                className="w-full px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {calculating ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : 'Calculate'}
               </button>
@@ -618,7 +618,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Tax Amount</p>
-                  <p className="text-lg font-semibold text-purple-600 dark:text-purple-400">
+                  <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">
                     {formatCurrency(calcResult.taxAmount)}
                   </p>
                 </div>
@@ -807,7 +807,7 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+              className="flex-1 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
             >
               {rate ? 'Update' : 'Create'}
             </button>

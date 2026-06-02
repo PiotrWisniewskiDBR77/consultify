@@ -1,0 +1,36 @@
+{
+  "startedAt": "2026-05-17T14:23:44.748Z",
+  "env": "https://demo.consultify.ai",
+  "steps": [
+    {
+      "at": "2026-05-17T14:23:45.691Z",
+      "name": "login",
+      "status": 200,
+      "user": {
+        "email": "piotr.wisniewski@dbr77.com",
+        "role": "OWNER",
+        "org": "a3e05d4a-5397-419d-b486-8e44366c0063"
+      }
+    },
+    {
+      "at": "2026-05-17T14:23:46.865Z",
+      "name": "create_idea_workspace",
+      "status": 201,
+      "workspaceId": "4cbf2708-7170-4eb9-9c25-b545fd55dc54",
+      "title": "QA TEST IDEA TABLE 1779027825691"
+    },
+    {
+      "at": "2026-05-17T14:23:47.369Z",
+      "name": "create_base",
+      "status": 201,
+      "baseId": "a709d645-bbc8-4b3f-9a0d-ca7dc08a3c7a"
+    }
+  ],
+  "errors": [
+    {
+      "fatal": "create table failed: status=403 body={\"error\":\"Access denied. Required roles: base_owner, schema_editor. Current role: viewer\"}"
+    }
+  ],
+  "final": "FAIL",
+  "finishedAt": "2026-05-17T14:23:47.516Z"
+}

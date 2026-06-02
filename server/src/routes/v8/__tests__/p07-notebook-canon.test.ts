@@ -6,22 +6,22 @@
  * §2.3.6 handoff targets, §2.3.7 anti-duplicate, §2.3.8 degraded posture,
  * §2.3.9 acceptance checklist.
  */
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  P07_CAPTURE_ENTRIES,
-  P07_PROVENANCE_LANGUAGE,
-  P07_PROVENANCE_RULES,
-  P07_ATTACHMENT_LIFECYCLE_STATES,
+  P07_ACCEPTANCE_CHECKLIST,
+  P07_ANTI_DUPLICATE_RULES,
   P07_ATTACHMENT_ERROR_TAXONOMY,
-  P07_SEARCH_BASELINE,
+  P07_ATTACHMENT_LIFECYCLE_STATES,
+  P07_CAPTURE_ENTRIES,
+  P07_DEGRADED_SCENARIOS,
   P07_HANDOFF_COMMON_FIELDS,
   P07_HANDOFF_TARGETS,
-  P07_ANTI_DUPLICATE_RULES,
-  P07_DEGRADED_SCENARIOS,
-  P07_ACCEPTANCE_CHECKLIST,
   P07_NON_GOALS,
   P07_NOTEBOOK_CANON_CONTRACT,
+  P07_PROVENANCE_LANGUAGE,
+  P07_PROVENANCE_RULES,
+  P07_SEARCH_BASELINE,
 } from '../../../services/v8/notebookCanon.js';
 
 const mockQueryRun = vi.fn();
@@ -290,24 +290,26 @@ describe('§2.3.8 Degraded posture', () => {
   });
 
   it('includes upload failure scenario', () => {
-    const uploadFail = P07_DEGRADED_SCENARIOS.find(s => s.scenario.includes('Upload failed'));
+    const uploadFail = P07_DEGRADED_SCENARIOS.find((s) => s.scenario.includes('Upload failed'));
     expect(uploadFail).toBeDefined();
     expect(uploadFail!.nextAction).toContain('Retry');
   });
 
   it('includes semantic search degraded scenario', () => {
-    const searchDegraded = P07_DEGRADED_SCENARIOS.find(s => s.scenario.includes('Semantic search'));
+    const searchDegraded = P07_DEGRADED_SCENARIOS.find((s) =>
+      s.scenario.includes('Semantic search')
+    );
     expect(searchDegraded).toBeDefined();
     expect(searchDegraded!.nextAction.toLowerCase()).toContain('keyword');
   });
 
   it('includes deeplink target missing scenario', () => {
-    const deeplink = P07_DEGRADED_SCENARIOS.find(s => s.scenario.includes('Deeplink'));
+    const deeplink = P07_DEGRADED_SCENARIOS.find((s) => s.scenario.includes('Deeplink'));
     expect(deeplink).toBeDefined();
   });
 
   it('includes AI unavailable scenario', () => {
-    const aiDown = P07_DEGRADED_SCENARIOS.find(s => s.scenario.includes('AI unavailable'));
+    const aiDown = P07_DEGRADED_SCENARIOS.find((s) => s.scenario.includes('AI unavailable'));
     expect(aiDown).toBeDefined();
     expect(aiDown!.userVisibleState).toContain('disabled');
   });
@@ -338,7 +340,7 @@ describe('§2.3.9 Acceptance checklist', () => {
   });
 
   it('covers all contract sections', () => {
-    const sections = P07_ACCEPTANCE_CHECKLIST.map(c => c.section);
+    const sections = P07_ACCEPTANCE_CHECKLIST.map((c) => c.section);
     expect(sections).toContain('§2.3.1');
     expect(sections).toContain('§2.3.2');
     expect(sections).toContain('§2.3.3');
@@ -360,17 +362,19 @@ describe('Non-goals and contract', () => {
   });
 
   it('non-goals include no Notion DB parity', () => {
-    const hasNotion = P07_NON_GOALS.some(g => g.toLowerCase().includes('notion'));
+    const hasNotion = P07_NON_GOALS.some((g) => g.toLowerCase().includes('notion'));
     expect(hasNotion).toBe(true);
   });
 
   it('non-goals include no new module', () => {
-    const hasModule = P07_NON_GOALS.some(g => g.toLowerCase().includes('no new top-level module'));
+    const hasModule = P07_NON_GOALS.some((g) =>
+      g.toLowerCase().includes('no new top-level module')
+    );
     expect(hasModule).toBe(true);
   });
 
   it('non-goals include no silent AI writing', () => {
-    const hasAI = P07_NON_GOALS.some(g => g.toLowerCase().includes('silent ai'));
+    const hasAI = P07_NON_GOALS.some((g) => g.toLowerCase().includes('silent ai'));
     expect(hasAI).toBe(true);
   });
 
@@ -453,18 +457,16 @@ describe('NotebookService integration (capture)', () => {
 
 describe('Attachment service integration', () => {
   it('parseNotebookAttachments handles null gracefully', async () => {
-    const { parseNotebookAttachments } = await import(
-      '../../../services/notebookAttachmentService.js'
-    );
+    const { parseNotebookAttachments } =
+      await import('../../../services/notebookAttachmentService.js');
     expect(parseNotebookAttachments(null)).toEqual([]);
     expect(parseNotebookAttachments(undefined)).toEqual([]);
     expect(parseNotebookAttachments('')).toEqual([]);
   });
 
   it('parseNotebookAttachments parses valid JSON array', async () => {
-    const { parseNotebookAttachments } = await import(
-      '../../../services/notebookAttachmentService.js'
-    );
+    const { parseNotebookAttachments } =
+      await import('../../../services/notebookAttachmentService.js');
     const input = JSON.stringify([
       { id: 'a1', name: 'file.pdf', type: 'application/pdf', size: 1024, uploadedAt: '2026-01-01' },
     ]);
@@ -475,11 +477,17 @@ describe('Attachment service integration', () => {
   });
 
   it('toPublicNotebookAttachments strips storageKey', async () => {
-    const { toPublicNotebookAttachments } = await import(
-      '../../../services/notebookAttachmentService.js'
-    );
+    const { toPublicNotebookAttachments } =
+      await import('../../../services/notebookAttachmentService.js');
     const input = [
-      { id: 'a1', name: 'file.pdf', type: 'application/pdf', size: 1024, uploadedAt: '2026-01-01', storageKey: 'secret/path' },
+      {
+        id: 'a1',
+        name: 'file.pdf',
+        type: 'application/pdf',
+        size: 1024,
+        uploadedAt: '2026-01-01',
+        storageKey: 'secret/path',
+      },
     ];
     const result = toPublicNotebookAttachments(input);
     expect(result).toHaveLength(1);
@@ -512,7 +520,7 @@ describe('NotebookService search integration', () => {
 
 describe('Canon ↔ service coherence', () => {
   it('capture connectors in canon match CaptureSource type', async () => {
-    const canonConnectors = P07_CAPTURE_ENTRIES.create.filter(e =>
+    const canonConnectors = P07_CAPTURE_ENTRIES.create.filter((e) =>
       ['web_clipper', 'email_forward', 'upload_import', 'api_import'].includes(e)
     );
     expect(canonConnectors).toHaveLength(4);

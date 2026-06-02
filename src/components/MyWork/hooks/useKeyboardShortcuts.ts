@@ -95,7 +95,9 @@ export const SHORTCUTS_HELP: ShortcutHelp[] = [
 ];
 
 export function buildShortcutHelp(config: KeyboardShortcutsConfig): ShortcutHelp[] {
-  const shortcuts: ShortcutHelp[] = [{ key: '?', description: 'Show / hide keyboard help', category: 'navigation' }];
+  const shortcuts: ShortcutHelp[] = [
+    { key: '?', description: 'Show / hide keyboard help', category: 'navigation' },
+  ];
 
   if (config.onNavigateUp) shortcuts.push(SHORTCUTS_HELP[0]);
   if (config.onNavigateDown) shortcuts.push(SHORTCUTS_HELP[1]);

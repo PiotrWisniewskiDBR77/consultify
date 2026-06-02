@@ -79,8 +79,8 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
   return (
     <div
       className={`
-            bg-slate-50 dark:bg-navy-900/50 
-            border border-slate-200 dark:border-slate-700 
+            bg-slate-50 dark:bg-navy-900/50
+            border border-slate-200 dark:border-slate-700
             rounded-lg overflow-hidden
             ${className}
         `}
@@ -90,8 +90,8 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-navy-800/50 transition-colors"
       >
-        <HelpCircle size={16} className="text-purple-500 shrink-0" />
-        <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+        <HelpCircle size={16} className="text-primary-500 shrink-0" />
+        <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
           Dlaczego o to pytam?
         </span>
         <svg
@@ -108,8 +108,8 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
       {isExpanded && (
         <div className="px-4 pb-4 pt-0 space-y-3">
           <div className="flex items-start gap-3 bg-white dark:bg-navy-800 rounded-lg p-3 border border-slate-100 dark:border-slate-600">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
-              <Icon size={16} className="text-purple-600 dark:text-purple-400" />
+            <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+              <Icon size={16} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h4 className="font-semibold text-navy-900 dark:text-white text-sm mb-1">

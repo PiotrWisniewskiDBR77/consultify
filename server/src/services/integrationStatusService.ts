@@ -24,13 +24,16 @@ export interface IntegrationHealth {
 }
 
 class IntegrationStatusServiceClass {
-
   getRemediationPath(status: IntegrationStatus): string {
     switch (status) {
-      case 'connected': return 'No action needed. Monitor health.';
-      case 'error': return 'Review error detail → Retry sync → Contact vendor if persistent → Disable if needed.';
-      case 'needs_reauth': return 'Run reauthorization flow → Verify SSO config in Security Policy.';
-      case 'disabled': return 'Re-enable integration → Reauthorize if required.';
+      case 'connected':
+        return 'No action needed. Monitor health.';
+      case 'error':
+        return 'Review error detail → Retry sync → Contact vendor if persistent → Disable if needed.';
+      case 'needs_reauth':
+        return 'Run reauthorization flow → Verify SSO config in Security Policy.';
+      case 'disabled':
+        return 'Re-enable integration → Reauthorize if required.';
     }
   }
 
@@ -107,7 +110,9 @@ class IntegrationStatusServiceClass {
           ],
           { fallback: true }
         );
-      } catch { /* audit best-effort */ }
+      } catch {
+        /* audit best-effort */
+      }
       return true;
     } catch (err) {
       logger.error('[IntegrationStatus] Failed to transition', { integrationId, newStatus, err });

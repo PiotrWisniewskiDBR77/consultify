@@ -2,8 +2,8 @@ import fs from 'fs';
 import JSZip from 'jszip';
 import path from 'path';
 import PDFDocument from 'pdfkit';
-import PptxGenJS from 'pptxgenjs';
-import { PassThrough } from 'stream';
+
+import { unifiedExportService } from './export/UnifiedExportService.js';
 
 export type PartnerResourceLanguage = 'en' | 'pl';
 
@@ -20,22 +20,12 @@ function toLanguage(lang: unknown): PartnerResourceLanguage {
 async function renderPdfToBuffer(
   build: (doc: InstanceType<typeof PDFDocument>) => void
 ): Promise<Buffer> {
-  const doc = new PDFDocument({ margin: 48, size: 'A4' });
-  const stream = new PassThrough();
-  const chunks: Buffer[] = [];
-
-  stream.on('data', (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-
-  const endPromise = new Promise<Buffer>((resolve, reject) => {
-    stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', reject);
+  // Delegates to the shared layout-agnostic PDF primitive (system-unification
+  // #5); the build callback (layout) is unchanged, so output is equivalent.
+  return unifiedExportService.renderPdf(build as (doc: any) => void, {
+    margin: 48,
+    size: 'A4',
   });
-
-  doc.pipe(stream);
-  build(doc);
-  doc.end();
-
-  return endPromise;
 }
 
 function safeReadFile(absPath: string): Buffer | null {
@@ -113,79 +103,80 @@ export async function generatePartnerToolkitResourceFile(params: {
   }
 
   if (fileKey === 'generated:sales_deck') {
-    const pptx = new (PptxGenJS as any)();
-    pptx.layout = 'LAYOUT_WIDE';
+    // Plumbing shared via the unified renderPptx primitive (system-unification
+    // #5); the deck layout below is unchanged.
+    const buffer = await unifiedExportService.renderPptx((pptx: any) => {
+      pptx.layout = 'LAYOUT_WIDE';
 
-    const title =
-      language === 'pl' ? 'Consultify — Deck partnerski' : 'Consultify — Partner Sales Deck';
-    const subtitle =
-      language === 'pl'
-        ? 'Bezpieczne claimy • discovery-first • evidence-backed'
-        : 'Safe claims • discovery-first • evidence-backed';
+      const title =
+        language === 'pl' ? 'Consultify — Deck partnerski' : 'Consultify — Partner Sales Deck';
+      const subtitle =
+        language === 'pl'
+          ? 'Bezpieczne claimy • discovery-first • evidence-backed'
+          : 'Safe claims • discovery-first • evidence-backed';
 
-    const slide1 = pptx.addSlide();
-    slide1.addShape(pptx.ShapeType.rect, {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: '4F46E5' },
-    });
-    slide1.addText(title, {
-      x: 0.7,
-      y: 2.4,
-      w: 12,
-      h: 1,
-      fontFace: 'Aptos Display',
-      fontSize: 36,
-      color: 'FFFFFF',
-      bold: true,
-    });
-    slide1.addText(subtitle, {
-      x: 0.7,
-      y: 3.4,
-      w: 12,
-      h: 0.6,
-      fontFace: 'Aptos',
-      fontSize: 16,
-      color: 'EDE9FE',
-    });
+      const slide1 = pptx.addSlide();
+      slide1.addShape(pptx.ShapeType.rect, {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: '4F46E5' },
+      });
+      slide1.addText(title, {
+        x: 0.7,
+        y: 2.4,
+        w: 12,
+        h: 1,
+        fontFace: 'Aptos Display',
+        fontSize: 36,
+        color: 'FFFFFF',
+        bold: true,
+      });
+      slide1.addText(subtitle, {
+        x: 0.7,
+        y: 3.4,
+        w: 12,
+        h: 0.6,
+        fontFace: 'Aptos',
+        fontSize: 16,
+        color: 'EDE9FE',
+      });
 
-    const slide2 = pptx.addSlide();
-    slide2.addText(language === 'pl' ? 'Co to jest Consultify?' : 'What is Consultify?', {
-      x: 0.7,
-      y: 0.6,
-      w: 12,
-      h: 0.6,
-      fontFace: 'Aptos Display',
-      fontSize: 26,
-      color: '0F172A',
-      bold: true,
+      const slide2 = pptx.addSlide();
+      slide2.addText(language === 'pl' ? 'Co to jest Consultify?' : 'What is Consultify?', {
+        x: 0.7,
+        y: 0.6,
+        w: 12,
+        h: 0.6,
+        fontFace: 'Aptos Display',
+        fontSize: 26,
+        color: '0F172A',
+        bold: true,
+      });
+      const bullets =
+        language === 'pl'
+          ? [
+              'Pomaga prowadzić uporządkowane discovery i uzgodnienia w programach transformacji.',
+              'Ułatwia pracę evidence‑backed: fakty, niewiadome, insighty i decyzje.',
+              'Wspiera governance bez “over‑claimingu” automatyzacji.',
+            ]
+          : [
+              'Helps run structured discovery and alignment in transformation programs.',
+              'Supports evidence‑backed work: facts, unknowns, insights and decisions.',
+              'Augments governance without over-claiming automation.',
+            ];
+      slide2.addText(bullets.map((b) => `• ${b}`).join('\n'), {
+        x: 1.0,
+        y: 1.6,
+        w: 11.5,
+        h: 5.2,
+        fontFace: 'Aptos',
+        fontSize: 18,
+        color: '334155',
+        valign: 'top',
+      });
     });
-    const bullets =
-      language === 'pl'
-        ? [
-            'Pomaga prowadzić uporządkowane discovery i uzgodnienia w programach transformacji.',
-            'Ułatwia pracę evidence‑backed: fakty, niewiadome, insighty i decyzje.',
-            'Wspiera governance bez “over‑claimingu” automatyzacji.',
-          ]
-        : [
-            'Helps run structured discovery and alignment in transformation programs.',
-            'Supports evidence‑backed work: facts, unknowns, insights and decisions.',
-            'Augments governance without over-claiming automation.',
-          ];
-    slide2.addText(bullets.map((b) => `• ${b}`).join('\n'), {
-      x: 1.0,
-      y: 1.6,
-      w: 11.5,
-      h: 5.2,
-      fontFace: 'Aptos',
-      fontSize: 18,
-      color: '334155',
-      valign: 'top',
-    });
-
-    const buffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
     return {
       buffer,
       fileName:

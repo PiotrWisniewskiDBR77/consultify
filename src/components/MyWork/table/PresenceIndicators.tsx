@@ -54,7 +54,7 @@ export const TableRealtimeStatusIndicator: React.FC<TableRealtimeStatusIndicator
           ? t('collaboration.realtimeConnecting', 'Realtime connecting')
           : isReconnecting
             ? t('collaboration.realtimeReconnecting', 'Realtime reconnecting')
-          : t('collaboration.realtimeDegraded', 'Realtime degraded')
+            : t('collaboration.realtimeDegraded', 'Realtime degraded')
       }
     >
       {isConnecting || isReconnecting ? (

@@ -15,7 +15,9 @@ export function getNotebookUploadSourceSummary(
   captureMetadata: NotebookCaptureMetadata | null | undefined,
   isPolish: boolean
 ): NotebookCaptureSourceSummary | null {
-  const normalizedSource = String(captureSource || '').trim().toLowerCase();
+  const normalizedSource = String(captureSource || '')
+    .trim()
+    .toLowerCase();
 
   if (normalizedSource === 'web_clipper') {
     const sourceUrl = String(captureMetadata?.url || '').trim();

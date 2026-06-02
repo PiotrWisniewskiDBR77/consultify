@@ -450,7 +450,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             />
             {/* Progress */}
             <div
-              className="absolute inset-y-0 left-0 bg-purple-500 rounded-full"
+              className="absolute inset-y-0 left-0 bg-primary-500 rounded-full"
               style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
             />
             {/* Chapter Markers */}
@@ -479,7 +479,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             {/* Play/Pause */}
             <button
               onClick={togglePlay}
-              className="p-1.5 text-white hover:text-purple-400 transition-colors"
+              className="p-1.5 text-white hover:text-primary-400 transition-colors"
               title={isPlaying ? t('help.video.controls.pause') : t('help.video.controls.play')}
             >
               {isPlaying ? <Pause size={20} /> : <Play size={20} />}
@@ -488,7 +488,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             {/* Skip Back */}
             <button
               onClick={() => skip(-10)}
-              className="p-1.5 text-white hover:text-purple-400 transition-colors"
+              className="p-1.5 text-white hover:text-primary-400 transition-colors"
               title={t('help.video.controls.prev10')}
             >
               <SkipBack size={18} />
@@ -497,7 +497,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             {/* Skip Forward */}
             <button
               onClick={() => skip(10)}
-              className="p-1.5 text-white hover:text-purple-400 transition-colors"
+              className="p-1.5 text-white hover:text-primary-400 transition-colors"
               title={t('help.video.controls.next10')}
             >
               <SkipForward size={18} />
@@ -506,7 +506,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             {/* Volume */}
             <button
               onClick={toggleMute}
-              className="p-1.5 text-white hover:text-purple-400 transition-colors"
+              className="p-1.5 text-white hover:text-primary-400 transition-colors"
               title={isMuted ? t('help.video.controls.unmute') : t('help.video.controls.mute')}
             >
               {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
@@ -527,7 +527,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     setShowChapters(!showChapters);
                     setShowSettings(false);
                   }}
-                  className="p-1.5 text-white hover:text-purple-400 transition-colors"
+                  className="p-1.5 text-white hover:text-primary-400 transition-colors"
                   title={t('help.video.chapters')}
                 >
                   <BookOpen size={18} />
@@ -545,7 +545,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                         <button
                           key={idx}
                           onClick={() => jumpToChapter(chapter.time)}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors ${currentChapter === chapter ? 'bg-purple-500/20 text-purple-400' : 'text-white'}`}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors ${currentChapter === chapter ? 'bg-primary-500/20 text-primary-400' : 'text-white'}`}
                         >
                           <Clock size={12} className="flex-shrink-0 opacity-50" />
                           <span className="text-xs flex-1 truncate">
@@ -569,7 +569,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                   setShowSettings(!showSettings);
                   setShowChapters(false);
                 }}
-                className="p-1.5 text-white hover:text-purple-400 transition-colors"
+                className="p-1.5 text-white hover:text-primary-400 transition-colors"
                 title={t('help.video.settings')}
               >
                 <Settings size={18} />
@@ -586,7 +586,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     <button
                       key={speed}
                       onClick={() => handleSpeedChange(speed)}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors ${playbackSpeed === speed ? 'text-purple-400' : 'text-white'}`}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors ${playbackSpeed === speed ? 'text-primary-400' : 'text-white'}`}
                     >
                       <span>{speed}x</span>
                       {playbackSpeed === speed && <Check size={14} />}
@@ -599,7 +599,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             {/* Fullscreen */}
             <button
               onClick={toggleFullscreen}
-              className="p-1.5 text-white hover:text-purple-400 transition-colors"
+              className="p-1.5 text-white hover:text-primary-400 transition-colors"
               title={
                 isFullscreen
                   ? t('help.video.controls.exitFullscreen')

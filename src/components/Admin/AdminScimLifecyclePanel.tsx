@@ -106,7 +106,9 @@ export const AdminScimLifecyclePanel: React.FC = () => {
 
         <div className="mt-5 grid gap-6 lg:grid-cols-2">
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">Create SCIM token</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              Create SCIM token
+            </div>
             <input
               type="text"
               value={tokenName}
@@ -115,14 +117,16 @@ export const AdminScimLifecyclePanel: React.FC = () => {
             />
             <button
               onClick={() => void createToken()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
             >
               Generate token
             </button>
           </div>
 
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">Create group mapping</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              Create group mapping
+            </div>
             <input
               type="text"
               value={groupName}
@@ -146,7 +150,7 @@ export const AdminScimLifecyclePanel: React.FC = () => {
             />
             <button
               onClick={() => void createGroupMapping()}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
             >
               Save mapping
             </button>
@@ -165,7 +169,9 @@ export const AdminScimLifecyclePanel: React.FC = () => {
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">Group mappings</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              Group mappings
+            </div>
             <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
               {(summary?.groupMappings || []).map((mapping: any) => (
                 <div key={mapping.id}>

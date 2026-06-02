@@ -35,7 +35,7 @@ const ForecastDay: React.FC<{
   const getCapacityColor = (capacity: number) => {
     if (capacity > 100) return 'bg-rose-500';
     if (capacity > 85) return 'bg-amber-500';
-    if (capacity > 60) return 'bg-cyan-500';
+    if (capacity > 60) return 'bg-blue-500';
     return 'bg-emerald-500';
   };
 
@@ -56,7 +56,7 @@ const ForecastDay: React.FC<{
       className={`
                 relative p-3 rounded-xl border cursor-pointer transition-all
                 ${getCapacityBgColor(forecast.capacity)}
-                ${isToday ? 'ring-2 ring-violet-500 ring-offset-2 dark:ring-offset-navy-950' : ''}
+                ${isToday ? 'ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-navy-950' : ''}
             `}
     >
       {/* Day Header */}
@@ -65,7 +65,7 @@ const ForecastDay: React.FC<{
           <p
             className={`text-xs font-bold uppercase tracking-wider ${
               isToday
-                ? 'text-violet-600 dark:text-violet-400'
+                ? 'text-primary-600 dark:text-primary-400'
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -138,7 +138,7 @@ const ForecastDay: React.FC<{
 
       {/* Today indicator */}
       {isToday && (
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-violet-500 rounded-full border-2 border-white dark:border-navy-950" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full border-2 border-white dark:border-navy-950" />
       )}
     </motion.div>
   );
@@ -194,7 +194,7 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
       <div className="px-5 py-4 border-b border-slate-100 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Calendar size={20} className="text-slate-900 dark:text-white" />
             </div>
             <div>

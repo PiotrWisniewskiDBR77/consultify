@@ -141,11 +141,7 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
 
       {/* Expired Trial Banner */}
       {isTrial && isTrialExpired && (
-        <TrialBanner
-          daysRemaining={0}
-          warningLevel="expired"
-          onUpgradeClick={handleBannerAction}
-        />
+        <TrialBanner daysRemaining={0} warningLevel="expired" onUpgradeClick={handleBannerAction} />
       )}
 
       {showPaymentBanner && !isTrial && (

@@ -5,8 +5,8 @@
 
 import { useMemo } from 'react';
 
-import { useTemplates } from '@/components/ReportsAndPresentations/useRapData';
 import type { TemplateItem, TemplateType } from '@/components/ReportsAndPresentations/types';
+import { useTemplates } from '@/components/ReportsAndPresentations/useRapData';
 
 import type { KimiLane } from './KimiWorkspaceShell';
 
@@ -14,6 +14,9 @@ const LANE_TO_TEMPLATE_TYPE: Record<KimiLane, TemplateType> = {
   wordy: 'report',
   excele: 'sheet',
   prezentacje: 'presentation',
+  // Tabele uses the existing 'sheet' template family. Sprint 5 may introduce
+  // a dedicated 'table' family — keeping 'sheet' is additive-safe today.
+  tabele: 'sheet',
 };
 
 export function useModuleTemplates(lane: KimiLane) {
@@ -22,7 +25,7 @@ export function useModuleTemplates(lane: KimiLane) {
 
   const filtered = useMemo(
     () => templates.filter((t: TemplateItem) => t.type === targetType),
-    [templates, targetType],
+    [templates, targetType]
   );
 
   return { templates: filtered, loading, error, fetchTemplates };

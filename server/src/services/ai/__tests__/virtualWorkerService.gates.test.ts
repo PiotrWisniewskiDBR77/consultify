@@ -20,10 +20,10 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 import {
-  VirtualWorkerValidationError,
   activateWorkerRelease,
   createWorkerEvaluation,
   createWorkerRelease,
+  VirtualWorkerValidationError,
 } from '../virtualWorkerService.js';
 
 describe('virtualWorkerService release and evaluation gates', () => {
@@ -181,7 +181,9 @@ describe('virtualWorkerService release and evaluation gates', () => {
       ['release-1', 'worker-1']
     );
     expect(mockQuery).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE virtual_worker_profiles SET is_active = TRUE, activated_at = NOW()'),
+      expect.stringContaining(
+        'UPDATE virtual_worker_profiles SET is_active = 1, activated_at = NOW()'
+      ),
       ['profile-1']
     );
   });

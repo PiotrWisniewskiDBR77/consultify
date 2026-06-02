@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  Bot,
   BrainCircuit,
   Briefcase,
   CheckCircle2,
@@ -17,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { AxisId, FullSession } from '../../types';
 import { AIInterviewModal } from '../AIInterviewModal';
 import { RadarChart } from '../RadarChart';
-
+import TeresaMark from '../shared/TeresaMark';
 interface FullStep1WorkspaceProps {
   fullSession: FullSession;
   currentAxisId?: AxisId;
@@ -217,9 +216,9 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                               e.stopPropagation();
                               setInterviewAxis(axis);
                             }}
-                            className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded flex items-center gap-1 transition-colors"
+                            className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 px-2 py-1 rounded flex items-center gap-1 transition-colors"
                           >
-                            <Bot size={12} /> Interview
+                            <TeresaMark size={12} /> Interview
                           </button>
                           <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 group-hover:underline decoration-blue-500/30 underline-offset-4 flex items-center gap-1">
                             {inProgress ? 'Continue' : 'Start'}

@@ -318,7 +318,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
       case 'degraded':
         return <AlertTriangle size={14} className="text-amber-400" />;
       case 'unhealthy':
-        return <XCircle size={14} className="text-red-400" />;
+        return <XCircle size={14} className="text-rose-400" />;
       default:
         return <Server size={14} className="text-slate-400 dark:text-slate-500" />;
     }
@@ -433,7 +433,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
           <button
             onClick={refreshAllHealth}
             disabled={refreshingHealth}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <RefreshCw size={16} className={refreshingHealth ? 'animate-spin' : ''} />
             {refreshingHealth ? 'Refreshing...' : 'Refresh All'}
@@ -471,7 +471,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         : TIER_CONFIG[p.tier]?.color === 'blue'
                           ? 'bg-blue-500/10 text-blue-400'
                           : TIER_CONFIG[p.tier]?.color === 'violet'
-                            ? 'bg-violet-500/10 text-violet-400'
+                            ? 'bg-primary-500/10 text-primary-400'
                             : TIER_CONFIG[p.tier]?.color === 'amber'
                               ? 'bg-amber-500/10 text-amber-400'
                               : 'bg-white/5 text-slate-400 dark:text-slate-500'
@@ -524,7 +524,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         llmStatus.circuitBreakers[p.provider].state === 'CLOSED'
                           ? 'bg-emerald-400'
                           : llmStatus.circuitBreakers[p.provider].state === 'OPEN'
-                            ? 'bg-red-400'
+                            ? 'bg-rose-400'
                             : 'bg-amber-400'
                       }`}
                     />
@@ -532,7 +532,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                       Circuit: {llmStatus.circuitBreakers[p.provider].state}
                     </span>
                     {llmStatus.circuitBreakers[p.provider].failures > 0 && (
-                      <span className="text-red-400">
+                      <span className="text-rose-400">
                         ({llmStatus.circuitBreakers[p.provider].failures} failures)
                       </span>
                     )}
@@ -569,7 +569,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
               {loading ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center">
-                    <RefreshCw size={20} className="animate-spin mx-auto text-violet-400" />
+                    <RefreshCw size={20} className="animate-spin mx-auto text-primary-400" />
                   </td>
                 </tr>
               ) : (
@@ -610,7 +610,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                       : config?.color === 'blue'
                                         ? 'bg-blue-500/10 text-blue-400'
                                         : config?.color === 'violet'
-                                          ? 'bg-violet-500/10 text-violet-400'
+                                          ? 'bg-primary-500/10 text-primary-400'
                                           : config?.color === 'amber'
                                             ? 'bg-amber-500/10 text-amber-400'
                                             : 'bg-white/5 text-slate-400 dark:text-slate-500'
@@ -636,7 +636,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                 : statusInfo?.healthStatus === 'degraded'
                                   ? 'text-amber-400'
                                   : statusInfo?.healthStatus === 'unhealthy'
-                                    ? 'text-red-400'
+                                    ? 'text-rose-400'
                                     : 'text-slate-500 dark:text-slate-400'
                             }`}
                           >
@@ -649,7 +649,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                           onClick={() => toggleOrgAccess(p.id, p.is_enabled_for_org !== false)}
                           disabled={savingProvider === p.id}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            p.is_enabled_for_org !== false ? 'bg-violet-600' : 'bg-slate-700'
+                            p.is_enabled_for_org !== false ? 'bg-primary-600' : 'bg-slate-700'
                           } ${savingProvider === p.id ? 'opacity-50' : ''}`}
                         >
                           {savingProvider === p.id ? (
@@ -735,7 +735,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         : config.color === 'blue'
                           ? 'bg-blue-500/5 border-blue-500/20'
                           : config.color === 'violet'
-                            ? 'bg-violet-500/5 border-violet-500/20'
+                            ? 'bg-primary-500/5 border-primary-500/20'
                             : config.color === 'amber'
                               ? 'bg-amber-500/5 border-amber-500/20'
                               : 'bg-white/5 border-white/10'
@@ -750,7 +750,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                             : config.color === 'blue'
                               ? 'text-blue-400'
                               : config.color === 'violet'
-                                ? 'text-violet-400'
+                                ? 'text-primary-400'
                                 : config.color === 'amber'
                                   ? 'text-amber-400'
                                   : 'text-slate-400 dark:text-slate-500'
@@ -763,7 +763,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                             : config.color === 'blue'
                               ? 'text-blue-400'
                               : config.color === 'violet'
-                                ? 'text-violet-400'
+                                ? 'text-primary-400'
                                 : config.color === 'amber'
                                   ? 'text-amber-400'
                                   : 'text-slate-400 dark:text-slate-500'

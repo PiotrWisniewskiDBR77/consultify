@@ -7,6 +7,7 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: vi.fn().mockResolvedValue([]),
   queryOne: vi.fn().mockResolvedValue(null),
   queryRun: vi.fn().mockResolvedValue({ changes: 1 }),
+  recordQueryPerformance: vi.fn(),
 }));
 vi.mock('../../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },

@@ -2,7 +2,12 @@ import { getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 const ORG_WIDE_MANAGER_ROLES = ['SUPERADMIN', 'OWNER', 'ADMIN', 'PROJECT_MANAGER'] as const;
-const PROJECT_MANAGER_ROLES = ['PMO_LEAD', 'WORKSTREAM_OWNER', 'INITIATIVE_OWNER', 'SPONSOR'] as const;
+const PROJECT_MANAGER_ROLES = [
+  'PMO_LEAD',
+  'WORKSTREAM_OWNER',
+  'INITIATIVE_OWNER',
+  'SPONSOR',
+] as const;
 
 export type InterviewManagerScope =
   | { kind: 'organization' }
@@ -77,9 +82,7 @@ export function buildAssignmentManagerScopeClause(
     };
   }
   return {
-    clause: ` AND ${assignmentAlias}.project_id IN (${scope.projectIds
-      .map(() => '?')
-      .join(', ')})`,
+    clause: ` AND ${assignmentAlias}.project_id IN (${scope.projectIds.map(() => '?').join(', ')})`,
     params: scope.projectIds,
   };
 }

@@ -144,7 +144,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
       case 'expired':
         return <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
       case 'revoked':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-rose-500" />;
       default:
         return <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
     }
@@ -155,7 +155,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
       pending: 'bg-yellow-100 text-yellow-800',
       accepted: 'bg-green-100 text-green-800',
       expired: 'bg-gray-100 dark:bg-navy-800 text-gray-800',
-      revoked: 'bg-red-100 text-red-800',
+      revoked: 'bg-rose-100 text-rose-800',
     };
 
     return (
@@ -210,12 +210,12 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-2">
           <AlertCircle className="w-5 h-5" />
           {error}
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-red-700 hover:text-red-900"
+            className="ml-auto text-rose-700 hover:text-rose-900"
           >
             <XCircle className="w-4 h-4" />
           </button>
@@ -301,7 +301,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
                       className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
                         invitation.invitationType === InvitationType.PROJECT
                           ? 'bg-blue-100 text-blue-800'
-                          : 'bg-purple-100 text-purple-800'
+                          : 'bg-primary-100 text-primary-800'
                       }`}
                     >
                       {invitation.invitationType || 'ORG'}
@@ -340,7 +340,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
                         </button>
                         <button
                           onClick={() => handleRevoke(invitation.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-rose-600 hover:text-rose-900"
                           title="Revoke invitation"
                         >
                           <Trash2 className="w-4 h-4 inline" />

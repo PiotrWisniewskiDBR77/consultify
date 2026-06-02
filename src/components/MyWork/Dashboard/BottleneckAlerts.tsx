@@ -29,18 +29,18 @@ const bottleneckConfig: Record<
   },
   overdue_cluster: {
     icon: <Calendar size={16} />,
-    color: 'text-red-500',
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
+    color: 'text-rose-500',
+    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
   },
   blocked_chain: {
     icon: <Link2 size={16} />,
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
   },
   missing_assignment: {
     icon: <UserX size={16} />,
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    color: 'text-primary-500',
+    bgColor: 'bg-primary-100 dark:bg-primary-900/30',
   },
   decision_delay: {
     icon: <AlertTriangle size={16} />,
@@ -69,7 +69,7 @@ const BottleneckItem: React.FC<{
                 hover:shadow-md
                 ${
                   bottleneck.impact === 'high'
-                    ? 'border-red-200 dark:border-red-800/30 bg-red-50/50 dark:bg-red-900/10'
+                    ? 'border-rose-200 dark:border-rose-800/30 bg-rose-50/50 dark:bg-rose-900/10'
                     : bottleneck.impact === 'medium'
                       ? 'border-amber-200 dark:border-amber-800/30 bg-amber-50/50 dark:bg-amber-900/10'
                       : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
@@ -89,7 +89,7 @@ const BottleneckItem: React.FC<{
                         text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded
                         ${
                           bottleneck.impact === 'high'
-                            ? 'bg-red-500 text-white'
+                            ? 'bg-rose-500 text-white'
                             : bottleneck.impact === 'medium'
                               ? 'bg-amber-500 text-white'
                               : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'

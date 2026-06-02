@@ -25,7 +25,7 @@ export const SEMANTIC_TYPE_OPTIONS = [
     labelEn: 'Hypothesis',
     color: 'text-amber-500',
   },
-  { id: 'risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk', color: 'text-red-500' },
+  { id: 'risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk', color: 'text-rose-500' },
   {
     id: 'action',
     iconEl: CheckSquare,
@@ -38,9 +38,9 @@ export const SEMANTIC_TYPE_OPTIONS = [
     iconEl: Diamond,
     labelPl: 'Punkt decyzyjny',
     labelEn: 'Decision point',
-    color: 'text-purple-500',
+    color: 'text-primary-500',
   },
-  { id: 'option', iconEl: Star, labelPl: 'Opcja', labelEn: 'Option', color: 'text-cyan-500' },
+  { id: 'option', iconEl: Star, labelPl: 'Opcja', labelEn: 'Option', color: 'text-blue-500' },
   {
     id: 'subtopic',
     iconEl: GitBranch,

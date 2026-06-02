@@ -5,7 +5,7 @@
  * Steps: Define → Inputs & Assumptions → Work → Review → Finalize → Outputs
  *
  * Features:
- * - Step navigation sidebar (220px, NModeLeftNav pattern)
+ * - Step navigation sidebar (242px, NModeLeftNav pattern)
  * - Missing items checklist with re-process loop
  * - Work surface types: Table / Workspace / Hybrid
  * - Output creation with traceability (source_type, source_id)
@@ -33,10 +33,10 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ToolsV8CanonPanel } from '../../Discovery/ToolsV8CanonPanel';
 import { Callout } from '../NModeBlocks/Callout';
 import { ChecklistBlock } from '../NModeBlocks/ChecklistBlock';
 import { EmptyStateInline } from '../NModeBlocks/EmptyStateInline';
-import { ToolsV8CanonPanel } from '../../Discovery/ToolsV8CanonPanel';
 import { ToolWizardHeader } from './ToolWizardHeader';
 import { ToolWizardStepNav } from './ToolWizardStepNav';
 import type {
@@ -212,7 +212,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
           <div key={field.id}>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
               {field.label[lang]}
-              {field.required && <span className="text-red-400 ml-0.5">*</span>}
+              {field.required && <span className="text-rose-400 ml-0.5">*</span>}
             </label>
             {field.type === 'textarea' ? (
               <textarea
@@ -722,7 +722,7 @@ const AISuggestionCard: React.FC<AISuggestionCardProps> = ({
   const statusColors = {
     pending: 'border-slate-200 dark:border-navy-700',
     accepted: 'border-emerald-500/30 bg-emerald-500/5',
-    rejected: 'border-red-500/30 bg-red-500/5 opacity-60',
+    rejected: 'border-rose-500/30 bg-rose-500/5 opacity-60',
   };
 
   return (
@@ -747,7 +747,7 @@ const AISuggestionCard: React.FC<AISuggestionCardProps> = ({
       {suggestion.status !== 'pending' && (
         <span
           className={`text-[10px] uppercase font-medium ${
-            suggestion.status === 'accepted' ? 'text-emerald-500' : 'text-red-400'
+            suggestion.status === 'accepted' ? 'text-emerald-500' : 'text-rose-400'
           }`}
         >
           {suggestion.status}

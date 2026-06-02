@@ -4,6 +4,22 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const expectFailEnvelope = (
+  payload: any,
+  code: string,
+  message: string,
+  expectedStatus: 'fail' | 'error' = 'fail'
+) => {
+  expect(payload).toMatchObject({
+    status: expectedStatus,
+    correlationId: null,
+    error: {
+      code,
+      message,
+    },
+  });
+};
+
 const mockInvitationServiceDefault = {
   getInvitations: vi.fn(),
   createInvitation: vi.fn(),
@@ -53,7 +69,11 @@ describe('InvitationController', () => {
     await InvitationController.getInvitations(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+    expectFailEnvelope(
+      mockRes.json.mock.calls[0][0],
+      'INVITATIONS_UNAUTHORIZED',
+      'Authentication is required.'
+    );
   });
 
   it('getInvitations should return service payload', async () => {
@@ -89,7 +109,43 @@ describe('InvitationController', () => {
     await InvitationController.resendInvitation(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invitation ID is required' });
+    expectFailEnvelope(
+      mockRes.json.mock.calls[0][0],
+      'INVITATION_ID_REQUIRED',
+      'Invitation ID is required.'
+    );
+  });
+
+  it('resendInvitation should 401 without organization context', async () => {
+    mockReq.body = { invitationId: 'inv-1' };
+    mockReq.user.organizationId = null;
+    const { InvitationController } =
+      await import('../../../../server/src/controllers/InvitationController.js');
+    await InvitationController.resendInvitation(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expectFailEnvelope(
+      mockRes.json.mock.calls[0][0],
+      'INVITATION_UNAUTHORIZED',
+      'Authentication is required.'
+    );
+    expect(mockInvitationServiceDefault.resendInvitation).not.toHaveBeenCalled();
+  });
+
+  it('resendInvitation forwards organization context to service', async () => {
+    mockReq.body = { invitationId: 'inv-1' };
+    mockInvitationServiceDefault.resendInvitation.mockResolvedValueOnce({ id: 'inv-1' });
+    const { InvitationController } =
+      await import('../../../../server/src/controllers/InvitationController.js');
+    await InvitationController.resendInvitation(mockReq, mockRes, mockNext);
+
+    expect(mockInvitationServiceDefault.resendInvitation).toHaveBeenCalledWith(
+      'inv-1',
+      'user-123',
+      {},
+      'org-456'
+    );
+    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
   it('acceptInvitation should return 400 on matching/accepted errors', async () => {
@@ -101,6 +157,114 @@ describe('InvitationController', () => {
     await InvitationController.acceptInvitation(mockReq, mockRes, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Token does not match' });
+    expectFailEnvelope(
+      mockRes.json.mock.calls[0][0],
+      'INVITATION_ACCEPT_INVALID',
+      'Invitation token or payload is invalid.'
+    );
+  });
+
+  it('acceptInvitation should return 400 on known invitation domain errors', async () => {
+    mockReq.body = { token: 't', email: 'e', firstName: 'a', lastName: 'b', password: 'x' };
+    mockAcceptInvitation.mockRejectedValueOnce(new Error('Invitation has expired'));
+
+    const { InvitationController } =
+      await import('../../../../server/src/controllers/InvitationController.js');
+    await InvitationController.acceptInvitation(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expectFailEnvelope(
+      mockRes.json.mock.calls[0][0],
+      'INVITATION_ACCEPT_INVALID',
+      'Invitation token or payload is invalid.'
+    );
+  });
+
+  it('acceptInvitation should keep 500 for unexpected failures', async () => {
+    mockReq.body = { token: 't', email: 'e', firstName: 'a', lastName: 'b', password: 'x' };
+    mockAcceptInvitation.mockRejectedValueOnce(new Error('Database exploded'));
+
+    const { InvitationController } =
+      await import('../../../../server/src/controllers/InvitationController.js');
+    await InvitationController.acceptInvitation(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expectFailEnvelope(
+      mockRes.json.mock.calls[0][0],
+      'INVITATION_ACCEPT_FAILED',
+      'Failed to accept invitation.',
+      'error'
+    );
+  });
+
+  it('validateToken should include role and expiry details in success payload', async () => {
+    mockReq.params = { token: 'invite-token-1' };
+    mockValidateInvitationToken.mockResolvedValueOnce({
+      invitationType: 'ORG',
+      organizationName: 'Org A',
+      email: 'invitee@example.com',
+      roleToAssign: 'ADMIN',
+      expiresAt: '2026-06-01T00:00:00.000Z',
+    });
+
+    const { InvitationController } =
+      await import('../../../../server/src/controllers/InvitationController.js');
+    await InvitationController.validateToken(mockReq, mockRes, mockNext);
+
+    expect(mockValidateInvitationToken).toHaveBeenCalledWith('invite-token-1');
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        valid: true,
+        roleToAssign: 'ADMIN',
+        expiresAt: '2026-06-01T00:00:00.000Z',
+      })
+    );
+  });
+
+  it('getInvitationAudit should 401 without organization context', async () => {
+    mockReq.params = { id: 'inv-1' };
+    mockReq.user.organizationId = null;
+    const { InvitationController } =
+      await import('../../../../server/src/controllers/InvitationController.js');
+    await InvitationController.getInvitationAudit(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expectFailEnvelope(
+      mockRes.json.mock.calls[0][0],
+      'INVITATION_UNAUTHORIZED',
+      'Authentication is required.'
+    );
+    expect(mockInvitationServiceDefault.getInvitationAudit).not.toHaveBeenCalled();
+  });
+
+  it('getInvitationAudit forwards org + user context', async () => {
+    mockReq.params = { id: 'inv-77' };
+    mockInvitationServiceDefault.getInvitationAudit.mockResolvedValueOnce([]);
+    const { InvitationController } =
+      await import('../../../../server/src/controllers/InvitationController.js');
+    await InvitationController.getInvitationAudit(mockReq, mockRes, mockNext);
+
+    expect(mockInvitationServiceDefault.getInvitationAudit).toHaveBeenCalledWith(
+      'inv-77',
+      'org-456',
+      'user-123'
+    );
+    expect(mockRes.json).toHaveBeenCalledWith([]);
+  });
+
+  it('cancelInvitation should 401 without organization context', async () => {
+    mockReq.params = { id: 'inv-1' };
+    mockReq.user.organizationId = null;
+    const { InvitationController } =
+      await import('../../../../server/src/controllers/InvitationController.js');
+    await InvitationController.cancelInvitation(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expectFailEnvelope(
+      mockRes.json.mock.calls[0][0],
+      'INVITATION_UNAUTHORIZED',
+      'Authentication is required.'
+    );
+    expect(mockInvitationServiceDefault.revokeInvitation).not.toHaveBeenCalled();
   });
 });

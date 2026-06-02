@@ -6,9 +6,13 @@ import type {
   RadarDynamicContext,
   RadarImpactType,
   RadarProcessedSignal,
+  RadarQuadrant,
   RadarRankedSignal,
   RadarRelevanceBreakdown,
+  RadarRing,
   RadarSignalCard,
+  RadarSignalStatus,
+  RadarSignalType,
   UserRadarProfileRecord,
 } from './radarTypes.js';
 
@@ -116,6 +120,36 @@ function classifyImpactType(signal: RadarProcessedSignal): RadarImpactType {
   if (signal.domainTags.includes('leadership') || signal.domainTags.includes('transformation'))
     return 'strategic';
   return signal.contentType === 'how_to' || signal.contentType === 'tool_tip' ? 'learning' : 'risk';
+}
+
+function toRing(signal: RadarProcessedSignal, finalScore: number): RadarRing {
+  if (signal.actionability === 'high' || finalScore >= 60) return 'NOW';
+  if (signal.actionability === 'medium' || finalScore >= 46) return 'PREPARE';
+  if (signal.contentType === 'how_to' || signal.contentType === 'guide') return 'LEARN';
+  return 'OBSERVE';
+}
+
+function toQuadrant(signal: RadarProcessedSignal): RadarQuadrant {
+  if (signal.relevanceScope === 'project_specific') return 'MY_PROJECTS';
+  if (signal.relevanceScope === 'industry_specific') return 'MY_INDUSTRY';
+  if (signal.relevanceScope === 'role_specific') return 'MY_ROLE';
+  return 'MY_DEVELOPMENT';
+}
+
+function toStatus(signal: RadarProcessedSignal): RadarSignalStatus {
+  const ageMs = signal.publishedAt ? Date.now() - Date.parse(signal.publishedAt) : Number.NaN;
+  if (!Number.isNaN(ageMs) && ageMs < 72 * 3600 * 1000) return 'new';
+  if (signal.durability === 'hot') return 'updated';
+  return 'saved';
+}
+
+function toSignalType(signal: RadarProcessedSignal): RadarSignalType {
+  if (signal.contentType === 'tool_tip' || signal.contentType === 'how_to') return 'TOOL';
+  if (signal.contentType === 'competitor_move') return 'BUSINESS';
+  if (signal.contentType === 'regulation') return 'RISK';
+  if (signal.contentType === 'guide') return 'SKILL';
+  if (signal.contentType === 'weak_signal') return 'TREND';
+  return 'TECHNOLOGY';
 }
 
 function deriveWhyYouSeeThis(
@@ -608,6 +642,10 @@ class RadarRankingService {
       localization?.isLocalized && localization?.requestedLanguage
         ? localization.requestedLanguage
         : localization?.sourceLanguage || 'en';
+    const ring = toRing(signal, ranked.finalScore);
+    const quadrant = toQuadrant(signal);
+    const status = toStatus(signal);
+    const signalType = toSignalType(signal);
     return {
       id: ranked.id,
       signalId: signal.id,
@@ -644,6 +682,18 @@ class RadarRankingService {
       requestedLanguage: localization?.requestedLanguage || localization?.sourceLanguage || 'en',
       isLocalized: localization?.isLocalized ?? true,
       localizationPending: localization?.localizationPending ?? false,
+      ring,
+      quadrant,
+      status,
+      signalType,
+      preview: {
+        shortDescription: signal.summaryShort,
+        whyItMatters: ranked.whyItMatters,
+        whyItMattersForYou: ranked.whyYouSeeThis,
+        howToThinkAboutIt: signal.summaryLong || signal.summaryShort,
+        goodFirstQuestion: `What concrete change would ${resolvedTitle} introduce in your current work?`,
+        suggestedNextStep: ranked.suggestedNextStep,
+      },
     };
   }
 }

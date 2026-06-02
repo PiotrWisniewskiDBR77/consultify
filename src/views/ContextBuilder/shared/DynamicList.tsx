@@ -123,7 +123,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
             return (
               <div
                 key={item.id}
-                className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-purple-500 rounded-lg shadow-sm"
+                className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-primary-500 rounded-lg shadow-sm"
               >
                 {columns.map((col) => (
                   <div key={col.key} className={`${col.width || 'flex-1'}`}>
@@ -134,7 +134,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                       <select
                         value={(formData[col.key] as string) || ''}
                         onChange={(e) => handleChange(col.key, e.target.value)}
-                        className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
+                        className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
                       >
                         <option value="" disabled>
                           Select...
@@ -151,7 +151,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                         value={(formData[col.key] as string) || ''}
                         onChange={(e) => handleChange(col.key, e.target.value)}
                         placeholder={col.placeholder || col.label}
-                        className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
+                        className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
                       />
                     )}
                   </div>
@@ -178,7 +178,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
             <div
               key={item.id}
               onClick={() => onRowClick && onRowClick(item)}
-              className={`flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg hover:shadow-md transition-all group ${onRowClick ? 'cursor-pointer hover:border-purple-300 active:scale-[0.99] transition-transform' : ''}`}
+              className={`flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg hover:shadow-md transition-all group ${onRowClick ? 'cursor-pointer hover:border-primary-300 active:scale-[0.99] transition-transform' : ''}`}
             >
               {columns.map((col) => (
                 <div key={col.key} className={`${col.width || 'flex-1'} flex items-center`}>
@@ -203,7 +203,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                 </button>
                 <button
                   onClick={(e) => handleDelete(item.id, e)}
-                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 rounded"
+                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -214,7 +214,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
 
         {/* Add Row */}
         {isAdding ? (
-          <div className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-purple-50/50 dark:bg-purple-900/10 border border-purple-500 border-dashed rounded-lg">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-4 p-4 bg-primary-50/50 dark:bg-primary-900/10 border border-primary-500 border-dashed rounded-lg">
             {columns.map((col) => (
               <div key={col.key} className={`${col.width || 'flex-1'}`}>
                 <label className="md:hidden text-xs font-bold text-slate-400 dark:text-slate-500 mb-1 block">
@@ -224,7 +224,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                   <select
                     value={(formData[col.key] as string) || ''}
                     onChange={(e) => handleChange(col.key, e.target.value)}
-                    className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
+                    className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
                   >
                     <option value="" disabled>
                       Select...
@@ -241,7 +241,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                     value={(formData[col.key] as string) || ''}
                     onChange={(e) => handleChange(col.key, e.target.value)}
                     placeholder={col.placeholder || col.label}
-                    className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-purple-500"
+                    className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
                   />
                 )}
               </div>
@@ -261,7 +261,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
         ) : (
           <button
             onClick={handleStartAdd}
-            className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 dark:text-slate-400 hover:border-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all flex items-center justify-center gap-2 font-medium text-sm"
+            className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 dark:text-slate-400 hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all flex items-center justify-center gap-2 font-medium text-sm"
           >
             <Plus size={16} />
             Add Item

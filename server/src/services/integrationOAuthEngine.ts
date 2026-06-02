@@ -8,7 +8,7 @@
 
 import crypto from 'crypto';
 
-import { run as dbRun, get as dbGet, all as dbAll } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import _logger from '../utils/Logger.js';
 
 const logger = _logger;
@@ -96,7 +96,14 @@ export const CONNECTOR_OAUTH_CONFIGS: Record<string, ConnectorOAuthConfig> = {
     authType: 'oauth2',
     authorizeUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
     tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-    scopes: ['Team.ReadBasic.All', 'Channel.ReadBasic.All', 'ChannelMessage.Send', 'Chat.ReadWrite', 'User.Read', 'offline_access'],
+    scopes: [
+      'Team.ReadBasic.All',
+      'Channel.ReadBasic.All',
+      'ChannelMessage.Send',
+      'Chat.ReadWrite',
+      'User.Read',
+      'offline_access',
+    ],
     testUrl: 'https://graph.microsoft.com/v1.0/me/joinedTeams',
     envClientId: 'MICROSOFT_CLIENT_ID',
     envClientSecret: 'MICROSOFT_CLIENT_SECRET',
@@ -223,7 +230,8 @@ export const CONNECTOR_OAUTH_CONFIGS: Record<string, ConnectorOAuthConfig> = {
     userInfoHeaders: { 'Notion-Version': '2022-06-28' },
     envClientId: 'NOTION_CLIENT_ID',
     envClientSecret: 'NOTION_CLIENT_SECRET',
-    notes: 'Token exchange uses Basic Auth header. Capabilities set in Notion integration settings.',
+    notes:
+      'Token exchange uses Basic Auth header. Capabilities set in Notion integration settings.',
   },
   todoist: {
     id: 'todoist',
@@ -284,7 +292,12 @@ export const CONNECTOR_OAUTH_CONFIGS: Record<string, ConnectorOAuthConfig> = {
     authorizeUrl: 'https://www.dropbox.com/oauth2/authorize',
     tokenUrl: 'https://api.dropboxapi.com/oauth2/token',
     revokeUrl: 'https://api.dropboxapi.com/2/auth/token/revoke',
-    scopes: ['account_info.read', 'files.content.read', 'files.content.write', 'files.metadata.read'],
+    scopes: [
+      'account_info.read',
+      'files.content.read',
+      'files.content.write',
+      'files.metadata.read',
+    ],
     extraAuthParams: { token_access_type: 'offline' },
     testUrl: 'https://api.dropboxapi.com/2/users/get_current_account',
     envClientId: 'DROPBOX_CLIENT_ID',
@@ -331,7 +344,8 @@ let tableEnsured = false;
 
 async function ensureTokenTable(): Promise<void> {
   if (tableEnsured) return;
-  await dbRun(`
+  await dbRun(
+    `
     CREATE TABLE IF NOT EXISTS integration_oauth_tokens (
       id              TEXT PRIMARY KEY,
       user_id         TEXT NOT NULL,
@@ -347,15 +361,26 @@ async function ensureTokenTable(): Promise<void> {
       updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(user_id, connector_id)
     )
-  `, [], { fallback: false });
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_iot_user ON integration_oauth_tokens(user_id)`, [], { fallback: false });
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_iot_connector ON integration_oauth_tokens(connector_id)`, [], { fallback: false });
+  `,
+    [],
+    { fallback: false }
+  );
+  await dbRun(`CREATE INDEX IF NOT EXISTS idx_iot_user ON integration_oauth_tokens(user_id)`, [], {
+    fallback: false,
+  });
+  await dbRun(
+    `CREATE INDEX IF NOT EXISTS idx_iot_connector ON integration_oauth_tokens(connector_id)`,
+    [],
+    { fallback: false }
+  );
   tableEnsured = true;
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-function getClientCredentials(cfg: ConnectorOAuthConfig): { clientId: string; clientSecret: string } | null {
+function getClientCredentials(
+  cfg: ConnectorOAuthConfig
+): { clientId: string; clientSecret: string } | null {
   const clientId = process.env[cfg.envClientId] || '';
   const clientSecret = process.env[cfg.envClientSecret] || '';
   if (!clientId) return null;
@@ -385,9 +410,10 @@ export function generateAuthUrl(
   const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
   if (!cfg || (cfg.authType !== 'oauth2' && cfg.authType !== 'token')) return null;
 
-  const creds = cfg.authType === 'token'
-    ? { clientId: process.env[cfg.envClientId] || '', clientSecret: '' }
-    : getClientCredentials(cfg);
+  const creds =
+    cfg.authType === 'token'
+      ? { clientId: process.env[cfg.envClientId] || '', clientSecret: '' }
+      : getClientCredentials(cfg);
   if (!creds?.clientId) return null;
 
   const state = crypto.randomBytes(32).toString('hex');
@@ -439,7 +465,12 @@ export function consumeState(state: string): PendingOAuthState | null {
 export async function exchangeCode(
   connectorId: string,
   code: string
-): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number; raw: Record<string, unknown> } | null> {
+): Promise<{
+  accessToken: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  raw: Record<string, unknown>;
+} | null> {
   const cfg = CONNECTOR_OAUTH_CONFIGS[connectorId];
   if (!cfg || cfg.authType !== 'oauth2') return null;
 
@@ -481,7 +512,9 @@ export async function exchangeCode(
 
     if (!resp.ok) {
       const text = await resp.text();
-      logger.error(`[IntegrationOAuth] Token exchange failed for ${connectorId}: ${resp.status} ${text}`);
+      logger.error(
+        `[IntegrationOAuth] Token exchange failed for ${connectorId}: ${resp.status} ${text}`
+      );
       return null;
     }
 
@@ -499,7 +532,8 @@ export async function exchangeCode(
     return {
       accessToken,
       refreshToken: data[refreshTokenField] ? String(data[refreshTokenField]) : undefined,
-      expiresIn: typeof data[expiresInField] === 'number' ? (data[expiresInField] as number) : undefined,
+      expiresIn:
+        typeof data[expiresInField] === 'number' ? (data[expiresInField] as number) : undefined,
       raw: data,
     };
   } catch (err: any) {
@@ -571,7 +605,13 @@ export async function refreshAccessToken(
 export async function storeTokens(
   userId: string,
   connectorId: string,
-  tokens: { accessToken: string; refreshToken?: string; expiresIn?: number; scopes?: string; extraData?: Record<string, unknown> }
+  tokens: {
+    accessToken: string;
+    refreshToken?: string;
+    expiresIn?: number;
+    scopes?: string;
+    extraData?: Record<string, unknown>;
+  }
 ): Promise<void> {
   await ensureTokenTable();
   const id = crypto.randomUUID();
@@ -580,7 +620,8 @@ export async function storeTokens(
     : null;
   const extra = tokens.extraData ? JSON.stringify(tokens.extraData) : null;
 
-  await dbRun(`
+  await dbRun(
+    `
     INSERT INTO integration_oauth_tokens
       (id, user_id, connector_id, access_token, refresh_token, expires_at, scopes, extra_data, status, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -592,7 +633,19 @@ export async function storeTokens(
       extra_data    = EXCLUDED.extra_data,
       status        = 'active',
       updated_at    = CURRENT_TIMESTAMP
-  `, [id, userId, connectorId, tokens.accessToken, tokens.refreshToken || null, expiresAt, tokens.scopes || null, extra], { fallback: false });
+  `,
+    [
+      id,
+      userId,
+      connectorId,
+      tokens.accessToken,
+      tokens.refreshToken || null,
+      expiresAt,
+      tokens.scopes || null,
+      extra,
+    ],
+    { fallback: false }
+  );
 }
 
 /**
@@ -601,7 +654,13 @@ export async function storeTokens(
 export async function getStoredToken(
   userId: string,
   connectorId: string
-): Promise<{ accessToken: string; refreshToken: string | null; expiresAt: string | null; status: string; extraData: string | null } | null> {
+): Promise<{
+  accessToken: string;
+  refreshToken: string | null;
+  expiresAt: string | null;
+  status: string;
+  extraData: string | null;
+} | null> {
   await ensureTokenTable();
   const row = await dbGet<{
     access_token: string;
@@ -609,10 +668,12 @@ export async function getStoredToken(
     expires_at: string | null;
     status: string;
     extra_data: string | null;
-  }>(`SELECT access_token, refresh_token, expires_at, status, extra_data
+  }>(
+    `SELECT access_token, refresh_token, expires_at, status, extra_data
       FROM integration_oauth_tokens
       WHERE user_id = ? AND connector_id = ? AND status = 'active'`,
-    [userId, connectorId], { fallback: false }
+    [userId, connectorId],
+    { fallback: false }
   );
   if (!row) return null;
   return {
@@ -652,10 +713,7 @@ export async function getValidAccessToken(
 /**
  * Disconnect: revoke and remove token.
  */
-export async function disconnectIntegration(
-  userId: string,
-  connectorId: string
-): Promise<boolean> {
+export async function disconnectIntegration(userId: string, connectorId: string): Promise<boolean> {
   await ensureTokenTable();
 
   const stored = await getStoredToken(userId, connectorId);
@@ -676,7 +734,8 @@ export async function disconnectIntegration(
 
   await dbRun(
     `UPDATE integration_oauth_tokens SET status = 'revoked', updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND connector_id = ?`,
-    [userId, connectorId], { fallback: false }
+    [userId, connectorId],
+    { fallback: false }
   );
   return true;
 }
@@ -719,9 +778,15 @@ export async function testConnection(
 /**
  * List all connected integrations for a user.
  */
-export async function listConnectedIntegrations(
-  userId: string
-): Promise<Array<{ connectorId: string; status: string; expiresAt: string | null; createdAt: string; updatedAt: string }>> {
+export async function listConnectedIntegrations(userId: string): Promise<
+  Array<{
+    connectorId: string;
+    status: string;
+    expiresAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }>
+> {
   await ensureTokenTable();
   const rows = await dbAll<{
     connector_id: string;
@@ -729,7 +794,8 @@ export async function listConnectedIntegrations(
     expires_at: string | null;
     created_at: string;
     updated_at: string;
-  }>(`SELECT connector_id, status, expires_at, created_at, updated_at
+  }>(
+    `SELECT connector_id, status, expires_at, created_at, updated_at
       FROM integration_oauth_tokens
       WHERE user_id = ? AND status = 'active'
       ORDER BY updated_at DESC`,
@@ -747,7 +813,10 @@ export async function listConnectedIntegrations(
 /**
  * Get connector availability status (are env vars configured?).
  */
-export function getConnectorAvailability(): Record<string, { configured: boolean; authType: string }> {
+export function getConnectorAvailability(): Record<
+  string,
+  { configured: boolean; authType: string }
+> {
   const result: Record<string, { configured: boolean; authType: string }> = {};
   for (const [id, cfg] of Object.entries(CONNECTOR_OAUTH_CONFIGS)) {
     result[id] = { configured: isConnectorConfigured(id), authType: cfg.authType };

@@ -1,7 +1,7 @@
 import { AlertCircle, DollarSign, Package, RefreshCw, TrendingUp, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 import { AdminLLMMultipliers } from './AdminLLMMultipliers';
 import { AdminMarginConfig } from './AdminMarginConfig';
@@ -15,18 +15,34 @@ export const TokenBillingManagementView = () => {
     balance: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [statsLoadError, setStatsLoadError] = useState<string | null>(null);
 
   const loadStats = async () => {
     setLoading(true);
+    setStatsLoadError(null);
     try {
       // Parallel fetch for overview numbers
-      const [providers, packages, margins, balance] = await Promise.all([
-        Api.getLLMProviders().catch(() => []),
-        Api.getTokenPackages().catch(() => []),
-        Api.getBillingMargins().catch(() => []),
-        Api.getTokenBalance().catch(() => 0),
-      ]);
+      const [providersResult, packagesResult, marginsResult, balanceResult] =
+        await Promise.allSettled([
+          Api.getLLMProviders(),
+          Api.getTokenPackages(),
+          Api.getBillingMargins(),
+          Api.getTokenBalance(),
+        ]);
 
+      if (
+        providersResult.status === 'rejected' ||
+        packagesResult.status === 'rejected' ||
+        marginsResult.status === 'rejected' ||
+        balanceResult.status === 'rejected'
+      ) {
+        throw new Error('Could not load token billing overview statistics');
+      }
+
+      const providers = providersResult.value;
+      const packages = packagesResult.value;
+      const margins = marginsResult.value;
+      const balance = balanceResult.value;
       const platformMargin = margins.find((m: any) => m.source_type === 'platform');
 
       setStats({
@@ -37,8 +53,9 @@ export const TokenBillingManagementView = () => {
       });
     } catch (error) {
       console.error('Failed to load billing stats', error);
-      // Don't block whole view if stats fail
-      toast.error('Could not load some overview statistics');
+      setStatsLoadError(
+        error instanceof Error ? error.message : 'Could not load token billing stats'
+      );
     } finally {
       setLoading(false);
     }
@@ -71,34 +88,40 @@ export const TokenBillingManagementView = () => {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <KPICard
-          title="Active AI Models"
-          value={stats.activeModels.toString()}
-          icon={<Zap size={20} className="text-yellow-400" />}
-          loading={loading}
-        />
-        <KPICard
-          title="Active Packages"
-          value={stats.activePackages.toString()}
-          icon={<Package size={20} className="text-blue-400" />}
-          loading={loading}
-        />
-        <KPICard
-          title="Platform Margin"
-          value={`${stats.platformMargin}%`}
-          icon={<TrendingUp size={20} className="text-emerald-400" />}
-          loading={loading}
-          subtext="Markup on base costs"
-        />
-        <KPICard
-          title="System Balance"
-          value={(stats.balance / 1000).toFixed(1) + 'k'}
-          icon={<DollarSign size={20} className="text-purple-400" />}
-          loading={loading}
-          subtext="Current admin tokens"
-        />
-      </div>
+      {statsLoadError ? (
+        <div className="mb-8">
+          <DegradedState title="Token billing overview unavailable" description={statsLoadError} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <KPICard
+            title="Active AI Models"
+            value={stats.activeModels.toString()}
+            icon={<Zap size={20} className="text-yellow-400" />}
+            loading={loading}
+          />
+          <KPICard
+            title="Active Packages"
+            value={stats.activePackages.toString()}
+            icon={<Package size={20} className="text-blue-400" />}
+            loading={loading}
+          />
+          <KPICard
+            title="Platform Margin"
+            value={`${stats.platformMargin}%`}
+            icon={<TrendingUp size={20} className="text-emerald-400" />}
+            loading={loading}
+            subtext="Markup on base costs"
+          />
+          <KPICard
+            title="System Balance"
+            value={(stats.balance / 1000).toFixed(1) + 'k'}
+            icon={<DollarSign size={20} className="text-primary-400" />}
+            loading={loading}
+            subtext="Current admin tokens"
+          />
+        </div>
+      )}
 
       {/* Main Content Layout */}
       <div className="flex flex-col gap-8">

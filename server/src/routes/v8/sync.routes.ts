@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { logIntegrationConnectionEvent } from '../../services/integrationConnectionLogService.js';
 import {
   CONNECTORS,
   disconnectIntegration,
@@ -42,7 +43,6 @@ import {
   getGovernedExternalAuthConfigFields,
 } from '../../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
-import { logIntegrationConnectionEvent } from '../../services/integrationConnectionLogService.js';
 import {
   executeRefreshExecution,
   storeRefreshExecutionSecret,
@@ -504,7 +504,11 @@ router.get(
       }
 
       let scopes: string[] = [];
-      try { scopes = JSON.parse(String(r.scopes || '[]')); } catch { /* */ }
+      try {
+        scopes = JSON.parse(String(r.scopes || '[]'));
+      } catch {
+        /* */
+      }
 
       let mode: string = 'manual';
       if (r.sync_schedule && String(r.sync_schedule) !== 'null') {
@@ -521,7 +525,10 @@ router.get(
         isPaused,
         syncSchedule: r.sync_schedule || null,
         scopes,
-        hasMappings: !!r.field_mappings && String(r.field_mappings) !== '{}' && String(r.field_mappings) !== 'null',
+        hasMappings:
+          !!r.field_mappings &&
+          String(r.field_mappings) !== '{}' &&
+          String(r.field_mappings) !== 'null',
         lastSyncAt: r.last_sync_at || null,
         lastError: r.last_error || null,
         createdAt: r.created_at,
@@ -557,7 +564,9 @@ router.get(
        GROUP BY connector_id`,
       [organizationId]
     );
-    const driftMap = new Map((driftCounts || []).map((d: Record<string, unknown>) => [d.connector_id, Number(d.cnt)]));
+    const driftMap = new Map(
+      (driftCounts || []).map((d: Record<string, unknown>) => [d.connector_id, Number(d.cnt)])
+    );
 
     const mappingCounts = await dbAll(
       `SELECT integration_id, COUNT(*) as cnt
@@ -566,11 +575,17 @@ router.get(
        GROUP BY integration_id`,
       [organizationId]
     );
-    const mappingMap = new Map((mappingCounts || []).map((m: Record<string, unknown>) => [m.integration_id, Number(m.cnt)]));
+    const mappingMap = new Map(
+      (mappingCounts || []).map((m: Record<string, unknown>) => [m.integration_id, Number(m.cnt)])
+    );
 
     const items = (integrations || []).map((i: Record<string, unknown>) => {
       let fmCount = 0;
-      try { fmCount = JSON.parse(String(i.field_mappings || '[]')).length; } catch { /* */ }
+      try {
+        fmCount = JSON.parse(String(i.field_mappings || '[]')).length;
+      } catch {
+        /* */
+      }
       return {
         integrationId: i.id,
         name: i.name,
@@ -594,7 +609,8 @@ router.get(
   '/integrations/:integrationId/mappings',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const integrationId = typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
 
     const fieldMappingsRow = await dbGet(
       `SELECT field_mappings, connector_id FROM integrations WHERE id = ? AND organization_id = ?`,
@@ -606,7 +622,11 @@ router.get(
 
     const fm = fieldMappingsRow as Record<string, unknown>;
     let fieldMappings: unknown[] = [];
-    try { fieldMappings = JSON.parse(String(fm.field_mappings || '[]')); } catch { /* */ }
+    try {
+      fieldMappings = JSON.parse(String(fm.field_mappings || '[]'));
+    } catch {
+      /* */
+    }
 
     const entityMappings = await dbAll(
       `SELECT id, local_type, local_id, external_type, external_id, sync_status, last_synced_at, metadata
@@ -671,11 +691,14 @@ router.post(
   '/integrations/:integrationId/mappings',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
-    const integrationId = typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
     const { fieldMappings } = req.body as { fieldMappings: unknown[] };
 
     if (!Array.isArray(fieldMappings)) {
-      return res.status(400).json({ error: 'fieldMappings must be an array', code: 'INVALID_PARAM' });
+      return res
+        .status(400)
+        .json({ error: 'fieldMappings must be an array', code: 'INVALID_PARAM' });
     }
 
     const existing = await dbGet(
@@ -731,7 +754,12 @@ router.get(
 // ── Provider Catalog State (§2.3.3A) ────────────────────────────
 
 const ProviderLifecycleStateValues = [
-  'draft', 'connected', 'degraded', 'requires_action', 'recovered', 'blocked',
+  'draft',
+  'connected',
+  'degraded',
+  'requires_action',
+  'recovered',
+  'blocked',
 ] as const;
 
 const SetProviderStateBodySchema = z.object({
@@ -767,7 +795,10 @@ router.get(
     return res.json({
       data: {
         providerId,
-        state: state ?? { lifecycleState: 'connected', reason: 'default — no explicit state recorded' },
+        state: state ?? {
+          lifecycleState: 'connected',
+          reason: 'default — no explicit state recorded',
+        },
       },
       meta: syncReadMeta(),
     });
@@ -813,19 +844,12 @@ router.post(
         expectedRecoveryAt: parsed.data.expectedRecoveryAt ?? null,
       });
 
-      await logIntegrationAudit(
-        organizationId,
-        null,
-        `provider_state_changed`,
-        actorId,
-        actorId,
-        {
-          providerId,
-          targetState: parsed.data.targetState,
-          previousState: state.previousState,
-          reason: parsed.data.reason,
-        }
-      );
+      await logIntegrationAudit(organizationId, null, `provider_state_changed`, actorId, actorId, {
+        providerId,
+        targetState: parsed.data.targetState,
+        previousState: state.previousState,
+        reason: parsed.data.reason,
+      });
 
       return res.json({
         data: { state },
@@ -1514,27 +1538,38 @@ router.get(
   '/integrations/:integrationId/workflow-policy',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const integrationId = typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
-    const row = await dbGet(
-      `SELECT workflow_policy, workflow_policy_reason, workflow_policy_set_by, workflow_policy_set_at, is_paused
-       FROM integrations WHERE id = ? AND organization_id = ?`,
-      [integrationId, organizationId]
-    );
-    if (!row) {
-      return res.status(404).json({ error: 'Integration not found', code: 'NOT_FOUND' });
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    try {
+      const row = await dbGet(
+        `SELECT workflow_policy, workflow_policy_reason, workflow_policy_set_by, workflow_policy_set_at, is_paused
+         FROM integrations WHERE id = ? AND organization_id = ?`,
+        [integrationId, organizationId]
+      );
+      if (!row) {
+        return res.status(404).json({
+          error: 'Integration not found',
+          code: 'SYNC_WORKFLOW_POLICY_INTEGRATION_NOT_FOUND',
+        });
+      }
+      const r = row as Record<string, unknown>;
+      return res.json({
+        data: {
+          integrationId,
+          workflowPolicy: r.workflow_policy || 'active',
+          reason: r.workflow_policy_reason || null,
+          setBy: r.workflow_policy_set_by || null,
+          setAt: r.workflow_policy_set_at || null,
+          isPaused: !!r.is_paused,
+        },
+        meta: syncReadMeta(),
+      });
+    } catch {
+      return res.status(503).json({
+        error: 'Failed to read workflow policy',
+        code: 'SYNC_WORKFLOW_POLICY_READ_FAILED',
+      });
     }
-    const r = row as Record<string, unknown>;
-    return res.json({
-      data: {
-        integrationId,
-        workflowPolicy: r.workflow_policy || 'active',
-        reason: r.workflow_policy_reason || null,
-        setBy: r.workflow_policy_set_by || null,
-        setAt: r.workflow_policy_set_at || null,
-        isPaused: !!r.is_paused,
-      },
-      meta: syncReadMeta(),
-    });
   })
 );
 
@@ -1542,45 +1577,66 @@ router.post(
   '/integrations/:integrationId/workflow-policy',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
-    const integrationId = typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const integrationId =
+      typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
     const { policy, reason } = req.body as { policy: string; reason?: string };
 
     const VALID_POLICIES = ['active', 'paused', 'blocked', 'safety_gate'];
     if (!policy || !VALID_POLICIES.includes(policy)) {
-      return res.status(400).json({ error: `policy must be one of: ${VALID_POLICIES.join(', ')}`, code: 'INVALID_PARAM' });
+      return res.status(400).json({
+        error: `policy must be one of: ${VALID_POLICIES.join(', ')}`,
+        code: 'SYNC_WORKFLOW_POLICY_INVALID',
+      });
     }
 
-    const existing = await dbGet(
-      `SELECT id FROM integrations WHERE id = ? AND organization_id = ?`,
-      [integrationId, organizationId]
-    );
-    if (!existing) {
-      return res.status(404).json({ error: 'Integration not found', code: 'NOT_FOUND' });
+    try {
+      const existing = await dbGet(
+        `SELECT id FROM integrations WHERE id = ? AND organization_id = ?`,
+        [integrationId, organizationId]
+      );
+      if (!existing) {
+        return res.status(404).json({
+          error: 'Integration not found',
+          code: 'SYNC_WORKFLOW_POLICY_INTEGRATION_NOT_FOUND',
+        });
+      }
+
+      const isPaused = policy === 'paused' || policy === 'blocked' || policy === 'safety_gate';
+      await dbRun(
+        `UPDATE integrations
+         SET workflow_policy = ?,
+             workflow_policy_reason = ?,
+             workflow_policy_set_by = ?,
+             workflow_policy_set_at = NOW(),
+             is_paused = ?,
+             paused_at = CASE WHEN ? THEN NOW() ELSE NULL END,
+             updated_at = NOW()
+         WHERE id = ? AND organization_id = ?`,
+        [policy, reason || null, userId, isPaused, isPaused, integrationId, organizationId]
+      );
+
+      await logIntegrationAudit(
+        organizationId,
+        integrationId,
+        `workflow_policy_${policy}`,
+        userId,
+        userId,
+        {
+          policy,
+          reason: reason || null,
+        }
+      );
+
+      return res.json({
+        data: { success: true, policy, isPaused },
+        meta: syncMutationMeta(),
+      });
+    } catch {
+      return res.status(503).json({
+        error: 'Failed to update workflow policy',
+        code: 'SYNC_WORKFLOW_POLICY_UPDATE_FAILED',
+      });
     }
-
-    const isPaused = policy === 'paused' || policy === 'blocked' || policy === 'safety_gate';
-    await dbRun(
-      `UPDATE integrations
-       SET workflow_policy = ?,
-           workflow_policy_reason = ?,
-           workflow_policy_set_by = ?,
-           workflow_policy_set_at = NOW(),
-           is_paused = ?,
-           paused_at = CASE WHEN ? THEN NOW() ELSE NULL END,
-           updated_at = NOW()
-       WHERE id = ? AND organization_id = ?`,
-      [policy, reason || null, userId, isPaused, isPaused, integrationId, organizationId]
-    );
-
-    await logIntegrationAudit(organizationId, integrationId, `workflow_policy_${policy}`, userId, userId, {
-      policy,
-      reason: reason || null,
-    });
-
-    return res.json({
-      data: { success: true, policy, isPaused },
-      meta: syncMutationMeta(),
-    });
   })
 );
 
@@ -2006,7 +2062,8 @@ router.get(
           const retryCount = Number(r.retry_count || 0);
           if (r.status === 'running') lifecycleState = 'connected';
           else if (r.status === 'completed') lifecycleState = 'connected';
-          else if (r.status === 'failed' && retryCount > 0 && retryCount < 3) lifecycleState = 'degraded';
+          else if (r.status === 'failed' && retryCount > 0 && retryCount < 3)
+            lifecycleState = 'degraded';
           else if (r.status === 'failed') lifecycleState = 'requires_action';
           else if (r.status === 'partial') lifecycleState = 'degraded';
           else lifecycleState = 'draft';
@@ -2051,7 +2108,9 @@ router.get(
           `SELECT * FROM integration_sync_runs WHERE organization_id = ? AND integration_id = ? ORDER BY started_at DESC LIMIT 1`,
           [organizationId, int.id]
         );
-        const isPaused = (int as unknown as Record<string, unknown>).is_paused === 1 || (int as unknown as Record<string, unknown>).is_paused === true;
+        const isPaused =
+          (int as unknown as Record<string, unknown>).is_paused === 1 ||
+          (int as unknown as Record<string, unknown>).is_paused === true;
 
         let lifecycleState: string;
         if (isPaused) lifecycleState = 'blocked';
@@ -2059,19 +2118,30 @@ router.get(
         else if (health.status === 'degraded') lifecycleState = 'degraded';
         else lifecycleState = 'requires_action';
 
-        const ownerType = ['degraded', 'requires_action'].includes(lifecycleState) ? 'tenant' : 'platform';
+        const ownerType = ['degraded', 'requires_action'].includes(lifecycleState)
+          ? 'tenant'
+          : 'platform';
 
         return {
           integrationId: int.id,
           connectorId: (int as unknown as Record<string, unknown>).connector_id,
-          providerFamily: (int as unknown as Record<string, unknown>).category || (int as unknown as Record<string, unknown>).connector_id,
-          name: (int as unknown as Record<string, unknown>).name || (int as unknown as Record<string, unknown>).connector_id,
+          providerFamily:
+            (int as unknown as Record<string, unknown>).category ||
+            (int as unknown as Record<string, unknown>).connector_id,
+          name:
+            (int as unknown as Record<string, unknown>).name ||
+            (int as unknown as Record<string, unknown>).connector_id,
           healthStatus: health.status,
           lifecycleState,
           reason: (int as unknown as Record<string, unknown>).last_error || null,
-          nextAction: lifecycleState === 'requires_action' ? 'reauth_or_fix_config' :
-                      lifecycleState === 'degraded' ? 'monitor_or_retry' :
-                      lifecycleState === 'blocked' ? 'resume_or_unblock' : 'none',
+          nextAction:
+            lifecycleState === 'requires_action'
+              ? 'reauth_or_fix_config'
+              : lifecycleState === 'degraded'
+                ? 'monitor_or_retry'
+                : lifecycleState === 'blocked'
+                  ? 'resume_or_unblock'
+                  : 'none',
           owner: ownerType,
           lastRunAt: lastRunRow ? (lastRunRow as Record<string, unknown>).started_at : null,
           lastRunStatus: lastRunRow ? (lastRunRow as Record<string, unknown>).status : null,
@@ -2113,12 +2183,15 @@ router.get(
     const integrationNames: Record<string, string> = {};
     for (const error of errors || []) {
       if (error.integrationId && !integrationNames[error.integrationId]) {
-        const row = await dbGet(
-          `SELECT name, connector_id FROM integrations WHERE id = ?`,
-          [error.integrationId]
-        );
+        const row = await dbGet(`SELECT name, connector_id FROM integrations WHERE id = ?`, [
+          error.integrationId,
+        ]);
         integrationNames[error.integrationId] = row
-          ? String((row as Record<string, unknown>).name || (row as Record<string, unknown>).connector_id || 'Unknown')
+          ? String(
+              (row as Record<string, unknown>).name ||
+                (row as Record<string, unknown>).connector_id ||
+                'Unknown'
+            )
           : 'Unknown';
       }
     }
@@ -2126,8 +2199,8 @@ router.get(
     return res.json({
       data: {
         errors: (errors || []).map((error) => {
-          const ownerType = error.errorType === 'AUTH' || error.errorType === 'VALIDATION'
-            ? 'tenant' : 'platform';
+          const ownerType =
+            error.errorType === 'AUTH' || error.errorType === 'VALIDATION' ? 'tenant' : 'platform';
           return {
             id: error.id,
             integrationId: error.integrationId,
@@ -2201,7 +2274,14 @@ router.post(
       `INSERT INTO integration_sync_runs
          (id, organization_id, integration_id, provider, direction, status, started_at, triggered_by)
        VALUES (?, ?, ?, ?, ?, 'running', NOW(), ?)`,
-      [replayRunId, organizationId, orig.integration_id, orig.provider, orig.direction || 'pull', `replay:${userId}`]
+      [
+        replayRunId,
+        organizationId,
+        orig.integration_id,
+        orig.provider,
+        orig.direction || 'pull',
+        `replay:${userId}`,
+      ]
     );
 
     await dbRun(
@@ -2223,10 +2303,7 @@ router.post(
       );
       if (integration && integration.length > 0) {
         const config = integration[0].config ? JSON.parse(String(integration[0].config)) : {};
-        const result = await syncIntegration(
-          String(orig.integration_id),
-          config
-        );
+        const result = await syncIntegration(String(orig.integration_id), config);
         await dbRun(
           `UPDATE integration_sync_runs
            SET status = 'completed', items_processed = ?, duration_ms = ?, completed_at = NOW()
@@ -2299,7 +2376,9 @@ router.get(
     const ROTATION_THRESHOLD_DAYS = 90;
 
     const items = (secrets || []).map((s: Record<string, unknown>) => {
-      const rotatedAt = s.rotated_at ? new Date(String(s.rotated_at)).getTime() : new Date(String(s.created_at)).getTime();
+      const rotatedAt = s.rotated_at
+        ? new Date(String(s.rotated_at)).getTime()
+        : new Date(String(s.created_at)).getTime();
       const ageDays = Math.floor((now - rotatedAt) / (1000 * 60 * 60 * 24));
       const needsRotation = ageDays > ROTATION_THRESHOLD_DAYS;
 
@@ -2342,16 +2421,17 @@ router.post(
       return res.status(404).json({ error: 'Secret not found', code: 'NOT_FOUND' });
     }
 
-    await dbRun(
-      `UPDATE integration_secrets SET rotated_at = NOW() WHERE id = ?`,
-      [secretId]
-    );
+    await dbRun(`UPDATE integration_secrets SET rotated_at = NOW() WHERE id = ?`, [secretId]);
 
     const ex = existing as Record<string, unknown>;
     await dbRun(
       `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
        VALUES (gen_random_uuid()::TEXT, ?, NULL, 'secret_rotated', ?, 'user', ?::JSONB)`,
-      [organizationId, userId, JSON.stringify({ secretId, connectorId: ex.connector_id, secretKey: ex.secret_key })]
+      [
+        organizationId,
+        userId,
+        JSON.stringify({ secretId, connectorId: ex.connector_id, secretKey: ex.secret_key }),
+      ]
     );
 
     return res.json({
@@ -2366,7 +2446,8 @@ router.post(
 router.post(
   '/webhooks/inbound/:registrationId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const registrationId = typeof req.params.registrationId === 'string' ? req.params.registrationId.trim() : '';
+    const registrationId =
+      typeof req.params.registrationId === 'string' ? req.params.registrationId.trim() : '';
 
     const reg = await dbGet(
       `SELECT registration_id, integration_id, organization_id, secret_key, event_types, is_active, direction
@@ -2395,7 +2476,10 @@ router.post(
       }
       const crypto = await import('crypto');
       const rawBody = JSON.stringify(req.body);
-      const expected = crypto.createHmac('sha256', String(r.secret_key)).update(rawBody).digest('hex');
+      const expected = crypto
+        .createHmac('sha256', String(r.secret_key))
+        .update(rawBody)
+        .digest('hex');
       if (signature !== expected) {
         return res.status(401).json({ error: 'Invalid webhook signature' });
       }
@@ -2405,13 +2489,20 @@ router.post(
     const resolvedEventType = eventType || 'generic';
 
     let allowedTypes: string[] = [];
-    try { allowedTypes = JSON.parse(String(r.event_types || '[]')); } catch { /* */ }
+    try {
+      allowedTypes = JSON.parse(String(r.event_types || '[]'));
+    } catch {
+      /* */
+    }
     if (allowedTypes.length > 0 && !allowedTypes.includes(resolvedEventType)) {
       return res.status(422).json({ error: `Event type '${resolvedEventType}' is not registered` });
     }
 
     const crypto2 = await import('crypto');
-    const payloadHash = crypto2.createHash('sha256').update(JSON.stringify(payload || {})).digest('hex');
+    const payloadHash = crypto2
+      .createHash('sha256')
+      .update(JSON.stringify(payload || {}))
+      .digest('hex');
 
     const existingDelivery = await dbGet(
       `SELECT delivery_id FROM v8_webhook_deliveries
@@ -2437,7 +2528,11 @@ router.post(
     await dbRun(
       `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
        VALUES (gen_random_uuid()::TEXT, ?, ?, 'webhook_received', 'system', 'webhook', ?::JSONB)`,
-      [r.organization_id, r.integration_id, JSON.stringify({ registrationId, eventType: resolvedEventType })]
+      [
+        r.organization_id,
+        r.integration_id,
+        JSON.stringify({ registrationId, eventType: resolvedEventType }),
+      ]
     );
 
     return res.json({

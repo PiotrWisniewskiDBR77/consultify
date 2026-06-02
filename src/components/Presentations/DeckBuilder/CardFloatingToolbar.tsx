@@ -53,7 +53,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
             onClick={() => togglePanel('layout')}
             className={`p-1.5 rounded-lg text-xs flex items-center gap-1 ${
               expandedPanel === 'layout'
-                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600'
+                ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600'
                 : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700'
             }`}
             title="Layout"
@@ -71,7 +71,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                   }}
                   className={`w-10 h-8 rounded border text-[10px] font-mono flex items-center justify-center ${
                     card.layout_id === l.id
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
                       : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
                   }`}
                   title={l.label}
@@ -89,7 +89,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
             onClick={() => togglePanel('bg')}
             className={`p-1.5 rounded-lg ${
               expandedPanel === 'bg'
-                ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600'
+                ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600'
                 : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700'
             }`}
             title="Background"
@@ -109,7 +109,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                   }}
                   className={`w-full text-left px-2 py-1.5 rounded text-[11px] ${
                     card.background.type === bg.id
-                      ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-600'
+                      ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -142,7 +142,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
           }
           className={`p-1.5 rounded-lg ${
             card.animations.block_stagger
-              ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600'
+              ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600'
               : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700'
           }`}
           title="Animations"

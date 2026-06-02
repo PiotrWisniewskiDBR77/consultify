@@ -5,9 +5,21 @@ export function listStrategyToolSlugs(): string[] {
 }
 
 export function hasStrategyToolDoc(slug: string): boolean {
-  return Boolean(STRATEGY_TOOL_DOCS[String(slug || '').trim().toLowerCase()]);
+  return Boolean(
+    STRATEGY_TOOL_DOCS[
+      String(slug || '')
+        .trim()
+        .toLowerCase()
+    ]
+  );
 }
 
 export async function loadStrategyToolDocMarkdown(slug: string): Promise<string> {
-  return STRATEGY_TOOL_DOCS[String(slug || '').trim().toLowerCase()] || '';
+  return (
+    STRATEGY_TOOL_DOCS[
+      String(slug || '')
+        .trim()
+        .toLowerCase()
+    ] || ''
+  );
 }

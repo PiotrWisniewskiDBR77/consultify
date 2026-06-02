@@ -53,7 +53,7 @@ interface NotificationCenterProps {
 const getNotificationIcon = (type: string, severity: string) => {
   const iconClass =
     severity === 'CRITICAL'
-      ? 'text-red-500'
+      ? 'text-rose-500'
       : severity === 'WARNING'
         ? 'text-amber-500'
         : 'text-blue-500';
@@ -108,7 +108,7 @@ const formatRelativeTime = (dateString: string | null | undefined): string => {
 const getSeverityBadgeClass = (severity: string): string => {
   switch (severity) {
     case 'CRITICAL':
-      return 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300';
+      return 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300';
     case 'WARNING':
       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300';
     default:
@@ -147,7 +147,7 @@ const NotificationItem: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0 }}
       className={`
-                relative border-b border-slate-100 dark:border-navy-700 
+                relative border-b border-slate-100 dark:border-navy-700
                 transition-colors
                 ${!notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}
                 ${isExpanded ? 'bg-slate-50/50 dark:bg-white/[0.02]' : ''}
@@ -172,7 +172,7 @@ const NotificationItem: React.FC<{
                         shrink-0 w-8 h-8 rounded-full flex items-center justify-center
                         ${
                           notification.severity === 'CRITICAL'
-                            ? 'bg-red-100 dark:bg-red-900/30'
+                            ? 'bg-rose-100 dark:bg-rose-900/30'
                             : notification.severity === 'WARNING'
                               ? 'bg-amber-100 dark:bg-amber-900/30'
                               : 'bg-blue-100 dark:bg-blue-900/30'
@@ -252,7 +252,7 @@ const NotificationItem: React.FC<{
                     e.stopPropagation();
                     onDelete(notification.id);
                   }}
-                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-red-500"
+                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-rose-500"
                   title="Delete"
                 >
                   <Trash2 size={14} />
@@ -464,7 +464,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             {t('myWork.notifications.title', 'Notifications')}
           </h3>
           {unreadCount > 0 && (
-            <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full">
+            <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">
               {unreadCount}
             </span>
           )}
@@ -491,7 +491,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       setFilter('all');
                       setShowFilter(false);
                     }}
-                    className={`w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-white/5 ${filter === 'all' ? 'text-purple-600 font-medium' : ''}`}
+                    className={`w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-white/5 ${filter === 'all' ? 'text-primary-600 font-medium' : ''}`}
                   >
                     All notifications
                   </button>
@@ -500,7 +500,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       setFilter('unread');
                       setShowFilter(false);
                     }}
-                    className={`w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-white/5 ${filter === 'unread' ? 'text-purple-600 font-medium' : ''}`}
+                    className={`w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-white/5 ${filter === 'unread' ? 'text-primary-600 font-medium' : ''}`}
                   >
                     Unread only
                   </button>
@@ -513,7 +513,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-white/5 rounded"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 hover:bg-slate-100 dark:hover:bg-white/5 rounded"
             >
               <CheckCheck size={12} />
               Mark all read

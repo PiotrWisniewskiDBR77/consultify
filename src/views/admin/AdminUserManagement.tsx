@@ -4,7 +4,6 @@ import {
   CheckCircle,
   Crown,
   Edit,
-  MoreVertical,
   Plus,
   RefreshCw,
   Search,
@@ -16,17 +15,52 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useUserCan } from '../../hooks/useUserCan';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { User, UserRole } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { isSuperAdminRole } from '../../utils/roleGuards';
 
 interface ExtendedUser extends User {
   isOwner?: boolean;
   licensePlanId?: string;
 }
+
+interface UsersResponse {
+  users?: ExtendedUser[];
+}
+
+interface UserFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+  status: string;
+  licensePlanId: string;
+}
+
+interface UserPlan {
+  id: string;
+  name: string;
+  price_monthly?: number;
+  ai_budget?: number;
+}
+
+const normalizeUsers = (data: unknown): ExtendedUser[] => {
+  if (Array.isArray(data)) return data as ExtendedUser[];
+  if (Array.isArray((data as UsersResponse)?.users)) return (data as UsersResponse).users || [];
+  return [];
+};
+
+const userMatchesForm = (user: ExtendedUser, formData: UserFormData) =>
+  user.firstName === formData.firstName &&
+  user.lastName === formData.lastName &&
+  user.email === formData.email &&
+  user.role === formData.role &&
+  user.status === formData.status;
 
 interface AdminUserManagementProps {
   initialUsers?: User[];
@@ -36,9 +70,10 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
   const { canDelete, canEdit } = useUserCan();
   const { currentUser } = useAppStore();
   const [users, setUsers] = useState<ExtendedUser[]>(initialUsers || []);
-  const [userPlans, setUserPlans] = useState<any[]>([]);
+  const [userPlans, setUserPlans] = useState<UserPlan[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Filter States
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -51,9 +86,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
   const [transferTarget, setTransferTarget] = useState<string>('');
   const [transferReason, setTransferReason] = useState('');
   const [transferring, setTransferring] = useState(false);
-
-  // Action Menu State
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -71,12 +105,17 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getUsers();
-      // Api.getUsers returns data.users || data (if data is array)
-      setUsers(Array.isArray(data) ? data : (data as any).users || []);
+      const nextUsers = normalizeUsers(data);
+      setUsers(nextUsers);
+      return nextUsers;
     } catch (e) {
-      console.error(e);
-      toast.error('Failed to load users');
+      setUsers([]);
+      const message = normalizeApiErrorMessage(e, 'Failed to load users');
+      setLoadError(message);
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -97,9 +136,9 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       }
       try {
         const plans = await Api.getUserPlans();
-        setUserPlans(plans);
-      } catch (e) {
-        console.error('Failed to load user plans', e);
+        setUserPlans(Array.isArray(plans) ? plans : []);
+      } catch {
+        setUserPlans([]);
       }
     };
     init();
@@ -115,14 +154,24 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
     if (!confirm(`Are you sure you want to delete ${user.firstName} ${user.lastName}?`)) return;
 
     try {
+      setActionError(null);
       await Api.deleteUser(user.id);
+      const refreshedUsers = await loadUsers();
+      if (!refreshedUsers || refreshedUsers.some((nextUser) => nextUser.id === user.id)) {
+        throw new Error('User deletion was not confirmed by the server');
+      }
       toast.success('User deleted');
-      loadUsers();
-    } catch (e: any) {
-      if (e.code === 'OWNER_PROTECTED') {
+    } catch (e: unknown) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        (e as { code?: string }).code === 'OWNER_PROTECTED'
+      ) {
         toast.error('Cannot delete Account Owner. Transfer ownership first.');
       } else {
-        toast.error(e.message || 'Failed to delete user');
+        const message = normalizeApiErrorMessage(e, 'Failed to delete user');
+        setActionError(message);
+        toast.error(message);
       }
     }
   };
@@ -144,11 +193,20 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       return;
 
     try {
-      await Api.updateUser(user.id, { status: newStatus as any });
+      setActionError(null);
+      await Api.updateUser(user.id, { status: newStatus as User['status'] });
+      const refreshedUsers = await loadUsers();
+      if (
+        !refreshedUsers ||
+        refreshedUsers.find((nextUser) => nextUser.id === user.id)?.status !== newStatus
+      ) {
+        throw new Error('User status update was not confirmed by the server');
+      }
       toast.success(`User status updated to ${newStatus}`);
-      loadUsers();
-    } catch (e: any) {
-      toast.error(e.message || `Failed to update user status`);
+    } catch (e: unknown) {
+      const message = normalizeApiErrorMessage(e, 'Failed to update user status');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -160,6 +218,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
 
     setTransferring(true);
     try {
+      setActionError(null);
       const response = await fetch('/api/organizations/transfer-ownership', {
         method: 'POST',
         headers: {
@@ -178,15 +237,20 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
         throw new Error(data.error || 'Transfer failed');
       }
 
+      const refreshedUsers = await loadUsers();
+      if (!refreshedUsers?.some((user) => user.id === transferTarget && user.isOwner)) {
+        throw new Error('Ownership transfer was not confirmed by the server');
+      }
       toast.success(
         `Ownership transferred to ${data.newOwner.firstName} ${data.newOwner.lastName}`
       );
       setShowTransferModal(false);
       setTransferTarget('');
       setTransferReason('');
-      loadUsers();
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to transfer ownership');
+    } catch (e: unknown) {
+      const message = normalizeApiErrorMessage(e, 'Failed to transfer ownership');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setTransferring(false);
     }
@@ -195,18 +259,29 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setFormError(null);
       if (editingUser) {
         await Api.updateUser(editingUser.id, formData);
+        const refreshedUsers = await loadUsers();
+        const persistedUser = refreshedUsers?.find((user) => user.id === editingUser.id);
+        if (!persistedUser || !userMatchesForm(persistedUser, formData)) {
+          throw new Error('User update was not confirmed by the server');
+        }
         toast.success('User updated');
       } else {
         await Api.addUser({ ...formData, password: 'welcome123' });
+        const refreshedUsers = await loadUsers();
+        if (!refreshedUsers?.some((user) => user.email === formData.email)) {
+          throw new Error('User creation was not confirmed by the server');
+        }
         toast.success('User created');
       }
       setShowAddUserModal(false);
       setEditingUser(null);
-      loadUsers();
-    } catch (err: any) {
-      toast.error(err.message || 'Error saving user');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Error saving user');
+      setFormError(message);
+      toast.error(message);
     }
   };
 
@@ -221,7 +296,6 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       licensePlanId: user.licensePlanId || '',
     });
     setShowAddUserModal(true);
-    setOpenMenuId(null);
   };
 
   const openAddModal = () => {
@@ -265,7 +339,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
     if (isOwner || role === 'OWNER')
       return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30';
     if (isSuperAdminRole(role))
-      return 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30';
+      return 'bg-primary-500/10 text-primary-700 dark:text-primary-400 border-primary-500/30';
     if (role === UserRole.ADMIN)
       return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30';
     if (role === 'PROJECT_MANAGER')
@@ -292,7 +366,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none w-64"
+              disabled={!!loadError}
+              className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 outline-none w-64"
             />
           </div>
 
@@ -300,7 +375,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-purple-500 outline-none"
+            disabled={!!loadError}
+            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
           >
             <option value="all">All Account Types</option>
             <option value="OWNER">Owner</option>
@@ -312,7 +388,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-purple-500 outline-none"
+            disabled={!!loadError}
+            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -325,6 +402,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           {currentUserIsOwner && (
             <button
               onClick={() => setShowTransferModal(true)}
+              disabled={!!loadError}
               className="flex items-center gap-2 px-4 py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-lg transition-colors text-sm font-medium"
             >
               <ArrowRightLeft size={16} /> Transfer Ownership
@@ -332,7 +410,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           )}
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20"
+            disabled={!!loadError}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-primary-900/20"
           >
             <Plus size={16} /> Add User
           </button>
@@ -341,6 +420,14 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
 
       {/* Users Table - Clean minimal */}
       <div className="admin-card overflow-hidden">
+        {actionError && (
+          <div
+            role="alert"
+            className="m-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
+          >
+            {actionError}
+          </div>
+        )}
         <table className="admin-table">
           <thead>
             <tr>
@@ -355,7 +442,13 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             {loading ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center">
-                  <RefreshCw className="w-6 h-6 animate-spin text-purple-500 mx-auto" />
+                  <RefreshCw className="w-6 h-6 animate-spin text-primary-500 mx-auto" />
+                </td>
+              </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-6">
+                  <DegradedState title="Users unavailable" description={loadError} />
                 </td>
               </tr>
             ) : filteredUsers.length === 0 ? (
@@ -475,7 +568,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                           className={`p-2 rounded-lg ${
                             user.isOwner || user.role === 'OWNER'
                               ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
-                              : 'hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400'
+                              : 'hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400'
                           }`}
                           title={
                             user.isOwner || user.role === 'OWNER'
@@ -529,6 +622,14 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             )}
 
             <form onSubmit={handleSaveUser} className="space-y-4">
+              {formError && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm"
+                >
+                  {formError}
+                </div>
+              )}
               <input
                 required
                 placeholder="First Name"
@@ -553,7 +654,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               />
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                 className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
                 disabled={editingUser?.isOwner}
               >
@@ -584,7 +685,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               </select>
               <button
                 type="submit"
-                className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4"
+                className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-semibold mt-4"
               >
                 Save
               </button>

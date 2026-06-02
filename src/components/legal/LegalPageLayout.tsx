@@ -65,7 +65,7 @@ export const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({
                         prose-h3:text-lg prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-navy-800 dark:prose-h3:text-slate-200
                         prose-p:text-slate-600 dark:text-slate-400 dark:prose-p:text-slate-300 prose-p:leading-relaxed
                         prose-li:text-slate-600 dark:text-slate-400 dark:prose-li:text-slate-300
-                        prose-a:text-purple-600 dark:prose-a:text-purple-400 prose-a:no-underline hover:prose-a:underline
+                        prose-a:text-primary-600 dark:prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline
                         prose-strong:text-navy-900 dark:prose-strong:text-white
                     "
           >

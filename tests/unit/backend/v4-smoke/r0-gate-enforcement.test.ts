@@ -32,12 +32,12 @@ describe('V4-INIT-01: Gate Policy Enforcement', () => {
       }
     });
 
-    it('blocks submit when status is not in_progress', () => {
+    it('blocks submit when status is not in_progress/submitted/sent_back', () => {
       const result = evaluateGatePolicy({
         action: 'SUBMIT_INTERVIEW',
         contextType: 'interview_assignment',
         user: baseUser,
-        context: { status: 'submitted', session_id: 'sess-1' },
+        context: { status: 'approved', session_id: 'sess-1' },
       });
       expect(result.allow).toBe(false);
       if (!result.allow) {

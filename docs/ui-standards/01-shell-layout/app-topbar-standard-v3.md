@@ -1,6 +1,6 @@
 # App Topbar (Global Header) Standard — v3
 
-> **Status:** Draft (v3)  
+> **Status:** Canonical global chrome standard, subordinate to `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`  
 > **Cel:** Ustandaryzować **stały** pasek górny aplikacji (chrome), oddzielając go od **kontekstowego** topbara modułów.  
 > **Powiązane standardy:**  
 > - `docs/ui-standards/03-modules/module-hub-standard.md` (kontekstowy topbar modułu)  

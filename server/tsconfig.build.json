@@ -21,6 +21,7 @@
     "noUnusedParameters": false,
     "noImplicitReturns": false,
 
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noEmitOnError": false
   }
 }

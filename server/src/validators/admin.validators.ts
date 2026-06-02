@@ -11,68 +11,72 @@ import { z } from 'zod';
 // REQUEST SCHEMAS
 // ==========================================
 
-// Feedback #1e3d749a / #682d4134 / #76ef6831 — the previous schemas rejected
-// the exact payloads the UI (and DB) actually use:
-//   - `role` only allowed USER/ADMIN/SUPERADMIN/MANAGER, but production users
-//     carry MEMBER, OWNER, PROJECT_MANAGER, CONSULTANT, CLIENT, VIEWER, etc.
-//     Editing such a user echoed their current role back and hit a 400.
-//   - `status` only allowed upper-case ACTIVE/INACTIVE/SUSPENDED/PENDING, but
-//     the DB and UI use lowercase `active|blocked|deleted|pending|trial|...`.
-//     That blocked both "change status" and the Block/Unblock toggle.
-//   - `organizationId` required a UUID, but tenant IDs are slugs
-//     (`vts`, `aplix-na`, `ateliertoys-demo`, `org-dbr77-system`), so the
-//     "move user to another org" action always failed validation.
-//
-// We normalize role/status in the controller layer, so at the schema level we
-// just enforce length/shape and let the business logic decide what's valid.
-const RoleString = z
+const userStatusValues = [
+  'active',
+  'blocked',
+  'inactive',
+  'suspended',
+  'pending',
+  'deleted',
+] as const;
+
+const userStatusSchema = z
   .string()
+  .trim()
   .min(1)
-  .max(64)
-  .regex(/^[A-Za-z0-9_\-]+$/, 'role must be a simple token');
-const StatusString = z
-  .string()
-  .min(1)
-  .max(32)
-  .regex(/^[A-Za-z0-9_\-]+$/, 'status must be a simple token');
-// Organization IDs in this platform are slugs (or legacy UUIDs). Accept either.
-const OrganizationIdString = z
-  .string()
-  .min(1)
-  .max(128)
-  .regex(/^[A-Za-z0-9_\-]+$/, 'organizationId must be a slug or UUID');
+  .transform((value) => value.toLowerCase())
+  .pipe(z.enum(userStatusValues));
 
 export const UpdateOrganizationAdminSchema = z.object({
-  plan: z.enum(['free', 'starter', 'professional', 'enterprise']).optional(),
-  status: z.enum(['active', 'suspended', 'cancelled', 'trial']).optional(),
+  plan: z.enum(['free', 'trial', 'starter', 'pro', 'professional', 'enterprise']).optional(),
+  status: z.enum(['active', 'pending', 'blocked', 'suspended', 'cancelled', 'trial']).optional(),
   name: z.string().max(255).optional(),
+  discount_percent: z.coerce.number().min(0).max(100).optional(),
 });
 
 export const CreateUserAdminSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1).max(255),
   lastName: z.string().min(1).max(255),
-  role: RoleString.optional(),
-  organizationId: OrganizationIdString.optional(),
+  role: z.enum(['USER', 'ADMIN', 'SUPERADMIN', 'MANAGER']).optional(),
+  organizationId: z.string().trim().min(1).max(255).optional(),
+  password: z.string().min(8).max(255).optional(),
+  licensePlanId: z.string().trim().max(255).nullable().optional(),
+  department: z.string().trim().max(255).optional(),
+  jobTitle: z.string().trim().max(255).optional(),
+  projectRole: z.string().trim().max(100).optional(),
 });
 
 export const UpdateUserAdminSchema = z.object({
   email: z.string().email().optional(),
   firstName: z.string().max(255).optional(),
   lastName: z.string().max(255).optional(),
-  role: RoleString.optional(),
-  organizationId: OrganizationIdString.optional(),
-  status: StatusString.optional(),
+  role: z.enum(['USER', 'ADMIN', 'SUPERADMIN', 'MANAGER']).optional(),
+  organizationId: z.string().trim().min(1).max(255).optional(),
+  status: userStatusSchema.optional(),
+  licensePlanId: z.string().trim().max(255).nullable().optional(),
+  department: z.string().trim().max(255).optional(),
+  jobTitle: z.string().trim().max(255).optional(),
+  projectRole: z.string().trim().max(100).optional(),
 });
 
 export const ImpersonateUserSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().trim().min(1).max(255),
 });
 
 export const CreateAccessCodeSchema = z.object({
-  code: z.string().min(1).max(100),
-  maxUses: z.number().int().positive().optional(),
-  expiresAt: z.string().datetime().optional(),
+  code: z.string().trim().min(1).max(100).optional().or(z.literal('')),
+  role: z.string().trim().min(1).max(50).optional(),
+  maxUses: z.coerce.number().int().positive().optional(),
+  organizationId: z.string().trim().min(1).max(255).optional(),
+  expiresAt: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(''))
+    .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
+      message: 'expiresAt must be a valid date',
+    }),
 });
 
 export const UpdateUserTierSchema = z.object({
@@ -92,7 +96,7 @@ export const CreateAdminAlertSchema = z.object({
 // ==========================================
 
 export const GetAdminDataQuerySchema = z.object({
-  orgId: z.string().uuid().optional(),
+  orgId: z.string().trim().min(1).max(255).optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   limit: z.coerce.number().int().min(1).max(1000).optional().default(50),

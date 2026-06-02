@@ -63,7 +63,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                                 flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                                 ${
                                   activeTab === tab.id
-                                    ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                                    ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                                     : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                                 }
                             `}
@@ -78,7 +78,7 @@ export const StrategicSynthesisModule: React.FC = () => {
         {/* TAB 1: RISKS */}
         {activeTab === 'risks' && (
           <div className="space-y-6 relative">
-            <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30 flex gap-3 text-red-800 dark:text-red-300">
+            <div className="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-xl border border-rose-100 dark:border-rose-900/30 flex gap-3 text-rose-800 dark:text-rose-300">
               <AlertOctagon size={20} className="shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-bold mb-1">Risk Assessment Logic</p>
@@ -105,7 +105,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                     <div className="flex items-center gap-2">
                       {(item.isAiSuggested as boolean) && (
                         <div
-                          className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded-md text-purple-600"
+                          className="p-1 bg-primary-100 dark:bg-primary-900/30 rounded-md text-primary-600"
                           title="AI Suggested Risk"
                         >
                           <BrainCircuit size={14} />
@@ -134,8 +134,8 @@ export const StrategicSynthesisModule: React.FC = () => {
                   width: 'w-1/6',
                   render: (item) => {
                     const colorMap: Record<string, string> = {
-                      Critical: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-                      High: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+                      Critical: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+                      High: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
                       Medium:
                         'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
                       Low: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
@@ -176,7 +176,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                   <div className="bg-slate-50 dark:bg-navy-800 p-6 border-b border-slate-200 dark:border-navy-700 flex justify-between items-start">
                     <div className="flex gap-4">
                       <div
-                        className={`mt-1 p-3 rounded-xl ${(selectedRisk.isAiSuggested as boolean) ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}`}
+                        className={`mt-1 p-3 rounded-xl ${(selectedRisk.isAiSuggested as boolean) ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30'}`}
                       >
                         {(selectedRisk.isAiSuggested as boolean) ? (
                           <BrainCircuit size={24} />
@@ -190,7 +190,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                             {selectedRisk.risk as string}
                           </h3>
                           {(selectedRisk.isAiSuggested as boolean) && (
-                            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-[10px] font-bold uppercase rounded-full tracking-wide">
+                            <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-[10px] font-bold uppercase rounded-full tracking-wide">
                               AI Insight
                             </span>
                           )}
@@ -229,18 +229,18 @@ export const StrategicSynthesisModule: React.FC = () => {
                         <div
                           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm ${
                             (selectedRisk.severity as string) === 'Critical'
-                              ? 'bg-red-100 text-red-700'
+                              ? 'bg-rose-100 text-rose-700'
                               : (selectedRisk.severity as string) === 'High'
-                                ? 'bg-orange-100 text-orange-700'
+                                ? 'bg-amber-100 text-amber-700'
                                 : 'bg-blue-100 text-blue-700'
                           }`}
                         >
                           <div
                             className={`w-2 h-2 rounded-full ${
                               (selectedRisk.severity as string) === 'Critical'
-                                ? 'bg-red-500'
+                                ? 'bg-rose-500'
                                 : (selectedRisk.severity as string) === 'High'
-                                  ? 'bg-orange-500'
+                                  ? 'bg-amber-500'
                                   : 'bg-blue-500'
                             }`}
                           />
@@ -278,8 +278,8 @@ export const StrategicSynthesisModule: React.FC = () => {
                       </div>
                     </div>
                     {(selectedRisk.isAiSuggested as boolean) && (
-                      <div className="flex gap-3 text-sm text-slate-500 dark:text-slate-400 bg-purple-50 dark:bg-purple-900/10 p-4 rounded-lg border border-purple-100 dark:border-purple-900/20">
-                        <BrainCircuit size={16} className="text-purple-500 shrink-0 mt-0.5" />
+                      <div className="flex gap-3 text-sm text-slate-500 dark:text-slate-400 bg-primary-50 dark:bg-primary-900/10 p-4 rounded-lg border border-primary-100 dark:border-primary-900/20">
+                        <BrainCircuit size={16} className="text-primary-500 shrink-0 mt-0.5" />
                         <p>
                           This risk was suggested because similar organizations in{' '}
                           <strong>Automotive</strong> typically struggle with this compliance gap
@@ -296,7 +296,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                     >
                       Close
                     </button>
-                    <button className="px-4 py-2 bg-navy-900 dark:bg-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                    <button className="px-4 py-2 bg-navy-900 dark:bg-primary-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
                       Update Risk Strategy
                     </button>
                   </div>
@@ -332,7 +332,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                     <div className="flex items-center gap-2">
                       {(item.isAiSuggested as boolean) && (
                         <div
-                          className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded-md text-purple-600"
+                          className="p-1 bg-primary-100 dark:bg-primary-900/30 rounded-md text-primary-600"
                           title="AI Suggested Opportunity"
                         >
                           <BrainCircuit size={14} />
@@ -372,7 +372,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                   <div className="bg-slate-50 dark:bg-navy-800 p-6 border-b border-slate-200 dark:border-navy-700 flex justify-between items-start">
                     <div className="flex gap-4">
                       <div
-                        className={`mt-1 p-3 rounded-xl ${selectedStrength.isAiSuggested ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'}`}
+                        className={`mt-1 p-3 rounded-xl ${selectedStrength.isAiSuggested ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30' : 'bg-green-100 text-green-600 dark:bg-green-900/30'}`}
                       >
                         {selectedStrength.isAiSuggested ? (
                           <BrainCircuit size={24} />
@@ -386,7 +386,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                             {selectedStrength.enabler as string}
                           </h3>
                           {(selectedStrength.isAiSuggested as boolean) && (
-                            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-[10px] font-bold uppercase rounded-full tracking-wide">
+                            <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-[10px] font-bold uppercase rounded-full tracking-wide">
                               AI Opportunity
                             </span>
                           )}

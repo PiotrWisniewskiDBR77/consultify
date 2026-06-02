@@ -163,7 +163,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
               onClick={() => handlePresetClick(preset.cron)}
               className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                 isActive
-                  ? 'border-purple-500 bg-purple-50 text-purple-700 dark:border-purple-400 dark:bg-purple-900/20 dark:text-purple-300'
+                  ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-900/20 dark:text-primary-300'
                   : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500'
               }`}
             >
@@ -188,7 +188,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
           placeholder="*/15 * * * *"
           className={`w-full rounded-lg border px-3 py-2 font-mono text-sm ${
             customInput && !validation.valid
-              ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20'
+              ? 'border-rose-300 bg-rose-50 dark:border-rose-600 dark:bg-rose-900/20'
               : 'border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800'
           }`}
         />
@@ -199,7 +199,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
           </p>
         )}
         {customInput && !validation.valid && validation.error && (
-          <p className="flex items-center gap-1 text-xs text-red-500">
+          <p className="flex items-center gap-1 text-xs text-rose-500">
             <AlertCircle className="h-3 w-3" />
             {validation.error}
           </p>

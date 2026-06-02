@@ -73,6 +73,9 @@ const PRODUCT_ORDER = [
   'marketplace',
 ] as const;
 
+/** Always retrieve full DBR77 portfolio context (pills + RAG) for these workers. */
+const WORKER_SLUGS_FULL_PORTFOLIO = new Set(['anna', 'teresa']);
+
 const PRODUCT_MATCHERS: Record<string, RegExp[]> = {
   consultify: [/\bconsultify\b/i, /\bconsultinity\b/i],
   vector: [/\bvector\b/i, /\bllm\b/i, /\blarge language model\b/i],
@@ -88,8 +91,8 @@ const PRODUCT_FALLBACK_CONTEXTS: Record<string, string> = {
 Consultify is the main public product priority. It is an AI-powered platform for structured digital transformation work: diagnosis, roadmap building, initiatives, execution support, ROI logic, and reporting. Anna should default to explaining Consultify first, especially for value, adoption, demo, trial, workflow, onboarding, and business impact questions.`,
   vector: `Product: DBR77 Vector
 DBR77 Vector is the DBR77 proprietary LLM and industrial reasoning layer. It is positioned as a domain-trained model for factory transformation, industrial operations, digital transformation, deployment flexibility, and enterprise-grade security. In Anna conversations, Vector should be explained mainly as the intelligence layer that can support Consultify and the broader DBR ecosystem.`,
-  dbr77: `Product: DBR77 Ecosystem
-DBR77 is presented as one connected system that includes Consultify, Vector, Digital Twin, IIoT, Marketplace, IRIS and other operational products. The priority in public conversations is still Consultify first. Other DBR products should be introduced when the user asks directly or when they help explain how Consultify creates business value.`,
+  dbr77: `Company: DBR77
+DBR77 is the organization behind a portfolio of industrial and transformation products, including Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT and Marketplace. Do not describe DBR77 itself as only a technology ecosystem; separate the company from its individual products and platforms.`,
   iris: `Product: IRIS
 IRIS is the DBR77 intelligence engine for industrial risk scoring, anomaly detection and predictive maintenance. It processes real-time signals from IIoT and Digital Twin to surface operational insights for factory and supply-chain leaders.`,
   'digital-twin': `Product: Digital Twin
@@ -116,11 +119,15 @@ function uniq<T>(items: T[]): T[] {
 
 function safeSlice(text: string, maxChars: number): string {
   const value = String(text || '').trim();
-  return value.length <= maxChars ? value : `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+  return value.length <= maxChars
+    ? value
+    : `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
 }
 
 function normalizeLanguage(value?: string | null): 'pl' | 'en' | null {
-  const normalized = String(value || '').trim().toLowerCase();
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
   if (!normalized) return null;
   if (normalized.startsWith('pl')) return 'pl';
   if (normalized.startsWith('en')) return 'en';
@@ -131,18 +138,27 @@ function resolveKnowledgeLanguage(locale?: string): 'pl' | 'en' {
   return normalizeLanguage(locale) === 'pl' ? 'pl' : 'en';
 }
 
-function detectProducts(query: string): string[] {
+export function detectProducts(query: string): string[] {
   const matched: string[] = [];
   for (const product of PRODUCT_ORDER) {
-    if ((PRODUCT_MATCHERS[product] || []).some((pattern) => pattern.test(query))) matched.push(product);
+    if ((PRODUCT_MATCHERS[product] || []).some((pattern) => pattern.test(query)))
+      matched.push(product);
   }
   return matched;
 }
 
-function isDbR77PortfolioQuestion(query: string): boolean {
+function prioritizeProducts(explicitProducts: string[], baseProducts: string[]): string[] {
+  return explicitProducts.length > 0
+    ? uniq([...explicitProducts, ...baseProducts])
+    : uniq(baseProducts);
+}
+
+export function isDbR77PortfolioQuestion(query: string): boolean {
   const q = String(query || '').toLowerCase();
   const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
-  const mentionsAnnaOrProduct = /\banna\b/.test(q) || /\bconsultify\b/.test(q) || mentionsDbR;
+  // Do not treat the assistant name "Anna" as narrowing the topic — users often
+  // address Anna while asking about the full DBR77 portfolio ("Anna, jakie macie produkty?").
+  const mentionsConsultifyOrDbR = /\bconsultify\b/.test(q) || mentionsDbR;
   const portfolioKeywords =
     /\bportfolio\b/.test(q) ||
     /\bekosystem\b/.test(q) ||
@@ -161,7 +177,7 @@ function isDbR77PortfolioQuestion(query: string): boolean {
     /\btell me about your\b/.test(q) ||
     /\bopowiedz.*o.*produk\b/.test(q) ||
     /\bprzedstaw.*ofert\b/.test(q);
-  return (mentionsDbR && portfolioKeywords) || (portfolioKeywords && !mentionsAnnaOrProduct);
+  return (mentionsDbR && portfolioKeywords) || (portfolioKeywords && !mentionsConsultifyOrDbR);
 }
 
 function splitDocsByLanguagePreference(
@@ -323,11 +339,18 @@ function searchPillHits(
   for (const { pill, assignment } of assignedPills) {
     const sections = selectSections(pill, assignment);
     for (const section of sections) {
-      const corpus = `${pill.title} ${pill.summary || ''} ${section.title} ${section.content}`.toLowerCase();
-      const tokenMatches = tokens.reduce((count, token) => count + (corpus.includes(token) ? 1 : 0), 0);
+      const corpus =
+        `${pill.title} ${pill.summary || ''} ${section.title} ${section.content}`.toLowerCase();
+      const tokenMatches = tokens.reduce(
+        (count, token) => count + (corpus.includes(token) ? 1 : 0),
+        0
+      );
       const productBoost = pill.product_slug && primaryProducts.includes(pill.product_slug) ? 1 : 0;
       const coverage = tokens.length > 0 ? tokenMatches / tokens.length : 0.25;
-      const score = Math.min(0.99, coverage + productBoost * 0.2 + assignment.priority_weight * 0.08);
+      const score = Math.min(
+        0.99,
+        coverage + productBoost * 0.2 + assignment.priority_weight * 0.08
+      );
       const excerpt =
         assignment.max_context_chars && assignment.max_context_chars > 0
           ? safeSlice(section.content, assignment.max_context_chars)
@@ -482,30 +505,39 @@ export async function buildWorkerKnowledgeContext(opts: {
     };
   }
 
-  const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
   const detectedProducts = detectProducts(originalQuery);
+  const forceFullPortfolio = WORKER_SLUGS_FULL_PORTFOLIO.has(opts.workerSlug);
+  const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
   const assignedProductSlugs = uniq(
-    assignments.filter((assignment) => assignment.product_slug).map((assignment) => assignment.product_slug!)
+    assignments
+      .filter((assignment) => assignment.product_slug)
+      .map((assignment) => assignment.product_slug!)
   );
-  const allKnownProducts = uniq([...assignedProductSlugs, ...(PRODUCT_ORDER as unknown as string[])]);
+  const allKnownProducts = uniq([
+    ...assignedProductSlugs,
+    ...(PRODUCT_ORDER as unknown as string[]),
+  ]);
   const defaultProduct = assignedProductSlugs.includes('consultify')
     ? 'consultify'
     : assignedProductSlugs[0] || undefined;
-  const explicitAssignedProducts = detectedProducts.filter((product) => assignedProductSlugs.includes(product));
+  const explicitAssignedProducts = detectedProducts.filter((product) =>
+    assignedProductSlugs.includes(product)
+  );
   const baseLimit = Math.min(Math.max(opts.limit || 6, 2), 10);
   const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
 
+  const portfolioProducts = uniq([
+    'dbr77',
+    'consultify',
+    'vector',
+    'iris',
+    'digital-twin',
+    'iiot',
+    'marketplace',
+    ...assignedProductSlugs,
+  ]);
   const primaryProducts = portfolioMode
-    ? uniq([
-        'dbr77',
-        'consultify',
-        'vector',
-        'iris',
-        'digital-twin',
-        'iiot',
-        'marketplace',
-        ...assignedProductSlugs,
-      ])
+    ? prioritizeProducts(detectedProducts, portfolioProducts)
     : explicitAssignedProducts.length > 0
       ? uniq([
           ...explicitAssignedProducts.filter((product) => product !== defaultProduct),
@@ -566,7 +598,11 @@ export async function buildWorkerKnowledgeContext(opts: {
               const productDocs = docsByProduct.get(product) || [];
               const scoped = splitDocsByLanguagePreference(productDocs, opts.locale);
               const hint = productQueryHints[product] || product;
-              const preferred = await searchScoped(`${hint} ${originalQuery}`, scoped.preferredDocs, 1);
+              const preferred = await searchScoped(
+                `${hint} ${originalQuery}`,
+                scoped.preferredDocs,
+                1
+              );
               return preferred.length > 0
                 ? preferred
                 : searchScoped(`${hint} ${originalQuery}`, scoped.fallbackDocs, 1);
@@ -579,9 +615,13 @@ export async function buildWorkerKnowledgeContext(opts: {
       const scopedPrimary = splitDocsByLanguagePreference(primaryDocs, opts.locale);
       const scopedAll = splitDocsByLanguagePreference(allDocs, opts.locale);
       const preferredDocs =
-        scopedPrimary.preferredDocs.length > 0 ? scopedPrimary.preferredDocs : scopedAll.preferredDocs;
+        scopedPrimary.preferredDocs.length > 0
+          ? scopedPrimary.preferredDocs
+          : scopedAll.preferredDocs;
       const fallbackDocs =
-        scopedPrimary.preferredDocs.length > 0 ? scopedPrimary.fallbackDocs : scopedAll.fallbackDocs;
+        scopedPrimary.preferredDocs.length > 0
+          ? scopedPrimary.fallbackDocs
+          : scopedAll.fallbackDocs;
 
       const preferredHits = await searchScoped(query, preferredDocs, limit);
       const explicitCrossProduct = detectedProducts.some((product) => product !== 'consultify');
@@ -589,9 +629,13 @@ export async function buildWorkerKnowledgeContext(opts: {
 
       if (shouldExpandBeyondPrimary && preferredHits.length < limit) {
         const secondaryHits =
-          scopedAll.preferredDocs.length > 0 ? await searchScoped(query, scopedAll.preferredDocs, limit) : [];
+          scopedAll.preferredDocs.length > 0
+            ? await searchScoped(query, scopedAll.preferredDocs, limit)
+            : [];
         const fallbackHits =
-          preferredHits.length === 0 && secondaryHits.length === 0 && scopedAll.fallbackDocs.length > 0
+          preferredHits.length === 0 &&
+          secondaryHits.length === 0 &&
+          scopedAll.fallbackDocs.length > 0
             ? await searchScoped(query, scopedAll.fallbackDocs, limit)
             : [];
         ragHits = dedupeHits([...ragHits, ...preferredHits, ...secondaryHits, ...fallbackHits]);
@@ -609,11 +653,18 @@ export async function buildWorkerKnowledgeContext(opts: {
     const fallbackProducts = portfolioMode ? allKnownProducts : primaryProducts;
     ragHits = dedupeHits([...ragHits, ...buildFallbackHits(fallbackProducts)]);
 
+    const explicitPriority = new Map(detectedProducts.map((product, index) => [product, index]));
     const sorted = ragHits
       .sort((a, b) => {
-        const aWeight = weightMap.get(a.productSlug) ?? 1.0;
-        const bWeight = weightMap.get(b.productSlug) ?? 1.0;
-        if (aWeight !== bWeight) return bWeight - aWeight;
+        if (explicitPriority.size > 0) {
+          const aExplicit = explicitPriority.has(a.productSlug)
+            ? (explicitPriority.get(a.productSlug) as number)
+            : explicitPriority.size + 1;
+          const bExplicit = explicitPriority.has(b.productSlug)
+            ? (explicitPriority.get(b.productSlug) as number)
+            : explicitPriority.size + 1;
+          if (aExplicit !== bExplicit) return aExplicit - bExplicit;
+        }
         const aPriority = primaryProducts.indexOf(a.productSlug);
         const bPriority = primaryProducts.indexOf(b.productSlug);
         const aScore = aPriority >= 0 ? aPriority : primaryProducts.length + 1;
@@ -622,17 +673,26 @@ export async function buildWorkerKnowledgeContext(opts: {
         const aLanguage = scoreLanguagePreference(a.language, preferredLanguage);
         const bLanguage = scoreLanguagePreference(b.language, preferredLanguage);
         if (aLanguage !== bLanguage) return aLanguage - bLanguage;
+        const aWeight = weightMap.get(a.productSlug) ?? 1.0;
+        const bWeight = weightMap.get(b.productSlug) ?? 1.0;
+        if (aWeight !== bWeight) return bWeight - aWeight;
         return b.similarity - a.similarity;
       })
       .slice(0, limit);
 
-    const { contextText: rawContextText, sources, usedPillIds, usedPillSections } = buildContextText(
-      sorted,
-      defaultProduct
-    );
+    const {
+      contextText: rawContextText,
+      sources,
+      usedPillIds,
+      usedPillSections,
+    } = buildContextText(sorted, defaultProduct);
 
     const contextText = portfolioMode
-      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.`
+      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.${
+          forceFullPortfolio && portfolioMode
+            ? '\n- You always have the governed product knowledge above; when a question touches any DBR77 product, use it. Do not claim you lack access to that product line.'
+            : ''
+        }`
       : rawContextText;
 
     return {
@@ -642,12 +702,11 @@ export async function buildWorkerKnowledgeContext(opts: {
       sources,
       usedPillIds,
       usedPillSections,
-      fallbackReason:
-        sorted.some((hit) => hit.source.startsWith('pill:'))
-          ? null
-          : sorted.some((hit) => hit.source.endsWith('-fallback'))
-            ? 'fallback_context_only'
-            : null,
+      fallbackReason: sorted.some((hit) => !hit.source.endsWith('-fallback'))
+        ? null
+        : sorted.some((hit) => hit.source.endsWith('-fallback'))
+          ? 'fallback_context_only'
+          : null,
     };
   } catch (error: unknown) {
     logger.warn('[VWKnowledge] Failed:', error instanceof Error ? error.message : String(error));
@@ -682,7 +741,11 @@ export async function buildWorkerVoiceBootstrap(
     fallbackReason: 'policy_refused',
   };
 
-  const lang = String(locale || '').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+  const lang = String(locale || '')
+    .toLowerCase()
+    .startsWith('pl')
+    ? 'pl'
+    : 'en';
   const bootstrapQuery =
     lang === 'pl'
       ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem'

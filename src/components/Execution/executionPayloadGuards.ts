@@ -1,7 +1,4 @@
-export function normalizeExecutionArrayEnvelope<T>(
-  value: unknown,
-  keys: string[]
-): T[] {
+export function normalizeExecutionArrayEnvelope<T>(value: unknown, keys: string[]): T[] {
   if (Array.isArray(value)) return value as T[];
   if (!value || typeof value !== 'object') return [];
 

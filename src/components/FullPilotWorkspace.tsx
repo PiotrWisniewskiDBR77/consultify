@@ -76,7 +76,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
 
         {/* Scope OUT */}
         <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-white/5">
-          <h3 className="flex items-center gap-2 text-lg font-bold text-red-500 mb-4">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-rose-500 mb-4">
             <AlertTriangle size={20} /> Scope OUT (Won't Do)
           </h3>
           {isEditing ? (
@@ -203,7 +203,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
               key={i}
               className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
             >
-              <Target size={18} className="text-purple-500" />
+              <Target size={18} className="text-primary-500" />
               {kpi}
             </li>
           )) || <div className="text-slate-500 italic">No KPIs defined.</div>}
@@ -244,12 +244,12 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
                 Pilot successful. Proceed to scale.
               </p>
             </div>
-            <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 p-8 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-105 transition-transform">
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center mb-4 text-red-600 dark:text-red-400">
+            <div className="bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-500/20 p-8 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer hover:scale-105 transition-transform">
+              <div className="w-16 h-16 bg-rose-100 dark:bg-rose-500/20 rounded-full flex items-center justify-center mb-4 text-rose-600 dark:text-rose-400">
                 <X size={32} />
               </div>
-              <h3 className="text-2xl font-bold text-red-700 dark:text-red-400">NO-GO: Pivot</h3>
-              <p className="text-red-600/70 dark:text-red-400/70 mt-2">
+              <h3 className="text-2xl font-bold text-rose-700 dark:text-rose-400">NO-GO: Pivot</h3>
+              <p className="text-rose-600/70 dark:text-rose-400/70 mt-2">
                 Pilot failed. Re-evaluate strategy.
               </p>
             </div>
@@ -265,7 +265,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
       {/* Header */}
       <div className="h-20 border-b border-white/10 px-8 flex items-center justify-between bg-navy-900/50 backdrop-blur-sm sticky top-0 z-10">
         <div>
-          <div className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1">
+          <div className="text-xs font-bold text-primary-400 uppercase tracking-widest mb-1">
             Active Pilot Experiment
           </div>
           <h1 className="text-2xl font-bold">{pilotInitiative.name}</h1>
@@ -302,7 +302,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as PilotTab)}
-            className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+            className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-white'}`}
           >
             <tab.icon size={16} />
             {tab.label}

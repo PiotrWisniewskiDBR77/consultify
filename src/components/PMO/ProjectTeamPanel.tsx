@@ -79,7 +79,7 @@ const CANONICAL_ROLE_DEFS: Record<
   INITIATIVE_OWNER: {
     labelEn: 'Initiative Owner',
     labelPl: 'Właściciel inicjatywy',
-    color: 'bg-teal-100 text-teal-800',
+    color: 'bg-blue-100 text-blue-800',
     icon: Users,
   },
   TEAM_MEMBER: {
@@ -91,14 +91,14 @@ const CANONICAL_ROLE_DEFS: Record<
   PMO: {
     labelEn: 'Project Office (PMO)',
     labelPl: 'Project Office (PMO)',
-    color: 'bg-violet-100 text-violet-800',
+    color: 'bg-primary-100 text-primary-800',
     icon: Shield,
     invokable: true,
   },
   PORTFOLIO_OWNER: {
     labelEn: 'Portfolio Owner',
     labelPl: 'Właściciel portfela',
-    color: 'bg-purple-100 text-purple-800',
+    color: 'bg-primary-100 text-primary-800',
     icon: Shield,
     invokable: true,
   },
@@ -265,7 +265,7 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="px-6 py-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
+        <div className="px-6 py-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
           <AlertTriangle className="w-4 h-4" />
           {error}
         </div>
@@ -445,7 +445,7 @@ const MemberRow: React.FC<MemberRowProps> = ({
 
         {/* Workstream */}
         {member.workstreamId && (
-          <span className="text-xs bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 px-2 py-1 rounded">
+          <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
             Workstream
           </span>
         )}
@@ -504,7 +504,7 @@ const MemberRow: React.FC<MemberRowProps> = ({
         {canManage && (
           <button
             onClick={onRemove}
-            className="p-1.5 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-red-500"
+            className="p-1.5 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500"
           >
             <X className="w-4 h-4" />
           </button>
@@ -663,7 +663,7 @@ const SteeringBoardPanel: React.FC<{ projectId: string; canManage: boolean }> = 
                   {canManage && (
                     <button
                       onClick={() => removeMember(m.userId)}
-                      className="p-1.5 text-slate-400 hover:text-red-500"
+                      className="p-1.5 text-slate-400 hover:text-rose-500"
                       title={t('common.remove', 'Remove')}
                     >
                       <X className="w-4 h-4" />
@@ -890,7 +890,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm rounded-lg">
+            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 text-sm rounded-lg">
               {error}
             </div>
           )}

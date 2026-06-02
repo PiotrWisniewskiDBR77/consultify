@@ -1,9 +1,10 @@
 import {
-  Bot,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   Flower2,
+  Folder,
+  FolderPlus,
   GitBranch,
   Lightbulb,
   Link2,
@@ -11,7 +12,6 @@ import {
   MessageSquarePlus,
   Network,
   PenTool,
-  Plus,
   Rocket,
   Sparkles,
   Sprout,
@@ -29,19 +29,36 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { tokenService } from '@/services/tokenService';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
+import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useRecentIdeas } from './hooks/useRecentIdeas';
 import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './ideaEntryTypes';
 import { IdeasTableContent } from './IdeasTableContent';
-import type { IdeasBulkBarPayload, IdeasViewMode, IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
+import type {
+  IdeasBulkBarPayload,
+  IdeaStage,
+  IdeasViewMode,
+  MyIdea,
+  SortDir,
+  SortField,
+} from './myIdeasTypes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 
-export type { IdeasBulkBarPayload, IdeasViewMode, IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
+export type {
+  IdeasBulkBarPayload,
+  IdeaStage,
+  IdeasViewMode,
+  MyIdea,
+  SortDir,
+  SortField,
+} from './myIdeasTypes';
 
 interface MyIdeasListContentProps {
   viewMode?: IdeasViewMode;
@@ -81,40 +98,41 @@ const STAGE_CONFIG: Record<
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10 dark:bg-amber-500/15',
     borderColor: 'border-amber-400/30 dark:border-amber-500/20',
-    badgeBg: 'bg-amber-500/15',
-    badgeText: 'text-amber-600 dark:text-amber-400',
+    badgeBg: 'border border-amber-200/70 bg-amber-50 dark:border-amber-300/15 dark:bg-amber-300/10',
+    badgeText: 'text-amber-800 dark:text-amber-200',
   },
   incubating: {
     icon: Sprout,
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10 dark:bg-emerald-500/15',
     borderColor: 'border-emerald-400/30 dark:border-emerald-500/20',
-    badgeBg: 'bg-emerald-500/15',
-    badgeText: 'text-emerald-600 dark:text-emerald-400',
+    badgeBg:
+      'border border-emerald-200/70 bg-emerald-50 dark:border-emerald-300/15 dark:bg-emerald-300/10',
+    badgeText: 'text-emerald-800 dark:text-emerald-200',
   },
   shaping: {
     icon: TreePine,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10 dark:bg-blue-500/15',
     borderColor: 'border-blue-400/30 dark:border-blue-500/20',
-    badgeBg: 'bg-blue-500/15',
-    badgeText: 'text-blue-600 dark:text-blue-400',
+    badgeBg: 'border border-blue-200/70 bg-blue-50 dark:border-blue-300/15 dark:bg-blue-300/10',
+    badgeText: 'text-blue-800 dark:text-blue-200',
   },
   ready: {
     icon: CheckCircle2,
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10 dark:bg-purple-500/15',
-    borderColor: 'border-purple-400/30 dark:border-purple-500/20',
-    badgeBg: 'bg-purple-500/15',
-    badgeText: 'text-purple-600 dark:text-purple-400',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10 dark:bg-blue-500/15',
+    borderColor: 'border-blue-400/30 dark:border-blue-500/20',
+    badgeBg: 'border border-blue-200/70 bg-blue-50 dark:border-blue-300/15 dark:bg-blue-300/10',
+    badgeText: 'text-blue-800 dark:text-blue-200',
   },
   promoted: {
     icon: Rocket,
     color: 'text-rose-500',
     bgColor: 'bg-rose-500/10 dark:bg-rose-500/15',
     borderColor: 'border-rose-400/30 dark:border-rose-500/20',
-    badgeBg: 'bg-rose-500/15',
-    badgeText: 'text-rose-600 dark:text-rose-400',
+    badgeBg: 'border border-rose-200/70 bg-rose-50 dark:border-rose-300/15 dark:bg-rose-300/10',
+    badgeText: 'text-rose-800 dark:text-rose-200',
   },
 };
 
@@ -127,15 +145,20 @@ const TOOL_CONFIG: Record<
     borderColor: string;
     label: string;
     labelPl: string;
+    badgeClass: string;
+    badgeIconClass: string;
   }
 > = {
   mindmap: {
     icon: Network,
-    color: 'text-violet-500',
-    bgColor: 'bg-violet-500/10 dark:bg-violet-500/15',
-    borderColor: 'border-violet-400/30',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10 dark:bg-blue-500/15',
+    borderColor: 'border-blue-400/30',
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
+    badgeClass:
+      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeIconClass: 'text-primary-600 dark:text-primary-300',
   },
   table: {
     icon: Table2,
@@ -144,6 +167,9 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-sky-400/30',
     label: 'Table',
     labelPl: 'Tabela',
+    badgeClass:
+      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeIconClass: 'text-sky-600 dark:text-sky-300',
   },
   process_flow: {
     icon: Workflow,
@@ -152,6 +178,9 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-emerald-400/30',
     label: 'Process Flow',
     labelPl: 'Proces',
+    badgeClass:
+      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeIconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   whiteboard: {
     icon: PenTool,
@@ -160,6 +189,9 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-amber-400/30',
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
+    badgeClass:
+      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeIconClass: 'text-amber-600 dark:text-amber-300',
   },
 };
 
@@ -169,20 +201,48 @@ function getToolConfig(tool?: string | null) {
 }
 
 const IDEAS_TABLE_VIEW_STORAGE_KEY = 'consultify.mywork.ideas.tableView';
+const IDEAS_TABLE_COLUMN_WIDTH_VERSION = 3;
 const DEFAULT_IDEAS_TABLE_FILTERS: TableFilters = {};
 const DEFAULT_IDEAS_COLUMN_WIDTHS = {
   select: 40,
-  stage: 140,
-  tags: 180,
-  tool: 170,
-  date: 120,
-  actions: 68,
+  title: 560,
+  stage: 150,
+  tags: 230,
+  tool: 190,
+  date: 128,
+  actions: 56,
 };
+
+function normalizeIdeasColumnWidths(
+  widths?: Partial<typeof DEFAULT_IDEAS_COLUMN_WIDTHS>,
+  options: { migrateFromLegacy?: boolean } = {}
+): typeof DEFAULT_IDEAS_COLUMN_WIDTHS {
+  if (!options.migrateFromLegacy) {
+    return {
+      ...DEFAULT_IDEAS_COLUMN_WIDTHS,
+      ...(widths || {}),
+      select: DEFAULT_IDEAS_COLUMN_WIDTHS.select,
+      actions: DEFAULT_IDEAS_COLUMN_WIDTHS.actions,
+    };
+  }
+
+  return {
+    select: DEFAULT_IDEAS_COLUMN_WIDTHS.select,
+    title: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.title, widths?.title || 0),
+    stage: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.stage, widths?.stage || 0),
+    tags: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.tags, widths?.tags || 0),
+    tool: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.tool, widths?.tool || 0),
+    date: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.date, widths?.date || 0),
+    actions: DEFAULT_IDEAS_COLUMN_WIDTHS.actions,
+  };
+}
 
 function getIdeasTableViewStorageKey(): string {
   try {
     const token = tokenService.getToken();
-    const payload = token ? (tokenService.decodeToken(token) as Record<string, unknown> | null) : null;
+    const payload = token
+      ? (tokenService.decodeToken(token) as Record<string, unknown> | null)
+      : null;
     const userId = String(payload?.id || 'anonymous').trim() || 'anonymous';
     const orgId = String(payload?.organizationId || 'unknown-org').trim() || 'unknown-org';
     return `${IDEAS_TABLE_VIEW_STORAGE_KEY}.${orgId}.${userId}`;
@@ -204,7 +264,7 @@ function loadIdeasTableViewState(): {
         sortField: 'date',
         sortDir: 'desc',
         tableFilters: DEFAULT_IDEAS_TABLE_FILTERS,
-        columnWidths: DEFAULT_IDEAS_COLUMN_WIDTHS,
+        columnWidths: normalizeIdeasColumnWidths(),
       };
     }
 
@@ -213,23 +273,22 @@ function loadIdeasTableViewState(): {
       sortDir: SortDir;
       tableFilters: TableFilters;
       columnWidths: Partial<typeof DEFAULT_IDEAS_COLUMN_WIDTHS>;
+      columnWidthVersion: number;
     }>;
+    const migrateFromLegacy = parsed.columnWidthVersion !== IDEAS_TABLE_COLUMN_WIDTH_VERSION;
 
     return {
       sortField: parsed.sortField || 'date',
       sortDir: parsed.sortDir || 'desc',
       tableFilters: parsed.tableFilters || DEFAULT_IDEAS_TABLE_FILTERS,
-      columnWidths: {
-        ...DEFAULT_IDEAS_COLUMN_WIDTHS,
-        ...(parsed.columnWidths || {}),
-      },
+      columnWidths: normalizeIdeasColumnWidths(parsed.columnWidths, { migrateFromLegacy }),
     };
   } catch {
     return {
       sortField: 'date',
       sortDir: 'desc',
       tableFilters: DEFAULT_IDEAS_TABLE_FILTERS,
-      columnWidths: DEFAULT_IDEAS_COLUMN_WIDTHS,
+      columnWidths: normalizeIdeasColumnWidths(),
     };
   }
 }
@@ -246,6 +305,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  const openChatWithContext = useOpenChatWithContext();
   const persistedTableView = useMemo(() => loadIdeasTableViewState(), []);
   const [ideas, setIdeas] = useState<MyIdea[]>([]);
   const [loading, setLoading] = useState(true);
@@ -302,16 +362,211 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
   }, [searchQuery, t]);
 
+  const { recentIds, record: recordRecent } = useRecentIdeas();
+  const { isFavorite, toggleFavorite, hydrateFromServer } = useFavoriteIdeas();
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
+  const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
+  const [foldersAvailable, setFoldersAvailable] = useState(false);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+
+  // Record opens (for the "Recently opened" rail), then delegate to the host.
+  const openIdea = useCallback(
+    (...args: Parameters<typeof onIdeaClick>) => {
+      recordRecent(args[0]);
+      onIdeaClick(...args);
+    },
+    [onIdeaClick, recordRecent]
+  );
+
   const openIdeaInProcessFlow = useCallback(
     (idea: MyIdea) => {
-      onIdeaClick(idea.id, idea, { openMap: true, initialTool: 'process_flow' });
+      openIdea(idea.id, idea, { openMap: true, initialTool: 'process_flow' });
     },
-    [onIdeaClick]
+    [openIdea]
+  );
+
+  // "Recently opened" rail data: map stored recent IDs back to live ideas,
+  // dropping any that no longer exist, capped for a compact rail.
+  const recentIdeas = useMemo(
+    () =>
+      recentIds
+        .map((id) => ideas.find((i) => i.id === id))
+        .filter((i): i is MyIdea => Boolean(i))
+        .slice(0, 6),
+    [recentIds, ideas]
   );
 
   useEffect(() => {
     fetchIdeas();
   }, [fetchIdeas, refreshTrigger]);
+
+  // Seed local favorites from server-side `isFavorite` (cross-device). Union-merge
+  // (see useFavoriteIdeas) so this is safe before the M2 migration is applied.
+  useEffect(() => {
+    hydrateFromServer(ideas.filter((i: any) => i?.isFavorite).map((i: any) => String(i.id)));
+  }, [ideas, hydrateFromServer]);
+
+  // Load folders. The endpoint 503s until the M2 migration lands; we only show
+  // the folders UI once it resolves (foldersAvailable), so nothing breaks early.
+  useEffect(() => {
+    let cancelled = false;
+    Api.getMyIdeaFolders()
+      .then((list) => {
+        if (cancelled) return;
+        setFolders(Array.isArray(list) ? list.map((f: any) => ({ id: f.id, name: f.name })) : []);
+        setFoldersAvailable(true);
+      })
+      .catch(() => {
+        if (!cancelled) setFoldersAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTrigger]);
+
+  const handleMoveToFolder = useCallback(
+    async (idea: MyIdea, folderId: string | null) => {
+      // Optimistic local update, then persist.
+      setIdeas((prev) => prev.map((i) => (i.id === idea.id ? ({ ...i, folderId } as MyIdea) : i)));
+      try {
+        await Api.setIdeaFolder(idea.id, folderId);
+        toast.success(isPolish ? 'Przeniesiono' : 'Moved', { duration: 800 });
+      } catch {
+        toast.error(isPolish ? 'Nie udało się przenieść' : 'Failed to move idea');
+        fetchIdeas();
+      }
+    },
+    [isPolish, fetchIdeas]
+  );
+
+  const handleCreateFolder = useCallback(async () => {
+    const name = window.prompt(isPolish ? 'Nazwa folderu' : 'Folder name')?.trim();
+    if (!name) return;
+    try {
+      const created = await Api.createMyIdeaFolder({ name });
+      setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder');
+    }
+  }, [isPolish]);
+
+  const handleDeleteFolder = useCallback(
+    async (folderId: string) => {
+      try {
+        await Api.deleteMyIdeaFolder(folderId);
+        setFolders((prev) => prev.filter((f) => f.id !== folderId));
+        if (activeFolderId === folderId) setActiveFolderId(null);
+        fetchIdeas(); // ideas were unfiled server-side
+      } catch {
+        toast.error(isPolish ? 'Nie udało się usunąć folderu' : 'Failed to delete folder');
+      }
+    },
+    [activeFolderId, fetchIdeas, isPolish]
+  );
+
+  // M2/C: home-shell bar (folders + starred + recents) shared across the
+  // table / grid / garden views so the home is consistent everywhere.
+  const homeShellBar = (
+    <>
+      {/* folders bar (only once the folders endpoint is live) */}
+      {foldersAvailable && (
+        <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => setActiveFolderId(null)}
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+              !activeFolderId
+                ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+            }`}
+          >
+            {isPolish ? 'Wszystkie' : 'All'}
+          </button>
+          {folders.map((f) => (
+            <span key={f.id} className="inline-flex items-center">
+              <button
+                type="button"
+                onClick={() => setActiveFolderId(f.id)}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  activeFolderId === f.id
+                    ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+                }`}
+              >
+                <Folder size={12} />
+                <span className="max-w-[140px] truncate">{f.name}</span>
+              </button>
+              {activeFolderId === f.id && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFolder(f.id)}
+                  title={isPolish ? 'Usuń folder' : 'Delete folder'}
+                  aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
+                  className="ml-0.5 rounded-full p-0.5 text-slate-400 hover:text-rose-500"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={handleCreateFolder}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-navy-600 dark:text-slate-400 dark:hover:bg-navy-800"
+          >
+            <FolderPlus size={12} />
+            {isPolish ? 'Nowy folder' : 'New folder'}
+          </button>
+        </div>
+      )}
+      {/* "Starred only" filter toggle (shown once anything is starred) */}
+      {(showStarredOnly || ideas.some((i) => isFavorite(i.id))) && (
+        <div className="px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => setShowStarredOnly((v) => !v)}
+            aria-pressed={showStarredOnly}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              showStarredOnly
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+            }`}
+          >
+            <Star size={13} className={showStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
+            {isPolish ? 'Tylko oznaczone' : 'Starred only'}
+          </button>
+        </div>
+      )}
+      {/* "Recently opened" rail (localStorage-backed, per device) */}
+      {recentIdeas.length > 0 && (
+        <div className="px-4 pt-3" data-testid="ideas-recents-rail">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {recentIdeas.map((idea) => {
+              const tc = getToolConfig(idea.preferredTool);
+              const ToolIcon = tc.icon;
+              return (
+                <button
+                  key={idea.id}
+                  type="button"
+                  onClick={() => openIdea(idea.id, idea)}
+                  title={idea.title || ''}
+                  className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
+                >
+                  <ToolIcon size={13} className="text-slate-400" />
+                  <span className="max-w-[160px] truncate">
+                    {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   useEffect(() => {
     const counts = {
@@ -344,6 +599,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           sortDir,
           tableFilters,
           columnWidths,
+          columnWidthVersion: IDEAS_TABLE_COLUMN_WIDTH_VERSION,
         })
       );
     } catch {
@@ -353,6 +609,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const baseFilteredIdeas = useMemo(() => {
     let list = ideas;
+    if (showStarredOnly) {
+      list = list.filter((i) => isFavorite(i.id));
+    }
+    if (activeFolderId) {
+      list = list.filter((i) => (i as any).folderId === activeFolderId);
+    }
     if (viewMode !== 'garden' && stageFilter !== 'all') {
       list = list.filter((i) => (i.stage || 'spark') === stageFilter);
     }
@@ -362,7 +624,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       );
     }
     return list;
-  }, [ideas, stageFilter, activeTag, viewMode]);
+  }, [ideas, stageFilter, activeTag, viewMode, showStarredOnly, isFavorite, activeFolderId]);
 
   const availableStageOptions = useMemo<FilterOption[]>(() => {
     const seen = new Set<string>();
@@ -546,7 +808,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const openFocusedIdea = useCallback(() => {
     if (!focusedIdea) return;
-    onIdeaClick(focusedIdea.id, focusedIdea);
+    openIdea(focusedIdea.id, focusedIdea);
   }, [focusedIdea, onIdeaClick]);
 
   const openConvertForSelection = useCallback(() => {
@@ -729,17 +991,18 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }, [onCreateIdea, openConvertForSelection, openFocusedIdea]);
 
   const handleConvert = useCallback(
-    async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat') => {
-      if (!convertIdea?.id) return;
+    async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat', ideaOverride?: MyIdea) => {
+      const sourceIdea = ideaOverride ?? convertIdea;
+      if (!sourceIdea?.id) return;
       try {
         setConverting(true);
         trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
-        const result = await Api.convertMyIdea(convertIdea.id, {
+        const result = await Api.convertMyIdea(sourceIdea.id, {
           target,
           options: { language: i18n.language },
         });
         trackFunnelEvent(`idea_converted_${target}`, {
-          ideaId: convertIdea.id,
+          ideaId: sourceIdea.id,
           surface: 'ideas-list',
         });
         trackFunnelEvent('mywork_convert_completed', {
@@ -750,13 +1013,15 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         if (result?.sourceSessionId) {
           trackFunnelEvent('mywork_session_materialized', {
             source: 'idea_convert',
-            sourceEntityId: convertIdea.id,
+            sourceEntityId: sourceIdea.id,
             target,
             sessionId: result.sourceSessionId,
           });
         }
         toast.success(isPolish ? 'Gotowe' : 'Done');
-        setConvertIdea(null);
+        if (!ideaOverride) {
+          setConvertIdea(null);
+        }
         await fetchIdeas();
       } catch (err: any) {
         toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
@@ -764,7 +1029,54 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         setConverting(false);
       }
     },
-    [convertIdea?.id, fetchIdeas, i18n.language, isPolish]
+    [convertIdea, fetchIdeas, i18n.language, isPolish]
+  );
+
+  const handleOpenIdeaAiChat = useCallback(
+    async (idea: MyIdea) => {
+      try {
+        await openChatWithContext({
+          entityType: 'idea',
+          entityId: idea.id,
+          entityName: idea.title,
+          contextData: {
+            ...idea,
+            source: 'my-work-ideas-row-menu',
+          },
+        });
+      } catch (err: any) {
+        toast.error(
+          err?.message || (isPolish ? 'Nie udało się otworzyć czata' : 'Failed to open chat')
+        );
+      }
+    },
+    [isPolish, openChatWithContext]
+  );
+
+  const handleOpenIdeaAiInsights = useCallback(
+    async (idea: MyIdea) => {
+      try {
+        await openChatWithContext({
+          entityType: 'idea',
+          entityId: idea.id,
+          entityName: `${idea.title} - AI Insights`,
+          contextData: {
+            ...idea,
+            source: 'my-work-ideas-row-menu',
+            requestedAnalysis: 'ai_insights',
+            promptHint: isPolish
+              ? 'Przygotuj krótkie AI Insights dla tego pomysłu: potencjał, ryzyka, następne kroki i możliwe konwersje.'
+              : 'Prepare concise AI insights for this idea: potential, risks, next steps and possible conversions.',
+          },
+        });
+      } catch (err: any) {
+        toast.error(
+          err?.message ||
+            (isPolish ? 'Nie udało się otworzyć AI Insights' : 'Failed to open AI Insights')
+        );
+      }
+    },
+    [isPolish, openChatWithContext]
   );
 
   const handleSort = useCallback((field: SortField) => {
@@ -814,9 +1126,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     const Icon = tc.icon;
     return (
       <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tc.bgColor} ${tc.color}`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tc.badgeClass}`}
       >
-        <Icon size={10} />
+        <Icon size={10} className={tc.badgeIconClass} />
         {isPolish ? tc.labelPl : tc.label}
       </span>
     );
@@ -829,7 +1141,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {ideaTags.slice(0, max).map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-navy-700"
+            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.06]"
           >
             {tag}
           </span>
@@ -887,7 +1199,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-purple-500" />
+            <Sparkles size={16} className="text-primary-500" />
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
               {isPolish ? 'Konwertuj pomysł' : 'Convert idea'}
             </div>
@@ -928,7 +1240,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               {
                 target: 'team_chat' as const,
                 icon: MessageSquarePlus,
-                color: 'text-purple-500',
+                color: 'text-blue-500',
                 label: isPolish ? 'Team Chat' : 'Team Chat',
                 desc: isPolish ? 'Wątek do omówienia' : 'Discussion thread',
               },
@@ -1046,9 +1358,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       </p>
       <button
         onClick={onCreateIdea}
-        className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all"
+        className="inline-flex h-9 items-center justify-center rounded-full border border-primary-500/30 bg-primary-600 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500"
       >
-        <Plus size={16} />
         {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
       </button>
     </div>
@@ -1077,6 +1388,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
+        {homeShellBar}
         {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
         <div className="flex flex-col flex-1 min-h-0">
           <IdeasTableContent
@@ -1110,9 +1422,16 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 [columnId]: value.length > 0 ? value : undefined,
               }))
             }
-            onOpenIdea={(idea) => onIdeaClick(idea.id, idea)}
+            onOpenIdea={(idea) => openIdea(idea.id, idea)}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+            folders={foldersAvailable ? folders : undefined}
+            onMoveToFolder={foldersAvailable ? handleMoveToFolder : undefined}
             onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
+            onOpenIdeaAiChat={handleOpenIdeaAiChat}
+            onOpenIdeaAiInsights={handleOpenIdeaAiInsights}
             onStartConvert={setConvertIdea}
+            onConvertIdeaToTarget={(idea, target) => handleConvert(target, idea)}
             onDeleteIdea={handleDeleteSingleIdea}
             onRefresh={fetchIdeas}
           />
@@ -1142,6 +1461,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
         {convertModal}
         {tagModal}
+        {homeShellBar}
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sortedIdeas.map((idea) => {
@@ -1155,11 +1475,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   key={idea.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => onIdeaClick(idea.id, idea)}
+                  onClick={() => openIdea(idea.id, idea)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      onIdeaClick(idea.id, idea);
+                      openIdea(idea.id, idea);
                     }
                   }}
                   className={[
@@ -1171,7 +1491,26 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                     isSelected ? 'ring-2 ring-primary-500/40' : '',
                   ].join(' ')}
                 >
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(idea.id);
+                      }}
+                      aria-label={isFavorite(idea.id) ? 'Unstar' : 'Star'}
+                      aria-pressed={isFavorite(idea.id)}
+                      className={`rounded p-0.5 transition-opacity ${
+                        isFavorite(idea.id)
+                          ? 'text-amber-400 opacity-100'
+                          : 'text-slate-300 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-600'
+                      }`}
+                    >
+                      <Star
+                        size={15}
+                        className={isFavorite(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
+                      />
+                    </button>
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -1235,7 +1574,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => setConvertIdea(idea)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-semibold hover:bg-purple-500/15 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[11px] font-semibold hover:bg-primary-500/15 transition-colors"
                     >
                       <Sparkles size={12} />
                       {isPolish ? 'Konwertuj' : 'Convert'}
@@ -1284,9 +1623,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       {convertModal}
       {tagModal}
       {confirmDialog}
+      {homeShellBar}
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-violet-400/20 dark:from-amber-500/15 dark:to-violet-500/15">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-primary-400/20 dark:from-amber-500/15 dark:to-primary-500/15">
             <Tag size={20} className="text-amber-500" />
           </div>
           <div>
@@ -1338,11 +1678,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         key={`${tag}-${idea.id}`}
                         role="button"
                         tabIndex={0}
-                        onClick={() => onIdeaClick(idea.id, idea)}
+                        onClick={() => openIdea(idea.id, idea)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            onIdeaClick(idea.id, idea);
+                            openIdea(idea.id, idea);
                           }
                         }}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 dark:hover:bg-navy-800/30 cursor-pointer transition-colors"
@@ -1356,6 +1696,25 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(idea.id);
+                            }}
+                            aria-label={isFavorite(idea.id) ? 'Unstar' : 'Star'}
+                            aria-pressed={isFavorite(idea.id)}
+                            className={`rounded p-0.5 transition-colors ${
+                              isFavorite(idea.id)
+                                ? 'text-amber-400'
+                                : 'text-slate-300 hover:text-amber-400 dark:text-slate-600'
+                            }`}
+                          >
+                            <Star
+                              size={13}
+                              className={isFavorite(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
+                            />
+                          </button>
                           {renderStageBadge(stage)}
                           {renderToolBadge(idea.preferredTool)}
                           <button

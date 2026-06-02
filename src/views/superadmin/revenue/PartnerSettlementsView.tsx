@@ -256,7 +256,10 @@ export const PartnerSettlementsView: React.FC = () => {
 
   // Process payout
   const handleProcessPayout = async (payoutId: string) => {
-    const reason = window.prompt('Podaj powód zatwierdzenia payoutu do processing:', 'Approve payout');
+    const reason = window.prompt(
+      'Podaj powód zatwierdzenia payoutu do processing:',
+      'Approve payout'
+    );
     if (!reason || reason.trim().length < 3) {
       toast.error('Confirmation reason is required');
       return;
@@ -264,11 +267,14 @@ export const PartnerSettlementsView: React.FC = () => {
 
     try {
       setProcessing(true);
-      const response = await Api.post(`/api/superadmin/partner-settlements/process-payout/${payoutId}`, {
-        payoutId,
-        confirmation: true,
-        reason: reason.trim(),
-      });
+      const response = await Api.post(
+        `/api/superadmin/partner-settlements/process-payout/${payoutId}`,
+        {
+          payoutId,
+          confirmation: true,
+          reason: reason.trim(),
+        }
+      );
 
       if (response?.success) {
         toast.success('Payout marked as processing');
@@ -297,11 +303,14 @@ export const PartnerSettlementsView: React.FC = () => {
 
     try {
       setProcessing(true);
-      const response = await Api.post(`/api/superadmin/partner-settlements/complete-payout/${payoutId}`, {
-        payoutId,
-        confirmation: true,
-        reason: reason.trim(),
-      });
+      const response = await Api.post(
+        `/api/superadmin/partner-settlements/complete-payout/${payoutId}`,
+        {
+          payoutId,
+          confirmation: true,
+          reason: reason.trim(),
+        }
+      );
 
       if (response?.success) {
         toast.success('Payout completed successfully');
@@ -346,7 +355,7 @@ export const PartnerSettlementsView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -420,8 +429,8 @@ export const PartnerSettlementsView: React.FC = () => {
 
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-violet-500/20">
-              <DollarSign className="w-5 h-5 text-violet-400" />
+            <div className="p-2 rounded-lg bg-primary-500/20">
+              <DollarSign className="w-5 h-5 text-primary-400" />
             </div>
             <span className="text-sm text-slate-600 dark:text-slate-400">This Month Payouts</span>
           </div>
@@ -438,7 +447,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'commissions'
-              ? 'bg-violet-600 text-white'
+              ? 'bg-primary-600 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -449,7 +458,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'payouts'
-              ? 'bg-violet-600 text-white'
+              ? 'bg-primary-600 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -460,7 +469,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'attribution'
-              ? 'bg-violet-600 text-white'
+              ? 'bg-primary-600 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -471,7 +480,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'expiring'
-              ? 'bg-violet-600 text-white'
+              ? 'bg-primary-600 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -488,7 +497,7 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'analytics'
-              ? 'bg-violet-600 text-white'
+              ? 'bg-primary-600 text-white'
               : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           )}
         >
@@ -540,7 +549,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         selectedCommissions.size === commissions.length && commissions.length > 0
                       }
                       onChange={selectAllCommissions}
-                      className="rounded text-violet-600"
+                      className="rounded text-primary-600"
                     />
                   </th>
                   <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
@@ -572,7 +581,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         type="checkbox"
                         checked={selectedCommissions.has(commission.id)}
                         onChange={() => toggleCommissionSelection(commission.id)}
-                        className="rounded text-violet-600"
+                        className="rounded text-primary-600"
                       />
                     </td>
                     <td className="px-3 py-3">
@@ -698,7 +707,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </button>
                     )}
                     <button
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors"
+                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
                       title="Reject"
                     >
                       <XCircle className="w-5 h-5" />
@@ -733,7 +742,7 @@ export const PartnerSettlementsView: React.FC = () => {
                 )}
               </p>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium">
+            <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium">
               <Plus className="w-4 h-4" />
               {t('superadmin.settlements.createAttribution', 'Create Attribution')}
             </button>
@@ -813,7 +822,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         </td>
                         <td className="px-3 py-3">
                           {attribution.referralCodeUsed ? (
-                            <code className="text-xs bg-navy-900 px-2 py-1 rounded text-violet-400">
+                            <code className="text-xs bg-navy-900 px-2 py-1 rounded text-primary-400">
                               {attribution.referralCodeUsed}
                             </code>
                           ) : (
@@ -852,7 +861,7 @@ export const PartnerSettlementsView: React.FC = () => {
                             <button
                               onClick={() => handleRemoveAttribution(attribution.id)}
                               disabled={processing}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors"
+                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
                               title="Remove attribution"
                             >
                               <Unlink className="w-4 h-4" />
@@ -967,7 +976,7 @@ export const PartnerSettlementsView: React.FC = () => {
                           className={cn(
                             'px-2 py-1 text-xs rounded-full',
                             attr.daysRemaining <= 7
-                              ? 'bg-red-500/20 text-red-400'
+                              ? 'bg-rose-500/20 text-rose-400'
                               : attr.daysRemaining <= 14
                                 ? 'bg-amber-500/20 text-amber-400'
                                 : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'
@@ -1008,7 +1017,7 @@ export const PartnerSettlementsView: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-violet-400" />
+                <BarChart3 className="w-5 h-5 text-primary-400" />
                 Referral Code Analytics
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -1061,7 +1070,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
                     >
                       <td className="px-3 py-3">
-                        <span className="font-mono text-sm px-2 py-1 bg-violet-500/20 text-violet-300 rounded">
+                        <span className="font-mono text-sm px-2 py-1 bg-primary-500/20 text-primary-300 rounded">
                           {code.referralCode}
                         </span>
                       </td>

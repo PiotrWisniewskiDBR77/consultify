@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockQuery = vi.fn();
+
 vi.mock('../../../database/Database.js', () => ({
-  getDatabase: () => ({ query: vi.fn() }),
+  getDatabase: () => ({ query: mockQuery }),
 }));
 
 vi.mock('../../../utils/Logger.js', () => ({
@@ -14,6 +16,11 @@ import {
   type FilterGroup,
   type SortRule,
 } from '../ViewQueryEngine.js';
+import viewQueryEngine from '../ViewQueryEngine.js';
+
+beforeEach(() => {
+  mockQuery.mockReset();
+});
 
 describe('ViewQueryEngine — buildFilterClause', () => {
   function run(filters: FilterGroup, fieldTypes: Map<string, string>, startIdx = 1) {
@@ -218,5 +225,37 @@ describe('ViewQueryEngine — search clause pattern', () => {
     const filters: FilterGroup = { logic: 'and', rules: [] };
     const { sql } = buildFilterClause(filters, params, 1, ft);
     expect(sql).toBe('TRUE');
+  });
+});
+
+describe('ViewQueryEngine — executeQuery pagination', () => {
+  it('uses the next available parameter for LIMIT when exporting without field projection', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ total: '1' }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'record-1',
+            table_id: 'table-1',
+            data: { Name: 'Initial item' },
+            created_at: '2026-05-09T19:38:49.314Z',
+          },
+        ],
+      });
+
+    const result = await viewQueryEngine.executeQuery({
+      tableId: 'table-1',
+      pageSize: 500,
+    });
+
+    expect(result.records).toHaveLength(1);
+    const listCall = mockQuery.mock.calls.find(
+      ([sql]) => String(sql).includes('SELECT r.*') && String(sql).includes('FROM tp_records r')
+    );
+    expect(listCall).toBeTruthy();
+    expect(String(listCall?.[0])).toContain('LIMIT $2');
+    expect(listCall?.[1]).toEqual(['table-1', 201]);
   });
 });

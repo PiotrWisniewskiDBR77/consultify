@@ -196,7 +196,7 @@ export function ReportTemplatePickerModal(props: {
         {/* Header */}
         <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            <div className="p-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400">
               <FileText className="w-5 h-5" />
             </div>
             <div>
@@ -252,9 +252,9 @@ export function ReportTemplatePickerModal(props: {
                 onChange={(e) => setRecipientFilter(e.target.value as RecipientFilter)}
                 className={cn(
                   'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
-                  'bg-transparent focus:outline-none focus:ring-1 focus:ring-purple-400',
+                  'bg-transparent focus:outline-none focus:ring-1 focus:ring-primary-400',
                   recipientFilter !== 'all'
-                    ? 'border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
+                    ? 'border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
                     : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
                 )}
               >
@@ -274,9 +274,9 @@ export function ReportTemplatePickerModal(props: {
                 disabled={Boolean(lockFramework && framework)}
                 className={cn(
                   'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
-                  'bg-transparent focus:outline-none focus:ring-1 focus:ring-purple-400',
+                  'bg-transparent focus:outline-none focus:ring-1 focus:ring-primary-400',
                   frameworkFilter !== 'all'
-                    ? 'border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300'
+                    ? 'border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
                     : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
                 )}
               >
@@ -310,7 +310,7 @@ export function ReportTemplatePickerModal(props: {
                 className={cn(
                   'p-1 rounded transition-colors',
                   viewMode === 'grid'
-                    ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
+                    ? 'bg-white dark:bg-navy-700 text-primary-600 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 )}
                 title="Grid view"
@@ -323,7 +323,7 @@ export function ReportTemplatePickerModal(props: {
                 className={cn(
                   'p-1 rounded transition-colors',
                   viewMode === 'table'
-                    ? 'bg-white dark:bg-navy-700 text-purple-600 shadow-sm'
+                    ? 'bg-white dark:bg-navy-700 text-primary-600 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 )}
                 title="Table view"
@@ -355,7 +355,7 @@ export function ReportTemplatePickerModal(props: {
                   setError(e?.message || 'Failed to open template generator');
                 }
               }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
               title="Create new template"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -397,8 +397,8 @@ export function ReportTemplatePickerModal(props: {
                       'text-left p-3.5 rounded-xl border transition-all',
                       'hover:shadow-md',
                       isSelected
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-purple-300 dark:hover:border-purple-700'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300 dark:hover:border-primary-700'
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -411,7 +411,7 @@ export function ReportTemplatePickerModal(props: {
                             app
                           </span>
                         ) : (
-                          <span className="text-[9px] px-1 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
                             org
                           </span>
                         )}
@@ -461,7 +461,7 @@ export function ReportTemplatePickerModal(props: {
                             'appearance-none text-xs pl-1 pr-4 py-0.5 rounded cursor-pointer transition-colors',
                             'bg-transparent border-0 focus:outline-none focus:ring-0',
                             frameworkFilter !== 'all'
-                              ? 'text-purple-600 dark:text-purple-400 font-medium'
+                              ? 'text-primary-600 dark:text-primary-400 font-medium'
                               : 'text-slate-500 dark:text-slate-400'
                           )}
                         >
@@ -482,7 +482,7 @@ export function ReportTemplatePickerModal(props: {
                             'appearance-none text-xs pl-1 pr-4 py-0.5 rounded cursor-pointer transition-colors',
                             'bg-transparent border-0 focus:outline-none focus:ring-0',
                             recipientFilter !== 'all'
-                              ? 'text-purple-600 dark:text-purple-400 font-medium'
+                              ? 'text-primary-600 dark:text-primary-400 font-medium'
                               : 'text-slate-500 dark:text-slate-400'
                           )}
                         >
@@ -512,7 +512,7 @@ export function ReportTemplatePickerModal(props: {
                         className={cn(
                           'cursor-pointer transition-colors',
                           isSelected
-                            ? 'bg-purple-50 dark:bg-purple-900/20'
+                            ? 'bg-primary-50 dark:bg-primary-900/20'
                             : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
                         )}
                       >
@@ -550,7 +550,7 @@ export function ReportTemplatePickerModal(props: {
                               app
                             </span>
                           ) : (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
                               org
                             </span>
                           )}
@@ -594,7 +594,7 @@ export function ReportTemplatePickerModal(props: {
               className={
                 !selectedTemplate || submitting
                   ? 'px-5 py-2.5 rounded-lg bg-slate-300 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-sm font-medium cursor-not-allowed inline-flex items-center gap-2'
-                  : 'px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2'
+                  : 'px-5 py-2.5 rounded-lg bg-gradient-to-r from-primary-500 to-indigo-500 hover:from-primary-600 hover:to-indigo-600 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2'
               }
             >
               {submitting ? (
@@ -746,7 +746,7 @@ export function ReportTemplatePickerModal(props: {
                   setIsNewTemplateMetaOpen(false);
                   setIsTemplateBuilderOpen(true);
                 }}
-                className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold"
+                className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
               >
                 Open generator
               </button>

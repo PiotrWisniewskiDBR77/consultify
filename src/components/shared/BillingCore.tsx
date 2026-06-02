@@ -87,7 +87,7 @@ export const UsageMeter: React.FC<{
             {usedStr} / {limitStr}
           </span>
           <span
-            className={`font-medium ${percentage >= 80 ? 'text-orange-500 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}
+            className={`font-medium ${percentage >= 80 ? 'text-amber-500 dark:text-amber-400' : 'text-slate-600 dark:text-slate-300'}`}
           >
             {percentage}%
           </span>
@@ -95,7 +95,11 @@ export const UsageMeter: React.FC<{
         <div className="w-full bg-slate-100 dark:bg-navy-950 rounded-full h-2.5 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              percentage >= 95 ? 'bg-red-500' : percentage >= 80 ? 'bg-orange-500' : 'bg-purple-600'
+              percentage >= 95
+                ? 'bg-rose-500'
+                : percentage >= 80
+                  ? 'bg-amber-500'
+                  : 'bg-primary-600'
             }`}
             style={{ width: `${Math.min(100, percentage)}%` }}
           />
@@ -117,12 +121,12 @@ export const PlanCard: React.FC<{
     <div
       className={`rounded-xl p-4 border transition-all ${
         isCurrentPlan
-          ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-500/50'
-          : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30'
+          ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-500/50'
+          : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30'
       }`}
     >
       <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-1">{plan.name}</h4>
-      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-3">
+      <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 mb-3">
         ${plan.price_monthly}
         <span className="text-sm text-slate-500 dark:text-slate-400">/mo</span>
       </p>
@@ -165,14 +169,14 @@ export const PlanCard: React.FC<{
         })()}
 
       {isCurrentPlan ? (
-        <div className="w-full py-2 rounded-lg text-center text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
+        <div className="w-full py-2 rounded-lg text-center text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20">
           Current Plan
         </div>
       ) : canSelect && onSelect ? (
         <button
           onClick={() => onSelect(plan.id)}
           disabled={isSelecting}
-          className="w-full py-2 rounded-lg text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white transition-colors disabled:opacity-50"
+          className="w-full py-2 rounded-lg text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-50"
         >
           {isSelecting ? 'Processing...' : 'Select Plan'}
         </button>
@@ -214,7 +218,7 @@ export const InvoiceTable: React.FC<{
                       ? 'bg-emerald-500/20 text-emerald-400'
                       : inv.status === 'open'
                         ? 'bg-yellow-500/20 text-yellow-400'
-                        : 'bg-red-500/20 text-red-400'
+                        : 'bg-rose-500/20 text-rose-400'
                   }`}
                 >
                   {inv.status}
@@ -348,7 +352,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -370,18 +374,18 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
         <div
           className={`rounded-xl p-4 flex items-center gap-3 ${
             snapshot.warningLevel === 'critical'
-              ? 'bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/30'
+              ? 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30'
               : 'bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30'
           }`}
         >
           <Zap
             size={20}
-            className={snapshot.warningLevel === 'critical' ? 'text-orange-500' : 'text-blue-500'}
+            className={snapshot.warningLevel === 'critical' ? 'text-amber-500' : 'text-blue-500'}
           />
           <p
             className={`text-sm flex-1 ${
               snapshot.warningLevel === 'critical'
-                ? 'text-orange-800 dark:text-orange-300'
+                ? 'text-amber-800 dark:text-amber-300'
                 : 'text-blue-800 dark:text-blue-300'
             }`}
           >
@@ -396,9 +400,9 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
       )}
 
       {snapshot?.isTrialExpired && (
-        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-4 flex items-center gap-3">
-          <AlertCircle size={20} className="text-red-500" />
-          <p className="text-sm text-red-800 dark:text-red-300 flex-1">
+        <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle size={20} className="text-rose-500" />
+          <p className="text-sm text-rose-800 dark:text-rose-300 flex-1">
             {t('access.banner.trialExpired')}
           </p>
         </div>
@@ -409,7 +413,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+              <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400">
                 <UserCircle size={24} />
               </div>
               <div>
@@ -429,7 +433,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium border ${
                 userLicense
-                  ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20'
+                  ? 'bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-500/20'
                   : 'bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-navy-700'
               }`}
             >
@@ -441,13 +445,13 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
 
       {/* Current Plan Card */}
       {showCurrentPlan && currentPlan && (
-        <div className="bg-gradient-to-br from-purple-900/40 to-navy-900 border border-purple-500/30 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-primary-900/40 to-navy-900 border border-primary-500/30 rounded-xl p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <CreditCard size={120} />
           </div>
           <div className="relative flex justify-between items-start">
             <div>
-              <div className="inline-block px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold mb-3 border border-purple-500/20">
+              <div className="inline-block px-3 py-1 rounded-full bg-primary-500/20 text-primary-300 text-xs font-bold mb-3 border border-primary-500/20">
                 CURRENT PLAN
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">{currentPlan.name}</h3>
@@ -464,7 +468,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
             {canManagePlans && billingData?.billing?.status === 'active' && (
               <button
                 onClick={handleCancelSubscription}
-                className="text-sm text-slate-400 dark:text-slate-500 hover:text-red-400 transition-colors"
+                className="text-sm text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors"
               >
                 Cancel Subscription
               </button>

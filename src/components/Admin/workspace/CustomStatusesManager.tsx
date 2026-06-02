@@ -57,19 +57,19 @@ interface CustomStatusesManagerProps {
 // Available colors
 const statusColors = [
   { id: 'gray', value: '#6b7280', name: 'Gray' },
-  { id: 'red', value: '#ef4444', name: 'Red' },
-  { id: 'orange', value: '#f97316', name: 'Orange' },
+  { id: 'red', value: '#f43f5e', name: 'Red' },
+  { id: 'orange', value: '#f59e0b', name: 'Orange' },
   { id: 'amber', value: '#f59e0b', name: 'Amber' },
   { id: 'yellow', value: '#eab308', name: 'Yellow' },
   { id: 'lime', value: '#84cc16', name: 'Lime' },
   { id: 'green', value: '#22c55e', name: 'Green' },
   { id: 'emerald', value: '#10b981', name: 'Emerald' },
-  { id: 'teal', value: '#14b8a6', name: 'Teal' },
-  { id: 'cyan', value: '#06b6d4', name: 'Cyan' },
+  { id: 'teal', value: '#3b82f6', name: 'Teal' },
+  { id: 'cyan', value: '#3b82f6', name: 'Cyan' },
   { id: 'sky', value: '#0ea5e9', name: 'Sky' },
   { id: 'blue', value: '#3b82f6', name: 'Blue' },
   { id: 'indigo', value: '#6366f1', name: 'Indigo' },
-  { id: 'violet', value: '#8b5cf6', name: 'Violet' },
+  { id: 'violet', value: '#6366f1', name: 'Violet' },
   { id: 'purple', value: '#a855f7', name: 'Purple' },
   { id: 'fuchsia', value: '#d946ef', name: 'Fuchsia' },
   { id: 'pink', value: '#ec4899', name: 'Pink' },
@@ -205,7 +205,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
         className={cn(
           'flex items-center gap-3 p-3 bg-white dark:bg-navy-800 rounded-lg border transition-all',
           isEditing
-            ? 'border-violet-500 ring-2 ring-violet-500/20'
+            ? 'border-primary-500 ring-2 ring-primary-500/20'
             : 'border-slate-200 dark:border-navy-700'
         )}
       >
@@ -284,7 +284,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
         {/* Badges */}
         <div className="flex items-center gap-2">
           {status.isDefault && (
-            <span className="px-1.5 py-0.5 text-xs font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded">
+            <span className="px-1.5 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded">
               {t('admin.workspace.statuses.default', 'Default')}
             </span>
           )}
@@ -390,7 +390,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
 
               {/* New Status Form */}
               {newStatus && newStatus.category === category && (
-                <div className="flex items-center gap-3 p-3 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+                <div className="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
                   <div
                     className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0"
                     style={{ backgroundColor: newStatus.color }}
@@ -400,7 +400,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
                     value={newStatus.name || ''}
                     onChange={(e) => setNewStatus({ ...newStatus, name: e.target.value })}
                     placeholder="Status name..."
-                    className="flex-1 px-2 py-1 bg-white dark:bg-navy-800 border border-violet-200 dark:border-violet-700 rounded text-sm text-navy-900 dark:text-white"
+                    className="flex-1 px-2 py-1 bg-white dark:bg-navy-800 border border-primary-200 dark:border-primary-700 rounded text-sm text-navy-900 dark:text-white"
                     autoFocus
                   />
                   <Button

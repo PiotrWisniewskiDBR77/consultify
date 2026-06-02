@@ -6,10 +6,8 @@
  * - Center: Block canvas for building report structure
  * - Blocks can be added, reordered, configured inline
  */
-
 import {
   BookTemplate,
-  Bot,
   Check,
   ChevronDown,
   ChevronRight,
@@ -46,6 +44,7 @@ import { EmbeddedView } from '@/components/shared/NModeBlocks';
 
 import { Api } from '../../../services/api';
 import { getSourceDisplayLabel } from '../../Initiatives/InitiativeSourceLink';
+import TeresaMark from '../../shared/TeresaMark';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
 import { QualityGatesPanel } from '../QualityGatesPanel';
@@ -357,7 +356,7 @@ const SmartContentRenderer: React.FC<{
                       </td>
                       <td className="py-3 px-4 text-center">
                         <span
-                          className={`font-medium ${axis.gap > 2 ? 'text-red-500' : axis.gap > 1 ? 'text-amber-500' : 'text-green-500'}`}
+                          className={`font-medium ${axis.gap > 2 ? 'text-rose-500' : axis.gap > 1 ? 'text-amber-500' : 'text-green-500'}`}
                         >
                           {axis.gap}
                         </span>
@@ -559,7 +558,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [styling, setStyling] = useState<ReportStyling>({
     theme: 'professional',
     primaryColor: '#3B82F6',
-    accentColor: '#8B5CF6',
+    accentColor: '#6366F1',
     customColors: [],
     fontFamily: 'inter',
     fontSize: 'medium',
@@ -2342,7 +2341,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               <button
                 onClick={() => handleGenerate('new_only')}
                 disabled={isGenerating}
-                className="inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border border-purple-500/40 bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border border-primary-500/40 bg-primary-500/15 text-primary-400 hover:bg-primary-500/25 transition-all disabled:opacity-50"
               >
                 {isGenerating ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2358,7 +2357,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   disabled={isGenerating}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
                 >
-                  <Zap className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                  <Zap className="w-3.5 h-3.5 text-primary-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
                       {isPl ? 'Generuj nowe' : 'Generate new'}
@@ -2409,12 +2408,12 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               onClick={() => setShowAgentChat((p) => !p)}
               className={`inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border transition-all ${
                 showAgentChat
-                  ? 'border-violet-500/60 bg-violet-500/20 text-violet-300'
+                  ? 'border-primary-500/60 bg-primary-500/20 text-primary-300'
                   : 'border-slate-600/40 bg-slate-800/40 text-slate-400 hover:bg-slate-700/60 hover:text-slate-300'
               }`}
               title={isPl ? 'Asystent raportu' : 'Report Agent'}
             >
-              <Bot className="w-3.5 h-3.5" />
+              <TeresaMark className="w-3.5 h-3.5" />
               {isPl ? 'Agent' : 'Agent'}
             </button>
           )}
@@ -2467,7 +2466,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   disabled={!!isExporting}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
                 >
-                  <FileText className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                  <FileText className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">PDF</div>
                     <div className="text-[10px] text-slate-500">
@@ -2481,7 +2480,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   disabled={!!isExporting}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
                 >
-                  <Presentation className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                  <Presentation className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">PPTX</div>
                     <div className="text-[10px] text-slate-500">
@@ -2560,7 +2559,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     {/* Chapter Header */}
                     {chapter.key !== '__ungrouped__' && (
                       <div className="flex items-center gap-3 pt-6 pb-2 border-b-2 border-slate-300 dark:border-slate-600">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
                           {chapters.filter((c) => c.key !== '__ungrouped__').indexOf(chapter) + 1}
                         </div>
                         <h2 className="text-lg font-bold text-slate-800 dark:text-white flex-1">
@@ -2705,7 +2704,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {/* Empty State */}
             {blocks.length === 0 && (
               <div className="text-center py-16">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-primary-100 dark:from-blue-900/30 dark:to-primary-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Layers className="w-10 h-10 text-blue-500" />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">

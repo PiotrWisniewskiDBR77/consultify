@@ -101,7 +101,7 @@ interface DashboardData {
   };
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#6366f1', '#3b82f6'];
 
 export const AIAnalyticsDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -172,10 +172,10 @@ export const AIAnalyticsDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+      <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-rose-700">
         <AlertTriangle className="w-5 h-5 inline mr-2" />
         {error}
-        <button onClick={loadData} className="ml-4 text-red-600 underline">
+        <button onClick={loadData} className="ml-4 text-rose-600 underline">
           Retry
         </button>
       </div>
@@ -188,13 +188,13 @@ export const AIAnalyticsDashboard: React.FC = () => {
   const approvalPieData = [
     { name: 'Auto-Approved', value: data.approvals.auto_approved, color: '#10b981' },
     { name: 'Manual Approved', value: data.approvals.manual_approved, color: '#6366f1' },
-    { name: 'Rejected', value: data.approvals.rejected, color: '#ef4444' },
+    { name: 'Rejected', value: data.approvals.rejected, color: '#f43f5e' },
     { name: 'Modified', value: data.approvals.modified, color: '#f59e0b' },
   ].filter((d) => d.value > 0);
 
   const executionData = [
     { name: 'Success', value: data.actions.success_count, fill: '#10b981' },
-    { name: 'Failed', value: data.actions.failed_count, fill: '#ef4444' },
+    { name: 'Failed', value: data.actions.failed_count, fill: '#f43f5e' },
   ];
 
   const playbookData = Object.entries(data.playbooks.by_playbook || {}).map(([key, pb]) => ({
@@ -292,10 +292,10 @@ export const AIAnalyticsDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Actions Executed</p>
-              <p className="text-2xl font-bold text-purple-600">{data.actions.total_executions}</p>
+              <p className="text-2xl font-bold text-primary-600">{data.actions.total_executions}</p>
             </div>
-            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-full">
-              <Zap className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-full">
+              <Zap className="w-6 h-6 text-primary-600" />
             </div>
           </div>
         </div>
@@ -353,14 +353,14 @@ export const AIAnalyticsDashboard: React.FC = () => {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Dead-Letter Rate
             </span>
-            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <AlertTriangle className="w-5 h-5 text-rose-500" />
           </div>
           <div className="text-3xl font-bold text-gray-900 dark:text-white">
             {data.deadLetter.dead_letter_rate}%
           </div>
           <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-red-500 rounded-full"
+              className="h-full bg-rose-500 rounded-full"
               style={{ width: `${Math.min(data.deadLetter.dead_letter_rate, 100)}%` }}
             ></div>
           </div>
@@ -443,7 +443,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center">
-              <XCircle className="w-4 h-4 text-red-500 mr-1" />
+              <XCircle className="w-4 h-4 text-rose-500 mr-1" />
               <span className="text-gray-600 dark:text-gray-400">
                 {data.actions.failed_count} failed
               </span>
@@ -486,10 +486,10 @@ export const AIAnalyticsDashboard: React.FC = () => {
                       {pb.name}
                     </td>
                     <td className="py-3 px-4 text-sm text-right text-green-600">{pb.completed}</td>
-                    <td className="py-3 px-4 text-sm text-right text-red-600">{pb.failed}</td>
+                    <td className="py-3 px-4 text-sm text-right text-rose-600">{pb.failed}</td>
                     <td className="py-3 px-4 text-sm text-right">
                       <span
-                        className={`px-2 py-1 rounded ${pb.rate >= 80 ? 'bg-green-100 text-green-700' : pb.rate >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}
+                        className={`px-2 py-1 rounded ${pb.rate >= 80 ? 'bg-green-100 text-green-700' : pb.rate >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-rose-100 text-rose-700'}`}
                       >
                         {pb.rate}%
                       </span>
@@ -522,7 +522,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
               <div className="text-sm text-gray-500 dark:text-gray-400">Min (mins)</div>
             </div>
             <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="text-3xl font-bold text-red-600">
+              <div className="text-3xl font-bold text-rose-600">
                 {data.timeToResolution.max_resolution_mins?.toFixed(1) || '-'}
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400">Max (mins)</div>

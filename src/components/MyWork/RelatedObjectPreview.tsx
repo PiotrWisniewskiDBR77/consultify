@@ -60,7 +60,7 @@ const getStatusStyle = (status: string) => {
     return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
   }
   if (['blocked', 'rejected', 'cancelled'].includes(s)) {
-    return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300';
+    return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
   }
   if (['in_progress', 'executing', 'review'].includes(s)) {
     return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
@@ -75,7 +75,7 @@ const getStatusStyle = (status: string) => {
 const getTypeIcon = (type: string) => {
   switch (type?.toUpperCase()) {
     case 'INITIATIVE':
-      return <Target size={16} className="text-purple-500" />;
+      return <Target size={16} className="text-primary-500" />;
     case 'TASK':
       return <CheckSquare size={16} className="text-blue-500" />;
     case 'PHASE':
@@ -171,19 +171,19 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
       <div
         onClick={handleClick}
         className={`
-                    p-4 bg-white dark:bg-navy-900 rounded-lg 
+                    p-4 bg-white dark:bg-navy-900 rounded-lg
                     border border-slate-200 dark:border-navy-700
-                    ${onNavigate ? 'cursor-pointer hover:border-purple-300 dark:hover:border-purple-500/50 transition-colors group' : ''}
+                    ${onNavigate ? 'cursor-pointer hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors group' : ''}
                 `}
       >
         <div className="flex items-start gap-3">
-          <div className="shrink-0 p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <Target size={20} className="text-purple-600 dark:text-purple-400" />
+          <div className="shrink-0 p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+            <Target size={20} className="text-primary-600 dark:text-primary-400" />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium uppercase">
+              <span className="text-[10px] px-2 py-0.5 rounded bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium uppercase">
                 Initiative
               </span>
               <span
@@ -193,7 +193,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
               </span>
             </div>
 
-            <h4 className="text-sm font-medium text-slate-800 dark:text-white mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+            <h4 className="text-sm font-medium text-slate-800 dark:text-white mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
               {initiative.name}
             </h4>
 
@@ -218,7 +218,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
           {onNavigate && (
             <ArrowRight
               size={16}
-              className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-purple-500 transition-colors"
+              className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
             />
           )}
         </div>
@@ -236,7 +236,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
       <div
         onClick={handleClick}
         className={`
-                    p-4 bg-white dark:bg-navy-900 rounded-lg 
+                    p-4 bg-white dark:bg-navy-900 rounded-lg
                     border border-slate-200 dark:border-navy-700
                     ${onNavigate ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors group' : ''}
                 `}

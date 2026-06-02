@@ -505,7 +505,10 @@ class NotebookService {
   async exportWithProvenance(
     orgId: string,
     pageId: string
-  ): Promise<{ markdown: string; provenanceMap: Array<{ blockIndex: number; provenance: BlockProvenance }> }> {
+  ): Promise<{
+    markdown: string;
+    provenanceMap: Array<{ blockIndex: number; provenance: BlockProvenance }>;
+  }> {
     const page = await queryHelpers.queryOne<{ content_json?: string | null }>(
       `SELECT content_json FROM notebook_pages WHERE id = ? AND organization_id = ?`,
       [pageId, orgId]
@@ -527,7 +530,13 @@ class NotebookService {
       const raw = (block as any).provenance;
       const provenance: BlockProvenance =
         raw && typeof raw === 'object' && P07_PROVENANCE_LANGUAGE.includes(raw.type)
-          ? { type: raw.type, actor: raw.actor || 'unknown', timestamp: raw.timestamp || '', proposalId: raw.proposalId, inputPointers: raw.inputPointers }
+          ? {
+              type: raw.type,
+              actor: raw.actor || 'unknown',
+              timestamp: raw.timestamp || '',
+              proposalId: raw.proposalId,
+              inputPointers: raw.inputPointers,
+            }
           : { type: 'user_edit', actor: 'unknown', timestamp: '' };
 
       provenanceMap.push({ blockIndex: i, provenance });
@@ -728,7 +737,11 @@ class NotebookService {
     const paragraphs = text.split(/\n{2,}/).filter(Boolean);
     return paragraphs.slice(0, 200).map((p) => ({
       type: 'paragraph',
-      provenance: { type: provenanceType, actor: 'system', timestamp: now } satisfies BlockProvenance,
+      provenance: {
+        type: provenanceType,
+        actor: 'system',
+        timestamp: now,
+      } satisfies BlockProvenance,
       content: [{ type: 'text', text: p.trim().slice(0, 10000) }],
     }));
   }
@@ -1160,8 +1173,4 @@ export async function createNote(params: {
 }
 
 export default notebookService;
-export {
-  NotebookService,
-  notebookService,
-  createNote as createNotebookNote,
-};
+export { createNote as createNotebookNote, NotebookService, notebookService };

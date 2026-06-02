@@ -30,6 +30,30 @@ CREATE TABLE IF NOT EXISTS interview_ai_parse_log (
 
 CREATE INDEX IF NOT EXISTS idx_ai_parse_log_session ON interview_ai_parse_log(session_id);
 
+-- Baseline Postgres migrations skip the legacy SQLite-first interview insights migrations (<500).
+-- Keep this migration self-contained for fresh Postgres databases.
+CREATE TABLE IF NOT EXISTS interview_insights (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    prompt_type TEXT NOT NULL DEFAULT 'summary',
+    source_session_ids TEXT DEFAULT '[]',
+    filters TEXT,
+    content TEXT,
+    status TEXT DEFAULT 'generating',
+    error_message TEXT,
+    source_session_count INTEGER DEFAULT 0,
+    tokens_used INTEGER DEFAULT 0,
+    generation_time_ms INTEGER,
+    created_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_interview_insights_org ON interview_insights(organization_id);
+CREATE INDEX IF NOT EXISTS idx_interview_insights_status ON interview_insights(status);
+CREATE INDEX IF NOT EXISTS idx_interview_insights_created_at ON interview_insights(created_at DESC);
+
 -- T016: Add structured content columns to interview_insights
 ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS structured_content JSONB;
 ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS evidence_links JSONB DEFAULT '[]'::JSONB;

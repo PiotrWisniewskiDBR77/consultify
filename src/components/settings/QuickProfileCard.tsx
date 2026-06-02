@@ -48,8 +48,8 @@ const statusConfig: Record<
 > = {
   online: { label: 'Online', color: 'bg-emerald-500', icon: Circle },
   away: { label: 'Away', color: 'bg-amber-500', icon: Clock },
-  busy: { label: 'Busy', color: 'bg-red-500', icon: Circle },
-  dnd: { label: 'Do Not Disturb', color: 'bg-red-600', icon: Moon },
+  busy: { label: 'Busy', color: 'bg-rose-500', icon: Circle },
+  dnd: { label: 'Do Not Disturb', color: 'bg-rose-600', icon: Moon },
   offline: { label: 'Offline', color: 'bg-slate-400', icon: Circle },
 };
 
@@ -121,7 +121,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
         <div className="relative group">
           <Avatar className="w-14 h-14 ring-2 ring-white dark:ring-navy-800 shadow-sm">
             <AvatarImage src={currentUser.avatarUrl} alt={displayName} />
-            <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white font-semibold text-lg">
+            <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-600 text-white font-semibold text-lg">
               {userInitials}
             </AvatarFallback>
           </Avatar>
@@ -183,7 +183,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
                     <span className={cn('w-2 h-2 rounded-full', config.color)} />
                     <span>{t(`settings.status.${status}`, config.label)}</span>
                   </div>
-                  {isActive && <Check className="w-4 h-4 text-violet-600" />}
+                  {isActive && <Check className="w-4 h-4 text-primary-600" />}
                 </DropdownMenuItem>
               );
             })}
@@ -202,7 +202,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
           variant="ghost"
           size="sm"
           onClick={onEditProfile}
-          className="flex-1 text-xs text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400"
+          className="flex-1 text-xs text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
         >
           <Edit2 className="w-3 h-3 mr-1" />
           {t('settings.profile.edit', 'Edit Profile')}
@@ -213,7 +213,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="flex-1 text-xs text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400"
+              className="flex-1 text-xs text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
             >
               <Eye className="w-3 h-3 mr-1" />
               {t('settings.profile.viewAs', 'View as...')}

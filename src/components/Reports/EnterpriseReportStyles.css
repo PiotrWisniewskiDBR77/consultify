@@ -262,7 +262,7 @@
 }
 
 .initiative-card.critical {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid #f43f5e;
 }
 
 .initiative-card.high {
@@ -321,7 +321,7 @@
 
 .callout.danger {
   background: #fef2f2;
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid #f43f5e;
 }
 
 /* Dark mode support */
@@ -569,4 +569,3 @@ html {
     font-size: 32px;
   }
 }
-

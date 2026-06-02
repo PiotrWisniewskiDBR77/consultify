@@ -358,17 +358,17 @@ export const AddRemoveSeats: React.FC<AddRemoveSeatsProps> = ({
         </div>
 
         {/* New Monthly Total */}
-        <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-lg">
+        <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-violet-800 dark:text-violet-200">
+              <p className="font-medium text-primary-800 dark:text-primary-200">
                 {t('admin.billing.seats.newMonthlyTotal', 'New monthly total')}
               </p>
-              <p className="text-xs text-violet-600 dark:text-violet-400">
+              <p className="text-xs text-primary-600 dark:text-primary-400">
                 {t('admin.billing.seats.startingNext', 'Starting next billing cycle')}
               </p>
             </div>
-            <span className="text-2xl font-bold text-violet-700 dark:text-violet-300">
+            <span className="text-2xl font-bold text-primary-700 dark:text-primary-300">
               ${prorate.newMonthlyTotal.toFixed(2)}
             </span>
           </div>

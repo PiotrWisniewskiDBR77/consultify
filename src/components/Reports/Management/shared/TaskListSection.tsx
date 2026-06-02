@@ -54,9 +54,9 @@ const variantStyles = {
     icon: <CheckCircle2 size={16} className="text-emerald-500" />,
   },
   blocked: {
-    container: 'bg-red-50/50 dark:bg-red-900/10',
-    itemBorder: 'border-red-100 dark:border-red-500/10',
-    icon: <AlertTriangle size={16} className="text-red-500" />,
+    container: 'bg-rose-50/50 dark:bg-rose-900/10',
+    itemBorder: 'border-rose-100 dark:border-rose-500/10',
+    icon: <AlertTriangle size={16} className="text-rose-500" />,
   },
   pending: {
     container: 'bg-amber-50/50 dark:bg-amber-900/10',
@@ -97,7 +97,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({
           {(showViewAll || hasMore) && onViewAll && (
             <button
               onClick={onViewAll}
-              className="text-sm text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
             >
               View all
               <ChevronRight size={14} />
@@ -129,7 +129,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({
                       <span
                         className={`px-2 py-0.5 text-xs font-medium rounded ${
                           item.severity === 'CRITICAL' || item.severity === 'HIGH'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                             : item.severity === 'MEDIUM'
                               ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                               : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'

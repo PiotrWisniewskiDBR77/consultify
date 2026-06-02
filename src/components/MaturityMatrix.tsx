@@ -1,11 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Bot, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { getQuestionsForAxis } from '@/services/drdStructure';
 
 import { AxisId } from '../types';
-
+import TeresaMark from './shared/TeresaMark';
 interface MaturityMatrixProps {
   axisId: number;
   axisKey: AxisId;
@@ -184,7 +184,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                   <div className="mt-4">
                     <button
                       onClick={() => setShowAi(!showAi)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 transition-colors"
+                      className="flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
                     >
                       <Sparkles size={14} />
                       {showAi ? 'Close AI Assistant' : 'Not sure? Ask AI to Diagnose'}
@@ -198,14 +198,14 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-lg">
-                            <h4 className="text-purple-700 dark:text-purple-300 font-semibold mb-2 flex items-center gap-1.5 text-xs">
-                              <Bot size={14} /> Digital Pathfinder AI
+                          <div className="mt-3 p-3 bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20 rounded-lg">
+                            <h4 className="text-primary-700 dark:text-primary-300 font-semibold mb-2 flex items-center gap-1.5 text-xs">
+                              <TeresaMark size={14} /> Digital Pathfinder AI
                             </h4>
 
                             {!aiResult ? (
                               <>
-                                <p className="text-[10px] text-purple-600/70 dark:text-purple-200/70 mb-2">
+                                <p className="text-[10px] text-primary-600/70 dark:text-primary-200/70 mb-2">
                                   Describe your current processes, tools, and challenges regarding{' '}
                                   {currentArea.name}.
                                 </p>
@@ -213,12 +213,12 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                                   value={aiInput}
                                   onChange={(e) => setAiInput(e.target.value)}
                                   placeholder="e.g. We currently use Excel for everything, but we are looking at..."
-                                  className="w-full text-xs bg-white dark:bg-navy-950 border border-purple-200 dark:border-purple-500/30 rounded-lg p-2 text-navy-900 dark:text-slate-200 focus:outline-none focus:border-purple-500 h-20 mb-2 placeholder:text-slate-400"
+                                  className="w-full text-xs bg-white dark:bg-navy-950 border border-primary-200 dark:border-primary-500/30 rounded-lg p-2 text-navy-900 dark:text-slate-200 focus:outline-none focus:border-primary-500 h-20 mb-2 placeholder:text-slate-400"
                                 />
                                 <button
                                   onClick={handleAiDiagnose}
                                   disabled={aiLoading || !aiInput.trim()}
-                                  className="px-3 py-1.5 bg-purple-600 text-white text-[10px] font-bold rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                                  className="px-3 py-1.5 bg-primary-600 text-white text-[10px] font-bold rounded-lg hover:bg-primary-500 disabled:opacity-50 transition-colors flex items-center gap-1.5"
                                 >
                                   {aiLoading ? (
                                     <span className="animate-spin">⌛</span>
@@ -231,14 +231,14 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                             ) : (
                               <div className="animate-pulse-once">
                                 <div className="flex items-start gap-3 mb-3">
-                                  <div className="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                                  <div className="bg-primary-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
                                     {aiResult.level}
                                   </div>
                                   <div>
-                                    <p className="text-xs text-purple-800 dark:text-purple-100 font-medium mb-0.5">
+                                    <p className="text-xs text-primary-800 dark:text-primary-100 font-medium mb-0.5">
                                       Recommended Level: {aiResult.level}
                                     </p>
-                                    <p className="text-[10px] text-purple-700 dark:text-purple-200 leading-relaxed italic">
+                                    <p className="text-[10px] text-primary-700 dark:text-primary-200 leading-relaxed italic">
                                       "{aiResult.justification}"
                                     </p>
                                   </div>

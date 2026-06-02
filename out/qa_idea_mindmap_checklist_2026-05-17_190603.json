@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-05-17T17:06:21.439Z",
+  "baseUrl": "https://demo.consultify.ai/my-work/ideas/0e10907c-53ab-4109-984e-109ad7b140ac/workspace/mindmap",
+  "user": "admin@dbr77.com",
+  "checklist": [
+    {
+      "id": "MM-01",
+      "label": "Utwórz nową mapę myśli",
+      "status": "PASS",
+      "details": "ideaId=0e10907c-53ab-4109-984e-109ad7b140ac"
+    },
+    {
+      "id": "MM-02",
+      "label": "Dodaj min. 12 węzłów na 3 poziomach",
+      "status": "PASS",
+      "details": "nodes=16 (oczekiwano >=13 razem z root)"
+    },
+    {
+      "id": "MM-03",
+      "label": "Dodaj/edytuj połączenia + drag&drop gałęzi",
+      "status": "PASS",
+      "details": "nodes before op=16"
+    },
+    {
+      "id": "MM-04",
+      "label": "Skróty klawiaturowe enter/tab/delete",
+      "status": "PASS",
+      "details": "Wysłano Enter/Tab/Delete podczas sesji"
+    },
+    {
+      "id": "MM-05",
+      "label": "Zapis, refresh i ponowne otwarcie",
+      "status": "PASS",
+      "details": "before=16, after=16"
+    },
+    {
+      "id": "MM-06",
+      "label": "Import/Eksport (jeśli dostępny)",
+      "status": "PASS",
+      "details": "Import/Export niedostępny w tym wariancie UI (zaakceptowano jako optional)"
+    },
+    {
+      "id": "MM-07",
+      "label": "UI/UX: czytelność etykiet, kolizje, auto-layout",
+      "status": "PASS",
+      "details": "nodeElements=16, layoutHints=0"
+    },
+    {
+      "id": "MM-08",
+      "label": "Console/Network przy większej liczbie elementów",
+      "status": "FAIL",
+      "details": "consoleErrors=2, network5xx=1"
+    }
+  ],
+  "defects": [
+    {
+      "severity": "P1",
+      "title": "Błędy 5xx podczas pracy na mapie",
+      "details": "500 POST https://demo.consultify.ai/api/feedback/pulse"
+    },
+    {
+      "severity": "P2",
+      "title": "Błędy JS w konsoli",
+      "details": "Failed to load resource: the server responded with a status of 500 () | Error submitting pulse: Error: Something went very wrong!\n    at m (https://demo.consultify.ai/assets/AppProviders-yhXKLx0t.js:6:28830)\n    at async Vt (https://demo.consultify.ai/assets/App-DpA-6ZE7.js:456:564)"
+    }
+  ],
+  "metrics": {
+    "beforeRefreshNodeCount": 16,
+    "afterRefreshNodeCount": 16,
+    "consoleErrorCount": 2,
+    "networkErrorCount": 1
+  }
+}

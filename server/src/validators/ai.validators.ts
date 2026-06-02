@@ -120,6 +120,8 @@ export const ChatStreamRequestSchema = z.object({
   endpoint: z.string().min(1).optional(),
   // Privacy
   privateMode: z.boolean().optional(),
+  assistantScope: z.enum(['anna_public', 'teresa_tenant']).optional(),
+  memoryScope: z.enum(['public_product', 'tenant', 'org', 'user', 'project']).optional(),
   aiModes: z
     .object({
       deepResearch: z.boolean().optional(),
@@ -533,6 +535,21 @@ export const RefineTextRequestSchema = z.object({
       priority: z.string().optional(),
       type: z.string(),
     })
+    .optional(),
+  language: z.string().optional(),
+});
+
+// ── Canvas inline-AI quick edit (floating selection menu) ───────────
+// Non-streaming single-shot transform of a selected fragment.
+// Consumed by src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx.
+export const ChatQuickRequestSchema = z.object({
+  message: z.string().min(1, 'Message is required'),
+  context: z
+    .object({
+      source: z.string().optional(),
+      selectedText: z.string().optional(),
+    })
+    .passthrough()
     .optional(),
   language: z.string().optional(),
 });

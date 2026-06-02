@@ -131,6 +131,9 @@ describe('CalendarCreateEventModal', () => {
     fireEvent.change(screen.getByPlaceholderText('Short context or definition of done...'), {
       target: { value: 'Bounded V8 continuity check' },
     });
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'weekly' },
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add' }));
 
@@ -141,6 +144,7 @@ describe('CalendarCreateEventModal', () => {
         start: '2026-03-27',
         allDay: true,
         source: 'task',
+        recurrence: { preset: 'weekly' },
       });
     });
 

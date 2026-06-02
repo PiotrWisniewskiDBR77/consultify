@@ -34,4 +34,39 @@ describe('V8MultiplayerApi', () => {
     expect(data.mapping?.surfaceAware).toBe(true);
     expect(data.mapping?.roomGranularity).toBe('resource');
   });
+
+  it('builds room-binding query with optional parent resource id', async () => {
+    vi.mocked(v8Get).mockResolvedValue({
+      binding: {
+        roomResourceType: 'whiteboard',
+        roomResourceId: 'wb-1',
+      },
+      resourceType: 'whiteboard',
+      resourceId: 'wb-1',
+      parentResourceId: 'ws-parent',
+    });
+
+    await V8MultiplayerApi.getRoomBinding('whiteboard', 'wb-1', 'ws-parent');
+    await V8MultiplayerApi.getRoomBinding('whiteboard', 'wb-1');
+
+    expect(v8Get).toHaveBeenNthCalledWith(1, '/multiplayer/room-binding', {
+      resourceType: 'whiteboard',
+      resourceId: 'wb-1',
+      parentResourceId: 'ws-parent',
+    });
+    expect(v8Get).toHaveBeenNthCalledWith(2, '/multiplayer/room-binding', {
+      resourceType: 'whiteboard',
+      resourceId: 'wb-1',
+    });
+  });
+
+  it('encodes room id in room presence and lock paths', async () => {
+    vi.mocked(v8Get).mockResolvedValue({ roomId: 'room/with space', presence: [], locks: [], count: 0 });
+
+    await V8MultiplayerApi.getRoomPresence('room/with space');
+    await V8MultiplayerApi.getRoomLocks('room/with space');
+
+    expect(v8Get).toHaveBeenNthCalledWith(1, '/multiplayer/rooms/room%2Fwith%20space/presence');
+    expect(v8Get).toHaveBeenNthCalledWith(2, '/multiplayer/rooms/room%2Fwith%20space/locks');
+  });
 });

@@ -228,7 +228,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             <button
               key={z}
               onClick={() => setZoom(z)}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${zoom === z ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${zoom === z ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600'}`}
             >
               {z === 'day'
                 ? isPl
@@ -292,7 +292,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               {headerCells.map((cell, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-center text-[9px] font-bold border-r border-slate-200/30 dark:border-navy-700/30 flex-shrink-0 ${cell.isToday ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'text-slate-400'}`}
+                  className={`flex items-center justify-center text-[9px] font-bold border-r border-slate-200/30 dark:border-navy-700/30 flex-shrink-0 ${cell.isToday ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400'}`}
                   style={{ width: cell.width }}
                 >
                   {cell.label}
@@ -322,7 +322,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 
                   {/* Bar */}
                   <div
-                    className={`absolute top-1.5 rounded-lg shadow-sm cursor-pointer transition-shadow hover:shadow-md ${dragging?.nodeId === node.id ? 'ring-2 ring-violet-500/40' : ''}`}
+                    className={`absolute top-1.5 rounded-lg shadow-sm cursor-pointer transition-shadow hover:shadow-md ${dragging?.nodeId === node.id ? 'ring-2 ring-primary-500/40' : ''}`}
                     style={{
                       left,
                       width,

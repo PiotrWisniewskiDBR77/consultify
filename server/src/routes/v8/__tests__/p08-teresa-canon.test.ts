@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  isValidEnvelopeTransition,
   P08_ACCEPTANCE_CHECKLIST,
   P08_ACTION_ENVELOPE_RULES,
   P08_ACTION_ENVELOPE_STATES,
@@ -22,7 +23,6 @@ import {
   P08_HANDOFF_TARGETS,
   P08_VOICE_POSTURE,
   P08_WRITE_OWNERSHIP,
-  isValidEnvelopeTransition,
   resolveVoiceAvailability,
   validateHandoffContext,
   validateTargetPayload,
@@ -34,9 +34,16 @@ import {
 // ────────────────────────────────────────────────────────────────
 
 describe('P08 §2.3.1 — Handoff targets', () => {
-  it('has exactly 4 P0 targets: radar, initiatives, calendar, notebook', () => {
-    expect(P08_HANDOFF_TARGET_MODULES).toEqual(['radar', 'initiatives', 'calendar', 'notebook']);
-    expect(Object.keys(P08_HANDOFF_TARGETS)).toHaveLength(4);
+  it('includes required target modules for Teresa handoff', () => {
+    expect(P08_HANDOFF_TARGET_MODULES).toEqual([
+      'radar',
+      'initiatives',
+      'calendar',
+      'notebook',
+      'interview',
+      'excele',
+    ]);
+    expect(Object.keys(P08_HANDOFF_TARGETS)).toHaveLength(6);
   });
 
   it('radar target references P06 and requires correct extra fields', () => {
@@ -100,7 +107,11 @@ describe('P08 §2.3.1 — Payload validation', () => {
     assumptions: [],
     uncertainty_boundary: { missing_inputs: [], conflicts: [], what_would_change_next_action: [] },
     evidence_pointers: ['signal:sig-001'],
-    proposed_next_action: { target_module: 'initiatives', handoff_intent: 'create', requires_approval: true },
+    proposed_next_action: {
+      target_module: 'initiatives',
+      handoff_intent: 'create',
+      requires_approval: true,
+    },
     audit_stub: { actor: 'teresa:copilot', timestamp: '2026-03-31T12:00:00Z' },
   };
 
@@ -124,7 +135,11 @@ describe('P08 §2.3.1 — Payload validation', () => {
       time_window: '2026-Q3',
       triggered_rules: ['deadline_proximity'],
       evidence_pointers: ['signal:sig-001'],
-      uncertainty_boundary: { missing_inputs: [], conflicts: [], what_would_change_next_action: [] },
+      uncertainty_boundary: {
+        missing_inputs: [],
+        conflicts: [],
+        what_would_change_next_action: [],
+      },
       next_action_safe_fallback: 'Capture in notebook',
     };
     const result = validateTargetPayload('radar', radarPayload);
@@ -215,18 +230,21 @@ describe('P08 §2.3.3 — Voice posture', () => {
   });
 
   it('resolveVoiceAvailability returns unavailable when mic denied', () => {
-    expect(resolveVoiceAvailability({ micPermission: false, networkStable: true, runtimeReady: true }))
-      .toBe('unavailable');
+    expect(
+      resolveVoiceAvailability({ micPermission: false, networkStable: true, runtimeReady: true })
+    ).toBe('unavailable');
   });
 
   it('resolveVoiceAvailability returns degraded when network unstable', () => {
-    expect(resolveVoiceAvailability({ micPermission: true, networkStable: false, runtimeReady: true }))
-      .toBe('degraded');
+    expect(
+      resolveVoiceAvailability({ micPermission: true, networkStable: false, runtimeReady: true })
+    ).toBe('degraded');
   });
 
   it('resolveVoiceAvailability returns available when all conditions met', () => {
-    expect(resolveVoiceAvailability({ micPermission: true, networkStable: true, runtimeReady: true }))
-      .toBe('available');
+    expect(
+      resolveVoiceAvailability({ micPermission: true, networkStable: true, runtimeReady: true })
+    ).toBe('available');
   });
 });
 
@@ -240,12 +258,16 @@ describe('P08 §2.3.4 — Citations posture', () => {
   });
 
   it('missing source boundary requires missing_inputs and conflicts', () => {
-    expect(P08_CITATION_POSTURE.missing_source_boundary.required_fields).toContain('missing_inputs');
+    expect(P08_CITATION_POSTURE.missing_source_boundary.required_fields).toContain(
+      'missing_inputs'
+    );
     expect(P08_CITATION_POSTURE.missing_source_boundary.required_fields).toContain('conflicts');
   });
 
   it('uncertainty marker forbids overclaim without evidence', () => {
-    expect(P08_CITATION_POSTURE.uncertainty_marker.forbidden).toContain('overclaim_without_evidence');
+    expect(P08_CITATION_POSTURE.uncertainty_marker.forbidden).toContain(
+      'overclaim_without_evidence'
+    );
   });
 });
 
@@ -323,15 +345,21 @@ describe('P08 §2.3.7 — Degraded posture', () => {
   });
 
   it('includes voice unavailable scenario', () => {
-    expect(P08_DEGRADED_SCENARIOS.some(s => s.id === 'D01' && s.scenario.includes('Voice unavailable'))).toBe(true);
+    expect(
+      P08_DEGRADED_SCENARIOS.some((s) => s.id === 'D01' && s.scenario.includes('Voice unavailable'))
+    ).toBe(true);
   });
 
   it('includes audit unavailable scenario', () => {
-    expect(P08_DEGRADED_SCENARIOS.some(s => s.id === 'D08' && s.scenario.includes('Audit'))).toBe(true);
+    expect(P08_DEGRADED_SCENARIOS.some((s) => s.id === 'D08' && s.scenario.includes('Audit'))).toBe(
+      true
+    );
   });
 
   it('includes duplicate detected scenario', () => {
-    expect(P08_DEGRADED_SCENARIOS.some(s => s.id === 'D09' && s.scenario.includes('Duplicate'))).toBe(true);
+    expect(
+      P08_DEGRADED_SCENARIOS.some((s) => s.id === 'D09' && s.scenario.includes('Duplicate'))
+    ).toBe(true);
   });
 });
 

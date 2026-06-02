@@ -23,7 +23,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -80,6 +80,15 @@ interface ReferralToolsSectionProps {
   subsection?: 'referral-tools' | 'referral-analytics' | 'referred-organizations';
 }
 
+const unwrapApiData = (response: any) => {
+  const descriptor = response ? Object.getOwnPropertyDescriptor(response, 'data') : undefined;
+  return descriptor?.value ?? response?.data ?? response;
+};
+
+const REFERRAL_TOOLS_RETRY_DELAY_MS = 700;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   subsection = 'referral-tools',
 }) => {
@@ -100,6 +109,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const campaignNameInputRef = useRef<HTMLInputElement | null>(null);
 
   const normalizeTools = useCallback(
     (payload: any): ReferralTools => ({
@@ -126,6 +136,12 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     }),
     []
   );
+
+  const hasUsableReferralIdentity = useCallback((payload: ReferralTools | null | undefined) => {
+    const referralCode = String(payload?.referralCode || '').trim();
+    const referralLink = String(payload?.referralLink || '').trim();
+    return Boolean(referralCode && referralLink);
+  }, []);
 
   const normalizeAttribution = useCallback(
     (payload: any): ReferredCustomer => ({
@@ -203,25 +219,61 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     try {
       setLoading(true);
       setError(null);
-      try {
-        const response = await V8PartnerApi.getReferralTools();
-        if (response?.tools) {
-          setTools(normalizeTools(response.tools as V8PartnerReferralTools));
-          return;
-        }
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          setError(t('partner.referrals.loadError', 'Failed to load referral tools'));
-          return;
-        }
-      }
 
-      const response = await Api.get('/api/partners/referral-tools');
-      if (response?.success && response?.data) {
-        setTools(normalizeTools(response.data));
+      const loadUsableTools = async (): Promise<ReferralTools | null> => {
+        try {
+          const response = await Api.get('/api/partners/referral-tools');
+          const legacyTools = unwrapApiData(response);
+          if (response?.success && legacyTools) {
+            const normalized = normalizeTools(legacyTools);
+            if (hasUsableReferralIdentity(normalized)) {
+              return normalized;
+            }
+          }
+        } catch (legacyError) {
+          if (!shouldFallbackToLegacyPartner(legacyError)) {
+            throw legacyError;
+          }
+        }
+
+        try {
+          const response = await V8PartnerApi.getReferralTools();
+          if (response?.tools) {
+            const normalized = normalizeTools(response.tools as V8PartnerReferralTools);
+            if (hasUsableReferralIdentity(normalized)) {
+              return normalized;
+            }
+          }
+        } catch (error) {
+          if (!shouldFallbackToLegacyPartner(error)) {
+            throw error;
+          }
+        }
+
+        return null;
+      };
+
+      const immediateTools = await loadUsableTools();
+      if (immediateTools) {
+        setTools(immediateTools);
         return;
       }
-      setError(t('partner.referrals.loadError', 'Failed to load referral tools'));
+
+      await wait(REFERRAL_TOOLS_RETRY_DELAY_MS);
+      const retriedTools = await loadUsableTools();
+      if (retriedTools) {
+        setTools(retriedTools);
+        return;
+      }
+
+      setTools((prev) => (hasUsableReferralIdentity(prev) ? prev : null));
+
+      setError(
+        t(
+          'partner.referrals.identityMissingError',
+          'Referral identity is being initialized. Refresh in a moment.'
+        )
+      );
     } catch (err: any) {
       console.error('Error fetching referral tools:', err);
       setError(
@@ -231,7 +283,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [normalizeTools, t]);
+  }, [hasUsableReferralIdentity, normalizeTools, t]);
 
   const fetchV8Analytics = useCallback(async () => {
     try {
@@ -261,10 +313,11 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         return;
       }
       const response = await Api.get('/api/partners/attributions');
-      const legacyItems = Array.isArray(response?.data?.items)
-        ? response.data.items
-        : Array.isArray(response?.data)
-          ? response.data
+      const legacyData = unwrapApiData(response);
+      const legacyItems = Array.isArray(legacyData?.items)
+        ? legacyData.items
+        : Array.isArray(legacyData)
+          ? legacyData
           : [];
       setReferredCustomers(legacyItems.map((item: ReferredCustomer) => normalizeAttribution(item)));
     }
@@ -293,7 +346,10 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
   // Create new campaign link via API
   const handleCreateCampaign = async () => {
-    if (!newCampaign.name) {
+    const candidateName = String(
+      newCampaign.name || campaignNameInputRef.current?.value || ''
+    ).trim();
+    if (!candidateName) {
       toast.error(t('partner.referrals.nameRequired', 'Campaign name is required'));
       return;
     }
@@ -302,8 +358,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       setCreating(true);
       let response: any;
       try {
-        response = await V8PartnerApi.createCampaignLink({
-          name: newCampaign.name,
+        response = await Api.post('/api/partners/campaign-links', {
+          name: candidateName,
           utmSource: newCampaign.utmSource || undefined,
           utmMedium: newCampaign.utmMedium || undefined,
           utmCampaign: newCampaign.utmCampaign || undefined,
@@ -312,8 +368,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         if (!shouldFallbackToLegacyPartner(error)) {
           throw error;
         }
-        response = await Api.post('/api/partners/campaign-links', {
-          name: newCampaign.name,
+        response = await V8PartnerApi.createCampaignLink({
+          name: candidateName,
           utmSource: newCampaign.utmSource || undefined,
           utmMedium: newCampaign.utmMedium || undefined,
           utmCampaign: newCampaign.utmCampaign || undefined,
@@ -356,12 +412,12 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       setDeleting(campaignId);
       let response: any;
       try {
-        response = await V8PartnerApi.deleteCampaignLink(campaignId);
+        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
       } catch (error) {
         if (!shouldFallbackToLegacyPartner(error)) {
           throw error;
         }
-        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
+        response = await V8PartnerApi.deleteCampaignLink(campaignId);
       }
 
       if (response?.success || response?.deleted) {
@@ -391,7 +447,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -399,13 +455,13 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   if (error && !tools) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="p-4 rounded-full bg-red-500/10 mb-4">
-          <Link2 className="w-8 h-8 text-red-400" />
+        <div className="p-4 rounded-full bg-rose-500/10 mb-4">
+          <Link2 className="w-8 h-8 text-rose-400" />
         </div>
         <p className="text-slate-400 dark:text-slate-500 mb-4">{error}</p>
         <button
           onClick={fetchTools}
-          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
         >
           {t('common.retry', 'Try Again')}
         </button>
@@ -422,11 +478,11 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       </div>
 
       {v8Analytics && (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-primary-200 dark:border-primary-900/40 p-6">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-violet-500" />
+                <TrendingUp className="w-5 h-5 text-primary-500" />
                 {pageCopy.runtimeTitle}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -459,7 +515,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             ].map((card) => (
               <div
                 key={card.label}
-                className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
+                className="rounded-xl border border-primary-200/70 dark:border-primary-900/30 bg-primary-50/50 dark:bg-primary-950/20 p-4"
               >
                 <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {card.label}
@@ -477,7 +533,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       {subsection === 'referred-organizations' && (
         <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="w-5 h-5 text-violet-400" />
+            <Users className="w-5 h-5 text-primary-400" />
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('partner.referrals.referredCustomersList', 'Referred customers')}
@@ -508,7 +564,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                         {customer.referralCodeUsed ? ` · ${customer.referralCodeUsed}` : ''}
                       </p>
                     </div>
-                    <span className="rounded-full bg-violet-500/15 px-2 py-1 text-xs font-medium text-violet-300">
+                    <span className="rounded-full bg-primary-500/15 px-2 py-1 text-xs font-medium text-primary-300">
                       {customer.status.toLowerCase()}
                     </span>
                   </div>
@@ -600,8 +656,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         {/* Referral Code */}
         <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="p-2 rounded-lg bg-violet-500/20">
-              <Link2 className="w-5 h-5 text-violet-400" />
+            <div className="p-2 rounded-lg bg-primary-500/20">
+              <Link2 className="w-5 h-5 text-primary-400" />
             </div>
             <span className="text-sm text-slate-400 dark:text-slate-500">
               {t('partner.referrals.yourCode', 'Your Referral Code')}
@@ -613,7 +669,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </code>
             <button
               onClick={() => copyToClipboard(tools?.referralCode || '', 'code')}
-              className="p-3 rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition-colors"
+              className="p-3 rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors"
             >
               {copiedField === 'code' ? (
                 <Check className="w-5 h-5" />
@@ -656,11 +712,11 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </button>
           </div>
           <div className="flex items-center gap-4 mt-2">
-            <button className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+            <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
               <QrCode className="w-3 h-3" />
               {t('partner.referrals.getQR', 'Get QR Code')}
             </button>
-            <button className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+            <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
               <ExternalLink className="w-3 h-3" />
               {t('partner.referrals.preview', 'Preview')}
             </button>
@@ -684,7 +740,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
           </div>
           <button
             onClick={() => setShowNewCampaign(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
             {t('partner.referrals.newCampaign', 'New Campaign')}
@@ -693,7 +749,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
         {/* New Campaign Form */}
         {showNewCampaign && (
-          <div className="mb-4 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-violet-500/30">
+          <div className="mb-4 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-primary-500/30">
             <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
               {t('partner.referrals.createCampaign', 'Create Campaign Link')}
             </h4>
@@ -703,11 +759,12 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                   Campaign Name*
                 </label>
                 <input
+                  ref={campaignNameInputRef}
                   type="text"
                   value={newCampaign.name}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                  onChange={(e) => setNewCampaign((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., LinkedIn Q1"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -717,9 +774,11 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 <input
                   type="text"
                   value={newCampaign.utmSource}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, utmSource: e.target.value })}
+                  onChange={(e) =>
+                    setNewCampaign((prev) => ({ ...prev, utmSource: e.target.value }))
+                  }
                   placeholder="e.g., linkedin"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -729,9 +788,11 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 <input
                   type="text"
                   value={newCampaign.utmMedium}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, utmMedium: e.target.value })}
+                  onChange={(e) =>
+                    setNewCampaign((prev) => ({ ...prev, utmMedium: e.target.value }))
+                  }
                   placeholder="e.g., social"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -741,9 +802,11 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 <input
                   type="text"
                   value={newCampaign.utmCampaign}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, utmCampaign: e.target.value })}
+                  onChange={(e) =>
+                    setNewCampaign((prev) => ({ ...prev, utmCampaign: e.target.value }))
+                  }
                   placeholder="e.g., partner-q1-2026"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 />
               </div>
             </div>
@@ -757,7 +820,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               <button
                 onClick={handleCreateCampaign}
                 disabled={creating}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
               >
                 {creating && (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -842,7 +905,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                         <button
                           onClick={() => handleDeleteCampaign(campaign.id)}
                           disabled={deleting === campaign.id}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors disabled:opacity-50"
+                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors disabled:opacity-50"
                           title="Delete"
                         >
                           {deleting === campaign.id ? (
@@ -872,26 +935,26 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       </div>
 
       {/* Tips Section */}
-      <div className="bg-gradient-to-br from-violet-900/30 to-violet-800/20 rounded-xl border border-violet-500/20 p-4">
-        <h4 className="text-sm font-semibold text-violet-300 mb-3 flex items-center gap-2">
+      <div className="bg-gradient-to-br from-primary-900/30 to-primary-800/20 rounded-xl border border-primary-500/20 p-4">
+        <h4 className="text-sm font-semibold text-primary-300 mb-3 flex items-center gap-2">
           <TrendingUp className="w-4 h-4" />
           {t('partner.referrals.tips', 'Tips for Better Conversions')}
         </h4>
         <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
           <li className="flex items-start gap-2">
-            <span className="text-violet-400">•</span>
+            <span className="text-primary-400">•</span>
             Share your link on LinkedIn with a compelling message about digital transformation
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-violet-400">•</span>
+            <span className="text-primary-400">•</span>
             Use campaign links to track which channels perform best
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-violet-400">•</span>
+            <span className="text-primary-400">•</span>
             Add your referral code to your email signature
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-violet-400">•</span>
+            <span className="text-primary-400">•</span>
             Share case studies alongside your referral link for higher trust
           </li>
         </ul>

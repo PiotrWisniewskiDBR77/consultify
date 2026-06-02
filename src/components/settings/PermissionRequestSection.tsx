@@ -74,8 +74,8 @@ const REQUEST_TYPES: {
 const PRIORITY_OPTIONS: { value: PermissionRequestPriority; label: string; color: string }[] = [
   { value: 'LOW', label: 'Low', color: 'text-slate-500 dark:text-slate-400' },
   { value: 'NORMAL', label: 'Normal', color: 'text-blue-500' },
-  { value: 'HIGH', label: 'High', color: 'text-orange-500' },
-  { value: 'URGENT', label: 'Urgent', color: 'text-red-500' },
+  { value: 'HIGH', label: 'High', color: 'text-amber-500' },
+  { value: 'URGENT', label: 'Urgent', color: 'text-rose-500' },
 ];
 
 const STATUS_CONFIG = {
@@ -91,7 +91,7 @@ const STATUS_CONFIG = {
   },
   REJECTED: {
     icon: XCircle,
-    color: 'text-red-500 bg-red-50 dark:bg-red-500/10',
+    color: 'text-rose-500 bg-rose-50 dark:bg-rose-500/10',
     label: 'Rejected',
   },
   CANCELLED: {
@@ -239,7 +239,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
             >
               <Send size={16} />
               {t('settings.permissions.newRequest', 'New Request')}
@@ -288,25 +288,25 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                                                 p-4 rounded-lg border-2 text-left transition-all
                                                 ${
                                                   isSelected
-                                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                                                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50'
+                                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                                                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
                                                 }
                                             `}
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`p-2 rounded-lg ${isSelected ? 'bg-purple-100 dark:bg-purple-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
+                          className={`p-2 rounded-lg ${isSelected ? 'bg-primary-100 dark:bg-primary-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
                         >
                           <Icon
                             size={18}
                             className={
-                              isSelected ? 'text-purple-600' : 'text-slate-500 dark:text-slate-400'
+                              isSelected ? 'text-primary-600' : 'text-slate-500 dark:text-slate-400'
                             }
                           />
                         </div>
                         <div>
                           <p
-                            className={`font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-200'}`}
+                            className={`font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-200'}`}
                           >
                             {type.label}
                           </p>
@@ -346,7 +346,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                     placeholder={
                       formData.requestType === 'ROLE_CHANGE' ? 'ADMIN' : 'Enter value...'
                     }
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
                   />
                 </div>
               </div>
@@ -391,7 +391,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                   'Explain why you need this change...'
                 )}
                 rows={4}
-                className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none resize-none"
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none resize-none"
               />
             </div>
 
@@ -407,7 +407,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
               <button
                 type="submit"
                 disabled={submitting || !formData.requestType}
-                className="flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 {t('settings.permissions.submit', 'Submit Request')}
@@ -432,7 +432,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+            <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
           </div>
         ) : requests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
@@ -442,7 +442,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
             </p>
             <button
               onClick={() => setShowForm(true)}
-              className="mt-3 text-sm text-purple-600 hover:text-purple-700 font-medium"
+              className="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium"
             >
               {t('settings.permissions.createFirst', 'Create your first request')}
             </button>
@@ -500,7 +500,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                     {request.status === 'PENDING' && (
                       <button
                         onClick={() => handleCancel(request.id)}
-                        className="text-sm text-red-500 hover:text-red-600 font-medium transition-colors"
+                        className="text-sm text-rose-500 hover:text-rose-600 font-medium transition-colors"
                       >
                         Cancel
                       </button>

@@ -22,6 +22,7 @@ import { FullInitiative, FullSession, Language } from '../../types';
 import { BenefitsTracker } from '../Execution/BenefitsTracker';
 import { CorrectiveActions } from '../Execution/CorrectiveActions';
 import { KPIDashboard } from '../Execution/KPIDashboard';
+import TeresaMark from '../shared/TeresaMark';
 import { Button } from '../ui/primitives/Button';
 // import { exportReportToPDF } from '../../services/pdf/pdfExport';
 import { AIInsightFeed } from './AIInsightFeed';
@@ -284,7 +285,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
           <span className="text-xs font-medium px-2 py-1 rounded bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
             12 On Track
           </span>
-          <span className="text-xs font-medium px-2 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+          <span className="text-xs font-medium px-2 py-1 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
             3 At Risk
           </span>
         </div>
@@ -383,7 +384,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
 
       <div className="glass-card p-10 flex flex-col items-center justify-center text-center animate-fade-in delay-100">
         <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mb-6 shadow-glow">
-          <Bot size={40} className="text-brand" />
+          <TeresaMark size={40} className="text-brand" />
         </div>
         <h3 className="text-2xl font-bold mb-2 text-navy-900 dark:text-white">AI Command Center</h3>
         <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm leading-relaxed">

@@ -161,18 +161,18 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15, delay: 0.1 }}
-          className="mt-2 flex items-center gap-2 rounded-lg bg-purple-50/60 dark:bg-purple-500/[0.08] border border-purple-200/40 dark:border-purple-500/20 px-2.5 py-1.5"
+          className="mt-2 flex items-center gap-2 rounded-lg bg-primary-50/60 dark:bg-primary-500/[0.08] border border-primary-200/40 dark:border-primary-500/20 px-2.5 py-1.5"
         >
-          <Sparkles size={12} className="text-purple-500 dark:text-purple-400 shrink-0" />
-          <span className="flex-1 text-[11px] text-purple-700 dark:text-purple-300 truncate">
+          <Sparkles size={12} className="text-primary-500 dark:text-primary-400 shrink-0" />
+          <span className="flex-1 text-[11px] text-primary-700 dark:text-primary-300 truncate">
             {suggestion.label}
           </span>
-          <span className="text-[10px] text-purple-400 dark:text-purple-500 tabular-nums shrink-0">
+          <span className="text-[10px] text-primary-400 dark:text-primary-500 tabular-nums shrink-0">
             {Math.round(suggestion.confidence * 100)}%
           </span>
           <button
             onClick={suggestion.action}
-            className="shrink-0 text-[10px] font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 transition-colors"
+            className="shrink-0 text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 transition-colors"
           >
             Apply
           </button>

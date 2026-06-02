@@ -118,8 +118,8 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
         )}
       >
         <div className="flex items-start gap-4">
-          <div className="p-2.5 bg-violet-600/10 rounded-lg flex-shrink-0">
-            <Icon size={20} className="text-violet-400" />
+          <div className="p-2.5 bg-primary-600/10 rounded-lg flex-shrink-0">
+            <Icon size={20} className="text-primary-400" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white leading-tight">{title}</h3>
@@ -159,9 +159,9 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
             disabled={saving || !isDirty}
             className={cn(
               'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-navy-900',
+              'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
               isDirty
-                ? 'bg-violet-600 hover:bg-violet-500 text-white'
+                ? 'bg-primary-600 hover:bg-primary-500 text-white'
                 : 'bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
             )}
           >
@@ -218,7 +218,7 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({ error, className, 
       className={cn(
         'w-full px-4 py-2.5 bg-navy-800 border rounded-lg text-white',
         'placeholder:text-slate-500 dark:text-slate-400 transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent',
+        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
         error ? 'border-rose-500 focus:ring-rose-500' : 'border-white/10 hover:border-white/20',
         className
       )}
@@ -245,7 +245,7 @@ export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
       className={cn(
         'w-full px-4 py-3 bg-navy-800 border rounded-lg text-white resize-none',
         'placeholder:text-slate-500 dark:text-slate-400 transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent',
+        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
         error ? 'border-rose-500 focus:ring-rose-500' : 'border-white/10 hover:border-white/20',
         className
       )}
@@ -274,7 +274,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
       className={cn(
         'w-full px-4 py-2.5 bg-navy-800 border rounded-lg text-white',
         'transition-all duration-200 cursor-pointer',
-        'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent',
+        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
         error ? 'border-rose-500 focus:ring-rose-500' : 'border-white/10 hover:border-white/20',
         className
       )}
@@ -321,8 +321,8 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
       onClick={() => onChange(!checked)}
       className={cn(
         'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-navy-900',
-        checked ? 'bg-violet-600' : 'bg-white/10',
+        'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
+        checked ? 'bg-primary-600' : 'bg-white/10',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >
@@ -378,7 +378,7 @@ export const SettingsButtonGroup: React.FC<SettingsButtonGroupProps> = ({
               'flex items-center gap-2 rounded-md font-medium transition-all duration-200',
               sizeClasses[size],
               isActive
-                ? 'bg-violet-600 text-white shadow-sm'
+                ? 'bg-primary-600 text-white shadow-sm'
                 : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             )}
           >

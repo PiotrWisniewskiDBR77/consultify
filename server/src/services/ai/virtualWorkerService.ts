@@ -379,7 +379,12 @@ function isNonEmptyArray(value: unknown): value is unknown[] {
 }
 
 function isNonEmptyRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0;
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).length > 0
+  );
 }
 
 function rowToWorker(row: Row): VirtualWorker {
@@ -535,9 +540,10 @@ async function getPillVersion(versionId: string | null): Promise<KnowledgePillVe
 }
 
 async function getProfileById(profileId: string): Promise<VirtualWorkerProfile | null> {
-  const result = await db().query<Row>('SELECT * FROM virtual_worker_profiles WHERE id = $1 LIMIT 1', [
-    profileId,
-  ]);
+  const result = await db().query<Row>(
+    'SELECT * FROM virtual_worker_profiles WHERE id = $1 LIMIT 1',
+    [profileId]
+  );
   return result.rows[0] ? rowToProfile(result.rows[0]) : null;
 }
 
@@ -695,16 +701,19 @@ export async function createProfile(data: {
     ]
   );
 
-  logger.info(`[VirtualWorkerService] Created profile v${nextVersion} for worker ${data.worker_id}`);
+  logger.info(
+    `[VirtualWorkerService] Created profile v${nextVersion} for worker ${data.worker_id}`
+  );
   return (await db()
     .query<Row>('SELECT * FROM virtual_worker_profiles WHERE id = $1', [id])
     .then((result) => rowToProfile(result.rows[0])))!;
 }
 
 export async function activateProfile(profileId: string): Promise<void> {
-  const result = await db().query<Row>('SELECT worker_id FROM virtual_worker_profiles WHERE id = $1', [
-    profileId,
-  ]);
+  const result = await db().query<Row>(
+    'SELECT worker_id FROM virtual_worker_profiles WHERE id = $1',
+    [profileId]
+  );
   const workerId = result.rows[0]?.worker_id;
   if (!workerId) return;
   await db().query('UPDATE virtual_worker_profiles SET is_active = 0 WHERE worker_id = $1', [
@@ -841,7 +850,9 @@ export async function listKnowledgePills(opts?: {
   }
 
   const versions = await Promise.all(
-    rows.map((row) => getPillVersion(row.current_version_id ? String(row.current_version_id) : null))
+    rows.map((row) =>
+      getPillVersion(row.current_version_id ? String(row.current_version_id) : null)
+    )
   );
   return rows.map((row, index) => rowToPill(row, versions[index]));
 }
@@ -951,7 +962,10 @@ export async function updateKnowledgePill(
   );
   const nextVersion = Number(versionResult.rows[0]?.max_v || 0) + 1;
   const newVersionId = uuidv4();
-  const sections = data.sections || (await getPillVersion(String(pillRow.current_version_id || '')))?.sections || [];
+  const sections =
+    data.sections ||
+    (await getPillVersion(String(pillRow.current_version_id || '')))?.sections ||
+    [];
 
   await db().query(
     `INSERT INTO knowledge_pill_versions
@@ -1089,7 +1103,11 @@ export async function createWorkerEvaluation(data: {
   const score =
     data.score == null ? null : Number.isFinite(Number(data.score)) ? Number(data.score) : null;
 
-  ensure(String(data.name || '').trim().length > 0, 'Evaluation name is required', 'VW_EVAL_NAME_REQUIRED');
+  ensure(
+    String(data.name || '').trim().length > 0,
+    'Evaluation name is required',
+    'VW_EVAL_NAME_REQUIRED'
+  );
 
   if (normalizedStatus === 'passed' || normalizedStatus === 'failed') {
     ensure(
@@ -1126,7 +1144,9 @@ export async function createWorkerEvaluation(data: {
       normalizedStatus !== 'draft' ? new Date().toISOString() : null,
     ]
   );
-  const result = await db().query<Row>('SELECT * FROM virtual_worker_evaluations WHERE id = $1', [id]);
+  const result = await db().query<Row>('SELECT * FROM virtual_worker_evaluations WHERE id = $1', [
+    id,
+  ]);
   return rowToEvaluation(result.rows[0]);
 }
 
@@ -1182,7 +1202,11 @@ export async function createWorkerRelease(data: {
   created_by?: string | null;
 }): Promise<WorkerRelease> {
   const normalizedStatus = (data.status || 'draft') as WorkerReleaseStatus;
-  ensure(normalizedStatus !== 'active', 'Create the release first, then activate it explicitly', 'VW_RELEASE_ACTIVATE_EXPLICIT');
+  ensure(
+    normalizedStatus !== 'active',
+    'Create the release first, then activate it explicitly',
+    'VW_RELEASE_ACTIVATE_EXPLICIT'
+  );
 
   const worker = await getWorkerById(data.worker_id);
   ensure(worker, 'Worker not found', 'VW_WORKER_NOT_FOUND');
@@ -1261,8 +1285,16 @@ export async function activateWorkerRelease(releaseId: string): Promise<WorkerRe
   );
   const release = releaseResult.rows[0];
   if (!release) return null;
-  ensure(release.status === 'ready', 'Only ready releases can be activated', 'VW_RELEASE_NOT_READY');
-  ensure(release.profile_id, 'Release must reference a profile before activation', 'VW_RELEASE_PROFILE_REQUIRED');
+  ensure(
+    release.status === 'ready',
+    'Only ready releases can be activated',
+    'VW_RELEASE_NOT_READY'
+  );
+  ensure(
+    release.profile_id,
+    'Release must reference a profile before activation',
+    'VW_RELEASE_PROFILE_REQUIRED'
+  );
   ensure(
     release.evaluation_id,
     'Release must reference a passed evaluation before activation',
@@ -1317,7 +1349,9 @@ export async function activateWorkerRelease(releaseId: string): Promise<WorkerRe
      WHERE worker_id = $2`,
     [releaseId, release.worker_id]
   );
-  const updated = await db().query<Row>('SELECT * FROM virtual_worker_releases WHERE id = $1', [releaseId]);
+  const updated = await db().query<Row>('SELECT * FROM virtual_worker_releases WHERE id = $1', [
+    releaseId,
+  ]);
   return updated.rows[0] ? rowToRelease(updated.rows[0]) : null;
 }
 

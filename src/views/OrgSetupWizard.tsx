@@ -249,7 +249,7 @@ export const OrgSetupWizard: React.FC = () => {
       <div className="mx-auto w-full max-w-3xl">
         <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-900/90">
           <div className="border-b border-slate-200 px-6 py-6 dark:border-navy-700 sm:px-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-300">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
               <Building2 size={14} />
               Nowa organizacja
             </div>
@@ -269,7 +269,7 @@ export const OrgSetupWizard: React.FC = () => {
                 <span>Tworzysz wspólną przestrzeń dla decyzji, wiedzy i pracy zespołu.</span>
               </div>
               <div className="flex items-start gap-3">
-                <Globe2 size={16} className="mt-0.5 shrink-0 text-purple-500" />
+                <Globe2 size={16} className="mt-0.5 shrink-0 text-primary-500" />
                 <span>Domena, kraj i branża pomagają ustawić sensowny kontekst od startu.</span>
               </div>
               <div className="flex items-start gap-3">
@@ -288,7 +288,7 @@ export const OrgSetupWizard: React.FC = () => {
                   value={state.orgName}
                   onChange={(e) => updateState({ orgName: e.target.value })}
                   placeholder='Np. "VTS Group" lub "PMO Europa"'
-                  className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-lg text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-lg text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   autoFocus
                 />
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -306,7 +306,7 @@ export const OrgSetupWizard: React.FC = () => {
                     value={state.domain}
                     onChange={(e) => updateState({ domain: normalizeDomain(e.target.value) })}
                     placeholder="np. vtsgroup.com"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
                 </div>
                 <div>
@@ -316,7 +316,7 @@ export const OrgSetupWizard: React.FC = () => {
                   <select
                     value={state.country}
                     onChange={(e) => updateState({ country: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Wybierz lub pomiń</option>
                     {COUNTRIES.map((c) => (
@@ -347,7 +347,7 @@ export const OrgSetupWizard: React.FC = () => {
                     value={state.userTitle}
                     onChange={(e) => updateState({ userTitle: e.target.value })}
                     placeholder="np. CFO, PMO Lead"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
                 </div>
                 <div>
@@ -359,7 +359,7 @@ export const OrgSetupWizard: React.FC = () => {
                     value={state.phone}
                     onChange={(e) => updateState({ phone: e.target.value })}
                     placeholder="+48 123 456 789"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
                 </div>
                 <div>
@@ -371,7 +371,7 @@ export const OrgSetupWizard: React.FC = () => {
                     onChange={(e) =>
                       updateState({ userRole: (e.target.value as OrgUserRole) || null })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Nie teraz</option>
                     {USER_ROLES.map((role) => (
@@ -388,7 +388,7 @@ export const OrgSetupWizard: React.FC = () => {
                   <select
                     value={state.orgType || ''}
                     onChange={(e) => updateState({ orgType: (e.target.value as OrgType) || null })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Nie teraz</option>
                     <option value="OPERATING">Firma operacyjna</option>
@@ -402,7 +402,7 @@ export const OrgSetupWizard: React.FC = () => {
                   <select
                     value={state.industry}
                     onChange={(e) => updateState({ industry: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Nie teraz</option>
                     {INDUSTRIES.map((ind) => (
@@ -421,7 +421,7 @@ export const OrgSetupWizard: React.FC = () => {
                     onChange={(e) =>
                       updateState({ companySize: (e.target.value as CompanySize) || null })
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
                     <option value="">Nie teraz</option>
                     {COMPANY_SIZES.map((size) => (
@@ -440,7 +440,7 @@ export const OrgSetupWizard: React.FC = () => {
                     value={state.vatNumber}
                     onChange={(e) => updateState({ vatNumber: e.target.value })}
                     placeholder="np. LU12345678 lub PL1234567890"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
                 </div>
               </div>
@@ -449,7 +449,7 @@ export const OrgSetupWizard: React.FC = () => {
             <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-navy-700 dark:bg-navy-950/60">
               <div className="flex items-start gap-3">
                 <ShieldCheck
-                  className="mt-0.5 shrink-0 text-purple-600 dark:text-purple-300"
+                  className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-300"
                   size={20}
                 />
                 <div>
@@ -468,7 +468,7 @@ export const OrgSetupWizard: React.FC = () => {
                   type="checkbox"
                   checked={state.memoryConsent}
                   onChange={(e) => updateState({ memoryConsent: e.target.checked })}
-                  className="mt-1 h-5 w-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-navy-700"
+                  className="mt-1 h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
                 />
                 <span className="text-sm text-slate-700 dark:text-slate-300">
                   Rozumiem i akceptuję, że pamięć pracy należy do organizacji, a nie do pojedynczej
@@ -502,7 +502,7 @@ export const OrgSetupWizard: React.FC = () => {
                   disabled={!canSubmit || state.isSubmitting}
                   className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold transition-colors ${
                     canSubmit && !state.isSubmitting
-                      ? 'bg-purple-600 text-white hover:bg-purple-500'
+                      ? 'bg-primary-600 text-white hover:bg-primary-500'
                       : 'cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                   }`}
                 >

@@ -210,7 +210,7 @@ export const EmailConfigurationPanel: React.FC = () => {
             value={config?.smtp_host || ''}
             onChange={(e) => updateConfig('smtp_host', e.target.value)}
             placeholder="smtp.example.com"
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
           />
         </div>
         <div>
@@ -219,7 +219,7 @@ export const EmailConfigurationPanel: React.FC = () => {
             type="number"
             value={config?.smtp_port || 587}
             onChange={(e) => updateConfig('smtp_port', parseInt(e.target.value))}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           />
         </div>
       </div>
@@ -231,7 +231,7 @@ export const EmailConfigurationPanel: React.FC = () => {
             type="text"
             value={config?.smtp_username || ''}
             onChange={(e) => updateConfig('smtp_username', e.target.value)}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           />
         </div>
         <div>
@@ -241,7 +241,7 @@ export const EmailConfigurationPanel: React.FC = () => {
               type={showPassword ? 'text' : 'password'}
               value={config?.smtp_password_encrypted || ''}
               onChange={(e) => updateConfig('smtp_password_encrypted', e.target.value)}
-              className="w-full px-4 py-2.5 pr-10 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+              className="w-full px-4 py-2.5 pr-10 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
             />
             <button
               type="button"
@@ -259,7 +259,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           type="checkbox"
           checked={config?.smtp_use_tls || false}
           onChange={(e) => updateConfig('smtp_use_tls', e.target.checked)}
-          className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-violet-500"
+          className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500"
         />
         <div>
           <span className="text-slate-300">Use TLS</span>
@@ -281,7 +281,7 @@ export const EmailConfigurationPanel: React.FC = () => {
             value={config?.api_key_encrypted || ''}
             onChange={(e) => updateConfig('api_key_encrypted', e.target.value)}
             placeholder={`Your ${PROVIDERS.find((p) => p.id === config?.provider)?.name} API key`}
-            className="w-full px-4 py-2.5 pr-10 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+            className="w-full px-4 py-2.5 pr-10 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
           />
           <button
             type="button"
@@ -301,7 +301,7 @@ export const EmailConfigurationPanel: React.FC = () => {
             value={config?.domain || ''}
             onChange={(e) => updateConfig('domain', e.target.value)}
             placeholder="mg.example.com"
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
           />
         </div>
       )}
@@ -312,7 +312,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           <select
             value={config?.region || 'us-east-1'}
             onChange={(e) => updateConfig('region', e.target.value)}
-            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           >
             <option value="us-east-1">US East (N. Virginia)</option>
             <option value="us-west-2">US West (Oregon)</option>
@@ -390,7 +390,7 @@ export const EmailConfigurationPanel: React.FC = () => {
         <select
           value={selectedOrgId}
           onChange={(e) => setSelectedOrgId(e.target.value)}
-          className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none min-w-[200px]"
+          className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none min-w-[200px]"
         >
           <option value="" disabled>
             Select Organization
@@ -415,7 +415,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           <button
             onClick={handleSave}
             disabled={saving || !hasChanges}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Save Changes
@@ -430,7 +430,7 @@ export const EmailConfigurationPanel: React.FC = () => {
         </div>
       ) : loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : (
         config && (
@@ -439,8 +439,8 @@ export const EmailConfigurationPanel: React.FC = () => {
             <div className="space-y-6">
               <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-                    <Server size={20} className="text-violet-400" />
+                  <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                    <Server size={20} className="text-primary-400" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Email Provider</h3>
@@ -457,12 +457,12 @@ export const EmailConfigurationPanel: React.FC = () => {
                       onClick={() => updateConfig('provider', provider.id)}
                       className={`p-4 rounded-lg border text-left transition-colors ${
                         config.provider === provider.id
-                          ? 'bg-violet-500/20 border-violet-500/50'
+                          ? 'bg-primary-500/20 border-primary-500/50'
                           : 'bg-slate-900/50 border-white/[0.06] hover:border-white/20'
                       }`}
                     >
                       <p
-                        className={`font-medium ${config.provider === provider.id ? 'text-violet-400' : 'text-white'}`}
+                        className={`font-medium ${config.provider === provider.id ? 'text-primary-400' : 'text-white'}`}
                       >
                         {provider.name}
                       </p>
@@ -501,7 +501,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                         value={config.from_email || ''}
                         onChange={(e) => updateConfig('from_email', e.target.value)}
                         placeholder="noreply@example.com"
-                        className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+                        className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                       />
                     </div>
                     <div>
@@ -513,7 +513,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                         value={config.from_name || ''}
                         onChange={(e) => updateConfig('from_name', e.target.value)}
                         placeholder="Consultify"
-                        className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+                        className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                       />
                     </div>
                   </div>
@@ -526,7 +526,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                       value={config.reply_to_email || ''}
                       onChange={(e) => updateConfig('reply_to_email', e.target.value)}
                       placeholder="support@example.com"
-                      className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+                      className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                     />
                   </div>
                 </div>
@@ -555,7 +555,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                     value={testEmail}
                     onChange={(e) => setTestEmail(e.target.value)}
                     placeholder="test@example.com"
-                    className="flex-1 px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+                    className="flex-1 px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                   />
                   <button
                     onClick={handleTestEmail}

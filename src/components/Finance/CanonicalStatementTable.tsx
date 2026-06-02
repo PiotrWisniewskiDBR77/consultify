@@ -142,7 +142,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
           const isEvenRow = idx % 2 === 0;
 
           const rowBg = isSelected
-            ? 'bg-cyan-50/90 dark:bg-cyan-500/[0.12]'
+            ? 'bg-blue-50/90 dark:bg-blue-500/[0.12]'
             : isTotal
               ? 'bg-slate-100/80 dark:bg-white/[0.06]'
               : isSubtotal
@@ -178,7 +178,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                 hasTwoPeriods
                   ? 'grid-cols-[minmax(200px,3fr)_minmax(100px,1fr)_minmax(100px,1fr)_minmax(60px,0.5fr)]'
                   : 'grid-cols-[minmax(220px,3fr)_minmax(120px,1fr)]'
-              } ${borderStyle} px-4 py-[5px] text-left text-[12.5px] transition-colors duration-75 last:border-b-0 hover:bg-cyan-50/40 dark:hover:bg-cyan-500/[0.05] ${rowBg}`}
+              } ${borderStyle} px-4 py-[5px] text-left text-[12.5px] transition-colors duration-75 last:border-b-0 hover:bg-blue-50/40 dark:hover:bg-blue-500/[0.05] ${rowBg}`}
             >
               {/* Line item */}
               <div

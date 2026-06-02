@@ -383,7 +383,7 @@ export const ToolSessionPreviewV3Footer: React.FC<{
         })),
         ...decisionRelations.map((d, idx) => ({
           label: clampText(String(d.decision_type || 'Decision'), 42),
-          tone: 'text-purple-700 dark:text-purple-300',
+          tone: 'text-primary-700 dark:text-primary-300',
         })),
       ];
 

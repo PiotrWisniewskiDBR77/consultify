@@ -3,11 +3,8 @@ import {
   Building2,
   Check,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   Clock,
   Copy,
-  DollarSign,
   Edit2,
   Eye,
   Key,
@@ -15,7 +12,6 @@ import {
   RefreshCw,
   Search,
   Trash2,
-  TrendingUp,
   Users,
   X,
   XCircle,
@@ -23,9 +19,11 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 
 interface AccessRequest {
@@ -51,7 +49,67 @@ interface AccessCode {
 
 type ActiveTab = 'organizations' | 'pending' | 'codes';
 
-export const OrganizationsView: React.FC = () => {
+interface OrganizationsViewProps {
+  onViewUsers?: (organizationId: string) => void;
+}
+
+type OrganizationRow = Organization & {
+  organization_name?: string;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const getOrganizationsPayload = (value: unknown) =>
+  getListPayload<Organization>(value, ['organizations', 'items']);
+
+const getAccessRequestsPayload = (value: unknown) =>
+  getListPayload<AccessRequest>(value, ['requests', 'accessRequests', 'items']).map((request) => ({
+    ...request,
+    status: String(request.status || 'pending').toLowerCase() as AccessRequest['status'],
+  }));
+
+const getAccessCodesPayload = (value: unknown) =>
+  getListPayload<AccessCode>(value, ['codes', 'accessCodes', 'items']);
+
+export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUsers }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('organizations');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
@@ -60,6 +118,12 @@ export const OrganizationsView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [nonBlockingLoadErrors, setNonBlockingLoadErrors] = useState<string[]>([]);
+  const [loadErrors, setLoadErrors] = useState<{
+    organizations: string | null;
+    requests: string | null;
+    codes: string | null;
+  }>({ organizations: null, requests: null, codes: null });
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Modal States
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
@@ -86,6 +150,7 @@ export const OrganizationsView: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setNonBlockingLoadErrors([]);
+    setLoadErrors({ organizations: null, requests: null, codes: null });
     try {
       const [orgsRes, reqsRes, codesRes] = await Promise.allSettled([
         Api.getOrganizations(),
@@ -94,30 +159,60 @@ export const OrganizationsView: React.FC = () => {
       ]);
 
       if (orgsRes.status === 'rejected') throw orgsRes.reason;
-      setOrganizations(orgsRes.value);
+      if (!hasListShape(orgsRes.value, ['organizations', 'items'])) {
+        throw new Error('Organizations response was not a list');
+      }
+      setOrganizations(getOrganizationsPayload(orgsRes.value));
 
       const errors: string[] = [];
+      const nextLoadErrors: {
+        organizations: string | null;
+        requests: string | null;
+        codes: string | null;
+      } = { organizations: null, requests: null, codes: null };
       if (reqsRes.status === 'fulfilled') {
-        setRequests(reqsRes.value);
+        if (hasListShape(reqsRes.value, ['requests', 'accessRequests', 'items'])) {
+          setRequests(getAccessRequestsPayload(reqsRes.value));
+        } else {
+          setRequests([]);
+          nextLoadErrors.requests = 'Access requests failed to load.';
+          errors.push(nextLoadErrors.requests);
+        }
       } else {
         setRequests([]);
-        errors.push('Access requests failed to load.');
+        nextLoadErrors.requests = 'Access requests failed to load.';
+        errors.push(nextLoadErrors.requests);
       }
 
       if (codesRes.status === 'fulfilled') {
-        setCodes(codesRes.value);
+        if (hasListShape(codesRes.value, ['codes', 'accessCodes', 'items'])) {
+          setCodes(getAccessCodesPayload(codesRes.value));
+        } else {
+          setCodes([]);
+          nextLoadErrors.codes = 'Access codes failed to load.';
+          errors.push(nextLoadErrors.codes);
+        }
       } else {
         setCodes([]);
-        errors.push('Access codes failed to load.');
+        nextLoadErrors.codes = 'Access codes failed to load.';
+        errors.push(nextLoadErrors.codes);
       }
 
+      setLoadErrors(nextLoadErrors);
       if (errors.length) {
         setNonBlockingLoadErrors(errors);
         toast.error(errors.join(' '));
       }
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to load data');
+      setOrganizations([]);
+      setRequests([]);
+      setCodes([]);
+      setLoadErrors({
+        organizations: normalizeApiErrorMessage(err, 'Organizations failed to load.'),
+        requests: 'Access requests are unavailable because organizations failed to load.',
+        codes: 'Access codes are unavailable because organizations failed to load.',
+      });
+      toast.error(normalizeApiErrorMessage(err, 'Failed to load data'));
     } finally {
       setLoading(false);
     }
@@ -129,6 +224,18 @@ export const OrganizationsView: React.FC = () => {
 
   const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length;
 
+  const formatDate = (value?: string | null, fallback = '-') => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString();
+  };
+
+  const formatDateTime = (value?: string | null, fallback = '-') => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
+  };
+
   // Organization Actions
   const handleDeleteOrg = async (id: string, name: string) => {
     if (
@@ -137,12 +244,27 @@ export const OrganizationsView: React.FC = () => {
       )
     )
       return;
+    setProcessingId(id);
     try {
+      setActionError(null);
       await Api.deleteOrganization(id);
+      const refreshedOrganizations = await Api.getOrganizations();
+      if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
+        throw new Error('Organization deletion could not be confirmed by read-back');
+      }
+      const normalizedOrganizations = getOrganizationsPayload(refreshedOrganizations);
+      setOrganizations(normalizedOrganizations);
+      setLoadErrors((prev) => ({ ...prev, organizations: null }));
+      if (normalizedOrganizations.some((org) => org.id === id)) {
+        throw new Error('Organization deletion was not confirmed by the server');
+      }
       toast.success('Organization deleted');
-      fetchData();
     } catch (err) {
-      toast.error('Failed to delete organization');
+      const message = normalizeApiErrorMessage(err, 'Failed to delete organization');
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -160,17 +282,38 @@ export const OrganizationsView: React.FC = () => {
   };
 
   const saveInlineEdit = async (orgId: string) => {
+    setProcessingId(orgId);
     try {
+      setActionError(null);
       await Api.updateOrganization(orgId, {
         plan: editForm.plan,
         status: editForm.status,
         discount_percent: editForm.discount_percent,
       });
+      const refreshedOrganizations = await Api.getOrganizations();
+      if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
+        throw new Error('Organization update could not be confirmed by read-back');
+      }
+      const normalizedOrganizations = getOrganizationsPayload(refreshedOrganizations);
+      setOrganizations(normalizedOrganizations);
+      setLoadErrors((prev) => ({ ...prev, organizations: null }));
+      const updatedOrganization = normalizedOrganizations.find((org) => org.id === orgId);
+      if (
+        !updatedOrganization ||
+        updatedOrganization.plan !== editForm.plan ||
+        updatedOrganization.status !== editForm.status ||
+        (updatedOrganization.discount_percent || 0) !== editForm.discount_percent
+      ) {
+        throw new Error('Organization update was not confirmed by the server');
+      }
       toast.success('Organization updated');
       setEditingOrgId(null);
-      fetchData();
     } catch (err) {
-      toast.error('Failed to update organization');
+      const message = normalizeApiErrorMessage(err, 'Failed to update organization');
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -178,11 +321,24 @@ export const OrganizationsView: React.FC = () => {
   const handleApprove = async (id: string) => {
     setProcessingId(id);
     try {
+      setActionError(null);
       await Api.approveAccessRequest(id);
+      const refreshedRequests = await Api.getAccessRequests();
+      if (!hasListShape(refreshedRequests, ['requests', 'accessRequests', 'items'])) {
+        throw new Error('Access request approval could not be confirmed by read-back');
+      }
+      const normalizedRequests = getAccessRequestsPayload(refreshedRequests);
+      setRequests(normalizedRequests);
+      setLoadErrors((prev) => ({ ...prev, requests: null }));
+      const updatedRequest = normalizedRequests.find((request) => request.id === id);
+      if (updatedRequest && updatedRequest.status !== 'approved') {
+        throw new Error('Access request approval was not confirmed by the server');
+      }
       toast.success('Access request approved');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to approve request');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to approve request');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -194,11 +350,24 @@ export const OrganizationsView: React.FC = () => {
 
     setProcessingId(id);
     try {
+      setActionError(null);
       await Api.rejectAccessRequest(id, reason);
+      const refreshedRequests = await Api.getAccessRequests();
+      if (!hasListShape(refreshedRequests, ['requests', 'accessRequests', 'items'])) {
+        throw new Error('Access request rejection could not be confirmed by read-back');
+      }
+      const normalizedRequests = getAccessRequestsPayload(refreshedRequests);
+      setRequests(normalizedRequests);
+      setLoadErrors((prev) => ({ ...prev, requests: null }));
+      const updatedRequest = normalizedRequests.find((request) => request.id === id);
+      if (updatedRequest && updatedRequest.status !== 'rejected') {
+        throw new Error('Access request rejection was not confirmed by the server');
+      }
       toast.success('Access request rejected');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to reject request');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to reject request');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -207,14 +376,44 @@ export const OrganizationsView: React.FC = () => {
   // Access Code Actions
   const handleGenerateCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    const maxUses = Number(newCodeData.maxUses);
+    if (!Number.isInteger(maxUses) || maxUses < 1) {
+      toast.error('Max uses must be a positive number');
+      return;
+    }
     try {
-      await Api.generateAccessCode(newCodeData);
+      setProcessingId('new-access-code');
+      setActionError(null);
+      const expectedCode = newCodeData.code.trim().toUpperCase();
+      const previousCodeCount = codes.length;
+      await Api.generateAccessCode({
+        ...newCodeData,
+        code: expectedCode || undefined,
+        maxUses,
+        expiresAt: newCodeData.expiresAt || undefined,
+      });
+      const refreshedCodes = await Api.getAccessCodes();
+      if (!hasListShape(refreshedCodes, ['codes', 'accessCodes', 'items'])) {
+        throw new Error('Access code generation could not be confirmed by read-back');
+      }
+      const normalizedCodes = getAccessCodesPayload(refreshedCodes);
+      setCodes(normalizedCodes);
+      setLoadErrors((prev) => ({ ...prev, codes: null }));
+      if (expectedCode && !normalizedCodes.some((code) => code.code === expectedCode)) {
+        throw new Error('Access code generation was not confirmed by the server');
+      }
+      if (!expectedCode && normalizedCodes.length <= previousCodeCount) {
+        throw new Error('Access code generation was not confirmed by the server');
+      }
       toast.success('Access code generated');
       setShowCodeModal(false);
       setNewCodeData({ code: '', role: 'USER', maxUses: 100, expiresAt: '' });
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to generate code');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to generate code');
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -223,11 +422,23 @@ export const OrganizationsView: React.FC = () => {
       return;
     setProcessingId(codeId);
     try {
+      setActionError(null);
       await Api.deactivateAccessCode(codeId);
+      const refreshedCodes = await Api.getAccessCodes();
+      if (!hasListShape(refreshedCodes, ['codes', 'accessCodes', 'items'])) {
+        throw new Error('Access code deactivation could not be confirmed by read-back');
+      }
+      const normalizedCodes = getAccessCodesPayload(refreshedCodes);
+      setCodes(normalizedCodes);
+      setLoadErrors((prev) => ({ ...prev, codes: null }));
+      if (normalizedCodes.some((code) => code.id === codeId)) {
+        throw new Error('Access code deactivation was not confirmed by the server');
+      }
       toast.success('Access code deactivated');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to deactivate access code');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to deactivate access code');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -238,9 +449,16 @@ export const OrganizationsView: React.FC = () => {
     toast.success('Code copied to clipboard');
   };
 
+  const getOrgName = (org: Organization) =>
+    String(
+      (org as OrganizationRow).name ||
+        (org as OrganizationRow).organization_name ||
+        'Unknown Organization'
+    );
+
   // Filtered Data
   const filteredOrgs = organizations.filter((org) => {
-    const name = String(org.name || (org as any).organization_name || 'Unknown Organization');
+    const name = getOrgName(org);
     return (
       name.toLowerCase().includes(searchTerm.toLowerCase()) || (org.id || '').includes(searchTerm)
     );
@@ -249,7 +467,7 @@ export const OrganizationsView: React.FC = () => {
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case 'enterprise':
-        return 'bg-purple-500/10 text-purple-700 border-purple-500/20 dark:bg-purple-500/20 dark:text-purple-400 dark:border-purple-500/30';
+        return 'bg-primary-500/10 text-primary-700 border-primary-500/20 dark:bg-primary-500/20 dark:text-primary-400 dark:border-primary-500/30';
       case 'pro':
         return 'bg-blue-500/10 text-blue-700 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30';
       case 'trial':
@@ -264,7 +482,7 @@ export const OrganizationsView: React.FC = () => {
       case 'active':
         return 'text-emerald-700 dark:text-emerald-400';
       case 'blocked':
-        return 'text-red-700 dark:text-red-400';
+        return 'text-rose-700 dark:text-rose-400';
       case 'pending':
         return 'text-amber-700 dark:text-yellow-400';
       default:
@@ -272,16 +490,13 @@ export const OrganizationsView: React.FC = () => {
     }
   };
 
-  const getOrgName = (org: Organization) =>
-    String((org as any).name || (org as any).organization_name || 'Unknown Organization');
-
   return (
     <div className="p-8 overflow-y-auto h-full relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
               <Building2 size={20} className="text-white" />
             </div>
             Organizations
@@ -312,6 +527,15 @@ export const OrganizationsView: React.FC = () => {
       {nonBlockingLoadErrors.length > 0 && (
         <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-200 rounded-xl px-4 py-3 text-sm">
           {nonBlockingLoadErrors.join(' ')}
+        </div>
+      )}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-6 rounded-lg border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-sm text-rose-700 dark:text-rose-300"
+        >
+          {actionError}
         </div>
       )}
 
@@ -375,6 +599,7 @@ export const OrganizationsView: React.FC = () => {
                 placeholder="Search organizations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={!!loadErrors.organizations}
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
@@ -399,6 +624,15 @@ export const OrganizationsView: React.FC = () => {
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400">
                       Loading...
+                    </td>
+                  </tr>
+                ) : loadErrors.organizations ? (
+                  <tr>
+                    <td colSpan={7} className="p-6">
+                      <DegradedState
+                        title="Organizations unavailable"
+                        description={loadErrors.organizations}
+                      />
                     </td>
                   </tr>
                 ) : filteredOrgs.length === 0 ? (
@@ -496,21 +730,27 @@ export const OrganizationsView: React.FC = () => {
                           )}
                         </td>
                         <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                          {org.created_at ? new Date(org.created_at).toLocaleDateString() : '-'}
+                          {formatDate(org.created_at)}
                         </td>
                         <td className="p-4 text-right">
                           {isEditing ? (
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => saveInlineEdit(org.id)}
-                                className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded transition-colors"
+                                disabled={processingId === org.id}
+                                className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded transition-colors disabled:opacity-60"
                                 title="Save"
                               >
-                                <Check size={16} />
+                                {processingId === org.id ? (
+                                  <RefreshCw size={16} className="animate-spin" />
+                                ) : (
+                                  <Check size={16} />
+                                )}
                               </button>
                               <button
                                 onClick={cancelInlineEdit}
-                                className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded transition-colors"
+                                disabled={processingId === org.id}
+                                className="p-1.5 bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 rounded transition-colors disabled:opacity-60"
                                 title="Cancel"
                               >
                                 <X size={16} />
@@ -518,6 +758,15 @@ export const OrganizationsView: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {onViewUsers && (
+                                <button
+                                  onClick={() => onViewUsers(org.id)}
+                                  className="p-1.5 hover:bg-indigo-500/20 text-slate-400 dark:text-slate-500 hover:text-indigo-400 rounded transition-colors"
+                                  title="View Users"
+                                >
+                                  <Users size={16} />
+                                </button>
+                              )}
                               <button
                                 onClick={() => setSelectedOrg(org)}
                                 className="p-1.5 hover:bg-blue-500/20 text-slate-400 dark:text-slate-500 hover:text-blue-400 rounded transition-colors"
@@ -534,7 +783,8 @@ export const OrganizationsView: React.FC = () => {
                               </button>
                               <button
                                 onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
-                                className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors"
+                                disabled={processingId === org.id}
+                                className="p-1.5 hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors disabled:opacity-60"
                                 title="Delete"
                               >
                                 <Trash2 size={16} />
@@ -577,6 +827,15 @@ export const OrganizationsView: React.FC = () => {
                     Loading...
                   </td>
                 </tr>
+              ) : loadErrors.requests ? (
+                <tr>
+                  <td colSpan={5} className="p-6">
+                    <DegradedState
+                      title="Access requests unavailable"
+                      description={loadErrors.requests}
+                    />
+                  </td>
+                </tr>
               ) : requests.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -590,7 +849,7 @@ export const OrganizationsView: React.FC = () => {
                     className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
                   >
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                      {new Date(req.requested_at).toLocaleString()}
+                      {formatDateTime(req.requested_at)}
                     </td>
                     <td className="p-4 text-slate-900 dark:text-white font-medium">
                       {req.organization_name}
@@ -607,7 +866,7 @@ export const OrganizationsView: React.FC = () => {
                           req.status === 'approved'
                             ? 'bg-emerald-500/20 text-emerald-400'
                             : req.status === 'rejected'
-                              ? 'bg-red-500/20 text-red-400'
+                              ? 'bg-rose-500/20 text-rose-400'
                               : 'bg-yellow-500/20 text-yellow-400'
                         }`}
                       >
@@ -628,7 +887,7 @@ export const OrganizationsView: React.FC = () => {
                           <button
                             onClick={() => handleReject(req.id)}
                             disabled={processingId === req.id}
-                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded transition-colors disabled:opacity-50"
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded transition-colors disabled:opacity-50"
                             title="Reject"
                           >
                             <XCircle size={18} />
@@ -636,7 +895,7 @@ export const OrganizationsView: React.FC = () => {
                         </div>
                       )}
                       {req.status === 'rejected' && req.rejection_reason && (
-                        <span className="text-xs text-red-400 italic">
+                        <span className="text-xs text-rose-400 italic">
                           Reason: {req.rejection_reason}
                         </span>
                       )}
@@ -655,7 +914,8 @@ export const OrganizationsView: React.FC = () => {
           <div className="flex justify-end">
             <button
               onClick={() => setShowCodeModal(true)}
-              className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+              disabled={!!loadErrors.codes}
+              className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
             >
               <Plus size={16} /> Generate New Code
             </button>
@@ -678,6 +938,15 @@ export const OrganizationsView: React.FC = () => {
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
                       Loading...
+                    </td>
+                  </tr>
+                ) : loadErrors.codes ? (
+                  <tr>
+                    <td colSpan={6} className="p-6">
+                      <DegradedState
+                        title="Access codes unavailable"
+                        description={loadErrors.codes}
+                      />
                     </td>
                   </tr>
                 ) : codes.length === 0 ? (
@@ -724,7 +993,7 @@ export const OrganizationsView: React.FC = () => {
                         </div>
                       </td>
                       <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                        {code.expires_at ? new Date(code.expires_at).toLocaleDateString() : 'Never'}
+                        {formatDate(code.expires_at, 'Never')}
                       </td>
                       <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
                         {code.created_by_email || 'Super Admin'}
@@ -733,7 +1002,7 @@ export const OrganizationsView: React.FC = () => {
                         <button
                           onClick={() => handleDeactivateCode(code.id)}
                           disabled={processingId === code.id}
-                          className="text-slate-500 dark:text-slate-400 hover:text-red-400 transition-colors disabled:opacity-50"
+                          className="text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-50"
                           title="Deactivate code"
                         >
                           <XCircle size={16} />
@@ -766,7 +1035,7 @@ export const OrganizationsView: React.FC = () => {
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Key size={20} className="text-purple-500" /> Generate Access Code
+                <Key size={20} className="text-primary-500" /> Generate Access Code
               </h3>
               <button
                 onClick={() => setShowCodeModal(false)}
@@ -788,7 +1057,7 @@ export const OrganizationsView: React.FC = () => {
                     setNewCodeData({ ...newCodeData, code: e.target.value.toUpperCase() })
                   }
                   placeholder="Leave empty for random"
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
@@ -802,9 +1071,9 @@ export const OrganizationsView: React.FC = () => {
                     min="1"
                     value={newCodeData.maxUses}
                     onChange={(e) =>
-                      setNewCodeData({ ...newCodeData, maxUses: parseInt(e.target.value) })
+                      setNewCodeData({ ...newCodeData, maxUses: Number(e.target.value) || 1 })
                     }
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -814,7 +1083,7 @@ export const OrganizationsView: React.FC = () => {
                   <select
                     value={newCodeData.role}
                     onChange={(e) => setNewCodeData({ ...newCodeData, role: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
                   >
                     <option value="USER">User</option>
                     <option value="ADMIN">Admin</option>
@@ -831,7 +1100,7 @@ export const OrganizationsView: React.FC = () => {
                   type="date"
                   value={newCodeData.expiresAt}
                   onChange={(e) => setNewCodeData({ ...newCodeData, expiresAt: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-primary-500 outline-none text-sm"
                 />
               </div>
 
@@ -845,9 +1114,10 @@ export const OrganizationsView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded text-white text-sm font-medium transition-colors"
+                  disabled={processingId === 'new-access-code'}
+                  className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 rounded text-white text-sm font-medium transition-colors disabled:opacity-60"
                 >
-                  Generate Code
+                  {processingId === 'new-access-code' ? 'Generating...' : 'Generate Code'}
                 </button>
               </div>
             </form>

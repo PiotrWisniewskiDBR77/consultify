@@ -2,6 +2,7 @@ import { ArrowRight, Check, Coins, Edit2, Package, Plus, Star, Trash2, X } from 
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
 export const AdminTokenPackages = () => {
@@ -13,10 +14,12 @@ export const AdminTokenPackages = () => {
   const loadPackages = async () => {
     setLoading(true);
     try {
+      setError(null);
       const data = await Api.getTokenPackages();
       setPackages(data);
     } catch (err: any) {
       setError(err.message);
+      setPackages([]);
       toast.error('Failed to load packages');
     } finally {
       setLoading(false);
@@ -74,6 +77,7 @@ export const AdminTokenPackages = () => {
               is_popular: false,
             })
           }
+          disabled={!!error}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-lg shadow-blue-500/20"
         >
           <Plus className="w-4 h-4" />
@@ -81,7 +85,9 @@ export const AdminTokenPackages = () => {
         </button>
       </div>
 
-      {editingPkg ? (
+      {error && !editingPkg ? (
+        <DegradedState title="Token packages unavailable" description={error} />
+      ) : editingPkg ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <form
             onSubmit={handleSave}
@@ -286,7 +292,7 @@ export const AdminTokenPackages = () => {
               </div>
 
               <div
-                className={`text-xs text-center py-1 rounded ${pkg.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}
+                className={`text-xs text-center py-1 rounded ${pkg.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}
               >
                 {pkg.is_active ? 'Active' : 'Inactive'}
               </div>

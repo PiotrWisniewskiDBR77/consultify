@@ -63,11 +63,14 @@ type ArtifactActionTargetPayload = {
 
 function isOriginRuntimeEntry(
   entry:
-    | readonly [`report:${string}` | `presentation:${string}`, { readonly runtime: 'report' | 'presentation'; readonly id: string }]
+    | readonly [
+        `report:${string}` | `presentation:${string}` | `sheet:${string}`,
+        { readonly runtime: 'report' | 'presentation' | 'sheet'; readonly id: string },
+      ]
     | null
 ): entry is readonly [
-  `report:${string}` | `presentation:${string}`,
-  { readonly runtime: 'report' | 'presentation'; readonly id: string },
+  `report:${string}` | `presentation:${string}` | `sheet:${string}`,
+  { readonly runtime: 'report' | 'presentation' | 'sheet'; readonly id: string },
 ] {
   return !!entry;
 }
@@ -582,7 +585,8 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
       reportType:
-        String((raw?.originSummary as any)?.template?.reportType || raw.reportType || 'custom') || 'custom',
+        String((raw?.originSummary as any)?.template?.reportType || raw.reportType || 'custom') ||
+        'custom',
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: [],
       governance: baseGov,
@@ -604,7 +608,9 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       statusKey: delivery,
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
-      sourceType: String((raw?.originSummary as any)?.template?.deckType || raw.sourceType || 'tool') as any,
+      sourceType: String(
+        (raw?.originSummary as any)?.template?.deckType || raw.sourceType || 'tool'
+      ) as any,
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       slideCount: outline.length,
       exportFormats: [],
@@ -662,7 +668,8 @@ function mapArtifactGovernance(raw: any): ArtifactGovernanceSummary {
     canonicalHome: raw.canonicalHome || null,
     lastTransitionAt: raw.lastTransitionAt || null,
     sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
-    originSummary: raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
+    originSummary:
+      raw.originSummary && typeof raw.originSummary === 'object' ? raw.originSummary : null,
     openPath: raw.openPath || null,
     exportPath: raw.exportPath || null,
     authority: raw.authority || null,
@@ -908,7 +915,13 @@ export function useArtifactOutputsForOrigins(
             .toLowerCase();
           const id = String(origin?.id || '').trim();
           const runtime =
-            type === 'report' ? 'report' : type === 'presentation' ? 'presentation' : type === 'sheet' ? 'sheet' : null;
+            type === 'report'
+              ? 'report'
+              : type === 'presentation'
+                ? 'presentation'
+                : type === 'sheet'
+                  ? 'sheet'
+                  : null;
           if (!runtime || !id) return null;
           return [`${runtime}:${id}`, { runtime, id }] as const;
         })
@@ -930,9 +943,12 @@ export function useArtifactOutputsForOrigins(
     try {
       const responses = await Promise.all(
         normalizedOrigins.map(async ({ runtime, id }) => {
-          const res = await fetch(`${API_URL}/artifacts/origin/${runtime}/${encodeURIComponent(id)}`, {
-            headers: getHeaders(),
-          });
+          const res = await fetch(
+            `${API_URL}/artifacts/origin/${runtime}/${encodeURIComponent(id)}`,
+            {
+              headers: getHeaders(),
+            }
+          );
           if (!res.ok) {
             throw new Error('Canonical artifact registry failed to load notebook outputs.');
           }
@@ -1012,7 +1028,10 @@ export function useAssessmentOutputsForOrigins(
             kind: 'assessment' as const,
             originRecordId: String(assessment.id || id),
             title: String(assessment.name || 'Assessment'),
-            statusKey: String(assessment.status || 'draft').trim().toLowerCase() || 'draft',
+            statusKey:
+              String(assessment.status || 'draft')
+                .trim()
+                .toLowerCase() || 'draft',
             owner: String(assessment.organizationId || ''),
             updatedAt: String(assessment.updatedAt || assessment.createdAt || ''),
             governance: { visibilityScope: 'private' as const },
@@ -1020,9 +1039,7 @@ export function useAssessmentOutputsForOrigins(
         })
       );
 
-      setRows(
-        responses.filter(isAssessmentOutputRow)
-      );
+      setRows(responses.filter(isAssessmentOutputRow));
       setError(null);
     } catch {
       setRows([]);
@@ -1196,10 +1213,12 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
   const outputType = String(raw?.outputType || '').toLowerCase();
   const resolvedTitle = String(raw?.resolvedTitle || raw?.titleSnapshot || raw?.title || '').trim();
 
-  if (outputType !== 'report' && outputType !== 'presentation' && outputType !== 'sheet') return null;
+  if (outputType !== 'report' && outputType !== 'presentation' && outputType !== 'sheet')
+    return null;
   if (!resolvedTitle) return null;
 
-  const metadata = template?.metadata && typeof template.metadata === 'object' ? template.metadata : {};
+  const metadata =
+    template?.metadata && typeof template.metadata === 'object' ? template.metadata : {};
   const updatedAt =
     String((metadata as any).updatedAt || '').trim() ||
     String(raw?.lastTransitionAt || raw?.createdAt || new Date().toISOString());
@@ -1232,7 +1251,9 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
     slideCount: outputType === 'presentation' ? outline.length : undefined,
     deprecationReason: template?.deprecationReason ? String(template.deprecationReason) : undefined,
     migrationHint: template?.migrationHint ? String(template.migrationHint) : undefined,
-    replacedByArtifactId: template?.replacedByArtifactId ? String(template.replacedByArtifactId) : undefined,
+    replacedByArtifactId: template?.replacedByArtifactId
+      ? String(template.replacedByArtifactId)
+      : undefined,
   };
 }
 

@@ -21,7 +21,9 @@ export function getWhiteboardModeCopy(
       helper: isPolish
         ? 'Rysujesz po warstwie boardu. Elementy tablicy sa chwilowo zablokowane, aby uniknac przypadkowych przesuniec.'
         : 'You are drawing on top of the board. Board elements are temporarily locked to avoid accidental moves.',
-      exitHint: isPolish ? 'Esc lub Canvas wraca do boardu.' : 'Esc or Canvas returns to board mode.',
+      exitHint: isPolish
+        ? 'Esc lub Canvas wraca do boardu.'
+        : 'Esc or Canvas returns to board mode.',
     };
   }
 
@@ -50,13 +52,50 @@ export function getWhiteboardShortcuts(isPolish: boolean): ShortcutHelp[] {
     },
     {
       key: 'Escape',
-      description: isPolish ? 'Zamknij pomoc albo wyjdz z trybu rysowania' : 'Close help or leave draw mode',
+      description: isPolish
+        ? 'Zamknij pomoc albo wyjdz z trybu rysowania'
+        : 'Close help or leave draw mode',
       category: 'navigation',
     },
     {
       key: 'Ctrl+S',
       description: isPolish ? 'Zapisz aktualny stan boardu' : 'Save the current board state',
       category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+Z',
+      description: isPolish ? 'Cofnij ostatnia zmiane' : 'Undo the latest change',
+      category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+Shift+Z',
+      description: isPolish ? 'Ponow cofniecie (redo)' : 'Redo the previously undone change',
+      category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+G',
+      description: isPolish ? 'Grupuj zaznaczone elementy' : 'Group selected elements',
+      category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+Shift+G',
+      description: isPolish ? 'Rozgrupuj zaznaczona grupe' : 'Ungroup selected frame/group',
+      category: 'actions',
+    },
+    {
+      key: 'Ctrl/Cmd+A',
+      description: isPolish ? 'Zaznacz wszystko na boardzie' : 'Select all board elements',
+      category: 'selection',
+    },
+    {
+      key: 'Delete / Backspace',
+      description: isPolish ? 'Usun zaznaczone elementy' : 'Delete selected elements',
+      category: 'actions',
+    },
+    {
+      key: '/',
+      description: isPolish ? 'Otworz menu szybkich komend' : 'Open quick command menu',
+      category: 'navigation',
     },
   ];
 }

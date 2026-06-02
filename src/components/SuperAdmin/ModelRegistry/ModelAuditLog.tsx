@@ -32,23 +32,23 @@ const authHeaders = () => ({
 const ACTION_ICONS: Record<ModelAuditEntry['action'], React.ReactNode> = {
   created: <Plus size={14} className="text-emerald-400" />,
   updated: <Edit size={14} className="text-blue-400" />,
-  deleted: <Trash2 size={14} className="text-red-400" />,
+  deleted: <Trash2 size={14} className="text-rose-400" />,
   assignment_changed: <Settings size={14} className="text-amber-400" />,
-  fallback_used: <AlertTriangle size={14} className="text-orange-400" />,
+  fallback_used: <AlertTriangle size={14} className="text-amber-400" />,
 };
 
 const ACTION_STYLES: Record<ModelAuditEntry['action'], string> = {
   created: 'bg-emerald-500/10 text-emerald-400',
   updated: 'bg-blue-500/10 text-blue-400',
-  deleted: 'bg-red-500/10 text-red-400',
+  deleted: 'bg-rose-500/10 text-rose-400',
   assignment_changed: 'bg-amber-500/10 text-amber-400',
-  fallback_used: 'bg-orange-500/10 text-orange-400',
+  fallback_used: 'bg-amber-500/10 text-amber-400',
 };
 
 const ENTITY_ICONS: Record<ModelAuditEntry['entityType'], React.ReactNode> = {
   model: <Database size={14} className="text-indigo-400" />,
-  assignment: <Shield size={14} className="text-purple-400" />,
-  policy: <FileText size={14} className="text-cyan-400" />,
+  assignment: <Shield size={14} className="text-primary-400" />,
+  policy: <FileText size={14} className="text-blue-400" />,
 };
 
 export const ModelAuditLog: React.FC = () => {
@@ -327,7 +327,7 @@ export const ModelAuditLog: React.FC = () => {
                               {key}
                             </span>
                             <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 bg-red-500/10 text-red-400 rounded text-xs font-mono">
+                              <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 rounded text-xs font-mono">
                                 {change.from === null ? 'null' : JSON.stringify(change.from)}
                               </span>
                               <span className="text-slate-400">→</span>

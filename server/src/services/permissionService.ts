@@ -22,6 +22,7 @@ import logger from '../utils/Logger.js';
 
 export const ROLES = {
   SUPERADMIN: 'SUPERADMIN',
+  OWNER: 'OWNER',
   ADMIN: 'ADMIN',
   PROJECT_MANAGER: 'PROJECT_MANAGER',
   TEAM_MEMBER: 'TEAM_MEMBER',
@@ -59,6 +60,7 @@ export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
 // Legacy capability matrix (for backward compatibility)
 export const ROLE_CAPABILITIES: Record<Role, Capability[]> = {
   [ROLES.SUPERADMIN]: Object.values(CAPABILITIES) as Capability[],
+  [ROLES.OWNER]: Object.values(CAPABILITIES) as Capability[],
   [ROLES.ADMIN]: Object.values(CAPABILITIES) as Capability[],
   [ROLES.PROJECT_MANAGER]: [
     CAPABILITIES.EDIT_PROJECT_SETTINGS,
@@ -325,13 +327,14 @@ export async function hasPermission(
 ): Promise<boolean> {
   if (!userId || !permissionKey) return false;
 
-  // SUPERADMIN bypass
-  if (userRole === ROLES.SUPERADMIN) return true;
+  // SUPERADMIN and OWNER bypass
+  if (userRole === ROLES.SUPERADMIN || userRole === ROLES.OWNER) return true;
 
   // Fallback role-permission mapping for environments where DB role_permissions
   // aren't migrated/seeded yet. Keep this intentionally narrow (Interview module).
-  const FALLBACK_INTERVIEW_PERMISSIONS: Record<Role, string[]> = {
+  const FALLBACK_INTERVIEW_PERMISSIONS: Record<string, string[]> = {
     [ROLES.SUPERADMIN]: ['*'],
+    [ROLES.OWNER]: ['*'],
     [ROLES.ADMIN]: [
       'INTERVIEW_TEMPLATE_VIEW',
       'INTERVIEW_TEMPLATE_USE',
@@ -347,12 +350,8 @@ export async function hasPermission(
       'INTERVIEW_ASSIGN_MANAGE',
       'INTERVIEW_REMIND',
     ],
-    [ROLES.TEAM_MEMBER]: [
-      'INTERVIEW_TEMPLATE_VIEW',
-      'INTERVIEW_TEMPLATE_USE',
-      'INTERVIEW_ASSIGN_VIEW',
-    ],
-    [ROLES.VIEWER]: ['INTERVIEW_TEMPLATE_VIEW', 'INTERVIEW_ASSIGN_VIEW'],
+    [ROLES.TEAM_MEMBER]: [],
+    [ROLES.VIEWER]: [],
   };
   const allowFallbackInterview = (key: string): boolean => {
     const allowed = FALLBACK_INTERVIEW_PERMISSIONS[userRole] || [];

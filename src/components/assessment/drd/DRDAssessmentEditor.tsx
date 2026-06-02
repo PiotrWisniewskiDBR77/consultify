@@ -543,7 +543,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             <select
               value={axisId}
               onChange={(e) => handleAxisChange(Number(e.target.value))}
-              className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+              className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
             >
               {DRD_STRUCTURE.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -571,7 +571,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
               }}
               className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
                 isActive
-                  ? 'border-purple-500/40 bg-purple-50 dark:bg-purple-900/10 text-purple-800 dark:text-purple-200'
+                  ? 'border-primary-500/40 bg-primary-50 dark:bg-primary-900/10 text-primary-800 dark:text-primary-200'
                   : 'border-transparent hover:border-slate-200 dark:hover:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-950/40 text-slate-700 dark:text-slate-200'
               }`}
             >
@@ -606,7 +606,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       return (
                         <div className="mt-1.5 h-1 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-purple-500 transition-all duration-300"
+                            className="h-full bg-primary-500 transition-all duration-300"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -661,14 +661,14 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
         {viewMode === 'matrix' && (
           <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 shadow-lg dark:shadow-2xl">
             {/* Background glow */}
-            <div className="pointer-events-none absolute -top-40 -right-40 h-[420px] w-[420px] rounded-full bg-purple-600/15 blur-3xl hidden dark:block" />
+            <div className="pointer-events-none absolute -top-40 -right-40 h-[420px] w-[420px] rounded-full bg-primary-600/15 blur-3xl hidden dark:block" />
             <div className="pointer-events-none absolute -bottom-48 -left-40 h-[460px] w-[460px] rounded-full bg-blue-500/10 blur-3xl hidden dark:block" />
 
             <div className="relative p-6">
               {/* Header */}
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <div className="text-xs font-semibold tracking-widest uppercase text-purple-600 dark:text-purple-300/90">
+                  <div className="text-xs font-semibold tracking-widest uppercase text-primary-600 dark:text-primary-300/90">
                     Digital Development Map
                   </div>
                   <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
@@ -684,7 +684,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   <div className="flex flex-col gap-2 text-xs text-slate-700 dark:text-slate-200">
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <span className="h-3.5 w-3.5 rounded-full bg-purple-500 shadow-[0_0_18px_rgba(168,85,247,0.45)]" />
+                        <span className="h-3.5 w-3.5 rounded-full bg-primary-500 shadow-[0_0_18px_rgba(168,85,247,0.45)]" />
                         <span>AS-IS</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -698,7 +698,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           type="checkbox"
                           checked={!matrixCompact}
                           onChange={(e) => setMatrixCompact(!e.target.checked)}
-                          className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-purple-500 focus:ring-purple-500/30"
+                          className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-primary-500 focus:ring-primary-500/30"
                         />
                         Spacious
                       </label>
@@ -741,10 +741,10 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     return (
                       <React.Fragment key={`row-${level}`}>
                         {/* Row label */}
-                        <div className="sticky left-0 z-10 rounded-xl border border-white/10 bg-gradient-to-r from-purple-700/30 to-navy-950/60 backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
+                        <div className="sticky left-0 z-10 rounded-xl border border-white/10 bg-gradient-to-r from-primary-700/30 to-navy-950/60 backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-white font-bold">
-                              <span className="text-purple-200">{level}.</span> {label}
+                              <span className="text-primary-200">{level}.</span> {label}
                             </div>
                           </div>
                           <div className="mt-1 text-[11px] text-slate-300">
@@ -785,7 +785,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     : ''
                               } ${
                                 !isSelected && !hasActivePopup && isAchieved
-                                  ? 'border-purple-400/50 bg-purple-500/25 hover:bg-purple-500/35'
+                                  ? 'border-primary-400/50 bg-primary-500/25 hover:bg-primary-500/35'
                                   : !isSelected && !hasActivePopup && isTarget
                                     ? 'border-blue-400/40 bg-blue-500/15 hover:bg-blue-500/25'
                                     : !isSelected && !hasActivePopup
@@ -888,10 +888,10 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       >
                         {/* Top line: ID + badges */}
                         <div className="flex items-center justify-between gap-1 mb-1">
-                          <span className="text-[11px] font-bold text-purple-300">{area.id}</span>
+                          <span className="text-[11px] font-bold text-primary-300">{area.id}</span>
                           <div className="flex items-center gap-1">
                             {achieved > 0 && (
-                              <span className="px-1.5 py-0.5 rounded bg-purple-500/25 text-[9px] font-bold text-purple-200">
+                              <span className="px-1.5 py-0.5 rounded bg-primary-500/25 text-[9px] font-bold text-primary-200">
                                 AS {achieved}
                               </span>
                             )}
@@ -1019,7 +1019,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         <span
                           className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${
                             isTooltipAchieved
-                              ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                              ? 'bg-primary-500/30 text-primary-700 dark:text-primary-200'
                               : isTooltipTarget
                                 ? 'bg-blue-500/25 text-blue-700 dark:text-blue-200'
                                 : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
@@ -1102,7 +1102,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             <div
                               className={`h-10 w-10 rounded-xl flex items-center justify-center text-lg font-bold ${
                                 isPopupAchieved
-                                  ? 'bg-purple-500 text-white'
+                                  ? 'bg-primary-500 text-white'
                                   : isPopupTarget
                                     ? 'bg-blue-500/50 text-blue-100'
                                     : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
@@ -1148,7 +1148,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           <span
                             className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
                               isPopupAchieved
-                                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200 ring-1 ring-purple-400/30'
+                                ? 'bg-primary-500/30 text-primary-700 dark:text-primary-200 ring-1 ring-primary-400/30'
                                 : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-white/10'
                             }`}
                           >
@@ -1266,8 +1266,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             }}
                             className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                               isPopupAchieved
-                                ? 'bg-purple-500 text-white hover:bg-purple-600'
-                                : 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                                ? 'bg-primary-500 text-white hover:bg-primary-600'
+                                : 'bg-primary-500/20 text-primary-300 hover:bg-primary-500/30'
                             }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1361,14 +1361,14 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       achieved
                         ? 'border-green-200 dark:border-green-900/40 bg-green-50/30 dark:bg-green-950/10'
                         : isTarget
-                          ? 'border-purple-300/50 dark:border-purple-800/50'
+                          ? 'border-primary-300/50 dark:border-primary-800/50'
                           : 'border-slate-200 dark:border-navy-700'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold">
+                          <div className="w-9 h-9 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 flex items-center justify-center font-bold">
                             {lvl.level}
                           </div>
                           <div className="min-w-0">
@@ -1390,7 +1390,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                   : 'Not achieved'}
                               </span>
                               {isTarget && !achieved && (
-                                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-purple-100/60 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200/60 dark:border-purple-900/30">
+                                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-primary-100/60 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200/60 dark:border-primary-900/30">
                                   Target
                                 </span>
                               )}
@@ -1449,7 +1449,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 {knowledge.suggestedTechnologies.map((t) => (
                                   <span
                                     key={t}
-                                    className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                                    className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800"
                                   >
                                     {t}
                                   </span>
@@ -1467,7 +1467,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => setIsExplanationExpanded((v) => !v)}
-                              className="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline"
+                              className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
                             >
                               {isExplanationExpanded ? 'Less' : 'More'}
                             </button>
@@ -1592,7 +1592,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
                               {knowledge.questions.map((q, idx) => (
                                 <li key={idx} className="flex gap-2">
-                                  <span className="text-purple-500/70 mt-0.5 shrink-0">•</span>
+                                  <span className="text-primary-500/70 mt-0.5 shrink-0">•</span>
                                   <span>{q}</span>
                                 </li>
                               ))}
@@ -1611,7 +1611,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               placeholder="Facts: what exists? Gaps: what's missing? Context: scope/owners/tools?"
                               disabled={readOnly}
                               rows={3}
-                              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                             />
                           </div>
                         )}
@@ -1648,7 +1648,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                   addLevelLink(lvl.level, linkDraft);
                                   setLinkDraft('');
                                 }}
-                                className="h-10 px-4 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-sm font-semibold"
+                                className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
                               >
                                 Add
                               </button>
@@ -1667,7 +1667,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                         href={u}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="text-sm text-purple-600 dark:text-purple-400 hover:underline truncate"
+                                        className="text-sm text-primary-600 dark:text-primary-400 hover:underline truncate"
                                         onClick={(e) => e.stopPropagation()}
                                       >
                                         {u}
@@ -1755,8 +1755,8 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     }}
                                     className={`h-10 w-28 rounded-lg text-sm font-semibold border transition-colors ${
                                       isTarget
-                                        ? 'bg-purple-600 border-purple-600 text-white'
-                                        : 'bg-purple-50 dark:bg-purple-900/15 border-purple-200 dark:border-purple-900/30 text-purple-700 dark:text-purple-200 hover:bg-purple-100 dark:hover:bg-purple-900/25'
+                                        ? 'bg-primary-600 border-primary-600 text-white'
+                                        : 'bg-primary-50 dark:bg-primary-900/15 border-primary-200 dark:border-primary-900/30 text-primary-700 dark:text-primary-200 hover:bg-primary-100 dark:hover:bg-primary-900/25'
                                     }`}
                                   >
                                     Target
@@ -1855,14 +1855,14 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
               {/* Re-render the same Matrix panel */}
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 shadow-lg dark:shadow-2xl">
-                <div className="pointer-events-none absolute -top-40 -right-40 h-[420px] w-[420px] rounded-full bg-purple-600/15 blur-3xl hidden dark:block" />
+                <div className="pointer-events-none absolute -top-40 -right-40 h-[420px] w-[420px] rounded-full bg-primary-600/15 blur-3xl hidden dark:block" />
                 <div className="pointer-events-none absolute -bottom-48 -left-40 h-[460px] w-[460px] rounded-full bg-blue-500/10 blur-3xl hidden dark:block" />
 
                 <div className="relative p-6">
                   {/* Header */}
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                      <div className="text-xs font-semibold tracking-widest uppercase text-purple-600 dark:text-purple-300/90">
+                      <div className="text-xs font-semibold tracking-widest uppercase text-primary-600 dark:text-primary-300/90">
                         Digital Development Map
                       </div>
                       <div className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
@@ -1877,7 +1877,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     <div className="flex flex-col gap-2 text-xs text-slate-700 dark:text-slate-200">
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
-                          <span className="h-3.5 w-3.5 rounded-full bg-purple-500 shadow-[0_0_18px_rgba(168,85,247,0.45)]" />
+                          <span className="h-3.5 w-3.5 rounded-full bg-primary-500 shadow-[0_0_18px_rgba(168,85,247,0.45)]" />
                           <span>AS-IS</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1891,7 +1891,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             type="checkbox"
                             checked={!matrixCompact}
                             onChange={(e) => setMatrixCompact(!e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-purple-500 focus:ring-purple-500/30"
+                            className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-primary-500 focus:ring-primary-500/30"
                           />
                           Spacious
                         </label>
@@ -1923,9 +1923,9 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                         return (
                           <React.Fragment key={`row-fs-${level}`}>
                             {/* Row label */}
-                            <div className="sticky left-0 z-10 rounded-xl border border-white/10 bg-gradient-to-r from-purple-700/30 to-navy-950/60 backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
+                            <div className="sticky left-0 z-10 rounded-xl border border-white/10 bg-gradient-to-r from-primary-700/30 to-navy-950/60 backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
                               <div className="text-white font-bold">
-                                <span className="text-purple-200">{level}.</span> {label}
+                                <span className="text-primary-200">{level}.</span> {label}
                               </div>
                               <div className="mt-1 text-[11px] text-slate-300">
                                 Click for details
@@ -1952,7 +1952,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                     matrixCompact ? 'p-2' : 'p-2.5'
                                   } ${
                                     isAchieved
-                                      ? 'border-purple-400/50 bg-purple-500/25 hover:bg-purple-500/35'
+                                      ? 'border-primary-400/50 bg-primary-500/25 hover:bg-primary-500/35'
                                       : isTarget
                                         ? 'border-blue-400/40 bg-blue-500/15 hover:bg-blue-500/25'
                                         : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
@@ -2054,12 +2054,12 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                           >
                             {/* Top line: ID + badges */}
                             <div className="flex items-center justify-between gap-1 mb-1">
-                              <span className="text-[11px] font-bold text-purple-300">
+                              <span className="text-[11px] font-bold text-primary-300">
                                 {area.id}
                               </span>
                               <div className="flex items-center gap-1">
                                 {achieved > 0 && (
-                                  <span className="px-1.5 py-0.5 rounded bg-purple-500/25 text-[9px] font-bold text-purple-200">
+                                  <span className="px-1.5 py-0.5 rounded bg-primary-500/25 text-[9px] font-bold text-primary-200">
                                     AS {achieved}
                                   </span>
                                 )}

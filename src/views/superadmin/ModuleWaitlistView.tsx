@@ -5,16 +5,7 @@
  * (Meeting Intelligence, MCP IRIS, MCP Marketplace).
  */
 
-import {
-  Bell,
-  Brain,
-  Calendar,
-  Download,
-  Package,
-  RefreshCw,
-  Search,
-  Users,
-} from 'lucide-react';
+import { Bell, Brain, Calendar, Download, Package, RefreshCw, Search, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { apiGet } from '../../services/api/baseClient';
@@ -44,7 +35,7 @@ const MODULE_META: Record<string, { label: string; icon: React.ReactNode; color:
   iris: {
     label: 'MCP IRIS',
     icon: <Brain size={16} />,
-    color: 'bg-purple-500/10 text-purple-500',
+    color: 'bg-primary-500/10 text-primary-500',
   },
   marketplace: {
     label: 'MCP Marketplace',
@@ -167,10 +158,7 @@ export const ModuleWaitlistView: React.FC = () => {
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search by name, email, org..."

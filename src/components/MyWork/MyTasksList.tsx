@@ -56,9 +56,9 @@ const getTimeGroupConfigs = (t: (key: string, fallback: string) => string): Time
     key: 'overdue',
     label: t('myWork.timeGroup.overdue', 'Overdue'),
     icon: AlertCircle,
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-50 dark:bg-red-900/20',
-    borderColor: 'border-red-200 dark:border-red-800/30',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-50 dark:bg-rose-900/20',
+    borderColor: 'border-rose-200 dark:border-rose-800/30',
   },
   {
     key: 'today',
@@ -333,12 +333,12 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
             {/* Pinned Tasks Section */}
             {pinnedTasks.length > 0 && activeTimeGroup === 'all' && (
               <div className="pb-2">
-                <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800/30">
-                  <Pin size={14} className="text-purple-500" />
-                  <span className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide">
+                <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-100 dark:border-primary-800/30">
+                  <Pin size={14} className="text-primary-500" />
+                  <span className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wide">
                     {t('myWork.pinned', 'Pinned')}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-800/50 text-purple-600 dark:text-purple-300">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-800/50 text-primary-600 dark:text-primary-300">
                     {pinnedTasks.length}
                   </span>
                 </div>
@@ -387,7 +387,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         config.key === 'overdue'
-                          ? 'bg-red-100 dark:bg-red-800/50 text-red-600 dark:text-red-300'
+                          ? 'bg-rose-100 dark:bg-rose-800/50 text-rose-600 dark:text-rose-300'
                           : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                       }`}
                     >

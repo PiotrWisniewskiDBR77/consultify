@@ -22,9 +22,9 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(
       blue: 'bg-blue-500/5 border-blue-500/30',
       green: 'bg-green-500/5 border-green-500/30',
       amber: 'bg-amber-500/5 border-amber-500/30',
-      red: 'bg-red-500/5 border-red-500/30',
-      purple: 'bg-purple-500/5 border-purple-500/30',
-      cyan: 'bg-cyan-500/5 border-cyan-500/30',
+      red: 'bg-rose-500/5 border-rose-500/30',
+      purple: 'bg-primary-500/5 border-primary-500/30',
+      cyan: 'bg-blue-500/5 border-blue-500/30',
       slate: 'bg-slate-500/5 border-slate-500/30',
     };
 
@@ -32,9 +32,9 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(
       blue: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
       green: 'bg-green-500/20 border-green-500/50 text-green-300',
       amber: 'bg-amber-500/20 border-amber-500/50 text-amber-300',
-      red: 'bg-red-500/20 border-red-500/50 text-red-300',
-      purple: 'bg-purple-500/20 border-purple-500/50 text-purple-300',
-      cyan: 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300',
+      red: 'bg-rose-500/20 border-rose-500/50 text-rose-300',
+      purple: 'bg-primary-500/20 border-primary-500/50 text-primary-300',
+      cyan: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
       slate: 'bg-slate-500/20 border-slate-500/50 text-slate-300',
     };
 

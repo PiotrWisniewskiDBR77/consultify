@@ -126,7 +126,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
         <div className="h-2 rounded-full bg-slate-700/50 overflow-hidden">
           {/* Filled portion */}
           <motion.div
-            className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full"
+            className="h-full bg-gradient-to-r from-primary-500 to-primary-500 rounded-full"
             initial={false}
             animate={{ width: `${percentage}%` }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -152,7 +152,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
         <motion.div
           className={`
                         absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full
-                        bg-white dark:bg-navy-900 shadow-lg border-2 border-violet-500
+                        bg-white dark:bg-navy-900 shadow-lg border-2 border-primary-500
                         pointer-events-none
                         ${isDisabled ? 'opacity-50' : ''}
                     `}

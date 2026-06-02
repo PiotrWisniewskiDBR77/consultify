@@ -73,14 +73,14 @@ const ScoreRing: React.FC<{ score: number; size?: number }> = ({ score, size = 2
 
   const getScoreColor = (value: number) => {
     if (value >= 80) return '#10B981'; // Emerald
-    if (value >= 60) return '#06B6D4'; // Cyan
+    if (value >= 60) return '#3B82F6'; // Blue
     if (value >= 40) return '#F59E0B'; // Amber
     return '#F43F5E'; // Rose
   };
 
   const getGlowColor = (value: number) => {
     if (value >= 80) return 'rgba(16, 185, 129, 0.4)';
-    if (value >= 60) return 'rgba(6, 182, 212, 0.4)';
+    if (value >= 60) return 'rgba(59, 130, 246, 0.4)';
     if (value >= 40) return 'rgba(245, 158, 11, 0.4)';
     return 'rgba(244, 63, 94, 0.4)';
   };
@@ -148,7 +148,7 @@ const BreakdownBar: React.FC<{
               value >= 80
                 ? 'bg-emerald-500'
                 : value >= 60
-                  ? 'bg-cyan-500'
+                  ? 'bg-blue-500'
                   : value >= 40
                     ? 'bg-amber-500'
                     : 'bg-rose-500'
@@ -192,7 +192,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
   const getScoreLabel = (value: number) => {
     if (value >= 80)
       return { label: t('executive.health.excellent', 'Excellent'), color: 'text-emerald-500' };
-    if (value >= 60) return { label: t('executive.health.good', 'Good'), color: 'text-cyan-500' };
+    if (value >= 60) return { label: t('executive.health.good', 'Good'), color: 'text-blue-500' };
     if (value >= 40)
       return { label: t('executive.health.attention', 'Needs Attention'), color: 'text-amber-500' };
     return { label: t('executive.health.critical', 'Critical'), color: 'text-rose-500' };
@@ -346,7 +346,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                   label={t('executive.health.decisions', 'Decision Velocity')}
                   value={breakdown!.decisions}
                   icon={<Zap size={16} className="text-slate-900 dark:text-white" />}
-                  color="bg-cyan-500"
+                  color="bg-blue-500"
                 />
               )}
               {breakdown!.capacity > 0 && (
@@ -354,7 +354,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                   label={t('executive.health.capacity', 'Team Capacity')}
                   value={breakdown!.capacity}
                   icon={<CheckCircle2 size={16} className="text-slate-900 dark:text-white" />}
-                  color="bg-violet-500"
+                  color="bg-primary-500"
                 />
               )}
               {breakdown!.risk > 0 && (

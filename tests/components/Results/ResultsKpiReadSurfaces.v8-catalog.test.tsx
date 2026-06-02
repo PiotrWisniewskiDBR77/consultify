@@ -11,6 +11,10 @@ vi.mock('react-i18next', () => ({
     t: (_key: string, fallback?: string) => fallback || _key,
     i18n: { language: 'en' },
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
 }));
 
 vi.mock('react-hot-toast', () => ({

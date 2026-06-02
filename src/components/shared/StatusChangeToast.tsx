@@ -66,7 +66,7 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
             {hasModuleChanged && (
               <button
                 onClick={handleNavigate}
-                className="flex items-center gap-1.5 mt-2 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                className="flex items-center gap-1.5 mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
               >
                 View in {moduleConfig.name}
                 <ArrowRight size={12} />

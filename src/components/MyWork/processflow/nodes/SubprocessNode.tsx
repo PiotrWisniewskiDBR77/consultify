@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 
 export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
   const [editing, setEditing] = useState(false);
@@ -62,9 +62,25 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
       {/* [+] / [-] collapse marker at bottom center */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-5 h-5 rounded border border-slate-400 dark:border-navy-500 bg-white dark:bg-navy-800 flex items-center justify-center">
         <svg width={12} height={12} viewBox="0 0 12 12">
-          <line x1={2} y1={6} x2={10} y2={6} stroke="currentColor" strokeWidth={1.5} className="text-slate-600 dark:text-slate-300" />
+          <line
+            x1={2}
+            y1={6}
+            x2={10}
+            y2={6}
+            stroke="currentColor"
+            strokeWidth={1.5}
+            className="text-slate-600 dark:text-slate-300"
+          />
           {collapsed && (
-            <line x1={6} y1={2} x2={6} y2={10} stroke="currentColor" strokeWidth={1.5} className="text-slate-600 dark:text-slate-300" />
+            <line
+              x1={6}
+              y1={2}
+              x2={6}
+              y2={10}
+              stroke="currentColor"
+              strokeWidth={1.5}
+              className="text-slate-600 dark:text-slate-300"
+            />
           )}
         </svg>
       </div>

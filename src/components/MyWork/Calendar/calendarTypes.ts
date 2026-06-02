@@ -12,7 +12,12 @@ export type VisibilityClass = 'free_busy_only' | 'details';
 export type EditAuthority = 'none' | 'local_only' | 'remote_owner' | 'delegate';
 export type SyncState = 'in_sync' | 'pending' | 'conflict' | 'blocked' | 'stale';
 export type PermissionGradient = 'free_busy' | 'read' | 'write' | 'delegate';
-export type SourceLifecycleState = 'connected' | 'degraded' | 'requires_action' | 'blocked' | 'recoverable';
+export type SourceLifecycleState =
+  | 'connected'
+  | 'degraded'
+  | 'requires_action'
+  | 'blocked'
+  | 'recoverable';
 
 export interface CalendarEvent {
   id: string;
@@ -31,21 +36,34 @@ export interface CalendarEvent {
   syncState?: SyncState;
   permissionGradient?: PermissionGradient;
   etag?: string;
+  recurrenceRule?: string;
+  recurrenceSourceId?: string;
 }
 
 export interface CalendarFilter {
   sources: CalendarEventSource[];
   projectId?: string;
+  ownership?: 'any' | 'assignee' | 'owner';
 }
 
-export const PERMISSION_UI_RULES: Record<PermissionGradient, { canSeeDetails: boolean; canEdit: boolean; label: string }> = {
+export const PERMISSION_UI_RULES: Record<
+  PermissionGradient,
+  { canSeeDetails: boolean; canEdit: boolean; label: string }
+> = {
   free_busy: { canSeeDetails: false, canEdit: false, label: 'Free/busy blocks only — no details' },
   read: { canSeeDetails: true, canEdit: false, label: 'Details visible — editing disabled' },
   write: { canSeeDetails: true, canEdit: true, label: 'Edit allowed for owned items only' },
-  delegate: { canSeeDetails: true, canEdit: true, label: 'Delegate — "on behalf of" context shown' },
+  delegate: {
+    canSeeDetails: true,
+    canEdit: true,
+    label: 'Delegate — "on behalf of" context shown',
+  },
 };
 
-export const LIFECYCLE_LABELS: Record<SourceLifecycleState, { label: string; variant: 'success' | 'warning' | 'error' | 'info' }> = {
+export const LIFECYCLE_LABELS: Record<
+  SourceLifecycleState,
+  { label: string; variant: 'success' | 'warning' | 'error' | 'info' }
+> = {
   connected: { label: 'Connected', variant: 'success' },
   degraded: { label: 'Degraded', variant: 'warning' },
   requires_action: { label: 'Requires Action', variant: 'error' },

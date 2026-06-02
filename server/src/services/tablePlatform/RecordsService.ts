@@ -6,10 +6,12 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import attachmentService from './AttachmentService.js';
 import auditService from './AuditService.js';
 import { automationService } from './AutomationService.js';
+import confidenceScoringService from './ConfidenceScoringService.js';
 import { ConflictError, PermissionError, ValidationError } from './ErrorHandling.js';
 import { fieldPermissionService } from './FieldPermissionService.js';
 import { recomputeAffectedFields } from './formulaEngine.js';
@@ -72,6 +74,12 @@ const AUTO_FIELD_TYPES = new Set([
   'lastModifiedBy',
   'autoNumber',
 ]);
+
+async function hasRecordVersionColumn(): Promise<boolean> {
+  return await getTableColumns('tp_records')
+    .then((cols) => cols.has('version'))
+    .catch(() => false);
+}
 
 interface AutoField {
   id: string;
@@ -282,7 +290,9 @@ const recordsService = {
     const id = uuidv4();
     try {
       // Apply default values before validation
-      const allFieldsResult = await db.query('SELECT * FROM tp_fields WHERE table_id = $1', [tableId]);
+      const allFieldsResult = await db.query('SELECT * FROM tp_fields WHERE table_id = $1', [
+        tableId,
+      ]);
       const allFields = allFieldsResult.rows as Array<{
         id: string;
         name: string;
@@ -291,7 +301,11 @@ const recordsService = {
       }>;
       for (const field of allFields) {
         const opts = field.options;
-        if (opts?.default !== undefined && data[field.id] === undefined && data[field.name] === undefined) {
+        if (
+          opts?.default !== undefined &&
+          data[field.id] === undefined &&
+          data[field.name] === undefined
+        ) {
           data[field.id] = opts.default;
         }
       }
@@ -346,6 +360,22 @@ const recordsService = {
         logger.warn('[RecordsService] formula recompute after create failed', {
           recordId: id,
           error: (recomputeErr as Error).message,
+        });
+      }
+
+      // Block B · EPIC-T9: confidence recompute. The service no-ops when the
+      // ENABLE_RECORD_PROVENANCE flag is OFF; we only re-read the row when
+      // the score actually changed so we keep DB I/O parity with the
+      // pre-Block-B path until provenance is rolled out.
+      try {
+        const outcome = await confidenceScoringService.recompute(id);
+        if (outcome.applied) {
+          row = (await db.query('SELECT * FROM tp_records WHERE id = $1', [id])).rows[0];
+        }
+      } catch (provenanceErr) {
+        logger.warn('[RecordsService] confidence recompute after create failed', {
+          recordId: id,
+          error: (provenanceErr as Error).message,
         });
       }
 
@@ -447,6 +477,7 @@ const recordsService = {
   ): Promise<any> {
     const db = getDatabase();
     try {
+      const versionColumnEnabled = await hasRecordVersionColumn();
       const before = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
       if (!before) return null;
       const tableId = (before as { table_id: string }).table_id;
@@ -504,6 +535,15 @@ const recordsService = {
       const merged = { ...existingData, ...enrichedData };
 
       if (expectedVersion != null) {
+        if (!versionColumnEnabled) {
+          throw new ConflictError(
+            'Optimistic lock is unavailable because tp_records.version is missing',
+            {
+              recordId,
+              expectedVersion,
+            }
+          );
+        }
         const result = await db.query(
           `UPDATE tp_records
            SET data = $2, updated_at = NOW(), version = COALESCE(version, 0) + 1
@@ -517,12 +557,21 @@ const recordsService = {
           });
         }
       } else {
-        await db.query(
-          `UPDATE tp_records
-           SET data = $2, updated_at = NOW(), version = COALESCE(version, 0) + 1
-           WHERE id = $1`,
-          [recordId, JSON.stringify(merged)]
-        );
+        if (versionColumnEnabled) {
+          await db.query(
+            `UPDATE tp_records
+             SET data = $2, updated_at = NOW(), version = COALESCE(version, 0) + 1
+             WHERE id = $1`,
+            [recordId, JSON.stringify(merged)]
+          );
+        } else {
+          await db.query(
+            `UPDATE tp_records
+             SET data = $2, updated_at = NOW()
+             WHERE id = $1`,
+            [recordId, JSON.stringify(merged)]
+          );
+        }
       }
 
       let after = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
@@ -568,6 +617,21 @@ const recordsService = {
         logger.warn('[RecordsService] formula recompute after update failed', {
           recordId,
           error: (recomputeErr as Error).message,
+        });
+      }
+
+      // Block B · EPIC-T9: confidence recompute. Same contract as the create
+      // path — feature-flag gated inside the service, only re-reads the row
+      // when the score actually changed.
+      try {
+        const outcome = await confidenceScoringService.recompute(recordId);
+        if (outcome.applied) {
+          after = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
+        }
+      } catch (provenanceErr) {
+        logger.warn('[RecordsService] confidence recompute after update failed', {
+          recordId,
+          error: (provenanceErr as Error).message,
         });
       }
 

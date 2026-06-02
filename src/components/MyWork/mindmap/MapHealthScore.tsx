@@ -91,7 +91,7 @@ export const BranchHealthDot: React.FC<{ score: number; size?: number }> = ({
   score,
   size = 8,
 }) => {
-  const color = score >= 70 ? '#22c55e' : score >= 30 ? '#eab308' : '#ef4444';
+  const color = score >= 70 ? '#22c55e' : score >= 30 ? '#eab308' : '#f43f5e';
   return (
     <div
       title={`Health: ${score}%`}
@@ -226,8 +226,8 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
       ? 'text-emerald-500'
       : overallScore >= 40
         ? 'text-amber-500'
-        : 'text-red-500';
-  const ringColor = overallScore >= 70 ? '#34d399' : overallScore >= 40 ? '#fbbf24' : '#ef4444';
+        : 'text-rose-500';
+  const ringColor = overallScore >= 70 ? '#34d399' : overallScore >= 40 ? '#fbbf24' : '#f43f5e';
 
   return (
     <div className="absolute top-14 right-3 z-[89]">
@@ -277,7 +277,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
           <div className="px-3 pb-3 space-y-2">
             {metrics.map((m) => {
               const color =
-                m.score >= 70 ? 'bg-emerald-500' : m.score >= 40 ? 'bg-amber-500' : 'bg-red-500';
+                m.score >= 70 ? 'bg-emerald-500' : m.score >= 40 ? 'bg-amber-500' : 'bg-rose-500';
               return (
                 <div key={m.key}>
                   <div className="flex items-center justify-between mb-0.5">

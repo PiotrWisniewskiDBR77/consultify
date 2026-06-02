@@ -303,7 +303,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div className="flex items-center gap-2">
               <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-purple-500 rounded-full"
+                  className="h-full bg-primary-500 rounded-full"
                   style={{ width: `${initiative.progress}%` }}
                 />
               </div>
@@ -331,7 +331,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div
               className={`text-lg font-semibold ${
                 (initiative.riskScore || 0) > 70
-                  ? 'text-red-600 dark:text-red-400'
+                  ? 'text-rose-600 dark:text-rose-400'
                   : (initiative.riskScore || 0) > 40
                     ? 'text-amber-600 dark:text-amber-400'
                     : 'text-green-600 dark:text-green-400'
@@ -466,7 +466,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div
               className={`h-full rounded-full ${
                 (initiative.progress || 0) > 90
-                  ? 'bg-red-500'
+                  ? 'bg-rose-500'
                   : (initiative.progress || 0) > 70
                     ? 'bg-amber-500'
                     : 'bg-green-500'
@@ -496,7 +496,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
           </h4>
           {initiative.ownerBusiness ? (
             <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-              <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-sm font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-sm font-medium text-primary-700 dark:text-primary-300 overflow-hidden">
                 {initiative.ownerBusiness.avatarUrl ? (
                   <img
                     src={initiative.ownerBusiness.avatarUrl}
@@ -566,7 +566,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <span
               className={`text-lg font-bold ${
                 (initiative?.riskScore || 0) > 70
-                  ? 'text-red-600 dark:text-red-400'
+                  ? 'text-rose-600 dark:text-rose-400'
                   : (initiative?.riskScore || 0) > 40
                     ? 'text-amber-600 dark:text-amber-400'
                     : 'text-green-600 dark:text-green-400'
@@ -579,7 +579,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div
               className={`h-full rounded-full ${
                 (initiative?.riskScore || 0) > 70
-                  ? 'bg-red-500'
+                  ? 'bg-rose-500'
                   : (initiative?.riskScore || 0) > 40
                     ? 'bg-amber-500'
                     : 'bg-green-500'
@@ -595,8 +595,8 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             {
               label: 'Risks',
               count: initiative?.riskScore && initiative.riskScore > 50 ? 'High' : 'Low',
-              color: 'text-red-500',
-              bg: 'bg-red-50 dark:bg-red-900/20',
+              color: 'text-rose-500',
+              bg: 'bg-rose-50 dark:bg-rose-900/20',
             },
             {
               label: 'Assumptions',
@@ -613,8 +613,8 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             {
               label: 'Dependencies',
               count: String(initiative?.dependencies?.length || 0),
-              color: 'text-purple-500',
-              bg: 'bg-purple-50 dark:bg-purple-900/20',
+              color: 'text-primary-500',
+              bg: 'bg-primary-50 dark:bg-primary-900/20',
             },
           ].map((item) => (
             <div key={item.label} className={`p-3 rounded-lg ${item.bg}`}>
@@ -642,7 +642,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       case 'in-progress':
         return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
       case 'blocked':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300';
+        return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
       default:
         return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
     }
@@ -652,9 +652,9 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
     switch (priority?.toLowerCase()) {
       case 'urgent':
       case 'critical':
-        return 'text-red-600 dark:text-red-400';
+        return 'text-rose-600 dark:text-rose-400';
       case 'high':
-        return 'text-orange-600 dark:text-orange-400';
+        return 'text-amber-600 dark:text-amber-400';
       case 'medium':
         return 'text-amber-600 dark:text-amber-400';
       default:
@@ -684,7 +684,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
               onClick={() => setTaskFilter(filter)}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                 taskFilter === filter
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                   : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
               }`}
             >
@@ -708,7 +708,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
         {/* Task list */}
         {tasksLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
           </div>
         ) : filteredTasks.length === 0 ? (
           <div className="text-center py-8 text-slate-400 dark:text-slate-500">
@@ -726,11 +726,11 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     setSelectedTask(task);
                     setIsTaskModalOpen(true);
                   }}
-                  className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-100 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30 cursor-pointer transition-all group"
+                  className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-100 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 cursor-pointer transition-all group"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-navy-900 dark:text-white line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                      <h4 className="text-sm font-medium text-navy-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400">
                         {task.title}
                       </h4>
                       {task.description && (
@@ -759,7 +759,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     </div>
                     <ChevronRight
                       size={16}
-                      className="text-slate-400 dark:text-slate-500 group-hover:text-purple-500 shrink-0 mt-1"
+                      className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 shrink-0 mt-1"
                     />
                   </div>
                 </div>
@@ -769,7 +769,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             {filteredTasks.length > MAX_VISIBLE_TASKS && (
               <button
                 onClick={() => setShowAllTasks((prev) => !prev)}
-                className="w-full text-center py-2 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                className="w-full text-center py-2 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
               >
                 {showAllTasks
                   ? 'Show less'
@@ -806,7 +806,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       case 'APPROVED':
         return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
       case 'REJECTED':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300';
+        return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
       case 'DEFERRED':
         return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
       default:
@@ -817,9 +817,9 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
   const getDecisionPriorityColor = (priority?: string) => {
     switch (priority?.toUpperCase()) {
       case 'CRITICAL':
-        return 'border-l-red-500';
+        return 'border-l-rose-500';
       case 'HIGH':
-        return 'border-l-orange-500';
+        return 'border-l-amber-500';
       case 'MEDIUM':
         return 'border-l-amber-500';
       default:
@@ -860,7 +860,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                   setGateType(requiredGates[0]?.id || '');
                   setShowGateRequest(true);
                 }}
-                className="text-xs text-purple-500 hover:text-purple-400"
+                className="text-xs text-primary-500 hover:text-primary-400"
               >
                 Request decision
               </button>
@@ -900,7 +900,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
         {/* Decision list */}
         {decisionsLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
           </div>
         ) : decisions.length === 0 ? (
           <div className="text-center py-8 text-slate-400 dark:text-slate-500">
@@ -925,7 +925,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                   <div
                     key={decision.id}
                     onClick={() => setSelectedDecisionId(decision.id)}
-                    className={`p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border-l-4 border border-slate-100 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30 cursor-pointer transition-all group ${getDecisionPriorityColor(decision.priority)} ${
+                    className={`p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border-l-4 border border-slate-100 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 cursor-pointer transition-all group ${getDecisionPriorityColor(decision.priority)} ${
                       isOverdue ? 'ring-1 ring-rose-400/50' : ''
                     }`}
                   >
@@ -946,7 +946,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                             </span>
                           )}
                         </div>
-                        <h4 className="text-sm font-medium text-navy-900 dark:text-white line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                        <h4 className="text-sm font-medium text-navy-900 dark:text-white line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400">
                           {decision.title}
                         </h4>
                         <div className="flex items-center gap-2 mt-2">
@@ -971,7 +971,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                       </div>
                       <ChevronRight
                         size={16}
-                        className="text-slate-400 dark:text-slate-500 group-hover:text-purple-500 shrink-0 mt-1"
+                        className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 shrink-0 mt-1"
                       />
                     </div>
                   </div>
@@ -1056,7 +1056,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                 <button
                   onClick={handleRequestGate}
                   disabled={submittingGate || !gateType || !gateOwnerId || !gateDueDate}
-                  className="px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-500 rounded-lg disabled:opacity-50"
+                  className="px-4 py-2 text-sm text-white bg-primary-600 hover:bg-primary-500 rounded-lg disabled:opacity-50"
                 >
                   {submittingGate ? 'Requesting...' : 'Request'}
                 </button>
@@ -1140,7 +1140,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                   {onOpenFullDetail && (
                     <button
                       onClick={() => onOpenFullDetail(initiative)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                       title="Open full details"
                     >
                       <ExternalLink size={18} />
@@ -1163,7 +1163,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div className="shrink-0 px-6 py-2 bg-slate-50 dark:bg-navy-950 border-b border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5">
-                  <Target size={12} className="text-purple-500" />
+                  <Target size={12} className="text-primary-500" />
                   <span className="text-slate-500 dark:text-slate-400">Progress:</span>
                   <span className="font-semibold text-navy-900 dark:text-white">
                     {initiative.progress ?? 0}%
@@ -1171,7 +1171,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                 </div>
                 <div className="w-px h-3 bg-slate-200 dark:bg-navy-700" />
                 <div className="flex items-center gap-1.5">
-                  <Calendar size={12} className="text-cyan-500" />
+                  <Calendar size={12} className="text-blue-500" />
                   <span className="text-slate-500 dark:text-slate-400">Q:</span>
                   <span className="font-medium text-navy-900 dark:text-white">
                     {initiative.targetQuarter || '—'}
@@ -1198,7 +1198,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
                       activeTab === tab.id
-                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
                     }`}
                   >

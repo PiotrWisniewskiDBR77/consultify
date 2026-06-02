@@ -34,7 +34,7 @@ export const LinkNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   return (
     <div
-      className={`relative w-[220px] rounded-xl border border-slate-200 dark:border-cyan-500/25 bg-white dark:bg-navy-900/80 dark:backdrop-blur-md shadow-sm dark:shadow-[0_0_12px_rgba(34,211,238,0.15)] transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''}`}
+      className={`relative w-[220px] rounded-xl border border-slate-200 dark:border-blue-500/25 bg-white dark:bg-navy-900/80 dark:backdrop-blur-md shadow-sm dark:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''}`}
       onClick={handleClick}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />

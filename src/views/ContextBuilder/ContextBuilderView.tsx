@@ -32,9 +32,9 @@ import { useAppStore } from '../../store/useAppStore';
 import { useContextBuilderStore } from '../../store/useContextBuilderStore';
 import { AppView } from '../../types';
 import { ChallengeMapModule } from './modules/ChallengeMapModule';
-import { OrganizationProfileModule } from './modules/OrganizationProfileModule';
 import { GoalsExpectationsModule } from './modules/GoalsExpectationsModule';
 import { MegatrendScannerModule } from './modules/MegatrendScannerModule';
+import { OrganizationProfileModule } from './modules/OrganizationProfileModule';
 import { StrategicSynthesisModule } from './modules/StrategicSynthesisModule';
 
 // ==========================================
@@ -155,7 +155,7 @@ const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
                 className={cn(
                   'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
                   isActive
-                    ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300'
+                    ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                 )}
               >
@@ -163,12 +163,12 @@ const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
                   size={18}
                   className={cn(
                     isActive
-                      ? 'text-purple-600 dark:text-purple-400'
+                      ? 'text-primary-600 dark:text-primary-400'
                       : 'text-slate-400 dark:text-slate-500'
                   )}
                 />
                 <span className="truncate">{item.label}</span>
-                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-500" />}
+                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500" />}
               </button>
             );
           })}
@@ -188,7 +188,7 @@ const RefreshAnalysisButton = () => {
     <button
       onClick={generateAnalysis}
       disabled={isGenerating}
-      className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/30 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors disabled:opacity-50"
+      className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary-600 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-500/30 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors disabled:opacity-50"
     >
       <RefreshCw size={14} className={isGenerating ? 'animate-spin' : ''} />
       {isGenerating ? 'Analyzing...' : 'Refresh Analysis'}

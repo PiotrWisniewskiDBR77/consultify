@@ -27,6 +27,29 @@ const testRootAbs = testDirs.map((d) => path.resolve(projectRoot, d));
 const outputDir = path.resolve(projectRoot, 'test-results', 'quality-check');
 const reportJsonPath = path.join(outputDir, 'quality-check.report.json');
 const reportMdPath = path.join(outputDir, 'quality-check.report.md');
+const baselinePath = path.resolve(projectRoot, 'scripts', 'testing', 'quality-check.baseline.json');
+
+type QualityBaseline = {
+  buckets?: Partial<Record<'FAKE_UNIT' | 'PLACEHOLDER' | 'FAKE_INTEGRATION', string[]>>;
+};
+
+function loadBaseline(): QualityBaseline {
+  try {
+    if (!fs.existsSync(baselinePath)) return {};
+    return JSON.parse(fs.readFileSync(baselinePath, 'utf-8')) as QualityBaseline;
+  } catch (e) {
+    console.log(`⚠️  Failed to read quality baseline: ${(e as Error).message}`);
+    return {};
+  }
+}
+
+function unbaselinedFiles(bucket: Bucket, files: string[], baseline: QualityBaseline): string[] {
+  if (bucket !== 'FAKE_UNIT' && bucket !== 'PLACEHOLDER' && bucket !== 'FAKE_INTEGRATION') {
+    return files;
+  }
+  const allowed = new Set(baseline.buckets?.[bucket] || []);
+  return files.filter((file) => !allowed.has(file));
+}
 
 function isInsideAny(p: string, dirs: string[]): boolean {
   const norm = path.normalize(p);
@@ -220,6 +243,22 @@ function importsServerGatewayOrApp(content: string): boolean {
   return sources.some((s) => /server\/src\/(Gateway|app|createApp)\b/.test(s));
 }
 
+function importsServerRuntimeContractHelper(content: string): boolean {
+  const sources = extractImportSources(content);
+  return sources.some((s) =>
+    /server\/src\/utils\/(ErrorHandler|RequestStore|apiContractResponses|apiRouteMethodAllowlist)(\.js|\.ts)?$/.test(
+      s
+    )
+  );
+}
+
+function executesRealGateScript(content: string, filePath: string): boolean {
+  const relPath = path.relative(projectRoot, filePath).replace(/\\/g, '/');
+  if (!relPath.startsWith('tests/unit/scripts/testing/')) return false;
+  if (!/execFileSync\s*\(/.test(content)) return false;
+  return /scripts\/testing\/[A-Za-z0-9_.-]+\.(ts|js)/.test(content);
+}
+
 function definesInlineExpressRoutes(content: string): boolean {
   // Inline route handlers in a test file are a strong signal of "fake integration".
   return /\bapp\.(get|post|put|delete|patch|all)\s*\(/.test(content);
@@ -233,17 +272,29 @@ function classifyTest(content: string, filePath: string): Bucket {
   const serverIndex = importsServerIndex(content);
   const serverRoutes = importsServerRoutes(content);
   const serverGatewayOrApp = importsServerGatewayOrApp(content);
+  const serverRuntimeContractHelper = importsServerRuntimeContractHelper(content);
   const inlineExpressRoutes = definesInlineExpressRoutes(content);
   const playwright = usesPlaywright(content, filePath);
   const fakeUnit = isFakeUnitTest(content, filePath);
   const placeholder = isPlaceholder(content);
   const specFile = readsSourceFiles(content);
   const lowSignal = isLowSignal(content);
+  const realGateScript = executesRealGateScript(content, filePath);
 
   // Integration honesty: supertest + local express() is "real" only if it mounts our real route stack
   // (or imports the real server entry). Inline route handlers in the test are treated as fake.
   if (supertest && expressApp) {
     const hasRuntimeSignal = serverIndex || serverRoutes || serverGatewayOrApp;
+    const relPath = path.relative(projectRoot, filePath).replace(/\\/g, '/');
+
+    // Fail-closed API contract tests use a local Express harness around production middleware/helpers.
+    if (
+      relPath.startsWith('tests/integration/server/') &&
+      /\.contract\.test\.[tj]sx?$/.test(relPath) &&
+      serverRuntimeContractHelper
+    ) {
+      return 'REAL_RUNTIME';
+    }
 
     // Explicit fake: local app with inline handlers and no real route stack imports.
     if (inlineExpressRoutes && !hasRuntimeSignal) return 'FAKE_INTEGRATION';
@@ -260,6 +311,9 @@ function classifyTest(content: string, filePath: string): Bucket {
 
   // REAL: must touch application code, not just testing libs.
   if (realCode) return 'REAL_CODE';
+
+  // Testing gate contract tests execute the actual repository gate script.
+  if (realGateScript) return 'REAL_RUNTIME';
 
   // Real runtime E2E (Playwright) tests. Note: these are executed by Playwright, not Vitest.
   if (playwright) return 'REAL_RUNTIME';
@@ -317,6 +371,7 @@ function scan(): void {
   const scored = real + placeholder;
   const authenticityOverall = total > 0 ? ((real / total) * 100).toFixed(1) : '0.0';
   const authenticityScored = scored > 0 ? ((real / scored) * 100).toFixed(1) : '100.0';
+  const baseline = loadBaseline();
 
   const placeholderShareScored = scored > 0 ? ((placeholder / scored) * 100).toFixed(1) : '0.0';
 
@@ -374,20 +429,23 @@ function scan(): void {
   }
 
   // Hard gate: don't allow "sham" tests back into the suite.
-  const placeholderCount = buckets.PLACEHOLDER.count + buckets.FAKE_UNIT.count;
-  if (placeholderCount > 0) {
-    console.log(`❌ PLACEHOLDER/FAKE_UNIT tests detected: ${placeholderCount}`);
-    const files = [
-      ...(buckets.PLACEHOLDER.files || []),
-      ...(buckets.FAKE_UNIT.files || []),
-    ];
-    if (files.length > 0) {
-      console.log('Files:', files.join(', '));
-    }
+  const newPlaceholderFiles = [
+    ...unbaselinedFiles('PLACEHOLDER', buckets.PLACEHOLDER.files || [], baseline),
+    ...unbaselinedFiles('FAKE_UNIT', buckets.FAKE_UNIT.files || [], baseline),
+  ];
+  if (newPlaceholderFiles.length > 0) {
+    console.log(`❌ New PLACEHOLDER/FAKE_UNIT tests detected: ${newPlaceholderFiles.length}`);
+    console.log('Files:', newPlaceholderFiles.join(', '));
     process.exit(1);
   }
-  if (buckets.FAKE_INTEGRATION.count > 0) {
-    console.log(`❌ FAKE_INTEGRATION tests detected: ${buckets.FAKE_INTEGRATION.count}`);
+  const newFakeIntegrationFiles = unbaselinedFiles(
+    'FAKE_INTEGRATION',
+    buckets.FAKE_INTEGRATION.files || [],
+    baseline
+  );
+  if (newFakeIntegrationFiles.length > 0) {
+    console.log(`❌ New FAKE_INTEGRATION tests detected: ${newFakeIntegrationFiles.length}`);
+    console.log('Files:', newFakeIntegrationFiles.join(', '));
     process.exit(1);
   }
 

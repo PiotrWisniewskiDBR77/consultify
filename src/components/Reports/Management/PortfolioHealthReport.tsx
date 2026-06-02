@@ -60,7 +60,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
         overallHealth={overview.overallHealth}
       />
 
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-500/20 p-6">
+      <div className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 rounded-xl border border-emerald-200 dark:border-emerald-500/20 p-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={18} className="text-emerald-500" />
           <h2 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100">
@@ -86,7 +86,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
 
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Target size={18} className="text-violet-500" />
+          <Target size={18} className="text-primary-500" />
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Health Drivers</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -157,7 +157,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
       {content.decisionsRequired?.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle size={18} className="text-red-500" />
+            <AlertTriangle size={18} className="text-rose-500" />
             <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
               Decisions Required
             </h3>
@@ -180,12 +180,12 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
       )}
 
       {content.warnings?.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-500/30 p-6">
+        <div className="bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-200 dark:border-rose-500/30 p-6">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle size={18} className="text-red-500" />
-            <h3 className="text-lg font-semibold text-red-700 dark:text-red-400">Escalations</h3>
+            <AlertTriangle size={18} className="text-rose-500" />
+            <h3 className="text-lg font-semibold text-rose-700 dark:text-rose-400">Escalations</h3>
           </div>
-          <ul className="space-y-2 text-sm text-red-700 dark:text-red-300">
+          <ul className="space-y-2 text-sm text-rose-700 dark:text-rose-300">
             {content.warnings.map((warning: string, index: number) => (
               <li key={index} className="flex items-start gap-2">
                 <span>•</span>

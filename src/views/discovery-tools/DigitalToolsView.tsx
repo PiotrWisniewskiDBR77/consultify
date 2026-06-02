@@ -228,7 +228,7 @@ export const DigitalToolsView: React.FC = () => {
           </button>
 
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
+            <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl">
               <Cpu className="w-8 h-8 text-white" />
             </div>
             <div>
@@ -260,16 +260,16 @@ export const DigitalToolsView: React.FC = () => {
                   p-5 rounded-xl border-2 transition-all cursor-pointer
                   ${
                     isSelected
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-purple-300'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300'
                   }
                 `}
                 onClick={() => handleStartTool(tool.id)}
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
                   </div>
 
@@ -293,7 +293,7 @@ export const DigitalToolsView: React.FC = () => {
                       {(isPolish ? tool.outputsPl : tool.outputs).map((output, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-1 text-xs rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                          className="px-2 py-1 text-xs rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
                         >
                           {output}
                         </span>

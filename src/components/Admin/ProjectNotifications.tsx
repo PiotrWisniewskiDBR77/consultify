@@ -111,7 +111,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -156,7 +156,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-lg font-semibold text-navy-900 dark:text-white">
-        <Bell className="text-purple-500" size={20} />
+        <Bell className="text-primary-500" size={20} />
         Notification Settings
       </div>
 
@@ -180,7 +180,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
             <button
               onClick={() => handleToggle(key)}
               className={`w-12 h-6 rounded-full transition-colors relative ${
-                settings[key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                settings[key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
@@ -210,7 +210,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
           <button
             onClick={() => handleToggle('escalation_enabled')}
             className={`w-12 h-6 rounded-full transition-colors relative ${
-              settings.escalation_enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.escalation_enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -251,7 +251,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
           <button
             onClick={() => handleToggle('in_app_notifications')}
             className={`w-12 h-6 rounded-full transition-colors relative ${
-              settings.in_app_notifications ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.in_app_notifications ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -271,7 +271,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
           <button
             onClick={() => handleToggle('email_notifications')}
             className={`w-12 h-6 rounded-full transition-colors relative ${
-              settings.email_notifications ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.email_notifications ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -287,7 +287,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
       <button
         onClick={handleSave}
         disabled={isSaving}
-        className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-400 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+        className="w-full py-3 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-400 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
       >
         {isSaving ? (
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

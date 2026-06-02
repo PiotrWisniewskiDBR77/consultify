@@ -32,10 +32,7 @@ export interface ChainExecutionResult {
   failedStep?: string;
 }
 
-type ToolExecutorFn = (
-  toolName: string,
-  input: Record<string, unknown>
-) => Promise<unknown>;
+type ToolExecutorFn = (toolName: string, input: Record<string, unknown>) => Promise<unknown>;
 
 type ApprovalFn = (step: ChainStep) => Promise<boolean>;
 
@@ -116,22 +113,25 @@ class ToolChainExecutor {
       );
 
       for (const settled of batchResults) {
-        const result = settled.status === 'fulfilled'
-          ? settled.value
-          : {
-              stepId: 'unknown',
-              toolName: 'unknown',
-              success: false,
-              error: (settled as any).reason?.message || 'Promise rejected',
-              durationMs: 0,
-            };
+        const result =
+          settled.status === 'fulfilled'
+            ? settled.value
+            : {
+                stepId: 'unknown',
+                toolName: 'unknown',
+                success: false,
+                error: (settled as any).reason?.message || 'Promise rejected',
+                durationMs: 0,
+              };
 
         results.set(result.stepId, result);
         completed.add(result.stepId);
         options?.onStepComplete?.(result);
 
         if (!result.success) {
-          logger.warn(`[ToolChain] Step ${result.stepId} (${result.toolName}) failed: ${result.error}`);
+          logger.warn(
+            `[ToolChain] Step ${result.stepId} (${result.toolName}) failed: ${result.error}`
+          );
           return {
             success: false,
             results: Array.from(results.values()),
@@ -162,9 +162,7 @@ class ToolChainExecutor {
           const [, stepId, path] = match;
           const stepResult = previousResults.get(stepId);
           if (stepResult?.result) {
-            resolved[key] = path
-              ? this.getNestedValue(stepResult.result, path)
-              : stepResult.result;
+            resolved[key] = path ? this.getNestedValue(stepResult.result, path) : stepResult.result;
           } else {
             resolved[key] = value;
           }

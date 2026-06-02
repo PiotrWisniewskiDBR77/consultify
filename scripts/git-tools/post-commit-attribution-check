@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# shellcheck shell=bash
+#
+# Post-commit attribution check.
+#
+# Installed via DRD/consultify/scripts/git-tools/install-hooks.sh
+# (which sets `core.hooksPath = scripts/git-tools/hooks`). After every
+# commit (regardless of how it was created — `git commit`, `git
+# commit-tree`, IDE GUI commit, atomic-commit.sh wrapper, etc.), this
+# hook re-reads the just-created commit and warns to stderr if the
+# `%an %ae` doesn't match the configured `user.name` / `user.email`.
+#
+# Why a hook (instead of relying on atomic-commit.sh):
+#
+#   - Not every commit goes through atomic-commit.sh. IDE GUIs (VS
+#     Code, Cursor's git panel, lazygit, etc.) call git directly.
+#   - Cherry-picks, rebases, merges, amends ALL produce commits.
+#   - Background re-syncs from Google Drive can rewrite commits in
+#     ways the user never intended; the hook catches the next commit
+#     after the re-sync.
+#
+# Contract:
+#
+#   - NEVER blocks the commit (already happened by the time hook runs).
+#   - Exits 0 always (post-commit hook exit code is informational only).
+#   - Writes a clearly-formatted warning line to stderr on mismatch.
+#
+# Related:
+#
+#   - DRD/consultify/scripts/git-tools/atomic-commit.sh (proactive
+#     wrapper that prevents the commit from being pushed if mismatch).
+#   - DRD/consultify/docs/operations/PARALLEL_SYNC_REMEDIATION_2026-05-09.md
+#     (root cause + remediation playbook).
+
+# Read configured identity. Fall back to empty string so empty config
+# triggers the same warning path (rather than silently passing).
+expected_name="$(git config user.name 2>/dev/null || true)"
+expected_email="$(git config user.email 2>/dev/null || true)"
+
+# Read just-committed identity. `git log -1` always exists in a
+# post-commit context.
+actual_name="$(git log -1 --format='%an' 2>/dev/null || true)"
+actual_email="$(git log -1 --format='%ae' 2>/dev/null || true)"
+sha="$(git log -1 --format='%h' 2>/dev/null || true)"
+subj="$(git log -1 --format='%s' 2>/dev/null || true)"
+
+if [ "$actual_name" != "$expected_name" ] || [ "$actual_email" != "$expected_email" ]; then
+  printf '\n' >&2
+  printf '[post-commit] ⚠ ATTRIBUTION MISMATCH on %s\n' "$sha" >&2
+  printf '[post-commit]   subject:  %s\n' "$subj" >&2
+  printf '[post-commit]   expected: %s <%s>\n' "$expected_name" "$expected_email" >&2
+  printf '[post-commit]   actual:   %s <%s>\n' "$actual_name" "$actual_email" >&2
+  printf '[post-commit]   action:   investigate before pushing — see\n' >&2
+  printf '[post-commit]            DRD/consultify/docs/operations/PARALLEL_SYNC_REMEDIATION_2026-05-09.md\n' >&2
+  printf '\n' >&2
+fi
+
+exit 0

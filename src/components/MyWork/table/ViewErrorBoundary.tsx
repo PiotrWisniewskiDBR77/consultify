@@ -9,20 +9,22 @@ export interface ViewErrorBoundaryProps {
 
 interface ViewErrorBoundaryState {
   hasError: boolean;
-  error: Error | null;
 }
 
 /**
  * Catches render errors in table view renderers and offers retry or grid fallback.
  */
-export class ViewErrorBoundary extends React.Component<ViewErrorBoundaryProps, ViewErrorBoundaryState> {
+export class ViewErrorBoundary extends React.Component<
+  ViewErrorBoundaryProps,
+  ViewErrorBoundaryState
+> {
   constructor(props: ViewErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): ViewErrorBoundaryState {
-    return { hasError: true, error };
+    return { hasError: true };
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
@@ -30,12 +32,12 @@ export class ViewErrorBoundary extends React.Component<ViewErrorBoundaryProps, V
   }
 
   private handleRetry = (): void => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false });
   };
 
   override render(): React.ReactNode {
     const { children, viewName, onSwitchToGrid, locale } = this.props;
-    const { hasError, error } = this.state;
+    const { hasError } = this.state;
 
     if (!hasError) {
       return children;
@@ -52,19 +54,10 @@ export class ViewErrorBoundary extends React.Component<ViewErrorBoundaryProps, V
         className="flex flex-1 min-h-[200px] flex-col items-center justify-center gap-4 rounded-xl border border-slate-200/80 bg-white px-6 py-10 text-center dark:border-navy-700/80 dark:bg-navy-900"
       >
         <div className="max-w-md space-y-2">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {title}
-          </h3>
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             The <span className="font-medium text-slate-700 dark:text-slate-200">{viewName}</span>{' '}
-            layout hit an unexpected error
-            {error?.message ? (
-              <>
-                : <span className="break-words text-slate-600 dark:text-slate-300">{error.message}</span>
-              </>
-            ) : (
-              '.'
-            )}
+            layout hit an unexpected error. Runtime details are hidden for safety.
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">

@@ -65,9 +65,14 @@ async function loadInitiatives(orgId: string, projectId?: string): Promise<any[]
       WHERE i.organization_id = $1
     `;
     const params: unknown[] = [orgId];
-    if (projectId) { q += ' AND i.project_id = $2'; params.push(projectId); }
+    if (projectId) {
+      q += ' AND i.project_id = $2';
+      params.push(projectId);
+    }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 async function loadTasks(orgId: string, projectId?: string): Promise<any[]> {
@@ -83,9 +88,14 @@ async function loadTasks(orgId: string, projectId?: string): Promise<any[]> {
       WHERE t.organization_id = $1
     `;
     const params: unknown[] = [orgId];
-    if (projectId) { q += ' AND t.project_id = $2'; params.push(projectId); }
+    if (projectId) {
+      q += ' AND t.project_id = $2';
+      params.push(projectId);
+    }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 async function loadDecisions(orgId: string, projectId?: string): Promise<any[]> {
@@ -102,9 +112,14 @@ async function loadDecisions(orgId: string, projectId?: string): Promise<any[]> 
       WHERE d.organization_id = $1
     `;
     const params: unknown[] = [orgId];
-    if (projectId) { q += ' AND d.project_id = $2'; params.push(projectId); }
+    if (projectId) {
+      q += ' AND d.project_id = $2';
+      params.push(projectId);
+    }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 async function loadRaidItems(orgId: string, projectId?: string): Promise<any[]> {
@@ -126,7 +141,9 @@ async function loadRaidItems(orgId: string, projectId?: string): Promise<any[]> 
       params.push(projectId);
     }
     return ((await dbAll(q, params)) || []) as any[];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 async function loadTaskCountsByPerson(orgId: string): Promise<Record<string, number>> {
@@ -143,12 +160,19 @@ async function loadTaskCountsByPerson(orgId: string): Promise<Record<string, num
       if (r.assignee_id) map[r.assignee_id] = Number(r.cnt);
     }
     return map;
-  } catch { return {}; }
+  } catch {
+    return {};
+  }
 }
 
 // ─── Problem builders per lane ────────────────────────────────────────────
 
-function buildActionQueue(initiatives: any[], tasks: any[], decisions: any[], raidItems: any[]): ManagerProblemRow[] {
+function buildActionQueue(
+  initiatives: any[],
+  tasks: any[],
+  decisions: any[],
+  raidItems: any[]
+): ManagerProblemRow[] {
   const problems: ManagerProblemRow[] = [];
   const now = Date.now();
 
@@ -171,7 +195,15 @@ function buildActionQueue(initiatives: any[], tasks: any[], decisions: any[], ra
           ownerName: t.assignee_name || null,
           daysOverdue: over,
           impactCount: t.initiative_id ? 1 : 0,
-          affectedEntities: t.initiative_id ? [{ id: t.initiative_id, name: t.initiative_name || 'Initiative', type: 'INITIATIVE' as SourceEntityType }] : [],
+          affectedEntities: t.initiative_id
+            ? [
+                {
+                  id: t.initiative_id,
+                  name: t.initiative_name || 'Initiative',
+                  type: 'INITIATIVE' as SourceEntityType,
+                },
+              ]
+            : [],
           actions: [
             { id: 'replan', label: 'Replan', variant: 'primary' },
             { id: 'reassign', label: 'Reassign' },
@@ -195,7 +227,15 @@ function buildActionQueue(initiatives: any[], tasks: any[], decisions: any[], ra
         ownerName: t.assignee_name || null,
         daysOverdue: null,
         impactCount: t.initiative_id ? 1 : 0,
-        affectedEntities: t.initiative_id ? [{ id: t.initiative_id, name: t.initiative_name || 'Initiative', type: 'INITIATIVE' as SourceEntityType }] : [],
+        affectedEntities: t.initiative_id
+          ? [
+              {
+                id: t.initiative_id,
+                name: t.initiative_name || 'Initiative',
+                type: 'INITIATIVE' as SourceEntityType,
+              },
+            ]
+          : [],
         actions: [
           { id: 'unblock', label: 'Unblock', variant: 'primary' },
           { id: 'escalate', label: 'Escalate', variant: 'danger' },
@@ -225,7 +265,15 @@ function buildActionQueue(initiatives: any[], tasks: any[], decisions: any[], ra
           ownerName: d.owner_name || null,
           daysOverdue: over,
           impactCount: d.initiative_id ? 1 : 0,
-          affectedEntities: d.initiative_name ? [{ id: d.initiative_id, name: d.initiative_name, type: 'INITIATIVE' as SourceEntityType }] : [],
+          affectedEntities: d.initiative_name
+            ? [
+                {
+                  id: d.initiative_id,
+                  name: d.initiative_name,
+                  type: 'INITIATIVE' as SourceEntityType,
+                },
+              ]
+            : [],
           actions: [
             { id: 'approve', label: 'Approve', variant: 'primary' },
             { id: 'reject', label: 'Reject', variant: 'danger' },
@@ -256,7 +304,15 @@ function buildActionQueue(initiatives: any[], tasks: any[], decisions: any[], ra
         ownerName: r.owner_name || null,
         daysOverdue: daysDiff(r.due_date),
         impactCount: 1,
-        affectedEntities: r.initiative_name ? [{ id: r.initiative_id, name: r.initiative_name, type: 'INITIATIVE' as SourceEntityType }] : [],
+        affectedEntities: r.initiative_name
+          ? [
+              {
+                id: r.initiative_id,
+                name: r.initiative_name,
+                type: 'INITIATIVE' as SourceEntityType,
+              },
+            ]
+          : [],
         actions: [
           { id: 'create_mitigation', label: 'Mitigate', variant: 'primary' },
           { id: 'escalate', label: 'Escalate', variant: 'danger' },
@@ -266,7 +322,11 @@ function buildActionQueue(initiatives: any[], tasks: any[], decisions: any[], ra
     }
   }
 
-  return problems.sort((a, b) => severityOrder(a.severity) - severityOrder(b.severity) || (b.daysOverdue ?? 0) - (a.daysOverdue ?? 0));
+  return problems.sort(
+    (a, b) =>
+      severityOrder(a.severity) - severityOrder(b.severity) ||
+      (b.daysOverdue ?? 0) - (a.daysOverdue ?? 0)
+  );
 }
 
 function buildDecisions(decisions: any[]): ManagerProblemRow[] {
@@ -290,7 +350,9 @@ function buildDecisions(decisions: any[]): ManagerProblemRow[] {
         ownerName: d.owner_name || null,
         daysOverdue: daysDiff(d.deadline),
         impactCount: d.initiative_id ? 1 : 0,
-        affectedEntities: d.initiative_name ? [{ id: d.initiative_id, name: d.initiative_name, type: 'INITIATIVE' }] : [],
+        affectedEntities: d.initiative_name
+          ? [{ id: d.initiative_id, name: d.initiative_name, type: 'INITIATIVE' }]
+          : [],
         actions: [
           { id: 'approve', label: 'Approve', variant: 'primary' },
           { id: 'reject', label: 'Reject', variant: 'danger' },
@@ -303,7 +365,7 @@ function buildDecisions(decisions: any[]): ManagerProblemRow[] {
       const daysWaiting = daysDiff(d.created_at) ?? 0;
       problems.push({
         id: `dec-pending-${d.id}`,
-        severity: s === 'DEFERRED' ? 'warning' : (daysWaiting > 14 ? 'warning' : 'info'),
+        severity: s === 'DEFERRED' ? 'warning' : daysWaiting > 14 ? 'warning' : 'info',
         problemType: s === 'DEFERRED' ? 'deferred_decision' : 'pending_decision',
         title: `${s === 'DEFERRED' ? 'Deferred' : 'Pending'}: ${d.title}`,
         rootCause: `${s === 'DEFERRED' ? 'Decision was deferred.' : `Waiting for ${daysWaiting} days.`}${d.owner_name ? ` Owner: ${d.owner_name}.` : ''}`,
@@ -314,7 +376,9 @@ function buildDecisions(decisions: any[]): ManagerProblemRow[] {
         ownerName: d.owner_name || null,
         daysOverdue: d.deadline ? daysDiff(d.deadline) : null,
         impactCount: 0,
-        affectedEntities: d.initiative_name ? [{ id: d.initiative_id, name: d.initiative_name, type: 'INITIATIVE' }] : [],
+        affectedEntities: d.initiative_name
+          ? [{ id: d.initiative_id, name: d.initiative_name, type: 'INITIATIVE' }]
+          : [],
         actions: [
           { id: 'approve', label: 'Approve', variant: 'primary' },
           { id: 'reject', label: 'Reject', variant: 'danger' },
@@ -395,7 +459,9 @@ function buildBlockers(initiatives: any[], tasks: any[], raidItems: any[]): Mana
         ownerName: t.assignee_name || null,
         daysOverdue: null,
         impactCount: t.initiative_id ? 1 : 0,
-        affectedEntities: t.initiative_name ? [{ id: t.initiative_id, name: t.initiative_name, type: 'INITIATIVE' }] : [],
+        affectedEntities: t.initiative_name
+          ? [{ id: t.initiative_id, name: t.initiative_name, type: 'INITIATIVE' }]
+          : [],
         actions: [
           { id: 'unblock', label: 'Unblock', variant: 'primary' },
           { id: 'workaround', label: 'Workaround' },
@@ -424,7 +490,9 @@ function buildBlockers(initiatives: any[], tasks: any[], raidItems: any[]): Mana
         ownerName: r.owner_name || null,
         daysOverdue: daysDiff(r.due_date),
         impactCount: r.initiative_id ? 1 : 0,
-        affectedEntities: r.initiative_name ? [{ id: r.initiative_id, name: r.initiative_name, type: 'INITIATIVE' }] : [],
+        affectedEntities: r.initiative_name
+          ? [{ id: r.initiative_id, name: r.initiative_name, type: 'INITIATIVE' }]
+          : [],
         actions: [
           { id: 'escalate', label: 'Escalate', variant: 'danger' },
           { id: 'workaround', label: 'Workaround' },
@@ -447,7 +515,9 @@ function buildBlockers(initiatives: any[], tasks: any[], raidItems: any[]): Mana
         ownerName: r.owner_name || null,
         daysOverdue: daysDiff(r.due_date),
         impactCount: 1,
-        affectedEntities: r.initiative_name ? [{ id: r.initiative_id, name: r.initiative_name, type: 'INITIATIVE' }] : [],
+        affectedEntities: r.initiative_name
+          ? [{ id: r.initiative_id, name: r.initiative_name, type: 'INITIATIVE' }]
+          : [],
         actions: [
           { id: 'create_mitigation', label: 'Mitigate', variant: 'primary' },
           { id: 'escalate', label: 'Escalate', variant: 'danger' },
@@ -460,7 +530,10 @@ function buildBlockers(initiatives: any[], tasks: any[], raidItems: any[]): Mana
   return problems.sort((a, b) => severityOrder(a.severity) - severityOrder(b.severity));
 }
 
-function buildWorkload(tasks: any[], taskCountsByPerson: Record<string, number>): ManagerProblemRow[] {
+function buildWorkload(
+  tasks: any[],
+  taskCountsByPerson: Record<string, number>
+): ManagerProblemRow[] {
   const problems: ManagerProblemRow[] = [];
   const OVERLOAD_THRESHOLD = 7;
   const seen = new Set<string>();
@@ -511,10 +584,10 @@ function buildWorkload(tasks: any[], taskCountsByPerson: Record<string, number>)
         ownerName: null,
         daysOverdue: daysDiff(t.due_date),
         impactCount: 0,
-        affectedEntities: t.initiative_name ? [{ id: t.initiative_id, name: t.initiative_name, type: 'INITIATIVE' }] : [],
-        actions: [
-          { id: 'reassign', label: 'Assign', variant: 'primary' },
-        ],
+        affectedEntities: t.initiative_name
+          ? [{ id: t.initiative_id, name: t.initiative_name, type: 'INITIATIVE' }]
+          : [],
+        actions: [{ id: 'reassign', label: 'Assign', variant: 'primary' }],
         meta: { status: t.status },
       });
     }
@@ -553,7 +626,9 @@ function buildWorkload(tasks: any[], taskCountsByPerson: Record<string, number>)
           ownerName: t.assignee_name || null,
           daysOverdue: dd,
           impactCount: 0,
-          affectedEntities: t.initiative_name ? [{ id: t.initiative_id, name: t.initiative_name, type: 'INITIATIVE' }] : [],
+          affectedEntities: t.initiative_name
+            ? [{ id: t.initiative_id, name: t.initiative_name, type: 'INITIATIVE' }]
+            : [],
           actions: [
             { id: 'replan', label: 'Extend deadline' },
             { id: 'reassign', label: 'Reassign' },
@@ -591,14 +666,25 @@ function buildRisk(initiatives: any[], tasks: any[], raidItems: any[]): ManagerP
       ownerName: r.owner_name || null,
       daysOverdue: daysDiff(r.due_date),
       impactCount: r.initiative_id ? 1 : 0,
-      affectedEntities: r.initiative_name ? [{ id: r.initiative_id, name: r.initiative_name, type: 'INITIATIVE' }] : [],
+      affectedEntities: r.initiative_name
+        ? [{ id: r.initiative_id, name: r.initiative_name, type: 'INITIATIVE' }]
+        : [],
       actions: [
-        { id: 'create_mitigation', label: r.mitigation_plan ? 'Update mitigation' : 'Create mitigation', variant: 'primary' },
+        {
+          id: 'create_mitigation',
+          label: r.mitigation_plan ? 'Update mitigation' : 'Create mitigation',
+          variant: 'primary',
+        },
         { id: 'assign_mitigation_owner', label: 'Assign owner' },
         { id: 'escalate', label: 'Escalate', variant: 'danger' },
         { id: 'mark_mitigated', label: 'Mark mitigated' },
       ],
-      meta: { probability: r.probability, impact: r.impact, risk_score: score, response_strategy: r.response_strategy },
+      meta: {
+        probability: r.probability,
+        impact: r.impact,
+        risk_score: score,
+        response_strategy: r.response_strategy,
+      },
     });
   }
 
@@ -672,7 +758,11 @@ function buildRisk(initiatives: any[], tasks: any[], raidItems: any[]): ManagerP
   return problems.sort((a, b) => severityOrder(a.severity) - severityOrder(b.severity));
 }
 
-function buildPeopleChange(initiatives: any[], tasks: any[], taskCountsByPerson: Record<string, number>): ManagerProblemRow[] {
+function buildPeopleChange(
+  initiatives: any[],
+  tasks: any[],
+  taskCountsByPerson: Record<string, number>
+): ManagerProblemRow[] {
   const problems: ManagerProblemRow[] = [];
 
   for (const i of initiatives) {

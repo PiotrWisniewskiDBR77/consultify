@@ -7,10 +7,7 @@
  * - Subtle progress bars
  */
 
-import {
-  Loader2,
-  RefreshCw,
-} from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -69,7 +66,9 @@ export const SuperAdminMetricsView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Enterprise Analytics & Funnel Monitoring</h2>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Enterprise Analytics & Funnel Monitoring
+          </h2>
         </div>
         <Button variant="secondary" icon={RefreshCw} onClick={fetchData}>
           Refresh
@@ -125,7 +124,7 @@ export const SuperAdminMetricsView: React.FC = () => {
                   <span
                     className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${
                       warning.severity === 'CRITICAL'
-                        ? 'bg-red-400'
+                        ? 'bg-rose-400'
                         : warning.severity === 'HIGH'
                           ? 'bg-amber-400'
                           : 'bg-yellow-400'

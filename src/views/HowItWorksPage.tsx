@@ -17,14 +17,14 @@ import { MarketingLayout } from '../components/Landing/MarketingLayout';
 const STEP_VISUALS = [
   { number: '01', icon: FileText, color: '#7c3aed', glow: 'rgba(124,58,237,0.30)' },
   { number: '02', icon: Brain, color: '#a855f7', glow: 'rgba(168,85,247,0.28)' },
-  { number: '03', icon: CheckCircle2, color: '#06b6d4', glow: 'rgba(6,182,212,0.25)' },
+  { number: '03', icon: CheckCircle2, color: '#3b82f6', glow: 'rgba(6,182,212,0.25)' },
   { number: '04', icon: Zap, color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
   { number: '05', icon: TrendingUp, color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
 ];
 
 const TECH_VISUALS = [
   { color: '#7c3aed', icon: Brain },
-  { color: '#06b6d4', icon: Zap },
+  { color: '#3b82f6', icon: Zap },
   { color: '#a855f7', icon: Cpu },
   { color: '#10b981', icon: CheckCircle2 },
 ];
@@ -110,7 +110,10 @@ export const HowItWorksPage: React.FC = () => {
             transition={{ delay: 0.14 }}
             className="text-lg text-white/55 max-w-2xl mx-auto mb-10"
           >
-            {t('pages.howItWorks.hero.subtitle', 'No consulting firm. No 6-month project. No slides assembled manually at 2am. Just intelligence turning into execution and results.')}
+            {t(
+              'pages.howItWorks.hero.subtitle',
+              'No consulting firm. No 6-month project. No slides assembled manually at 2am. Just intelligence turning into execution and results.'
+            )}
           </motion.p>
 
           <motion.div
@@ -273,10 +276,16 @@ export const HowItWorksPage: React.FC = () => {
                   </span>
                 </div>
                 <h2 className="text-3xl font-black text-white mb-5">
-                  {t('pages.howItWorks.tech.title', 'Powered by DBR77 Vector, our proprietary AI model.')}
+                  {t(
+                    'pages.howItWorks.tech.title',
+                    'Powered by DBR77 Vector, our proprietary AI model.'
+                  )}
                 </h2>
                 <p className="text-white/55 leading-relaxed mb-6">
-                  {t('pages.howItWorks.tech.description', 'Built on 1,000+ real transformation engagements and delivered through secure deployment options. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation from data ingestion to final output.')}
+                  {t(
+                    'pages.howItWorks.tech.description',
+                    'Built on 1,000+ real transformation engagements and delivered through secure deployment options. DBR77 Vector is our model, not a wrapper, with MCP integration for end-to-end automation from data ingestion to final output.'
+                  )}
                 </p>
                 <a
                   href="https://vector.dbr77.com"

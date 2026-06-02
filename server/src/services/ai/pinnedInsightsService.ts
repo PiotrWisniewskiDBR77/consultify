@@ -81,34 +81,35 @@ class PinnedInsightsService {
       params.push(input.userId);
     }
 
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT * FROM pinned_insights
        WHERE ${conditions.join(' AND ')}
        ORDER BY created_at DESC
        LIMIT ?`,
       [...params, input.limit || 50]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     return (rows || []).map(this.mapRow);
   }
 
   async unpinInsight(insightId: string, userId: string): Promise<boolean> {
-    await dbRun(
-      `DELETE FROM pinned_insights WHERE id = ? AND user_id = ?`,
-      [insightId, userId]
-    );
+    await dbRun(`DELETE FROM pinned_insights WHERE id = ? AND user_id = ?`, [insightId, userId]);
     return true;
   }
 
-  async updateInsight(insightId: string, userId: string, updates: {
-    content?: string;
-    tags?: string[];
-    isShared?: boolean;
-  }): Promise<PinnedInsight | null> {
-    const existing = await dbGet(
-      `SELECT * FROM pinned_insights WHERE id = ? AND user_id = ?`,
-      [insightId, userId]
-    ) as any;
+  async updateInsight(
+    insightId: string,
+    userId: string,
+    updates: {
+      content?: string;
+      tags?: string[];
+      isShared?: boolean;
+    }
+  ): Promise<PinnedInsight | null> {
+    const existing = (await dbGet(`SELECT * FROM pinned_insights WHERE id = ? AND user_id = ?`, [
+      insightId,
+      userId,
+    ])) as any;
 
     if (!existing) return null;
 
@@ -126,7 +127,7 @@ class PinnedInsightsService {
       ]
     );
 
-    const updated = await dbGet(`SELECT * FROM pinned_insights WHERE id = ?`, [insightId]) as any;
+    const updated = (await dbGet(`SELECT * FROM pinned_insights WHERE id = ?`, [insightId])) as any;
     return updated ? this.mapRow(updated) : null;
   }
 

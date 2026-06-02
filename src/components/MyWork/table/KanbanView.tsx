@@ -103,7 +103,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             key={laneKey}
             className={`flex-shrink-0 w-[280px] flex flex-col rounded-2xl bg-slate-50/80 dark:bg-navy-900/80 border transition-colors ${
               dropTarget === laneKey
-                ? 'border-violet-400 dark:border-violet-500 bg-violet-50/30 dark:bg-violet-500/5'
+                ? 'border-primary-400 dark:border-primary-500 bg-primary-50/30 dark:bg-primary-500/5'
                 : isOverWip
                   ? 'border-amber-300/60 dark:border-amber-500/30'
                   : 'border-slate-200/40 dark:border-navy-700/40'
@@ -149,7 +149,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                     onClick={() => onNodeClick?.(node.id)}
                     className={`rounded-xl border bg-white dark:bg-navy-950 p-3 cursor-pointer hover:shadow-md transition-all ${
                       dragNodeId === node.id
-                        ? 'opacity-40 scale-95 border-violet-300'
+                        ? 'opacity-40 scale-95 border-primary-300'
                         : 'border-slate-200/60 dark:border-navy-700/40'
                     }`}
                     style={
@@ -205,7 +205,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                       <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 dark:border-navy-800">
                         {person ? (
                           <div className="flex items-center gap-1">
-                            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-[7px] font-bold text-white">
+                            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-[7px] font-bold text-white">
                               {String(person).charAt(0).toUpperCase()}
                             </div>
                             <span className="text-[9px] text-slate-500 truncate max-w-[80px]">

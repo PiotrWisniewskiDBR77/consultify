@@ -402,7 +402,10 @@ export interface KbTag {
   article_count: number;
 }
 
-async function fetchCollections(lang: string, params: { parentId?: string; featured?: boolean } = {}): Promise<KbCollection[]> {
+async function fetchCollections(
+  lang: string,
+  params: { parentId?: string; featured?: boolean } = {}
+): Promise<KbCollection[]> {
   const searchParams = new URLSearchParams({ lang });
   if (params.parentId) searchParams.append('parent', params.parentId);
   if (params.featured) searchParams.append('featured', 'true');
@@ -439,14 +442,22 @@ async function fetchTags(lang: string, kind?: string): Promise<KbTag[]> {
   return (data.data?.tags || []) as KbTag[];
 }
 
-async function fetchRelatedArticles(slug: string, lang: string, limit = 5): Promise<KbArticleListItem[]> {
-  const res = await fetch(`${PUBLIC_V8_KB_BASE}/articles/${slug}/related?lang=${lang}&limit=${limit}`);
+async function fetchRelatedArticles(
+  slug: string,
+  lang: string,
+  limit = 5
+): Promise<KbArticleListItem[]> {
+  const res = await fetch(
+    `${PUBLIC_V8_KB_BASE}/articles/${slug}/related?lang=${lang}&limit=${limit}`
+  );
   if (!res.ok) return [];
   const data = await res.json();
   return (data.data?.articles || []) as KbArticleListItem[];
 }
 
-async function fetchArticleRedirect(slug: string): Promise<{ redirectSlug: string | null; deprecationReason: string | null }> {
+async function fetchArticleRedirect(
+  slug: string
+): Promise<{ redirectSlug: string | null; deprecationReason: string | null }> {
   const res = await fetch(`${PUBLIC_V8_KB_BASE}/articles/${slug}/redirect`);
   if (!res.ok) return { redirectSlug: null, deprecationReason: null };
   const data = await res.json();
@@ -457,8 +468,13 @@ async function searchWithFacets(
   query: string,
   lang: string,
   params: { collectionSlug?: string; tagSlugs?: string[]; surface?: string; limit?: number } = {}
-): Promise<{ articles: KbArticleListItem[]; facets: { collections: any[]; tags: any[] }; total: number }> {
-  if (!query || query.length < 2) return { articles: [], facets: { collections: [], tags: [] }, total: 0 };
+): Promise<{
+  articles: KbArticleListItem[];
+  facets: { collections: any[]; tags: any[] };
+  total: number;
+}> {
+  if (!query || query.length < 2)
+    return { articles: [], facets: { collections: [], tags: [] }, total: 0 };
   const searchParams = new URLSearchParams({ q: query, lang });
   if (params.collectionSlug) searchParams.append('collection', params.collectionSlug);
   if (params.tagSlugs?.length) searchParams.append('tags', params.tagSlugs.join(','));
@@ -470,7 +486,10 @@ async function searchWithFacets(
   return data.data || { articles: [], facets: { collections: [], tags: [] }, total: 0 };
 }
 
-export function useKnowledgeCollections(params: { parentId?: string; featured?: boolean } = {}, languageOverride?: string) {
+export function useKnowledgeCollections(
+  params: { parentId?: string; featured?: boolean } = {},
+  languageOverride?: string
+) {
   const { i18n } = useTranslation();
   const lang = normalizeKbLang(languageOverride ?? i18n.language);
   return useQuery({
@@ -480,7 +499,12 @@ export function useKnowledgeCollections(params: { parentId?: string; featured?: 
   });
 }
 
-export function useKnowledgeCollectionArticles(collectionSlug: string | undefined, limit = 20, offset = 0, languageOverride?: string) {
+export function useKnowledgeCollectionArticles(
+  collectionSlug: string | undefined,
+  limit = 20,
+  offset = 0,
+  languageOverride?: string
+) {
   const { i18n } = useTranslation();
   const lang = normalizeKbLang(languageOverride ?? i18n.language);
   return useQuery({

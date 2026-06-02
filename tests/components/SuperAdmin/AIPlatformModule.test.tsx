@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { AIPlatformModule } from '../../../src/views/superadmin/AIPlatformModule/AIPlatformModule';
 import { Api } from '../../../src/services/api';
@@ -152,5 +152,18 @@ describe('SuperAdmin AIPlatformModule', () => {
     render(<AIPlatformModule initialTab="operations" initialSubTab="prompt-os-runtime" />);
 
     expect(await screen.findByText('Prompt OS runtime panel')).toBeInTheDocument();
+  });
+
+  it('shows unknown internet policy status for malformed signal payloads', async () => {
+    vi.mocked(Api.getAIGovernancePolicy).mockResolvedValue({
+      data: { data: { unexpected: true } },
+    } as any);
+
+    render(<AIPlatformModule initialTab="operations" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Internet: UNKNOWN')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Internet: OFF')).not.toBeInTheDocument();
   });
 });

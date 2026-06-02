@@ -79,7 +79,7 @@ const FRAMEWORKS: FrameworkDef[] = [
     descEn: 'Identify and analyze key stakeholders',
     descPl: 'Identyfikacja i analiza kluczowych interesariuszy',
     icon: Users,
-    color: 'text-violet-600',
+    color: 'text-primary-600',
     columns: [
       { key: 'label', header: 'Stakeholder', type: 'text', visible: true, width: 200 },
       { key: 'role', header: 'Role', type: 'text', visible: true, width: 160 },
@@ -132,7 +132,7 @@ const FRAMEWORKS: FrameworkDef[] = [
     descEn: 'Identify, assess and mitigate project risks',
     descPl: 'Identyfikacja, ocena i mitygacja ryzyk projektowych',
     icon: Shield,
-    color: 'text-red-600',
+    color: 'text-rose-600',
     columns: [
       { key: 'label', header: 'Risk', type: 'text', visible: true, width: 220 },
       {
@@ -403,7 +403,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
       <div className="w-[560px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-violet-500" />
+            <Sparkles size={16} className="text-primary-500" />
             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
               {isPl ? 'Generator frameworków' : 'Framework Generator'}
             </h3>
@@ -433,7 +433,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
                   onClick={() => setSelected(fw.id)}
                   className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
                     isActive
-                      ? 'border-violet-500/50 bg-violet-500/5 ring-1 ring-violet-500/20'
+                      ? 'border-primary-500/50 bg-primary-500/5 ring-1 ring-primary-500/20'
                       : 'border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50 dark:hover:bg-navy-800'
                   }`}
                 >

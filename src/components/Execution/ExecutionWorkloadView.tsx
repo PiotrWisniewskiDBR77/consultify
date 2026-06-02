@@ -163,8 +163,8 @@ const getHeatmapColor = (percentage: number): string => {
   if (percentage <= 70) return 'bg-emerald-500/50';
   if (percentage <= 85) return 'bg-yellow-500/35';
   if (percentage <= 100) return 'bg-amber-500/45';
-  if (percentage <= 120) return 'bg-orange-500/50';
-  return 'bg-red-500/50';
+  if (percentage <= 120) return 'bg-amber-500/50';
+  return 'bg-rose-500/50';
 };
 
 const getHeatmapTextColor = (percentage: number): string => {
@@ -173,14 +173,14 @@ const getHeatmapTextColor = (percentage: number): string => {
   if (percentage <= 70) return 'text-emerald-300';
   if (percentage <= 85) return 'text-yellow-400';
   if (percentage <= 100) return 'text-amber-400';
-  return 'text-red-400';
+  return 'text-rose-400';
 };
 
 const getHeatmapBorder = (percentage: number): string => {
   if (percentage === 0) return 'border-transparent';
   if (percentage <= 70) return 'border-emerald-500/20';
   if (percentage <= 100) return 'border-amber-500/30';
-  return 'border-red-500/40';
+  return 'border-rose-500/40';
 };
 
 // ============================================
@@ -206,7 +206,7 @@ const WorkloadCell: React.FC<WorkloadCellProps> = ({ allocations, onClick, viewM
       onClick={onClick}
       className={`
         w-full rounded-lg transition-all border
-        hover:border-cyan-500/50 hover:scale-[1.03] hover:shadow-md
+        hover:border-blue-500/50 hover:scale-[1.03] hover:shadow-md
         ${bgColor} ${borderColor}
         flex flex-col items-center justify-center
         ${viewMode === 'monthly' ? 'h-16 gap-0.5' : 'h-12'}
@@ -220,7 +220,7 @@ const WorkloadCell: React.FC<WorkloadCellProps> = ({ allocations, onClick, viewM
             >
               {totalPercentage}%
             </span>
-            {isOverallocated && <AlertTriangle size={11} className="text-red-500" />}
+            {isOverallocated && <AlertTriangle size={11} className="text-rose-500" />}
           </div>
           {viewMode === 'monthly' && taskCount > 0 && (
             <span className="text-[10px] text-slate-500">
@@ -300,9 +300,9 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
                   <span
                     className={`text-xs px-2 py-0.5 rounded ${
                       allocation.status === InitiativeStatus.EXECUTING
-                        ? 'bg-cyan-500/20 text-cyan-400'
+                        ? 'bg-blue-500/20 text-blue-400'
                         : allocation.status === InitiativeStatus.BLOCKED
-                          ? 'bg-red-500/20 text-red-400'
+                          ? 'bg-rose-500/20 text-rose-400'
                           : 'bg-slate-500/20 text-slate-400'
                     }`}
                   >
@@ -519,7 +519,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 onClick={() => setViewMode('weekly')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'weekly'
-                    ? 'bg-purple-600 text-white shadow-sm'
+                    ? 'bg-primary-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -530,7 +530,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 onClick={() => setViewMode('monthly')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'monthly'
-                    ? 'bg-purple-600 text-white shadow-sm'
+                    ? 'bg-primary-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -550,7 +550,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                       onClick={() => setWeekCount(w)}
                       className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                         weekCount === w
-                          ? 'bg-purple-500/20 text-purple-400'
+                          ? 'bg-primary-500/20 text-primary-400'
                           : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
@@ -563,7 +563,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                       onClick={() => setMonthCount(m)}
                       className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                         monthCount === m
-                          ? 'bg-purple-500/20 text-purple-400'
+                          ? 'bg-primary-500/20 text-primary-400'
                           : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
@@ -719,7 +719,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
               <span className="text-slate-500 dark:text-slate-400">Medium</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-3 rounded-sm bg-red-500/50" />
+              <div className="w-4 h-3 rounded-sm bg-rose-500/50" />
               <span className="text-slate-500 dark:text-slate-400">Overallocated</span>
             </div>
           </div>
@@ -727,8 +727,8 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             <>
               <div className="w-px h-3 bg-slate-300 dark:bg-navy-700 mx-1" />
               <div className="flex items-center gap-1.5">
-                <AlertTriangle size={11} className="text-red-500" />
-                <span className="text-red-400">Peak: {maxAllocation}%</span>
+                <AlertTriangle size={11} className="text-rose-500" />
+                <span className="text-rose-400">Peak: {maxAllocation}%</span>
               </div>
             </>
           )}

@@ -101,7 +101,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -111,7 +111,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
       {/* Header */}
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Bell className="w-5 h-5 text-purple-500" />
+          <Bell className="w-5 h-5 text-primary-500" />
           {t('billing.alerts.title', 'Usage Alerts & Limits')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -126,7 +126,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
       <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-purple-500" />
+            <Shield className="w-5 h-5 text-primary-500" />
             <div>
               <p className="font-medium text-slate-900 dark:text-white">
                 {t('billing.alerts.emailNotifications', 'Email Notifications')}
@@ -139,7 +139,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
           <button
             onClick={() => toggleSetting('email_notifications')}
             className={`w-12 h-6 rounded-full transition-colors ${
-              settings.email_notifications ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.email_notifications ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -169,9 +169,9 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
                       threshold === 100
-                        ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                        ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400'
                         : threshold === 90
-                          ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
+                          ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
                           : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
                     }`}
                   >
@@ -184,7 +184,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                 <button
                   onClick={() => toggleSetting(key)}
                   className={`w-10 h-5 rounded-full transition-colors ${
-                    settings[key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                    settings[key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
                   }`}
                 >
                   <div
@@ -217,9 +217,9 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
                       threshold === 100
-                        ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                        ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400'
                         : threshold === 90
-                          ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
+                          ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
                           : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
                     }`}
                   >
@@ -235,7 +235,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                 <button
                   onClick={() => toggleSetting(key)}
                   className={`w-10 h-5 rounded-full transition-colors ${
-                    settings[key] ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+                    settings[key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
                   }`}
                 >
                   <div
@@ -277,7 +277,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
               }))
             }
             placeholder={t('billing.alerts.noCap', 'No limit')}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
           />
         </div>
       </div>
@@ -302,7 +302,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
           <button
             onClick={() => toggleSetting('auto_upgrade_enabled')}
             className={`w-12 h-6 rounded-full transition-colors ${
-              settings.auto_upgrade_enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.auto_upgrade_enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -322,7 +322,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                 auto_upgrade_plan_id: e.target.value || null,
               }))
             }
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
           >
             <option value="">{t('billing.alerts.selectPlan', 'Select upgrade plan...')}</option>
             {plans.map((plan) => (
@@ -339,7 +339,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
         >
           {saving ? (
             <>

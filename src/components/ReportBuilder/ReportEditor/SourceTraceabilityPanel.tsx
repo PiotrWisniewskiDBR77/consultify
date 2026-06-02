@@ -60,22 +60,22 @@ const ARTIFACT_ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const ARTIFACT_COLOR_MAP: Record<string, string> = {
-  initiative: 'text-purple-400',
-  initiative_portfolio: 'text-purple-400',
+  initiative: 'text-primary-400',
+  initiative_portfolio: 'text-primary-400',
   task: 'text-blue-400',
   execution_tasks: 'text-blue-400',
   decision: 'text-amber-400',
   benefit: 'text-green-400',
   benefits_tracking: 'text-green-400',
-  kpi_roi: 'text-cyan-400',
+  kpi_roi: 'text-blue-400',
   financial_analysis: 'text-emerald-400',
   economic_analysis: 'text-emerald-400',
   budget: 'text-emerald-400',
   valuation: 'text-emerald-400',
   execution_status: 'text-blue-400',
-  risk: 'text-red-400',
-  raid: 'text-red-400',
-  tool_session: 'text-cyan-400',
+  risk: 'text-rose-400',
+  raid: 'text-rose-400',
+  tool_session: 'text-blue-400',
 };
 
 function formatArtifactType(type: string, isPl: boolean): string {

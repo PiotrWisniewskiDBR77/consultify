@@ -10,7 +10,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { isKbCategoryForCurrentSite } from '../../config/knowledgeBaseSite';
-import { KbArticleListItem, useKnowledgeFeatured, useKnowledgePublicPreview } from '../../hooks/useKnowledge';
+import {
+  KbArticleListItem,
+  useKnowledgeFeatured,
+  useKnowledgePublicPreview,
+} from '../../hooks/useKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 
 function kbImg(url: string | null | undefined): string | undefined {
@@ -79,10 +83,14 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
       onClick={() => onArticleClick(article)}
     >
       {/* Video Teaser / Thumbnail */}
-      <div className="relative aspect-video bg-gradient-to-br from-purple-900 to-indigo-900 overflow-hidden">
+      <div className="relative aspect-video bg-gradient-to-br from-primary-900 to-indigo-900 overflow-hidden">
         {article.thumbnail_url ? (
           <img
-            src={kbThumb(article.thumbnail_url) || kbImg(article.thumbnail_url) || article.thumbnail_url}
+            src={
+              kbThumb(article.thumbnail_url) ||
+              kbImg(article.thumbnail_url) ||
+              article.thumbnail_url
+            }
             alt={article.title}
             width={600}
             height={338}
@@ -100,14 +108,14 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
         {article.video_teaser_url && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
             <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Play size={24} className="text-purple-600 ml-1" />
+              <Play size={24} className="text-primary-600 ml-1" />
             </div>
           </div>
         )}
 
         {/* Category Badge */}
         <div className="absolute top-3 left-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-purple-600 dark:text-purple-400 text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-primary-600 dark:text-primary-400 text-xs font-semibold rounded-full">
             <DynamicIcon name={article.category_icon} size={12} />
             {article.category_name}
           </span>
@@ -124,13 +132,13 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="mb-2 min-h-[3.5rem] text-lg font-bold text-slate-900 transition-colors line-clamp-2 group-hover:text-purple-600 dark:text-white dark:group-hover:text-purple-400">
+        <h3 className="mb-2 min-h-[3.5rem] text-lg font-bold text-slate-900 transition-colors line-clamp-2 group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
           {article.title}
         </h3>
         <p className="mb-4 flex-1 text-sm text-slate-600 line-clamp-3 dark:text-slate-400">
           {article.summary}
         </p>
-        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:from-purple-700 group-hover:to-indigo-700">
+        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:from-primary-700 group-hover:to-indigo-700">
           {t('landing.knowledge.readMore', 'Read Full Article')}
           <ArrowRight size={14} />
         </span>
@@ -154,15 +162,19 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
   const { t } = useTranslation();
   const navigate = useNavigate();
   const previewLimit = 3;
-  const { data: featuredArticles = [], isLoading: featuredLoading } = useKnowledgeFeatured(previewLimit);
-  const { data: previewArticles = [], isLoading: previewLoading } = useKnowledgePublicPreview(previewLimit * 2);
+  const { data: featuredArticles = [], isLoading: featuredLoading } =
+    useKnowledgeFeatured(previewLimit);
+  const { data: previewArticles = [], isLoading: previewLoading } = useKnowledgePublicPreview(
+    previewLimit * 2
+  );
 
   const articles = useMemo(
-    () => buildLandingArticles(
-      featuredArticles.filter(a => isKbCategoryForCurrentSite(a.category_slug)),
-      previewArticles.filter(a => isKbCategoryForCurrentSite(a.category_slug)),
-      previewLimit
-    ),
+    () =>
+      buildLandingArticles(
+        featuredArticles.filter((a) => isKbCategoryForCurrentSite(a.category_slug)),
+        previewArticles.filter((a) => isKbCategoryForCurrentSite(a.category_slug)),
+        previewLimit
+      ),
     [featuredArticles, previewArticles]
   );
   const isLoading = featuredLoading || previewLoading;
@@ -182,7 +194,7 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
           </div>
         </div>
       </section>
@@ -198,7 +210,7 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-semibold mb-4">
             <BookOpen size={16} />
             {t('landing.knowledge.badge', 'Knowledge Base')}
           </div>
@@ -224,7 +236,7 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
         <div className="text-center">
           <button
             onClick={handleExploreAll}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white dark:bg-slate-800 border-2 border-purple-600 text-purple-600 dark:text-purple-400 font-semibold rounded-xl hover:bg-purple-50 dark:hover:bg-slate-700 transition-all shadow-lg"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-white dark:bg-slate-800 border-2 border-primary-600 text-primary-600 dark:text-primary-400 font-semibold rounded-xl hover:bg-primary-50 dark:hover:bg-slate-700 transition-all shadow-lg"
           >
             {t('landing.knowledge.exploreAll', 'Access Full Knowledge Base')}
             <ArrowRight size={18} />

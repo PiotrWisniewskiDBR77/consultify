@@ -44,36 +44,36 @@ export const ACTUAL_COLORS = {
  */
 export const TARGET_COLORS = {
   // Primary background and border
-  bg: 'bg-purple-600',
-  bgLight: 'bg-purple-100',
-  bgLightDark: 'dark:bg-purple-600/40',
-  border: 'border-purple-500',
-  borderDashed: 'border-purple-400 border-dashed',
+  bg: 'bg-primary-600',
+  bgLight: 'bg-primary-100',
+  bgLightDark: 'dark:bg-primary-600/40',
+  border: 'border-primary-500',
+  borderDashed: 'border-primary-400 border-dashed',
 
   // Text colors
   text: 'text-white',
-  textDark: 'text-purple-600',
-  textDarkMode: 'dark:text-purple-300',
-  textLight: 'text-purple-400',
-  textNeutral: 'text-purple-900 dark:text-white',
+  textDark: 'text-primary-600',
+  textDarkMode: 'dark:text-primary-300',
+  textLight: 'text-primary-400',
+  textNeutral: 'text-primary-900 dark:text-white',
 
   // Hover states
-  hoverBg: 'hover:bg-purple-500',
-  hoverBorder: 'hover:border-purple-500',
-  hoverText: 'hover:text-purple-400',
+  hoverBg: 'hover:bg-primary-500',
+  hoverBorder: 'hover:border-primary-500',
+  hoverText: 'hover:text-primary-400',
 
   // Dark mode variants
-  darkBg: 'dark:bg-purple-600',
-  darkHoverBg: 'dark:hover:bg-purple-500',
+  darkBg: 'dark:bg-primary-600',
+  darkHoverBg: 'dark:hover:bg-primary-500',
 
   // Shadow and glow effects
-  shadow: 'shadow-lg shadow-purple-900/40',
-  glow: 'shadow-lg shadow-purple-900/30',
+  shadow: 'shadow-lg shadow-primary-900/40',
+  glow: 'shadow-lg shadow-primary-900/30',
   glowRing: 'shadow-[0_0_15px_rgba(168,85,247,0.5)]',
 
   // Small elements (dots, indicators)
-  dot: 'bg-purple-600',
-  ring: 'border-purple-400 border-dashed',
+  dot: 'bg-primary-600',
+  ring: 'border-primary-400 border-dashed',
 } as const;
 
 /**
@@ -90,7 +90,7 @@ export function getAssessmentButtonClasses(type: 'actual' | 'target', isActive: 
   } else {
     return isActive
       ? `${TARGET_COLORS.bg} ${TARGET_COLORS.border} ${TARGET_COLORS.text} ${TARGET_COLORS.shadow}`
-      : `bg-slate-100 dark:bg-navy-950/30 border-slate-200 dark:border-purple-500/30 text-slate-500 dark:text-slate-300 ${TARGET_COLORS.hoverBorder} hover:bg-purple-50 dark:hover:bg-purple-500/10 ${TARGET_COLORS.hoverText} dark:hover:text-white hover:shadow-lg hover:shadow-purple-900/20`;
+      : `bg-slate-100 dark:bg-navy-950/30 border-slate-200 dark:border-primary-500/30 text-slate-500 dark:text-slate-300 ${TARGET_COLORS.hoverBorder} hover:bg-primary-50 dark:hover:bg-primary-500/10 ${TARGET_COLORS.hoverText} dark:hover:text-white hover:shadow-lg hover:shadow-primary-900/20`;
   }
 }
 
@@ -127,7 +127,7 @@ export function getLevelBubbleClasses(
   } else if (isTarget) {
     return `${TARGET_COLORS.ring} ${TARGET_COLORS.textLight} ${TARGET_COLORS.glowRing}`;
   } else if (isInGap) {
-    return 'border-purple-500/30 text-purple-200/50';
+    return 'border-primary-500/30 text-primary-200/50';
   } else {
     return 'border-white/10 text-slate-600';
   }

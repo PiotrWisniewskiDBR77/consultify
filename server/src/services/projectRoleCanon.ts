@@ -10,12 +10,16 @@
  * Those can be mapped into the canon via helpers below.
  */
 export const CanonicalProjectRole = {
-  SPONSOR: 'SPONSOR',
+  PROJECT_SPONSOR: 'PROJECT_SPONSOR',
   PROJECT_LEADER: 'PROJECT_LEADER',
-  INITIATIVE_OWNER: 'INITIATIVE_OWNER',
-  TEAM_MEMBER: 'TEAM_MEMBER',
+  TASK_ASSIGNEE: 'TASK_ASSIGNEE',
+  OBSERVER: 'OBSERVER',
   PMO: 'PMO',
-  PORTFOLIO_OWNER: 'PORTFOLIO_OWNER',
+  INITIATIVE_OWNER: 'INITIATIVE_OWNER',
+  WORKSTREAM_OWNER: 'WORKSTREAM_OWNER',
+  REVIEWER: 'REVIEWER',
+  SME: 'SME',
+  CONSULTANT: 'CONSULTANT',
   BUSINESS_OWNER: 'BUSINESS_OWNER',
   STEERING_COMMITTEE: 'STEERING_COMMITTEE',
 } as const;
@@ -27,7 +31,7 @@ export const CANONICAL_PROJECT_ROLE_LABELS: Record<
   CanonicalProjectRoleType,
   { en: string; pl: string; descriptionEn: string; descriptionPl: string }
 > = {
-  SPONSOR: {
+  PROJECT_SPONSOR: {
     en: 'Sponsor (Business Owner)',
     pl: 'Sponsor (Właściciel biznesowy)',
     descriptionEn: 'Owns business goal and ROI; approves budget and key decisions.',
@@ -39,6 +43,24 @@ export const CANONICAL_PROJECT_ROLE_LABELS: Record<
     descriptionEn: 'Operational leader responsible for delivery, plan, schedule, and execution.',
     descriptionPl: 'Operacyjny dowódca odpowiedzialny za delivery, plan, harmonogram i wykonanie.',
   },
+  TASK_ASSIGNEE: {
+    en: 'Task Assignee',
+    pl: 'Wykonawca zadania',
+    descriptionEn: 'Executes assigned work and updates own task progress.',
+    descriptionPl: 'Wykonuje przypisana prace i aktualizuje postep swoich zadan.',
+  },
+  OBSERVER: {
+    en: 'Observer',
+    pl: 'Obserwator',
+    descriptionEn: 'Read-only project participant.',
+    descriptionPl: 'Uczestnik projektu tylko do odczytu.',
+  },
+  PMO: {
+    en: 'Project Office (PMO)',
+    pl: 'Project Office (PMO)',
+    descriptionEn: 'Governance and standards control; typically invoked on triggers.',
+    descriptionPl: 'Kontrola governance i standardow; zwykle wywolywane na triggerach.',
+  },
   INITIATIVE_OWNER: {
     en: 'Initiative Owner',
     pl: 'Właściciel inicjatywy',
@@ -46,25 +68,29 @@ export const CANONICAL_PROJECT_ROLE_LABELS: Record<
     descriptionPl:
       'Odpowiada za realizację konkretnej inicjatywy/obszaru; planuje i raportuje postęp.',
   },
-  TEAM_MEMBER: {
-    en: 'Team Member',
-    pl: 'Członek zespołu',
-    descriptionEn: 'Executes assigned work and updates progress.',
-    descriptionPl: 'Wykonuje pracę i aktualizuje postęp.',
+  WORKSTREAM_OWNER: {
+    en: 'Workstream Owner',
+    pl: 'Wlasciciel strumienia',
+    descriptionEn: 'Owns delivery for a scoped workstream or domain.',
+    descriptionPl: 'Odpowiada za realizacje w swoim strumieniu albo domenie.',
   },
-  PMO: {
-    en: 'Project Office (PMO)',
-    pl: 'Project Office (PMO)',
-    descriptionEn: 'Governance and standards control; typically invoked on triggers.',
-    descriptionPl: 'Kontrola governance i standardów; zwykle wywoływane na triggerach.',
+  REVIEWER: {
+    en: 'Reviewer',
+    pl: 'Reviewer',
+    descriptionEn: 'Reviews submissions, tasks, interviews, and deliverables when delegated.',
+    descriptionPl: 'Recenzuje submissions, taski, interview i deliverables po delegacji.',
   },
-  PORTFOLIO_OWNER: {
-    en: 'Portfolio Owner',
-    pl: 'Właściciel portfela',
-    descriptionEn:
-      'Investment-level decisions across projects: start/stop, budget allocation, priorities.',
-    descriptionPl:
-      'Decyzje inwestycyjne ponad projektami: start/stop, alokacja budżetu, priorytety.',
+  SME: {
+    en: 'Subject Matter Expert',
+    pl: 'Ekspert merytoryczny',
+    descriptionEn: 'Provides expert input without default delivery authority.',
+    descriptionPl: 'Dostarcza input ekspercki bez domyslnej wladzy delivery.',
+  },
+  CONSULTANT: {
+    en: 'Consultant',
+    pl: 'Konsultant',
+    descriptionEn: 'Internal or external consultant working in a project scope.',
+    descriptionPl: 'Konsultant wewnetrzny albo zewnetrzny pracujacy w zakresie projektu.',
   },
   BUSINESS_OWNER: {
     en: 'Business Owner (Benefits)',
@@ -118,32 +144,29 @@ export function mapToCanonicalProjectRole(role: unknown): CanonicalProjectRoleTy
   }
 
   // Legacy mappings (frontend/core.ts, older DBs, or earlier role sets)
-  if (['PROJECT_EXECUTIVE', 'PROJECT_SPONSOR', 'SPONSOR'].includes(r)) return 'SPONSOR';
+  if (['PROJECT_EXECUTIVE', 'PROJECT_SPONSOR', 'SPONSOR'].includes(r)) {
+    return 'PROJECT_SPONSOR';
+  }
 
   // Project leader (delivery commander): accept common synonyms
-  if (
-    [
-      'PROJECT_LEAD',
-      'PROJECT_LEADER',
-      'PROJECT_MANAGER',
-      'PMO_LEAD', // legacy: often used as project manager in delivery
-      'MANAGER',
-      'TEAM_LEAD',
-      'WORKSTREAM_OWNER',
-    ].includes(r)
-  ) {
+  if (['PROJECT_LEAD', 'PROJECT_LEADER', 'PROJECT_MANAGER', 'MANAGER', 'TEAM_LEAD'].includes(r)) {
     return 'PROJECT_LEADER';
   }
 
+  if (['PMO', 'PMO_LEAD', 'PMO_SUPPORT'].includes(r)) return 'PMO';
+
   if (['INITIATIVE_OWNER'].includes(r)) return 'INITIATIVE_OWNER';
 
-  if (['TEAM_MEMBER', 'TASK_ASSIGNEE', 'DEVELOPER', 'ANALYST', 'SME'].includes(r)) {
-    return 'TEAM_MEMBER';
+  if (['WORKSTREAM_OWNER'].includes(r)) return 'WORKSTREAM_OWNER';
+
+  if (['TEAM_MEMBER', 'TASK_ASSIGNEE', 'DEVELOPER', 'ANALYST'].includes(r)) {
+    return 'TASK_ASSIGNEE';
   }
 
-  if (['PMO', 'PMO_SUPPORT'].includes(r)) return 'PMO';
-
-  if (['PORTFOLIO_OWNER'].includes(r)) return 'PORTFOLIO_OWNER';
+  if (['OBSERVER', 'VIEWER', 'STAKEHOLDER', 'CLIENT'].includes(r)) return 'OBSERVER';
+  if (['REVIEWER', 'DECISION_OWNER'].includes(r)) return 'REVIEWER';
+  if (['SME'].includes(r)) return 'SME';
+  if (['CONSULTANT'].includes(r)) return 'CONSULTANT';
 
   if (['BUSINESS_OWNER', 'SENIOR_USER'].includes(r)) return 'BUSINESS_OWNER';
 

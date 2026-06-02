@@ -8,11 +8,11 @@ import {
   BarChart3,
   Calculator,
   CreditCard,
-  Layers,
-  ShieldCheck,
   HandCoins,
+  Layers,
   Receipt,
   RefreshCw,
+  ShieldCheck,
   TrendingUp,
   Wallet,
 } from 'lucide-react';
@@ -24,6 +24,7 @@ import { UsageStatsPanel } from '../../components/SuperAdmin/UsageStatsPanel';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { BillingCenterView } from './BillingCenterView';
 import { InvoiceCenterView } from './InvoiceCenterView';
+import { PartnerProgramConfig } from './partners';
 import {
   PartnerSettlementsView,
   PaymentMethodsView,
@@ -32,7 +33,6 @@ import {
   RevenueRecognitionView,
   SubscriptionChangesView,
 } from './revenue';
-import { PartnerProgramConfig } from './partners';
 
 interface RevenueModuleProps {
   initialTab?: string;

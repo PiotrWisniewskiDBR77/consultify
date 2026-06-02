@@ -50,7 +50,7 @@ class CrossConversationService {
     const ownerParams = includeOwnOnly ? [userId] : [];
 
     try {
-      const rows = await dbAll(
+      const rows = (await dbAll(
         `SELECT
            c.id as conversation_id,
            c.title as conversation_title,
@@ -65,7 +65,7 @@ class CrossConversationService {
          ORDER BY m.created_at DESC
          LIMIT ?`,
         [organizationId, ...ownerParams, ...likeParams, limit]
-      ) as any[];
+      )) as any[];
 
       return (rows || []).map((row: any) => ({
         conversationId: row.conversation_id,
@@ -91,7 +91,7 @@ class CrossConversationService {
     const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
     try {
-      const rows = await dbAll(
+      const rows = (await dbAll(
         `SELECT
            m.content,
            c.user_id,
@@ -105,14 +105,17 @@ class CrossConversationService {
          ORDER BY m.created_at DESC
          LIMIT 500`,
         [organizationId, cutoff]
-      ) as any[];
+      )) as any[];
 
-      const topicCounts = new Map<string, {
-        count: number;
-        users: Set<string>;
-        firstSeen: string;
-        lastSeen: string;
-      }>();
+      const topicCounts = new Map<
+        string,
+        {
+          count: number;
+          users: Set<string>;
+          firstSeen: string;
+          lastSeen: string;
+        }
+      >();
 
       for (const row of rows || []) {
         const topics = this.extractTopics(row.content);
@@ -148,9 +151,7 @@ class CrossConversationService {
         });
       }
 
-      return trends
-        .sort((a, b) => b.mentionCount - a.mentionCount)
-        .slice(0, 20);
+      return trends.sort((a, b) => b.mentionCount - a.mentionCount).slice(0, 20);
     } catch (err: any) {
       logger.warn(`[CrossConv] Trend detection failed: ${err?.message}`);
       return [];
@@ -168,7 +169,10 @@ class CrossConversationService {
       }
     }
 
-    const properNouns = content.match(/\b[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]{3,}(?:\s+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]{3,})?/g) || [];
+    const properNouns =
+      content.match(
+        /\b[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]{3,}(?:\s+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]{3,})?/g
+      ) || [];
     topics.push(...properNouns.map((n) => n.toLowerCase()));
 
     return [...new Set(topics)].slice(0, 10);

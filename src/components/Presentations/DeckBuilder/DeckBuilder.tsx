@@ -1,7 +1,7 @@
 /**
  * Deck Builder V3 — Gamma-like WYSIWYG Presentation Editor
  * Three-panel layout: Slide Sorter | Card Canvas | Block Toolbar
- * Features: AI Agent, Command Palette, Theme Switcher, Version History,
+ * Features: Teresa, Command Palette, Theme Switcher, Version History,
  * animations, collaboration, data refresh, source traceability, media library.
  */
 
@@ -10,19 +10,36 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
+import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
-
+import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
+import {
+  fetchPresentationGovernanceCard,
+  type GovernanceVerdict,
+} from '@/services/presentationGovernance';
+import {
+  deriveLastAgentActivity,
+  fetchPresentationRuntimeEvents,
+  type PresentationRuntimeEvent,
+} from '@/services/presentationRuntimeEvents';
 import { useAppStore } from '@/store/useAppStore';
+import { AppView } from '@/types';
+import type { WorkspaceContext } from '@/types/workspace';
+import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
-import { AgentPanel } from './AgentPanel';
+import { AgentActivityPanel } from './AgentActivityPanel';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
+import { DeckAuditLogModal } from './DeckAuditLogModal';
 import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
+import type { DeckBuilderTopBarChipsState } from './DeckBuilderMelsChips';
+import { DeckBuilderMelsView } from './DeckBuilderMelsView';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
+import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
@@ -279,8 +296,9 @@ export const DeckBuilder: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
+  const serverVersionRef = useRef<number>(1);
 
-  const [agentOpen, setAgentOpen] = useState(false);
+  const [teresaOpen, setTeresaOpen] = useState(true);
   const [showNotes, setShowNotes] = useState(false);
   const [presentMode, setPresentMode] = useState<'off' | 'fullscreen' | 'presenter'>('off');
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -291,6 +309,22 @@ export const DeckBuilder: React.FC = () => {
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [auditLogOpen, setAuditLogOpen] = useState(() => {
+    if (typeof window === 'undefined' || !window.location) return false;
+    try {
+      return new URLSearchParams(window.location.search).get('audit_log') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [governanceModalOpen, setGovernanceModalOpen] = useState(false);
+  const [governanceVerdict, setGovernanceVerdict] = useState<GovernanceVerdict | null>(null);
+  const [runtimeEvents, setRuntimeEvents] = useState<{
+    events: PresentationRuntimeEvent[];
+    degraded: boolean;
+    reason?: string;
+  }>({ events: [], degraded: false });
+  const [lastAgentActivityAt, setLastAgentActivityAt] = useState<string | null>(null);
   const [deckBacklinks, setDeckBacklinks] = useState<
     Array<{ id: string; sourceType: string; sourceId: string }>
   >([]);
@@ -299,6 +333,14 @@ export const DeckBuilder: React.FC = () => {
     deck: any;
     reply: string;
     actions: string[];
+    operationId?: string;
+    diff?: {
+      cardsBefore?: number;
+      cardsAfter?: number;
+      cardsAdded?: number;
+      cardsRemoved?: number;
+      changedCards?: number;
+    };
   } | null>(null);
 
   const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
@@ -310,7 +352,10 @@ export const DeckBuilder: React.FC = () => {
   const currentUser = useMemo(
     () => ({
       userId: authUser?.id || 'current-user',
-      name: authUser?.name || authUser?.email || 'You',
+      name:
+        `${authUser?.firstName || ''} ${authUser?.lastName || ''}`.trim() ||
+        authUser?.email ||
+        'You',
     }),
     [authUser]
   );
@@ -335,6 +380,43 @@ export const DeckBuilder: React.FC = () => {
       .catch(() => {});
   }, []);
 
+  const refetchRuntimeEvents = useCallback(async () => {
+    const targetDeckId = deck?.deck_id;
+    if (!targetDeckId) return;
+    const result = await fetchPresentationRuntimeEvents(targetDeckId, { limit: 50 });
+    setRuntimeEvents(result);
+    setLastAgentActivityAt(deriveLastAgentActivity(result.events));
+  }, [deck?.deck_id]);
+
+  useEffect(() => {
+    if (!deck?.deck_id) return;
+    refetchRuntimeEvents();
+    const intervalId = setInterval(refetchRuntimeEvents, 30_000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [deck?.deck_id, refetchRuntimeEvents]);
+
+  useEffect(() => {
+    const targetDeckId = deck?.deck_id;
+    if (!targetDeckId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetchPresentationGovernanceCard(targetDeckId);
+        if (cancelled) return;
+        if (res.status === 'ok' && res.card) {
+          setGovernanceVerdict(res.card.overallVerdict);
+        }
+      } catch {
+        // never block deck builder on prefetch errors
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [deck?.deck_id]);
+
   useCommandPaletteShortcut(() => setCommandPaletteOpen(true));
 
   useEffect(() => {
@@ -352,6 +434,9 @@ export const DeckBuilder: React.FC = () => {
         const payload = res?.data;
         const row =
           payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
+        if (typeof row?.version === 'number' && Number.isFinite(row.version)) {
+          serverVersionRef.current = row.version;
+        }
 
         const status = (String(row?.status || 'draft').toLowerCase() as Deck['status']) || 'draft';
         const title = row?.title ? String(row.title) : undefined;
@@ -438,11 +523,15 @@ export const DeckBuilder: React.FC = () => {
           setLoadingDeck(false);
           setLoadError(null);
           hasLoadedInitialRef.current = true;
-          toast.error(t('presentations.builder.noContent', 'Deck has no content yet. Generate slides first.'));
+          toast.error(
+            t('presentations.builder.noContent', 'Deck has no content yet. Generate slides first.')
+          );
         }
       } catch (e: any) {
         if (!cancelled) {
-          const message = e?.message ? String(e.message) : t('presentations.builder.loadFailed', 'Failed to load presentation deck');
+          const message = e?.message
+            ? String(e.message)
+            : t('presentations.builder.loadFailed', 'Failed to load presentation deck');
           toast.error(message);
           setDeck(null);
           setLoadingDeck(false);
@@ -472,10 +561,50 @@ export const DeckBuilder: React.FC = () => {
 
     autosaveTimerRef.current = setTimeout(async () => {
       try {
-        await Api.put(
-          `/presentations/decks/${deckForAutosave.deckId}/autosave`,
-          deckForAutosave.deck
-        );
+        const res = await fetch(`/api/presentations/decks/${deckForAutosave.deckId}/autosave`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'X-Deck-Version': String(serverVersionRef.current),
+          },
+          body: JSON.stringify(deckForAutosave.deck),
+        });
+        if (res.status === 409) {
+          const conflictPayload = await res.json().catch(() => ({}));
+          if (typeof conflictPayload?.serverVersion === 'number') {
+            serverVersionRef.current = conflictPayload.serverVersion;
+          }
+          toast.error(
+            isPolish
+              ? 'Wykryto konflikt wersji. Odświeżam deck do najnowszej wersji.'
+              : 'Version conflict detected. Refreshing deck to latest version.'
+          );
+          const latest = (await Api.get(`/presentations/decks/${deckForAutosave.deckId}`)) as any;
+          const latestPayload =
+            latest?.data && typeof latest.data === 'object' && 'data' in latest.data
+              ? latest.data.data
+              : latest?.data;
+          if (typeof latestPayload?.version === 'number') {
+            serverVersionRef.current = latestPayload.version;
+          }
+          const latestDeckJson = safeJsonParse<any>(latestPayload?.deck_json, null);
+          if (latestDeckJson && Array.isArray(latestDeckJson.cards)) {
+            setDeck((prev) => ({
+              ...(prev || {}),
+              ...latestDeckJson,
+              deck_id: deckForAutosave.deckId,
+              title: String(
+                latestPayload?.title || latestDeckJson.title || prev?.title || 'Untitled'
+              ),
+            }));
+          }
+          return;
+        }
+        const payload = await res.json().catch(() => ({}));
+        if (typeof payload?.version === 'number') {
+          serverVersionRef.current = payload.version;
+        }
       } catch {
         // Non-blocking; builder remains usable offline-ish.
       }
@@ -507,7 +636,11 @@ export const DeckBuilder: React.FC = () => {
     if (!targetDeckId) return;
     setDeckBacklinksLoading(true);
 
-    const linkGraphP = Api.getLinkGraphBacklinks({ type: 'presentation', id: targetDeckId, limit: 50 })
+    const linkGraphP = Api.getLinkGraphBacklinks({
+      type: 'presentation',
+      id: targetDeckId,
+      limit: 50,
+    })
       .then((rows: any) =>
         (Array.isArray(rows) ? rows : [])
           .map((x: any) => ({
@@ -608,50 +741,32 @@ export const DeckBuilder: React.FC = () => {
     async (format: 'pdf' | 'pptx' | 'png') => {
       if (!deck) return;
       try {
-        const request =
-          format === 'pptx'
-            ? {
-                url: `/api/presentations/decks/${deck.deck_id}/download`,
-                init: { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
-                extension: 'pptx',
-              }
-            : format === 'png'
-              ? {
-                  url: `/api/presentations/decks/${deck.deck_id}/export/png`,
-                  init: {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                  },
-                  extension: 'zip',
-                }
-              : {
-                  url: `/api/presentations/decks/${deck.deck_id}/export/pdf`,
-                  init: { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
-                  extension: 'pdf',
-                };
-        const response = await fetch(request.url, request.init);
-        if (!response.ok) {
-          let errorMsg = 'Export failed';
-          try {
-            const errorBody = await response.json();
-            errorMsg = errorBody?.error || errorMsg;
-          } catch { /* ignore parse errors */ }
-          throw new Error(errorMsg);
-        }
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${deck.title || 'presentation'}.${request.extension}`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        toast.success(isPolish ? `Wyeksportowano jako ${format.toUpperCase()}` : `Exported as ${format.toUpperCase()}`);
+        await exportPresentationDeck({ deckId: deck.deck_id, title: deck.title, format });
+        toast.success(
+          isPolish
+            ? `Wyeksportowano jako ${format.toUpperCase()}`
+            : `Exported as ${format.toUpperCase()}`
+        );
       } catch (err: any) {
+        if (err instanceof PresentationExportError && err.code === 'QUALITY_GATE_BLOCKED') {
+          setQualityGatesOpen(true);
+          const firstBlocker = (
+            Array.isArray(err.gates)
+              ? err.gates.find(
+                  (gate: unknown): gate is { cardIndex: number } =>
+                    typeof (gate as { cardIndex?: unknown } | null)?.cardIndex === 'number'
+                )
+              : null
+          ) as { cardIndex?: number } | null;
+          if (firstBlocker && typeof firstBlocker.cardIndex === 'number') {
+            setActiveCardIndex(firstBlocker.cardIndex);
+          }
+        }
         const message = err?.message || (isPolish ? 'Eksport nie powiódł się' : 'Export failed');
         toast.error(message);
       }
     },
-    [deck]
+    [deck, isPolish]
   );
 
   const handleRestoreVersion = useCallback(
@@ -662,18 +777,36 @@ export const DeckBuilder: React.FC = () => {
     [restoreVersion, setDeck]
   );
 
-  const handleAcceptAgentEdit = useCallback(() => {
+  const handleAcceptAgentEdit = useCallback(async () => {
     if (pendingAgentEdit?.deck) {
-      setDeck(pendingAgentEdit.deck);
-      toast.success(isPolish ? 'Zmiany zastosowane' : 'Changes applied');
+      if (pendingAgentEdit.operationId && deck?.deck_id) {
+        const res = (await Api.post(
+          `/presentations/decks/${deck.deck_id}/agent-edit/${pendingAgentEdit.operationId}/accept`,
+          {}
+        )) as any;
+        const payload =
+          res?.data && typeof res.data === 'object' && 'data' in res.data
+            ? res.data.data
+            : res?.data;
+        setDeck(payload?.deck || pendingAgentEdit.deck);
+      } else {
+        setDeck(pendingAgentEdit.deck);
+      }
+      toast.success(isPolish ? 'Zmiany zastosowane i zapisane' : 'Changes applied and saved');
     }
     setPendingAgentEdit(null);
-  }, [pendingAgentEdit, setDeck, isPolish]);
+  }, [pendingAgentEdit, setDeck, isPolish, deck?.deck_id]);
 
-  const handleRejectAgentEdit = useCallback(() => {
+  const handleRejectAgentEdit = useCallback(async () => {
+    if (pendingAgentEdit?.operationId && deck?.deck_id) {
+      await Api.post(
+        `/presentations/decks/${deck.deck_id}/agent-edit/${pendingAgentEdit.operationId}/reject`,
+        {}
+      ).catch(() => null);
+    }
     toast(isPolish ? 'Zmiany odrzucone' : 'Changes rejected');
     setPendingAgentEdit(null);
-  }, [isPolish]);
+  }, [isPolish, pendingAgentEdit?.operationId, deck?.deck_id]);
 
   const handleAiPrompt = useCallback(
     async (prompt: string) => {
@@ -684,15 +817,60 @@ export const DeckBuilder: React.FC = () => {
       const payload =
         res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
       const nextDeck = payload?.deck;
-      const reply = payload?.reply ||
-        (isPolish ? 'Zastosowałem zmiany w decku.' : 'I applied the requested changes to the deck.');
+      const reply =
+        payload?.reply ||
+        (isPolish
+          ? 'Zastosowałem zmiany w decku.'
+          : 'I applied the requested changes to the deck.');
       const actions = Array.isArray(payload?.appliedActions) ? payload.appliedActions : [];
       if (nextDeck) {
-        setPendingAgentEdit({ deck: nextDeck, reply, actions });
+        setPendingAgentEdit({
+          deck: nextDeck,
+          reply,
+          actions,
+          operationId: payload?.operationId,
+          diff: payload?.diff,
+        });
       }
-      return { reply };
+      return payload && typeof payload === 'object' ? { ...payload, reply } : { reply };
     },
     [deck, isPolish]
+  );
+
+  const deckWorkspaceContext = useMemo<WorkspaceContext | null>(() => {
+    if (!deck) return null;
+    return {
+      view: AppView.PREZENTACJE_GEN,
+      type: 'presentation',
+      entityId: deck.deck_id,
+      entityName: deck.title || (isPolish ? 'Deck prezentacji' : 'Presentation deck'),
+      entityData: {
+        moduleKey: 'deckBuilder',
+        artifactKind: 'deck',
+        artifactId: deck.deck_id,
+        activeCardId: activeCard?.card_id || null,
+        activeCardTitle: activeCard?.title || null,
+        slideCount: deck.cards.length,
+      },
+      timestamp: new Date(),
+    };
+  }, [activeCard?.card_id, activeCard?.title, deck, isPolish]);
+
+  const handleTeresaDeckIntent = useCallback(
+    async (prompt: string) => {
+      if (!deck) return false;
+      const response = await handleAiPrompt(prompt);
+      const reply =
+        response && typeof response === 'object' && 'reply' in response
+          ? String((response as { reply?: unknown }).reply || '')
+          : '';
+      const fallbackReply = isPolish
+        ? 'Teresa przygotowała propozycję zmian w decku. Sprawdź pasek propozycji i zaakceptuj albo odrzuć zmianę.'
+        : 'Teresa prepared a deck change proposal. Review the proposal banner and accept or reject the change.';
+      toast.success(reply || fallbackReply);
+      return { handled: true, reply: reply || fallbackReply };
+    },
+    [deck, handleAiPrompt, isPolish]
   );
 
   if (loadingDeck || !deck) {
@@ -707,7 +885,7 @@ export const DeckBuilder: React.FC = () => {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-4 inline-flex rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+              className="mt-4 inline-flex rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
               {t('common.retry', 'Retry')}
             </button>
@@ -718,7 +896,9 @@ export const DeckBuilder: React.FC = () => {
 
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
-        <div className="animate-pulse text-slate-400">{t('presentations.builder.loading', 'Loading deck...')}</div>
+        <div className="animate-pulse text-slate-400">
+          {t('presentations.builder.loading', 'Loading deck...')}
+        </div>
       </div>
     );
   }
@@ -735,8 +915,218 @@ export const DeckBuilder: React.FC = () => {
     );
   }
 
+  // WS-A4: unified ExecutiveModuleShell rendering, behind a default-OFF flag.
+  // The shell adapter is presentational only — all deck state/handlers below
+  // are reused verbatim, so the legacy path stays the source of truth until
+  // the flag is enabled.
+  if (isMelsDeckBuilderEnabled()) {
+    const deckConfidentiality = ((deck as any)?.confidentiality ||
+      (deck as any)?.meta?.confidentiality ||
+      'internal') as 'public' | 'internal' | 'confidential';
+    return (
+      <DeckThemeProvider
+        initialColorSetId={deck.color_set_id || 'midnight_navy'}
+        initialBrandKit={brandKit}
+      >
+        <DeckBuilderMelsView
+          title={deck.title}
+          onTitleChange={handleTitleChange}
+          moduleLabel={t('presentations.builder.moduleLabel', 'Prezentacje')}
+          backLabel={t('presentations.builder.back', 'Back to presentations')}
+          topBarHandlers={{
+            onTheme: () => setThemeSwitcherOpen(true),
+            onHistory: () => setVersionHistoryOpen((v) => !v),
+            onQa: () => setQualityGatesOpen((v) => !v),
+            onGovernance: () => setGovernanceModalOpen(true),
+            onAnalytics: () => setAnalyticsOpen((v) => !v),
+            onAudit: () => setAuditLogOpen(true),
+            onShare: () => setShareModalOpen(true),
+            onToggleAgent: () => setTeresaOpen((v) => !v),
+            onRun: () => setPresentMode('fullscreen'),
+          }}
+          topBarState={
+            {
+              confidentiality: deckConfidentiality,
+              governanceVerdict: governanceVerdict ?? null,
+              agentOpen: teresaOpen,
+              runEnabled: deck.cards.length > 0,
+            } satisfies DeckBuilderTopBarChipsState
+          }
+          rightRailState={{
+            agentActivityCount: runtimeEvents.events.length,
+            activityTone: runtimeEvents.degraded
+              ? 'warning'
+              : runtimeEvents.events.length > 0
+                ? 'info'
+                : null,
+          }}
+          rightRailPanels={{
+            blocks: (
+              <BlockToolbar
+                onInsertBlock={handleInsertBlock}
+                onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
+              />
+            ),
+            activity: (
+              <AgentActivityPanel
+                events={runtimeEvents.events}
+                degraded={runtimeEvents.degraded}
+                reason={runtimeEvents.reason}
+              />
+            ),
+          }}
+          leftRailTitle={t('presentations.builder.slides', 'Slides')}
+          leftRail={
+            <SlideSorter
+              cards={deck.cards}
+              activeIndex={activeCardIndex}
+              colorSetId={deck.color_set_id}
+              onSelect={setActiveCardIndex}
+              onReorder={reorderCards}
+              onDuplicate={duplicateCard}
+              onDelete={deleteCard}
+              onAddCard={handleAddBlankCard}
+              isCardOutdated={isCardOutdated}
+            />
+          }
+          canvas={
+            <CardCanvas
+              cards={deck.cards}
+              activeCardIndex={activeCardIndex}
+              colorSetId={deck.color_set_id}
+              onSelectCard={setActiveCardIndex}
+              onBlockClick={() => {}}
+              onAddCard={handleAddBlankCard}
+              speakerNotes={activeCard?.speaker_notes}
+              showNotes={showNotes}
+              animationsEnabled={animationsEnabled}
+            />
+          }
+          teresaSlot={
+            teresaOpen ? (
+              <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+                <UnifiedChatPanel
+                  mode="split"
+                  title={t('presentations.builder.teresa.title', 'Teresa')}
+                  workspaceContext={deckWorkspaceContext}
+                  onModuleIntent={handleTeresaDeckIntent}
+                  showModeToggle={false}
+                  showHistoryTrigger
+                  showFocusMode
+                  maxHeight="100%"
+                />
+              </aside>
+            ) : null
+          }
+          bannerSlot={
+            pendingAgentEdit ? (
+              <div className="flex items-center gap-3 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-2.5">
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-200 flex-1">
+                  {pendingAgentEdit.reply}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAcceptAgentEdit}
+                  className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                >
+                  {isPolish ? 'Zastosuj' : 'Accept'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRejectAgentEdit}
+                  className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                >
+                  {isPolish ? 'Odrzuć' : 'Reject'}
+                </button>
+              </div>
+            ) : null
+          }
+          bottomBarSlot={
+            <DeckBuilderBottomBar
+              currentIndex={activeCardIndex}
+              totalCards={deck.cards.length}
+              cardTitle={activeCard?.title || ''}
+              onQuickEdits={() => setTeresaOpen(true)}
+              onToggleNotes={() => setShowNotes((v) => !v)}
+              notesOpen={showNotes}
+            />
+          }
+          overlays={
+            <>
+              <ThemeSwitcher
+                isOpen={themeSwitcherOpen}
+                onClose={() => setThemeSwitcherOpen(false)}
+              />
+              <VersionHistoryPanel
+                isOpen={versionHistoryOpen}
+                onClose={() => setVersionHistoryOpen(false)}
+                versions={versions}
+                onRestore={handleRestoreVersion}
+                onSaveCheckpoint={saveManualCheckpoint}
+                hasUnsavedChanges={hasUnsavedChanges}
+                lastSavedAt={lastSavedAt}
+              />
+              <MediaLibraryBrowser
+                isOpen={mediaLibraryOpen}
+                onClose={() => setMediaLibraryOpen(false)}
+                onSelect={handleInsertMediaImage}
+              />
+              <DeckQualityGatesPanel
+                deckId={deckId || deck?.deck_id || ''}
+                isOpen={qualityGatesOpen}
+                onClose={() => setQualityGatesOpen(false)}
+                onJumpToCard={setActiveCardIndex}
+              />
+              <ShareAnalyticsPanel
+                deckId={deckId || deck?.deck_id || ''}
+                isOpen={analyticsOpen}
+                onClose={() => setAnalyticsOpen(false)}
+                totalCards={deck?.cards.length || 0}
+              />
+              {auditLogOpen && (
+                <DeckAuditLogModal
+                  deckId={deckId || deck?.deck_id || ''}
+                  onClose={() => setAuditLogOpen(false)}
+                />
+              )}
+              {governanceModalOpen && (
+                <DeckGovernanceCardModal
+                  deckId={deckId || deck?.deck_id || ''}
+                  onClose={() => setGovernanceModalOpen(false)}
+                  onCardLoaded={(card) => setGovernanceVerdict(card.overallVerdict)}
+                />
+              )}
+              <ShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                deckId={deck.deck_id}
+                deckTitle={deck.title}
+                onExport={handleExport}
+              />
+              <CommandPalette
+                isOpen={commandPaletteOpen}
+                onClose={() => setCommandPaletteOpen(false)}
+                onInsertBlock={handleInsertBlock}
+                onPresent={() => setPresentMode('fullscreen')}
+                onExport={handleExport}
+                onToggleAgent={() => setTeresaOpen((v) => !v)}
+                onOpenTheme={() => setThemeSwitcherOpen(true)}
+                onAddCard={() => handleAddBlankCard()}
+              />
+            </>
+          }
+          onRunPrimary={() => setPresentMode('fullscreen')}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        />
+      </DeckThemeProvider>
+    );
+  }
+
   return (
-    <DeckThemeProvider initialColorSetId={deck.color_set_id || 'midnight_navy'} initialBrandKit={brandKit}>
+    <DeckThemeProvider
+      initialColorSetId={deck.color_set_id || 'midnight_navy'}
+      initialBrandKit={brandKit}
+    >
       <div className="h-screen flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
         {/* Top Bar */}
         <div className="relative">
@@ -747,8 +1137,8 @@ export const DeckBuilder: React.FC = () => {
             onRedo={redo}
             canUndo={canUndo}
             canRedo={canRedo}
-            onToggleAgent={() => setAgentOpen((v) => !v)}
-            agentOpen={agentOpen}
+            onToggleAgent={() => setTeresaOpen((v) => !v)}
+            agentOpen={teresaOpen}
             onPresent={() => setPresentMode('fullscreen')}
             onTheme={() => setThemeSwitcherOpen(true)}
             onShare={() => setShareModalOpen(true)}
@@ -760,6 +1150,15 @@ export const DeckBuilder: React.FC = () => {
             connectionStatus={collab.connectionStatus}
             onQualityGates={() => setQualityGatesOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
+            onAuditLog={() => setAuditLogOpen(true)}
+            onGovernance={() => setGovernanceModalOpen(true)}
+            governanceVerdict={governanceVerdict}
+            confidentiality={
+              ((deck as any)?.confidentiality ||
+                (deck as any)?.meta?.confidentiality ||
+                'internal') as 'public' | 'internal' | 'confidential'
+            }
+            lastAgentActivityAt={lastAgentActivityAt}
           />
           <ThemeSwitcher isOpen={themeSwitcherOpen} onClose={() => setThemeSwitcherOpen(false)} />
         </div>
@@ -813,6 +1212,13 @@ export const DeckBuilder: React.FC = () => {
                   ({pendingAgentEdit.actions.join(', ')})
                 </span>
               )}
+              {pendingAgentEdit.diff && (
+                <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                  {isPolish
+                    ? `diff: +${pendingAgentEdit.diff.cardsAdded || 0}/-${pendingAgentEdit.diff.cardsRemoved || 0}, zmienione ${pendingAgentEdit.diff.changedCards || 0}`
+                    : `diff: +${pendingAgentEdit.diff.cardsAdded || 0}/-${pendingAgentEdit.diff.cardsRemoved || 0}, changed ${pendingAgentEdit.diff.changedCards || 0}`}
+                </span>
+              )}
             </span>
             <button
               type="button"
@@ -833,6 +1239,21 @@ export const DeckBuilder: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative">
+          {teresaOpen && (
+            <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+              <UnifiedChatPanel
+                mode="split"
+                title={t('presentations.builder.teresa.title', 'Teresa')}
+                workspaceContext={deckWorkspaceContext}
+                onModuleIntent={handleTeresaDeckIntent}
+                showModeToggle={false}
+                showHistoryTrigger
+                showFocusMode
+                maxHeight="100%"
+              />
+            </aside>
+          )}
+
           {/* Left: Slide Sorter */}
           <SlideSorter
             cards={deck.cards}
@@ -865,13 +1286,12 @@ export const DeckBuilder: React.FC = () => {
             onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
           />
 
-          {/* Agent Panel (conditional) — bridged to conversation store */}
-          {agentOpen && (
-            <AgentPanel
-              onClose={() => setAgentOpen(false)}
-              sourceNames={deck.source_refs.map((s) => s.artifact_name)}
-              onSendMessage={handleAiPrompt}
-              conversationId={deckId}
+          {/* Passive AI Activity Panel — runtime telemetry feed */}
+          {teresaOpen && (
+            <AgentActivityPanel
+              events={runtimeEvents.events}
+              degraded={runtimeEvents.degraded}
+              reason={runtimeEvents.reason}
             />
           )}
 
@@ -908,6 +1328,23 @@ export const DeckBuilder: React.FC = () => {
             onClose={() => setAnalyticsOpen(false)}
             totalCards={deck?.cards.length || 0}
           />
+
+          {/* Audit Log Modal */}
+          {auditLogOpen && (
+            <DeckAuditLogModal
+              deckId={deckId || deck?.deck_id || ''}
+              onClose={() => setAuditLogOpen(false)}
+            />
+          )}
+
+          {/* Governance Card Modal */}
+          {governanceModalOpen && (
+            <DeckGovernanceCardModal
+              deckId={deckId || deck?.deck_id || ''}
+              onClose={() => setGovernanceModalOpen(false)}
+              onCardLoaded={(card) => setGovernanceVerdict(card.overallVerdict)}
+            />
+          )}
         </div>
 
         {/* Bottom Bar */}
@@ -915,7 +1352,7 @@ export const DeckBuilder: React.FC = () => {
           currentIndex={activeCardIndex}
           totalCards={deck.cards.length}
           cardTitle={activeCard?.title || ''}
-          onQuickEdits={() => {}}
+          onQuickEdits={() => setTeresaOpen(true)}
           onToggleNotes={() => setShowNotes((v) => !v)}
           notesOpen={showNotes}
         />
@@ -936,10 +1373,9 @@ export const DeckBuilder: React.FC = () => {
           onInsertBlock={handleInsertBlock}
           onPresent={() => setPresentMode('fullscreen')}
           onExport={handleExport}
-          onToggleAgent={() => setAgentOpen((v) => !v)}
+          onToggleAgent={() => setTeresaOpen((v) => !v)}
           onOpenTheme={() => setThemeSwitcherOpen(true)}
           onAddCard={() => handleAddBlankCard()}
-          onAiPrompt={handleAiPrompt}
         />
       </div>
     </DeckThemeProvider>

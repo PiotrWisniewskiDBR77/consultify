@@ -178,7 +178,7 @@ export const AccessLimitsTab: React.FC = () => {
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -227,7 +227,7 @@ export const AccessLimitsTab: React.FC = () => {
           onClick={() => setActiveSubTab('limits')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'limits'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -238,7 +238,7 @@ export const AccessLimitsTab: React.FC = () => {
           onClick={() => setActiveSubTab('tiers')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'tiers'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -249,7 +249,7 @@ export const AccessLimitsTab: React.FC = () => {
           onClick={() => setActiveSubTab('costs')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'costs'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -542,7 +542,7 @@ export const AccessLimitsTab: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2">
-                    <span className="text-purple-400">Reasoning</span>
+                    <span className="text-primary-400">Reasoning</span>
                     <span className="text-slate-400 dark:text-slate-500">
                       200,001+ tokens/month
                     </span>
@@ -615,7 +615,7 @@ export const AccessLimitsTab: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-slate-300">${user.cost.toFixed(2)}</td>
                       <td className="px-6 py-4">
-                        <button className="text-violet-400 hover:text-violet-300 text-sm">
+                        <button className="text-primary-400 hover:text-primary-300 text-sm">
                           View Details
                         </button>
                       </td>
@@ -683,7 +683,7 @@ export const AccessLimitsTab: React.FC = () => {
                           className={`px-2 py-0.5 rounded text-xs ${
                             item.entityType === 'user'
                               ? 'bg-blue-500/20 text-blue-300'
-                              : 'bg-violet-500/20 text-violet-300'
+                              : 'bg-primary-500/20 text-primary-300'
                           }`}
                         >
                           {item.entityType}
@@ -698,7 +698,7 @@ export const AccessLimitsTab: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-violet-500 rounded-full"
+                              className="h-full bg-primary-500 rounded-full"
                               style={{ width: `${item.percentage}%` }}
                             />
                           </div>

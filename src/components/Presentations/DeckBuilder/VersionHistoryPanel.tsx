@@ -56,7 +56,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-navy-800">
         <div className="flex items-center gap-2">
-          <Clock size={14} className="text-purple-500" />
+          <Clock size={14} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-700 dark:text-white">
             {t('presentations.builder.versionHistory.title', 'Version History')}
           </h3>
@@ -94,12 +94,12 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             onChange={(e) => setCheckpointName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSaveCheckpoint()}
             placeholder="Name this version..."
-            className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 outline-none focus:ring-1 focus:ring-purple-400"
+            className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 outline-none focus:ring-1 focus:ring-primary-400"
           />
           <button
             onClick={handleSaveCheckpoint}
             disabled={!checkpointName.trim()}
-            className="px-2 py-1.5 rounded-lg bg-purple-500 text-white text-xs disabled:opacity-40 hover:bg-purple-600"
+            className="px-2 py-1.5 rounded-lg bg-primary-500 text-white text-xs disabled:opacity-40 hover:bg-primary-600"
           >
             <Save size={12} />
           </button>
@@ -126,7 +126,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     <div
                       className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         version.type === 'manual'
-                          ? 'bg-purple-500'
+                          ? 'bg-primary-500'
                           : version.type === 'checkpoint'
                             ? 'bg-blue-500'
                             : 'bg-slate-300'
@@ -143,7 +143,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                       <span
                         className={`text-[8px] px-1 py-0.5 rounded ${
                           version.type === 'manual'
-                            ? 'bg-purple-100 text-purple-600'
+                            ? 'bg-primary-100 text-primary-600'
                             : version.type === 'checkpoint'
                               ? 'bg-blue-100 text-blue-600'
                               : 'bg-slate-100 text-slate-500'
@@ -162,8 +162,8 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     onClick={() => handleRestore(version.id)}
                     className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-xs ${
                       restoreConfirm === version.id
-                        ? 'bg-red-500 text-white opacity-100'
-                        : 'text-slate-400 hover:text-purple-500 hover:bg-purple-50'
+                        ? 'bg-rose-500 text-white opacity-100'
+                        : 'text-slate-400 hover:text-primary-500 hover:bg-primary-50'
                     }`}
                     title={restoreConfirm === version.id ? 'Click again to confirm' : 'Restore'}
                   >

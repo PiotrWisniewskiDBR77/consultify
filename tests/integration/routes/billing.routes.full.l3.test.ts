@@ -976,7 +976,7 @@ describe('Billing routes integration (L3) - full', () => {
         lineItems: [{ description: 'Item', amount: 10, quantity: 1 }],
       },
     });
-    expect(create.status).toBe(200);
+    expect(create.status).toBe(201);
     expect(create.body).toEqual(expect.objectContaining({ success: true, id: expect.any(String) }));
 
     const updateNoop = await dispatch(app, { method: 'PUT', url: `/api/billing/invoices/${uuid(31)}`, user: superAdminUser, body: {} });

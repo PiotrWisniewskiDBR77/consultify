@@ -256,7 +256,7 @@ export async function createProvenanceLedgerEntry(
     retrievalTraceId: validated.retrievalTraceId ?? null,
     executionRunId: validated.executionRunId ?? null,
     routingExplanationId: validated.routingExplanationId ?? null,
-    trustSummary: validated.trustSummary,
+    trustSummary: validated.trustSummary as ProvenanceLedgerEntry['trustSummary'],
     createdAt: now,
     createdBy: validated.createdBy,
   };

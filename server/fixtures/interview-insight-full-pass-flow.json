@@ -1,0 +1,137 @@
+{
+  "fixture": "interview_insight_full_pass_flow_v1",
+  "scope": "dev_or_staging_only",
+  "organizationId": "org-interview-pass",
+  "projectId": "project-interview-pass",
+  "userId": "user-interview-pass-owner",
+  "approvedCompletedMaterial": {
+    "templateId": "template-consulting-discovery",
+    "sessionIds": ["session-pass-ops-1", "session-pass-hr-1", "session-pass-fin-1"],
+    "filters": {
+      "people": ["ops-manager", "hr-lead", "finance-controller"],
+      "roles": ["Operations Manager", "HR Lead", "Finance Controller"],
+      "departments": ["Operations", "People", "Finance"],
+      "dateRange": {
+        "from": "2026-04-20",
+        "to": "2026-05-02"
+      }
+    },
+    "answers": [
+      {
+        "answerId": "answer-pass-ops-handoff",
+        "sessionId": "session-pass-ops-1",
+        "status": "answered",
+        "excerpt": "Handoffs between sales and onboarding are manual and often missing implementation context."
+      },
+      {
+        "answerId": "answer-pass-hr-readiness",
+        "sessionId": "session-pass-hr-1",
+        "status": "answered",
+        "excerpt": "Managers do not have a shared readiness checklist before a new customer handoff."
+      },
+      {
+        "answerId": "answer-pass-fin-rework",
+        "sessionId": "session-pass-fin-1",
+        "status": "answered",
+        "excerpt": "Finance sees avoidable rework when onboarding dates shift without a single owner."
+      }
+    ]
+  },
+  "insight": {
+    "id": "insight-pass-onboarding-handoff",
+    "title": "Onboarding handoff governance gap",
+    "analysisMode": "directed",
+    "contextMode": "selected_material_plus_approved_org_knowledge",
+    "topicFocus": ["handoff", "ownership", "readiness"],
+    "leadingQuestion": "What is blocking reliable onboarding handoffs?",
+    "consultantNote": "Assess operational truth, contradictions, and initiative potential.",
+    "status": "completed",
+    "confidence": "high",
+    "content": "The selected interviews consistently indicate that onboarding handoffs lack a shared readiness definition, a single accountable owner, and visible date-change governance.",
+    "materialQuality": {
+      "qualityLevel": "sufficient",
+      "coverage": "cross_functional",
+      "risks": ["small_sample_size"],
+      "recommendation": "Good enough for candidate finding and initiative draft; validate with client readback before handoff."
+    },
+    "generationContext": {
+      "sourcePolicy": "approved_completed_interview_material_only",
+      "analysisScope": {
+        "sessionIds": ["session-pass-ops-1", "session-pass-hr-1", "session-pass-fin-1"],
+        "topicFocus": ["handoff", "ownership", "readiness"]
+      },
+      "approvedOrgKnowledgePack": {
+        "included": true,
+        "degraded": false,
+        "entries": [
+          {
+            "claimId": "org-claim-pass-onboarding-sla",
+            "reviewStatus": "approved",
+            "claim": "Target onboarding readiness review should happen before customer kickoff."
+          }
+        ]
+      }
+    }
+  },
+  "p10": {
+    "candidate": {
+      "id": "candidate-pass-handoff-owner",
+      "status": "ready_for_review",
+      "statement": "Onboarding handoff reliability is limited by missing ownership and readiness criteria."
+    },
+    "finding": {
+      "id": "finding-pass-handoff-owner",
+      "reviewStatus": "published",
+      "readbackStatus": "confirmed_by_client",
+      "statement": "A single accountable owner and readiness checklist are required before onboarding handoff.",
+      "evidenceRefs": ["answer-pass-ops-handoff", "answer-pass-hr-readiness", "answer-pass-fin-rework"],
+      "readbackSummary": "Client confirmed the finding and asked for an initiative draft."
+    }
+  },
+  "sourcePack": {
+    "sourceType": "interview_insight",
+    "sourceId": "insight-pass-onboarding-handoff",
+    "entries": [
+      {
+        "answerId": "answer-pass-ops-handoff",
+        "capturedPointers": [{ "pointerId": "ptr-pass-ops-handoff" }]
+      },
+      {
+        "answerId": "answer-pass-hr-readiness",
+        "capturedPointers": [{ "pointerId": "ptr-pass-hr-readiness" }]
+      },
+      {
+        "answerId": "answer-pass-fin-rework",
+        "capturedPointers": [{ "pointerId": "ptr-pass-fin-rework" }]
+      }
+    ]
+  },
+  "downstreamActions": [
+    "report",
+    "presentation",
+    "table",
+    "idea",
+    "note",
+    "initiative"
+  ],
+  "actionContract": {
+    "contract": "interview_insight_downstream_action_v1",
+    "source": {
+      "type": "interview_insight",
+      "id": "insight-pass-onboarding-handoff",
+      "title": "Onboarding handoff governance gap",
+      "confidence": "high",
+      "evidenceCount": 3,
+      "sourceSessionCount": 3
+    },
+    "lineage": {
+      "sourcePackRef": "sourcePack",
+      "evidenceRefs": ["answer-pass-ops-handoff", "answer-pass-hr-readiness", "answer-pass-fin-rework"]
+    },
+    "governance": {
+      "proposalRequired": true,
+      "confirmationRequired": true,
+      "readBackText": "Confirm creating the downstream artifact from the onboarding handoff insight after reviewing evidence, limits, and confidence."
+    }
+  }
+}

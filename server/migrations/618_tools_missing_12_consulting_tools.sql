@@ -80,9 +80,9 @@ INSERT INTO tools (
       }
     }$$,
     'Target',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["strategy","targets","roadmap"]$$,
     108
   ),
@@ -123,9 +123,9 @@ INSERT INTO tools (
       }
     }$$,
     'GitBranch',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["strategy","tradeoffs","focus"]$$,
     109
   ),
@@ -166,9 +166,9 @@ INSERT INTO tools (
       }
     }$$,
     'FileText',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["strategy","narrative","alignment"]$$,
     110
   ),
@@ -210,9 +210,9 @@ INSERT INTO tools (
       }
     }$$,
     'Clock',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["operations","smed","setup"]$$,
     208
   ),
@@ -253,9 +253,9 @@ INSERT INTO tools (
       }
     }$$,
     'Radar',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["operations","cadence","kpi"]$$,
     209
   ),
@@ -296,9 +296,9 @@ INSERT INTO tools (
       }
     }$$,
     'Boxes',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["operations","inventory","policy"]$$,
     210
   ),
@@ -340,9 +340,9 @@ INSERT INTO tools (
       }
     }$$,
     'Network',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["digital","integration","architecture"]$$,
     305
   ),
@@ -383,9 +383,9 @@ INSERT INTO tools (
       }
     }$$,
     'DollarSign',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["digital","value","economics"]$$,
     306
   ),
@@ -426,9 +426,9 @@ INSERT INTO tools (
       }
     }$$,
     'HardDrive',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["digital","legacy","modernization"]$$,
     307
   ),
@@ -469,9 +469,9 @@ INSERT INTO tools (
       }
     }$$,
     'Database',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["digital","data","governance"]$$,
     308
   ),
@@ -512,9 +512,9 @@ INSERT INTO tools (
       }
     }$$,
     'Lightbulb',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["digital","solutions","mapping"]$$,
     309
   ),
@@ -555,9 +555,9 @@ INSERT INTO tools (
       }
     }$$,
     'Search',
-    FALSE,
-    TRUE,
-    FALSE,
+    0,
+    1,
+    0,
     $$["digital","discovery","problems"]$$,
     310
   )

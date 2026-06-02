@@ -7,6 +7,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
 
 const DOC_TYPES = [
@@ -18,9 +20,58 @@ const DOC_TYPES = [
   'COOKIE_POLICY',
 ];
 
+interface LegalPanelDocument {
+  id: string;
+  doc_type?: string;
+  type?: string;
+  title?: string;
+  name?: string;
+  version?: string;
+  effective_from?: string;
+  effective_date?: string;
+  is_active?: boolean | number;
+  isActive?: boolean;
+  status?: string;
+  change_summary?: string;
+}
+
+const normalizeDocs = (data: unknown): LegalPanelDocument[] => {
+  if (Array.isArray(data)) return data;
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    Array.isArray((data as { data?: unknown }).data)
+  ) {
+    return (data as { data: LegalPanelDocument[] }).data;
+  }
+  throw new Error('Legal document list response was not returned by the server');
+};
+
+const isActive = (doc: LegalPanelDocument) =>
+  doc.is_active === true || doc.is_active === 1 || doc.isActive === true || doc.status === 'active';
+
+const formatDate = (value?: string) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+};
+
+const matchesPublish = (
+  doc: LegalPanelDocument,
+  expected: { docType: string; title: string; version: string }
+) =>
+  String(doc.doc_type || doc.type || '') === expected.docType &&
+  String(doc.title || doc.name || '') === expected.title &&
+  String(doc.version || '') === expected.version;
+
+const matchesActiveState = (doc: LegalPanelDocument, expected: { id: string; isActive: boolean }) =>
+  String(doc.id || '') === expected.id && isActive(doc) === expected.isActive;
+
 export const LegalPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [docs, setDocs] = useState<any[]>([]);
+  const [docs, setDocs] = useState<LegalPanelDocument[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [newDoc, setNewDoc] = useState({
@@ -35,12 +86,17 @@ export const LegalPanel: React.FC = () => {
 
   const fetchDocs = async () => {
     setLoading(true);
+    setLoadError(null);
+    setActionError(null);
     try {
       const data = await Api.getSuperAdminLegalDocs();
-      setDocs(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to load legal documents');
+      const nextDocs = normalizeDocs(data);
+      setDocs(nextDocs);
+      return nextDocs;
+    } catch (e: unknown) {
       setDocs([]);
+      setLoadError(normalizeApiErrorMessage(e, 'Failed to load legal documents'));
+      return [];
     } finally {
       setLoading(false);
     }
@@ -51,17 +107,15 @@ export const LegalPanel: React.FC = () => {
   }, []);
 
   const grouped = useMemo(() => {
-    const map = new Map<string, any[]>();
+    const map = new Map<string, LegalPanelDocument[]>();
     for (const d of docs) {
       const type = String(d.doc_type || d.type || 'UNKNOWN').toUpperCase();
-      if (!map.has(type)) map.set(type, []);
-      map.get(type)!.push(d);
+      const items = map.get(type) || [];
+      items.push(d);
+      map.set(type, items);
     }
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [docs]);
-
-  const isActive = (d: any) =>
-    d?.is_active === true || d?.is_active === 1 || d?.status === 'active';
 
   const handlePublish = async () => {
     if (!newDoc.title.trim()) {
@@ -69,8 +123,14 @@ export const LegalPanel: React.FC = () => {
       return;
     }
     setPublishing(true);
+    setActionError(null);
     try {
-      await (Api as any).publishSuperAdminLegalDoc({
+      const expected = {
+        docType: newDoc.doc_type,
+        title: newDoc.title,
+        version: newDoc.version || '1.0',
+      };
+      await Api.publishSuperAdminLegalDoc({
         docType: newDoc.doc_type,
         title: newDoc.title,
         version: newDoc.version || '1.0',
@@ -78,6 +138,10 @@ export const LegalPanel: React.FC = () => {
         effectiveFrom: newDoc.effective_from || new Date().toISOString().split('T')[0],
         changeSummary: newDoc.change_summary,
       });
+      const refreshedDocs = await fetchDocs();
+      if (!refreshedDocs.some((doc) => matchesPublish(doc, expected))) {
+        throw new Error('Legal document publish was not confirmed by the server');
+      }
       toast.success('Document published');
       setShowPublishModal(false);
       setNewDoc({
@@ -89,21 +153,28 @@ export const LegalPanel: React.FC = () => {
         effective_from: '',
         change_summary: '',
       });
-      fetchDocs();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to publish document');
+    } catch (e: unknown) {
+      const message = normalizeApiErrorMessage(e, 'Failed to publish document');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setPublishing(false);
     }
   };
 
   const handleToggle = async (id: string, nextActive: boolean) => {
+    setActionError(null);
     try {
       await Api.toggleSuperAdminLegalDocActive(id, nextActive);
+      const refreshedDocs = await fetchDocs();
+      if (!refreshedDocs.some((doc) => matchesActiveState(doc, { id, isActive: nextActive }))) {
+        throw new Error('Legal document status was not confirmed by the server');
+      }
       toast.success(nextActive ? 'Document activated' : 'Document archived');
-      fetchDocs();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to update document');
+    } catch (e: unknown) {
+      const message = normalizeApiErrorMessage(e, 'Failed to update document');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -129,7 +200,11 @@ export const LegalPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setShowPublishModal(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors"
+            disabled={!!loadError}
+            title={
+              loadError ? 'Legal documents must load before publishing a new version.' : undefined
+            }
+            className="flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
             Publish Document
@@ -137,10 +212,21 @@ export const LegalPanel: React.FC = () => {
         </div>
       </div>
 
+      {actionError && (
+        <div
+          role="alert"
+          className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400"
+        >
+          {actionError}
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-16 text-slate-600 dark:text-slate-400">
           <Loader2 className="w-6 h-6 animate-spin" />
         </div>
+      ) : loadError ? (
+        <DegradedState title="Legal documents unavailable" description={loadError} />
       ) : docs.length === 0 ? (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-10 text-center">
           <div className="text-slate-900 dark:text-slate-100 font-medium">No legal documents</div>
@@ -190,9 +276,7 @@ export const LegalPanel: React.FC = () => {
                           {d.version}
                         </td>
                         <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                          {d.effective_from || d.effective_date
-                            ? new Date(d.effective_from || d.effective_date).toLocaleDateString()
-                            : '-'}
+                          {formatDate(d.effective_from || d.effective_date)}
                         </td>
                         <td className="px-6 py-4">
                           {active ? (
@@ -333,7 +417,7 @@ export const LegalPanel: React.FC = () => {
               <button
                 onClick={handlePublish}
                 disabled={publishing || !newDoc.title.trim()}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
               >
                 {publishing && <Loader2 className="w-4 h-4 animate-spin" />}
                 Publish

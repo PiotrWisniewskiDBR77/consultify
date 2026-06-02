@@ -2,10 +2,10 @@ import * as cheerio from 'cheerio';
 
 import logger from '../../utils/Logger.js';
 import {
-  TavilyWebSearchService,
   type TavilySearchOptions,
   type TavilySearchResponse,
   type TavilySearchResult,
+  TavilyWebSearchService,
 } from './tavilyWebSearchService.js';
 
 export type RuntimeWebSearchProvider = 'tavily' | 'duckduckgo';
@@ -21,7 +21,9 @@ export type RuntimeWebSearchResponse = TavilySearchResponse & {
 };
 
 function cleanText(value: string): string {
-  return String(value || '').replace(/\s+/g, ' ').trim();
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function normalizeDuckDuckGoHref(href: string): string {
@@ -54,7 +56,10 @@ function isResultUrl(url: string): boolean {
 }
 
 class DuckDuckGoWebSearchService {
-  async search(query: string, options: RuntimeWebSearchOptions = {}): Promise<RuntimeWebSearchResponse> {
+  async search(
+    query: string,
+    options: RuntimeWebSearchOptions = {}
+  ): Promise<RuntimeWebSearchResponse> {
     const maxResults = Math.max(1, Math.min(10, options.maxResults ?? 8));
     const language = String(options.language || 'en').split('-')[0] || 'en';
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&kl=${encodeURIComponent(
@@ -146,7 +151,10 @@ export function getRuntimeWebSearchStatus(): {
 }
 
 export class RuntimeWebSearchService {
-  async search(query: string, options: RuntimeWebSearchOptions = {}): Promise<RuntimeWebSearchResponse> {
+  async search(
+    query: string,
+    options: RuntimeWebSearchOptions = {}
+  ): Promise<RuntimeWebSearchResponse> {
     const provider = getRuntimeWebSearchProvider();
     if (provider === 'tavily') {
       const response = await new TavilyWebSearchService(process.env.TAVILY_API_KEY || '').search(

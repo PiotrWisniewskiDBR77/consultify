@@ -6,12 +6,16 @@
 import { z } from 'zod';
 
 // Invoice Line Item
-export const InvoiceLineItemSchema = z.object({
-  description: z.string().min(1),
-  amount: z.number().positive(),
-  quantity: z.number().int().positive().default(1),
-  unitPrice: z.number().positive().optional(),
-});
+export const InvoiceLineItemSchema = z
+  .object({
+    description: z.string().min(1),
+    amount: z.number().positive().optional(),
+    quantity: z.number().int().positive().default(1),
+    unitPrice: z.number().positive().optional(),
+  })
+  .refine((item) => item.amount !== undefined || item.unitPrice !== undefined, {
+    message: 'Each line item requires amount or unitPrice',
+  });
 
 // Create Invoice Request
 export const CreateInvoiceRequestSchema = z.object({

@@ -17,7 +17,7 @@ export const QuoteNode: React.FC<NodeProps<QuoteNodeData>> = memo(({ data, selec
 
   const sentimentColors = {
     positive: 'border-l-green-500',
-    negative: 'border-l-red-500',
+    negative: 'border-l-rose-500',
     neutral: 'border-l-slate-400',
   };
 

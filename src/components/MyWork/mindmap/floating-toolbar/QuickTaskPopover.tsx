@@ -62,7 +62,7 @@ export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
         onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
         placeholder={isPl ? 'Tytuł zadania…' : 'Task title…'}
         autoFocus
-        className="w-full h-8 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-purple-400 transition-colors"
+        className="w-full h-8 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-primary-400 transition-colors"
       />
 
       <div className="flex gap-1.5">

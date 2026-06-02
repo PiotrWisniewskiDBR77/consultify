@@ -11,8 +11,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
   CreateProjectRequest,
   ProjectNotificationSettingsRequest,

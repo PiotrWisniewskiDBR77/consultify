@@ -70,19 +70,19 @@ const DOCUMENT_INFO: Record<
     title: 'Terms of Service',
     description: 'Main agreement governing your use of Consultify',
     icon: Scale,
-    color: 'from-purple-500 to-indigo-600',
+    color: 'from-primary-500 to-indigo-600',
   },
   PRIVACY: {
     title: 'Privacy Policy',
     description: 'How we collect, use, and protect your personal data under GDPR',
     icon: Shield,
-    color: 'from-blue-500 to-cyan-600',
+    color: 'from-blue-500 to-blue-600',
   },
   COOKIES: {
     title: 'Cookie Policy',
     description: 'Information about cookies and tracking technologies',
     icon: Cookie,
-    color: 'from-amber-500 to-orange-600',
+    color: 'from-amber-500 to-amber-600',
   },
   AUP: {
     title: 'Acceptable Use Policy',
@@ -94,13 +94,13 @@ const DOCUMENT_INFO: Record<
     title: 'AI Usage Policy',
     description: 'Transparency about AI features, BYOK, and data handling',
     icon: Brain,
-    color: 'from-violet-500 to-purple-600',
+    color: 'from-primary-500 to-primary-600',
   },
   SUBSCRIPTION: {
     title: 'Subscription Agreement',
     description: 'Pricing plans, AI Credits, billing terms, and seat licensing',
     icon: CreditCard,
-    color: 'from-emerald-500 to-teal-600',
+    color: 'from-emerald-500 to-blue-600',
   },
   DPA: {
     title: 'Data Processing Addendum',
@@ -130,7 +130,7 @@ const DOCUMENT_INFO: Record<
     title: 'Customer Data Security',
     description: 'How we protect your data: encryption, isolation, incident response',
     icon: Shield,
-    color: 'from-indigo-500 to-violet-600',
+    color: 'from-indigo-500 to-primary-600',
   },
   SUBPROCESSORS: {
     title: 'Sub-processor List',
@@ -250,7 +250,7 @@ export const LegalDocumentView: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent mx-auto mb-4" />
           <p className="text-slate-600 dark:text-slate-400">Loading document...</p>
         </div>
       </div>
@@ -272,7 +272,7 @@ export const LegalDocumentView: React.FC = () => {
           </p>
           <Link
             to="/legal"
-            className="inline-flex items-center gap-2 p-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-500/25"
+            className="inline-flex items-center gap-2 p-4 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl hover:from-primary-500 hover:to-indigo-500 transition-all shadow-lg shadow-primary-500/25"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Legal Documents
@@ -286,7 +286,7 @@ export const LegalDocumentView: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* Header */}
       <header
-        className={`sticky top-0 z-50 bg-gradient-to-r ${docInfo?.color || 'from-purple-600 to-indigo-600'} text-white shadow-lg`}
+        className={`sticky top-0 z-50 bg-gradient-to-r ${docInfo?.color || 'from-primary-600 to-indigo-600'} text-white shadow-lg`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -399,8 +399,8 @@ export const LegalDocumentView: React.FC = () => {
             <div className="mb-8 p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
               <div className="flex flex-wrap items-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-purple-100 dark:bg-purple-500/20 rounded-lg flex items-center justify-center">
-                    <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <div className="w-8 h-8 bg-primary-100 dark:bg-primary-500/20 rounded-lg flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 dark:text-slate-400">Effective Date</p>
@@ -480,7 +480,7 @@ export const LegalDocumentView: React.FC = () => {
                   a: ({ href, children }) => (
                     <a
                       href={href}
-                      className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 underline underline-offset-2 font-medium transition-colors"
+                      className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline underline-offset-2 font-medium transition-colors"
                     >
                       {children}
                     </a>
@@ -500,7 +500,7 @@ export const LegalDocumentView: React.FC = () => {
                   ),
                   li: ({ children }) => (
                     <li className="flex items-start gap-3 text-slate-600 dark:text-slate-300">
-                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500 dark:bg-purple-400 mt-2.5 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary-500 dark:bg-primary-400 mt-2.5 shrink-0" />
                       <span>{children}</span>
                     </li>
                   ),
@@ -544,7 +544,7 @@ export const LegalDocumentView: React.FC = () => {
                       );
                     }
                     return (
-                      <code className="bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded text-sm font-mono">
+                      <code className="bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded text-sm font-mono">
                         {children}
                       </code>
                     );
@@ -552,7 +552,7 @@ export const LegalDocumentView: React.FC = () => {
                   pre: ({ children }) => <pre className="my-4">{children}</pre>,
                   // Blockquote
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-purple-500 bg-purple-50 dark:bg-purple-500/10 px-4 py-3 my-4 rounded-r-xl">
+                    <blockquote className="border-l-4 border-primary-500 bg-primary-50 dark:bg-primary-500/10 px-4 py-3 my-4 rounded-r-xl">
                       {children}
                     </blockquote>
                   ),
@@ -585,7 +585,7 @@ export const LegalDocumentView: React.FC = () => {
                       <Link
                         key={slug}
                         to={`/legal/${slug}`}
-                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all group"
+                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all group"
                       >
                         <div
                           className={`w-9 h-9 bg-gradient-to-br ${info?.color || 'from-slate-400 to-slate-500'} rounded-lg flex items-center justify-center shrink-0`}
@@ -593,11 +593,11 @@ export const LegalDocumentView: React.FC = () => {
                           <Icon className="w-4 h-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-purple-600 dark:group-hover:text-purple-400 truncate">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 truncate">
                             {info?.title || type}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-purple-600 dark:group-hover:text-purple-400 shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 shrink-0" />
                       </Link>
                     );
                   })}
@@ -605,7 +605,7 @@ export const LegalDocumentView: React.FC = () => {
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
                 <Link
                   to="/legal"
-                  className="inline-flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
                 >
                   View all legal documents
                   <ChevronRight className="w-4 h-4" />
@@ -621,7 +621,7 @@ export const LegalDocumentView: React.FC = () => {
                 @media print {
                     header, aside, nav, button { display: none !important; }
                     main { padding: 0 !important; }
-                    .legal-document { 
+                    .legal-document {
                         border: none !important;
                         box-shadow: none !important;
                         padding: 0 !important;

@@ -1,5 +1,14 @@
+import {
+  ClipboardPaste,
+  Copy,
+  GitBranch,
+  LayoutGrid,
+  Pencil,
+  Plus,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
-import { Pencil, Copy, Trash2, Plus, LayoutGrid, ClipboardPaste, GitBranch, Settings } from 'lucide-react';
 
 interface ContextMenuAction {
   id: string;
@@ -18,7 +27,10 @@ interface ProcessFlowContextMenuProps {
 }
 
 export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
-  x, y, actions, onClose,
+  x,
+  y,
+  actions,
+  onClose,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -49,11 +61,14 @@ export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
       {actions.map((action) => (
         <button
           key={action.id}
-          onClick={() => { action.onClick(); onClose(); }}
+          onClick={() => {
+            action.onClick();
+            onClose();
+          }}
           disabled={action.disabled}
           className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:opacity-40 ${
             action.danger
-              ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+              ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20'
               : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
           }`}
         >
@@ -76,10 +91,34 @@ export function getNodeContextActions(opts: {
   onOpenProperties: () => void;
 }): ContextMenuAction[] {
   return [
-    { id: 'edit', label: opts.isPl ? 'Edytuj etykietę' : 'Edit label', icon: <Pencil size={14} />, onClick: opts.onEditLabel, disabled: opts.locked },
-    { id: 'duplicate', label: opts.isPl ? 'Duplikuj' : 'Duplicate', icon: <Copy size={14} />, onClick: opts.onDuplicate, disabled: opts.locked },
-    { id: 'properties', label: opts.isPl ? 'Właściwości' : 'Properties', icon: <Settings size={14} />, onClick: opts.onOpenProperties },
-    { id: 'delete', label: opts.isPl ? 'Usuń' : 'Delete', icon: <Trash2 size={14} />, onClick: opts.onDelete, danger: true, disabled: opts.locked },
+    {
+      id: 'edit',
+      label: opts.isPl ? 'Edytuj etykietę' : 'Edit label',
+      icon: <Pencil size={14} />,
+      onClick: opts.onEditLabel,
+      disabled: opts.locked,
+    },
+    {
+      id: 'duplicate',
+      label: opts.isPl ? 'Duplikuj' : 'Duplicate',
+      icon: <Copy size={14} />,
+      onClick: opts.onDuplicate,
+      disabled: opts.locked,
+    },
+    {
+      id: 'properties',
+      label: opts.isPl ? 'Właściwości' : 'Properties',
+      icon: <Settings size={14} />,
+      onClick: opts.onOpenProperties,
+    },
+    {
+      id: 'delete',
+      label: opts.isPl ? 'Usuń' : 'Delete',
+      icon: <Trash2 size={14} />,
+      onClick: opts.onDelete,
+      danger: true,
+      disabled: opts.locked,
+    },
   ];
 }
 
@@ -92,9 +131,33 @@ export function getCanvasContextActions(opts: {
   onAutoLayout: () => void;
 }): ContextMenuAction[] {
   return [
-    { id: 'add-action', label: opts.isPl ? 'Dodaj akcję' : 'Add action', icon: <Plus size={14} />, onClick: () => opts.onAddNode('action'), disabled: opts.locked },
-    { id: 'add-decision', label: opts.isPl ? 'Dodaj decyzję' : 'Add decision', icon: <GitBranch size={14} />, onClick: () => opts.onAddNode('decision'), disabled: opts.locked },
-    { id: 'paste', label: opts.isPl ? 'Wklej' : 'Paste', icon: <ClipboardPaste size={14} />, onClick: opts.onPaste, disabled: opts.locked },
-    { id: 'layout', label: opts.isPl ? 'Auto-układ' : 'Auto-layout', icon: <LayoutGrid size={14} />, onClick: opts.onAutoLayout, disabled: opts.locked },
+    {
+      id: 'add-action',
+      label: opts.isPl ? 'Dodaj akcję' : 'Add action',
+      icon: <Plus size={14} />,
+      onClick: () => opts.onAddNode('action'),
+      disabled: opts.locked,
+    },
+    {
+      id: 'add-decision',
+      label: opts.isPl ? 'Dodaj decyzję' : 'Add decision',
+      icon: <GitBranch size={14} />,
+      onClick: () => opts.onAddNode('decision'),
+      disabled: opts.locked,
+    },
+    {
+      id: 'paste',
+      label: opts.isPl ? 'Wklej' : 'Paste',
+      icon: <ClipboardPaste size={14} />,
+      onClick: opts.onPaste,
+      disabled: opts.locked,
+    },
+    {
+      id: 'layout',
+      label: opts.isPl ? 'Auto-układ' : 'Auto-layout',
+      icon: <LayoutGrid size={14} />,
+      onClick: opts.onAutoLayout,
+      disabled: opts.locked,
+    },
   ];
 }

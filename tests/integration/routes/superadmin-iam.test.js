@@ -123,12 +123,58 @@ describe('SuperAdmin IAM API', () => {
       expect([401, 403, 404]).toContain(res.status);
     });
 
-    it('should get audit logs for superadmin', async () => {
+    it('should get audit logs for superadmin and respect the hardened contract', async () => {
       if (!superadminToken) return;
       const res = await request(app)
         .get('/api/superadmin/admin/audit-logs')
         .set('Authorization', `Bearer ${superadminToken}`);
-      expect([200, 404, 500, 503]).toContain(res.status);
+
+      // The hardened endpoint MUST NOT 5xx for valid superadmin requests.
+      expect([200, 404]).toContain(res.status);
+      if (res.status !== 200) return;
+
+      expect(res.body).toBeTypeOf('object');
+      expect(Array.isArray(res.body.logs)).toBe(true);
+      expect(res.body.pagination).toMatchObject({
+        limit: expect.any(Number),
+        offset: expect.any(Number),
+        count: expect.any(Number),
+      });
+      expect(res.body.integrity).toMatchObject({
+        degraded: expect.any(Boolean),
+        malformedMetadataCount: expect.any(Number),
+      });
+    });
+
+    it('should clamp invalid pagination params instead of returning 5xx', async () => {
+      if (!superadminToken) return;
+      const res = await request(app)
+        .get('/api/superadmin/admin/audit-logs?limit=NaN&offset=-50&status=pwned')
+        .set('Authorization', `Bearer ${superadminToken}`);
+
+      expect([200, 404]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body.pagination.limit).toBeGreaterThanOrEqual(1);
+        expect(res.body.pagination.offset).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('should expose stats with safe numeric defaults', async () => {
+      if (!superadminToken) return;
+      const res = await request(app)
+        .get('/api/superadmin/admin/audit-logs/stats')
+        .set('Authorization', `Bearer ${superadminToken}`);
+      expect([200, 404]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toMatchObject({
+          total_logs: expect.any(Number),
+          unresolved_count: expect.any(Number),
+          high_risk_count: expect.any(Number),
+          medium_risk_count: expect.any(Number),
+          low_risk_count: expect.any(Number),
+          avg_risk_score: expect.any(Number),
+        });
+      }
     });
   });
 

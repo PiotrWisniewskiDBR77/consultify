@@ -34,7 +34,7 @@ const queryMock = vi.hoisted(() =>
       });
     }
     return Promise.resolve({ rows: [] });
-  }),
+  })
 );
 
 vi.mock('../../../server/src/utils/Logger.js', () => ({
@@ -50,7 +50,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   get: <T = unknown>(
     sql: string,
     params?: unknown[],
-    opts?: { fallback?: boolean },
+    opts?: { fallback?: boolean }
   ): Promise<T | null> =>
     new Promise((resolve, reject) => {
       const fallback = opts?.fallback !== false;
@@ -63,7 +63,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         resolve((row || null) as T | null);
       });
     }),
-  all: <T = unknown>(sql: string, params?: unknown[], opts?: { fallback?: boolean }): Promise<T[]> =>
+  all: <T = unknown>(
+    sql: string,
+    params?: unknown[],
+    opts?: { fallback?: boolean }
+  ): Promise<T[]> =>
     new Promise((resolve, reject) => {
       const fallback = opts?.fallback !== false;
       sqliteCtx.db.all(sql, params || [], (err: Error | null, rows: unknown[]) => {
@@ -78,24 +82,30 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: (
     sql: string,
     params?: unknown[],
-    opts?: { fallback?: boolean },
+    opts?: { fallback?: boolean }
   ): Promise<{ success: boolean; changes?: number; lastID?: number; error?: string }> =>
     new Promise((resolve, reject) => {
       const fallback = opts?.fallback !== false;
-      sqliteCtx.db.run(sql, params || [], function (this: { changes: number; lastID?: number }, err: Error | null) {
-        if (err) {
-          if (fallback) resolve({ success: false, error: err.message });
-          else reject(err);
-          return;
+      sqliteCtx.db.run(
+        sql,
+        params || [],
+        function (this: { changes: number; lastID?: number }, err: Error | null) {
+          if (err) {
+            if (fallback) resolve({ success: false, error: err.message });
+            else reject(err);
+            return;
+          }
+          resolve({ success: true, changes: this.changes, lastID: this.lastID });
         }
-        resolve({ success: true, changes: this.changes, lastID: this.lastID });
-      });
+      );
     }),
   default: {},
 }));
 
 vi.mock('../../../server/src/database/Database.js', () => ({
-  getDatabase: () => ({ query: (...args: unknown[]) => queryMock(...(args as [string, unknown[]])) }),
+  getDatabase: () => ({
+    query: (...args: unknown[]) => queryMock(...(args as [string, unknown[]])),
+  }),
 }));
 
 vi.mock('express-rate-limit', () => ({
@@ -114,6 +124,7 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
     req.user = { id: 'user-tp-sheet', organizationId: 'org-tp' };
     next();
   },
+  requireSuperAdmin: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
 vi.mock('../../../server/src/middleware/requireAudit.middleware.js', () => ({
@@ -124,10 +135,21 @@ vi.mock('../../../server/src/services/tablePlatform/PermissionsService.js', () =
   default: {
     requireBaseAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
     requireTableAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+    requireFieldAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+    requireRecordAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+    requireViewAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
+    requireRoles: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+    SCHEMA_ROLES: ['owner'],
+    DATA_ROLES: ['owner'],
+    VIEW_ROLES: ['owner'],
+    INTERFACE_ROLES: ['owner'],
+    ALL_ROLES: ['owner'],
   },
 }));
 
-const buildXlsxBufferMock = vi.hoisted(() => vi.fn().mockResolvedValue(Buffer.from([80, 75, 3, 4])));
+const buildXlsxBufferMock = vi.hoisted(() =>
+  vi.fn().mockResolvedValue(Buffer.from([80, 75, 3, 4]))
+);
 const getTableNameMock = vi.hoisted(() => vi.fn().mockResolvedValue('Export display name'));
 
 vi.mock('../../../server/src/services/tablePlatform/ExportService.js', () => ({
@@ -158,7 +180,7 @@ describe('table-platform sheet artifact routes (SQLite registry + stubbed tp_tab
     () =>
       new Promise<void>((resolve, reject) => {
         sqliteCtx.db.close((err) => (err ? reject(err) : resolve()));
-      }),
+      })
   );
 
   it('POST /tables/:tableId/register-sheet-artifact registers governed sheet in canonical registry', async () => {
@@ -175,7 +197,7 @@ describe('table-platform sheet artifact routes (SQLite registry + stubbed tp_tab
     expect(res.body?.data?.artifactId).toBeTruthy();
     expect(queryMock).toHaveBeenCalledWith(
       'SELECT name, governance_mode FROM tp_tables WHERE id = $1',
-      ['tbl-governed-1'],
+      ['tbl-governed-1']
     );
   });
 
@@ -192,7 +214,7 @@ describe('table-platform sheet artifact routes (SQLite registry + stubbed tp_tab
     expect(res.headers['content-type']).toMatch(/spreadsheetml/);
     expect(Buffer.isBuffer(res.body) ? res.body.length : res.text?.length).toBeGreaterThan(0);
     expect(buildXlsxBufferMock).toHaveBeenCalledWith(
-      expect.objectContaining({ tableId: 'tbl-governed-1' }),
+      expect.objectContaining({ tableId: 'tbl-governed-1' })
     );
   });
 

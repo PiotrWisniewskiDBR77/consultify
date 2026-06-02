@@ -193,13 +193,13 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-emerald-500';
     if (score >= 60) return 'text-amber-500';
-    return 'text-red-500';
+    return 'text-rose-500';
   };
 
   const getScoreBgColor = (score: number) => {
-    if (score >= 80) return 'from-emerald-500 to-teal-600';
-    if (score >= 60) return 'from-amber-500 to-orange-600';
-    return 'from-red-500 to-rose-600';
+    if (score >= 80) return 'from-emerald-500 to-blue-600';
+    if (score >= 60) return 'from-amber-500 to-amber-600';
+    return 'from-rose-500 to-rose-600';
   };
 
   const getScoreLabel = (score: number) => {
@@ -231,7 +231,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-rose-500" />;
       case 'warning':
         return <AlertTriangle className="w-4 h-4 text-amber-500" />;
       default:
@@ -255,7 +255,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -267,7 +267,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
             <Shield className="w-7 h-7 text-slate-900 dark:text-white" />
           </div>
           <div>
@@ -321,7 +321,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                     ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
                     : score.total >= 60
                       ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                      : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
+                      : 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400'
                 }`}
               >
                 {getScoreLabel(score.total)}
@@ -340,10 +340,10 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
               {/* MFA */}
               <div className="flex items-center gap-4">
                 <div
-                  className={`p-2 rounded-lg ${score.breakdown.mfa.enabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-red-100 dark:bg-red-500/20'}`}
+                  className={`p-2 rounded-lg ${score.breakdown.mfa.enabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-rose-100 dark:bg-rose-500/20'}`}
                 >
                   <Fingerprint
-                    className={`w-5 h-5 ${score.breakdown.mfa.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                    className={`w-5 h-5 ${score.breakdown.mfa.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
                   />
                 </div>
                 <div className="flex-1">
@@ -357,7 +357,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${score.breakdown.mfa.enabled ? 'bg-emerald-500' : 'bg-red-500'}`}
+                      className={`h-full rounded-full transition-all ${score.breakdown.mfa.enabled ? 'bg-emerald-500' : 'bg-rose-500'}`}
                       style={{
                         width: `${(score.breakdown.mfa.score / score.breakdown.mfa.max) * 100}%`,
                       }}
@@ -394,8 +394,8 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
 
               {/* Recent Activity */}
               <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-500/20">
-                  <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-500/20">
+                  <Activity className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
@@ -408,7 +408,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-500 rounded-full transition-all"
+                      className="h-full bg-primary-500 rounded-full transition-all"
                       style={{
                         width: `${(score.breakdown.recentActivity.score / score.breakdown.recentActivity.max) * 100}%`,
                       }}
@@ -444,8 +444,8 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
 
               {/* Data Controls */}
               <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-500/20">
-                  <Eye className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-500/20">
+                  <Eye className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
@@ -458,7 +458,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-teal-500 rounded-full transition-all"
+                      className="h-full bg-blue-500 rounded-full transition-all"
                       style={{
                         width: `${(score.breakdown.dataControls.score / score.breakdown.dataControls.max) * 100}%`,
                       }}
@@ -515,7 +515,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Award className="w-5 h-5 text-purple-500" />
+              <Award className="w-5 h-5 text-primary-500" />
               {t('security.dashboard.compliance', 'Compliance Certifications')}
             </h3>
           </div>
@@ -556,7 +556,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
             </h3>
             <button
               onClick={() => onNavigateToTab?.('events')}
-              className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
             >
               {t('common.viewAll', 'View all')}
               <ChevronRight className="w-4 h-4" />
@@ -652,20 +652,20 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
     success: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
     warning: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
     info: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400',
-    error: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400',
+    error: 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400',
   };
 
   return (
     <button
       onClick={onClick}
-      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 text-left hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-500/50 transition-all group"
+      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 text-left hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-500/50 transition-all group"
     >
       <div
         className={`w-12 h-12 rounded-xl ${statusColors[status]} flex items-center justify-center mb-3`}
       >
         {icon}
       </div>
-      <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+      <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
         {title}
       </h4>
       <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</p>

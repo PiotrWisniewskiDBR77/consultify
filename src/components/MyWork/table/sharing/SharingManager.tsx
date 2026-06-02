@@ -192,7 +192,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
         >
           <ChevronLeft size={16} className="text-slate-400" />
         </button>
-        <Shield size={18} className="text-violet-500" />
+        <Shield size={18} className="text-primary-500" />
         <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
           {isPl ? 'Udostępnianie' : 'Sharing'}
         </h3>
@@ -244,7 +244,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   key={view.id}
                   className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3"
                 >
-                  <Globe size={14} className="text-violet-500 shrink-0" />
+                  <Globe size={14} className="text-primary-500 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-slate-800 dark:text-white truncate block">
                       {view.name}
@@ -255,14 +255,14 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   </div>
                   <button
                     onClick={() => handleCopyLink(view.id, view.shareToken!)}
-                    className="p-1.5 rounded-lg text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                    className="p-1.5 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                     title={isPl ? 'Kopiuj link' : 'Copy link'}
                   >
                     {copiedId === view.id ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                   <button
                     onClick={() => handleRevokeShare(view.id)}
-                    className="p-1.5 rounded-lg text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                     title={isPl ? 'Cofnij udostępnianie' : 'Revoke'}
                   >
                     <X size={14} />
@@ -281,7 +281,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           {!showInvite && (
             <button
               onClick={() => setShowInvite(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 dark:bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors mb-4"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-50 dark:bg-primary-500/10 px-3 py-2 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors mb-4"
             >
               <UserPlus size={12} />
               {isPl ? 'Zaproś osobę' : 'Invite person'}
@@ -300,7 +300,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="user@example.com"
-                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
                 />
               </div>
               <div>
@@ -310,7 +310,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
                 >
                   {ROLES.filter((r) => r.value !== 'owner').map((r) => (
                     <option key={r.value} value={r.value}>
@@ -323,7 +323,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 <button
                   onClick={handleInvite}
                   disabled={inviting}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-violet-500 px-3 py-2 text-xs font-medium text-white hover:bg-violet-600 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-2 text-xs font-medium text-white hover:bg-primary-600 disabled:opacity-50 transition-colors"
                 >
                   {inviting && <Loader2 size={12} className="animate-spin" />}
                   {isPl ? 'Zaproś' : 'Invite'}
@@ -367,8 +367,8 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3"
                   >
                     {/* Avatar placeholder */}
-                    <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
+                    <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-primary-600 dark:text-primary-400">
                         {(collab.name ?? collab.email)?.[0]?.toUpperCase() ?? '?'}
                       </span>
                     </div>
@@ -414,7 +414,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                                 onClick={() => handleChangeRole(collab.userId, r.value)}
                                 className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium transition-colors ${
                                   collab.role === r.value
-                                    ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10'
+                                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
                                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                                 }`}
                               >
@@ -431,7 +431,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     {!isOwner && (
                       <button
                         onClick={() => handleRemoveCollaborator(collab.userId)}
-                        className="p-1.5 rounded-lg text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                         title={isPl ? 'Usuń dostęp' : 'Remove access'}
                       >
                         <Trash2 size={14} />

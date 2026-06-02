@@ -22,14 +22,14 @@ export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(
       pending: 'border-slate-600 bg-slate-800',
       active: 'border-blue-500 bg-blue-500/10',
       completed: 'border-green-500 bg-green-500/10',
-      error: 'border-red-500 bg-red-500/10',
+      error: 'border-rose-500 bg-rose-500/10',
     };
 
     const statusIndicator = {
       pending: 'bg-slate-500',
       active: 'bg-blue-500 animate-pulse',
       completed: 'bg-green-500',
-      error: 'bg-red-500',
+      error: 'bg-rose-500',
     };
 
     return (

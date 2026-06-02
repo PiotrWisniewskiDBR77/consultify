@@ -133,9 +133,7 @@ export function usePortfolioAnalysisData(
         (scores[dims.budget] + scores[dims.skills] + scores[dims.time] + scores[dims.risk]) / 4;
 
       const ownerObj = i.ownerBusiness;
-      const ownerName = ownerObj
-        ? `${ownerObj.firstName} ${ownerObj.lastName}`
-        : undefined;
+      const ownerName = ownerObj ? `${ownerObj.firstName} ${ownerObj.lastName}` : undefined;
 
       return {
         initiativeId: i.id,
@@ -170,7 +168,8 @@ export function usePortfolioAnalysisData(
     const localFallbackDependencies =
       dependencySource === null
         ? initiatives.flatMap((initiative) => {
-            const predecessorIds = initiative.dependencies ?? (initiative as any).dependsOnIds ?? [];
+            const predecessorIds =
+              initiative.dependencies ?? (initiative as any).dependsOnIds ?? [];
             return predecessorIds.map((predecessorId: string, idx: number) => ({
               id: `derived-${initiative.id}-${predecessorId}-${idx}`,
               fromInitiativeId: predecessorId,
@@ -221,9 +220,7 @@ export function usePortfolioAnalysisData(
       const start = i.plannedStartDate ?? (i as any).startDate;
       const end = i.plannedEndDate ?? (i as any).endDate;
       const ownerObj = i.ownerBusiness;
-      const ownerName = ownerObj
-        ? `${ownerObj.firstName} ${ownerObj.lastName}`
-        : undefined;
+      const ownerName = ownerObj ? `${ownerObj.firstName} ${ownerObj.lastName}` : undefined;
       let status: TimelineBar['status'] = 'on-schedule';
       if (!start || !end)
         return {
@@ -237,7 +234,14 @@ export function usePortfolioAnalysisData(
       const endDate = new Date(end);
       if (endDate < today) status = 'delayed';
       else if (endDate < new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)) status = 'at-risk';
-      return { initiativeId: i.id, initiativeName: i.name, startDate: start, endDate: end, status, ownerName };
+      return {
+        initiativeId: i.id,
+        initiativeName: i.name,
+        startDate: start,
+        endDate: end,
+        status,
+        ownerName,
+      };
     });
 
     const timelineIssues: AnalysisIssue[] = bars

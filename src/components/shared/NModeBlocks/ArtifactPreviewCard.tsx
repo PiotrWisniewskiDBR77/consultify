@@ -63,10 +63,10 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; border: string;
     ring: 'ring-blue-400/30',
   },
   violet: {
-    bg: 'bg-violet-500/10',
-    text: 'text-violet-500',
-    border: 'border-violet-500/20',
-    ring: 'ring-violet-400/30',
+    bg: 'bg-primary-500/10',
+    text: 'text-primary-500',
+    border: 'border-primary-500/20',
+    ring: 'ring-primary-400/30',
   },
   emerald: {
     bg: 'bg-emerald-500/10',
@@ -87,10 +87,10 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; border: string;
     ring: 'ring-indigo-400/30',
   },
   cyan: {
-    bg: 'bg-cyan-500/10',
-    text: 'text-cyan-500',
-    border: 'border-cyan-500/20',
-    ring: 'ring-cyan-400/30',
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-500',
+    border: 'border-blue-500/20',
+    ring: 'ring-blue-400/30',
   },
   slate: {
     bg: 'bg-slate-500/10',
@@ -111,10 +111,10 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; border: string;
     ring: 'ring-sky-400/30',
   },
   red: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-500',
-    border: 'border-red-500/20',
-    ring: 'ring-red-400/30',
+    bg: 'bg-rose-500/10',
+    text: 'text-rose-500',
+    border: 'border-rose-500/20',
+    ring: 'ring-rose-400/30',
   },
   lime: {
     bg: 'bg-lime-500/10',
@@ -129,16 +129,16 @@ const ACCENT_CLASSES: Record<string, { bg: string; text: string; border: string;
     ring: 'ring-green-400/30',
   },
   teal: {
-    bg: 'bg-teal-500/10',
-    text: 'text-teal-500',
-    border: 'border-teal-500/20',
-    ring: 'ring-teal-400/30',
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-500',
+    border: 'border-blue-500/20',
+    ring: 'ring-blue-400/30',
   },
   orange: {
-    bg: 'bg-orange-500/10',
-    text: 'text-orange-500',
-    border: 'border-orange-500/20',
-    ring: 'ring-orange-400/30',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-500',
+    border: 'border-amber-500/20',
+    ring: 'ring-amber-400/30',
   },
 };
 
@@ -281,7 +281,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
             <button
               type="button"
               onClick={onRemove}
-              className="p-1 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-500"
+              className="p-1 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-500"
               title={isPl ? 'Usuń link' : 'Remove link'}
             >
               <X size={10} />

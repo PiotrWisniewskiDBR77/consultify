@@ -71,11 +71,11 @@ interface KGProvenance {
 const ENTITY_COLORS: Record<string, string> = {
   person: '#6366f1',
   organization: '#0ea5e9',
-  concept: '#8b5cf6',
+  concept: '#6366f1',
   technology: '#10b981',
   location: '#f59e0b',
   process: '#ec4899',
-  metric: '#14b8a6',
+  metric: '#3b82f6',
   default: '#64748b',
 };
 
@@ -322,7 +322,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 text-xs">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 text-xs">
           <AlertTriangle size={14} />
           {error}
         </div>

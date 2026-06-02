@@ -92,7 +92,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                   ? 'text-emerald-500'
                   : proposal.risk_level === 'MEDIUM'
                     ? 'text-amber-500'
-                    : 'text-red-500'
+                    : 'text-rose-500'
               }
             />
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -100,7 +100,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
             </span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-sm">
-            <Target size={14} className="text-purple-500" />
+            <Target size={14} className="text-primary-500" />
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
               Scope: {proposal.scope}
             </span>
@@ -161,9 +161,9 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
 
             {/* Policy Evaluation Section */}
             {policyEvaluation && (
-              <section className="bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-500/20 rounded-xl p-4">
+              <section className="bg-primary-50/50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-500/20 rounded-xl p-4">
                 <h3 className="flex items-center gap-2 text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider mb-4">
-                  <Shield size={16} className="text-violet-500" />
+                  <Shield size={16} className="text-primary-500" />
                   Policy Evaluation
                 </h3>
                 <div className="space-y-3">
@@ -185,7 +185,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                       </span>
                     </div>
                     {policyEvaluation.matched && policyEvaluation.decision && (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-400">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-400">
                         <span className="text-xs font-bold">{policyEvaluation.decision}</span>
                       </div>
                     )}
@@ -196,7 +196,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                     </p>
                   )}
                   {policyEvaluation.rule_id && (
-                    <p className="text-[10px] text-violet-500 font-mono">
+                    <p className="text-[10px] text-primary-500 font-mono">
                       RULE ID: {policyEvaluation.rule_id}
                     </p>
                   )}
@@ -307,7 +307,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
       <div className="p-6 border-t border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 flex items-center justify-between">
         <button
           onClick={onReject}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/30 transition-all"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30 transition-all"
         >
           <XCircle size={18} />
           Reject Proposal

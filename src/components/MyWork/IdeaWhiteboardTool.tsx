@@ -36,6 +36,7 @@ import {
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {
@@ -49,8 +50,15 @@ import {
   type IdeaWorkspaceSelection,
 } from './ideaSelectionTypes';
 export type { CanvasBgPattern } from './ideaSelectionTypes';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
+import { IdeaCanvasContextMenu } from './IdeaCanvasContextMenu';
+import { IdeaProposalReview } from './IdeaProposalReview';
+import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
+import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
+import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
 import { useWhiteboardQuickActions } from './whiteboard/useWhiteboardQuickActions';
 import {
@@ -58,10 +66,10 @@ import {
   createWhiteboardHistoryEntry,
   cycleWhiteboardClassification,
   cycleWhiteboardRole,
+  FACILITATION_TRANSITIONS,
+  type FacilitationPhase,
   getSemanticTypeLabel,
   inferWhiteboardSemanticType,
-  type FacilitationPhase,
-  FACILITATION_TRANSITIONS,
   type WhiteboardActivityEntry,
   type WhiteboardClassification,
   type WhiteboardHistoryEntry,
@@ -71,21 +79,14 @@ import {
   type WhiteboardSharePolicy,
   type WhiteboardVoteEntry,
 } from './whiteboard/whiteboardContracts';
+import { WhiteboardEmptyState } from './whiteboard/WhiteboardEmptyState';
 import {
   getWhiteboardModeCopy,
   getWhiteboardShortcuts,
 } from './whiteboard/whiteboardInteractionGrammar';
-import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
-import { whiteboardNodeTypes, whiteboardEdgeTypes } from './whiteboard/nodes/nodeTypes';
-import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
-import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
 import { WhiteboardSelectionBar } from './whiteboard/WhiteboardSelectionBar';
-import { WhiteboardEmptyState } from './whiteboard/WhiteboardEmptyState';
-import { IdeaCanvasContextMenu } from './IdeaCanvasContextMenu';
-import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
-import { IdeaProposalReview } from './IdeaProposalReview';
-import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
-import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
+import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
 
 // ── Node/edge types (extracted to whiteboard/nodes/) ─────────────────────────
 const nodeTypes = whiteboardNodeTypes;
@@ -126,7 +127,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   isFullscreen: externalIsFullscreen = false,
   onContextMenu: externalOnContextMenu,
 }) => {
-  const { screenToFlowPosition, setViewport } = useReactFlow();
+  const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
   const isDarkCanvas = useIsDark();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [showMiniMap, setShowMiniMap] = React.useState(false);
@@ -179,6 +180,28 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     rfEl.addEventListener('idea-whiteboard-set-viewport', handler);
     return () => rfEl.removeEventListener('idea-whiteboard-set-viewport', handler);
   }, [setViewport]);
+
+  // A6: zoom-to-fit shortcuts (Cmd/Ctrl+0 and Shift+1) — consistent with the
+  // Mind Map and Process Flow tools. Whiteboard previously had neither.
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
+      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+        e.preventDefault();
+        fitView({ padding: 0.2, duration: 300 });
+        return;
+      }
+      // e.code is layout-independent (Shift+1 yields "!" on most layouts).
+      if (!typing && e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        e.preventDefault();
+        fitView({ padding: 0.2, duration: 300 });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [fitView]);
 
   const getCenter = React.useCallback(() => {
     return screenToFlowPosition({
@@ -340,10 +363,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           event.preventDefault();
           externalOnContextMenu?.(event);
         }}
+        {...getIdeasToolInteractionProps('whiteboard', { locked })}
         fitView
-        selectionOnDrag
-        panOnDrag={[1, 2]}
-        deleteKeyCode={locked ? null : 'Delete'}
         className="bg-slate-100/80 dark:bg-[#0b1020]"
         defaultEdgeOptions={{ type: 'labeled' }}
         onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
@@ -382,7 +403,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
                       ? '#fbbf24'
                       : '#94a3b8';
               }
-              if (n.type === 'scoreNode') return '#8b5cf6';
+              if (n.type === 'scoreNode') return '#6366f1';
               if (n.type === 'progressNode') return '#60a5fa';
               if (n.type === 'summaryCard') return '#a78bfa';
               if (n.type === 'frameNode') return isDarkCanvas ? '#0f172a' : '#f1f5f9';
@@ -602,7 +623,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const [outlineImportOpen, setOutlineImportOpen] = useState(false);
   const [outlineImportValue, setOutlineImportValue] = useState('');
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
-  const [contextMenuTarget, setContextMenuTarget] = useState<{ nodeId?: string; nodeLabel?: string; nodeType?: string }>({});
+  const [contextMenuTarget, setContextMenuTarget] = useState<{
+    nodeId?: string;
+    nodeLabel?: string;
+    nodeType?: string;
+  }>({});
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashMenuPos, setSlashMenuPos] = useState<{ x: number; y: number } | undefined>();
   const [bgPattern, setBgPattern] = useState<CanvasBgPattern>('dots');
@@ -660,11 +685,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     redoStackRef.current = [current, ...redoStackRef.current.slice(0, 24)];
     restoreSnapshot(previous);
     appendActivity(
-      createWhiteboardActivityEntry(
-        'history',
-        t('myWork.whiteboard.activity.undo'),
-        currentUserId
-      )
+      createWhiteboardActivityEntry('history', t('myWork.whiteboard.activity.undo'), currentUserId)
     );
   }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
 
@@ -676,11 +697,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     undoStackRef.current = [...undoStackRef.current.slice(-24), current];
     restoreSnapshot(next);
     appendActivity(
-      createWhiteboardActivityEntry(
-        'history',
-        t('myWork.whiteboard.activity.redo'),
-        currentUserId
-      )
+      createWhiteboardActivityEntry('history', t('myWork.whiteboard.activity.redo'), currentUserId)
     );
   }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
   const handleSelectionUpdate = useCallback(
@@ -789,7 +806,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       });
       return changed ? next : nds;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameCollapseKey, setNodes]);
 
   const didPersistRef = useRef(false);
@@ -1715,10 +1731,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             height: 250,
             bgColor: 'rgba(245, 158, 11, 0.08)',
           });
-          make('sticky', { label: t('myWork.whiteboard.quickStart.brainstorm.idea', { n: 1 }), position: { x: 180, y: 150 } });
-          make('sticky', { label: t('myWork.whiteboard.quickStart.brainstorm.idea', { n: 2 }), position: { x: 360, y: 150 } });
-          make('sticky', { label: t('myWork.whiteboard.quickStart.brainstorm.idea', { n: 3 }), position: { x: 240, y: 290 } });
-          make('sticky', { label: t('myWork.whiteboard.quickStart.brainstorm.idea', { n: 4 }), position: { x: 430, y: 290 } });
+          make('sticky', {
+            label: t('myWork.whiteboard.quickStart.brainstorm.idea', { n: 1 }),
+            position: { x: 180, y: 150 },
+          });
+          make('sticky', {
+            label: t('myWork.whiteboard.quickStart.brainstorm.idea', { n: 2 }),
+            position: { x: 360, y: 150 },
+          });
+          make('sticky', {
+            label: t('myWork.whiteboard.quickStart.brainstorm.idea', { n: 3 }),
+            position: { x: 240, y: 290 },
+          });
+          make('sticky', {
+            label: t('myWork.whiteboard.quickStart.brainstorm.idea', { n: 4 }),
+            position: { x: 430, y: 290 },
+          });
         }
 
         if (mode === 'affinity') {
@@ -1736,10 +1764,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             height: 320,
             bgColor: 'rgba(59, 130, 246, 0.08)',
           });
-          make('sticky', { label: t('myWork.whiteboard.quickStart.affinity.input', { n: 1 }), position: { x: 165, y: 145 } });
-          make('sticky', { label: t('myWork.whiteboard.quickStart.affinity.input', { n: 2 }), position: { x: 165, y: 265 } });
-          make('sticky', { label: t('myWork.whiteboard.quickStart.affinity.input', { n: 3 }), position: { x: 470, y: 145 } });
-          make('sticky', { label: t('myWork.whiteboard.quickStart.affinity.input', { n: 4 }), position: { x: 470, y: 265 } });
+          make('sticky', {
+            label: t('myWork.whiteboard.quickStart.affinity.input', { n: 1 }),
+            position: { x: 165, y: 145 },
+          });
+          make('sticky', {
+            label: t('myWork.whiteboard.quickStart.affinity.input', { n: 2 }),
+            position: { x: 165, y: 265 },
+          });
+          make('sticky', {
+            label: t('myWork.whiteboard.quickStart.affinity.input', { n: 3 }),
+            position: { x: 470, y: 145 },
+          });
+          make('sticky', {
+            label: t('myWork.whiteboard.quickStart.affinity.input', { n: 4 }),
+            position: { x: 470, y: 265 },
+          });
         }
 
         if (mode === 'workshop') {
@@ -1854,9 +1894,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           )
         );
       } catch (error: any) {
-        toast.error(
-          error?.message || t('myWork.whiteboard.errors.voteSaveFailed')
-        );
+        toast.error(error?.message || t('myWork.whiteboard.errors.voteSaveFailed'));
       }
     };
     window.addEventListener('idea-whiteboard-cast-vote', handler);
@@ -1960,9 +1998,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   useEffect(() => {
     if (!open || !sessionState.sessionId || !sessionState.votingOpen) return;
-    syncFacilitationVotes(sessionState.sessionId).catch(() => toast.error(t('myWork.whiteboard.errors.voteSyncFailed')));
+    syncFacilitationVotes(sessionState.sessionId).catch(() =>
+      toast.error(t('myWork.whiteboard.errors.voteSyncFailed'))
+    );
     const interval = window.setInterval(() => {
-      syncFacilitationVotes(sessionState.sessionId as string).catch(() => toast.error(t('myWork.whiteboard.errors.voteSyncFailed')));
+      syncFacilitationVotes(sessionState.sessionId as string).catch(() =>
+        toast.error(t('myWork.whiteboard.errors.voteSyncFailed'))
+      );
     }, 5000);
     return () => window.clearInterval(interval);
   }, [open, sessionState.sessionId, sessionState.votingOpen, syncFacilitationVotes]);
@@ -2001,7 +2043,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     }, 5000);
     return () => {
       window.clearInterval(heartbeat);
-      Api.toolSessionDisconnect(toolSessionId).catch(() => toast.error(t('myWork.whiteboard.errors.disconnectFailed')));
+      Api.toolSessionDisconnect(toolSessionId).catch(() =>
+        toast.error(t('myWork.whiteboard.errors.disconnectFailed'))
+      );
     };
   }, [
     currentUserName,
@@ -2176,9 +2220,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         if (selected.length < 2) return nds;
 
         const getNodeW = (n: Node): number =>
-          (n.style?.width as number) || n.data?.width || (n.type === 'frameNode' ? 400 : n.type === 'stickyNote' ? 180 : 200);
+          (n.style?.width as number) ||
+          n.data?.width ||
+          (n.type === 'frameNode' ? 400 : n.type === 'stickyNote' ? 180 : 200);
         const getNodeH = (n: Node): number =>
-          (n.style?.height as number) || n.data?.height || (n.type === 'frameNode' ? 300 : n.type === 'stickyNote' ? 100 : 80);
+          (n.style?.height as number) ||
+          n.data?.height ||
+          (n.type === 'frameNode' ? 300 : n.type === 'stickyNote' ? 100 : 80);
 
         let ref: number;
         switch (direction) {
@@ -2215,12 +2263,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           const w = getNodeW(n);
           const h = getNodeH(n);
           switch (direction) {
-            case 'left': pos.x = ref; break;
-            case 'right': pos.x = ref - w; break;
-            case 'center': pos.x = ref - w / 2; break;
-            case 'top': pos.y = ref; break;
-            case 'bottom': pos.y = ref - h; break;
-            case 'middle': pos.y = ref - h / 2; break;
+            case 'left':
+              pos.x = ref;
+              break;
+            case 'right':
+              pos.x = ref - w;
+              break;
+            case 'center':
+              pos.x = ref - w / 2;
+              break;
+            case 'top':
+              pos.y = ref;
+              break;
+            case 'bottom':
+              pos.y = ref - h;
+              break;
+            case 'middle':
+              pos.y = ref - h / 2;
+              break;
           }
           return { ...n, position: pos };
         });
@@ -2281,7 +2341,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       setContextMenuPos({ x: e.clientX, y: e.clientY });
       setContextMenuTarget(
         nodeId
-          ? { nodeId, nodeLabel: nodeData?.label, nodeType: nodeData?.semanticType || nodeData?.type }
+          ? {
+              nodeId,
+              nodeLabel: nodeData?.label,
+              nodeType: nodeData?.semanticType || nodeData?.type,
+            }
           : {}
       );
     },
@@ -2311,7 +2375,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         ),
       };
       setProposalBatch(updated);
-      const accepted = updated.proposals.filter((p) => p.id === proposalId && p.status === 'accepted');
+      const accepted = updated.proposals.filter(
+        (p) => p.id === proposalId && p.status === 'accepted'
+      );
       for (const p of accepted) {
         if (p.patch?.addNodes?.length) {
           for (const an of p.patch.addNodes) {
@@ -2379,11 +2445,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }
     }
     appendActivity(
-      createWhiteboardActivityEntry(
-        'ai',
-        t('myWork.whiteboard.ai.acceptedAll'),
-        currentUserId
-      )
+      createWhiteboardActivityEntry('ai', t('myWork.whiteboard.ai.acceptedAll'), currentUserId)
     );
     toast.success(t('myWork.whiteboard.ai.allProposalsApplied'));
   }, [addElement, appendActivity, currentUserId, isPl, proposalBatch]);
@@ -2399,11 +2461,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       };
     });
     appendActivity(
-      createWhiteboardActivityEntry(
-        'ai',
-        t('myWork.whiteboard.ai.rejectedAll'),
-        currentUserId
-      )
+      createWhiteboardActivityEntry('ai', t('myWork.whiteboard.ai.rejectedAll'), currentUserId)
     );
   }, [appendActivity, currentUserId, isPl]);
 
@@ -2427,7 +2485,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     if (!open) return;
     const isEditing = () => {
       const el = document.activeElement;
-      return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el as HTMLElement)?.isContentEditable;
+      return (
+        el instanceof HTMLInputElement ||
+        el instanceof HTMLTextAreaElement ||
+        (el as HTMLElement)?.isContentEditable
+      );
     };
     const handler = (e: KeyboardEvent) => {
       if (e.key === '?' && !e.metaKey && !e.ctrlKey && !isEditing()) {
@@ -2506,7 +2568,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [contextMenuPos, deleteSelected, groupSelected, handleSave, locked, open, proposalBatch, redoWhiteboard, setBoardMode, shortcutsHelpOpen, slashMenuOpen, undoWhiteboard, ungroupSelected, whiteboardMode]);
+  }, [
+    contextMenuPos,
+    deleteSelected,
+    groupSelected,
+    handleSave,
+    locked,
+    open,
+    proposalBatch,
+    redoWhiteboard,
+    setBoardMode,
+    shortcutsHelpOpen,
+    slashMenuOpen,
+    undoWhiteboard,
+    ungroupSelected,
+    whiteboardMode,
+  ]);
 
   // ── Focus-mode filtering (nodes + edges) ───────────────────────────────────
   const { nodes: displayNodes, edges: displayEdges } = useMemo(() => {
@@ -2589,7 +2666,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         canUndo={undoStackRef.current.length > 0}
         canRedo={redoStackRef.current.length > 0}
         whiteboardModeCopy={whiteboardModeCopy}
-        onAddElement={addElement}
+        onAddElement={(kind, extraData) => addElement(kind as WbNodeKind, extraData)}
         onSetBoardMode={setBoardMode}
         onClearDrawings={() => {
           setDrawingPaths([]);

@@ -116,7 +116,7 @@ const DEFAULT_TIERS: CommissionRate[] = [
   { tier: 'BRONZE', tierName: 'Bronze', rate: 12, minRevenue: 5000, color: 'bg-amber-600' },
   { tier: 'SILVER', tierName: 'Silver', rate: 15, minRevenue: 15000, color: 'bg-slate-400' },
   { tier: 'GOLD', tierName: 'Gold', rate: 18, minRevenue: 50000, color: 'bg-yellow-500' },
-  { tier: 'PLATINUM', tierName: 'Platinum', rate: 20, minRevenue: 100000, color: 'bg-violet-500' },
+  { tier: 'PLATINUM', tierName: 'Platinum', rate: 20, minRevenue: 100000, color: 'bg-primary-500' },
 ];
 
 const PAYMENT_METHODS = [
@@ -312,9 +312,12 @@ export const PartnerProgramConfig: React.FC = () => {
   ) => {
     try {
       setSaving(true);
-      const response = await Api.post(`/api/superadmin/partner-config/review-queue/${certificationId}`, {
-        reviewState,
-      });
+      const response = await Api.post(
+        `/api/superadmin/partner-config/review-queue/${certificationId}`,
+        {
+          reviewState,
+        }
+      );
       if (response?.success) {
         toast.success(
           reviewState === 'approved' ? 'Certification approved' : 'Changes requested sent'
@@ -334,7 +337,7 @@ export const PartnerProgramConfig: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -365,10 +368,10 @@ export const PartnerProgramConfig: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+        <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-4">
           <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400" />
-            <span className="text-red-300">{error}</span>
+            <AlertCircle className="w-5 h-5 text-rose-400" />
+            <span className="text-rose-300">{error}</span>
           </div>
         </div>
       )}
@@ -459,8 +462,8 @@ export const PartnerProgramConfig: React.FC = () => {
       <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-violet-500/20">
-              <Percent className="w-5 h-5 text-violet-400" />
+            <div className="p-2 rounded-lg bg-primary-500/20">
+              <Percent className="w-5 h-5 text-primary-400" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">
@@ -566,7 +569,7 @@ export const PartnerProgramConfig: React.FC = () => {
           <button
             onClick={handleSaveDiscountConfig}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             Save Discount Settings
@@ -639,7 +642,7 @@ export const PartnerProgramConfig: React.FC = () => {
                     <button
                       onClick={() => handlePartnerApplicationDecision(item.id, 'needs_follow_up')}
                       disabled={saving}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm disabled:opacity-50"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm disabled:opacity-50"
                     >
                       <RefreshCw className="w-4 h-4" />
                       Follow up
@@ -727,8 +730,8 @@ export const PartnerProgramConfig: React.FC = () => {
 
         <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
           <div className="flex items-center gap-3 mb-5">
-            <div className="p-2 rounded-lg bg-violet-500/20">
-              <Users className="w-5 h-5 text-violet-300" />
+            <div className="p-2 rounded-lg bg-primary-500/20">
+              <Users className="w-5 h-5 text-primary-300" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">
@@ -742,7 +745,10 @@ export const PartnerProgramConfig: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(reporting?.blockedReasons || []).map((item) => (
-              <div key={item.reason} className="rounded-xl border border-white/5 bg-navy-900/40 p-4">
+              <div
+                key={item.reason}
+                className="rounded-xl border border-white/5 bg-navy-900/40 p-4"
+              >
                 <div className="text-xs uppercase tracking-wide text-slate-500">{item.reason}</div>
                 <div className="mt-1 text-2xl font-semibold text-white">{item.count}</div>
               </div>
@@ -889,7 +895,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
                   payoutSettings.paymentMethods.includes(method.id)
-                    ? 'bg-violet-600/20 border-violet-500 text-white'
+                    ? 'bg-primary-600/20 border-primary-500 text-white'
                     : 'bg-navy-900 border-white/10 text-slate-400 dark:text-slate-500 hover:text-white'
                 )}
               >

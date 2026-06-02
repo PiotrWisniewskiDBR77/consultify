@@ -1,0 +1,104 @@
+{
+  "source": "out/qa-prezentacje-run.json",
+  "exportedAt": "2026-05-17T15:41:14.365Z",
+  "summary": {
+    "createDeck": {
+      "name": "create_deck_manual_6_types",
+      "status": 201,
+      "ok": true,
+      "data": {
+        "id": "92ac4df480394e5a928cf467d70f35de",
+        "title": "QA Deck Manual 6 Slides",
+        "slideCount": 6
+      },
+      "error": null,
+      "deckId": "92ac4df480394e5a928cf467d70f35de"
+    },
+    "autosave": {
+      "name": "autosave_edit_layout_reorder",
+      "status": 200,
+      "ok": true,
+      "version": 2,
+      "error": null
+    },
+    "persist": {
+      "name": "persist_after_refresh_readback",
+      "status": 200,
+      "ok": true,
+      "version": 2,
+      "firstTitle": "EDYTOWANY SLIDE 1 QA",
+      "cardsCount": 4
+    },
+    "exports": [
+      {
+        "name": "export_pptx",
+        "status": 404,
+        "ok": false,
+        "bytes": 48,
+        "contentType": "application/json; charset=utf-8"
+      },
+      {
+        "name": "export_pdf",
+        "status": 404,
+        "ok": false,
+        "bytes": 42,
+        "contentType": "application/json; charset=utf-8"
+      },
+      {
+        "name": "export_html_preview_surrogate",
+        "status": 404,
+        "ok": false,
+        "bytes": 42,
+        "contentType": "application/json; charset=utf-8"
+      }
+    ],
+    "parity": {
+      "name": "export_parity_check",
+      "status": 200,
+      "ok": true,
+      "verdict": "FAIL",
+      "summary": {
+        "total": 4,
+        "critical": 2,
+        "warning": 0,
+        "info": 2
+      },
+      "issues": [
+        {
+          "format": "pdf",
+          "field": "missing_export",
+          "expected": "completed export record",
+          "actual": null,
+          "severity": "critical",
+          "reason": "PDF export is mandatory but no export record was found. Trigger a fresh PDF export."
+        },
+        {
+          "format": "pptx",
+          "field": "missing_export",
+          "expected": "completed export record",
+          "actual": null,
+          "severity": "critical",
+          "reason": "PPTX export is mandatory but no export record was found. Trigger a fresh PPTX export."
+        },
+        {
+          "format": "png",
+          "field": "missing_export",
+          "expected": "completed export record",
+          "actual": null,
+          "severity": "info",
+          "reason": "PNG export is optional and not present. Skip if intentional, otherwise trigger a PNG export."
+        },
+        {
+          "format": "html",
+          "field": "missing_export",
+          "expected": "completed export record",
+          "actual": null,
+          "severity": "info",
+          "reason": "HTML export is optional and not present. Skip if intentional, otherwise trigger a HTML export."
+        }
+      ],
+      "error": null
+    }
+  },
+  "note": "Runtime retest against live backend was blocked by local startup issue after code changes; this snapshot preserves last successful runtime evidence from current session before backend restart instability."
+}

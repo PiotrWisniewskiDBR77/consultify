@@ -110,7 +110,9 @@ router.post(
       const data = await teresaToolOperatorService.proposeInitiativeDraftOperator({
         organizationId,
         userId,
-        sessionId: String(req.body?.sessionId || req.body?.conversationId || `initiative-${userId}`),
+        sessionId: String(
+          req.body?.sessionId || req.body?.conversationId || `initiative-${userId}`
+        ),
         conversationId: req.body?.conversationId ? String(req.body.conversationId) : null,
         contextSnapshotId: req.body?.contextSnapshotId ? String(req.body.contextSnapshotId) : null,
         sourceSurface: 'initiatives',

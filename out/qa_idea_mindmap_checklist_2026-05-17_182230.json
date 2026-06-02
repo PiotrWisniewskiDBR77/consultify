@@ -1,0 +1,83 @@
+{
+  "generatedAt": "2026-05-17T16:23:00.064Z",
+  "baseUrl": "https://demo.consultify.ai/my-work/ideas/0a4c40b9-898d-4d3d-b5f4-286c932ec587/workspace/mindmap",
+  "user": "admin@dbr77.com",
+  "checklist": [
+    {
+      "id": "MM-01",
+      "label": "Utwórz nową mapę myśli",
+      "status": "PASS",
+      "details": "ideaId=0a4c40b9-898d-4d3d-b5f4-286c932ec587"
+    },
+    {
+      "id": "MM-02",
+      "label": "Dodaj min. 12 węzłów na 3 poziomach",
+      "status": "FAIL",
+      "details": "nodes=8 (oczekiwano >=13 razem z root)"
+    },
+    {
+      "id": "MM-03",
+      "label": "Dodaj/edytuj połączenia + drag&drop gałęzi",
+      "status": "FAIL",
+      "details": "Connect blocked: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /^Connect/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Connect — drag from one node handle to another\" aria-label=\"Connect — drag from one node handle to another\" class=\"flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"react-flow__pane selection\">…</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"react-flow__pane selection\">…</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    14 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"react-flow__pane selection\">…</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "id": "MM-04",
+      "label": "Skróty klawiaturowe enter/tab/delete",
+      "status": "PASS",
+      "details": "Wysłano Enter/Tab/Delete podczas sesji"
+    },
+    {
+      "id": "MM-05",
+      "label": "Zapis, refresh i ponowne otwarcie",
+      "status": "PASS",
+      "details": "before=8, after=8"
+    },
+    {
+      "id": "MM-06",
+      "label": "Import/Eksport (jeśli dostępny)",
+      "status": "FAIL",
+      "details": "Import/Export blocked: locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /import|export|eksport|import/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Import / Export\" aria-label=\"Import / Export\" class=\"flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"react-flow__pane selection\">…</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"react-flow__pane selection\">…</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"text-[10px] text-slate-500 dark:text-slate-400 mt-0.5\">0 nodes</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  3 × retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"react-flow__pane selection\">…</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"react-flow__pane selection\">…</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"text-[10px] text-slate-500 dark:text-slate-400 mt-0.5\">0 nodes</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"text-[10px] text-slate-500 dark:text-slate-400 mt-0.5\">0 nodes</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <div class=\"react-flow__pane selection\">…</div> from <div tabindex=\"-1\" data-mm-surface=\"mindmap\" class=\"fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950\">…</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "id": "MM-07",
+      "label": "UI/UX: czytelność etykiet, kolizje, auto-layout",
+      "status": "FAIL",
+      "details": "labelElements=0, layoutHints=0"
+    },
+    {
+      "id": "MM-08",
+      "label": "Console/Network przy większej liczbie elementów",
+      "status": "PASS",
+      "details": "consoleErrors=0, network5xx=0"
+    }
+  ],
+  "defects": [
+    {
+      "severity": "P1",
+      "title": "Nie udało się uzyskać 12+ węzłów",
+      "details": "Wykryto tylko 8 node na canvasie."
+    },
+    {
+      "severity": "P1",
+      "title": "Connect action blocked by overlay",
+      "details": "locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /^Connect/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Connect — drag from one node handle to another\" aria-label=\"Connect — drag from one node handle to another\" class=\"flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]\">…</button>\u001b[22m\n\u001b[2m  - attempting click acti"
+    },
+    {
+      "severity": "P1",
+      "title": "Import/Export action blocked by overlay",
+      "details": "locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /import|export|eksport|import/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button title=\"Import / Export\" aria-label=\"Import / Export\" class=\"flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to"
+    },
+    {
+      "severity": "P2",
+      "title": "Nieczytelne etykiety / brak feedbacku layout",
+      "details": "Nie wykryto stabilnych znaczników etykiet."
+    }
+  ],
+  "metrics": {
+    "beforeRefreshNodeCount": 8,
+    "afterRefreshNodeCount": 8,
+    "consoleErrorCount": 0,
+    "networkErrorCount": 0
+  }
+}

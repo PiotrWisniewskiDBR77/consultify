@@ -8,6 +8,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  isValidMessageFlow,
+  isValidProcessFlowTool,
+  isValidSemanticObject,
   P14_ACCEPTANCE_CHECKLIST,
   P14_AI_PROPOSAL_RULES,
   P14_ANTI_DUPLICATE_RULES,
@@ -21,9 +24,6 @@ import {
   P14_TOOLBELT_RULES,
   P14_VALIDATION_LAYERS,
   P14_VALIDATION_RULES,
-  isValidMessageFlow,
-  isValidProcessFlowTool,
-  isValidSemanticObject,
   validateSemanticRule,
 } from '../../../services/v8/processFlowCanon.js';
 
@@ -37,9 +37,17 @@ describe('P14 Process Flow Canon', () => {
 
     it('includes all required BPMN-adjacent types', () => {
       const required = [
-        'start_event', 'end_event', 'task', 'decision_gateway',
-        'parallel_gateway', 'subprocess', 'lane', 'pool',
-        'sequence_flow', 'message_flow', 'annotation',
+        'start_event',
+        'end_event',
+        'task',
+        'decision_gateway',
+        'parallel_gateway',
+        'subprocess',
+        'lane',
+        'pool',
+        'sequence_flow',
+        'message_flow',
+        'annotation',
       ];
       for (const obj of required) {
         expect(P14_SEMANTIC_OBJECTS).toContain(obj);
@@ -115,11 +123,15 @@ describe('P14 Process Flow Canon', () => {
     });
 
     it('non-goals include execution engine', () => {
-      expect(P14_BPMN_INTEROP_POSTURE.nonGoal.some((ng) => ng.includes('execution engine'))).toBe(true);
+      expect(P14_BPMN_INTEROP_POSTURE.nonGoal.some((ng) => ng.includes('execution engine'))).toBe(
+        true
+      );
     });
 
     it('supported includes visual semantics alignment', () => {
-      expect(P14_BPMN_INTEROP_POSTURE.supported.some((s) => s.includes('Visual semantics'))).toBe(true);
+      expect(P14_BPMN_INTEROP_POSTURE.supported.some((s) => s.includes('Visual semantics'))).toBe(
+        true
+      );
     });
   });
 
@@ -141,15 +153,21 @@ describe('P14 Process Flow Canon', () => {
     });
 
     it('semantic rules include start_event constraint', () => {
-      expect(P14_VALIDATION_RULES.semantic_first.rules.some((r) => r.includes('start_event'))).toBe(true);
+      expect(P14_VALIDATION_RULES.semantic_first.rules.some((r) => r.includes('start_event'))).toBe(
+        true
+      );
     });
 
     it('structural rules include orphan check', () => {
-      expect(P14_VALIDATION_RULES.structural_bounded.rules.some((r) => r.includes('orphan'))).toBe(true);
+      expect(P14_VALIDATION_RULES.structural_bounded.rules.some((r) => r.includes('orphan'))).toBe(
+        true
+      );
     });
 
     it('structural rules include nesting depth limit', () => {
-      expect(P14_VALIDATION_RULES.structural_bounded.rules.some((r) => r.includes('nesting depth'))).toBe(true);
+      expect(
+        P14_VALIDATION_RULES.structural_bounded.rules.some((r) => r.includes('nesting depth'))
+      ).toBe(true);
     });
   });
 

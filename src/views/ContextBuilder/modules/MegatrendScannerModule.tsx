@@ -97,7 +97,7 @@ export const MegatrendScannerModule: React.FC = () => {
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${
                               activeTab === tab.id
-                                ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                                ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                             }
                         `}
@@ -144,7 +144,7 @@ export const MegatrendScannerModule: React.FC = () => {
                 </p>
                 <button
                   onClick={() => setActiveTab('baseline')}
-                  className="mt-4 text-purple-600 hover:text-purple-700 font-medium"
+                  className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
                 >
                   Go to Baseline
                 </button>

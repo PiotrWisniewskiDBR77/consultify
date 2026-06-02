@@ -5,6 +5,7 @@
 import { createElement, useCallback, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
+
 import { MAX_MINDMAP_NODES, resolveDeleteAnchor, wouldCreateCycle } from './mindmapCanonHelpers';
 
 // ── Clipboard ────────────────────────────────────────────────────────────────
@@ -65,7 +66,7 @@ export const BRANCH_COLORS: Record<
   { bg: string; text: string; edge: string; glow: string }
 > = {
   strengths: { bg: '#dcfce7', text: '#166534', edge: '#22c55e', glow: '#bbf7d0' },
-  weaknesses: { bg: '#fee2e2', text: '#991b1b', edge: '#ef4444', glow: '#fecaca' },
+  weaknesses: { bg: '#fee2e2', text: '#991b1b', edge: '#f43f5e', glow: '#fecaca' },
   opportunities: { bg: '#dbeafe', text: '#1e40af', edge: '#3b82f6', glow: '#bfdbfe' },
   threats: { bg: '#fef9c3', text: '#854d0e', edge: '#eab308', glow: '#fef08a' },
   options: { bg: '#f3e8ff', text: '#6b21a8', edge: '#a855f7', glow: '#e9d5ff' },
@@ -89,6 +90,7 @@ export interface UseMindMapNodesOpts {
   fitView: (opts?: any) => void;
   remoteLockedNodeIds: Set<string>;
   autoLayout?: (nodes: Node[], edges: Edge[]) => Node[];
+  partialLayoutSubtree?: (nodes: Node[], edges: Edge[], subtreeRootId: string) => Node[];
 }
 
 export function useMindMapNodes(opts: UseMindMapNodesOpts) {
@@ -103,6 +105,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     fitView,
     remoteLockedNodeIds,
     autoLayout,
+    partialLayoutSubtree,
   } = opts;
 
   const editingNodeIdRef = useRef<string | null>(null);
@@ -122,8 +125,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
           return [...prev, newEdge];
         });
       };
-      window.setTimeout(reapply, 120);
-      window.setTimeout(reapply, 600);
+      window.setTimeout(reapply, 200);
     },
     [setEdges, setNodes]
   );
@@ -258,11 +260,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         newNode.position = { x: selected.position.x + 220, y: maxY + 80 };
       }
 
-      setNodes((prev: Node[]) => [
-        ...prev.map((n) => ({ ...n, selected: false })),
+      const updatedEdges: Edge[] = [...edges, newEdge];
+      const updatedNodes: Node[] = [
+        ...nodes.map((n) => ({ ...n, selected: false })),
         { ...newNode, selected: true, data: { ...newNode.data, _isNew: true } },
-      ]);
-      setEdges((prev: Edge[]) => [...prev, newEdge]);
+      ];
+
+      const layoutedNodes = partialLayoutSubtree
+        ? partialLayoutSubtree(updatedNodes, updatedEdges, selected.id)
+        : updatedNodes;
+
+      setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
+      setEdges(updatedEdges);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
 
       toast.success(isPolish ? 'Dodano gałąź' : 'Child added', { id: 'mm-op-cue', duration: 1500 });
@@ -273,15 +282,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         } catch {
           /* */
         }
-      }, 60);
-
-      setTimeout(() => {
-        setNodes((prev) =>
-          prev.map((n) =>
-            n.id === newId && n.data?._isNew ? { ...n, data: { ...n.data, _isNew: false } } : n
-          )
-        );
-      }, 3000);
+      }, 150);
     },
     [
       edges,
@@ -369,14 +370,24 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         newNode.position = { x: selected.position.x, y: maxY + 80 };
       }
 
-      setNodes((prev: Node[]) => [
-        ...prev.map((n) => ({ ...n, selected: false })),
+      const updatedEdges: Edge[] = [...edges, newEdge];
+      const updatedNodes: Node[] = [
+        ...nodes.map((n) => ({ ...n, selected: false })),
         { ...newNode, selected: true, data: { ...newNode.data, _isNew: true } },
-      ]);
-      setEdges((prev: Edge[]) => [...prev, newEdge]);
+      ];
+
+      const layoutedNodes = partialLayoutSubtree
+        ? partialLayoutSubtree(updatedNodes, updatedEdges, parentId)
+        : updatedNodes;
+
+      setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
+      setEdges(updatedEdges);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
 
-      toast.success(isPolish ? 'Dodano sąsiada' : 'Sibling added', { id: 'mm-op-cue', duration: 1500 });
+      toast.success(isPolish ? 'Dodano sąsiada' : 'Sibling added', {
+        id: 'mm-op-cue',
+        duration: 1500,
+      });
 
       setTimeout(() => {
         try {
@@ -384,15 +395,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         } catch {
           /* */
         }
-      }, 60);
-
-      setTimeout(() => {
-        setNodes((prev) =>
-          prev.map((n) =>
-            n.id === newId && n.data?._isNew ? { ...n, data: { ...n.data, _isNew: false } } : n
-          )
-        );
-      }, 3000);
+      }, 150);
     },
     [
       edges,
@@ -440,7 +443,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
                 'button',
                 {
                   className:
-                    'ml-2 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700',
+                    'ml-2 px-2 py-0.5 rounded bg-rose-600 text-white text-xs font-medium hover:bg-rose-700',
                   onClick: () => {
                     toast.dismiss(t.id);
                     deleteSelected({ confirmed: true });
@@ -502,7 +505,9 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         setTimeout(() => {
           try {
             fitView({ nodes: [{ id: anchor } as any], padding: 0.5, duration: 300 });
-          } catch { /* */ }
+          } catch {
+            /* */
+          }
         }, 60);
       }
     },
@@ -613,9 +618,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       });
 
       setNodes((prev) =>
-        prev.map((n) =>
-          n.id === nodeId ? { ...n, data: { ...n.data, _justMoved: true } } : n
-        )
+        prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, _justMoved: true } } : n))
       );
       setTimeout(() => {
         setNodes((prev) =>
@@ -628,10 +631,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }, 2500);
 
       const parentLabel = newParent.data?.label || newParentId;
-      toast.success(
-        isPolish ? `Przeniesiono pod ${parentLabel}` : `Moved under ${parentLabel}`,
-        { id: 'mm-op-cue', duration: 2000 }
-      );
+      toast.success(isPolish ? `Przeniesiono pod ${parentLabel}` : `Moved under ${parentLabel}`, {
+        id: 'mm-op-cue',
+        duration: 2000,
+      });
 
       setTimeout(() => focusSelectedNode(), 30);
       return true;

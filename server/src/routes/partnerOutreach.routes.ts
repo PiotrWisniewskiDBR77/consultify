@@ -6,12 +6,20 @@ import crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 
 import { getDatabase } from '../database/Database.js';
-import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
+import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import {
+  requireSuperAdminCapability,
+  verifySuperAdmin,
+} from '../middleware/superAdmin.middleware.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+router.use(defaultRateLimiter);
+router.use(verifyToken);
 router.use(verifySuperAdmin);
+router.use(requireSuperAdminCapability('platform_ops', 'support_ops'));
 
 function parseCsvLeads(csv: string): Array<{
   email: string;

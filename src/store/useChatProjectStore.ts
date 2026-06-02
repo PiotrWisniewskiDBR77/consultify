@@ -281,9 +281,12 @@ export const useChatProjectStore = create<ChatProjectState>()(
             return { projects: updatedProjects };
           });
 
-          // Refresh both stores
-          get().fetchProjects({ force: true });
-          useConversationStore.getState().fetchConversations({ force: true });
+          // Refresh both stores before closing the modal so folder membership is
+          // visible immediately in the sidebar.
+          await Promise.all([
+            get().fetchProjects({ force: true }),
+            useConversationStore.getState().fetchConversations({ force: true }),
+          ]);
         } catch (err: any) {
           console.error('[ChatProjectStore] Move conversation error:', err);
           set({ error: err.message || 'Failed to move conversation' });

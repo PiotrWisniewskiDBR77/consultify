@@ -42,14 +42,52 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   const langRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const currentCode =
+    normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || SUPPORTED_LANGUAGES[0];
+
+  const localizedNavLabel = (
+    key: string,
+    fallbackEn: string,
+    fallbackPl: string,
+    fallbackDe: string
+  ) => {
+    const translated = t(key, fallbackEn);
+    if (translated !== fallbackEn) return translated;
+    if (currentCode === 'pl') return fallbackPl;
+    if (currentCode === 'de') return fallbackDe;
+    return fallbackEn;
+  };
 
   const navLinks = [
-    { label: t('nav.product', 'Product'), href: ROUTES.WELCOME },
-    { label: t('nav.knowledgeBase', 'Knowledge Base'), href: ROUTES.KNOWLEDGE_BASE_PUBLIC },
-    { label: t('nav.pricing', 'Pricing'), href: ROUTES.PRICING },
-    { label: t('nav.partners', 'Partners'), href: ROUTES.BECOME_PARTNER },
-    { label: t('nav.vector', 'Vector AI'), href: ROUTES.VECTOR },
-    { label: t('nav.security', 'Security'), href: ROUTES.LEGAL.SECURITY },
+    {
+      label: localizedNavLabel('nav.product', 'Product', 'Produkt', 'Produkt'),
+      href: ROUTES.WELCOME,
+    },
+    {
+      label: localizedNavLabel(
+        'nav.knowledgeBase',
+        'Knowledge Base',
+        'Baza wiedzy',
+        'Wissensdatenbank'
+      ),
+      href: ROUTES.KNOWLEDGE_BASE_PUBLIC,
+    },
+    {
+      label: localizedNavLabel('nav.pricing', 'Pricing', 'Cennik', 'Preise'),
+      href: ROUTES.PRICING,
+    },
+    {
+      label: localizedNavLabel('nav.partners', 'Partners', 'Partnerzy', 'Partner'),
+      href: ROUTES.BECOME_PARTNER,
+    },
+    {
+      label: localizedNavLabel('nav.vector', 'Vector AI', 'Vector AI', 'Vector AI'),
+      href: ROUTES.VECTOR,
+    },
+    {
+      label: localizedNavLabel('nav.security', 'Security', 'Bezpieczeństwo', 'Sicherheit'),
+      href: ROUTES.LEGAL.SECURITY,
+    },
   ];
   const { theme, toggleTheme } = useAppStore();
   const effectiveTheme = forceDark ? 'dark' : theme;
@@ -60,9 +98,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     displayCode: LANGUAGE_DISPLAY_CODES[code],
   }));
 
-  const currentCode =
-    normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || SUPPORTED_LANGUAGES[0];
   const currentLang = languages.find((l) => l.code === currentCode) || languages[0];
+  const languageMatches = (code: string) =>
+    currentCode === code || String(i18n.language || '').startsWith(code);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -331,20 +369,20 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       onClick={() => handleLangChange(lang.code)}
                       className="w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between"
                       style={{
-                        color: i18n.language.startsWith(lang.code)
+                        color: languageMatches(lang.code)
                           ? '#a855f7'
                           : isDark
                             ? 'rgba(255,255,255,0.65)'
                             : 'rgba(0,0,0,0.65)',
-                        background: i18n.language.startsWith(lang.code)
+                        background: languageMatches(lang.code)
                           ? 'rgba(168,85,247,0.10)'
                           : 'transparent',
-                        fontWeight: i18n.language.startsWith(lang.code) ? 700 : 400,
+                        fontWeight: languageMatches(lang.code) ? 700 : 400,
                       }}
                     >
                       {lang.label}
-                      {i18n.language.startsWith(lang.code) && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                      {languageMatches(lang.code) && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
                       )}
                     </button>
                   ))}
@@ -373,7 +411,11 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 ? 'rgba(255,255,255,0.40)'
                 : 'rgba(0,0,0,0.40)';
             }}
-            aria-label={isDark ? t('landing.topBar.switchLight', 'Switch to light mode') : t('landing.topBar.switchDark', 'Switch to dark mode')}
+            aria-label={
+              isDark
+                ? t('landing.topBar.switchLight', 'Switch to light mode')
+                : t('landing.topBar.switchDark', 'Switch to dark mode')
+            }
           >
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
@@ -549,17 +591,21 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       onClick={() => toggleTheme()}
                       className="text-xs px-3 py-1 rounded-full border transition-colors font-medium flex items-center gap-1"
                       style={{
-                        borderColor: isDark
-                          ? 'rgba(255,255,255,0.12)'
-                          : 'rgba(0,0,0,0.10)',
-                        color: isDark
-                          ? 'rgba(255,255,255,0.50)'
-                          : 'rgba(0,0,0,0.50)',
+                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)',
+                        color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.50)',
                       }}
-                      aria-label={isDark ? t('landing.topBar.switchLight', 'Switch to light mode') : t('landing.topBar.switchDark', 'Switch to dark mode')}
+                      aria-label={
+                        isDark
+                          ? t('landing.topBar.switchLight', 'Switch to light mode')
+                          : t('landing.topBar.switchDark', 'Switch to dark mode')
+                      }
                     >
                       {isDark ? <Sun size={12} /> : <Moon size={12} />}
-                      <span>{isDark ? t('landing.topBar.lightMode', 'Light') : t('landing.topBar.darkMode', 'Dark')}</span>
+                      <span>
+                        {isDark
+                          ? t('landing.topBar.lightMode', 'Light')
+                          : t('landing.topBar.darkMode', 'Dark')}
+                      </span>
                     </button>
                     {languages.slice(0, 3).map((lang) => (
                       <button
@@ -567,15 +613,15 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                         onClick={() => handleLangChange(lang.code)}
                         className="text-xs px-3 py-1 rounded-full border transition-colors font-medium"
                         style={{
-                          background: i18n.language.startsWith(lang.code)
+                          background: languageMatches(lang.code)
                             ? 'rgba(168,85,247,0.15)'
                             : 'transparent',
-                          borderColor: i18n.language.startsWith(lang.code)
+                          borderColor: languageMatches(lang.code)
                             ? 'rgba(168,85,247,0.40)'
                             : isDark
                               ? 'rgba(255,255,255,0.12)'
                               : 'rgba(0,0,0,0.10)',
-                          color: i18n.language.startsWith(lang.code)
+                          color: languageMatches(lang.code)
                             ? '#a855f7'
                             : isDark
                               ? 'rgba(255,255,255,0.50)'

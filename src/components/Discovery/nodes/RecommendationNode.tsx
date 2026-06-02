@@ -18,7 +18,7 @@ const ConfidenceMeter: React.FC<{ score: number }> = ({ score }) => {
     if (score >= 80) return 'bg-green-500';
     if (score >= 60) return 'bg-blue-500';
     if (score >= 40) return 'bg-amber-500';
-    return 'bg-red-500';
+    return 'bg-rose-500';
   };
 
   return (
@@ -41,7 +41,7 @@ const TransformationBadge: React.FC<{ type: TransformationType }> = ({ type }) =
   const config: Record<TransformationType, { color: string; icon: string }> = {
     strategic: {
       color:
-        'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700',
+        'bg-primary-100 text-primary-700 border-primary-300 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-700',
       icon: '🎯',
     },
     operational: {
@@ -51,7 +51,7 @@ const TransformationBadge: React.FC<{ type: TransformationType }> = ({ type }) =
     },
     digital: {
       color:
-        'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-700',
+        'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700',
       icon: '💻',
     },
   };

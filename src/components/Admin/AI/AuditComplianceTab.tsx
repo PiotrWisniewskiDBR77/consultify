@@ -158,9 +158,9 @@ export const AuditComplianceTab: React.FC = () => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
+        return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
       case 'high':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+        return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
       case 'medium':
         return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
       case 'low':
@@ -203,7 +203,7 @@ export const AuditComplianceTab: React.FC = () => {
         );
       case 'non_compliant':
         return (
-          <span className="px-2 py-0.5 rounded-full text-xs bg-red-500/20 text-red-400">
+          <span className="px-2 py-0.5 rounded-full text-xs bg-rose-500/20 text-rose-400">
             Non-Compliant
           </span>
         );
@@ -261,7 +261,7 @@ export const AuditComplianceTab: React.FC = () => {
           onClick={() => setActiveSubTab('settings')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'settings'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -272,7 +272,7 @@ export const AuditComplianceTab: React.FC = () => {
           onClick={() => setActiveSubTab('usage')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'usage'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -283,14 +283,14 @@ export const AuditComplianceTab: React.FC = () => {
           onClick={() => setActiveSubTab('security')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'security'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
           <Shield size={14} className="inline mr-2" />
           Security Events
           {securityEvents.filter((e) => !e.resolved).length > 0 && (
-            <span className="ml-2 px-1.5 py-0.5 bg-danger-500/20 text-danger-600 dark:text-red-400 text-xs rounded-full">
+            <span className="ml-2 px-1.5 py-0.5 bg-danger-500/20 text-danger-600 dark:text-rose-400 text-xs rounded-full">
               {securityEvents.filter((e) => !e.resolved).length}
             </span>
           )}
@@ -299,7 +299,7 @@ export const AuditComplianceTab: React.FC = () => {
           onClick={() => setActiveSubTab('compliance')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'compliance'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -310,7 +310,7 @@ export const AuditComplianceTab: React.FC = () => {
           onClick={() => setActiveSubTab('templates')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'templates'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -356,7 +356,7 @@ export const AuditComplianceTab: React.FC = () => {
           <p className="text-slate-500 dark:text-slate-400 mt-1">
             Detailed log of all AI requests and responses
           </p>
-          <p className="text-xs text-primary-600 dark:text-violet-400 mt-4">
+          <p className="text-xs text-primary-600 dark:text-primary-400 mt-4">
             Enable "Audit All AI Requests" in Features tab to start logging
           </p>
         </div>
@@ -379,7 +379,7 @@ export const AuditComplianceTab: React.FC = () => {
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
                 Unresolved
               </p>
-              <p className="text-2xl font-bold text-danger-600 dark:text-red-400">
+              <p className="text-2xl font-bold text-danger-600 dark:text-rose-400">
                 {securityEvents.filter((e) => !e.resolved).length}
               </p>
             </div>
@@ -387,7 +387,7 @@ export const AuditComplianceTab: React.FC = () => {
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">
                 High/Critical
               </p>
-              <p className="text-2xl font-bold text-warning-600 dark:text-orange-400">
+              <p className="text-2xl font-bold text-warning-600 dark:text-amber-400">
                 {
                   securityEvents.filter((e) => e.severity === 'high' || e.severity === 'critical')
                     .length
@@ -463,7 +463,7 @@ export const AuditComplianceTab: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <button className="text-primary-600 dark:text-violet-400 hover:text-primary-700 dark:hover:text-violet-300 text-sm">
+                        <button className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm">
                           View
                         </button>
                       </td>
@@ -541,7 +541,7 @@ export const AuditComplianceTab: React.FC = () => {
                 >
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                      <FileText size={20} className="text-primary-600 dark:text-violet-400" />
+                      <FileText size={20} className="text-primary-600 dark:text-primary-400" />
                     </div>
                     <div>
                       <h4 className="font-medium text-navy-900 dark:text-white">{report.name}</h4>
@@ -609,7 +609,7 @@ export const AuditComplianceTab: React.FC = () => {
               {customTemplates.map((template) => (
                 <div
                   key={template.id}
-                  className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-6 hover:border-primary-500/30 dark:hover:border-violet-500/30 transition-colors shadow-sm dark:shadow-none"
+                  className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-6 hover:border-primary-500/30 dark:hover:border-primary-500/30 transition-colors shadow-sm dark:shadow-none"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -619,7 +619,7 @@ export const AuditComplianceTab: React.FC = () => {
                       </p>
                     </div>
                     {template.basedOn && (
-                      <span className="px-2 py-1 bg-primary-500/20 text-primary-700 dark:text-violet-300 text-xs rounded">
+                      <span className="px-2 py-1 bg-primary-500/20 text-primary-700 dark:text-primary-300 text-xs rounded">
                         Based on {template.basedOn}
                       </span>
                     )}
@@ -658,7 +658,7 @@ export const AuditComplianceTab: React.FC = () => {
                           setCustomTemplates((prev) => prev.filter((t) => t.id !== template.id));
                           toast.success('Template deleted');
                         }}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-600 dark:hover:text-red-400 hover:bg-danger-500/10 rounded transition-colors"
+                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-600 dark:hover:text-rose-400 hover:bg-danger-500/10 rounded transition-colors"
                         title="Delete"
                       >
                         <Trash2 size={16} />

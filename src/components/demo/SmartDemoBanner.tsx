@@ -20,6 +20,7 @@ interface SmartDemoBannerProps {
   demoEmail?: string;
   aiInteractionsRemaining?: number;
   aiInteractionsLimit?: number;
+  isWorkspaceDemo?: boolean;
 }
 
 export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
@@ -29,6 +30,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
   demoEmail = 'piotr.wisniewski@demo.com',
   aiInteractionsRemaining,
   aiInteractionsLimit,
+  isWorkspaceDemo = false,
 }) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -123,7 +125,11 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                 <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
                   <Sparkles size={14} className="text-white" />
                 </div>
-                <span className="font-semibold text-sm">{t('demo.banner.title', 'Demo Mode')}</span>
+                <span className="font-semibold text-sm">
+                  {isWorkspaceDemo
+                    ? t('demo.banner.sampleWorkspace', 'Sample Workspace')
+                    : t('demo.banner.title', 'Demo Mode')}
+                </span>
               </div>
 
               <div className="hidden sm:flex items-center gap-2 text-white/70 text-xs">
@@ -173,7 +179,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                 )}
               </button>
 
-              {/* Upgrade Button */}
+              {/* Primary action */}
               <button
                 onClick={() => {
                   if (onUpgradeClick) {
@@ -182,13 +188,19 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                   }
                   handleContactSales();
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-900 text-purple-700 text-xs font-semibold rounded-lg hover:bg-white/90 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-900 text-primary-700 text-xs font-semibold rounded-lg hover:bg-white/90 transition-colors"
               >
                 <Calendar size={12} />
                 <span className="hidden sm:inline">
-                  {t('demo.banner.getFullAccess', 'Get Full Access')}
+                  {isWorkspaceDemo
+                    ? t('demo.banner.backToWorkspace', 'Back to my workspace')
+                    : t('demo.banner.getFullAccess', 'Get Full Access')}
                 </span>
-                <span className="sm:hidden">{t('demo.banner.upgrade', 'Upgrade')}</span>
+                <span className="sm:hidden">
+                  {isWorkspaceDemo
+                    ? t('demo.banner.exitShort', 'Exit')
+                    : t('demo.banner.upgrade', 'Upgrade')}
+                </span>
                 <ArrowRight size={12} />
               </button>
 
@@ -229,12 +241,19 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
 
                 {/* CTA */}
                 <div className="text-xs text-slate-400">
-                  {t('demo.banner.readyForMore', 'Ready for your own data?')}{' '}
+                  {isWorkspaceDemo
+                    ? t(
+                        'demo.banner.readyForMoreWorkspace',
+                        'Ready to try the same flow in your own workspace?'
+                      )
+                    : t('demo.banner.readyForMore', 'Ready for your own data?')}{' '}
                   <button
                     onClick={() => onUpgradeClick?.()}
                     className="text-primary-400 hover:text-primary-300 font-medium"
                   >
-                    {t('demo.banner.startTrial', 'Start your 7-day trial')}
+                    {isWorkspaceDemo
+                      ? t('demo.banner.backToWorkspace', 'Back to my workspace')
+                      : t('demo.banner.startTrial', 'Start your 7-day trial')}
                   </button>
                 </div>
               </div>

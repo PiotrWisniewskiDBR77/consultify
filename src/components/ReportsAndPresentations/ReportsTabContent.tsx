@@ -4,7 +4,15 @@
  * Connected to /api/report-builder backend
  */
 
-import { Archive, Download, ExternalLink, FileText, Loader2, MessageCircle, Share2 } from 'lucide-react';
+import {
+  Archive,
+  Download,
+  ExternalLink,
+  FileText,
+  Loader2,
+  MessageCircle,
+  Share2,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -102,7 +110,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'R1', label: 'R1 — Weekly', color: 'bg-blue-400' },
-          { value: 'R2', label: 'R2 — Steering', color: 'bg-purple-400' },
+          { value: 'R2', label: 'R2 — Steering', color: 'bg-blue-400' },
           { value: 'R3', label: 'R3 — Benefits', color: 'bg-emerald-400' },
           { value: 'R4', label: 'R4 — Portfolio', color: 'bg-amber-400' },
           { value: 'custom', label: 'Custom', color: 'bg-slate-400' },

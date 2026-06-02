@@ -170,7 +170,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                 </label>
                 <button
                   onClick={() => removeWebhook(wh.id)}
-                  className="p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-500/10 transition-colors"
+                  className="p-1 rounded text-rose-400 hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -207,7 +207,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
           <div className="flex-1" />
           <button
             onClick={handleSave}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-orange-500/15 border border-amber-500/10 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-amber-500/15 to-amber-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-amber-500/15 border border-amber-500/10 transition-all"
           >
             <Save size={12} />
             {isPl ? 'Zapisz' : 'Save'}

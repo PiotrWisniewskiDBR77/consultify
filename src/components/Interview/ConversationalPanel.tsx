@@ -199,7 +199,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
   const roleColors: Record<string, string> = {
     user: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800',
-    ai: 'bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800',
+    ai: 'bg-primary-50 border-primary-200 dark:bg-primary-950/30 dark:border-primary-800',
     system: 'bg-gray-50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700',
   };
 
@@ -217,7 +217,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
         </div>
         <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-purple-500 rounded-full transition-all duration-300"
+            className="h-full bg-primary-500 rounded-full transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -282,14 +282,14 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                 className={`flex items-start gap-3 p-2 rounded-lg border ${
                   mapping.accepted
                     ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20'
-                    : 'border-red-200 bg-red-50/30 dark:border-red-800 dark:bg-red-950/20 opacity-60'
+                    : 'border-rose-200 bg-rose-50/30 dark:border-rose-800 dark:bg-rose-950/20 opacity-60'
                 }`}
               >
                 <button onClick={() => toggleMapping(idx)} className="mt-0.5 flex-shrink-0">
                   {mapping.accepted ? (
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   ) : (
-                    <X className="w-4 h-4 text-red-400" />
+                    <X className="w-4 h-4 text-rose-400" />
                   )}
                 </button>
                 <div className="flex-1 min-w-0">
@@ -305,7 +305,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
           </div>
           <button
             onClick={applyDraftMappings}
-            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
+            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition-colors"
           >
             <Check className="w-4 h-4" />
             {t('interview.conversational.acceptAnswer')} ({acceptedDraftCount})
@@ -323,7 +323,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t('interview.conversational.inputPlaceholder')}
-                className="w-full resize-none rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400"
+                className="w-full resize-none rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400"
                 rows={2}
               />
             </div>
@@ -331,7 +331,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
               <button
                 onClick={sendMessage}
                 disabled={!inputValue.trim() || loading}
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Send"
               >
                 {loading ? (
@@ -343,7 +343,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
               <button
                 onClick={parseToAnswers}
                 disabled={parsing || messages.length === 0}
-                className="flex items-center justify-center w-10 h-10 rounded-xl border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center w-10 h-10 rounded-xl border border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title={t('interview.conversational.parseToAnswers')}
               >
                 {parsing ? (

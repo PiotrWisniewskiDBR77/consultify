@@ -62,7 +62,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
         {onOpenBuilder && (
           <button
             onClick={onOpenBuilder}
-            className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-blue-500 shadow-lg shadow-purple-500/25 text-lg"
+            className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-blue-600 text-white font-semibold rounded-xl hover:from-primary-500 hover:to-blue-500 shadow-lg shadow-primary-500/25 text-lg"
           >
             <ExternalLink size={20} /> {t('presentations.result.openBuilder', 'Open Deck Builder')}
           </button>
@@ -72,7 +72,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
           className={`flex items-center gap-2 px-8 py-4 font-semibold rounded-xl text-lg ${
             onOpenBuilder
               ? 'border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
-              : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-500 hover:to-blue-500 shadow-lg shadow-purple-500/25'
+              : 'bg-gradient-to-r from-primary-600 to-blue-600 text-white hover:from-primary-500 hover:to-blue-500 shadow-lg shadow-primary-500/25'
           }`}
         >
           <Download size={20} /> {t('presentations.result.downloadPptx', 'Download PPTX')}

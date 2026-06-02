@@ -26,6 +26,7 @@ import logger from '../../utils/Logger.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
+import { isQaAiMode } from './qaAiRuntime.js';
 
 // Lazy load AIContextBuilder to avoid circular dependencies
 let _AIContextBuilder: any = null;
@@ -345,6 +346,7 @@ export class AIPipeline {
             const endpoint = (cfg as any)?.endpoint;
 
             const isConfigured =
+              isQaAiMode() ||
               providerId.toLowerCase() === 'ollama' ||
               (typeof apiKey === 'string' && apiKey.trim().length > 0);
             if (!isConfigured) {
@@ -938,7 +940,9 @@ export class AIPipeline {
     // Dedicated system instruction mode: when a caller provides systemInstruction
     // AND sets dedicatedSystemPrompt=true, use ONLY that instruction as the system
     // prompt (skip persona, org context, etc.). Used by WorkbookGeneratorService, etc.
-    const dedicatedMode = !!(request.options as any)?.dedicatedSystemPrompt && (request.options as any)?.systemInstruction;
+    const dedicatedMode =
+      !!(request.options as any)?.dedicatedSystemPrompt &&
+      (request.options as any)?.systemInstruction;
 
     let systemPrompt: string;
     if (dedicatedMode) {
@@ -1336,8 +1340,12 @@ export class AIPipeline {
       '## ORGANIZACJA',
       `- Nazwa: ${org.organizationName || p?.companyName || 'Nieznana'}`,
       p?.organizationType ? `- Typ organizacji: ${p.organizationType}` : '',
-      org.industry || p?.industry ? `- Branża: ${org.industry || p?.industry}${p?.industrySubsector ? ` / ${p.industrySubsector}` : ''}` : '',
-      p?.companySize ? `- Skala: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} pracowników)` : ''}${p.annualRevenue ? `, przychód: ${p.annualRevenue}` : ''}` : '',
+      org.industry || p?.industry
+        ? `- Branża: ${org.industry || p?.industry}${p?.industrySubsector ? ` / ${p.industrySubsector}` : ''}`
+        : '',
+      p?.companySize
+        ? `- Skala: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} pracowników)` : ''}${p.annualRevenue ? `, przychód: ${p.annualRevenue}` : ''}`
+        : '',
       s?.growthStage ? `- Etap wzrostu: ${s.growthStage}` : '',
       s?.competitivePosition ? `- Pozycja konkurencyjna: ${s.competitivePosition}` : '',
       `- Aktywne projekty: ${org.activeProjectCount || 0}`,
@@ -1432,7 +1440,10 @@ export class AIPipeline {
         }
       | undefined;
     if (snap) {
-      const snapLines: string[] = ['', '### Dane zebrane od organizacji (wywiady, dowody, notatki)'];
+      const snapLines: string[] = [
+        '',
+        '### Dane zebrane od organizacji (wywiady, dowody, notatki)',
+      ];
       if (Array.isArray(snap.interviewAnswers) && snap.interviewAnswers.length > 0) {
         snapLines.push('#### Ostatnie odpowiedzi z wywiadów:');
         for (const qa of snap.interviewAnswers) {
@@ -1823,10 +1834,12 @@ export class AIPipeline {
       '## INSTRUKCJE',
       '1. Odpowiadaj konkretnie i pomocnie, wykorzystując powyższy kontekst.',
       '1.1. Zasada jakości (CHAT): Nie odmawiaj tylko dlatego, że brakuje danych lub źródeł. Jeśli nie masz pewności: (a) podaj 2–5 hipotez, (b) zaznacz założenia, (c) zadaj maks. 3 pytania doprecyzowujące, (d) zaproponuj jak zweryfikować (np. wklejenie linku/fragmentu/plików).',
+      '1.2. Prosty chat: dla zwykłych pytań produktowych odpowiadaj w 4–8 zdaniach, profesjonalnie i rzeczowo. Bez sztucznych sekcji procesu, bez technicznego żargonu i bez ciężkich zastrzeżeń, jeśli evidence policy ich nie wymaga.',
+      '1.3. Product assistant: gdy użytkownik pyta jak coś zrobić w aplikacji, odpowiedz praktycznie: wskaż moduł, orientacyjną ścieżkę w UI, ograniczenia i następny krok. Nie odpowiadaj ogólną wiedzą biznesową, jeśli pytanie dotyczy funkcji produktu.',
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
-      '5. LANGUAGE POLICY: You support Polish (pl), English (en), German (de), Spanish (es), Arabic (ar) and Japanese (ja). ALWAYS respond in the single language specified by the final [LANGUAGE INSTRUCTION] block — do NOT auto-detect from the user\'s input and do NOT mix languages within one response. Natural, idiomatic output in the selected language is required.',
+      "5. LANGUAGE POLICY: You support Polish (pl), English (en), German (de), Spanish (es), Arabic (ar) and Japanese (ja). ALWAYS respond in the single language specified by the final [LANGUAGE INSTRUCTION] block — do NOT auto-detect from the user's input and do NOT mix languages within one response. Natural, idiomatic output in the selected language is required.",
     ];
 
     // Chat runtime modes (ToolsMenu)
@@ -1910,12 +1923,12 @@ export class AIPipeline {
       }
     }
 
-    // C8.3: Behavioral guardrails — prevent autonomous creation of entities
+    // C8.3: Behavioral guardrails — governed mutations only (proposal-first, never silent)
     instructions.push(
-      '13. ZASADA BEZPIECZEŃSTWA: NIGDY nie twórz samodzielnie inicjatyw, zadań, decyzji ani kamieni milowych w systemie. ' +
-        'Możesz jedynie PROPONOWAĆ ich utworzenie jako akcje do zatwierdzenia przez użytkownika. ' +
-        'Każda modyfikacja danych w systemie wymaga jawnej zgody użytkownika. ' +
-        'Możesz natomiast generować powiadomienia informacyjne i sugestie.'
+      '13. ZASADA BEZPIECZEŃSTWA: Nie wykonujesz samodzielnych mutacji danych (no silent writes). ' +
+        'Gdy użytkownik prosi o utworzenie/zmianę (np. Canvas, dokument, inicjatywa, zadanie, decyzja), NIE odmawiaj takiej intencji. ' +
+        'Zamiast tego przygotuj proposal do zatwierdzenia i jasno poproś o akceptację wykonania. ' +
+        'Każda modyfikacja danych wymaga jawnej zgody użytkownika; po zgodzie system wykonuje akcję z audytem AIRun.'
     );
 
     // C8.2: Documentation/help awareness — AI knows the platform and can guide users

@@ -114,6 +114,19 @@ const DEFAULT_LAYOUT: HomeLayoutConfig = {
   ],
 };
 
+const HOME_INITIAL_LOAD_TIMEOUT_MS = 12_000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
 const MOCK_SCREEN: HomeScreenData = {
   timeMode: 'liveDay',
   updatedAt: new Date().toISOString(),
@@ -434,7 +447,6 @@ function createEmptyScreen(): HomeScreenData {
   return {
     ...cloneMockScreen(),
     updatedAt: new Date().toISOString(),
-    blocks: [],
   };
 }
 
@@ -466,14 +478,19 @@ function asNumber(value: unknown, fallback = 0): number {
 }
 
 function cloneDefaultBlock<K extends HomeBlockId>(blockId: K): Extract<HomeBlock, { id: K }> {
-  const block = MOCK_SCREEN.blocks.find((entry): entry is Extract<HomeBlock, { id: K }> => entry.id === blockId);
+  const block = MOCK_SCREEN.blocks.find(
+    (entry): entry is Extract<HomeBlock, { id: K }> => entry.id === blockId
+  );
   if (!block) {
     throw new Error(`Missing default home block for ${blockId}`);
   }
   return JSON.parse(JSON.stringify(block)) as Extract<HomeBlock, { id: K }>;
 }
 
-function normalizeSignalCard(value: unknown, fallback: { id: string; title?: string; summary?: string; tag?: string }) {
+function normalizeSignalCard(
+  value: unknown,
+  fallback: { id: string; title?: string; summary?: string; tag?: string }
+) {
   const input = asObject(value);
   return {
     id: asString(input.id, fallback.id),
@@ -507,7 +524,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
     case 'aiPulseCore': {
       const fallback = cloneDefaultBlock('aiPulseCore');
       const payload = asObject(input.payload);
-      const focusItemsRaw = Array.isArray(payload.focusItems) ? payload.focusItems : fallback.payload.focusItems;
+      const focusItemsRaw = Array.isArray(payload.focusItems)
+        ? payload.focusItems
+        : fallback.payload.focusItems;
       return {
         ...fallback,
         title: asString(input.title, fallback.title),
@@ -517,7 +536,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
         priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
         relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
         freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
-        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        ctaIntents: Array.isArray(input.ctaIntents)
+          ? input.ctaIntents.map((item) => String(item))
+          : fallback.ctaIntents,
         payload: {
           greeting: asString(payload.greeting, fallback.payload.greeting),
           headline: asString(payload.headline, fallback.payload.headline),
@@ -531,7 +552,10 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
             .filter((item) => item && typeof item === 'object')
             .map((item: any, index) => ({
               id: asString(item.id, `focus-${index}`),
-              type: item.type === 'task' || item.type === 'decision' || item.type === 'idea' ? item.type : 'idea',
+              type:
+                item.type === 'task' || item.type === 'decision' || item.type === 'idea'
+                  ? item.type
+                  : 'idea',
               title: asString(item.title, ''),
               meta: asString(item.meta, ''),
               priority:
@@ -546,7 +570,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
       const fallback = cloneDefaultBlock('momentum');
       const payload = asObject(input.payload);
       const statsRaw = Array.isArray(payload.stats) ? payload.stats : fallback.payload.stats;
-      const signalsRaw = Array.isArray(payload.signals) ? payload.signals : fallback.payload.signals;
+      const signalsRaw = Array.isArray(payload.signals)
+        ? payload.signals
+        : fallback.payload.signals;
       return {
         ...fallback,
         title: asString(input.title, fallback.title),
@@ -556,7 +582,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
         priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
         relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
         freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
-        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        ctaIntents: Array.isArray(input.ctaIntents)
+          ? input.ctaIntents.map((item) => String(item))
+          : fallback.ctaIntents,
         payload: {
           headline: asString(payload.headline, fallback.payload.headline),
           summary: asString(payload.summary, fallback.payload.summary),
@@ -585,7 +613,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
         priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
         relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
         freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
-        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        ctaIntents: Array.isArray(input.ctaIntents)
+          ? input.ctaIntents.map((item) => String(item))
+          : fallback.ctaIntents,
         payload: {
           ideas: ideasRaw.map((item: any, index) => ({
             id: asString(item?.id, `idea-${index}`),
@@ -627,7 +657,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
     case 'decisionTemperature': {
       const fallback = cloneDefaultBlock('decisionTemperature');
       const payload = asObject(input.payload);
-      const signalsRaw = Array.isArray(payload.signals) ? payload.signals : fallback.payload.signals;
+      const signalsRaw = Array.isArray(payload.signals)
+        ? payload.signals
+        : fallback.payload.signals;
       const hottestDecision =
         payload.hottestDecision && typeof payload.hottestDecision === 'object'
           ? {
@@ -647,7 +679,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
         priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
         relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
         freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
-        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        ctaIntents: Array.isArray(input.ctaIntents)
+          ? input.ctaIntents.map((item) => String(item))
+          : fallback.ctaIntents,
         payload: {
           pendingCount: asNumber(payload.pendingCount, fallback.payload.pendingCount),
           blockedCount: asNumber(payload.blockedCount, fallback.payload.blockedCount),
@@ -670,19 +704,33 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
         priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
         relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
         freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
-        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        ctaIntents: Array.isArray(input.ctaIntents)
+          ? input.ctaIntents.map((item) => String(item))
+          : fallback.ctaIntents,
         payload: {
           industryLabel: asString(payload.industryLabel, fallback.payload.industryLabel),
           roleLens: asString(payload.roleLens, fallback.payload.roleLens),
           marketSignal: normalizeSignalCard(payload.marketSignal, fallback.payload.marketSignal),
-          technologySignal: normalizeSignalCard(payload.technologySignal, fallback.payload.technologySignal),
+          technologySignal: normalizeSignalCard(
+            payload.technologySignal,
+            fallback.payload.technologySignal
+          ),
           aiNews: Array.isArray(payload.aiNews) ? payload.aiNews : undefined,
           benchmark:
             payload.benchmark && typeof payload.benchmark === 'object'
               ? {
-                  label: asString((payload.benchmark as any).label, fallback.payload.benchmark.label),
-                  value: asString((payload.benchmark as any).value, fallback.payload.benchmark.value),
-                  delta: asString((payload.benchmark as any).delta, fallback.payload.benchmark.delta),
+                  label: asString(
+                    (payload.benchmark as any).label,
+                    fallback.payload.benchmark.label
+                  ),
+                  value: asString(
+                    (payload.benchmark as any).value,
+                    fallback.payload.benchmark.value
+                  ),
+                  delta: asString(
+                    (payload.benchmark as any).delta,
+                    fallback.payload.benchmark.delta
+                  ),
                   implication: asString(
                     (payload.benchmark as any).implication,
                     fallback.payload.benchmark.implication
@@ -693,7 +741,10 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
             payload.peerCase && typeof payload.peerCase === 'object'
               ? {
                   title: asString((payload.peerCase as any).title, fallback.payload.peerCase.title),
-                  summary: asString((payload.peerCase as any).summary, fallback.payload.peerCase.summary),
+                  summary: asString(
+                    (payload.peerCase as any).summary,
+                    fallback.payload.peerCase.summary
+                  ),
                   implication: asString(
                     (payload.peerCase as any).implication,
                     fallback.payload.peerCase.implication
@@ -706,7 +757,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
     case 'executionCurrent': {
       const fallback = cloneDefaultBlock('executionCurrent');
       const payload = asObject(input.payload);
-      const streamsRaw = Array.isArray(payload.streams) ? payload.streams : fallback.payload.streams;
+      const streamsRaw = Array.isArray(payload.streams)
+        ? payload.streams
+        : fallback.payload.streams;
       const artifactOutputsRaw = Array.isArray(payload.artifactOutputs)
         ? payload.artifactOutputs
         : fallback.payload.artifactOutputs || [];
@@ -719,7 +772,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
         priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
         relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
         freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
-        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        ctaIntents: Array.isArray(input.ctaIntents)
+          ? input.ctaIntents.map((item) => String(item))
+          : fallback.ctaIntents,
         payload: {
           headline: asString(payload.headline, fallback.payload.headline),
           streams: streamsRaw.map((stream: any, index) => ({
@@ -727,7 +782,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
             label: asString(stream?.label, ''),
             progressLabel: asString(stream?.progressLabel, ''),
             status:
-              stream?.status === 'accelerating' || stream?.status === 'steady' || stream?.status === 'blocked'
+              stream?.status === 'accelerating' ||
+              stream?.status === 'steady' ||
+              stream?.status === 'blocked'
                 ? stream.status
                 : 'steady',
             entityType:
@@ -748,11 +805,15 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
             artifactId: asString(artifact?.artifactId, `artifact-${index}`),
             title: asString(artifact?.title, ''),
             outputType:
-              artifact?.outputType === 'report' || artifact?.outputType === 'presentation' || artifact?.outputType === 'sheet'
+              artifact?.outputType === 'report' ||
+              artifact?.outputType === 'presentation' ||
+              artifact?.outputType === 'sheet'
                 ? artifact.outputType
                 : 'report',
             originRuntime:
-              artifact?.originRuntime === 'report' || artifact?.originRuntime === 'presentation' || artifact?.originRuntime === 'sheet'
+              artifact?.originRuntime === 'report' ||
+              artifact?.originRuntime === 'presentation' ||
+              artifact?.originRuntime === 'sheet'
                 ? artifact.originRuntime
                 : 'report',
             deliveryState: asString(artifact?.deliveryState, ''),
@@ -774,7 +835,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
     case 'teamSignal': {
       const fallback = cloneDefaultBlock('teamSignal');
       const payload = asObject(input.payload);
-      const signalsRaw = Array.isArray(payload.signals) ? payload.signals : fallback.payload.signals;
+      const signalsRaw = Array.isArray(payload.signals)
+        ? payload.signals
+        : fallback.payload.signals;
       return {
         ...fallback,
         title: asString(input.title, fallback.title),
@@ -784,7 +847,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
         priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
         relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
         freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
-        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        ctaIntents: Array.isArray(input.ctaIntents)
+          ? input.ctaIntents.map((item) => String(item))
+          : fallback.ctaIntents,
         payload: {
           headline: asString(payload.headline, fallback.payload.headline),
           summary: asString(payload.summary, fallback.payload.summary),
@@ -793,7 +858,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
             title: asString(signal?.title, ''),
             detail: asString(signal?.detail, ''),
             tone:
-              signal?.tone === 'positive' || signal?.tone === 'warning' || signal?.tone === 'neutral'
+              signal?.tone === 'positive' ||
+              signal?.tone === 'warning' ||
+              signal?.tone === 'neutral'
                 ? signal.tone
                 : 'neutral',
           })),
@@ -812,7 +879,9 @@ function normalizeHomeBlock(block: unknown): HomeBlock | null {
         priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
         relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
         freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
-        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        ctaIntents: Array.isArray(input.ctaIntents)
+          ? input.ctaIntents.map((item) => String(item))
+          : fallback.ctaIntents,
         payload: asObject(input.payload) as any,
       };
     }
@@ -1063,18 +1132,31 @@ export function useHomeData(refreshTrigger?: number): HomeData {
       setError(null);
     }
     const [screenRes, prefsRes] = await Promise.allSettled([
-      apiGetCached('/my-work/home/v2', 15_000, 'Failed to fetch Home V2'),
-      apiGetCached('/preferences', 15_000, 'Failed to fetch preferences').catch(() => null),
+      withTimeout(
+        apiGetCached('/my-work/home/v2', 15_000, 'Failed to fetch Home V2'),
+        HOME_INITIAL_LOAD_TIMEOUT_MS,
+        'Home V2 request timed out'
+      ),
+      withTimeout(
+        apiGetCached('/preferences', 15_000, 'Failed to fetch preferences').catch(() => null),
+        HOME_INITIAL_LOAD_TIMEOUT_MS,
+        'Preferences request timed out'
+      ).catch(() => null),
     ]);
 
-    const screenData =
+    const screenValue =
       screenRes.status === 'fulfilled'
-        ? normalizeHomeScreenData(screenRes.value?.data)
-        : createEmptyScreen();
-    const savedLayout =
-      prefsRes.status === 'fulfilled' && prefsRes.value?.data?.home_layout
-        ? sanitizeLayout(prefsRes.value.data.home_layout)
-        : getDefaultLayout();
+        ? (screenRes.value as { data?: unknown } | null | undefined)
+        : null;
+    const prefsValue =
+      prefsRes.status === 'fulfilled'
+        ? (prefsRes.value as { data?: { home_layout?: unknown }; home_layout?: unknown } | null)
+        : null;
+    const screenData = screenValue
+      ? normalizeHomeScreenData(screenValue.data ?? screenValue)
+      : createEmptyScreen();
+    const rawSavedLayout = prefsValue?.data?.home_layout ?? prefsValue?.home_layout;
+    const savedLayout = rawSavedLayout ? sanitizeLayout(rawSavedLayout) : getDefaultLayout();
 
     if (screenRes.status === 'fulfilled') {
       setScreen(screenData);
@@ -1125,5 +1207,17 @@ export function useHomeData(refreshTrigger?: number): HomeData {
   const pulse = useMemo(() => buildLegacyPulse(screen), [screen]);
   const nudge = useMemo(() => buildLegacyNudge(screen), [screen]);
 
-  return { screen, blocks, layout, brief, spark, pulse, nudge, loading, error, updateLayout, refresh: fetchData };
+  return {
+    screen,
+    blocks,
+    layout,
+    brief,
+    spark,
+    pulse,
+    nudge,
+    loading,
+    error,
+    updateLayout,
+    refresh: fetchData,
+  };
 }

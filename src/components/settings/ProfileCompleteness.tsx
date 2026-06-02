@@ -142,13 +142,13 @@ const getCompletionLevel = (
   if (percentage >= 25)
     return {
       label: 'Getting Started',
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-500',
+      color: 'text-amber-600 dark:text-amber-400',
+      bgColor: 'bg-amber-500',
     };
   return {
     label: 'Just Beginning',
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-500',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-500',
   };
 };
 
@@ -251,7 +251,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
   // Compact version for sidebar or card display
   if (compact) {
     return (
-      <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-500/10 dark:to-indigo-500/10 rounded-lg border border-purple-100 dark:border-purple-500/20">
+      <div className="p-4 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-500/10 dark:to-indigo-500/10 rounded-lg border border-primary-100 dark:border-primary-500/20">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             Profile Completion
@@ -287,7 +287,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
   return (
     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       {/* Header with Progress */}
-      <div className="p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-500/10 dark:to-indigo-500/10 border-b border-purple-100 dark:border-purple-500/20">
+      <div className="p-6 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-500/10 dark:to-indigo-500/10 border-b border-primary-100 dark:border-primary-500/20">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -337,7 +337,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
               {item.action && onNavigate && (
                 <button
                   onClick={() => onNavigate(item.action!)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                 >
                   {item.actionLabel}
                   <ChevronRight size={14} />
@@ -405,7 +405,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                   size={16}
                   className={`mt-0.5 ${
                     suggestion.priority === 'high'
-                      ? 'text-red-500'
+                      ? 'text-rose-500'
                       : suggestion.priority === 'medium'
                         ? 'text-yellow-500'
                         : 'text-blue-500'

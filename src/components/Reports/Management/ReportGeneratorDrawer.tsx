@@ -168,8 +168,8 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-violet-500/20 rounded-lg">
-              <Sparkles className="w-5 h-5 text-violet-400" />
+            <div className="p-2 bg-primary-500/20 rounded-lg">
+              <Sparkles className="w-5 h-5 text-primary-400" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -206,14 +206,14 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                     onClick={() => handleTypeChange(option.id)}
                     className={`w-full flex items-start gap-3 p-3 rounded-xl border-2 transition-all text-left ${
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/10'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-violet-500/50 bg-slate-50 dark:bg-navy-800/50'
+                        ? 'border-primary-500 bg-primary-500/10'
+                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-500/50 bg-slate-50 dark:bg-navy-800/50'
                     }`}
                   >
                     <div
                       className={`p-2 rounded-lg ${
                         isSelected
-                          ? 'bg-violet-500 text-white'
+                          ? 'bg-primary-500 text-white'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
                       }`}
                     >
@@ -226,7 +226,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                         {option.title}
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">{option.description}</p>
-                      <span className="text-xs text-violet-400 mt-1 inline-block">
+                      <span className="text-xs text-primary-400 mt-1 inline-block">
                         PRINCE2: {option.prince2}
                       </span>
                     </div>
@@ -250,8 +250,8 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                 disabled={reportType === 'TEAM_MEETING' || reportType === 'TEAM_WEEKLY'}
                 className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
                   scope === 'PORTFOLIO'
-                    ? 'border-violet-500 bg-violet-500/10 text-white'
-                    : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-violet-500/50'
+                    ? 'border-primary-500 bg-primary-500/10 text-white'
+                    : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-500/50'
                 } ${reportType === 'TEAM_MEETING' || reportType === 'TEAM_WEEKLY' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Briefcase size={18} />
@@ -262,8 +262,8 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                 disabled={reportType === 'PORTFOLIO_HEALTH'}
                 className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
                   scope === 'PROJECT'
-                    ? 'border-violet-500 bg-violet-500/10 text-white'
-                    : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-violet-500/50'
+                    ? 'border-primary-500 bg-primary-500/10 text-white'
+                    : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-500/50'
                 } ${reportType === 'PORTFOLIO_HEALTH' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Building2 size={18} />
@@ -282,7 +282,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                 <select
                   value={selectedProjectId || ''}
                   onChange={(e) => setSelectedProjectId(e.target.value || undefined)}
-                  className="w-full appearance-none px-4 py-3 pr-10 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full appearance-none px-4 py-3 pr-10 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Choose a project...</option>
                   {projects.map((project) => (
@@ -308,7 +308,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
               <select
                 value={periodDays}
                 onChange={(e) => setPeriodDays(parseInt(e.target.value))}
-                className="w-full appearance-none px-4 py-3 pr-10 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full appearance-none px-4 py-3 pr-10 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {periodOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -350,7 +350,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
           <button
             onClick={handleGenerate}
             disabled={generating || (scope === 'PROJECT' && !selectedProjectId)}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-lg transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-600/50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-lg transition-colors"
           >
             {generating ? (
               <>

@@ -61,17 +61,21 @@ const processor = async (job) => {
         const { runEvalHarness } = await import('../services/ai/evalHarnessService.js');
         const { organizationId, datasetId, evalTypes, purpose, regressionBaseline, runBy } =
           payload;
-        result = await runEvalHarness(organizationId, {
-          datasetId,
-          evalTypes: evalTypes || [
-            'response_quality',
-            'citation_coverage',
-            'policy_compliance',
-            'latency',
-          ],
-          purpose: purpose || 'chat',
-          regressionBaseline,
-        }, runBy);
+        result = await runEvalHarness(
+          organizationId,
+          {
+            datasetId,
+            evalTypes: evalTypes || [
+              'response_quality',
+              'citation_coverage',
+              'policy_compliance',
+              'latency',
+            ],
+            purpose: purpose || 'chat',
+            regressionBaseline,
+          },
+          runBy
+        );
         break;
       }
       case 'AGENT_BACKGROUND_TASK': {

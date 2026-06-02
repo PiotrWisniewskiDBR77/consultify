@@ -5,27 +5,68 @@
  * CalendarProviderAdapter contract used by the calendar interop layer.
  */
 
-import { Client } from '@microsoft/microsoft-graph-client';
+import logger from '../../../utils/Logger.js';
+import type { RecurrenceModel } from '../calendarInteropService.js';
 import type {
+  CalendarItemPayload,
   CalendarProviderAdapter,
   ConnectionRef,
-  ProviderCalendarRef,
-  ProviderEvent,
-  ProviderConflictError,
-  CalendarItemPayload,
-  WatchSubscription,
   FetchEventsResult,
+  ProviderCalendarRef,
+  ProviderConflictError,
+  ProviderEvent,
+  WatchSubscription,
 } from './types.js';
-import type { RecurrenceModel } from '../calendarInteropService.js';
-import logger from '../../../utils/Logger.js';
 
 const LOG_PREFIX = '[P02-MicrosoftGraph]';
+
+type GraphRequest = {
+  select: (fields: string) => GraphRequest;
+  header: (name: string, value: string) => GraphRequest;
+  get: () => Promise<Record<string, unknown>>;
+  post: (body: unknown) => Promise<unknown>;
+  patch: (body: unknown) => Promise<unknown>;
+  delete: () => Promise<unknown>;
+};
+type GraphClient = {
+  api: (path: string) => GraphRequest;
+};
+type GraphClientCtor = {
+  init: (options: {
+    authProvider: (done: (error: Error | null, token?: string) => void) => void;
+  }) => GraphClient;
+};
+
+let graphClientCtor: GraphClientCtor | null | undefined;
 
 /* -------------------------------------------------------------------------- */
 /*  Graph client factory                                                      */
 /* -------------------------------------------------------------------------- */
 
-function buildGraphClient(connection: ConnectionRef): Client {
+async function getGraphClientCtor(): Promise<GraphClientCtor | null> {
+  if (graphClientCtor !== undefined) return graphClientCtor;
+  try {
+    const optionalModule = '@microsoft/microsoft-graph-client';
+    const mod = (await import(optionalModule)) as {
+      Client?: GraphClientCtor;
+      default?: { Client?: GraphClientCtor };
+    };
+    graphClientCtor = mod.Client ?? mod.default?.Client ?? null;
+    return graphClientCtor;
+  } catch {
+    graphClientCtor = null;
+    return null;
+  }
+}
+
+async function buildGraphClient(connection: ConnectionRef): Promise<GraphClient> {
+  const Client = await getGraphClientCtor();
+  if (!Client) {
+    throw new Error(
+      `${LOG_PREFIX} @microsoft/microsoft-graph-client dependency is required for Microsoft Graph`
+    );
+  }
+
   return Client.init({
     authProvider: (done) => {
       done(null, connection.accessToken);
@@ -74,7 +115,7 @@ const GRAPH_DAY_MAP: Record<string, string> = {
 
 function graphRecurrenceToRrule(
   pattern: Record<string, unknown>,
-  range: Record<string, unknown>,
+  range: Record<string, unknown>
 ): string {
   const parts: string[] = [];
 
@@ -133,7 +174,9 @@ function graphRecurrenceToRrule(
 }
 
 function mapRecurrence(event: Record<string, unknown>): RecurrenceModel | undefined {
-  const recurrence = event.recurrence as { pattern: Record<string, unknown>; range: Record<string, unknown> } | undefined;
+  const recurrence = event.recurrence as
+    | { pattern: Record<string, unknown>; range: Record<string, unknown> }
+    | undefined;
   if (!recurrence?.pattern || !recurrence?.range) return undefined;
 
   const rrule = graphRecurrenceToRrule(recurrence.pattern, recurrence.range);
@@ -156,10 +199,12 @@ function mapGraphEvent(event: Record<string, unknown>, calendarId: string): Prov
   const end = event.end as { dateTime: string; timeZone: string } | undefined;
   const isAllDay = event.isAllDay as boolean;
   const organizer = event.organizer as { emailAddress?: { address: string } } | undefined;
-  const attendees = event.attendees as Array<{
-    emailAddress: { address: string };
-    status: { response: string };
-  }> | undefined;
+  const attendees = event.attendees as
+    | Array<{
+        emailAddress: { address: string };
+        status: { response: string };
+      }>
+    | undefined;
 
   const isSeriesMaster = event.type === 'seriesMaster';
   const isSingleInstance = event.type === 'singleInstance';
@@ -173,9 +218,9 @@ function mapGraphEvent(event: Record<string, unknown>, calendarId: string): Prov
     allDay: isAllDay ?? false,
     timezone: start?.timeZone ?? null,
     etag: (event['@odata.etag'] as string) ?? '',
-    status: event.isCancelled ? 'cancelled' : mapStatus(
-      (event.responseStatus as { response?: string } | undefined)?.response,
-    ),
+    status: event.isCancelled
+      ? 'cancelled'
+      : mapStatus((event.responseStatus as { response?: string } | undefined)?.response),
     iCalUID: event.iCalUId as string | undefined,
     htmlLink: event.webLink as string | undefined,
   };
@@ -275,9 +320,7 @@ function buildEventBody(item: CalendarItemPayload): Record<string, unknown> {
       : { dateTime: item.startAt, timeZone: item.timezone ?? 'UTC' };
   } else {
     body.start = { dateTime: item.startAt, timeZone: item.timezone ?? 'UTC' };
-    body.end = item.endAt
-      ? { dateTime: item.endAt, timeZone: item.timezone ?? 'UTC' }
-      : undefined;
+    body.end = item.endAt ? { dateTime: item.endAt, timeZone: item.timezone ?? 'UTC' } : undefined;
   }
 
   return body;
@@ -295,7 +338,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
   async listCalendars(connection: ConnectionRef): Promise<ProviderCalendarRef[]> {
     logger.debug(`${LOG_PREFIX} listCalendars for account=${connection.accountRef}`);
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
 
     try {
       const response = await client
@@ -305,13 +348,15 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
 
       const calendars = (response.value ?? []) as Array<Record<string, unknown>>;
 
-      return calendars.map((cal): ProviderCalendarRef => ({
-        calendarId: cal.id as string,
-        name: cal.name as string,
-        primary: (cal.isDefaultCalendar as boolean) ?? false,
-        accessRole: mapAccessRole(cal),
-        color: cal.color as string | undefined,
-      }));
+      return calendars.map(
+        (cal): ProviderCalendarRef => ({
+          calendarId: cal.id as string,
+          name: cal.name as string,
+          primary: (cal.isDefaultCalendar as boolean) ?? false,
+          accessRole: mapAccessRole(cal),
+          color: cal.color as string | undefined,
+        })
+      );
     } catch (error) {
       logger.error(`${LOG_PREFIX} listCalendars failed`, { error });
       handleApiError(error);
@@ -323,13 +368,13 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
   async fetchEvents(
     connection: ConnectionRef,
     window: { startAt: string; endAt: string },
-    cursor?: string | null,
+    cursor?: string | null
   ): Promise<FetchEventsResult> {
     logger.debug(`${LOG_PREFIX} fetchEvents cursor=${cursor ? 'deltaLink' : 'initial'}`, {
       window,
     });
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
     const allEvents: ProviderEvent[] = [];
     let nextCursor: string | null = null;
 
@@ -389,13 +434,13 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
   async createEvent(
     connection: ConnectionRef,
     item: CalendarItemPayload,
-    transactionId?: string,
+    transactionId?: string
   ): Promise<ProviderEvent> {
     logger.debug(`${LOG_PREFIX} createEvent calendar=${item.calendarId}`, {
       transactionId,
     });
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
     const body = buildEventBody(item);
 
     if (transactionId) {
@@ -424,7 +469,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
   async updateEvent(
     connection: ConnectionRef,
     item: CalendarItemPayload,
-    providerEtag: string,
+    providerEtag: string
   ): Promise<ProviderEvent | ProviderConflictError> {
     logger.debug(`${LOG_PREFIX} updateEvent id=${item.providerEventId}`);
 
@@ -432,7 +477,7 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
       throw new Error(`${LOG_PREFIX} updateEvent requires providerEventId on the item`);
     }
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
     const body = buildEventBody(item);
 
     try {
@@ -463,11 +508,11 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
   async deleteEvent(
     connection: ConnectionRef,
     providerEventId: string,
-    providerEtag: string,
+    providerEtag: string
   ): Promise<void | ProviderConflictError> {
     logger.debug(`${LOG_PREFIX} deleteEvent id=${providerEventId}`);
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
 
     try {
       await client
@@ -492,17 +537,12 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
 
   /* ── watchChanges ─────────────────────────────────────────────────────── */
 
-  async watchChanges(
-    connection: ConnectionRef,
-    callbackUrl: string,
-  ): Promise<WatchSubscription> {
+  async watchChanges(connection: ConnectionRef, callbackUrl: string): Promise<WatchSubscription> {
     logger.debug(`${LOG_PREFIX} watchChanges callbackUrl=${callbackUrl}`);
 
-    const client = buildGraphClient(connection);
+    const client = await buildGraphClient(connection);
 
-    const expirationDateTime = new Date(
-      Date.now() + 3 * 24 * 60 * 60 * 1000,
-    ).toISOString();
+    const expirationDateTime = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
     const subscriptionPayload = {
       changeType: 'created,updated,deleted',
@@ -512,9 +552,10 @@ export const microsoftGraphCalendarAdapter: CalendarProviderAdapter = {
     };
 
     try {
-      const subscription = (await client
-        .api('/subscriptions')
-        .post(subscriptionPayload)) as Record<string, unknown>;
+      const subscription = (await client.api('/subscriptions').post(subscriptionPayload)) as Record<
+        string,
+        unknown
+      >;
 
       return {
         subscriptionId: subscription.id as string,

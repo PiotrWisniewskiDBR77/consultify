@@ -13,6 +13,8 @@ vi.mock('@/services/api', () => ({
     put: vi.fn(),
     getLLMProviders: vi.fn(),
     checkLLMProvidersHealth: vi.fn(),
+    getAIUserSettings: vi.fn(),
+    updateAIUserSettings: vi.fn(),
   },
 }));
 
@@ -65,10 +67,18 @@ describe('AISettings', () => {
     ]);
 
     (Api.checkLLMProvidersHealth as any).mockResolvedValue({});
+    (Api.getAIUserSettings as any).mockResolvedValue({});
+    (Api.updateAIUserSettings as any).mockResolvedValue({});
 
     (Api.get as any).mockImplementation((url: string) => {
       if (url === '/settings/preferences') {
         return Promise.resolve({ data: { ai: { responseStyle: 'balanced' } } });
+      }
+      if (url === '/settings/preferences/ai-providers') {
+        return Promise.resolve({ providers: [] });
+      }
+      if (url.startsWith('/ai-settings/org/')) {
+        return Promise.resolve({});
       }
       return Promise.resolve({ data: {} });
     });
@@ -121,7 +131,10 @@ describe('AISettings', () => {
     await user.click(saveBtn);
 
     await waitFor(() => {
-      expect(Api.put).toHaveBeenCalledWith('/settings/preferences/ai', expect.any(Object));
+      expect(Api.updateAIUserSettings).toHaveBeenCalledWith(expect.any(Object));
+      expect(Api.put).toHaveBeenCalledWith('/settings/preferences/ai-providers', {
+        providers: [],
+      });
     });
   });
 
@@ -146,9 +159,14 @@ describe('AISettings', () => {
     await user.click(saveKeyBtn);
 
     await waitFor(() => {
-      expect(screen.getAllByText('My Key').length).toBeGreaterThan(0);
-      const stored = localStorage.getItem(`user_ai_providers:${mockUser.id}`);
-      expect(stored || '').toContain('My Key');
+      expect(Api.put).toHaveBeenCalledWith(
+        '/settings/preferences/ai-providers',
+        expect.objectContaining({
+          providers: expect.arrayContaining([
+            expect.objectContaining({ name: 'My Key', apiKey: 'sk-test-key-123456' }),
+          ]),
+        })
+      );
     });
   });
 });

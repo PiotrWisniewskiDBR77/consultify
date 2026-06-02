@@ -66,7 +66,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="flex h-56 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-            <KeyRound className="h-4 w-4 text-violet-500" />
+            <KeyRound className="h-4 w-4 text-primary-500" />
             MFA enforcement
           </div>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -111,7 +111,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
 
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-            <Shield className="h-4 w-4 text-violet-500" />
+            <Shield className="h-4 w-4 text-primary-500" />
             SSO posture
           </div>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -189,7 +189,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
 
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-            <Lock className="h-4 w-4 text-violet-500" />
+            <Lock className="h-4 w-4 text-primary-500" />
             Session and password
           </div>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -237,7 +237,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save security policy

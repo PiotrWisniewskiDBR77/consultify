@@ -1064,6 +1064,17 @@
     "register": "Registrieren"
   },
   "help": {
+    "feedback": {
+      "title": "War das hilfreich?",
+      "yes": "Ja",
+      "no": "Nein",
+      "addComment": "Sagen Sie uns, was gefehlt hat",
+      "commentPlaceholder": "Was sollen wir verbessern?",
+      "submit": "Feedback senden",
+      "skip": "Überspringen",
+      "thanks": "Danke für das Feedback",
+      "error": "Feedback konnte nicht gesendet werden. Bitte erneut versuchen."
+    },
     "title": "Hilfezentrum",
     "knowledge": {
       "title": "Wissensdatenbank",
@@ -1452,9 +1463,39 @@
     },
     "topBar": {
       "demo": "Demo",
-      "trial": "Trial",
-      "login": "Log in",
-      "signUp": "Sign up"
+      "trial": "Test starten",
+      "login": "Anmelden",
+      "signUp": "Registrieren",
+      "menu": "Menü",
+      "lightMode": "Hell",
+      "darkMode": "Dunkel",
+      "switchLight": "Zum hellen Modus wechseln",
+      "switchDark": "Zum dunklen Modus wechseln"
+    },
+    "profitHero": {
+      "h1": {
+        "line1": "Consultify AI.",
+        "line2": "Das gesamte Business-Wissen der Welt.",
+        "line3": "Verwandelt in Ihren Profit."
+      },
+      "sub": "Für Berater, Transformationsteams und Operatoren, die Diagnose, Planung, Umsetzung und messbare Ergebnisse in einem Workflow brauchen.",
+      "billboard": "Wir haben für Consulting getan, was Spotify für Musik getan hat: unbegrenzter Zugang. Nur dass Sie statt Playlists Profit bekommen.",
+      "billboardShort": "Ein Workflow von der Diagnose über die Umsetzung bis zu messbaren Ergebnissen.",
+      "ctaPrimary": "Test starten",
+      "ctaSecondary": "Demo ausprobieren",
+      "ctaNote": "Kurze Teaser sind öffentlich. Die Vollversionen werden nach dem Login freigeschaltet.",
+      "panel": {
+        "title": "Vom Chat -> zu Deliverables -> zu Profit",
+        "subtitle": "Ein Workspace. Durchgängige Umsetzung.",
+        "items": {
+          "tools": "Tools & Frameworks",
+          "finance": "Finanzanalyse",
+          "reports": "Berichte & Präsentationen",
+          "governance": "Governance standardmäßig"
+        },
+        "imageAlt": "Consultify Produktscreenshot",
+        "imageHint": "Screenshots erscheinen hier, sobald die Assets verfügbar sind."
+      }
     },
     "methodology": {
       "badge": "Our Methodology",
@@ -1493,19 +1534,28 @@
       },
       "knowledge": {
         "title": "Wissen",
+        "blogDbr77": "DBR77 Blog",
+        "blogConsultify": "Consultify Blog",
         "blog": "Blog",
         "reports": "Berichte",
         "podcasts": "Podcasts"
+      },
+      "documentation": {
+        "title": "Dokumentation"
       },
       "legal": {
         "privacy": "Datenschutzrichtlinie",
         "cookies": "Cookie-Richtlinie",
         "terms": "Nutzungsbedingungen",
+        "subscription": "Abonnementbedingungen",
+        "dpa": "Auftragsverarbeitung (DPA)",
+        "sla": "Service Levels (SLA)",
         "acceptableUse": "Richtlinie zur akzeptablen Nutzung",
         "aiPolicy": "KI-Richtlinie",
         "security": "Sicherheitsübersicht",
         "consent": "Einwilligung & Kontrolle"
-      }
+      },
+      "offices": "Standorte"
     },
     "problemPlatform": {
       "heading": "Was Spotify für Musik getan hat,",
@@ -1552,6 +1602,85 @@
       "resources": "Ressourcen",
       "resourcesDesc": "Fallstudien, Whitepapers, Webinare und Produktaktualisierungen.",
       "explore": "Entdecken"
+    },
+    "whereItHappens": {
+      "badge": "Was Consultify leistet",
+      "heading": "Consultify bringt Consulting-Wissen, Frameworks, Umsetzung und Deliverables in eine gemeinsame Arbeitsumgebung.",
+      "sub": "So sieht die Consulting Intelligence Platform in der Praxis aus: nicht nur KI-Antworten, sondern ein strukturierter Consulting-Workflow von der Diagnose bis zum Ergebnis.",
+      "closingNote": "Ein Kategorieversprechen, eine Produktoberfläche, ein Weg vom Verständnis zu messbaren Ergebnissen.",
+      "imageAlt": "Consultify Produktscreenshot",
+      "imageHint": "Screenshots erscheinen hier, sobald die Assets verfügbar sind.",
+      "features": {
+        "aiCore": {
+          "badge": "AI Core",
+          "title": "Strategischer KI-Berater",
+          "description": "Die KI analysiert Ihre Organisation, identifiziert Lücken und erstellt in Minuten statt Monaten eine priorisierte strategische Roadmap.",
+          "highlights": [
+            "Diagnosebewertung",
+            "Gap-Analyse",
+            "Benchmark gegen die Branche"
+          ]
+        },
+        "economics": {
+          "badge": "Wirtschaftlichkeit",
+          "title": "Finanzmodellierung & ROI",
+          "description": "Erstellen Sie Business Cases, modellieren Sie NPV-/IRR-Szenarien und verfolgen Sie die tatsächlichen im Vergleich zu den geplanten Renditen jeder Initiative.",
+          "highlights": [
+            "NPV- / IRR-Modellierung",
+            "Sensitivitätsanalyse",
+            "Live-ROI-Tracking"
+          ]
+        },
+        "execution": {
+          "badge": "Umsetzung",
+          "title": "Initiativenmanagement",
+          "description": "Machen Sie aus Strategie echte Umsetzung. Steuern Sie Workstreams, Meilensteine und Governance - mit KI, die Ihr Team bei jeder Entscheidung in Richtung Wirkung lenkt.",
+          "highlights": [
+            "Initiativen-Roadmap",
+            "Menschliche Freigabegates",
+            "Risiko-Früherkennung"
+          ]
+        },
+        "deliverables": {
+          "badge": "Deliverables",
+          "title": "Berichts- & Präsentations-Builder",
+          "description": "Erstellen Sie aus Live-Daten sofort Vorstandsberichte und Investor-Decks. Ein Klick von der Analyse zum fertigen Output.",
+          "highlights": [
+            "Automatisch erzeugte Decks",
+            "Narrative Engine",
+            "Quellen-Nachvollziehbarkeit"
+          ]
+        },
+        "chat": {
+          "badge": "Chat",
+          "title": "KI-Experteninterview",
+          "description": "Fragen Sie alles zu Ihrem Geschäftskontext. Die KI greift auf 10.000+ Frameworks und Ihre internen Daten zu und antwortet präzise.",
+          "highlights": [
+            "Kontextbewusster Chat",
+            "Framework-Bibliothek",
+            "Antworten mit Quellen"
+          ]
+        },
+        "results": {
+          "badge": "Ergebnisse",
+          "title": "Impact-Tracking",
+          "description": "Verbinden Sie Initiativen mit realen KPIs. Messen Sie den tatsächlich gelieferten Wert und markieren Sie Abweichungen automatisch, bevor sie zum Problem werden.",
+          "highlights": [
+            "Live-KPI-Verfolgung",
+            "Abweichungswarnungen",
+            "Wirkungsnachweis"
+          ]
+        }
+      }
+    },
+    "knowledge": {
+      "badge": "Wissensdatenbank",
+      "title": "Entdecken Sie unsere Expertise",
+      "subtitle": "Bewährte Methoden und Best Practices, denen Branchenführer in ganz Europa vertrauen.",
+      "readMore": "Vollständigen Artikel lesen",
+      "exploreAll": "Gesamte Wissensdatenbank öffnen",
+      "ctaSubtext": "Starten Sie eine kostenlose Testphase, um alle Artikel, Videos und Ressourcen freizuschalten.",
+      "minUnit": "Min."
     }
   },
   "partner": {

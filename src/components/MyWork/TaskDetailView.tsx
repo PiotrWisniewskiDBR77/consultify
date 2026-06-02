@@ -89,6 +89,7 @@ import {
   RiskCanvas,
   type SortOrder,
 } from '../shared/NModeSections';
+import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import {
   type Alternative,
   AlternativesSection,
@@ -118,7 +119,6 @@ import {
   type WarningThresholds,
 } from './shared';
 import { AIConnections } from './shared/AIConnections';
-import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import { buildAskAIMessage } from './shared/askAiHelper';
 // ── Presentation Mode Switcher ───────────────────────────────────────────────
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
@@ -147,8 +147,8 @@ const STATUS_CONFIG = {
   },
   review: {
     label: { en: 'Review', pl: 'Przegląd' },
-    color: 'bg-purple-500',
-    textColor: 'text-purple-500',
+    color: 'bg-primary-500',
+    textColor: 'text-primary-500',
     icon: Edit3,
   },
   done: {
@@ -159,8 +159,8 @@ const STATUS_CONFIG = {
   },
   blocked: {
     label: { en: 'Blocked', pl: 'Zablokowane' },
-    color: 'bg-red-500',
-    textColor: 'text-red-500',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-500',
     icon: AlertCircle,
   },
 };
@@ -178,13 +178,13 @@ const PRIORITY_CONFIG = {
   },
   high: {
     label: { en: 'High', pl: 'Wysoki' },
-    color: 'bg-orange-400',
-    textColor: 'text-orange-500',
+    color: 'bg-amber-400',
+    textColor: 'text-amber-500',
   },
   critical: {
     label: { en: 'Critical', pl: 'Krytyczny' },
-    color: 'bg-red-500',
-    textColor: 'text-red-500',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-500',
   },
 };
 
@@ -1399,7 +1399,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const getRiskScore = (risk: RiskItem) =>
     riskLevelToScore(risk.probability) * riskLevelToScore(risk.impact);
   const getRiskScoreClass = (score: number) => {
-    if (score >= 12) return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/30';
+    if (score >= 12) return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30';
     if (score >= 8) return 'text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30';
     if (score >= 4)
       return 'text-yellow-700 dark:text-yellow-300 bg-yellow-500/10 border-yellow-500/30';
@@ -1407,9 +1407,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   };
   const getRiskLevelClass = (level?: string) => {
     const n = String(level || '').toLowerCase();
-    if (n === 'critical') return 'border-red-500/60 bg-red-500/10 text-red-700 dark:text-red-300';
+    if (n === 'critical')
+      return 'border-rose-500/60 bg-rose-500/10 text-rose-700 dark:text-rose-300';
     if (n === 'high')
-      return 'border-orange-500/55 bg-orange-500/10 text-orange-700 dark:text-orange-300';
+      return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
     if (n === 'medium')
       return 'border-amber-500/55 bg-amber-500/10 text-amber-700 dark:text-amber-300';
     return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
@@ -1860,19 +1861,19 @@ Return ONLY the final comment text.`;
   // ── Alert border classes for PropertiesStrip ─────────────────────────────
   const statusAlertBorderClass =
     status === 'blocked'
-      ? 'border-red-400/70 dark:border-red-500/50'
+      ? 'border-rose-400/70 dark:border-rose-500/50'
       : status === 'done'
         ? 'border-emerald-400/70 dark:border-emerald-500/50'
         : status === 'in_progress'
           ? 'border-blue-400/70 dark:border-blue-500/50'
           : status === 'review'
-            ? 'border-purple-400/70 dark:border-purple-500/50'
+            ? 'border-primary-400/70 dark:border-primary-500/50'
             : 'border-slate-200 dark:border-navy-600/60';
   const priorityAlertBorderClass =
     priority === 'critical'
-      ? 'border-red-400/70 dark:border-red-500/50'
+      ? 'border-rose-400/70 dark:border-rose-500/50'
       : priority === 'high'
-        ? 'border-orange-400/70 dark:border-orange-500/50'
+        ? 'border-amber-400/70 dark:border-amber-500/50'
         : priority === 'medium'
           ? 'border-blue-400/70 dark:border-blue-500/50'
           : 'border-slate-200 dark:border-navy-600/60';
@@ -1882,7 +1883,7 @@ Return ONLY the final comment text.`;
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (diff < 0) return 'border-red-400 dark:border-red-500/50';
+    if (diff < 0) return 'border-rose-400 dark:border-rose-500/50';
     if (diff <= 3) return 'border-amber-400 dark:border-amber-500/50';
     return undefined;
   }, [dueDate]);
@@ -1978,12 +1979,12 @@ Return ONLY the final comment text.`;
   );
 
   const getPriorityDotClass = (p: CommentPriority) =>
-    p === 'high' ? 'bg-red-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
+    p === 'high' ? 'bg-rose-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
   const getCommentPriority = (_c: CommentItem): CommentPriority => 'normal';
   const getPriorityButtonClass = (p: CommentPriority, active: boolean) =>
     active
       ? p === 'high'
-        ? 'border-red-400/80 text-red-300 bg-red-500/20 shadow-[0_0_0_1px_rgba(239,68,68,0.3)]'
+        ? 'border-rose-400/80 text-rose-300 bg-rose-500/20 shadow-[0_0_0_1px_rgba(244,63,94,0.3)]'
         : p === 'low'
           ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
           : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]'
@@ -2053,7 +2054,7 @@ Return ONLY the final comment text.`;
       assignment: {
         icon: <User size={10} />,
         label: 'Assigned',
-        style: 'border-purple-300/50 bg-purple-500/10 text-purple-600',
+        style: 'border-primary-300/50 bg-primary-500/10 text-primary-600',
       },
       comment: {
         icon: <MessageSquare size={10} />,
@@ -2068,17 +2069,17 @@ Return ONLY the final comment text.`;
       attachment: {
         icon: <FileText size={10} />,
         label: 'Attachment',
-        style: 'border-cyan-300/50 bg-cyan-500/10 text-cyan-600',
+        style: 'border-blue-300/50 bg-blue-500/10 text-blue-600',
       },
       deadline: {
         icon: <Calendar size={10} />,
         label: 'Deadline',
-        style: 'border-red-300/50 bg-red-500/10 text-red-600',
+        style: 'border-rose-300/50 bg-rose-500/10 text-rose-600',
       },
       priority: {
         icon: <Flag size={10} />,
         label: 'Priority',
-        style: 'border-orange-300/50 bg-orange-500/10 text-orange-600',
+        style: 'border-amber-300/50 bg-amber-500/10 text-amber-600',
       },
     };
     return (
@@ -2511,7 +2512,7 @@ Return ONLY the final comment text.`;
                         {/* Delete */}
                         <button
                           onClick={() => removeChecklistItem(item.id)}
-                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all"
+                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-all"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -2569,9 +2570,9 @@ Return ONLY the final comment text.`;
             },
             rejected: {
               label: isPolish ? 'Odrzucony' : 'Rejected',
-              dot: 'bg-red-500',
-              text: 'text-red-600 dark:text-red-400',
-              bg: 'bg-red-100 dark:bg-red-500/20',
+              dot: 'bg-rose-500',
+              text: 'text-rose-600 dark:text-rose-400',
+              bg: 'bg-rose-100 dark:bg-rose-500/20',
             },
           };
 
@@ -2667,7 +2668,7 @@ Return ONLY the final comment text.`;
                                       )
                                     )
                                   }
-                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                                   title={isPolish ? 'Głosuj przeciw' : 'Vote down'}
                                 >
                                   <ThumbsDown size={14} />
@@ -2681,7 +2682,7 @@ Return ONLY the final comment text.`;
                                   <span
                                     className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                       isAI
-                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400'
+                                        ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400'
                                         : isTeam
                                           ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
                                           : 'bg-slate-100 dark:bg-slate-500/20 text-slate-500 dark:text-slate-400'
@@ -2778,7 +2779,7 @@ Return ONLY the final comment text.`;
                                       implementationIdeas.filter((i) => i.id !== idea.id)
                                     )
                                   }
-                                  className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                                  className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                                 >
                                   <Trash2 size={13} />
                                 </button>
@@ -2975,7 +2976,7 @@ Return ONLY the final comment text.`;
                                         stakeholders.filter((item) => item.id !== s.id)
                                       )
                                     }
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500"
                                     title={isPolish ? 'Usuń' : 'Delete'}
                                   >
                                     <Trash2 size={13} />
@@ -3097,7 +3098,7 @@ Return ONLY the final comment text.`;
                                     onClick={() =>
                                       setReminders(reminders.filter((item) => item.id !== r.id))
                                     }
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500"
                                     title={isPolish ? 'Usuń' : 'Delete'}
                                   >
                                     <Trash2 size={13} />
@@ -3240,7 +3241,7 @@ Return ONLY the final comment text.`;
                                         escalationRules.filter((item) => item.id !== rule.id)
                                       )
                                     }
-                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-red-500"
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-500"
                                     title={isPolish ? 'Usuń' : 'Delete'}
                                   >
                                     <Trash2 size={13} />
@@ -3495,7 +3496,7 @@ Return ONLY the final comment text.`;
             <div className="col-span-full space-y-4 mt-4">
               {/* Deadline Alert */}
               {dueDate && dueDateAlertBorderClass && (
-                <div className="mb-3 px-4 py-2 rounded-xl bg-red-500/5 dark:bg-red-500/10 border border-red-200/60 dark:border-red-500/30 text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+                <div className="mb-3 px-4 py-2 rounded-xl bg-rose-500/5 dark:bg-rose-500/10 border border-rose-200/60 dark:border-rose-500/30 text-sm text-rose-600 dark:text-rose-400 flex items-center gap-2">
                   <AlertCircle size={14} />
                   {isPolish
                     ? 'Uwaga: zbliża się lub minął termin!'
@@ -3505,10 +3506,10 @@ Return ONLY the final comment text.`;
 
               {/* Blocked reason — editable when status=blocked */}
               {status === 'blocked' && (
-                <div className="mb-3 px-4 py-3 rounded-xl bg-red-500/5 dark:bg-red-500/10 border border-red-200/60 dark:border-red-500/30">
+                <div className="mb-3 px-4 py-3 rounded-xl bg-rose-500/5 dark:bg-rose-500/10 border border-rose-200/60 dark:border-rose-500/30">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle size={14} className="text-red-500 dark:text-red-400" />
-                    <span className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">
+                    <AlertCircle size={14} className="text-rose-500 dark:text-rose-400" />
+                    <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wide">
                       {isPolish ? 'Powód blokady' : 'Blocked Reason'}
                     </span>
                   </div>
@@ -3516,7 +3517,7 @@ Return ONLY the final comment text.`;
                     value={blockedReason}
                     onChange={(e) => setBlockedReason(e.target.value)}
                     rows={2}
-                    className="w-full px-3 py-2 rounded-lg text-sm bg-white/60 dark:bg-navy-800/60 border border-red-200/40 dark:border-red-500/20 text-slate-700 dark:text-slate-300 placeholder-red-300 dark:placeholder-red-500/50 focus:outline-none focus:border-red-400 resize-none"
+                    className="w-full px-3 py-2 rounded-lg text-sm bg-white/60 dark:bg-navy-800/60 border border-rose-200/40 dark:border-rose-500/20 text-slate-700 dark:text-slate-300 placeholder-rose-300 dark:placeholder-rose-500/50 focus:outline-none focus:border-rose-400 resize-none"
                     placeholder={
                       isPolish ? 'Opisz powód blokady...' : 'Describe blocking reason...'
                     }
@@ -3649,12 +3650,16 @@ Return ONLY the final comment text.`;
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
                   {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
                   {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
-                  {sourceType === 'decision' && <Scale size={14} className="text-purple-500" />}
+                  {sourceType === 'decision' && <Scale size={14} className="text-blue-500" />}
                   <span className="text-slate-600 dark:text-slate-300">
                     {sourceType === 'idea'
-                      ? (isPolish ? 'Utworzone z pomysłu' : 'Created from Idea')
+                      ? isPolish
+                        ? 'Utworzone z pomysłu'
+                        : 'Created from Idea'
                       : sourceType === 'notebook'
-                        ? (isPolish ? 'Utworzone z notatki' : 'Created from Note')
+                        ? isPolish
+                          ? 'Utworzone z notatki'
+                          : 'Created from Note'
                         : `Created from ${sourceType}`}
                   </span>
                   <button
@@ -3673,8 +3678,12 @@ Return ONLY the final comment text.`;
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >
                     {sourceType === 'idea'
-                      ? (isPolish ? 'Pokaż źródło w mapie →' : 'View source in mindmap →')
-                      : (isPolish ? 'Pokaż źródło →' : 'View source →')}
+                      ? isPolish
+                        ? 'Pokaż źródło w mapie →'
+                        : 'View source in mindmap →'
+                      : isPolish
+                        ? 'Pokaż źródło →'
+                        : 'View source →'}
                   </button>
                 </div>
               )}
@@ -3714,7 +3723,7 @@ Return ONLY the final comment text.`;
                           'review'
                         );
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-purple-400/50 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                     >
                       <Eye size={13} /> {isPolish ? 'Do przeglądu' : 'Send to Review'}
                     </button>
@@ -3752,7 +3761,7 @@ Return ONLY the final comment text.`;
                           'blocked'
                         );
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-400/50 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-400/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
                     >
                       <AlertCircle size={13} /> {isPolish ? 'Zablokuj' : 'Block'}
                     </button>
@@ -4145,7 +4154,7 @@ Return ONLY the final comment text.`;
                           key={channel.key}
                           type="button"
                           onClick={channel.toggle}
-                          className={`${channelChipClass} ${channel.active ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${channel.active ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                         >
                           {channel.label}
                         </button>
@@ -4179,7 +4188,7 @@ Return ONLY the final comment text.`;
                                 },
                               });
                             }}
-                            className={`${channelChipClass} ${selected ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${selected ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                             title={channel.scope}
                           >
                             {channel.label}
@@ -4240,7 +4249,7 @@ Return ONLY the final comment text.`;
                     setEditingStakeholderId(null);
                     setStakeholderDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                  className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
                 >
                   {isPolish ? 'Zapisz' : 'Save'}
                 </button>
@@ -4276,7 +4285,7 @@ Return ONLY the final comment text.`;
                     onClick={() =>
                       toast(isPolish ? 'AI uzupełni formularz...' : 'AI will fill the form...')
                     }
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
                     <Sparkles size={12} /> AI
                   </button>
@@ -4394,7 +4403,7 @@ Return ONLY the final comment text.`;
                                     : coreChannels.includes('email'),
                               })
                             }
-                            className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${enabled ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                           >
                             {channel.label}
                           </button>
@@ -4433,7 +4442,7 @@ Return ONLY the final comment text.`;
                                 },
                               })
                             }
-                            className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                            className={`${channelChipClass} ${enabled ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                             title={channel.scope}
                           >
                             {channel.label}
@@ -4505,7 +4514,7 @@ Return ONLY the final comment text.`;
                     setEditingReminderId(null);
                     setReminderDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                  className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
                 >
                   {isPolish ? 'Zapisz' : 'Save'}
                 </button>
@@ -4541,7 +4550,7 @@ Return ONLY the final comment text.`;
                     onClick={() =>
                       toast(isPolish ? 'AI uzupełni formularz...' : 'AI will fill the form...')
                     }
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
                   >
                     <Sparkles size={12} /> AI
                   </button>
@@ -4691,7 +4700,7 @@ Return ONLY the final comment text.`;
                               },
                             })
                           }
-                          className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${enabled ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                         >
                           {channel.label}
                         </button>
@@ -4727,7 +4736,7 @@ Return ONLY the final comment text.`;
                               },
                             })
                           }
-                          className={`${channelChipClass} ${enabled ? 'border-purple-400/60 text-purple-500 bg-purple-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
+                          className={`${channelChipClass} ${enabled ? 'border-primary-400/60 text-primary-500 bg-primary-500/10' : 'border-slate-300/70 text-slate-500 hover:border-slate-400/80'}`}
                           title={channel.scope}
                         >
                           {channel.label}
@@ -4797,7 +4806,7 @@ Return ONLY the final comment text.`;
                     setEditingEscalationId(null);
                     setEscalationDraft(null);
                   }}
-                  className="px-3 py-1.5 rounded-md text-xs bg-purple-600 text-white hover:bg-purple-500"
+                  className="px-3 py-1.5 rounded-md text-xs bg-primary-600 text-white hover:bg-primary-500"
                 >
                   {isPolish ? 'Zapisz' : 'Save'}
                 </button>
@@ -4817,8 +4826,8 @@ Return ONLY the final comment text.`;
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50/30 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 dark:from-blue-500/10 dark:to-cyan-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/5 to-pink-500/5 dark:from-purple-500/10 dark:to-pink-500/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/5 to-blue-500/5 dark:from-blue-500/10 dark:to-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-primary-500/5 to-pink-500/5 dark:from-primary-500/10 dark:to-pink-500/10 rounded-full blur-3xl" />
       </div>
 
       {/* Content - Two columns */}
@@ -4828,7 +4837,7 @@ Return ONLY the final comment text.`;
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-3 bg-gradient-to-r from-white/80 via-purple-50/30 to-white/80 dark:from-navy-900/80 dark:via-purple-900/20 dark:to-navy-900/80 backdrop-blur-xl rounded-2xl border border-purple-200/40 dark:border-purple-500/20 shadow-lg shadow-purple-500/10 dark:shadow-purple-500/20 overflow-hidden ring-1 ring-purple-500/10 dark:ring-purple-400/10"
+            className="lg:col-span-3 bg-gradient-to-r from-white/80 via-primary-50/30 to-white/80 dark:from-navy-900/80 dark:via-primary-900/20 dark:to-navy-900/80 backdrop-blur-xl rounded-2xl border border-primary-200/40 dark:border-primary-500/20 shadow-lg shadow-primary-500/10 dark:shadow-primary-500/20 overflow-hidden ring-1 ring-primary-500/10 dark:ring-primary-400/10"
           >
             <div className="flex items-center gap-4 px-5 py-4">
               <motion.button
@@ -4881,7 +4890,7 @@ Return ONLY the final comment text.`;
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleOpenChat}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-primary-500/40 dark:border-primary-400/30 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 dark:hover:bg-primary-500/10 text-sm font-semibold transition-all shadow-sm"
                   title={isPolish ? 'Otwórz czat do tego zadania' : 'Open task chat'}
                 >
                   <MessageSquare size={16} />
@@ -4903,7 +4912,7 @@ Return ONLY the final comment text.`;
                 onClick={() => toggleSection('description')}
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
                     <FileText size={18} className="text-blue-500 dark:text-blue-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -4930,7 +4939,7 @@ Return ONLY the final comment text.`;
                           generateAIDescription();
                         }}
                         disabled={isGeneratingDescription}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
                         title={isPolish ? 'Wygeneruj opis AI' : 'Generate AI description'}
                       >
                         {isGeneratingDescription ? (
@@ -4987,7 +4996,7 @@ Return ONLY the final comment text.`;
                 onClick={() => toggleSection('expectedOutcome')}
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/10 to-blue-500/10 dark:from-emerald-500/20 dark:to-blue-500/20">
                     <Target size={18} className="text-emerald-500 dark:text-emerald-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -5014,7 +5023,7 @@ Return ONLY the final comment text.`;
                           generateAIOutcome();
                         }}
                         disabled={isGeneratingOutcome}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
                         title={isPolish ? 'Wygeneruj rezultat AI' : 'Generate AI outcome'}
                       >
                         {isGeneratingOutcome ? (
@@ -5116,7 +5125,7 @@ Return ONLY the final comment text.`;
                 onClick={() => toggleSection('relatedDecisions')}
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
                     <Scale size={18} className="text-amber-500 dark:text-amber-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -5176,9 +5185,9 @@ Return ONLY the final comment text.`;
                             const statusColors: Record<string, string> = {
                               pending: 'bg-amber-500',
                               approved: 'bg-emerald-500',
-                              rejected: 'bg-red-500',
+                              rejected: 'bg-rose-500',
                               deferred: 'bg-slate-500',
-                              escalated: 'bg-orange-500',
+                              escalated: 'bg-amber-500',
                             };
                             const statusLabels: Record<string, { en: string; pl: string }> = {
                               pending: { en: 'Pending', pl: 'Oczekuje' },
@@ -5257,7 +5266,7 @@ Return ONLY the final comment text.`;
                                           relatedDecisions.filter((d) => d.id !== rel.id)
                                         )
                                       }
-                                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all"
+                                      className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-all"
                                     >
                                       <X size={14} />
                                     </button>
@@ -5652,7 +5661,7 @@ Return ONLY the final comment text.`;
                           generateAIChecklist();
                         }}
                         disabled={isGeneratingChecklist}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
                         title={isPolish ? 'Wygeneruj checklistę AI' : 'Generate AI checklist'}
                       >
                         {isGeneratingChecklist ? (
@@ -5726,7 +5735,7 @@ Return ONLY the final comment text.`;
                               />
                               <button
                                 onClick={() => removeChecklistItem(item.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all"
+                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-all"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -5838,15 +5847,15 @@ Return ONLY the final comment text.`;
                                   case 'status_change':
                                     return 'bg-blue-500 text-white';
                                   case 'assignment':
-                                    return 'bg-purple-500 text-white';
+                                    return 'bg-primary-500 text-white';
                                   case 'comment':
                                     return 'bg-amber-500 text-white';
                                   case 'edit':
                                     return 'bg-slate-500 text-slate-900 dark:text-white';
                                   case 'deadline':
-                                    return 'bg-red-500 text-white';
+                                    return 'bg-rose-500 text-white';
                                   case 'priority':
-                                    return 'bg-orange-500 text-white';
+                                    return 'bg-amber-500 text-white';
                                   default:
                                     return 'bg-slate-400 text-slate-900 dark:text-white';
                                 }
@@ -5928,7 +5937,7 @@ Return ONLY the final comment text.`;
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 dark:from-blue-500/20 dark:to-cyan-500/20">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20">
                     <Flag size={18} className="text-blue-500 dark:text-blue-400" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -6201,7 +6210,7 @@ Return ONLY the final comment text.`;
                             value={blockedReason}
                             onChange={(e) => setBlockedReason(e.target.value)}
                             rows={2}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-red-200 dark:border-red-500/30 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-red-400 resize-none"
+                            className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-rose-200 dark:border-rose-500/30 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-rose-400 resize-none"
                             placeholder={
                               isPolish ? 'Opisz powód blokady...' : 'Describe blocking reason...'
                             }
@@ -6443,8 +6452,8 @@ Return ONLY the final comment text.`;
                   onClick={() => toggleSection('relatedNotes')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20">
-                      <BookOpen size={18} className="text-violet-500 dark:text-violet-400" />
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-primary-500/10 dark:from-primary-500/20 dark:to-primary-500/20">
+                      <BookOpen size={18} className="text-primary-500 dark:text-primary-400" />
                     </div>
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       {isPolish ? 'Powiązane notatki' : 'Related Notes'}

@@ -207,12 +207,12 @@ router.get(
 );
 
 // ===========================================
-// POST /api/branding/:orgId/upload - Upload branding asset (SuperAdmin)
+// POST /api/branding/:orgId/upload - Upload branding asset
 // ===========================================
 router.post(
   '/:orgId/upload',
   verifyToken,
-  verifySuperAdmin,
+  ensureBrandingWriteAccess,
   brandingUpload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;

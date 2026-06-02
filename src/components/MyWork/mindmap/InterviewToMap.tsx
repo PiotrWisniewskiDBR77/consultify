@@ -122,7 +122,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
       <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center gap-2">
-            <MessageSquare size={16} className="text-violet-500" />
+            <MessageSquare size={16} className="text-primary-500" />
             <h3 className="text-sm font-bold text-slate-800 dark:text-white">
               {isPl ? 'Wywiady → Mapa' : 'Interviews → Map'}
             </h3>
@@ -138,7 +138,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-violet-500" />
+              <Loader2 size={16} className="animate-spin text-primary-500" />
               <span className="text-[11px] text-slate-500">
                 {isPl ? 'Szukam insightów...' : 'Finding insights...'}
               </span>
@@ -166,14 +166,14 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
                       type="checkbox"
                       checked={selected.has(insight.id)}
                       onChange={() => toggleInsight(insight.id)}
-                      className="mt-0.5 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
+                      className="mt-0.5 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
                     />
                     <div className="min-w-0 flex-1">
                       <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
                         {insight.text}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400">
                           {insight.category.replace(/_/g, ' ')}
                         </span>
                         <span className="text-[9px] text-slate-400">→ {branchKey}</span>
@@ -201,7 +201,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
           <button
             onClick={handleApply}
             disabled={selected.size === 0 || locked}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-violet-500/15 to-purple-500/10 text-violet-700 dark:text-violet-300 hover:from-violet-500/25 hover:to-purple-500/15 border border-violet-500/10 transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-primary-500/15 to-primary-500/10 text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-primary-500/15 border border-primary-500/10 transition-all disabled:opacity-40"
           >
             <Zap size={12} />
             {isPl ? `Importuj ${selected.size} insightów` : `Import ${selected.size} insights`}

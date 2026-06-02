@@ -31,10 +31,10 @@ const MILESTONE_COLORS: Record<string, { bg: string; icon: string; glow: string 
   cta_clicked: { bg: 'bg-amber-500', icon: 'text-white', glow: 'shadow-amber-500/30' },
   demo_started: { bg: 'bg-blue-500', icon: 'text-white', glow: 'shadow-blue-500/30' },
   demo_completed: { bg: 'bg-green-500', icon: 'text-white', glow: 'shadow-green-500/30' },
-  trial_started: { bg: 'bg-purple-500', icon: 'text-white', glow: 'shadow-purple-500/30' },
+  trial_started: { bg: 'bg-primary-500', icon: 'text-white', glow: 'shadow-primary-500/30' },
   memory_activated: { bg: 'bg-indigo-500', icon: 'text-white', glow: 'shadow-indigo-500/30' },
   first_axis_created: { bg: 'bg-emerald-500', icon: 'text-white', glow: 'shadow-emerald-500/30' },
-  snapshot_created: { bg: 'bg-teal-500', icon: 'text-white', glow: 'shadow-teal-500/30' },
+  snapshot_created: { bg: 'bg-blue-500', icon: 'text-white', glow: 'shadow-blue-500/30' },
   second_user_joined: { bg: 'bg-pink-500', icon: 'text-white', glow: 'shadow-pink-500/30' },
 };
 
@@ -76,8 +76,8 @@ export const MilestoneBadge: React.FC<MilestoneBadgeProps> = ({
       <div className="flex flex-col items-center gap-1">
         <div
           className={`
-                        ${sizeClasses.wrapper} rounded-full 
-                        bg-slate-100 dark:bg-slate-800 
+                        ${sizeClasses.wrapper} rounded-full
+                        bg-slate-100 dark:bg-slate-800
                         flex items-center justify-center
                         opacity-40
                     `}
@@ -97,8 +97,8 @@ export const MilestoneBadge: React.FC<MilestoneBadgeProps> = ({
     <div className="flex flex-col items-center gap-1">
       <div
         className={`
-                    ${sizeClasses.wrapper} rounded-full 
-                    ${colors.bg} 
+                    ${sizeClasses.wrapper} rounded-full
+                    ${colors.bg}
                     flex items-center justify-center
                     shadow-lg ${colors.glow}
                     ${animate ? 'animate-bounce' : ''}

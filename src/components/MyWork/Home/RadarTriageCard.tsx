@@ -1,4 +1,13 @@
-import { AlertTriangle, ArrowRight, BookOpen, Clock, Eye, FileWarning, Lock, Shield } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  Clock,
+  Eye,
+  FileWarning,
+  Lock,
+  Shield,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -38,7 +47,7 @@ const DEGRADED_META: Record<
   },
   blocked_permission: {
     icon: <Lock className="size-3.5 shrink-0 text-slate-300" aria-hidden />,
-    bannerClass: 'border-violet-400/25 bg-violet-500/10 text-violet-100',
+    bannerClass: 'border-primary-400/25 bg-primary-500/10 text-primary-100',
   },
 };
 
@@ -69,6 +78,7 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
       handoffIntent: signal.nextAction.handoffIntent,
     });
   };
+  const moduleLabel = getTargetModuleLabel(signal.nextAction.targetModule, t);
 
   return (
     <div className="flex flex-col gap-2">
@@ -216,7 +226,7 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
               onClick={handleHandoff}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.08] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]"
             >
-              {t(`${TK}.goTo`, { module: signal.nextAction.targetModule })}
+              {t(`${TK}.goTo`, { module: moduleLabel })}
               <ArrowRight className="size-3.5 opacity-80" aria-hidden />
             </button>
             <button
@@ -235,4 +245,20 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
       </div>
     </div>
   );
+}
+
+function getTargetModuleLabel(
+  target: TriageSignal['nextAction']['targetModule'],
+  t: (key: string, options?: any) => string
+): string {
+  if (target === 'initiatives' || target === 'Inicjatywy') {
+    return t('myWork.radar.module.initiatives', 'Initiatives');
+  }
+  if (target === 'execution' || target === 'Wdrożenia') {
+    return t('myWork.radar.module.execution', 'Execution');
+  }
+  if (target === 'notebook' || target === 'Notatki') {
+    return t('myWork.radar.module.notebook', 'Notebook');
+  }
+  return String(target);
 }

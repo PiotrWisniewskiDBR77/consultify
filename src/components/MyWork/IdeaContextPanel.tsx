@@ -538,7 +538,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       icon: AlertTriangle,
       labelPl: 'Luki (Assessment)',
       labelEn: 'Gaps (Assessment)',
-      color: 'text-red-600 dark:text-red-400',
+      color: 'text-rose-600 dark:text-rose-400',
       items: grouped.gaps,
     },
     {
@@ -562,7 +562,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       icon: Lightbulb,
       labelPl: 'Powiązane pomysły',
       labelEn: 'Related ideas',
-      color: 'text-violet-600 dark:text-violet-400',
+      color: 'text-primary-600 dark:text-primary-400',
       items: grouped.similar,
     },
   ];
@@ -940,20 +940,20 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         </div>
 
         {/* V5-IDEA-28: Evidence section */}
-        <div className="rounded-xl border border-cyan-200/40 dark:border-cyan-800/30 bg-cyan-50/30 dark:bg-cyan-900/10 p-2.5">
+        <div className="rounded-xl border border-blue-200/40 dark:border-blue-800/30 bg-blue-50/30 dark:bg-blue-900/10 p-2.5">
           <button
             type="button"
             onClick={() => toggleSection('evidence')}
             className="flex items-center gap-1.5 w-full text-left"
           >
-            <Shield size={12} className="text-cyan-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex-1">
+            <Shield size={12} className="text-blue-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex-1">
               {isPl ? 'Dowody' : 'Evidence'} ({evidence.length})
             </span>
             {expandedSections.has('evidence') ? (
-              <ChevronUp size={12} className="text-cyan-400" />
+              <ChevronUp size={12} className="text-blue-400" />
             ) : (
-              <ChevronDown size={12} className="text-cyan-400" />
+              <ChevronDown size={12} className="text-blue-400" />
             )}
           </button>
           {expandedSections.has('evidence') && (
@@ -961,16 +961,16 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               {evidence.map((ev) => (
                 <div
                   key={ev.id}
-                  className="flex items-center gap-2 bg-white/50 dark:bg-white/[0.03] rounded-lg p-2 border border-cyan-200/30 dark:border-cyan-800/20"
+                  className="flex items-center gap-2 bg-white/50 dark:bg-white/[0.03] rounded-lg p-2 border border-blue-200/30 dark:border-blue-800/20"
                 >
-                  <ExternalLink size={10} className="text-cyan-500 shrink-0" />
+                  <ExternalLink size={10} className="text-blue-500 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">
                       {ev.title}
                     </div>
-                    {ev.url && <div className="text-[8px] text-cyan-400 truncate">{ev.url}</div>}
+                    {ev.url && <div className="text-[8px] text-blue-400 truncate">{ev.url}</div>}
                   </div>
-                  <span className="text-[8px] font-bold uppercase text-cyan-500/60 shrink-0">
+                  <span className="text-[8px] font-bold uppercase text-blue-500/60 shrink-0">
                     {ev.type}
                   </span>
                 </div>
@@ -992,7 +992,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                       onInsertToCanvas?.({ text: url.trim(), type: 'evidence', detail: 'url' });
                     }
                   }}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                 >
                   <Link2 size={9} />
                   {isPl ? 'Dodaj URL' : 'Add URL'}
@@ -1013,7 +1013,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                       onInsertToCanvas?.({ text: text.trim(), type: 'evidence', detail: 'note' });
                     }
                   }}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                 >
                   <FileText size={9} />
                   {isPl ? 'Importuj tekst' : 'Import text'}
@@ -1027,7 +1027,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                       })
                     );
                   }}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
                 >
                   <Plus size={9} />
                   {isPl ? 'Na canvas' : 'To canvas'}
@@ -1099,10 +1099,10 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         </div>
 
         {/* V5-IDEA-30: Search and insert knowledge */}
-        <div className="rounded-xl border border-violet-200/40 dark:border-violet-800/30 bg-violet-50/30 dark:bg-violet-900/10 p-2.5">
+        <div className="rounded-xl border border-primary-200/40 dark:border-primary-800/30 bg-primary-50/30 dark:bg-primary-900/10 p-2.5">
           <div className="flex items-center gap-1.5 mb-2">
-            <Search size={12} className="text-violet-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+            <Search size={12} className="text-primary-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">
               {isPl ? 'Szukaj wiedzy' : 'Search Knowledge'}
             </span>
           </div>
@@ -1113,7 +1113,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   ? 'Szukaj w wywiadach, narzędziach, notatkach...'
                   : 'Search interviews, tools, notes...'
               }
-              className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-violet-200/40 dark:border-violet-800/30 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60 outline-none focus:ring-1 focus:ring-violet-400/40"
+              className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-primary-200/40 dark:border-primary-800/30 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60 outline-none focus:ring-1 focus:ring-primary-400/40"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const query = (e.target as HTMLInputElement).value.trim();
@@ -1164,7 +1164,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                     })
                   );
                 }}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
               >
                 <src.icon size={9} />
                 {isPl ? src.labelPl : src.labelEn}
@@ -1174,14 +1174,14 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         </div>
 
         {loading ? null : error ? (
-          <div className="rounded-xl border border-red-200/60 dark:border-red-800/40 bg-red-50/60 dark:bg-red-900/10 p-3">
+          <div className="rounded-xl border border-rose-200/60 dark:border-rose-800/40 bg-rose-50/60 dark:bg-rose-900/10 p-3">
             <div className="flex items-start gap-2">
-              <AlertTriangle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
-              <div className="text-[11px] text-red-700 dark:text-red-300">{error}</div>
+              <AlertTriangle size={14} className="text-rose-500 mt-0.5 flex-shrink-0" />
+              <div className="text-[11px] text-rose-700 dark:text-rose-300">{error}</div>
             </div>
             <button
               onClick={() => fetchData()}
-              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-red-700 dark:text-red-300 bg-red-100/60 dark:bg-red-900/20 hover:bg-red-200/60 transition-colors"
+              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-900/20 hover:bg-rose-200/60 transition-colors"
             >
               <RefreshCw size={10} />
               {isPl ? 'Spróbuj ponownie' : 'Retry'}
@@ -1250,7 +1250,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                             {onInsertToCanvas && (
                               <button
                                 onClick={() => handleInsert(item)}
-                                className="text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 transition-colors shrink-0 mt-0.5"
+                                className="text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors shrink-0 mt-0.5"
                                 title={isPl ? 'Dodaj na canvas' : 'Add to canvas'}
                               >
                                 <Plus size={14} />

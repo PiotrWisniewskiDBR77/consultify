@@ -95,7 +95,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
 
   // Type badge color
   const typeBadgeColor = {
-    major: 'bg-purple-500',
+    major: 'bg-primary-500',
     minor: 'bg-blue-500',
     patch: 'bg-green-500',
   };
@@ -143,7 +143,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
           className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="relative bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 px-6 py-8 text-white">
+          <div className="relative bg-gradient-to-r from-primary-600 via-indigo-600 to-blue-600 px-6 py-8 text-white">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div
@@ -203,15 +203,15 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                     className="flex items-start gap-4"
                   >
                     {/* Icon */}
-                    <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
                       {currentFeature.icon ? (
                         <DynamicIcon
                           name={currentFeature.icon}
                           size={24}
-                          className="text-purple-600 dark:text-purple-400"
+                          className="text-primary-600 dark:text-primary-400"
                         />
                       ) : (
-                        <Star size={24} className="text-purple-600 dark:text-purple-400" />
+                        <Star size={24} className="text-primary-600 dark:text-primary-400" />
                       )}
                     </div>
 
@@ -224,7 +224,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                         {currentFeature.description[lang]}
                       </p>
                       {currentFeature.videoId && (
-                        <button className="mt-2 inline-flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">
+                        <button className="mt-2 inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
                           <Video size={14} />
                           {t('help.whatsNew.watchDemo')}
                         </button>
@@ -252,7 +252,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                           onClick={() => setCurrentFeatureIndex(i)}
                           className={`w-2 h-2 rounded-full transition-colors ${
                             i === currentFeatureIndex
-                              ? 'bg-purple-500'
+                              ? 'bg-primary-500'
                               : 'bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
                           }`}
                         />
@@ -321,7 +321,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                   type="checkbox"
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500"
                 />
                 <span className="text-sm text-slate-600 dark:text-slate-400">
                   {tTrans.dontShow}
@@ -339,7 +339,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
 
                 <button
                   onClick={handleClose}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors"
                 >
                   {tTrans.gotIt}
                 </button>

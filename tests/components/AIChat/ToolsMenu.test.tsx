@@ -243,6 +243,15 @@ describe('ToolsMenu (L2)', () => {
     expect(screen.getByText(/3.*active/i)).toBeInTheDocument();
   });
 
+  it('blocks Add to project when there is no active conversation', () => {
+    render(<ToolsMenu onToolSelect={onToolSelect} hasActiveConversation={false} />);
+    fireEvent.click(screen.getByTestId('chat-tools-button'));
+    fireEvent.click(screen.getByRole('button', { name: /add to project/i }));
+
+    expect(onToolSelect).toHaveBeenCalledWith('addToProject');
+    expect(toast.error).toHaveBeenCalled();
+  });
+
   it('applies response style preset into custom instructions', async () => {
     render(<ToolsMenu onToolSelect={onToolSelect} />);
 

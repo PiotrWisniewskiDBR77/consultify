@@ -12,29 +12,15 @@
 import {
   Activity,
   AlertTriangle,
-  Calendar,
-  Check,
   CheckCircle,
-  ChevronDown,
-  ChevronRight,
   Clock,
-  Copy,
-  Database,
-  Edit,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  FileText,
   Globe,
   Link,
   Loader2,
   Lock,
-  MessageSquare,
-  Pause,
   Play,
   Plus,
   RefreshCw,
-  RotateCcw,
   Search,
   Settings,
   Trash2,
@@ -42,12 +28,13 @@ import {
   Webhook,
   X,
   XCircle,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 
 interface Integration {
   id: string;
@@ -59,10 +46,73 @@ interface Integration {
   last_sync_at?: string;
   last_sync_status?: string;
   sync_frequency?: string;
-  config: any;
+  config: unknown;
   error_message?: string;
   created_at: string;
 }
+
+const asText = (value: unknown, fallback: string) => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+const normalizeStatus = (value: unknown): Integration['status'] => {
+  if (
+    value === 'connected' ||
+    value === 'disconnected' ||
+    value === 'error' ||
+    value === 'pending'
+  ) {
+    return value;
+  }
+  return 'disconnected';
+};
+
+const normalizeIntegrations = (payload: unknown): Integration[] => {
+  if (Array.isArray(payload)) return payload as Integration[];
+  if (payload && typeof payload === 'object') {
+    const candidate = payload as { integrations?: unknown; data?: unknown; items?: unknown };
+    if (Array.isArray(candidate.integrations)) return candidate.integrations as Integration[];
+    if (Array.isArray(candidate.data)) return candidate.data as Integration[];
+    if (Array.isArray(candidate.items)) return candidate.items as Integration[];
+  }
+  throw new Error('Integrations response was not a list');
+};
+
+const normalizeWebhooks = (payload: unknown): Webhook[] => {
+  if (Array.isArray(payload)) return payload as Webhook[];
+  if (payload && typeof payload === 'object') {
+    const candidate = payload as { webhooks?: unknown; data?: unknown; items?: unknown };
+    if (Array.isArray(candidate.webhooks)) return candidate.webhooks as Webhook[];
+    if (Array.isArray(candidate.data)) return candidate.data as Webhook[];
+    if (Array.isArray(candidate.items)) return candidate.items as Webhook[];
+  }
+  throw new Error('Webhooks response was not a list');
+};
+
+const normalizeDeliveries = (payload: unknown): WebhookDelivery[] => {
+  if (Array.isArray(payload)) return payload as WebhookDelivery[];
+  if (payload && typeof payload === 'object') {
+    const candidate = payload as { deliveries?: unknown; data?: unknown; items?: unknown };
+    if (Array.isArray(candidate.deliveries)) return candidate.deliveries as WebhookDelivery[];
+    if (Array.isArray(candidate.data)) return candidate.data as WebhookDelivery[];
+    if (Array.isArray(candidate.items)) return candidate.items as WebhookDelivery[];
+  }
+  throw new Error('Webhook deliveries response was not a list');
+};
+
+const formatDateTime = (value?: unknown) => {
+  if (!value) return 'Never';
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
 
 interface Webhook {
   id: string;
@@ -224,6 +274,12 @@ const WEBHOOK_EVENTS = [
   { id: 'user.joined', label: 'User Joined' },
 ];
 
+const CATALOG_CONNECT_UNAVAILABLE =
+  'Connector setup is not wired from this catalog yet. Existing integrations and webhook reads remain available.';
+
+const WEBHOOK_MUTATION_UNAVAILABLE =
+  'Webhook create, test, and delete actions are disabled until duplicate superadmin webhook routes are reconciled behind one audited backend workflow.';
+
 const STATUS_CONFIG = {
   connected: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle },
   disconnected: {
@@ -231,7 +287,7 @@ const STATUS_CONFIG = {
     bg: 'bg-slate-500/20',
     icon: Unlink,
   },
-  error: { color: 'text-red-400', bg: 'bg-red-500/20', icon: XCircle },
+  error: { color: 'text-rose-400', bg: 'bg-rose-500/20', icon: XCircle },
   pending: { color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Clock },
 };
 
@@ -244,31 +300,44 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
   const [connectorCatalog, setConnectorCatalog] = useState<ConnectorType[]>(CONNECTOR_CATALOG);
   const [catalogNotice, setCatalogNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAddIntegration, setShowAddIntegration] = useState(false);
-  const [showAddWebhook, setShowAddWebhook] = useState(false);
-  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
+  const [loadErrors, setLoadErrors] = useState<Record<string, string | null>>({});
+  const [deliveryLoadError, setDeliveryLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
 
   const fetchIntegrations = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, integrations: null }));
       const data = await Api.getSystemIntegrations();
-      setIntegrations(data.integrations || []);
+      const normalized = normalizeIntegrations(data);
+      setIntegrations(normalized);
+      return normalized;
     } catch (error) {
-      console.error('Failed to fetch integrations:', error);
+      setLoadErrors((prev) => ({
+        ...prev,
+        integrations: normalizeApiErrorMessage(error, 'Failed to fetch integrations'),
+      }));
       setIntegrations([]);
+      return null;
     }
   }, []);
 
   const fetchWebhooks = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, webhooks: null }));
       const data = await Api.getSystemWebhooks();
-      setWebhooks(data.webhooks || []);
-    } catch (error) {
-      console.error('Failed to fetch webhooks:', error);
+      const normalized = normalizeWebhooks(data);
+      setWebhooks(normalized);
+      return normalized;
+    } catch (error: unknown) {
+      setLoadErrors((prev) => ({
+        ...prev,
+        webhooks: normalizeApiErrorMessage(error, 'Failed to fetch webhooks'),
+      }));
       setWebhooks([]);
+      return null;
     }
   }, []);
 
@@ -280,9 +349,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
         setConnectorCatalog(payload.connectors);
         setCatalogNotice(null);
       }
-    } catch (error) {
-      console.warn('[EnterpriseIntegrationsHub] Falling back to bundled connector catalog', error);
-      setCatalogNotice('Live connector catalog is unavailable. Showing bundled connector definitions.');
+    } catch {
+      setCatalogNotice(
+        'Live connector catalog is unavailable. Showing bundled connector definitions.'
+      );
     }
   }, []);
 
@@ -298,50 +368,39 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
   const handleSync = async (provider: string) => {
     try {
       await Api.refreshSystemIntegration(provider);
+      const refreshed = await fetchIntegrations();
+      if (!refreshed?.some((integration) => integration.type === provider)) {
+        throw new Error('Integration sync was not confirmed by the server');
+      }
       toast.success('Sync started');
-      fetchIntegrations();
     } catch (error) {
-      toast.error('Failed to start sync');
+      toast.error(normalizeApiErrorMessage(error, 'Failed to start sync'));
     }
   };
 
   const handleDeleteIntegration = async (provider: string) => {
     if (!confirm('Are you sure you want to disconnect this integration?')) return;
     try {
+      const target = integrations.find((integration) => integration.type === provider);
       await Api.deleteSystemIntegration(provider);
+      const refreshed = await fetchIntegrations();
+      if (!refreshed || refreshed.some((integration) => integration.id === target?.id)) {
+        throw new Error('Integration disconnect was not confirmed by the server');
+      }
       toast.success('Integration disconnected');
-      fetchIntegrations();
     } catch (error) {
-      toast.error('Failed to disconnect integration');
-    }
-  };
-
-  const handleDeleteWebhook = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this webhook?')) return;
-    try {
-      await Api.deleteSystemWebhook(id);
-      toast.success('Webhook deleted');
-      fetchWebhooks();
-    } catch (error) {
-      toast.error('Failed to delete webhook');
-    }
-  };
-
-  const handleTestWebhook = async (id: string) => {
-    try {
-      await Api.testSystemWebhook(id);
-      toast.success('Test webhook sent');
-    } catch (error) {
-      toast.error('Failed to send test webhook');
+      toast.error(normalizeApiErrorMessage(error, 'Failed to disconnect integration'));
     }
   };
 
   const handleViewDeliveries = async (webhook: Webhook) => {
     setSelectedWebhook(webhook);
+    setDeliveryLoadError(null);
     try {
       const data = await Api.getSystemWebhookDeliveries(webhook.id);
-      setDeliveries(data);
+      setDeliveries(normalizeDeliveries(data));
     } catch (error) {
+      setDeliveryLoadError(normalizeApiErrorMessage(error, 'Failed to fetch webhook deliveries'));
       setDeliveries([]);
     }
   };
@@ -372,32 +431,43 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Connected</div>
-          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            {integrations.filter((i) => i.status === 'connected').length}
+      {loadErrors.integrations || loadErrors.webhooks ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+          <DegradedState
+            title="Integration overview unavailable"
+            description={
+              loadErrors.integrations || loadErrors.webhooks || 'Failed to fetch integrations'
+            }
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Connected</div>
+            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              {integrations.filter((i) => normalizeStatus(i.status) === 'connected').length}
+            </div>
+          </div>
+          <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Active Webhooks</div>
+            <div className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
+              {webhooks.filter((w) => Boolean(w.is_active)).length}
+            </div>
+          </div>
+          <div className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Errors</div>
+            <div className="text-2xl font-semibold text-rose-700 dark:text-rose-400">
+              {integrations.filter((i) => normalizeStatus(i.status) === 'error').length}
+            </div>
+          </div>
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Available</div>
+            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              {connectorCatalog.filter((c) => c.status === 'available').length}
+            </div>
           </div>
         </div>
-        <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Active Webhooks</div>
-          <div className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
-            {webhooks.filter((w) => w.is_active).length}
-          </div>
-        </div>
-        <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Errors</div>
-          <div className="text-2xl font-semibold text-red-700 dark:text-red-400">
-            {integrations.filter((i) => i.status === 'error').length}
-          </div>
-        </div>
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Available</div>
-          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            {connectorCatalog.filter((c) => c.status === 'available').length}
-          </div>
-        </div>
-      </div>
+      )}
 
       {catalogNotice && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
@@ -408,13 +478,23 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
         {[
-          { id: 'integrations', label: 'Connected', icon: Link, count: integrations.length },
-          { id: 'webhooks', label: 'Webhooks', icon: Webhook, count: webhooks.length },
+          {
+            id: 'integrations',
+            label: 'Connected',
+            icon: Link,
+            count: loadErrors.integrations ? '!' : integrations.length,
+          },
+          {
+            id: 'webhooks',
+            label: 'Webhooks',
+            icon: Webhook,
+            count: loadErrors.webhooks ? '!' : webhooks.length,
+          },
           { id: 'catalog', label: 'Catalog', icon: Globe, count: connectorCatalog.length },
         ].map(({ id, label, icon: Icon, count }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id as 'integrations' | 'webhooks' | 'catalog')}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
                 ? 'bg-slate-50 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
@@ -452,7 +532,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                 </button>
               </div>
 
-              {integrations.length === 0 ? (
+              {loadErrors.integrations ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState
+                    title="Connected integrations unavailable"
+                    description={loadErrors.integrations}
+                  />
+                </div>
+              ) : integrations.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">
                   <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No integrations connected</p>
@@ -461,7 +548,8 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   {integrations.map((integration) => {
-                    const statusConfig = STATUS_CONFIG[integration.status];
+                    const status = normalizeStatus(integration.status);
+                    const statusConfig = STATUS_CONFIG[status];
                     const StatusIcon = statusConfig.icon;
                     const connector = connectorCatalog.find((c) => c.id === integration.type);
 
@@ -476,34 +564,32 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-medium text-slate-900 dark:text-slate-100">
-                                  {integration.name}
+                                  {asText(integration.name, 'Unknown integration')}
                                 </span>
                                 <span
                                   className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded ${statusConfig.bg} ${statusConfig.color}`}
                                 >
                                   <StatusIcon className="w-3 h-3" />
-                                  {integration.status}
+                                  {status}
                                 </span>
                               </div>
                               {integration.description && (
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                                  {integration.description}
+                                  {asText(integration.description, '')}
                                 </p>
                               )}
                               <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
                                 {integration.last_sync_at && (
-                                  <span>
-                                    Last sync: {new Date(integration.last_sync_at).toLocaleString()}
-                                  </span>
+                                  <span>Last sync: {formatDateTime(integration.last_sync_at)}</span>
                                 )}
                                 {integration.sync_frequency && (
-                                  <span>• {integration.sync_frequency}</span>
+                                  <span>• {asText(integration.sync_frequency, 'unknown')}</span>
                                 )}
                               </div>
                               {integration.error_message && (
-                                <div className="flex items-center gap-1 text-xs text-red-400 mt-1">
+                                <div className="flex items-center gap-1 text-xs text-rose-400 mt-1">
                                   <AlertTriangle className="w-3 h-3" />
-                                  {integration.error_message}
+                                  {asText(integration.error_message, 'Unknown integration error')}
                                 </div>
                               )}
                             </div>
@@ -517,18 +603,18 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                               <RefreshCw className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                             </button>
                             <button
-                              onClick={() => setSelectedIntegration(integration)}
+                              disabled
                               className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                              title="Settings"
+                              title="Integration settings editing requires an audited configuration workflow"
                             >
                               <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                             </button>
                             <button
                               onClick={() => handleDeleteIntegration(integration.type)}
-                              className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                              className="p-2 hover:bg-rose-500/20 rounded-lg transition-colors"
                               title="Disconnect"
                             >
-                              <Unlink className="w-4 h-4 text-red-400" />
+                              <Unlink className="w-4 h-4 text-rose-400" />
                             </button>
                           </div>
                         </div>
@@ -546,7 +632,8 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Webhooks</h3>
                 <button
-                  onClick={() => setShowAddWebhook(true)}
+                  disabled
+                  title={loadErrors.webhooks || WEBHOOK_MUTATION_UNAVAILABLE}
                   className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
@@ -554,83 +641,99 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                 </button>
               </div>
 
-              {webhooks.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 dark:text-slate-500">
-                  <Webhook className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No webhooks configured</p>
-                  <p className="text-sm mt-1">
-                    Create a webhook to receive real-time notifications
-                  </p>
+              {loadErrors.webhooks ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState title="Webhooks unavailable" description={loadErrors.webhooks} />
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {webhooks.map((webhook) => (
-                    <div
-                      key={webhook.id}
-                      className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900 dark:text-slate-100">
-                              {webhook.name}
-                            </span>
-                            {webhook.is_active ? (
-                              <CheckCircle className="w-4 h-4 text-emerald-400" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-red-400" />
-                            )}
-                          </div>
-                          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 break-all">
-                            {webhook.url}
-                          </div>
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {webhook.events.map((event) => (
-                              <span
-                                key={event}
-                                className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded"
-                              >
-                                {WEBHOOK_EVENTS.find((e) => e.id === event)?.label || event}
-                              </span>
-                            ))}
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            <span className="text-emerald-400">✓ {webhook.success_count}</span>
-                            <span className="text-red-400">✗ {webhook.failure_count}</span>
-                            {webhook.last_triggered_at && (
-                              <span>
-                                Last: {new Date(webhook.last_triggered_at).toLocaleString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleTestWebhook(webhook.id)}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                            title="Test"
-                          >
-                            <Play className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                          </button>
-                          <button
-                            onClick={() => handleViewDeliveries(webhook)}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                            title="View deliveries"
-                          >
-                            <Activity className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteWebhook(webhook.id)}
-                            className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-400" />
-                          </button>
-                        </div>
-                      </div>
+                <>
+                  <ReadOnlyState
+                    title="Webhook mutations unavailable"
+                    description={WEBHOOK_MUTATION_UNAVAILABLE}
+                  />
+
+                  {webhooks.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+                      <Webhook className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No webhooks configured</p>
+                      <p className="text-sm mt-1">
+                        Existing webhook reads are available when the backend returns data.
+                      </p>
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {webhooks.map((webhook) => (
+                        <div
+                          key={webhook.id}
+                          className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-slate-900 dark:text-slate-100">
+                                  {asText(webhook.name, 'Unnamed webhook')}
+                                </span>
+                                {webhook.is_active ? (
+                                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                                ) : (
+                                  <XCircle className="w-4 h-4 text-rose-400" />
+                                )}
+                              </div>
+                              <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 break-all">
+                                {asText(webhook.url, 'Unknown URL')}
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {asArray<string>(webhook.events).map((event) => (
+                                  <span
+                                    key={event}
+                                    className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded"
+                                  >
+                                    {WEBHOOK_EVENTS.find((e) => e.id === event)?.label ||
+                                      asText(event, 'unknown')}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-400 mt-2">
+                                <span className="text-emerald-400">
+                                  ✓ {safeNumber(webhook.success_count)}
+                                </span>
+                                <span className="text-rose-400">
+                                  ✗ {safeNumber(webhook.failure_count)}
+                                </span>
+                                {webhook.last_triggered_at && (
+                                  <span>Last: {formatDateTime(webhook.last_triggered_at)}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                disabled
+                                className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                                title={WEBHOOK_MUTATION_UNAVAILABLE}
+                              >
+                                <Play className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                              </button>
+                              <button
+                                onClick={() => handleViewDeliveries(webhook)}
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                                title="View deliveries"
+                              >
+                                <Activity className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                              </button>
+                              <button
+                                disabled
+                                className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                                title={WEBHOOK_MUTATION_UNAVAILABLE}
+                              >
+                                <Trash2 className="w-4 h-4 text-rose-400" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -638,6 +741,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {/* Catalog Tab */}
           {activeTab === 'catalog' && (
             <div className="space-y-4">
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+                {CATALOG_CONNECT_UNAVAILABLE}
+              </div>
               <div className="flex items-center gap-4">
                 <div className="flex-1 relative">
                   <Search
@@ -723,11 +829,12 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               isConnected
                                 ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                : 'bg-primary-600 hover:bg-primary-700 text-white'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                             }`}
-                            disabled={isConnected}
+                            disabled
+                            title={isConnected ? 'Already connected' : CATALOG_CONNECT_UNAVAILABLE}
                           >
-                            {isConnected ? 'Connected' : 'Connect'}
+                            {isConnected ? 'Connected' : 'Unavailable'}
                           </button>
                         )}
                       </div>
@@ -740,18 +847,6 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
         </>
       )}
 
-      {/* Webhook Create/Edit Modal */}
-      {showAddWebhook && (
-        <WebhookModal
-          onClose={() => setShowAddWebhook(false)}
-          onSave={() => {
-            fetchWebhooks();
-            setShowAddWebhook(false);
-          }}
-          events={WEBHOOK_EVENTS}
-        />
-      )}
-
       {/* Deliveries Modal */}
       {selectedWebhook && (
         <DeliveriesModal
@@ -760,143 +855,11 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           onClose={() => {
             setSelectedWebhook(null);
             setDeliveries([]);
+            setDeliveryLoadError(null);
           }}
+          loadError={deliveryLoadError}
         />
       )}
-    </div>
-  );
-};
-
-// Webhook Modal
-const WebhookModal: React.FC<{
-  onClose: () => void;
-  onSave: () => void;
-  events: { id: string; label: string }[];
-}> = ({ onClose, onSave, events }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    url: '',
-    events: [] as string[],
-    secret: '',
-  });
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await Api.createSystemWebhook({ ...formData, is_active: true });
-      toast.success('Webhook created');
-      onSave();
-    } catch (error) {
-      toast.error('Failed to create webhook');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Create Webhook</h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-          >
-            <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              placeholder="My Webhook"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              URL *
-            </label>
-            <input
-              type="url"
-              required
-              value={formData.url}
-              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              placeholder="https://api.example.com/webhook"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Secret (for signature verification)
-            </label>
-            <input
-              type="text"
-              value={formData.secret}
-              onChange={(e) => setFormData({ ...formData, secret: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              placeholder="Optional secret key"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Events *
-            </label>
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-transparent rounded-lg">
-              {events.map((event) => (
-                <label key={event.id} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.events.includes(event.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData({ ...formData, events: [...formData.events, event.id] });
-                      } else {
-                        setFormData({
-                          ...formData,
-                          events: formData.events.filter((id) => id !== event.id),
-                        });
-                      }
-                    }}
-                    className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-400"
-                  />
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{event.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving || formData.events.length === 0}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
-            >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Create
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 };
@@ -905,14 +868,17 @@ const WebhookModal: React.FC<{
 const DeliveriesModal: React.FC<{
   webhook: Webhook;
   deliveries: WebhookDelivery[];
+  loadError?: string | null;
   onClose: () => void;
-}> = ({ webhook, deliveries, onClose }) => (
+}> = ({ webhook, deliveries, loadError, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">Webhook Deliveries</h3>
-          <p className="text-sm text-slate-400 dark:text-slate-500">{webhook.name}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            {asText(webhook.name, 'Unnamed webhook')}
+          </p>
         </div>
         <button
           onClick={onClose}
@@ -922,7 +888,9 @@ const DeliveriesModal: React.FC<{
         </button>
       </div>
 
-      {deliveries.length === 0 ? (
+      {loadError ? (
+        <DegradedState title="Webhook deliveries unavailable" description={loadError} />
+      ) : deliveries.length === 0 ? (
         <div className="text-center py-8 text-slate-400 dark:text-slate-500">
           <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No deliveries yet</p>
@@ -939,17 +907,17 @@ const DeliveriesModal: React.FC<{
                   {delivery.status === 'success' ? (
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
                   ) : delivery.status === 'failed' ? (
-                    <XCircle className="w-4 h-4 text-red-400" />
+                    <XCircle className="w-4 h-4 text-rose-400" />
                   ) : (
                     <Clock className="w-4 h-4 text-amber-400" />
                   )}
                   <span className="text-sm text-slate-900 dark:text-white">
-                    {delivery.event_type}
+                    {asText(delivery.event_type, 'unknown')}
                   </span>
                   {delivery.response_code && (
                     <span
                       className={`text-xs ${
-                        delivery.response_code < 300 ? 'text-emerald-400' : 'text-red-400'
+                        delivery.response_code < 300 ? 'text-emerald-400' : 'text-rose-400'
                       }`}
                     >
                       HTTP {delivery.response_code}
@@ -957,7 +925,7 @@ const DeliveriesModal: React.FC<{
                   )}
                 </div>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {new Date(delivery.created_at).toLocaleString()}
+                  {formatDateTime(delivery.created_at)}
                 </span>
               </div>
             </div>

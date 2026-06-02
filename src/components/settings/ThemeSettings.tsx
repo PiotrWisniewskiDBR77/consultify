@@ -7,15 +7,7 @@
  * @version 3.0
  */
 
-import {
-  Check,
-  Columns3,
-  Monitor,
-  Moon,
-  Palette,
-  Sparkles,
-  Sun,
-} from 'lucide-react';
+import { Check, Columns3, Monitor, Moon, Palette, Sparkles, Sun } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +15,9 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import Api from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import { SettingsButtonGroup, SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
+import { SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
 
 interface ThemeSettingsProps {
   className?: string;
@@ -33,25 +27,27 @@ type Theme = 'light' | 'dark' | 'system';
 type Density = 'compact' | 'comfortable' | 'spacious';
 
 const ACCENT_COLORS = [
-  { name: 'Violet', value: '#8b5cf6', class: 'bg-violet-500' },
-  { name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
-  { name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
-  { name: 'Rose', value: '#f43f5e', class: 'bg-rose-500' },
-  { name: 'Amber', value: '#f59e0b', class: 'bg-amber-500' },
-  { name: 'Cyan', value: '#06b6d4', class: 'bg-cyan-500' },
+  { key: 'violet', name: 'Violet', value: '#6366f1', class: 'bg-primary-500' },
+  { key: 'blue', name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
+  { key: 'emerald', name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
+  { key: 'rose', name: 'Rose', value: '#f43f5e', class: 'bg-rose-500' },
+  { key: 'amber', name: 'Amber', value: '#f59e0b', class: 'bg-amber-500' },
+  { key: 'cyan', name: 'Cyan', value: '#3b82f6', class: 'bg-blue-500' },
 ];
 
 export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const theme = useAppStore((s) => s.theme) as Theme;
   const toggleTheme = useAppStore((s) => s.toggleTheme);
-  const [accentColor, setAccentColor] = useState('#8b5cf6');
+  const [accentColor, setAccentColor] = useState('#6366f1');
   const [density, setDensity] = useState<Density>('comfortable');
   const [originalTheme, setOriginalTheme] = useState<Theme>('system');
-  const [originalAccent, setOriginalAccent] = useState('#8b5cf6');
+  const [originalAccent, setOriginalAccent] = useState('#6366f1');
   const [originalDensity, setOriginalDensity] = useState<Density>('comfortable');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty =
     theme !== originalTheme || accentColor !== originalAccent || density !== originalDensity;
@@ -59,7 +55,11 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
   useEffect(() => {
     const loadTheme = async () => {
       try {
+        setLoadError(null);
         const response = await Api.getAppearancePreferences();
+        if (!response?.preferences) {
+          throw new Error('Appearance preferences response was missing preferences');
+        }
         const savedTheme = response?.preferences?.theme as Theme;
         const savedAccent = response?.preferences?.accentColor;
         const savedDensity = response?.preferences?.density as Density;
@@ -79,8 +79,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           setOriginalDensity(savedDensity);
           applyDensity(savedDensity);
         }
-      } catch (err) {
-        setOriginalTheme(useAppStore.getState().theme as Theme);
+      } catch (err: unknown) {
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load appearance preferences'));
       } finally {
         setLoading(false);
       }
@@ -102,13 +102,33 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
   const handleSave = async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Api.saveAppearancePreferences({ theme, accentColor, density });
-      setOriginalTheme(theme);
-      setOriginalAccent(accentColor);
-      setOriginalDensity(density);
+      const response = await Api.getAppearancePreferences();
+      if (!response?.preferences) {
+        throw new Error('Appearance settings save was not confirmed by the server');
+      }
+      const nextTheme = response.preferences.theme as Theme;
+      const nextAccent = response.preferences.accentColor;
+      const nextDensity = response.preferences.density as Density;
+      if (nextTheme !== theme || nextAccent !== accentColor || nextDensity !== density) {
+        throw new Error('Appearance settings save was not confirmed by the server');
+      }
+      toggleTheme(nextTheme);
+      setAccentColor(nextAccent);
+      setDensity(nextDensity);
+      applyDensity(nextDensity);
+      setOriginalTheme(nextTheme);
+      setOriginalAccent(nextAccent);
+      setOriginalDensity(nextDensity);
       toast.success(t('settings.appearance.saved', 'Appearance settings saved'));
-    } catch (err: any) {
-      toast.error(t('settings.appearance.error', 'Failed to save settings'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.appearance.error', 'Failed to save settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -138,8 +158,25 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
     },
   ];
 
+  if (loadError) {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <DegradedState title="Appearance preferences unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className={cn('space-y-6', className)}>
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       <SettingsSection
         icon={Palette}
         title={t('settings.appearance.title', 'Theme & Appearance')}
@@ -170,7 +207,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20 bg-navy-800/50'
                     )}
                   >
@@ -182,13 +219,13 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                         size={18}
                         className={cn(
                           'transition-colors',
-                          isSelected ? 'text-violet-400' : 'text-slate-400'
+                          isSelected ? 'text-primary-400' : 'text-slate-400'
                         )}
                       />
                       <span
                         className={cn(
                           'font-medium transition-colors',
-                          isSelected ? 'text-violet-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-300'
                         )}
                       >
                         {label}
@@ -196,7 +233,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                     </div>
                     <p className="text-xs text-slate-500 mt-1 text-center">{description}</p>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 p-1 bg-violet-500 rounded-full">
+                      <div className="absolute top-2 right-2 p-1 bg-primary-500 rounded-full">
                         <Check size={12} className="text-white" />
                       </div>
                     )}
@@ -219,6 +256,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
             <div className="flex flex-wrap gap-3 mt-3">
               {ACCENT_COLORS.map((color) => {
                 const isSelected = accentColor === color.value;
+                const colorName = t(`settings.appearance.accent.${color.key}`, color.name);
                 return (
                   <button
                     key={color.value}
@@ -227,21 +265,20 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'group relative w-12 h-12 rounded-xl transition-all duration-200',
                       'hover:scale-110 active:scale-95',
                       color.class,
-                      isSelected &&
-                        'ring-2 ring-white/80 ring-offset-2 ring-offset-navy-900'
+                      isSelected && 'ring-2 ring-white/80 ring-offset-2 ring-offset-navy-900'
                     )}
-                    title={color.name}
+                    title={colorName}
                   >
                     {isSelected && (
                       <Check size={18} className="text-white absolute inset-0 m-auto" />
                     )}
-                    <span className="sr-only">{color.name}</span>
+                    <span className="sr-only">{colorName}</span>
                   </button>
                 );
               })}
 
               <label
-                className="relative w-12 h-12 rounded-xl bg-navy-700 border border-dashed border-white/20 
+                className="relative w-12 h-12 rounded-xl bg-navy-700 border border-dashed border-white/20
                            cursor-pointer hover:border-white/40 transition-all duration-200
                            flex items-center justify-center"
                 title={t('settings.appearance.customColor', 'Custom color')}
@@ -259,9 +296,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
             <div className="flex items-center gap-3 mt-4 p-3 bg-navy-700/50 rounded-lg">
               <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: accentColor }} />
               <div>
-                <span className="text-sm text-white font-mono">
-                  {accentColor.toUpperCase()}
-                </span>
+                <span className="text-sm text-white font-mono">{accentColor.toUpperCase()}</span>
                 <p className="text-xs text-slate-500">
                   {t('settings.appearance.currentAccent', 'Current accent color')}
                 </p>
@@ -280,7 +315,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
             )}
           >
             <div className="grid grid-cols-3 gap-4 mt-3">
-              {([
+              {[
                 {
                   id: 'compact' as Density,
                   icon: Columns3,
@@ -302,7 +337,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                   desc: t('settings.appearance.density.spaciousDesc', 'More breathing room'),
                   lines: 3,
                 },
-              ]).map((opt) => {
+              ].map((opt) => {
                 const isSelected = density === opt.id;
                 return (
                   <button
@@ -312,7 +347,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-violet-500 bg-violet-500/5'
+                        ? 'border-primary-500 bg-primary-500/5'
                         : 'border-white/10 hover:border-white/20 bg-navy-800/50'
                     )}
                   >
@@ -325,7 +360,11 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                             key={i}
                             className={cn(
                               'rounded-sm bg-white/10',
-                              opt.id === 'compact' ? 'h-1.5' : opt.id === 'comfortable' ? 'h-2' : 'h-2.5'
+                              opt.id === 'compact'
+                                ? 'h-1.5'
+                                : opt.id === 'comfortable'
+                                  ? 'h-2'
+                                  : 'h-2.5'
                             )}
                             style={{ width: `${widths[i % widths.length]}%` }}
                           />
@@ -333,16 +372,18 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       })}
                     </div>
                     <div className="text-center">
-                      <span className={cn(
-                        'text-sm font-medium',
-                        isSelected ? 'text-violet-300' : 'text-slate-300'
-                      )}>
+                      <span
+                        className={cn(
+                          'text-sm font-medium',
+                          isSelected ? 'text-primary-300' : 'text-slate-300'
+                        )}
+                      >
                         {opt.label}
                       </span>
                       <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
                     </div>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 p-1 bg-violet-500 rounded-full">
+                      <div className="absolute top-2 right-2 p-1 bg-primary-500 rounded-full">
                         <Check size={12} className="text-white" />
                       </div>
                     )}
@@ -355,7 +396,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           {/* Preview Note */}
           <div className="p-4 bg-navy-700/30 rounded-lg text-center">
             <p className="text-sm text-slate-500">
-              <Sparkles size={14} className="inline mr-2 text-violet-400" />
+              <Sparkles size={14} className="inline mr-2 text-primary-400" />
               {t(
                 'settings.appearance.previewNote',
                 'Changes are previewed instantly and saved to your account'

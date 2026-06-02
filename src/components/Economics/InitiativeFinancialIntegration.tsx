@@ -176,7 +176,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-xl border border-emerald-200 dark:border-emerald-500/30 p-6">
+      <div className="bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-500/10 dark:to-blue-500/10 rounded-xl border border-emerald-200 dark:border-emerald-500/30 p-6">
         <div className="flex items-center justify-center py-4">
           <Loader2 size={24} className="animate-spin text-emerald-500" />
         </div>
@@ -187,7 +187,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
   // Linked Analysis Exists
   if (linkedAnalysis) {
     return (
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-xl border border-emerald-200 dark:border-emerald-500/30 p-6">
+      <div className="bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-500/10 dark:to-blue-500/10 rounded-xl border border-emerald-200 dark:border-emerald-500/30 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
@@ -267,7 +267,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                 className={`text-lg font-bold ${
                   linkedAnalysis.npv && linkedAnalysis.npv > 0
                     ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-red-600 dark:text-red-400'
+                    : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
                 {formatCurrency(linkedAnalysis.npv)}
@@ -279,7 +279,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
                 className={`text-lg font-bold ${
                   linkedAnalysis.roi && linkedAnalysis.roi > 0
                     ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-red-600 dark:text-red-400'
+                    : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
                 {formatPercent(linkedAnalysis.roi)}

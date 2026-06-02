@@ -32,6 +32,7 @@ async function queryDb<T = _DbRow>(sql: string, params: unknown[] = []): Promise
 }
 
 let knowledgeDocsColumns: Set<string> | null = null;
+let knowledgeChunksColumns: Set<string> | null = null;
 
 async function ensureKnowledgeDocsColumns(): Promise<Set<string>> {
   if (knowledgeDocsColumns) return knowledgeDocsColumns;
@@ -74,6 +75,57 @@ async function ensureKnowledgeDocsColumns(): Promise<Set<string>> {
   return cols;
 }
 
+async function ensureKnowledgeChunksColumns(): Promise<Set<string>> {
+  if (knowledgeChunksColumns) return knowledgeChunksColumns;
+  const cols = new Set<string>();
+
+  if (isPg()) {
+    try {
+      const rows = await queryDb<{ column_name?: string }>(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = 'knowledge_chunks'`
+      );
+      for (const r of rows || []) {
+        const name = String(r?.column_name || '').trim();
+        if (name) cols.add(name);
+      }
+    } catch {
+      // ignore
+    }
+  } else {
+    try {
+      const rows = await queryDb<{ name?: string }>(`PRAGMA table_info(knowledge_chunks)`);
+      for (const r of rows || []) {
+        const name = String(r?.name || '').trim();
+        if (name) cols.add(name);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (cols.size === 0) {
+    cols.add('doc_id');
+  }
+
+  knowledgeChunksColumns = cols;
+  return cols;
+}
+
+function knowledgeChunkDocJoin(columns: Set<string>): string {
+  const hasDocId = columns.has('doc_id');
+  const hasDocumentId = columns.has('document_id');
+  if (hasDocId && hasDocumentId) return '(c.doc_id = d.id OR c.document_id = d.id)';
+  if (hasDocumentId) return 'c.document_id = d.id';
+  return 'c.doc_id = d.id';
+}
+
+function chunkInsertDocumentColumns(columns: Set<string>): string[] {
+  const out: string[] = [];
+  if (columns.has('doc_id')) out.push('doc_id');
+  if (columns.has('document_id')) out.push('document_id');
+  return out.length > 0 ? out : ['doc_id'];
+}
+
 type RerankableChunk = {
   id?: string;
   content: string;
@@ -107,6 +159,45 @@ type HybridOptions = {
    */
   documentIds?: string[];
 };
+
+function appendKnowledgeDocAccessFilter(params: {
+  sql: string;
+  queryParams: unknown[];
+  columns: Set<string>;
+  organizationId: string | null;
+  documentIds?: string[];
+}): { sql: string; allowed: boolean } {
+  const { columns, organizationId, documentIds, queryParams } = params;
+  let sql = params.sql;
+  const hasOrg = columns.has('organization_id');
+  const hasStatus = columns.has('status');
+  const hasDeletedAt = columns.has('deleted_at');
+
+  if (Array.isArray(documentIds) && documentIds.length > 0) {
+    if (!organizationId || !hasOrg) {
+      aiLogger.warn(
+        'RagService',
+        'Explicit documentIds search blocked because organization_id filtering is unavailable'
+      );
+      return { sql, allowed: false };
+    }
+    const placeholders = documentIds.map(() => '?').join(',');
+    sql += ` AND d.id IN (${placeholders}) AND d.organization_id = ?`;
+    queryParams.push(...documentIds, organizationId);
+  } else if (organizationId && hasOrg) {
+    sql += ' AND d.organization_id = ?';
+    queryParams.push(organizationId);
+  }
+
+  if (hasDeletedAt) {
+    sql += ' AND d.deleted_at IS NULL';
+  }
+  if (hasStatus) {
+    sql += " AND (d.status IS NULL OR d.status IN ('ready', 'indexed'))";
+  }
+
+  return { sql, allowed: true };
+}
 
 type ScreenContext = {
   screenId?: string;
@@ -255,7 +346,9 @@ const RagService = {
     await initDeps();
     const { organizationId, screenContext } = filterOptions;
     const cols = await ensureKnowledgeDocsColumns();
+    const chunkCols = await ensureKnowledgeChunksColumns();
     const hasOrg = cols.has('organization_id');
+    const chunkJoin = knowledgeChunkDocJoin(chunkCols);
 
     let expandedQuery = query;
     if (screenContext) {
@@ -271,7 +364,7 @@ const RagService = {
     let sql = `
             SELECT c.content, d.filename, c.embedding 
             FROM knowledge_chunks c
-            JOIN knowledge_docs d ON c.doc_id = d.id
+            JOIN knowledge_docs d ON ${chunkJoin}
             WHERE c.embedding IS NOT NULL
         `;
     const params: unknown[] = [];
@@ -336,7 +429,9 @@ const RagService = {
   ): Promise<string> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
+    const chunkCols = await ensureKnowledgeChunksColumns();
     const hasOrg = cols.has('organization_id');
+    const chunkJoin = knowledgeChunkDocJoin(chunkCols);
     if (!query) return '';
     const keywords = query
       .split(' ')
@@ -350,7 +445,7 @@ const RagService = {
     let sql = `
             SELECT c.content, d.filename
             FROM knowledge_chunks c
-            JOIN knowledge_docs d ON c.doc_id = d.id
+            JOIN knowledge_docs d ON ${chunkJoin}
             WHERE (${sqlParts})
         `;
 
@@ -367,14 +462,16 @@ const RagService = {
 
   storeChunks: async (docId: string, chunks: string[]): Promise<void> => {
     await initDeps();
+    const chunkCols = await ensureKnowledgeChunksColumns();
+    const docColumns = chunkInsertDocumentColumns(chunkCols);
     for (let i = 0; i < chunks.length; i++) {
       const chunkId = `${docId}-chk-${i}`;
       const embedding = await RagService.generateEmbedding(chunks[i]);
 
       await DbPromise.run(
-        `INSERT INTO knowledge_chunks (id, doc_id, content, embedding)
-                 VALUES (?, ?, ?, ?)`,
-        [chunkId, docId, chunks[i], JSON.stringify(embedding || [])],
+        `INSERT INTO knowledge_chunks (id, ${docColumns.join(', ')}, content, embedding)
+                 VALUES (?, ${docColumns.map(() => '?').join(', ')}, ?, ?)`,
+        [chunkId, ...docColumns.map(() => docId), chunks[i], JSON.stringify(embedding || [])],
         { fallback: true }
       );
     }
@@ -530,9 +627,10 @@ const RagService = {
   ): Promise<RerankableChunk[]> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
+    const chunkCols = await ensureKnowledgeChunksColumns();
     const hasCategory = cols.has('category');
     const hasVersion = cols.has('version');
-    const hasOrg = cols.has('organization_id');
+    const chunkJoin = knowledgeChunkDocJoin(chunkCols);
     let sql = `
             SELECT
               c.id,
@@ -542,21 +640,20 @@ const RagService = {
               ${hasCategory ? ', d.category as doc_category' : ''}
               ${hasVersion ? ', d.version as doc_version' : ''}
             FROM knowledge_chunks c
-            JOIN knowledge_docs d ON c.doc_id = d.id
+            JOIN knowledge_docs d ON ${chunkJoin}
             WHERE 1=1
         `;
     const params: unknown[] = [];
 
-    // When searching by specific documentIds (e.g. conversation-scoped attachments),
-    // skip the organization_id filter — the caller already knows which docs to search.
-    if (Array.isArray(documentIds) && documentIds.length > 0) {
-      const placeholders = documentIds.map(() => '?').join(',');
-      sql += ` AND d.id IN (${placeholders})`;
-      params.push(...documentIds);
-    } else if (organizationId && hasOrg) {
-      sql += ' AND d.organization_id = ?';
-      params.push(organizationId);
-    }
+    const accessFilter = appendKnowledgeDocAccessFilter({
+      sql,
+      queryParams: params,
+      columns: cols,
+      organizationId,
+      documentIds,
+    });
+    if (!accessFilter.allowed) return [];
+    sql = accessFilter.sql;
 
     const rows = await queryDb<{ id: string; content: string; filename: string }>(sql, params);
     if (!rows || rows.length === 0) {
@@ -701,9 +798,10 @@ const RagService = {
   ): Promise<Array<RerankableChunk & { vectorScore: number }>> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
+    const chunkCols = await ensureKnowledgeChunksColumns();
     const hasCategory = cols.has('category');
     const hasVersion = cols.has('version');
-    const hasOrg = cols.has('organization_id');
+    const chunkJoin = knowledgeChunkDocJoin(chunkCols);
     const queryEmbedding = await RagService.generateEmbedding(query);
     if (!queryEmbedding) return [];
 
@@ -717,21 +815,20 @@ const RagService = {
               ${hasCategory ? ', d.category as doc_category' : ''}
               ${hasVersion ? ', d.version as doc_version' : ''}
             FROM knowledge_chunks c
-            JOIN knowledge_docs d ON c.doc_id = d.id
+            JOIN knowledge_docs d ON ${chunkJoin}
             WHERE c.embedding IS NOT NULL
         `;
     const params: unknown[] = [];
 
-    // When searching by specific documentIds (e.g. conversation-scoped attachments),
-    // skip the organization_id filter — the caller already knows which docs to search.
-    if (Array.isArray(documentIds) && documentIds.length > 0) {
-      const placeholders = documentIds.map(() => '?').join(',');
-      sql += ` AND d.id IN (${placeholders})`;
-      params.push(...documentIds);
-    } else if (organizationId && hasOrg) {
-      sql += ' AND d.organization_id = ?';
-      params.push(organizationId);
-    }
+    const accessFilter = appendKnowledgeDocAccessFilter({
+      sql,
+      queryParams: params,
+      columns: cols,
+      organizationId,
+      documentIds,
+    });
+    if (!accessFilter.allowed) return [];
+    sql = accessFilter.sql;
 
     const rows = await queryDb<{
       id: string;

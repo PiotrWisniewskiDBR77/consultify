@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
   type ActionRow,
   type MetaPill,
@@ -14,6 +13,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 
@@ -572,12 +572,36 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         label: t('results.kpiReports.discuss', 'Discuss report'),
         onClick: async () => {
           try {
+            const relatedInitiativeIds = Array.from(
+              new Set(
+                selectedInitiatives
+                  .map((initiative) => String(initiative.initiativeId || '').trim())
+                  .filter(Boolean)
+              )
+            );
+            const relatedKpiIds = Array.from(
+              new Set(selectedKpis.map((kpi) => String(kpi.id || '').trim()).filter(Boolean))
+            );
             await openChatWithContext({
               entityType: 'kpi_report',
               entityId: String(row.reportId || row.id),
               entityName: String(row.title || 'KPI Report'),
-              contextData: row as unknown as Record<string, unknown>,
-              pmoContext: { reportId: String(row.reportId || row.id) },
+              contextData: {
+                ...(row as unknown as Record<string, unknown>),
+                initiativeIds: relatedInitiativeIds,
+                kpiIds: relatedKpiIds,
+                p11Handoff: {
+                  source: 'results_kpi_reports',
+                  lane: 'kpi_reports',
+                  reportId: String(row.reportId || row.id),
+                  initiativeIds: relatedInitiativeIds,
+                  kpiIds: relatedKpiIds,
+                },
+              },
+              pmoContext: {
+                reportId: String(row.reportId || row.id),
+                initiativeIds: relatedInitiativeIds,
+              },
             });
             toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });
           } catch {
@@ -586,7 +610,16 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         },
       },
     ],
-    [navigate, t, loadActionsForRow, refreshingReportId, fetchReports, openChatWithContext]
+    [
+      navigate,
+      t,
+      loadActionsForRow,
+      refreshingReportId,
+      fetchReports,
+      openChatWithContext,
+      selectedInitiatives,
+      selectedKpis,
+    ]
   );
 
   return (
@@ -770,7 +803,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                 {t('results.kpi.queue.requiresReview', 'Requires review')}:{' '}
                 {reviewContext.requiresReview}
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-red-500">
+              <span className="inline-flex items-center gap-2 rounded-full bg-rose-500/10 px-3 py-1 text-rose-500">
                 {t('results.kpi.queue.discrepancy', 'Discrepancy')}: {reviewContext.discrepancy}
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-amber-600 dark:text-amber-300">

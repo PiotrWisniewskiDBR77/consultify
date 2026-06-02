@@ -196,7 +196,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -205,7 +205,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
     <div className="space-y-8">
       {/* Current Plan Card */}
       {currentPlan && (
-        <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl p-6 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-br from-primary-600 to-indigo-600 rounded-xl p-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <Crown className="w-32 h-32" />
           </div>
@@ -248,7 +248,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
       {/* Plans Comparison */}
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-500" />
+          <Sparkles className="w-5 h-5 text-primary-500" />
           {t('billing.subscription.availablePlans', 'Available Plans')}
         </h3>
 
@@ -263,10 +263,10 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                 key={plan.id}
                 className={`relative rounded-xl p-6 transition-all duration-300 ${
                   isCurrent
-                    ? 'bg-purple-50 dark:bg-purple-500/10 border-2 border-purple-500 shadow-lg shadow-purple-500/20'
+                    ? 'bg-primary-50 dark:bg-primary-500/10 border-2 border-primary-500 shadow-lg shadow-primary-500/20'
                     : isPopular
                       ? 'bg-white dark:bg-white/5 border-2 border-amber-400 shadow-lg'
-                      : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/30'
+                      : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30'
                 }`}
               >
                 {/* Popular Badge */}
@@ -282,7 +282,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                 {/* Current Badge */}
                 {isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="flex items-center gap-1 px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">
+                    <span className="flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-full">
                       <Check className="w-3 h-3" />
                       {t('billing.subscription.current', 'Current')}
                     </span>
@@ -346,7 +346,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
 
                 {/* Action Button */}
                 {isCurrent ? (
-                  <div className="w-full py-3 rounded-xl text-center text-sm font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10">
+                  <div className="w-full py-3 rounded-xl text-center text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10">
                     {t('billing.subscription.yourPlan', 'Your Current Plan')}
                   </div>
                 ) : (
@@ -355,7 +355,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                     className={`w-full py-3 rounded-xl font-semibold transition-all ${
                       isPopular
                         ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                        : 'bg-purple-600 hover:bg-purple-700 text-white'
+                        : 'bg-primary-600 hover:bg-primary-700 text-white'
                     }`}
                   >
                     {currentPlan && plan.price_monthly > currentPlan.price_monthly
@@ -435,7 +435,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                         setDiscount(null);
                       }}
                       placeholder="PROMO2024"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
                   <button
@@ -452,7 +452,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                 </div>
                 {discount && (
                   <p
-                    className={`text-sm mt-1 ${discount.valid ? 'text-green-600' : 'text-red-500'}`}
+                    className={`text-sm mt-1 ${discount.valid ? 'text-green-600' : 'text-rose-500'}`}
                   >
                     {discount.valid
                       ? `${discount.discount?.type === 'percent' ? `${discount.discount.value}% off` : `$${discount.discount?.value} off`}`
@@ -493,7 +493,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
               <button
                 onClick={handleConfirmChange}
                 disabled={processing}
-                className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {processing ? (
                   <>

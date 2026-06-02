@@ -70,7 +70,9 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
     setPersona(profile?.persona_description || '');
     setTone(profile?.tone_description || '');
     setSystemPrompt(profile?.system_prompt || '');
-    setPriorityRules(profile?.priority_rules ? JSON.stringify(profile.priority_rules, null, 2) : '{}');
+    setPriorityRules(
+      profile?.priority_rules ? JSON.stringify(profile.priority_rules, null, 2) : '{}'
+    );
     setBoundaries(profile?.boundaries ? JSON.stringify(profile.boundaries, null, 2) : '{}');
     setMemoryPolicy(profile?.memory_policy ? JSON.stringify(profile.memory_policy, null, 2) : '{}');
     setChannelPolicy(
@@ -369,9 +371,9 @@ export const WorkerProfileEditor: React.FC<WorkerProfileEditorProps> = ({
             Web Access Policy (JSON)
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            Stored as `retrieval_policy.web_search`. Typical keys: `internetEnabled`,
-            `autoSearch`, `allowUserToggle`, `onlyFreshTopics`, `searchDepth`, `maxResults`,
-            `maxCitations`, `domainAllowlist`, `domainDenylist`.
+            Stored as `retrieval_policy.web_search`. Typical keys: `internetEnabled`, `autoSearch`,
+            `allowUserToggle`, `onlyFreshTopics`, `searchDepth`, `maxResults`, `maxCitations`,
+            `domainAllowlist`, `domainDenylist`.
           </p>
           <textarea
             value={webPolicy}

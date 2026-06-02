@@ -295,7 +295,7 @@ export class InitiativeController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       if (!orgId) {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({ error: 'Unauthorized', code: 'INITIATIVES_UNAUTHORIZED' });
         return;
       }
 
@@ -320,6 +320,13 @@ export class InitiativeController {
         : priorityRaw
           ? [priorityRaw]
           : [];
+      const qh = queryHelpers as unknown as {
+        getTableColumns?: (table: string) => Promise<unknown[]>;
+        queryAll?: (sql: string, params?: Array<unknown>) => Promise<Record<string, unknown>[]>;
+      };
+      const initiativeColumns = getColumnNameSet(
+        typeof qh.getTableColumns === 'function' ? await qh.getTableColumns('initiatives') : []
+      );
       const params: Array<unknown> = [orgId];
       let sql = `
             SELECT i.*, 
@@ -357,16 +364,50 @@ export class InitiativeController {
         params.push(like, like, like);
       }
 
+      const normalizedSourceFilter = source ? source.toString().trim().toLowerCase() : '';
       // Assessment module support: show initiatives derived from assessments/reports
-      if (source && source.toString().toLowerCase() === 'assessment') {
+      if (normalizedSourceFilter === 'assessment') {
         // Canonical source tracking (preferred): source_type/source_id
         // Backward compatible (legacy): source_assessment_id/source_report_id/created_from
-        sql += ` AND (
-          (i.source_type IN ('assessment','assessment_report','ASSESSMENT','ASSESSMENT_REPORT') AND i.source_id IS NOT NULL AND i.source_id <> '')
-          OR i.source_assessment_id IS NOT NULL
-          OR i.source_report_id IS NOT NULL
-          OR i.created_from IN ('assessment','ASSESSMENT')
-        )`;
+        const assessmentSourceClauses: string[] = [];
+        if (initiativeColumns.has('source_type') && initiativeColumns.has('source_id')) {
+          assessmentSourceClauses.push(
+            "(i.source_type IN ('assessment','assessment_report','ASSESSMENT','ASSESSMENT_REPORT') AND i.source_id IS NOT NULL AND i.source_id <> '')"
+          );
+        }
+        if (initiativeColumns.has('source_assessment_id')) {
+          assessmentSourceClauses.push('i.source_assessment_id IS NOT NULL');
+        }
+        if (initiativeColumns.has('source_report_id')) {
+          assessmentSourceClauses.push('i.source_report_id IS NOT NULL');
+        }
+        if (initiativeColumns.has('created_from')) {
+          assessmentSourceClauses.push("i.created_from IN ('assessment','ASSESSMENT')");
+        }
+        if (assessmentSourceClauses.length > 0) {
+          sql += ` AND (${assessmentSourceClauses.join(' OR ')})`;
+        } else {
+          sql += ` AND 1 = 0`;
+        }
+      } else if (normalizedSourceFilter) {
+        const sourceClauses: string[] = [];
+        if (initiativeColumns.has('source_type')) {
+          sourceClauses.push("LOWER(COALESCE(i.source_type, '')) = ?");
+          params.push(normalizedSourceFilter);
+        }
+        if (initiativeColumns.has('created_from')) {
+          sourceClauses.push("LOWER(COALESCE(i.created_from, '')) = ?");
+          params.push(normalizedSourceFilter);
+        }
+        if (initiativeColumns.has('category')) {
+          sourceClauses.push("LOWER(COALESCE(i.category, '')) = ?");
+          params.push(normalizedSourceFilter);
+        }
+        if (sourceClauses.length > 0) {
+          sql += ` AND (${sourceClauses.join(' OR ')})`;
+        } else {
+          sql += ` AND 1 = 0`;
+        }
       }
       if (sourceAssessmentId) {
         // Match both canonical and legacy assessment linkage
@@ -378,7 +419,18 @@ export class InitiativeController {
       }
       sql += ` ORDER BY i.created_at DESC`;
 
-      const rows = await queryHelpers.queryAll(sql, params);
+      let rows: Record<string, unknown>[] = [];
+      try {
+        if (typeof qh.queryAll !== 'function') {
+          throw new Error('queryAll unavailable');
+        }
+        rows = await qh.queryAll(sql, params);
+      } catch {
+        res
+          .status(500)
+          .json({ error: 'Failed to load initiatives', code: 'INITIATIVES_LIST_FAILED' });
+        return;
+      }
 
       const initiatives = rows.map((i: Record<string, unknown>) => ({
         id: i.id,
@@ -401,6 +453,9 @@ export class InitiativeController {
         currentStage: i.current_stage,
         sourceType: i.source_framework || i.source_type,
         sourceId: i.source_id,
+        actionContract: safeJsonParseObject(i.action_contract_json as string, {}),
+        sourcePack: safeJsonParseObject(i.source_pack_json as string, {}),
+        evidenceRefs: safeJsonParse(i.evidence_refs_json as string, []),
         sourceAssessmentId: i.source_assessment_id,
         sourceFramework: i.source_framework,
         businessValue: i.business_value,
@@ -456,7 +511,7 @@ export class InitiativeController {
       const { id } = req.params;
       const orgId = req.user?.organizationId;
       if (!orgId) {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({ error: 'Unauthorized', code: 'INITIATIVES_UNAUTHORIZED' });
         return;
       }
 
@@ -470,7 +525,7 @@ export class InitiativeController {
 
       const initiative = await getInitiativeDetailRead(id, orgId, lang);
       if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
+        res.status(404).json({ error: 'Initiative not found', code: 'INITIATIVE_NOT_FOUND' });
         return;
       }
       res.json(initiative);
@@ -515,6 +570,14 @@ export class InitiativeController {
         keyRisks,
         sourceType,
         sourceId,
+        category,
+        priority,
+        impact,
+        effort,
+        description,
+        sourcePack,
+        actionContract,
+        evidenceRefs,
         programId,
       } = req.body;
 
@@ -538,15 +601,16 @@ export class InitiativeController {
 
       const sql = `
             INSERT INTO initiatives (
-                id, organization_id, project_id, program_id, title, axis, area, summary, hypothesis, status,
+                id, organization_id, project_id, program_id, title, category, priority, impact, effort,
+                axis, area, summary, hypothesis, status,
                 business_value, cost_capex, cost_opex, expected_roi,
                 value_driver, confidence_level, value_timing,
                 planned_start_date, planned_end_date,
                 owner_business_id, owner_execution_id,
                 problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
-                source_type, source_id,
+                source_type, source_id, action_contract_json, source_pack_json, evidence_refs_json,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       try {
@@ -556,10 +620,14 @@ export class InitiativeController {
           projectId ?? null,
           programId ?? null,
           title,
+          category ?? null,
+          priority ?? 'medium',
+          impact ?? 'medium',
+          effort ?? 'medium',
           axis ?? null,
           area ?? null,
           summary ?? null,
-          hypothesis ?? null,
+          hypothesis ?? description ?? null,
           status ?? null,
           businessValue ?? null,
           costCapex ?? null,
@@ -580,6 +648,11 @@ export class InitiativeController {
           JSON.stringify(keyRisks || []),
           normalizedSourceType,
           normalizedSourceId || null,
+          JSON.stringify(
+            actionContract && typeof actionContract === 'object' ? actionContract : {}
+          ),
+          JSON.stringify(sourcePack && typeof sourcePack === 'object' ? sourcePack : {}),
+          JSON.stringify(Array.isArray(evidenceRefs) ? evidenceRefs : []),
           now,
           now,
         ]);
@@ -633,7 +706,14 @@ export class InitiativeController {
           action: 'initiative.created',
           resourceType: 'initiative',
           resourceId: id,
-          after: { id, title, projectId: projectId ?? null, status: status ?? null },
+          after: {
+            id,
+            title,
+            projectId: projectId ?? null,
+            status: status ?? null,
+            sourceType: normalizedSourceType,
+            sourceId: normalizedSourceId || null,
+          },
           organizationId: orgId,
           ip: (req as any).ip,
           userAgent: (req as any).get?.('user-agent'),
@@ -756,6 +836,8 @@ export class InitiativeController {
         valueDriver: 'value_driver',
         confidenceLevel: 'confidence_level',
         valueTiming: 'value_timing',
+        status: 'status',
+        progress: 'progress',
         plannedStartDate: plannedStartCol,
         plannedEndDate: plannedEndCol,
         // UI aliases
@@ -1633,7 +1715,13 @@ export class InitiativeController {
         );
       }
       if (nextStatus === 'DONE') {
-        pushOptionalColumnUpdate(lifecycleUpdates, lifecycleParams, initiativeColumns, 'done_at', now);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'done_at',
+          now
+        );
         pushOptionalColumnUpdate(
           lifecycleUpdates,
           lifecycleParams,
@@ -1674,7 +1762,11 @@ export class InitiativeController {
           now
         );
       }
-      if (actorId && (process.env.DB_TYPE || '').toLowerCase() !== 'postgres' && initiativeColumns.has('updated_by')) {
+      if (
+        actorId &&
+        (process.env.DB_TYPE || '').toLowerCase() !== 'postgres' &&
+        initiativeColumns.has('updated_by')
+      ) {
         lifecycleUpdates.push('updated_by = ?');
         lifecycleParams.push(actorId);
       }
@@ -3308,7 +3400,9 @@ export class InitiativeController {
       } catch (err: any) {
         const message = String(err?.message || '');
         if (message.includes('Initiative not found') || message.includes('KPI not found')) {
-          res.status(404).json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
+          res
+            .status(404)
+            .json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
           return;
         }
         throw err;
@@ -3338,7 +3432,9 @@ export class InitiativeController {
       } catch (err: any) {
         const message = String(err?.message || '');
         if (message.includes('Initiative not found') || message.includes('KPI not found')) {
-          res.status(404).json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
+          res
+            .status(404)
+            .json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
           return;
         }
         throw err;
@@ -5181,12 +5277,7 @@ export class InitiativeController {
       // Canonical role resolution (system role + project membership + gate roles + steering board)
       const accessCtx =
         orgId && currentUserId
-          ? await resolveInitiativeAccessContext(
-              orgId,
-              initiativeId,
-              currentUserId,
-              req.user?.role
-            )
+          ? await resolveInitiativeAccessContext(orgId, initiativeId, currentUserId, req.user?.role)
           : null;
       const steeringBoardEnabled = !!accessCtx?.steeringBoard?.enabled;
       const userRoles = accessCtx?.effectiveRoles || [];
@@ -5531,9 +5622,13 @@ export class InitiativeController {
       const hasEditRole =
         isAdmin ||
         userRoles.some((r: string) =>
-          ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
-            String(r || '').toUpperCase()
-          )
+          [
+            'PMO',
+            'PROJECT_MANAGER',
+            'PROJECT_LEAD',
+            'INITIATIVE_OWNER',
+            'PROJECT_SPONSOR',
+          ].includes(String(r || '').toUpperCase())
         );
 
       const topBar = {

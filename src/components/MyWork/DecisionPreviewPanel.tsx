@@ -107,7 +107,7 @@ function relationTone(type: string) {
   const t = String(type || '').toLowerCase();
   if (t === 'task') return 'text-blue-600 dark:text-blue-300';
   if (t === 'initiative') return 'text-amber-700 dark:text-amber-300';
-  if (t === 'decision') return 'text-purple-700 dark:text-purple-300';
+  if (t === 'decision') return 'text-blue-700 dark:text-blue-300';
   return 'text-slate-700 dark:text-slate-200';
 }
 
@@ -201,7 +201,7 @@ export const DecisionPreviewBody: React.FC<{
     status === 'APPROVED'
       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
       : status === 'REJECTED'
-        ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+        ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
         : status === 'DEFERRED' || status === 'ESCALATED'
           ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
           : 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300';
@@ -209,7 +209,7 @@ export const DecisionPreviewBody: React.FC<{
   const pri = String(decision?.priority || 'MEDIUM').toUpperCase();
   const priClassName =
     pri === 'CRITICAL'
-      ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+      ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
       : pri === 'HIGH'
         ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
         : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300';
@@ -226,7 +226,7 @@ export const DecisionPreviewBody: React.FC<{
 
   const urgencyClassName =
     brief?.urgency === 'urgent'
-      ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+      ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
       : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300';
 
   const pills: MetaPill[] = [

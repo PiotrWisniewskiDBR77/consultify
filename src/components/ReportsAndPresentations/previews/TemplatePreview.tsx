@@ -99,7 +99,9 @@ export const TemplatePreviewBody: React.FC<{ template: TemplateItem }> = ({ temp
               <span className="text-slate-500 dark:text-slate-400">
                 {t('rap.preview.validationState', 'Walidacja')}
               </span>
-              <span className="text-slate-700 dark:text-slate-200">{governance.validationState}</span>
+              <span className="text-slate-700 dark:text-slate-200">
+                {governance.validationState}
+              </span>
             </div>
           )}
           {governance.reviewGateCount != null && governance.reviewGateCount > 0 && (
@@ -107,7 +109,9 @@ export const TemplatePreviewBody: React.FC<{ template: TemplateItem }> = ({ temp
               <span className="text-slate-500 dark:text-slate-400">
                 {t('rap.preview.reviewGates', 'Review gates')}
               </span>
-              <span className="text-slate-700 dark:text-slate-200">{governance.reviewGateCount}</span>
+              <span className="text-slate-700 dark:text-slate-200">
+                {governance.reviewGateCount}
+              </span>
             </div>
           )}
         </div>
@@ -160,7 +164,9 @@ export const TemplatePreviewFooter: React.FC<{ template: TemplateItem }> = ({ te
 
   return (
     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-      <span>{t('rap.preview.updatedAt', 'Ostatnia zmiana')}: {formatted}</span>
+      <span>
+        {t('rap.preview.updatedAt', 'Ostatnia zmiana')}: {formatted}
+      </span>
       <span>{template.createdBy}</span>
     </div>
   );

@@ -57,13 +57,13 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div
-        className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 
+        className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700
                 rounded-xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center">
               <FileText size={24} className="text-emerald-500" />
             </div>
             <div>
@@ -86,7 +86,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-              Nazwa analysis <span className="text-red-500">*</span>
+              Nazwa analysis <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -94,7 +94,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               placeholder="np. Maturity Assessment Q1 2025"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700
                                 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
             />
           </div>
@@ -109,7 +109,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
             <select
               value={formData.projectId}
               onChange={(e) => setFormData((prev) => ({ ...prev, projectId: e.target.value }))}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700
                                 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
             >
               <option value="">Bez projektu</option>
@@ -129,7 +129,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
             <select
               value={formData.analysisType}
               onChange={(e) => setFormData((prev) => ({ ...prev, analysisType: e.target.value }))}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700
                                 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
             >
               <option value="financial">Analiza ekonomiczna</option>
@@ -149,7 +149,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Brief description of this analysis purpose..."
               rows={3}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700
                                 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none transition-all"
             />
           </div>
@@ -167,7 +167,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white 
+              className="flex-1 py-3 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white
                                 font-medium transition-colors rounded-xl hover:bg-slate-100 dark:hover:bg-white/5"
             >
               Cancel
@@ -175,7 +175,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl 
+              className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl
                                 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                                 shadow-lg shadow-emerald-600/20"
             >

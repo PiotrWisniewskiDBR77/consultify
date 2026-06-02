@@ -83,12 +83,25 @@ describe('adminP32Routes', () => {
     buildPolicySnapshot.mockResolvedValue({
       subscriptionStatus: 'active',
       usageToday: { users: 5, projects: 2, storageMb: 50, tokensUsed: 120, aiCalls: 18 },
-      limits: { maxUsers: 20, maxProjects: 10, maxStorageMb: 1024, maxTotalTokens: 5000, maxAICallsPerDay: 200 },
+      limits: {
+        maxUsers: 20,
+        maxProjects: 10,
+        maxStorageMb: 1024,
+        maxTotalTokens: 5000,
+        maxAICallsPerDay: 200,
+      },
       trialExpiresAt: null,
     });
     getEffectivePolicy.mockResolvedValue({ level: 'ASSISTED' });
-    getPolicySummary.mockResolvedValue({ policyLevel: 'ASSISTED', modelCount: 4, budgetStatus: 'healthy' });
-    getOrgContextPolicy.mockResolvedValue({ allowExternalContext: false, defaultSensitivity: 'internal' });
+    getPolicySummary.mockResolvedValue({
+      policyLevel: 'ASSISTED',
+      modelCount: 4,
+      budgetStatus: 'healthy',
+    });
+    getOrgContextPolicy.mockResolvedValue({
+      allowExternalContext: false,
+      defaultSensitivity: 'internal',
+    });
   });
 
   it('blocks guests from the admin cockpit with explicit guidance', async () => {
@@ -217,8 +230,18 @@ describe('adminP32Routes', () => {
       })
       .mockResolvedValueOnce({ mfa_required: 1, mfa_grace_period_days: 7 })
       .mockResolvedValueOnce({ setting_value: JSON.stringify({ passwordPolicy: 'strict' }) })
-      .mockResolvedValueOnce({ is_enabled: 1, provider_name: 'Okta', provider_type: 'okta', protocol: 'saml' })
-      .mockResolvedValueOnce({ mode: 'approved', review_state: 'published', audit_required: 1, updated_at: 'now' });
+      .mockResolvedValueOnce({
+        is_enabled: 1,
+        provider_name: 'Okta',
+        provider_type: 'okta',
+        protocol: 'saml',
+      })
+      .mockResolvedValueOnce({
+        mode: 'approved',
+        review_state: 'published',
+        audit_required: 1,
+        updated_at: 'now',
+      });
 
     dbAll
       .mockResolvedValueOnce([
@@ -252,20 +275,20 @@ describe('adminP32Routes', () => {
   });
 
   it('reads and writes tenant IAM policy from organization settings', async () => {
-    dbGet
-      .mockResolvedValueOnce({ role: 'OWNER' })
-      .mockResolvedValueOnce({
-        setting_value: JSON.stringify({
-          delegatedRoles: [{ id: 'billing_admin', name: 'Billing Admin', capabilities: ['billing:read'] }],
-          accessReviewsEnabled: true,
-          accessReviewCadenceDays: 60,
-          contextAwareAccessEnabled: true,
-          privilegedSessionReauthMinutes: 15,
-          breakGlassEnabled: false,
-          breakGlassApprovers: ['owner@company.com'],
-          alertOnPrivilegedChange: true,
-        }),
-      });
+    dbGet.mockResolvedValueOnce({ role: 'OWNER' }).mockResolvedValueOnce({
+      setting_value: JSON.stringify({
+        delegatedRoles: [
+          { id: 'billing_admin', name: 'Billing Admin', capabilities: ['billing:read'] },
+        ],
+        accessReviewsEnabled: true,
+        accessReviewCadenceDays: 60,
+        contextAwareAccessEnabled: true,
+        privilegedSessionReauthMinutes: 15,
+        breakGlassEnabled: false,
+        breakGlassApprovers: ['owner@company.com'],
+        alertOnPrivilegedChange: true,
+      }),
+    });
 
     const app = createApp();
     const getRes = await request(app).get('/api/admin/iam/policy');
@@ -273,20 +296,18 @@ describe('adminP32Routes', () => {
     expect(getRes.status).toBe(200);
     expect(getRes.body.policy.accessReviewCadenceDays).toBe(60);
 
-    dbGet
-      .mockResolvedValueOnce({ role: 'OWNER' })
-      .mockResolvedValueOnce({
-        setting_value: JSON.stringify({
-          delegatedRoles: [],
-          accessReviewsEnabled: true,
-          accessReviewCadenceDays: 90,
-          contextAwareAccessEnabled: false,
-          privilegedSessionReauthMinutes: 30,
-          breakGlassEnabled: false,
-          breakGlassApprovers: [],
-          alertOnPrivilegedChange: true,
-        }),
-      });
+    dbGet.mockResolvedValueOnce({ role: 'OWNER' }).mockResolvedValueOnce({
+      setting_value: JSON.stringify({
+        delegatedRoles: [],
+        accessReviewsEnabled: true,
+        accessReviewCadenceDays: 90,
+        contextAwareAccessEnabled: false,
+        privilegedSessionReauthMinutes: 30,
+        breakGlassEnabled: false,
+        breakGlassApprovers: [],
+        alertOnPrivilegedChange: true,
+      }),
+    });
 
     const putRes = await request(app).put('/api/admin/iam/policy').send({
       accessReviewCadenceDays: 45,
@@ -357,12 +378,14 @@ describe('adminP32Routes', () => {
 
     const app = createApp();
 
-    const assignmentRes = await request(app).post('/api/admin/iam/assignments').send({
-      userId: 'user-2',
-      roleId: 'billing_admin',
-      roleName: 'Billing Admin',
-      capabilities: ['billing:read', 'billing:write'],
-    });
+    const assignmentRes = await request(app)
+      .post('/api/admin/iam/assignments')
+      .send({
+        userId: 'user-2',
+        roleId: 'billing_admin',
+        roleName: 'Billing Admin',
+        capabilities: ['billing:read', 'billing:write'],
+      });
     expect(assignmentRes.status).toBe(201);
     expect(assignmentRes.body.assignment.roleId).toBe('billing_admin');
 
@@ -371,10 +394,12 @@ describe('adminP32Routes', () => {
     });
     expect(paymentRes.status).toBe(201);
 
-    const scimRes = await request(app).post('/api/admin/identity/scim/tokens').send({
-      name: 'Tenant SCIM Token',
-      scopes: ['users:read', 'users:write'],
-    });
+    const scimRes = await request(app)
+      .post('/api/admin/identity/scim/tokens')
+      .send({
+        name: 'Tenant SCIM Token',
+        scopes: ['users:read', 'users:write'],
+      });
     expect(scimRes.status).toBe(201);
     expect(String(scimRes.body.token.token)).toContain('scim_');
   });
@@ -408,8 +433,18 @@ describe('adminP32Routes', () => {
       })
       .mockResolvedValueOnce({ mfa_required: 1, mfa_grace_period_days: 7 })
       .mockResolvedValueOnce({ setting_value: JSON.stringify({ passwordPolicy: 'strict' }) })
-      .mockResolvedValueOnce({ is_enabled: 1, provider_name: 'Okta', provider_type: 'okta', protocol: 'saml' })
-      .mockResolvedValueOnce({ mode: 'approved', review_state: 'published', audit_required: 1, updated_at: 'now' });
+      .mockResolvedValueOnce({
+        is_enabled: 1,
+        provider_name: 'Okta',
+        provider_type: 'okta',
+        protocol: 'saml',
+      })
+      .mockResolvedValueOnce({
+        mode: 'approved',
+        review_state: 'published',
+        audit_required: 1,
+        updated_at: 'now',
+      });
 
     dbAll
       .mockResolvedValueOnce([

@@ -14,6 +14,14 @@ import { appCache } from '../redis/CacheService.js';
 import circuitBreaker from './circuitBreaker.js';
 import { embeddingService } from './embeddingService.js';
 import { aiLogger } from './logger.js';
+import {
+  buildQaAiStructuredObject,
+  buildQaAiText,
+  buildQaAiUsage,
+  createQaAiStream,
+  getQaAiModeLabel,
+  isQaAiMode,
+} from './qaAiRuntime.js';
 
 // Concurrency and rate limits per provider (process-level guard)
 const PROVIDER_CONCURRENCY_LIMITS: Record<string, number> = {
@@ -463,6 +471,32 @@ export class LLMService {
     const { type, stream, schema, tools, cache, cacheTtl } = params;
     let { modelConfig } = params;
 
+    if (isQaAiMode()) {
+      const content = buildQaAiText(params);
+      if (stream) {
+        return {
+          stream: createQaAiStream(content),
+          usage: buildQaAiUsage(content),
+          qaMock: true,
+          provider: getQaAiModeLabel(),
+        };
+      }
+      if (type === 'structured' && schema) {
+        return {
+          object: buildQaAiStructuredObject(schema),
+          usage: buildQaAiUsage(content),
+          qaMock: true,
+          provider: getQaAiModeLabel(),
+        };
+      }
+      return {
+        content,
+        usage: buildQaAiUsage(content),
+        qaMock: true,
+        provider: getQaAiModeLabel(),
+      };
+    }
+
     // Intelligent Caching (Skip for streams/tools/reasoning for now)
     // We can cache simple text/structured generation
     const canCache = cache !== false && !stream && (!tools || tools.length === 0);
@@ -718,9 +752,7 @@ export class LLMService {
       // into the user-facing chat bubble. Tag it with CIRCUIT_OPEN so both the
       // pipeline (for provider-level fallback) and the client (for a friendly
       // localized message) can recognize the condition.
-      const err: any = new Error(
-        circuitCheck.reason || `Circuit [${providerId}] is OPEN`
-      );
+      const err: any = new Error(circuitCheck.reason || `Circuit [${providerId}] is OPEN`);
       err.code = 'CIRCUIT_OPEN';
       err.isCircuitOpen = true;
       err.breakerName = providerId;
@@ -837,9 +869,7 @@ export class LLMService {
       // Feedback #a9fcdd99 / #3b6c0287 — see matching block in callWithToolsStream.
       // Tagging the error lets the AIPipeline fallback loop keep iterating to the
       // next candidate and gives the client a localizable code to map on.
-      const err: any = new Error(
-        circuitCheck.reason || `Circuit [${providerId}] is OPEN`
-      );
+      const err: any = new Error(circuitCheck.reason || `Circuit [${providerId}] is OPEN`);
       err.code = 'CIRCUIT_OPEN';
       err.isCircuitOpen = true;
       err.breakerName = providerId;

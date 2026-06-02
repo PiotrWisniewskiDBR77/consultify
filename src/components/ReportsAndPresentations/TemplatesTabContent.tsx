@@ -4,8 +4,18 @@
  * Canonical source: /api/artifacts?artifactFamily=template (P24 Outputs artifacts)
  */
 
-import { BookTemplate, Copy, Edit, FileSpreadsheet, FileText, Loader2, MessageSquare, Play, Presentation } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import {
+  BookTemplate,
+  Copy,
+  Edit,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  MessageSquare,
+  Play,
+  Presentation,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,7 +30,11 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import { resolveTemplateClonePath, resolveTemplateEditPath, resolveTemplateUsePath } from './artifactNavigation';
+import {
+  resolveTemplateClonePath,
+  resolveTemplateEditPath,
+  resolveTemplateUsePath,
+} from './artifactNavigation';
 import { TemplatePreviewBody, TemplatePreviewFooter } from './previews/TemplatePreview';
 import { TEMPLATE_STATUS_META, TEMPLATE_TYPE_META, type TemplateItem } from './types';
 
@@ -36,6 +50,7 @@ interface TemplatesTabContentProps {
   actions?: {
     startArtifactReview?: (artifactId: string) => Promise<boolean>;
   };
+  initialArtifactId?: string | null;
 }
 
 export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
@@ -48,6 +63,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   error,
   onRefresh,
   actions,
+  initialArtifactId,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -55,6 +71,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const openChat = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitBusyId, setSubmitBusyId] = useState<string | null>(null);
+  const deepLinkConsumed = useRef(false);
 
   const filteredData = useMemo(() => {
     let data = templates;
@@ -87,7 +104,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ) : row.type === 'sheet' ? (
               <FileSpreadsheet size={14} className="text-emerald-400 shrink-0" />
             ) : (
-              <Presentation size={14} className="text-purple-400 shrink-0" />
+              <Presentation size={14} className="text-blue-400 shrink-0" />
             )}
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
               {row.title}
@@ -106,7 +123,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           {
             value: 'presentation',
             label: isPolish ? 'Prezentacja' : 'Presentation',
-            color: 'bg-purple-400',
+            color: 'bg-blue-400',
           },
         ],
         render: (row: TemplateItem) => {
@@ -128,7 +145,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'R1', label: 'R1 — Weekly', color: 'bg-blue-400' },
-          { value: 'R2', label: 'R2 — Steering', color: 'bg-purple-400' },
+          { value: 'R2', label: 'R2 — Steering', color: 'bg-blue-400' },
           { value: 'R3', label: 'R3 — Benefits', color: 'bg-emerald-400' },
           { value: 'R4', label: 'R4 — Portfolio', color: 'bg-amber-400' },
           { value: 'executive_update', label: 'Executive Update' },
@@ -284,6 +301,15 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     },
   ];
 
+  useEffect(() => {
+    if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
+    const match = filteredData.find((r) => r.artifactId === initialArtifactId);
+    if (match) {
+      setSelectedId(match.id);
+      deepLinkConsumed.current = true;
+    }
+  }, [initialArtifactId, filteredData]);
+
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
   const previewItem = selectedItem ? { ...selectedItem, title: selectedItem.title } : null;
   const itemIds = filteredData.map((i) => i.id);
@@ -361,7 +387,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               key={f.key}
               className="rounded-xl border border-slate-200/70 dark:border-navy-700/50 bg-white/60 dark:bg-navy-800/40 p-4"
             >
-              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{f.title}</h4>
+              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {f.title}
+              </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{f.desc}</p>
               <div className="flex gap-1 mt-2">
                 {f.categories.map((c) => (
@@ -391,10 +419,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     const gridItems: GridItem[] = filteredData.map((item) => ({
       id: item.id,
       name: item.title,
-      type: isPolish
-        ? TEMPLATE_TYPE_META[item.type].labelPl
-        : TEMPLATE_TYPE_META[item.type].label,
-      typeColor: item.type === 'report' ? 'operational' : item.type === 'sheet' ? 'financial' : 'digital',
+      type: isPolish ? TEMPLATE_TYPE_META[item.type].labelPl : TEMPLATE_TYPE_META[item.type].label,
+      typeColor:
+        item.type === 'report' ? 'operational' : item.type === 'sheet' ? 'financial' : 'digital',
       status: gridStatusMap[item.status] || 'DRAFT',
       progress: 0,
       updatedAt: item.updatedAt,
@@ -408,7 +435,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         items={gridItems}
         selectedItemId={selectedId}
         onItemClick={(item) => setSelectedId(item.id)}
-        onItemAction={(item, actionId) => {
+        onItemAction={(actionId, item) => {
           const tpl = filteredData.find((t) => t.id === item.id);
           if (!tpl) return;
           if (actionId === 'open') navigate(resolveTemplateUsePath(tpl.id, tpl.type));

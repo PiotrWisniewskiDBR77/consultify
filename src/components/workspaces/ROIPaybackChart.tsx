@@ -37,7 +37,9 @@ export const ROIPaybackChart: React.FC<ROIPaybackChartProps> = ({
           <div className="text-sm text-gray-500 dark:text-gray-400">Payback Months</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-purple-600">${returnAmount.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-primary-600">
+            ${returnAmount.toLocaleString()}
+          </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">Return</div>
         </div>
       </div>
