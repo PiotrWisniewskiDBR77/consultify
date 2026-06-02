@@ -34,6 +34,7 @@ import { tokenService } from '@/services/tokenService';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useRecentIdeas } from './hooks/useRecentIdeas';
 import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './ideaEntryTypes';
 import { IdeasTableContent } from './IdeasTableContent';
 import type {
@@ -358,11 +359,33 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
   }, [searchQuery, t]);
 
+  const { recentIds, record: recordRecent } = useRecentIdeas();
+
+  // Record opens (for the "Recently opened" rail), then delegate to the host.
+  const openIdea = useCallback(
+    (...args: Parameters<typeof onIdeaClick>) => {
+      recordRecent(args[0]);
+      onIdeaClick(...args);
+    },
+    [onIdeaClick, recordRecent]
+  );
+
   const openIdeaInProcessFlow = useCallback(
     (idea: MyIdea) => {
-      onIdeaClick(idea.id, idea, { openMap: true, initialTool: 'process_flow' });
+      openIdea(idea.id, idea, { openMap: true, initialTool: 'process_flow' });
     },
-    [onIdeaClick]
+    [openIdea]
+  );
+
+  // "Recently opened" rail data: map stored recent IDs back to live ideas,
+  // dropping any that no longer exist, capped for a compact rail.
+  const recentIdeas = useMemo(
+    () =>
+      recentIds
+        .map((id) => ideas.find((i) => i.id === id))
+        .filter((i): i is MyIdea => Boolean(i))
+        .slice(0, 6),
+    [recentIds, ideas]
   );
 
   useEffect(() => {
@@ -603,7 +626,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const openFocusedIdea = useCallback(() => {
     if (!focusedIdea) return;
-    onIdeaClick(focusedIdea.id, focusedIdea);
+    openIdea(focusedIdea.id, focusedIdea);
   }, [focusedIdea, onIdeaClick]);
 
   const openConvertForSelection = useCallback(() => {
@@ -1183,6 +1206,34 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
+        {/* M2: "Recently opened" rail (localStorage-backed, per device) */}
+        {recentIdeas.length > 0 && (
+          <div className="px-4 pt-3" data-testid="ideas-recents-rail">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {recentIdeas.map((idea) => {
+                const tc = getToolConfig(idea.preferredTool);
+                const ToolIcon = tc.icon;
+                return (
+                  <button
+                    key={idea.id}
+                    type="button"
+                    onClick={() => openIdea(idea.id, idea)}
+                    title={idea.title || ''}
+                    className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
+                  >
+                    <ToolIcon size={13} className="text-slate-400" />
+                    <span className="max-w-[160px] truncate">
+                      {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
         <div className="flex flex-col flex-1 min-h-0">
           <IdeasTableContent
@@ -1216,7 +1267,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 [columnId]: value.length > 0 ? value : undefined,
               }))
             }
-            onOpenIdea={(idea) => onIdeaClick(idea.id, idea)}
+            onOpenIdea={(idea) => openIdea(idea.id, idea)}
             onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
             onOpenIdeaAiChat={handleOpenIdeaAiChat}
             onOpenIdeaAiInsights={handleOpenIdeaAiInsights}
@@ -1264,11 +1315,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   key={idea.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => onIdeaClick(idea.id, idea)}
+                  onClick={() => openIdea(idea.id, idea)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      onIdeaClick(idea.id, idea);
+                      openIdea(idea.id, idea);
                     }
                   }}
                   className={[
@@ -1447,11 +1498,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         key={`${tag}-${idea.id}`}
                         role="button"
                         tabIndex={0}
-                        onClick={() => onIdeaClick(idea.id, idea)}
+                        onClick={() => openIdea(idea.id, idea)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            onIdeaClick(idea.id, idea);
+                            openIdea(idea.id, idea);
                           }
                         }}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 dark:hover:bg-navy-800/30 cursor-pointer transition-colors"
