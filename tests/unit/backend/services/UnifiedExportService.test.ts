@@ -67,6 +67,18 @@ describe('UnifiedExportService', () => {
     expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 
+  it('renderPptx primitive runs the build callback and yields a PPTX buffer', async () => {
+    let received: any = null;
+    const buf = await unifiedExportService.renderPptx((pptx) => {
+      received = pptx;
+      pptx.layout = 'LAYOUT_WIDE';
+      const slide = pptx.addSlide();
+      slide.addText('Custom deck slide', { x: 0.5, y: 0.5, w: 9, h: 1 });
+    });
+    expect(received).not.toBeNull();
+    expect(isZip(buf)).toBe(true);
+  });
+
   it('caps PPTX at 20 slides without throwing', async () => {
     const slides = Array.from({ length: 50 }, (_, i) => ({
       title: `Slide ${i + 1}`,
