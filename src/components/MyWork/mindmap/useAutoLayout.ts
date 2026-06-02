@@ -94,5 +94,45 @@ export function useAutoLayout() {
     });
   }, []);
 
-  return { autoLayout };
+  /**
+   * Re-layout only the subtree rooted at `subtreeRootId`, leaving all other
+   * node positions untouched. Useful after addChild/addSibling to avoid
+   * disrupting manually positioned nodes elsewhere in the map.
+   */
+  const partialLayoutSubtree = useCallback(
+    (nodes: Node[], edges: Edge[], subtreeRootId: string): Node[] => {
+      if (nodes.length === 0) return nodes;
+
+      const adj = new Map<string, string[]>();
+      for (const edge of edges) {
+        const children = adj.get(edge.source) || [];
+        children.push(edge.target);
+        adj.set(edge.source, children);
+      }
+
+      const subtreeRoot = nodes.find((n) => n.id === subtreeRootId);
+      if (!subtreeRoot) return nodes;
+
+      const positions = new Map<string, { x: number; y: number }>();
+      const visited = new Set<string>();
+      layoutSubtree(
+        subtreeRootId,
+        subtreeRoot.position.x,
+        subtreeRoot.position.y,
+        adj,
+        positions,
+        visited
+      );
+
+      return nodes.map((n) => {
+        if (n.id === subtreeRootId) return n;
+        const pos = positions.get(n.id);
+        if (!pos) return n;
+        return { ...n, position: { x: pos.x, y: pos.y } };
+      });
+    },
+    []
+  );
+
+  return { autoLayout, partialLayoutSubtree };
 }

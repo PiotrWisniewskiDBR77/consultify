@@ -43,6 +43,7 @@ import {
 import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
+import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
 
 export type { ActiveCanvasDocument } from '@/types/canvasWorkspace';
@@ -415,9 +416,11 @@ const toolbarGroupClass =
   'flex items-center gap-1 rounded-full border border-slate-200 px-1 dark:border-white/10';
 
 function getInitialMode(): CanvasMode {
-  if (typeof window === 'undefined') return 'document';
+  if (typeof window === 'undefined') return 'rich';
   const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-  return stored === 'md' ? 'md' : 'document';
+  if (stored === 'md') return 'md';
+  if (stored === 'document') return 'document';
+  return 'rich';
 }
 
 function createDocumentState(
@@ -1626,7 +1629,19 @@ export function WorkCanvasDocumentPanel({
           saveState: 'saved',
         })
       );
-      setStatusFeedback(`${linked.title} saved to ${linked.type}. ${linked.id}`);
+      const targetPath =
+        target === 'idea'
+          ? `/my-work?ideaId=${encodeURIComponent(linked.id)}`
+          : target === 'note'
+            ? `/my-work?tab=notebook`
+            : target === 'initiative'
+              ? `/initiatives`
+              : null;
+      setStatusFeedback(
+        targetPath
+          ? `${linked.title} saved to ${linked.type}. [Open →](${targetPath})`
+          : `${linked.title} saved to ${linked.type}.`
+      );
     } catch (error) {
       setCanvasErrorFeedback(error, `Failed to save Canvas to ${target}.`);
     } finally {
@@ -2160,10 +2175,10 @@ export function WorkCanvasDocumentPanel({
                       onClick: () => setIsTemplateBuilderOpen((open) => !open),
                     },
                     {
-                      title: 'Przełącz widok Dock/MD',
-                      detail: 'Zmiana widoku pomaga szybko przechodzić między czytaniem a precyzyjną edycją Markdown.',
-                      actionLabel: mode === 'document' ? 'MD' : 'Dock',
-                      onClick: () => setMode(mode === 'document' ? 'md' : 'document'),
+                      title: 'Przełącz widok Rich/Dock/MD',
+                      detail: 'Rich = edytor z toolbarem, Dock = podgląd, MD = surowy markdown.',
+                      actionLabel: mode === 'rich' ? 'Dock' : mode === 'document' ? 'MD' : 'Rich',
+                      onClick: () => setMode(mode === 'rich' ? 'document' : mode === 'document' ? 'md' : 'rich'),
                     },
                     {
                       title: 'Zapisz i eksportuj wersję roboczą',
@@ -2783,6 +2798,39 @@ export function WorkCanvasDocumentPanel({
                 <div className="mt-8 h-4 w-full rounded bg-white/10" />
                 <div className="mt-3 h-4 w-5/6 rounded bg-white/10" />
                 <div className="mt-8 h-32 rounded bg-white/10" />
+              </div>
+            ) : mode === 'rich' ? (
+              <div
+                className="flex flex-1 flex-col min-h-[680px] rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-navy-900 dark:shadow-none overflow-hidden"
+                data-testid="canvas-rich-editor"
+              >
+                <CanvasRichEditor
+                  contentMd={documentState.contentMd}
+                  onContentChange={updateMarkdown}
+                  onSelectionChange={(sel) => {
+                    if (sel) {
+                      setCanvasSelection({
+                        selectedText: sel.selectedText,
+                        mode: 'rich',
+                        draftId: documentState.draftId ?? undefined,
+                      });
+                    } else {
+                      setCanvasSelection(null);
+                    }
+                  }}
+                  editable={true}
+                />
+                {documentState.blocks?.length ? (
+                  <div className="mt-4 px-6 pb-6" data-testid="canvas-artifact-blocks">
+                    {documentState.blocks.map((block) => (
+                      <CanvasArtifactBlockRenderer
+                        key={block.id}
+                        block={block}
+                        onFeedback={setActionFeedback}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ) : mode === 'md' ? (
               <div className="flex flex-1 flex-col">

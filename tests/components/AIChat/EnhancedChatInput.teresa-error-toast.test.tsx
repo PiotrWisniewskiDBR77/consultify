@@ -47,7 +47,13 @@ vi.mock('../../../src/hooks/useCloudIntegrations', () => ({
   }),
 }));
 
-vi.mock('../../../src/components/AIChat/AddFilesMenu', () => ({ AddFilesMenu: () => null }));
+const addFilesMenuPropsRef: { current: any } = { current: null };
+vi.mock('../../../src/components/AIChat/AddFilesMenu', () => ({
+  AddFilesMenu: (props: any) => {
+    addFilesMenuPropsRef.current = props;
+    return null;
+  },
+}));
 vi.mock('../../../src/components/AIChat/CloudFilePicker', () => ({ CloudFilePicker: () => null }));
 vi.mock('../../../src/components/AIChat/CoThinkerMenu', () => ({ CoThinkerMenu: () => null }));
 vi.mock('../../../src/components/AIChat/MoveToProjectModal', () => ({ MoveToProjectModal: () => null }));
@@ -80,5 +86,14 @@ describe('EnhancedChatInput Teresa toast lifecycle', () => {
       <EnhancedChatInput {...props} teresaVoiceStatus="error" teresaVoiceError="boom" />
     );
     expect(toastErrorMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('wires AddFilesMenu callbacks and forwards add-to-project guard info', () => {
+    const onSend = vi.fn();
+    render(<EnhancedChatInput onSend={onSend} />);
+
+    expect(addFilesMenuPropsRef.current).toBeTruthy();
+    expect(typeof addFilesMenuPropsRef.current.onUrlAdd).toBe('function');
+    expect(typeof addFilesMenuPropsRef.current.onFileSelect).toBe('function');
   });
 });

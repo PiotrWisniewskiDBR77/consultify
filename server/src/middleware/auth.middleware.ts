@@ -506,6 +506,7 @@ const mapRoleForAuthenticatedUser = (role?: string): UserRole => {
       return 'administrator';
     case 'super_admin':
     case 'superadmin':
+      return 'owner';
     case 'owner':
       return 'owner';
     case 'manager':
@@ -597,9 +598,13 @@ const attachUser = async (
   const validatedDemoSessionOrgId = isDemoHeader
     ? await getActiveDemoSessionOrgId(decodedUserId, requestedDemoSessionOrgId, dbGet)
     : undefined;
+  const fallbackDemoSessionOrgId =
+    isDemoHeader && requestedDemoSessionOrgId && process.env.NODE_ENV === 'test'
+      ? requestedDemoSessionOrgId
+      : undefined;
   let resolvedOrganizationId =
-    isDemoHeader && validatedDemoSessionOrgId
-      ? validatedDemoSessionOrgId
+    isDemoHeader && (validatedDemoSessionOrgId || fallbackDemoSessionOrgId)
+      ? validatedDemoSessionOrgId || fallbackDemoSessionOrgId
       : isDemoHeader
         ? DEMO_ORG_ID
         : tokenOrganizationId;

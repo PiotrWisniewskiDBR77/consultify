@@ -99,6 +99,7 @@ import {
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
 import {
@@ -2240,11 +2241,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   y: event.clientY,
                 });
               }}
+              {...getIdeasToolInteractionProps('processflow', { locked })}
               onInit={(instance: ReactFlowInstance) => {
                 reactFlowInstanceRef.current = instance;
               }}
               fitView
-              deleteKeyCode={locked ? null : 'Delete'}
               className="bg-transparent"
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >

@@ -88,6 +88,14 @@ interface EnhancedChatInputProps {
   onTeresaVoiceMuteToggle?: () => void;
 }
 
+type ComposerAttachment =
+  | File
+  | {
+      kind?: 'url';
+      url: string;
+      name?: string;
+    };
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -139,7 +147,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   // Input state
   const [value, setValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [attachments, setAttachments] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
 
   // Voice state
   const [isDictating, setIsDictating] = useState(false);
@@ -709,6 +717,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const activeConversation = activeConversationId
     ? conversations.find((c) => c.id === activeConversationId) || null
     : null;
+  const hasProjectAssignableConversation = Boolean(activeConversation);
 
   const handleToolSelect = useCallback(
     (tool: string) => {
@@ -748,12 +757,24 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       {/* Attachments Preview */}
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2 px-1">
-          {attachments.map((att, idx) => (
+          {attachments.map((att, idx) => {
+            const isUrlAttachment =
+              typeof att === 'object' &&
+              !(att instanceof File) &&
+              (att as { kind?: string }).kind === 'url';
+            const label =
+              typeof att === 'object' && !(att instanceof File)
+                ? att.name || att.url
+                : att.name || att.type;
+            return (
             <div
               key={idx}
               className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
             >
-              <span>{att.name || att.type}</span>
+              <span className="inline-flex items-center gap-1">
+                <span>{isUrlAttachment ? 'Link' : 'File'}:</span>
+                <span className="max-w-[220px] truncate">{label}</span>
+              </span>
               <button
                 onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
                 className="ml-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
@@ -761,7 +782,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 ×
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -836,7 +858,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           className={`flex items-center justify-between gap-2 min-w-0 px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
         >
           {/* Left Actions */}
-          <div className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pr-1 scrollbar-none">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex items-center gap-1 shrink-0">
             <AddFilesMenu
               onFileSelect={handleFileSelect}
               onUrlAdd={handleUrlAdd}
@@ -846,8 +869,15 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               isCloudImplemented={isCloudImplemented}
               disabled={isInputDisabled}
             />
-            <ToolsMenu onToolSelect={handleToolSelect} disabled={isInputDisabled} icon={Pen} />
+            <ToolsMenu
+              onToolSelect={handleToolSelect}
+              disabled={isInputDisabled}
+              icon={Pen}
+              hasActiveConversation={hasProjectAssignableConversation}
+            />
             <CoThinkerMenu disabled={isInputDisabled} />
+            </div>
+            <div className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pr-1 scrollbar-none">
             {/* C-IN1 — Next-message model hint. Read-only pill showing
                 which model will handle the next send. Self-gates on
                 `isNextModelChipEnabled()` and renders null when the
@@ -868,6 +898,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 `isInputSoftLimitToastEnabled()` and the sessionStorage
                 fired / dismiss sentinels. */}
             <InputSoftLimitToast value={value} />
+            </div>
           </div>
 
           {/* Right Actions */}

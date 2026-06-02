@@ -862,6 +862,17 @@ For example: REMEMBER: preferred_language: Polish`;
             (a: any): a is File => typeof File !== 'undefined' && a instanceof File
           )
         : [];
+      const urlAttachments: Array<{ kind?: string; url: string; title?: string; name?: string }> =
+        Array.isArray(attachments)
+          ? attachments
+              .filter((a: any) => a && typeof a === 'object' && typeof a.url === 'string')
+              .map((a: any) => ({
+                kind: a.kind,
+                url: String(a.url),
+                title: a.title ? String(a.title) : undefined,
+                name: a.name ? String(a.name) : undefined,
+              }))
+          : [];
 
       const uploadedAttachments: Array<{
         docId: string;
@@ -869,6 +880,8 @@ For example: REMEMBER: preferred_language: Polish`;
         mimeType?: string;
         size?: number;
         extractionStatus?: string;
+        sourceUrl?: string;
+        kind?: 'file' | 'url';
       }> = [];
       const failedAttachments: Array<{
         filename: string;
@@ -877,6 +890,7 @@ For example: REMEMBER: preferred_language: Polish`;
         error: string;
         code?: string;
         extractionStatus?: string;
+        kind?: 'file' | 'url';
       }> = [];
 
       for (const file of files) {
@@ -909,6 +923,7 @@ For example: REMEMBER: preferred_language: Polish`;
             mimeType: file.type || undefined,
             size: file.size,
             extractionStatus: String((resp as any)?.extractionStatus || 'extracted'),
+            kind: 'file',
           });
         } catch (err: any) {
           console.error('[AIChatWelcomeView] Failed to upload attachment:', err);
@@ -924,16 +939,43 @@ For example: REMEMBER: preferred_language: Polish`;
               typeof err?.data?.extractionStatus === 'string'
                 ? err.data.extractionStatus
                 : 'failed',
+            kind: 'file',
+          });
+        }
+      }
+      for (const urlAtt of urlAttachments) {
+        const url = String(urlAtt.url || '').trim();
+        if (!url) continue;
+        try {
+          const resp = await Api.ingestChatUrlAttachment(url, { title: urlAtt.title });
+          const docId = String((resp as any)?.docId || '');
+          if (!docId) continue;
+          uploadedAttachments.push({
+            docId,
+            filename: String((resp as any)?.filename || '').trim() || urlAtt.name || url,
+            mimeType: (resp as any)?.mimeType || 'text/html',
+            sourceUrl: String((resp as any)?.sourceUrl || url),
+            extractionStatus: 'extracted',
+            kind: 'url',
+          });
+        } catch (err: any) {
+          failedAttachments.push({
+            filename: urlAtt.name || url,
+            error:
+              String(err?.data?.error || err?.message || '').trim() ||
+              t('aiChat.attachmentUploadFailed', 'Nie udało się odczytać pliku.'),
+            code: typeof err?.data?.code === 'string' ? err.data.code : undefined,
+            extractionStatus:
+              typeof err?.data?.extractionStatus === 'string'
+                ? err.data.extractionStatus
+                : 'failed',
+            kind: 'url',
           });
         }
       }
 
       const attachmentDocIds = Array.from(
-        new Set(
-          uploadedAttachments.length > 0
-            ? uploadedAttachments.map((a) => a.docId)
-            : existingAttachmentDocIds
-        )
+        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
       );
 
       // Add user message

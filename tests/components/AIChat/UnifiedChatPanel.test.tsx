@@ -270,6 +270,22 @@ vi.doMock('../../../src/components/AIChat/EnhancedChatInput', () => ({
       >
         send-unsupported
       </button>
+      <button
+        data-testid="send-url"
+        disabled={disabled}
+        onClick={() =>
+          onSend('with url', [
+            {
+              kind: 'url',
+              url: 'https://example.com/report',
+              title: 'Example report',
+              name: 'example.com/report',
+            },
+          ])
+        }
+      >
+        send-url
+      </button>
       <button data-testid="stop-button" onClick={onStopGenerating}>
         stop
       </button>
@@ -1135,6 +1151,39 @@ describe('UnifiedChatPanel (L2)', () => {
 
     fireEvent.click(screen.getByTestId('send-unsupported'));
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
+  });
+
+  it('ingests URL attachments and persists them in message metadata', async () => {
+    createConversationMock.mockResolvedValue({ id: 'conv-1' });
+    h.apiMock.ingestChatUrlAttachment = vi.fn().mockResolvedValue({
+      success: true,
+      docId: 'url-doc-1',
+      filename: 'Example page',
+      mimeType: 'text/html',
+      sourceUrl: 'https://example.com/report',
+    });
+
+    renderWithRouter(<UnifiedChatPanel />);
+
+    fireEvent.click(screen.getByTestId('send-url'));
+
+    await waitFor(() => expect(h.apiMock.ingestChatUrlAttachment).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(addMessageToConversationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'user',
+          metadata: expect.objectContaining({
+            attachments: [
+              expect.objectContaining({
+                docId: 'url-doc-1',
+                kind: 'url',
+                sourceUrl: 'https://example.com/report',
+              }),
+            ],
+          }),
+        })
+      )
+    );
   });
 
   it('renders error retry UI when lastError is set and wires actions', () => {

@@ -35,6 +35,7 @@ import {
 } from '@/utils/artifactLinks';
 
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
   IDEA_STAGE_LABELS,
@@ -1080,13 +1081,15 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     );
   }, [data.label, id]);
 
+  const labelRef = useRef(data.label);
+  labelRef.current = data.label;
   const handleDoubleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      setEditValue(String(data.label || ''));
+      setEditValue(String(labelRef.current || ''));
       setEditing(true);
     },
-    [data.label]
+    []
   );
 
   const handleKeyDown = useCallback(
@@ -1614,7 +1617,7 @@ function MindMapInner({
   const debugEnabled = false;
   const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } =
     useReactFlow();
-  const { autoLayout } = useAutoLayout();
+  const { autoLayout, partialLayoutSubtree } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
   const { exportAsPdf } = useMapExportPdf();
   const interactionMode = externalInteractionMode;
@@ -2439,12 +2442,16 @@ function MindMapInner({
   });
 
   const debouncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  nodesRef.current = nodes;
+  edgesRef.current = edges;
   const debouncedSave = useCallback(() => {
     if (debouncedSaveTimerRef.current) clearTimeout(debouncedSaveTimerRef.current);
     debouncedSaveTimerRef.current = setTimeout(() => {
-      scheduleSave(nodes as any, edges as any);
+      scheduleSave(nodesRef.current as any, edgesRef.current as any);
     }, 500);
-  }, [scheduleSave, nodes, edges]);
+  }, [scheduleSave]);
 
   useEffect(() => {
     return () => {
@@ -2492,6 +2499,7 @@ function MindMapInner({
     fitView,
     remoteLockedNodeIds,
     autoLayout,
+    partialLayoutSubtree,
   });
 
   // ── AI Sidekick context detection ──────────────────────────────────────
@@ -5063,23 +5071,11 @@ function MindMapInner({
               onNodeDragStop={onNodeDragStop}
               nodeTypes={reactFlowNodeTypes}
               edgeTypes={reactFlowEdgeTypes}
-              nodesConnectable={!locked && interactionMode === 'connect'}
-              nodesDraggable={!locked && interactionMode === 'select'}
-              panOnDrag={interactionMode === 'pan'}
-              selectionOnDrag={interactionMode === 'select'}
-              nodesFocusable
-              edgesFocusable
-              connectionMode={ConnectionMode.Loose}
-              fitViewOptions={reactFlowFitViewOptions}
-              minZoom={0.1}
-              maxZoom={3}
-              proOptions={reactFlowProOptions}
+              {...getIdeasToolInteractionProps('mindmap', { locked, connectMode: interactionMode === 'connect' })}
               className={`bg-slate-50 dark:bg-navy-950 ${
-                interactionMode === 'pan'
-                  ? 'cursor-grab active:cursor-grabbing'
-                  : interactionMode === 'connect'
-                    ? 'cursor-crosshair'
-                    : 'cursor-default'
+                interactionMode === 'connect'
+                  ? 'cursor-crosshair'
+                  : 'cursor-default'
               }`}
               aria-label={
                 isPolish

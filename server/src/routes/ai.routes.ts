@@ -56,6 +56,7 @@ import {
   CalculateQualityRequestSchema,
   CanPerformActionQuerySchema,
   ChatConfirmRequestSchema,
+  ChatQuickRequestSchema,
   ChatRequestSchema,
   ChatStreamRequestSchema,
   CreateDraftRequestSchema,
@@ -5298,6 +5299,126 @@ router.post(
     }
 
     return res.json({ text: refinedText });
+  })
+);
+
+// ==================== CANVAS INLINE-AI QUICK EDIT ====================
+// Non-streaming single-shot transform for the Canvas floating selection menu
+// (CanvasRichEditor.handleAIRequest). Returns ONLY the modified fragment as
+// { response }. Deliberately bypasses the heavy /chat/stream governance path
+// (policy gateway, trust bundle, proposals) — this edits a text fragment, not a
+// governed workspace mutation.
+router.post(
+  '/chat/quick',
+  verifyToken,
+  validateBody(ChatQuickRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message, context, language } = req.body as {
+      message: string;
+      context?: { source?: string; selectedText?: string } & Record<string, unknown>;
+      language?: string;
+    };
+
+    // --- Provider check ---
+    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+    const hasDbProvider = !!(await dbGet(
+      `SELECT 1 AS ok
+       FROM llm_providers
+       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       LIMIT 1`
+    ));
+
+    if (!hasEnvProvider && !hasDbProvider) {
+      return res.status(500).json({
+        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
+        code: 'NO_LLM_PROVIDER',
+      });
+    }
+
+    // --- Access policy ---
+    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
+    if (!aiAccessCheck.allowed) {
+      return res.status(403).json({
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      });
+    }
+    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
+      logger.warn('[AI ChatQuick] Failed to increment ai_calls usage:', err?.message || err);
+    });
+
+    // --- System prompt: return ONLY the modified fragment ---
+    const langCode = (language || 'pl').split('-')[0];
+    const langMap: Record<string, string> = {
+      pl: 'Polish',
+      en: 'English',
+      de: 'German',
+      es: 'Spanish',
+    };
+    const langName = langMap[langCode] || 'Polish';
+
+    const sys = [
+      'You edit a selected fragment of a document for an inline editor.',
+      'Return ONLY the modified text — no commentary, no explanations, no quotes, no markdown code fences, no prefixes.',
+      'Preserve the original language UNLESS the instruction explicitly asks to translate.',
+      `\n[LANGUAGE INSTRUCTION: Unless asked to translate, respond in ${langName}.]`,
+    ].join('\n');
+
+    // --- Call LLM (fail-fast for an interactive UI surface) ---
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: req.organizationId,
+      tier: 'BUDGET',
+    } as any);
+
+    logger.info('[AI ChatQuick] Using model:', modelCfg.id, 'provider:', modelCfg.provider);
+
+    let result: any;
+    try {
+      result = (await llmService.callText({
+        type: 'chat',
+        modelConfig: {
+          provider: modelCfg.provider,
+          id: modelCfg.id,
+          endpoint: (modelCfg as any).endpoint,
+          apiKey: (modelCfg as any).apiKey,
+        },
+        systemPrompt: sys,
+        messages: [{ role: 'user', content: message }],
+        timeoutMs: 20000,
+        breakerOptions: {
+          retryAttempts: 1,
+          retryBaseDelay: 250,
+          retryMaxDelay: 1000,
+        },
+      } as any)) as any;
+    } catch (err: any) {
+      const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
+      if (error.isBudgetError) {
+        return res.status(403).json({
+          error: error.message,
+          code: 'AI_BUDGET_EXHAUSTED',
+          budgetStatus: error.budgetStatus,
+        });
+      }
+      logger.error('[AI ChatQuick] LLM call failed:', error?.message || error);
+      return res.status(502).json({ error: 'LLM call failed', code: 'LLM_CALL_FAILED' });
+    }
+
+    const responseText = String(result?.content || result?.text || '').trim();
+
+    if (!responseText) {
+      return res.status(502).json({
+        error: 'LLM returned empty response',
+        code: 'EMPTY_LLM_RESPONSE',
+      });
+    }
+
+    return res.json({ response: responseText });
   })
 );
 

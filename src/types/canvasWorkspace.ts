@@ -1,4 +1,4 @@
-export type CanvasMode = 'document' | 'md';
+export type CanvasMode = 'rich' | 'document' | 'md';
 
 export type CanvasStarterId = 'thoughts' | 'document' | 'research' | 'decision' | 'plan';
 

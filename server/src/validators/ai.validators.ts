@@ -539,6 +539,21 @@ export const RefineTextRequestSchema = z.object({
   language: z.string().optional(),
 });
 
+// ── Canvas inline-AI quick edit (floating selection menu) ───────────
+// Non-streaming single-shot transform of a selected fragment.
+// Consumed by src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx.
+export const ChatQuickRequestSchema = z.object({
+  message: z.string().min(1, 'Message is required'),
+  context: z
+    .object({
+      source: z.string().optional(),
+      selectedText: z.string().optional(),
+    })
+    .passthrough()
+    .optional(),
+  language: z.string().optional(),
+});
+
 // ── T032: AI Authoring ──────────────────────────────────────────────
 
 export const GenerateCardDraftRequestSchema = z.object({

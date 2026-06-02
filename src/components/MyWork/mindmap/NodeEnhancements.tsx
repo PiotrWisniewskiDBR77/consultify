@@ -133,7 +133,12 @@ export const GlowWrapper: React.FC<GlowWrapperProps> = ({
     : 'shadow-[0_0_12px_rgba(251,191,36,0.3)] dark:shadow-[0_0_16px_rgba(251,191,36,0.4)]';
 
   return (
-    <div className={`rounded-xl ${glowColor} animate-pulse-slow ${className}`}>{children}</div>
+    <div
+      className={`rounded-xl ${glowColor} ${className}`}
+      style={isNew ? { animation: 'idea-node-glow 3s ease-out forwards' } : undefined}
+    >
+      {children}
+    </div>
   );
 };
 

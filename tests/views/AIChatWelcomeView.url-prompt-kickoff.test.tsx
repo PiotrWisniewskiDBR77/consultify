@@ -15,6 +15,9 @@ const addMessageMock = vi.fn();
 const setActiveConversationMock = vi.fn();
 const setConversationChatLanguageMock = vi.fn();
 const useAIStreamStartStreamMock = vi.fn();
+const uploadChatAttachmentMock = vi.fn();
+const ingestChatUrlAttachmentMock = vi.fn();
+const enhancedChatInputPropsRef: { current: any } = { current: null };
 
 const appState: any = {
   currentUser: { firstName: 'Piotr', role: 'ADMIN' },
@@ -92,6 +95,13 @@ vi.mock('../../src/hooks/useAIStream', () => ({
   }),
 }));
 
+vi.mock('../../src/services/api', () => ({
+  Api: {
+    uploadChatAttachment: uploadChatAttachmentMock,
+    ingestChatUrlAttachment: ingestChatUrlAttachmentMock,
+  },
+}));
+
 vi.mock('../../src/hooks/useUniversalVoice', () => ({
   useUniversalVoice: () => ({
     state: { isSpeaking: false, isListening: false },
@@ -138,7 +148,10 @@ vi.mock('../../src/components/AIChat/CitationList', () => ({
   CitationList: () => null,
 }));
 vi.mock('../../src/components/AIChat/EnhancedChatInput', () => ({
-  EnhancedChatInput: () => null,
+  EnhancedChatInput: (props: any) => {
+    enhancedChatInputPropsRef.current = props;
+    return null;
+  },
 }));
 vi.mock('../../src/components/AIChat/Messages/MessageActions', () => ({
   MessageActions: () => null,
@@ -187,6 +200,19 @@ describe('AIChatWelcomeView URL prompt kickoff', () => {
     vi.clearAllMocks();
     appState.chatKickoffMessage = null;
     conversationState.activeMessages = [];
+    enhancedChatInputPropsRef.current = null;
+    uploadChatAttachmentMock.mockResolvedValue({
+      success: true,
+      docId: 'file-doc-1',
+      extractionStatus: 'extracted',
+    });
+    ingestChatUrlAttachmentMock.mockResolvedValue({
+      success: true,
+      docId: 'url-doc-1',
+      filename: 'Example URL',
+      sourceUrl: 'https://example.com/context',
+      mimeType: 'text/html',
+    });
   });
 
   it('promotes ?prompt query to kickoff message and clears query', async () => {
@@ -212,5 +238,32 @@ describe('AIChatWelcomeView URL prompt kickoff', () => {
     expect(
       await screen.findByTestId('location-probe')
     ).toHaveTextContent('/chat?foo=1');
+  });
+
+  it('ingests URL attachments and passes attachmentDocIds to stream context', async () => {
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <Routes>
+          <Route path="/chat" element={<AIChatWelcomeView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(enhancedChatInputPropsRef.current).toBeTruthy();
+    await enhancedChatInputPropsRef.current.onSend('hello with url', [
+      { kind: 'url', url: 'https://example.com/context', title: 'Context page' },
+    ]);
+
+    await waitFor(() => expect(ingestChatUrlAttachmentMock).toHaveBeenCalled());
+    await waitFor(() => expect(useAIStreamStartStreamMock).toHaveBeenCalled());
+
+    const call = useAIStreamStartStreamMock.mock.calls.at(-1);
+    const contextArg = call?.[3] ?? {};
+    expect(contextArg).toEqual(
+      expect.objectContaining({
+        attachmentDocIds: expect.arrayContaining(['url-doc-1']),
+        attachments: expect.arrayContaining([expect.objectContaining({ docId: 'url-doc-1' })]),
+      })
+    );
   });
 });

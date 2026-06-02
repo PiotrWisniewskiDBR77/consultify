@@ -31,6 +31,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   formatIdeaMapSyncLabel,
   resolveIdeaMapHydration,
@@ -340,10 +341,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           event.preventDefault();
           externalOnContextMenu?.(event);
         }}
+        {...getIdeasToolInteractionProps('whiteboard', { locked })}
         fitView
-        selectionOnDrag
-        panOnDrag={[1, 2]}
-        deleteKeyCode={locked ? null : 'Delete'}
         className="bg-slate-100/80 dark:bg-[#0b1020]"
         defaultEdgeOptions={{ type: 'labeled' }}
         onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>

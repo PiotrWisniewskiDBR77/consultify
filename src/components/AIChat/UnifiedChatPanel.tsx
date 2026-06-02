@@ -95,6 +95,8 @@ import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
 import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
+import { detectMindmapIntent } from './mindmapIntentDetector';
+import { detectProcessFlowIntent } from './processFlowIntentDetector';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 import { type ActiveCanvasDocument, WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
 
@@ -2035,6 +2037,64 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
         setTableBuilderInitialMsg(text);
         setTableBuilderOpen(true);
+
+        onMessageSent?.(content);
+        return;
+      }
+
+      // Mind Map: intercept mind map / idea map intents
+      const mmAction = detectMindmapIntent(text);
+      if (mmAction) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `mm-intent-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Pracuję nad mapą myśli…' : 'Working on mind map…',
+          timestamp: new Date(),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: mmAction },
+          })
+        );
+
+        onMessageSent?.(content);
+        return;
+      }
+
+      // Process Flow: intercept process/workflow intents
+      const pfAction = detectProcessFlowIntent(text);
+      if (pfAction) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `pf-intent-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Buduję przepływ procesu…' : 'Building process flow…',
+          timestamp: new Date(),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: pfAction },
+          })
+        );
 
         onMessageSent?.(content);
         return;

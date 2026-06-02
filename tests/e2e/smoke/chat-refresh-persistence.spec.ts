@@ -24,6 +24,8 @@ test.describe('Runtime Gate — Chat refresh persistence [@module:ai-chat]', () 
 
     await gotoRuntimeGateRoute(page, '/chat');
     await expectAppMounted(page);
+    await expect(page.getByRole('heading', { name: /application error/i })).toHaveCount(0);
+    await expect(page.getByText(/failed to start the application/i)).toHaveCount(0);
 
     const input = page.locator('textarea[data-testid="chat-input"]:visible').first();
     await expect(input).toBeVisible({ timeout: 30000 });

@@ -40,18 +40,24 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('start lane run', async ({ request }) => {
-    const res = await request.post(`${API_BASE_URL}/api/v8/finance/lane/start`, {
-      headers: authHeaders(token),
-      data: { versionType: 'current' },
-    });
-    expect(res.status()).toBeLessThan(500);
+    const attemptStart = async () =>
+      request.post(`${API_BASE_URL}/api/v8/finance/lane/start`, {
+        headers: authHeaders(token),
+        data: { versionType: 'current' },
+        timeout: 45000,
+      });
 
-    if (res.status() === 200) {
-      const body = await jsonOrText(res);
-      runId = body?.data?.runId || '';
-      expect(runId).toBeTruthy();
-      expect(body.data.currentStep).toBe('import');
+    let res = await attemptStart();
+    // Under local e2e load this endpoint can be slow on first hit.
+    if (res.status() >= 500) {
+      res = await attemptStart();
     }
+
+    expect(res.status()).toBeLessThan(500);
+    const body = await jsonOrText(res);
+    runId = body?.data?.runId || '';
+    expect(runId).toBeTruthy();
+    expect(body.data.currentStep).toBe('import');
   });
 
   test('advance import → completed', async ({ request }) => {

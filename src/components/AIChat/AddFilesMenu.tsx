@@ -148,6 +148,7 @@ const FileIcon: React.FC<{ name: string }> = ({ name }) => {
 interface AddFilesMenuProps {
   onFileSelect: (files: File[]) => void;
   onUrlAdd?: (url: string) => void;
+  onRecentSelect?: (recent: { name: string; url?: string }) => void;
   onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
   onConnectCloud?: (provider: CloudProviderId) => void;
   connectedProviders?: CloudProviderId[];
@@ -172,6 +173,7 @@ const PROVIDERS: ProviderDef[] = [
 export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   onFileSelect,
   onUrlAdd,
+  onRecentSelect,
   onCloudFileSelect,
   onConnectCloud,
   connectedProviders = [],
@@ -426,6 +428,11 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                       className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors group"
                       title={r.name}
                       onClick={() => {
+                        onRecentSelect?.({ name: r.name });
+                        toast(t('aiChat.menu.recentNotReusable', 'Recent item cannot be reattached automatically yet.'), {
+                          icon: 'ℹ️',
+                          duration: 2500,
+                        });
                         setIsOpen(false);
                       }}
                     >
