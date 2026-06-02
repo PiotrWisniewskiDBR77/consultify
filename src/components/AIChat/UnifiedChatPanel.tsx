@@ -2124,9 +2124,28 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           timestamp: new Date(),
         });
 
+        // Give Teresa document + conversation awareness while streaming (same
+        // canvasContextPacket shape /chat/stream reads, plus chat history/lang).
+        const canvasStreamPacket = buildCanvasContextPacket(
+          activeCanvasDocument,
+          activeCanvasSelection
+        );
+        const canvasStreamHistory = (customMessages || messages || []).map(
+          (m: { role: string; content: string }) => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }],
+          })
+        );
+
         window.dispatchEvent(
           new CustomEvent('canvas-stream-request', {
-            detail: { prompt: content, mode: canvasStreamMode },
+            detail: {
+              prompt: content,
+              mode: canvasStreamMode,
+              language: chatLanguage,
+              canvasContextPacket: canvasStreamPacket,
+              history: canvasStreamHistory,
+            },
           })
         );
 

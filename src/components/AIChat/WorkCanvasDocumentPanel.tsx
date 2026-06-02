@@ -1217,11 +1217,21 @@ export function WorkCanvasDocumentPanel({
   React.useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail as
-        | { prompt?: string; mode?: 'append' | 'replace' | 'generate' }
+        | {
+            prompt?: string;
+            mode?: 'append' | 'replace' | 'generate';
+            history?: Array<{ role: string; parts: Array<{ text: string }> }>;
+            language?: string;
+            canvasContextPacket?: Record<string, unknown> | null;
+          }
         | undefined;
       const prompt = detail?.prompt?.trim();
       if (!prompt || !richEditor) return;
-      streamToCanvas(prompt, detail?.mode || 'append');
+      streamToCanvas(prompt, detail?.mode || 'append', {
+        history: detail?.history,
+        language: detail?.language,
+        canvasContextPacket: detail?.canvasContextPacket ?? null,
+      });
     };
     window.addEventListener('canvas-stream-request', handler);
     return () => window.removeEventListener('canvas-stream-request', handler);
