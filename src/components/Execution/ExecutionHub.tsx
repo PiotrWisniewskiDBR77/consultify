@@ -34,6 +34,7 @@ import {
   LayoutDashboard,
   Loader2,
   MessageSquare,
+  Rocket,
   Scale,
   Shield,
   Sparkles,
@@ -109,6 +110,7 @@ import {
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
+import { RolloutTab } from './RolloutTab';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
@@ -566,6 +568,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [managerCommandRowContent, setManagerCommandRowContent] = useState<React.ReactNode>(null);
   const [managerCommandRowRightContent, setManagerCommandRowRightContent] =
     useState<React.ReactNode>(null);
+  const [rolloutCommandRowContent, setRolloutCommandRowContent] = useState<React.ReactNode>(null);
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
@@ -684,6 +687,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (targetTab === 'reports') {
       setActiveTab('reports');
       setViewMode(targetView === 'grid' ? 'grid' : 'table');
+      setDeepLinkHandled(true);
+      return;
+    }
+
+    // Rollout consolidation: /rollout redirects to /execution?tab=rollout
+    if (targetTab === 'rollout') {
+      setActiveTab('rollout' as ModuleTab);
       setDeepLinkHandled(true);
       return;
     }
@@ -1580,6 +1590,45 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [addChatMessage, isChatCollapsed, openChatWithContext, t, toggleChatCollapse]
   );
 
+  const openRolloutRiskChat = useCallback(
+    async (topSignal: string) => {
+      try {
+        const convId = await openChatWithContext({
+          entityType: 'execution-rollout-risk',
+          entityId: currentProjectId || 'rollout',
+          entityName: t('execution.rollout.tabLabel', 'Rollout'),
+          contextData: {
+            topSignal,
+            riskSignals,
+            delaySignals,
+            p11Handoff: { source: 'execution_hub', lane: 'execution_rollout_risk' },
+          },
+        });
+        await addChatMessage({
+          conversationId: convId,
+          role: 'user',
+          content: t(
+            'execution.rollout.teresaPrompt',
+            'Review the active rollout risk and delay signals and propose mitigations.'
+          ),
+        } as any);
+        if (isChatCollapsed) toggleChatCollapse();
+      } catch {
+        toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
+      }
+    },
+    [
+      addChatMessage,
+      currentProjectId,
+      delaySignals,
+      isChatCollapsed,
+      openChatWithContext,
+      riskSignals,
+      t,
+      toggleChatCollapse,
+    ]
+  );
+
   const copyExecutionLink = useCallback(
     async (id: string) => {
       try {
@@ -1611,6 +1660,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           decisions.filter(
             (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
           ).length,
+      },
+      {
+        id: 'rollout' as ModuleTab,
+        label: t('execution.rollout.tabLabel', 'Rollout'),
+        icon: <Rocket size={16} />,
       },
       {
         id: 'reports' as ModuleTab,
@@ -4484,6 +4538,24 @@ Please return:
 
   // Render content
   const renderContent = () => {
+    // Rollout tab manages its own data + loading/error states independently of
+    // the portfolio fetch, so resolve it before the portfolio loading guards.
+    if (activeTab === ('rollout' as ModuleTab)) {
+      return (
+        <RolloutTab
+          projectId={currentProjectId || undefined}
+          initiatives={
+            (summaryInitiatives.length ? summaryInitiatives : initiatives) as FullInitiative[]
+          }
+          riskSignals={riskSignals}
+          delaySignals={delaySignals}
+          readOnly={isPilotParticipant}
+          onRegisterCommandRowContent={setRolloutCommandRowContent}
+          onOpenChat={openRolloutRiskChat}
+        />
+      );
+    }
+
     if (initiativesLoadError) {
       return (
         <div className="flex items-center justify-center h-full">
@@ -4678,6 +4750,10 @@ Please return:
     [activeTab]
   );
 
+  // Tabs that render their own full-bleed surface (no document tabs / filters / new-item).
+  const isChromelessTab =
+    activeTab === ('people_change' as ModuleTab) || activeTab === ('rollout' as ModuleTab);
+
   return (
     <>
       <ModuleHub
@@ -4687,13 +4763,13 @@ Please return:
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         onSearch={setSearchQuery}
-        openDocuments={activeTab === ('people_change' as ModuleTab) ? [] : openDocuments}
-        activeDocumentId={activeTab === ('people_change' as ModuleTab) ? null : activeDocumentId}
+        openDocuments={isChromelessTab ? [] : openDocuments}
+        activeDocumentId={isChromelessTab ? null : activeDocumentId}
         onSelectDocument={setActiveDocumentId}
         onCloseDocument={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={
-          activeTab === ('people_change' as ModuleTab)
+          isChromelessTab
             ? []
             : activeTab === 'list'
               ? summaryFilters
@@ -4703,7 +4779,7 @@ Please return:
         }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={isPilotParticipant ? undefined : handleCreateInitiative}
+        onNewItem={isPilotParticipant || isChromelessTab ? undefined : handleCreateInitiative}
         newItemLabel={t('initiatives.form.newInitiative', 'New Initiative')}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
@@ -4712,7 +4788,9 @@ Please return:
         commandRowContent={
           activeTab === ('people_change' as ModuleTab)
             ? managerCommandRowContent
-            : commandRowContent
+            : activeTab === ('rollout' as ModuleTab)
+              ? rolloutCommandRowContent
+              : commandRowContent
         }
         commandRowRightContent={
           activeTab === ('people_change' as ModuleTab) ? managerCommandRowRightContent : undefined

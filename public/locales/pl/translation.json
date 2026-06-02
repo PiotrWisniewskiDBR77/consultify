@@ -2048,6 +2048,95 @@
       "reports": "Raportowanie",
       "peopleChange": "Zarządzanie"
     },
+    "manager": {
+      "noInitiatives": "Brak inicjatyw w realizacji",
+      "noInitiativesDesc": "Kokpit menedżera zapełni się, gdy inicjatywy wejdą w fazę realizacji. Obecnie portfel jest pusty.",
+      "actionApplied": "Akcja zastosowana",
+      "actionFailed": "Akcja nie powiodła się",
+      "preset": {
+        "peopleChange": "Ludzie i zmiana"
+      },
+      "tile": {
+        "actionQueue": "Kolejka działań",
+        "actionQueueDesc": "Zadania, decyzje i eskalacje wymagające Twojej uwagi.",
+        "decisions": "Decyzje i zatwierdzenia",
+        "decisionsDesc": "Oczekujące i zaległe decyzje blokujące dalsze prace.",
+        "blockers": "Blokery i eskalacje",
+        "blockersDesc": "Zablokowane inicjatywy, krytyczne ryzyka i działania naprawcze.",
+        "workload": "Zasoby i obciążenie",
+        "workloadDesc": "Obciążenie zadaniami, wykorzystanie i luki w mocy przerobowej.",
+        "risk": "Ryzyko realizacji",
+        "riskDesc": "Sygnały ryzyka, wykrywanie opóźnień i sugestie interwencji.",
+        "peopleChange": "Ludzie i zmiana",
+        "peopleChangeDesc": "Luki w odpowiedzialności, mapowanie interesariuszy i komunikacja."
+      },
+      "decision": {
+        "approved": "Decyzja zatwierdzona",
+        "rejected": "Decyzja odrzucona",
+        "approvedBadge": "ZATWIERDZONA",
+        "rejectedBadge": "ODRZUCONA"
+      },
+      "ai": {
+        "suggest": "AI — jak tym zarządzić?"
+      }
+    },
+    "rollout": {
+      "tabLabel": "Wdrożenie",
+      "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+      "loadErrorTitle": "Nie udało się wczytać danych wdrożenia",
+      "loadErrorMessage": "Wystąpił błąd podczas wczytywania zasobów wdrożenia. Spróbuj ponownie.",
+      "teresaTitle": "Teresa — wdrożenie zagrożone",
+      "teresaCta": "Sprawdź teraz",
+      "teresaGeneric": "wykryto sygnały realizacji",
+      "teresa": "Teresa wykrywa {{count}} aktywny/-e sygnał/-y ryzyka — {{topSignal}}. Sprawdź teraz.",
+      "teresaPrompt": "Przejrzyj aktywne sygnały ryzyka i opóźnień wdrożenia i zaproponuj działania zaradcze.",
+      "plan": {
+        "title": "Główny plan wdrożenia",
+        "subtitle": "Inicjatywy pogrupowane wg planowanego kwartału wdrożenia.",
+        "overloaded": "Przeciążony",
+        "unscheduled": "Niezaplanowane",
+        "empty": "Brak inicjatyw zaplanowanych do wdrożenia."
+      },
+      "kpi": {
+        "title": "Śledzenie KPI",
+        "subtitle": "Monitoruj operacyjne i finansowe wyniki wdrożenia.",
+        "add": "Dodaj KPI",
+        "empty": "Brak śledzonych KPI. Dodaj pierwszy wskaźnik, aby monitorować wyniki wdrożenia.",
+        "seedDemo": "Wczytaj przykład Atelier Toys",
+        "baseline": "Bazowa",
+        "current": "Obecna",
+        "target": "Cel"
+      },
+      "risks": {
+        "title": "Rejestr ryzyk",
+        "subtitle": "Śledź ryzyka wdrożenia, prawdopodobieństwo, wpływ i działania zaradcze.",
+        "add": "Dodaj ryzyko",
+        "empty": "Brak zarejestrowanych ryzyk.",
+        "col": {
+          "title": "Tytuł",
+          "probability": "Prawdopodobieństwo",
+          "impact": "Wpływ",
+          "status": "Status"
+        }
+      },
+      "change": {
+        "title": "Dziennik zmian",
+        "subtitle": "Dokumentuj i zatwierdzaj wnioski o zmianę wdrożenia.",
+        "add": "Dodaj zmianę",
+        "empty": "Brak zarejestrowanych wniosków o zmianę.",
+        "col": {
+          "title": "Tytuł",
+          "type": "Typ",
+          "status": "Status"
+        }
+      },
+      "closure": {
+        "title": "Lista zamknięcia",
+        "subtitle": "Przekazanie, akceptacja i działania zamknięcia projektu.",
+        "add": "Dodaj pozycję",
+        "empty": "Brak pozycji zamknięcia."
+      }
+    },
     "reporting": {
       "tasksTitle": "Zadania",
       "decisionsTitle": "Decyzje"

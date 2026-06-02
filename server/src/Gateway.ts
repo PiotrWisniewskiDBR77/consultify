@@ -103,6 +103,7 @@ import economicsRoutes from './routes/economics.routes.js';
 import enterprisePlatformRoutes from './routes/enterprise-platform.routes.js';
 import executionModulesRoutes from './routes/execution-modules.routes.js';
 import executionControlRoutes from './routes/executionControl.routes.js';
+import rolloutRoutes from './routes/rollout.routes.js';
 import executiveAggregateRoutes from './routes/executiveAggregate.routes.js';
 import externalAssessmentsRoutes from './routes/external-assessments.routes.js';
 import featureFlagsRoutes from './routes/featureFlags.routes.js';
@@ -783,6 +784,7 @@ export class ApiGateway {
       // PMO routes
       app.use('/api/roadmap', gatewayVerifyToken, trialEntryGuard, roadmapRoutes);
       app.use('/api/execution', executionRoutes);
+      app.use('/api/rollout', rolloutRoutes);
       mountStub('/api/stabilization', stabilizationRoutes, 'stabilizationRoutes');
       app.use('/api/decisions', decisionsRoutes);
       app.use('/api/stage-gates', stageGatesRoutes);

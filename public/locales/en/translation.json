@@ -2635,6 +2635,95 @@
       "reports": "Reporting",
       "peopleChange": "Management"
     },
+    "manager": {
+      "noInitiatives": "No executing initiatives",
+      "noInitiativesDesc": "The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.",
+      "actionApplied": "Action applied",
+      "actionFailed": "Action failed",
+      "preset": {
+        "peopleChange": "People & Change"
+      },
+      "tile": {
+        "actionQueue": "Action Queue",
+        "actionQueueDesc": "Tasks, decisions, and escalations requiring your attention.",
+        "decisions": "Decisions & Approvals",
+        "decisionsDesc": "Pending and overdue decisions blocking downstream work.",
+        "blockers": "Blockers & Escalations",
+        "blockersDesc": "Blocked initiatives, critical risks, and recovery actions.",
+        "workload": "Resource & Workload",
+        "workloadDesc": "Per-person task load, utilization, and capacity gaps.",
+        "risk": "Execution Risk",
+        "riskDesc": "Risk signals, delay detection, and intervention suggestions.",
+        "peopleChange": "People & Change",
+        "peopleChangeDesc": "Ownership gaps, stakeholder mapping, and communication."
+      },
+      "decision": {
+        "approved": "Decision approved",
+        "rejected": "Decision rejected",
+        "approvedBadge": "APPROVED",
+        "rejectedBadge": "REJECTED"
+      },
+      "ai": {
+        "suggest": "AI — How to manage this?"
+      }
+    },
+    "rollout": {
+      "tabLabel": "Rollout",
+      "saveFailed": "Failed to save. Please try again.",
+      "loadErrorTitle": "Could not load rollout data",
+      "loadErrorMessage": "Something went wrong while loading rollout resources. Please try again.",
+      "teresaTitle": "Teresa — rollout at risk",
+      "teresaCta": "Review now",
+      "teresaGeneric": "delivery signals detected",
+      "teresa": "Teresa detects {{count}} active risk signal(s) — {{topSignal}}. Review now.",
+      "teresaPrompt": "Review the active rollout risk and delay signals and propose mitigations.",
+      "plan": {
+        "title": "Master Rollout Plan",
+        "subtitle": "Initiatives grouped by planned rollout quarter.",
+        "overloaded": "Overloaded",
+        "unscheduled": "Unscheduled",
+        "empty": "No initiatives scheduled for rollout yet."
+      },
+      "kpi": {
+        "title": "KPI Tracking",
+        "subtitle": "Monitor operational and financial rollout performance.",
+        "add": "Add KPI",
+        "empty": "No KPIs tracked yet. Add your first KPI to start monitoring rollout performance.",
+        "seedDemo": "Load Atelier Toys example",
+        "baseline": "Baseline",
+        "current": "Current",
+        "target": "Target"
+      },
+      "risks": {
+        "title": "Risk Register",
+        "subtitle": "Track rollout risks, likelihood, impact, and mitigation.",
+        "add": "Add Risk",
+        "empty": "No risks logged.",
+        "col": {
+          "title": "Title",
+          "probability": "Probability",
+          "impact": "Impact",
+          "status": "Status"
+        }
+      },
+      "change": {
+        "title": "Change Log",
+        "subtitle": "Document and approve rollout change requests.",
+        "add": "Add Change",
+        "empty": "No change requests logged.",
+        "col": {
+          "title": "Title",
+          "type": "Type",
+          "status": "Status"
+        }
+      },
+      "closure": {
+        "title": "Closure Checklist",
+        "subtitle": "Handover, sign-off, and project closure actions.",
+        "add": "Add Item",
+        "empty": "No closure items yet."
+      }
+    },
     "reporting": {
       "tasksTitle": "Tasks",
       "decisionsTitle": "Decisions"

@@ -102,9 +102,6 @@ const FullExecutionView = React.lazy(() =>
 const ImplementationView = React.lazy(() =>
   import('@/views/ImplementationView').then((m) => ({ default: m.ImplementationView }))
 );
-const FullRolloutView = React.lazy(() =>
-  import('@/views/FullRolloutView').then((m) => ({ default: m.FullRolloutView }))
-);
 const ReportBuilderView = React.lazy(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
 );
@@ -1911,23 +1908,16 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        {/* Rollout consolidated into ExecutionHub as a tab (Module 06 Realizacja).
+            Legacy FullRolloutView + SplitLayout retired — redirect to the tab. */}
         <Route
           path={ROUTES.ROLLOUT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Rollout']}>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Implementation"
-              >
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                      <FullRolloutView />
-                    </Suspense>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <RedirectWithTracking
+              from={ROUTES.ROLLOUT}
+              to={`${ROUTES.EXECUTION}?tab=rollout`}
+              reason="rollout_consolidated_into_execution_hub"
+            />
           }
         />
         {/* Reports & Presentations — unified V3 hub (V3-J01) */}

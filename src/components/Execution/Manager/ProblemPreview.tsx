@@ -6,7 +6,7 @@
  * Footer: action buttons matching the problem's actions list
  */
 
-import { ChevronRight, ExternalLink, Info, Link2, X } from 'lucide-react';
+import { CheckCircle2, ChevronRight, ExternalLink, Info, Link2, X, XCircle } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +17,8 @@ interface ProblemPreviewProps {
   onAction: (action: ProblemAction) => void;
   onClose: () => void;
   onOpenEntity?: (type: string, id: string) => void;
+  /** Read-back state after a manager decision write-back (P0-7). */
+  confirmedOutcome?: 'approved' | 'rejected';
 }
 
 const SEVERITY_COLORS: Record<
@@ -77,7 +79,13 @@ function ActionButton({ action, onClick }: { action: ProblemAction; onClick: () 
   );
 }
 
-export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: ProblemPreviewProps) {
+export function ProblemPreview({
+  problem,
+  onAction,
+  onClose,
+  onOpenEntity,
+  confirmedOutcome,
+}: ProblemPreviewProps) {
   const { t } = useTranslation();
   const sev = SEVERITY_COLORS[problem.severity];
   const typeLabel = problem.problemType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -219,15 +227,33 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
         )}
       </div>
 
-      {/* ─── Footer — Actions ─── */}
-      {problem.actions.length > 0 && (
+      {/* ─── Footer — Confirmed read-back badge OR Actions ─── */}
+      {confirmedOutcome ? (
         <div className="p-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
-          <div className="flex flex-wrap gap-2">
-            {problem.actions.map((action) => (
-              <ActionButton key={action.id} action={action} onClick={() => onAction(action)} />
-            ))}
-          </div>
+          <span
+            data-testid="decision-confirmed-badge"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
+              confirmedOutcome === 'approved'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                : 'bg-crimson-50 text-crimson-700 dark:bg-crimson-900/30 dark:text-crimson-300'
+            }`}
+          >
+            {confirmedOutcome === 'approved' ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+            {confirmedOutcome === 'approved'
+              ? t('execution.manager.decision.approvedBadge', 'APPROVED')
+              : t('execution.manager.decision.rejectedBadge', 'REJECTED')}
+          </span>
         </div>
+      ) : (
+        problem.actions.length > 0 && (
+          <div className="p-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+            <div className="flex flex-wrap gap-2">
+              {problem.actions.map((action) => (
+                <ActionButton key={action.id} action={action} onClick={() => onAction(action)} />
+              ))}
+            </div>
+          </div>
+        )
       )}
     </div>
   );

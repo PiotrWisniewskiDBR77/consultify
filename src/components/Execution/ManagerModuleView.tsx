@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 
+import { Api } from '../../services/api';
 import {
   V8ExecutionControlApi,
   type V8ManagerProblemRow,
@@ -149,6 +150,10 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
   const { t } = useTranslation();
   const { rows, loading, refresh } = useManagerProblems(moduleId, projectId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Read-back state for manager decision approvals: decisionId -> outcome.
+  const [decisionOutcomes, setDecisionOutcomes] = useState<Record<string, 'approved' | 'rejected'>>(
+    {}
+  );
 
   // workspace panel state
   const [workspaceMode, setWorkspaceMode] = useState<ManagementWorkspaceMode | null>(null);
@@ -235,6 +240,32 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
     async (row: ManagerProblemRow, action: ProblemAction) => {
       if (action.id === 'open_entity') {
         onOpenEntity?.(row.sourceEntityType, row.sourceEntityId);
+        return;
+      }
+
+      // Manager approval write-back: decision approve/reject posts directly to the
+      // decisions API and surfaces a confirmed read-back badge (P0-7).
+      if (
+        row.sourceEntityType === 'DECISION' &&
+        (action.id === 'approve' || action.id === 'reject')
+      ) {
+        const outcome = action.id === 'approve' ? 'approved' : 'rejected';
+        try {
+          await Api.decideDecision(row.sourceEntityId, outcome);
+          setDecisionOutcomes((prev) => ({ ...prev, [row.sourceEntityId]: outcome }));
+          toast.success(
+            outcome === 'approved'
+              ? t('execution.manager.decision.approved', 'Decision approved')
+              : t('execution.manager.decision.rejected', 'Decision rejected')
+          );
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message
+              ? error.message
+              : t('execution.manager.actionFailed', 'Action failed');
+          toast.error(message);
+        }
+        refresh();
         return;
       }
 
@@ -348,6 +379,11 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
               onAction={handlePreviewAction}
               onClose={() => setSelectedId(null)}
               onOpenEntity={onOpenEntity}
+              confirmedOutcome={
+                selectedProblem.sourceEntityType === 'DECISION'
+                  ? decisionOutcomes[selectedProblem.sourceEntityId]
+                  : undefined
+              }
             />
             {/* AI Suggest button at bottom of preview */}
             <div className="shrink-0 border-t border-slate-200 dark:border-navy-700 px-3 py-2">
