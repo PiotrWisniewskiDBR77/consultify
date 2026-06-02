@@ -119,12 +119,25 @@ class UnifiedExportService {
     return Buffer.from(buffer);
   }
 
-  async exportPptx(src: ExportSource): Promise<Buffer> {
+  /**
+   * Low-level, layout-agnostic PPTX primitive: the pptxgenjs "import → new →
+   * write nodebuffer" plumbing. Callers build their own slides via build(pptx)
+   * (they may set pptx.layout, use pptx.ShapeType, addSlide, etc.). Simple-tier
+   * deck generators can adopt this without changing their layout.
+   */
+  async renderPptx(build: (pptx: any) => void): Promise<Buffer> {
     const module = await import('pptxgenjs');
     const PptxGenJS = (module.default || module) as any;
     const pptx = new PptxGenJS();
-    pptx.author = src.author || 'Business Work Canvas';
-    const slides =
+    build(pptx);
+    const output = await pptx.write({ outputType: 'nodebuffer' });
+    return Buffer.from(output);
+  }
+
+  async exportPptx(src: ExportSource): Promise<Buffer> {
+    return this.renderPptx((pptx) => {
+      pptx.author = src.author || 'Business Work Canvas';
+      const slides =
       src.slides && src.slides.length
         ? src.slides
         : [{ title: src.title, body: src.markdown }];
@@ -147,9 +160,8 @@ class UnifiedExportService {
         fontSize: 8,
         color: '64748B',
       });
+      });
     });
-    const output = await pptx.write({ outputType: 'nodebuffer' });
-    return Buffer.from(output);
   }
 }
 

@@ -30,4 +30,18 @@ describe('generatePartnerToolkitResourceFile (PDF path)', () => {
     expect(res.mimeType).toBe('application/pdf');
     expect(res.buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
+
+  it('generates a valid sales-deck PPTX (zip)', async () => {
+    const res = await generatePartnerToolkitResourceFile({
+      fileKey: 'generated:sales_deck',
+      language: 'en',
+    });
+    expect(res.mimeType).toBe(
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
+    expect(res.buffer.length).toBeGreaterThan(500);
+    // OpenXML (pptx) is a zip — starts with "PK".
+    expect(res.buffer[0]).toBe(0x50);
+    expect(res.buffer[1]).toBe(0x4b);
+  });
 });

@@ -2,7 +2,6 @@ import fs from 'fs';
 import JSZip from 'jszip';
 import path from 'path';
 import PDFDocument from 'pdfkit';
-import PptxGenJS from 'pptxgenjs';
 
 import { unifiedExportService } from './export/UnifiedExportService.js';
 
@@ -104,8 +103,10 @@ export async function generatePartnerToolkitResourceFile(params: {
   }
 
   if (fileKey === 'generated:sales_deck') {
-    const pptx = new (PptxGenJS as any)();
-    pptx.layout = 'LAYOUT_WIDE';
+    // Plumbing shared via the unified renderPptx primitive (system-unification
+    // #5); the deck layout below is unchanged.
+    const buffer = await unifiedExportService.renderPptx((pptx: any) => {
+      pptx.layout = 'LAYOUT_WIDE';
 
     const title =
       language === 'pl' ? 'Consultify — Deck partnerski' : 'Consultify — Partner Sales Deck';
@@ -176,7 +177,7 @@ export async function generatePartnerToolkitResourceFile(params: {
       valign: 'top',
     });
 
-    const buffer = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
+    });
     return {
       buffer,
       fileName:
