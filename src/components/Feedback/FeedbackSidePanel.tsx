@@ -1,4 +1,3 @@
-import TeresaMark from '../shared/TeresaMark';
 // @ts-nocheck
 /**
  * FeedbackSidePanel - Enterprise SaaS Feedback System
@@ -10,8 +9,31 @@ import TeresaMark from '../shared/TeresaMark';
  * - Smart suggestions based on context
  * - Analytics integration
  */
-
-import { AlertTriangle, BarChart3, Bug, CheckCircle2, ChevronRight, Frown, Lightbulb, Loader2, MapPin, Meh, MessageSquareWarning, Monitor, Paperclip, Send, Smile, Sparkles, Star, ThumbsDown, ThumbsUp, TrendingUp, Upload, X, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Bug,
+  CheckCircle2,
+  ChevronRight,
+  Frown,
+  Lightbulb,
+  Loader2,
+  MapPin,
+  Meh,
+  MessageSquareWarning,
+  Monitor,
+  Paperclip,
+  Send,
+  Smile,
+  Sparkles,
+  Star,
+  ThumbsDown,
+  ThumbsUp,
+  TrendingUp,
+  Upload,
+  X,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { buildFeedbackDossier } from '../../services/feedbackCollector';
 import { useAppStore } from '../../store/useAppStore';
+import TeresaMark from '../shared/TeresaMark';
 
 // ==================== TYPES ====================
 
@@ -269,7 +292,10 @@ export const FeedbackSidePanel: React.FC = () => {
   useEffect(() => {
     function onOpen() {
       try {
-        useAppStore.getState().openSidePanel?.('FEEDBACK');
+        const store = useAppStore.getState();
+        if (store.activeSidePanel !== 'FEEDBACK') {
+          store.toggleSidePanel('FEEDBACK');
+        }
       } catch {
         // ignore
       }
@@ -460,7 +486,9 @@ export const FeedbackSidePanel: React.FC = () => {
       await Api.sendFeedback({
         userId: currentUser?.id || undefined,
         userEmail: currentUser?.email || undefined,
-        userName: currentUser?.full_name || currentUser?.firstName,
+        userName:
+          [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ').trim() ||
+          undefined,
         type: reportType,
         title: reportTitle.trim() || undefined,
         message,
@@ -486,7 +514,10 @@ export const FeedbackSidePanel: React.FC = () => {
         consoleLogs: attachDiagnostics && dossier ? (dossier.consoleLogs as any) : undefined,
         networkErrors: attachDiagnostics && dossier ? (dossier.networkErrors as any) : undefined,
         breadcrumbs: attachDiagnostics && dossier ? (dossier.breadcrumbs as any) : undefined,
-        lastUncaughtError: attachDiagnostics && dossier ? dossier.lastUncaughtError : undefined,
+        lastUncaughtError:
+          attachDiagnostics && dossier
+            ? ((dossier.lastUncaughtError as Record<string, unknown> | null) ?? undefined)
+            : undefined,
         // Feedback #00835312 — user-uploaded image wins over the
         // auto-captured viewport so a tester who pastes / uploads their
         // own annotated screenshot always sees it travel with the

@@ -1,4 +1,3 @@
-import TeresaMark from '../shared/TeresaMark';
 /**
  * NotificationDetailView
  * Full-page notification detail view with N / C presentation modes.
@@ -7,10 +6,40 @@ import TeresaMark from '../shared/TeresaMark';
  *
  * @see docs/ui-standards/01-shell-layout/presentation-modes.md
  */
-
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertCircle, AlertTriangle, Bell, BellOff, BookOpen, Check, CheckSquare, ChevronDown, ChevronLeft, Clock, Copy, CreditCard, ExternalLink, FileText, Flag, FolderOpen, History, Info, Loader2, MailOpen, Megaphone, MessageCircle, MessageSquare, Monitor, Scale, Sparkles, Target, Trash2, Users, Zap } from 'lucide-react';
+  AlertCircle,
+  AlertTriangle,
+  Bell,
+  BellOff,
+  BookOpen,
+  Bot,
+  Check,
+  CheckSquare,
+  ChevronDown,
+  ChevronLeft,
+  Clock,
+  Copy,
+  CreditCard,
+  ExternalLink,
+  FileText,
+  Flag,
+  FolderOpen,
+  History,
+  Info,
+  Loader2,
+  MailOpen,
+  Megaphone,
+  MessageCircle,
+  MessageSquare,
+  Monitor,
+  Scale,
+  Sparkles,
+  Target,
+  Trash2,
+  Users,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +63,7 @@ import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModePropertiesStrip } from '../shared/NModeLayout/NModePropertiesStrip';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
+import TeresaMark from '../shared/TeresaMark';
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -1646,7 +1676,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
               {!aiAnalysis && (
                 <div className="py-10 text-center">
-                  <TeresaMark size={28} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                  <TeresaMark
+                    size={28}
+                    className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                  />
                   <p className="text-sm text-slate-400 dark:text-slate-500">
                     {isPolish ? 'Brak danych do analizy' : 'No data for analysis'}
                   </p>
@@ -2602,7 +2635,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-indigo-500/10 dark:from-primary-500/20 dark:to-indigo-500/20">
-                          <TeresaMark size={18} className="text-primary-500 dark:text-primary-400" />
+                          <TeresaMark
+                            size={18}
+                            className="text-primary-500 dark:text-primary-400"
+                          />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                           {isPolish ? 'Analiza AI' : 'AI Analysis'}

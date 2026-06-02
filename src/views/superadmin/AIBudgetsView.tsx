@@ -1,16 +1,29 @@
-import TeresaMark from '../../components/shared/TeresaMark';
 /**
  * AI Budgets View
  *
  * Dashboard for managing AI spending budgets, alerts, and model permissions.
  * Enterprise-grade cost control for AI features.
  */
-
-import { AlertTriangle, Bell, Check, Clock, DollarSign, Plus, RefreshCw, Target, Trash2, TrendingUp, X, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  Bell,
+  Bot,
+  Check,
+  Clock,
+  DollarSign,
+  Plus,
+  RefreshCw,
+  Target,
+  Trash2,
+  TrendingUp,
+  X,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import TeresaMark from '../../components/shared/TeresaMark';
 import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 

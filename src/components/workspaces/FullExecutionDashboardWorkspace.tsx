@@ -1,7 +1,20 @@
-import TeresaMark from '../shared/TeresaMark';
 // import { translations } from '../translations';
 import {
-  Activity, AlertTriangle, ArrowRight, BarChart3, CheckCircle2, Clock, Download, FileText, LayoutDashboard, ListChecks, Shield, TrendingUp, Zap } from 'lucide-react';
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  Bot,
+  CheckCircle2,
+  Clock,
+  Download,
+  FileText,
+  LayoutDashboard,
+  ListChecks,
+  Shield,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { useAppStore } from '../../store/useAppStore';
@@ -9,6 +22,7 @@ import { FullInitiative, FullSession, Language } from '../../types';
 import { BenefitsTracker } from '../Execution/BenefitsTracker';
 import { CorrectiveActions } from '../Execution/CorrectiveActions';
 import { KPIDashboard } from '../Execution/KPIDashboard';
+import TeresaMark from '../shared/TeresaMark';
 import { Button } from '../ui/primitives/Button';
 // import { exportReportToPDF } from '../../services/pdf/pdfExport';
 import { AIInsightFeed } from './AIInsightFeed';
