@@ -2489,6 +2489,16 @@
     "back": "Wstecz"
   },
   "help": {
+    "onboarding": {
+      "cta": {
+        "toast": {
+          "title": "Rozpocznij wdrożenie",
+          "body": "Wybierz ścieżkę „Pierwsze 30 minut”, aby szybko uzyskać pierwszą wartość — bez ścian tekstu, tylko kroki i bezpośrednie linki.",
+          "later": "Później",
+          "start": "Otwórz wprowadzenie"
+        }
+      }
+    },
     "microVideo": {
       "header": "Szybki samouczek",
       "watch": "Obejrzyj",

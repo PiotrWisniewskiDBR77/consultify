@@ -3,6 +3,7 @@
  * API endpoints for settings including user preferences
  */
 
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { Response, Router } from 'express';
 
@@ -2308,21 +2309,15 @@ router.post(
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
     if (!provider) return res.status(400).json({ error: 'provider required' });
 
-    const connections = await loadCalendarConnections(userId);
-    const now = new Date().toISOString();
-    const updated = connections.filter((c) => c.provider !== provider);
-    updated.push({
-      provider,
-      connected: true,
-      externalEmail: req.user?.email || 'user@example.com',
-      calendarName: 'Primary',
-      lastSyncAt: now,
-      syncTasks: true,
-      syncMeetings: true,
+    // Real calendar OAuth is not implemented yet. Previously this endpoint faked a
+    // successful connection (wrote connected: true with authUrl: null), which misled
+    // the UI into showing a working integration. Until a genuine OAuth flow exists,
+    // do NOT pretend the calendar connected — report that the feature is unavailable.
+    return res.status(501).json({
+      success: false,
+      available: false,
+      error: 'Calendar integrations are not available yet.',
     });
-    await saveCalendarConnections(userId, updated);
-
-    return res.json({ success: true, authUrl: null });
   })
 );
 
@@ -3007,9 +3002,23 @@ router.post(
       return res.status(400).json({ error: 'A deletion request is already pending' });
     }
 
-    // In production, verify password here
-    // const user = await dbGet('SELECT password_hash FROM users WHERE id = ?', [userId]);
-    // const isValid = await bcrypt.compare(password, user.password_hash);
+    // Verify the user's password before scheduling an irreversible account deletion.
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Password is required to confirm account deletion' });
+    }
+
+    const user = await dbGet<{ id: string; password: string }>(
+      'SELECT id, password FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (!user || !user.password) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!bcrypt.compareSync(password, user.password)) {
+      return res.status(403).json({ error: 'Password is incorrect' });
+    }
 
     const { v4: uuidv4 } = await import('uuid');
     const requestId = uuidv4();

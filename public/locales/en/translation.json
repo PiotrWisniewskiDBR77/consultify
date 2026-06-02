@@ -3022,6 +3022,16 @@
     "back": "Back"
   },
   "help": {
+    "onboarding": {
+      "cta": {
+        "toast": {
+          "title": "Start onboarding",
+          "body": "Take the “First 30 minutes” path to reach your first value fast — no walls of text, just steps and deep links.",
+          "later": "Later",
+          "start": "Open intro"
+        }
+      }
+    },
     "microVideo": {
       "header": "Quick Tutorial",
       "watch": "Watch",
