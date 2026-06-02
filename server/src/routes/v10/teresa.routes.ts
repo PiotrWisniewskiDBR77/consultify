@@ -2,6 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import {
+  mintGeminiLiveEphemeralToken,
+  resolveGeminiLiveServerKey,
+} from '../../services/ai/geminiLiveTokenService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
@@ -30,23 +34,22 @@ const TeresaVoiceEventSchema = z.object({
 router.get(
   '/voice-config',
   verifyToken,
-  asyncHandler(async (_req, res) => {
-    const hasServerKey = Boolean(
-      String(
-        process.env.GEMINI_LIVE_API_KEY ||
-          process.env.GEMINI_API_KEY ||
-          process.env.GOOGLE_AI_API_KEY ||
-          ''
-      ).trim()
-    );
-    const clientToken = String(process.env.GEMINI_LIVE_EPHEMERAL_TOKEN || '').trim();
+  asyncHandler(async (req: any, res) => {
+    const hasServerKey = Boolean(resolveGeminiLiveServerKey());
     const voiceName = String(process.env.TERESA_VOICE_NAME || 'Kore').trim() || 'Kore';
     const model =
       String(process.env.TERESA_VOICE_MODEL || '').trim() ||
       'gemini-2.5-flash-native-audio-preview-09-2025';
     const enabledByFlag =
       String(process.env.TERESA_VOICE_ENABLED || 'true').toLowerCase() !== 'false';
-    const enabled = Boolean(clientToken) && enabledByFlag;
+    const session =
+      hasServerKey && enabledByFlag
+        ? await mintGeminiLiveEphemeralToken({
+            assistant: 'teresa',
+            subjectKey: String(req.userId || req.user?.id || req.organizationId || 'unknown'),
+          })
+        : null;
+    const enabled = Boolean(session) && enabledByFlag;
 
     return res.json({
       assistant: 'teresa',
@@ -55,13 +58,7 @@ router.get(
       enabled,
       model,
       voiceName,
-      session: enabled
-        ? {
-            clientToken,
-            tokenType: 'ephemeral',
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-          }
-        : null,
+      session: enabled ? session : null,
       unavailableReason: enabled
         ? null
         : !enabledByFlag

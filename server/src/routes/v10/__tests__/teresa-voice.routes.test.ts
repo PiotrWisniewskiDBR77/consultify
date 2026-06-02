@@ -15,8 +15,11 @@ type MockAuthRequest = {
   };
 };
 
-const { loggerInfoMock } = vi.hoisted(() => ({
+const { loggerInfoMock, mintGeminiLiveEphemeralTokenMock, resolveGeminiLiveServerKeyMock } =
+  vi.hoisted(() => ({
   loggerInfoMock: vi.fn(),
+  mintGeminiLiveEphemeralTokenMock: vi.fn(),
+  resolveGeminiLiveServerKeyMock: vi.fn(),
 }));
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
@@ -44,6 +47,11 @@ vi.mock('../../../utils/Logger.js', () => ({
   },
 }));
 
+vi.mock('../../../services/ai/geminiLiveTokenService.js', () => ({
+  mintGeminiLiveEphemeralToken: mintGeminiLiveEphemeralTokenMock,
+  resolveGeminiLiveServerKey: resolveGeminiLiveServerKeyMock,
+}));
+
 import router from '../teresa-voice.routes.js';
 
 function createApp() {
@@ -58,46 +66,56 @@ describe('v10 teresa voice routes', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     loggerInfoMock.mockReset();
+    mintGeminiLiveEphemeralTokenMock.mockReset();
+    resolveGeminiLiveServerKeyMock.mockReset();
   });
 
   it('returns disabled voice config when GEMINI_API_KEY is missing', async () => {
-    vi.stubEnv('GEMINI_API_KEY', '');
     vi.stubEnv('TERESA_VOICE_NAME', '');
+    resolveGeminiLiveServerKeyMock.mockReturnValue('');
 
     const res = await request(createApp()).get('/api/v10/teresa/voice-config');
 
     expect(res.status).toBe(200);
     expect(res.body.enabled).toBe(false);
-    expect(res.body.apiKey).toBeNull();
+    expect(res.body).not.toHaveProperty('apiKey');
+    expect(res.body.session).toBeNull();
     expect(res.body.voiceName).toBeNull();
   });
 
-  it('returns enabled voice config when GEMINI_API_KEY is present', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'gem-key-123');
+  it('returns enabled voice config when a server-minted ephemeral token is present', async () => {
     vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'short-lived-client-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const res = await request(createApp()).get('/api/v10/teresa/voice-config');
 
     expect(res.status).toBe(200);
     expect(res.body.enabled).toBe(true);
-    expect(res.body.apiKey).toBe('gem-key-123');
+    expect(res.body).not.toHaveProperty('apiKey');
+    expect(res.body.session).toEqual(
+      expect.objectContaining({
+        clientToken: 'short-lived-client-token',
+        tokenType: 'ephemeral',
+      })
+    );
     expect(res.body.voiceName).toBe('Kore');
   });
 
-  it('strips leading zero-width characters from GEMINI_API_KEY', async () => {
-    vi.stubEnv('GEMINI_API_KEY', '\u200bgem-key-123');
-    vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
-
-    const res = await request(createApp()).get('/api/v10/teresa/voice-config');
-
-    expect(res.status).toBe(200);
-    expect(res.body.enabled).toBe(true);
-    expect(res.body.apiKey).toBe('gem-key-123');
-  });
-
   it('strips leading zero-width characters from TERESA_VOICE_NAME', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'gem-key-123');
     vi.stubEnv('TERESA_VOICE_NAME', '\u200bKore');
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'short-lived-client-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const res = await request(createApp()).get('/api/v10/teresa/voice-config');
 
@@ -106,8 +124,14 @@ describe('v10 teresa voice routes', () => {
   });
 
   it('sets no-store cache headers for voice-config response', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'gem-key-123');
     vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'short-lived-client-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const res = await request(createApp()).get('/api/v10/teresa/voice-config');
 
@@ -116,90 +140,19 @@ describe('v10 teresa voice routes', () => {
     expect(res.headers.pragma).toBe('no-cache');
   });
 
-  it('returns disabled voice config when GEMINI_API_KEY is placeholder', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'YOUR_GEMINI_API_KEY_HERE');
-    vi.stubEnv('TERESA_VOICE_NAME', '');
+  it('does not expose a long-lived server key when ephemeral minting fails', async () => {
+    vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue(null);
 
     const res = await request(createApp()).get('/api/v10/teresa/voice-config');
 
     expect(res.status).toBe(200);
     expect(res.body.enabled).toBe(false);
-    expect(res.body.apiKey).toBeNull();
-  });
-
-  it('treats placeholder markers case-insensitively in GEMINI_API_KEY', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'MY-PLACEHOLDER-KEY');
-    vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
-
-    const res = await request(createApp()).get('/api/v10/teresa/voice-config');
-
-    expect(res.status).toBe(200);
-    expect(res.body.enabled).toBe(false);
-    expect(res.body.apiKey).toBeNull();
-  });
-
-  it('returns enabled voice config when only GOOGLE_AI_API_KEY is present', async () => {
-    vi.stubEnv('GEMINI_API_KEY', '');
-    vi.stubEnv('GOOGLE_AI_API_KEY', 'google-ai-only-key');
-    vi.stubEnv('GOOGLE_API_KEY', '');
-    vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
-
-    const res = await request(createApp()).get('/api/v10/teresa/voice-config');
-
-    expect(res.status).toBe(200);
-    expect(res.body.enabled).toBe(true);
-    expect(res.body.apiKey).toBe('google-ai-only-key');
+    expect(res.body).not.toHaveProperty('apiKey');
+    expect(res.body.session).toBeNull();
     expect(res.body.voiceName).toBe('Kore');
-  });
-
-  it('falls back to GOOGLE_AI_API_KEY when GEMINI_API_KEY is whitespace-only', async () => {
-    vi.stubEnv('GEMINI_API_KEY', '   \n');
-    vi.stubEnv('GOOGLE_AI_API_KEY', 'google-ai-fallback-key');
-    vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
-
-    const res = await request(createApp()).get('/api/v10/teresa/voice-config');
-
-    expect(res.status).toBe(200);
-    expect(res.body.enabled).toBe(true);
-    expect(res.body.apiKey).toBe('google-ai-fallback-key');
-  });
-
-  it('falls back to GOOGLE_AI_API_KEY when GEMINI_API_KEY is placeholder', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'YOUR_GEMINI_API_KEY_HERE');
-    vi.stubEnv('GOOGLE_AI_API_KEY', 'google-ai-fallback-key');
-    vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
-
-    const res = await request(createApp()).get('/api/v10/teresa/voice-config');
-
-    expect(res.status).toBe(200);
-    expect(res.body.enabled).toBe(true);
-    expect(res.body.apiKey).toBe('google-ai-fallback-key');
-  });
-
-  it('returns disabled voice config when only GOOGLE_API_KEY is present', async () => {
-    vi.stubEnv('GEMINI_API_KEY', '');
-    vi.stubEnv('GOOGLE_AI_API_KEY', '');
-    vi.stubEnv('GOOGLE_API_KEY', 'google-api-only-key');
-    vi.stubEnv('TERESA_VOICE_NAME', '');
-
-    const res = await request(createApp()).get('/api/v10/teresa/voice-config');
-
-    expect(res.status).toBe(200);
-    expect(res.body.enabled).toBe(false);
-    expect(res.body.apiKey).toBeNull();
-    expect(res.body.voiceName).toBeNull();
-  });
-
-  it('prefers GEMINI_API_KEY when both Gemini env vars are set', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'gemini-wins');
-    vi.stubEnv('GOOGLE_AI_API_KEY', 'google-ai-loses');
-    vi.stubEnv('TERESA_VOICE_NAME', 'Kore');
-
-    const res = await request(createApp()).get('/api/v10/teresa/voice-config');
-
-    expect(res.status).toBe(200);
-    expect(res.body.enabled).toBe(true);
-    expect(res.body.apiKey).toBe('gemini-wins');
+    expect(res.body.unavailableReason).toBe('server_voice_proxy_required');
   });
 
   it('accepts voice-event telemetry payloads', async () => {

@@ -2,7 +2,6 @@ import { Menu, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import {
   AdminSettingsSection,
@@ -14,14 +13,13 @@ import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
-import { OrganizationContextWorkerOperationsView } from './OrganizationContextWorkerOperationsView';
 
 interface AdminSettingsModuleProps {
   initialTab?: AdminSettingsSection;
   currentUser: User;
 }
 
-const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people', 'billing', 'operations'];
+const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people'];
 
 const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
   people: {
@@ -29,12 +27,12 @@ const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: stri
     subtitle: 'Membership operations, role changes, ownership transfer, and team invite codes.',
   },
   billing: {
-    title: 'Billing & FinOps',
-    subtitle: 'Subscription, invoices, payment methods, and spend governance for your workspace.',
+    title: 'Team & Access',
+    subtitle: 'Membership operations, role changes, ownership transfer, and team invite codes.',
   },
   operations: {
-    title: 'Operations',
-    subtitle: 'Worker queues, processing jobs, and explicit operational controls.',
+    title: 'Team & Access',
+    subtitle: 'Membership operations, role changes, ownership transfer, and team invite codes.',
   },
 };
 
@@ -46,11 +44,11 @@ const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
   people: 'people',
   access: 'people',
   security: 'people',
-  billing: 'billing',
+  billing: 'people',
   ai: 'people',
   integrations: 'people',
   audit: 'people',
-  operations: 'operations',
+  operations: 'people',
   worker: 'operations',
   workers: 'operations',
   queue: 'operations',
@@ -111,9 +109,9 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       case 'people':
         return <AdminMembersRolesPanel />;
       case 'billing':
-        return <AdminBillingFinOpsPanel />;
+        return <AdminMembersRolesPanel />;
       case 'operations':
-        return <OrganizationContextWorkerOperationsView />;
+        return <AdminMembersRolesPanel />;
       default:
         return <AdminMembersRolesPanel />;
     }

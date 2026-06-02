@@ -1007,7 +1007,10 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         throw new Error('AudioContext unavailable');
       }
 
-      const ai = new GoogleGenAI({ apiKey: voiceApiKey });
+      const ai = new GoogleGenAI({
+        apiKey: voiceApiKey,
+        httpOptions: { apiVersion: 'v1alpha' },
+      });
       const audioContext = new AudioContextCtor({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
       nextPlayTimeRef.current = audioContext.currentTime;

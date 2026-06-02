@@ -281,11 +281,14 @@ router.get(
       // accepted by auth middleware only when E2E_MODE=true. In that mode
       // we return a valid user payload directly from the decoded token.
       if (process.env.E2E_MODE === 'true' && req.user && (req.user as any).id) {
+        const e2eRole = String(req.userRole || (req.user as any).role || 'ADMIN').toUpperCase();
         return res.json({
           user: {
             id: req.user.id,
             email: req.user.email || 'e2e@local.test',
-            role: (req.user as any).role || 'ADMIN',
+            // Preserve raw persona role in E2E mode (e.g. SUPERADMIN),
+            // instead of mapped UI role labels like OWNER.
+            role: e2eRole,
             organizationId: req.organizationId || (req.user as any).organizationId || 'e2e-org-id',
             organizationName: 'E2E Organization',
             firstName: (req.user as any).name?.split?.(' ')?.[0] || 'E2E',

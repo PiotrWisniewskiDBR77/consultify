@@ -2,12 +2,22 @@ import express from 'express';
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const { mintGeminiLiveEphemeralTokenMock, resolveGeminiLiveServerKeyMock } = vi.hoisted(() => ({
+  mintGeminiLiveEphemeralTokenMock: vi.fn(),
+  resolveGeminiLiveServerKeyMock: vi.fn(),
+}));
+
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: any) => {
     req.userId = 'user-1';
     req.organizationId = 'org-1';
     next();
   },
+}));
+
+vi.mock('../../../services/ai/geminiLiveTokenService.js', () => ({
+  mintGeminiLiveEphemeralToken: mintGeminiLiveEphemeralTokenMock,
+  resolveGeminiLiveServerKey: resolveGeminiLiveServerKeyMock,
 }));
 
 const { default: teresaV10Routes } = await import('../teresa.routes.js');
@@ -20,31 +30,18 @@ function createApp() {
 }
 
 describe('V10 Teresa voice config', () => {
-  const originalGeminiLive = process.env.GEMINI_LIVE_API_KEY;
-  const originalGemini = process.env.GEMINI_API_KEY;
-  const originalGoogle = process.env.GOOGLE_AI_API_KEY;
   const originalEnabled = process.env.TERESA_VOICE_ENABLED;
-  const originalEphemeral = process.env.GEMINI_LIVE_EPHEMERAL_TOKEN;
 
   afterEach(() => {
-    if (originalGeminiLive === undefined) delete process.env.GEMINI_LIVE_API_KEY;
-    else process.env.GEMINI_LIVE_API_KEY = originalGeminiLive;
-    if (originalGemini === undefined) delete process.env.GEMINI_API_KEY;
-    else process.env.GEMINI_API_KEY = originalGemini;
-    if (originalGoogle === undefined) delete process.env.GOOGLE_AI_API_KEY;
-    else process.env.GOOGLE_AI_API_KEY = originalGoogle;
     if (originalEnabled === undefined) delete process.env.TERESA_VOICE_ENABLED;
     else process.env.TERESA_VOICE_ENABLED = originalEnabled;
-    if (originalEphemeral === undefined) delete process.env.GEMINI_LIVE_EPHEMERAL_TOKEN;
-    else process.env.GEMINI_LIVE_EPHEMERAL_TOKEN = originalEphemeral;
+    mintGeminiLiveEphemeralTokenMock.mockReset();
+    resolveGeminiLiveServerKeyMock.mockReset();
   });
 
   it('returns an explicit unavailable state when server-side voice key is missing', async () => {
-    delete process.env.GEMINI_LIVE_API_KEY;
-    delete process.env.GEMINI_API_KEY;
-    delete process.env.GOOGLE_AI_API_KEY;
     delete process.env.TERESA_VOICE_ENABLED;
-    delete process.env.GEMINI_LIVE_EPHEMERAL_TOKEN;
+    resolveGeminiLiveServerKeyMock.mockReturnValue('');
 
     const res = await request(createApp()).get('/api/v10/teresa/voice-config');
 
@@ -67,12 +64,15 @@ describe('V10 Teresa voice config', () => {
     );
   });
 
-  it('returns enabled workspace voice config from an ephemeral client token only', async () => {
-    process.env.GEMINI_LIVE_API_KEY = 'server-live-key';
-    process.env.GEMINI_LIVE_EPHEMERAL_TOKEN = 'short-lived-client-token';
-    delete process.env.GEMINI_API_KEY;
-    delete process.env.GOOGLE_AI_API_KEY;
+  it('returns enabled workspace voice config from a freshly minted ephemeral client token only', async () => {
     process.env.TERESA_VOICE_ENABLED = 'true';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-live-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'short-lived-client-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const res = await request(createApp()).get('/api/v10/teresa/voice-config');
 
@@ -93,14 +93,18 @@ describe('V10 Teresa voice config', () => {
         tokenType: 'ephemeral',
       })
     );
+    expect(mintGeminiLiveEphemeralTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assistant: 'teresa',
+        subjectKey: 'user-1',
+      })
+    );
   });
 
-  it('does not expose a long-lived server key when only server Gemini config exists', async () => {
-    process.env.GEMINI_LIVE_API_KEY = 'server-live-key';
-    delete process.env.GEMINI_LIVE_EPHEMERAL_TOKEN;
-    delete process.env.GEMINI_API_KEY;
-    delete process.env.GOOGLE_AI_API_KEY;
+  it('does not expose a long-lived server key when ephemeral minting fails', async () => {
     process.env.TERESA_VOICE_ENABLED = 'true';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-live-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue(null);
 
     const res = await request(createApp()).get('/api/v10/teresa/voice-config');
 

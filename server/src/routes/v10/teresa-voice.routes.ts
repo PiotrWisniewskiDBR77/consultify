@@ -3,6 +3,10 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import verifyToken, { requireOrganization } from '../../middleware/auth.middleware.js';
+import {
+  mintGeminiLiveEphemeralToken,
+  resolveGeminiLiveServerKey,
+} from '../../services/ai/geminiLiveTokenService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
@@ -20,26 +24,8 @@ const normalizeTelemetryField = (value: unknown): string => {
   return '';
 };
 
-const isPlaceholderApiKey = (value: string): boolean =>
-  value.startsWith('sk-demo-') ||
-  value.toLowerCase().includes('placeholder') ||
-  value === 'YOUR_GEMINI_API_KEY_HERE' ||
-  value === 'YOUR_OPENAI_API_KEY_HERE';
-
 const stripInvisibleFormatting = (value: string): string =>
   value.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
-
-const resolveVoiceApiKey = (): string => {
-  const candidates = [process.env.GEMINI_API_KEY, process.env.GOOGLE_AI_API_KEY];
-  for (const rawCandidate of candidates) {
-    const candidate = stripInvisibleFormatting(String(rawCandidate || ''));
-    if (!candidate || isPlaceholderApiKey(candidate)) {
-      continue;
-    }
-    return candidate;
-  }
-  return '';
-};
 
 const TELEMETRY_FIELD_MAX_LENGTH = 256;
 const capTelemetryField = (value: string): string =>
@@ -50,10 +36,16 @@ router.use(requireOrganization);
 
 router.get(
   '/voice-config',
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const apiKey = resolveVoiceApiKey();
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const hasServerKey = Boolean(resolveGeminiLiveServerKey());
     const voiceName = stripInvisibleFormatting(String(process.env.TERESA_VOICE_NAME || '')) || null;
-    const enabled = Boolean(apiKey);
+    const session = hasServerKey
+      ? await mintGeminiLiveEphemeralToken({
+          assistant: 'teresa',
+          subjectKey: String(req.userId || req.user?.id || req.organizationId || 'unknown'),
+        })
+      : null;
+    const enabled = Boolean(session);
 
     return res
       .status(200)
@@ -61,8 +53,13 @@ router.get(
       .set('Pragma', 'no-cache')
       .json({
         enabled,
-        apiKey: enabled ? apiKey : null,
+        session: enabled ? session : null,
         voiceName,
+        unavailableReason: enabled
+          ? null
+          : hasServerKey
+            ? 'server_voice_proxy_required'
+            : 'server_missing_gemini_live_key',
       });
   })
 );

@@ -22,6 +22,10 @@ import {
 import { getWorkerWithProfile } from '../services/ai/virtualWorkerService.js';
 import { buildWorkerWebAccessResult } from '../services/ai/virtualWorkerWebAccessService.js';
 import {
+  mintGeminiLiveEphemeralToken,
+  resolveGeminiLiveServerKey,
+} from '../services/ai/geminiLiveTokenService.js';
+import {
   PUBLIC_ANNA_FUNNEL_EVENT_NAMES,
   recordPublicAnnaFunnelEvent,
 } from '../services/annaAnalyticsService.js';
@@ -1188,12 +1192,8 @@ router.post(
 
 router.get(
   '/voice-config',
-  asyncHandler(async (_req, res: Response) => {
-    const hasServerKey = Boolean(
-      (process.env.ANNA_GEMINI_LIVE_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim() || '')
-        .length
-    );
-    const clientToken = String(process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN || '').trim();
+  asyncHandler(async (req, res: Response) => {
+    const hasServerKey = Boolean(resolveGeminiLiveServerKey());
     let voiceName: string | null = null;
     let workerVoiceEnabled = true;
 
@@ -1214,17 +1214,19 @@ router.get(
       // Worker table may not exist yet.
     }
 
+    const session =
+      hasServerKey && workerVoiceEnabled
+        ? await mintGeminiLiveEphemeralToken({
+            assistant: 'anna',
+            subjectKey: buildAnnaRateLimitKey(req),
+          })
+        : null;
+
     return res.json({
-      enabled: Boolean(clientToken) && workerVoiceEnabled,
+      enabled: Boolean(session) && workerVoiceEnabled,
       voiceName,
-      session: clientToken
-        ? {
-            clientToken,
-            tokenType: 'ephemeral',
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-          }
-        : null,
-      unavailableReason: clientToken
+      session,
+      unavailableReason: session
         ? null
         : hasServerKey
           ? 'server_voice_proxy_required'

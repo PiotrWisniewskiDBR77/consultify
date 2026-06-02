@@ -54,7 +54,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     onStatusChange,
   } = options;
 
-  const effectiveKey = apiKey || null;
+  const effectiveKey = typeof apiKey === 'string' && apiKey.trim() ? apiKey.trim() : null;
 
   const [voiceStatus, setVoiceStatus] = useState<TeresaVoiceStatus>('idle');
   const [voiceError, setVoiceError] = useState<string | null>(null);
@@ -133,6 +133,15 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     };
   }, [teardownVoice]);
 
+  useEffect(() => {
+    if (enabled) return;
+    attemptRef.current += 1;
+    setVoiceError(null);
+    setIsMuted(false);
+    updateStatus('idle');
+    void teardownVoice();
+  }, [enabled, teardownVoice, updateStatus]);
+
   const startVoiceConversation = useCallback(async () => {
     const token = attemptRef.current + 1;
     attemptRef.current = token;
@@ -157,7 +166,10 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     try {
       if (!AudioContextCtor) throw new Error('AudioContext unavailable');
 
-      const ai = new GoogleGenAI({ apiKey: effectiveKey });
+      const ai = new GoogleGenAI({
+        apiKey: effectiveKey,
+        httpOptions: { apiVersion: 'v1alpha' },
+      });
       const audioContext = new AudioContextCtor({
         sampleRate: TERESA_VOICE_CONFIG.sampleRateInput,
       });
@@ -206,11 +218,15 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               for (let i = 0; i < bytes.length; i++) {
                 binary += String.fromCharCode(bytes[i]);
               }
-              sessionRef.current?.sendRealtimeInput({
+              void Promise.resolve(
+                sessionRef.current?.sendRealtimeInput({
                 media: {
                   mimeType: `audio/pcm;rate=${TERESA_VOICE_CONFIG.sampleRateInput}`,
                   data: btoa(binary),
                 },
+                })
+              ).catch(() => {
+                /* Realtime send failures are surfaced by the Live API error callback. */
               });
             };
 
@@ -234,9 +250,8 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
             }
 
             const sc = message.serverContent as Record<string, unknown> | undefined;
-            const userTranscript = (sc?.inputTranscript ?? sc?.outputTranscript) as
-              | string
-              | undefined;
+            const transcriptValue = sc?.inputTranscript ?? sc?.outputTranscript;
+            const userTranscript = typeof transcriptValue === 'string' ? transcriptValue : '';
             if (userTranscript && onTranscriptRef.current) {
               onTranscriptRef.current(userTranscript);
             }
@@ -250,7 +265,14 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               ?.inlineData?.data;
             if (!base64Audio) return;
 
-            const binaryString = atob(base64Audio);
+            let binaryString = '';
+            try {
+              binaryString = atob(base64Audio);
+            } catch {
+              return;
+            }
+            if (binaryString.length % 2 !== 0) return;
+
             const bytesArray = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
               bytesArray[i] = binaryString.charCodeAt(i);
@@ -335,13 +357,16 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const toggleMute = useCallback(() => {
     const stream = streamRef.current;
     if (!stream) return;
-    const tracks = stream.getAudioTracks();
-    const nextMuted = !isMuted;
-    tracks.forEach((track) => {
-      track.enabled = !nextMuted;
+    const tracks =
+      typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : stream.getTracks();
+    setIsMuted((currentMuted) => {
+      const nextMuted = !currentMuted;
+      tracks.forEach((track) => {
+        track.enabled = !nextMuted;
+      });
+      return nextMuted;
     });
-    setIsMuted(nextMuted);
-  }, [isMuted]);
+  }, []);
 
   const sendTextHistory = useCallback((turns: Array<{ role: string; content: string }>) => {
     const session = sessionRef.current;
