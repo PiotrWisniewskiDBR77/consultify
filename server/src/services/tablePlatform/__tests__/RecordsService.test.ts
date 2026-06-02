@@ -133,7 +133,10 @@ describe('RecordsService', () => {
 
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('SET data = $2, updated_at = NOW()'),
-      ['r-1', JSON.stringify({ Name: 'New', __modified_by: 'user-1', __modified_by_name: 'user-1' })]
+      [
+        'r-1',
+        JSON.stringify({ Name: 'New', __modified_by: 'user-1', __modified_by_name: 'user-1' }),
+      ]
     );
     expect(result).toEqual(after);
   });
@@ -146,9 +149,9 @@ describe('RecordsService', () => {
       .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
       .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }); // resolveUserName
 
-    await expect(
-      recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1', 3)
-    ).rejects.toThrow('Optimistic lock is unavailable because tp_records.version is missing');
+    await expect(recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1', 3)).rejects.toThrow(
+      'Optimistic lock is unavailable because tp_records.version is missing'
+    );
   });
 
   // 4. deleteRecord → calls relationService.onRecordDeleted, then deletes

@@ -1,5 +1,9 @@
+import {
+  dispatchAccessBlocked,
+  getAccessBlockedCode,
+  isAccessBlockedCode,
+} from '../utils/accessBlocked';
 import { tokenService } from './tokenService';
-import { dispatchAccessBlocked, getAccessBlockedCode, isAccessBlockedCode } from '../utils/accessBlocked';
 
 export const API_URL = '/api';
 

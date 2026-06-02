@@ -767,21 +767,21 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 ? att.name || att.url
                 : att.name || att.type;
             return (
-            <div
-              key={idx}
-              className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
-            >
-              <span className="inline-flex items-center gap-1">
-                <span>{isUrlAttachment ? 'Link' : 'File'}:</span>
-                <span className="max-w-[220px] truncate">{label}</span>
-              </span>
-              <button
-                onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
-                className="ml-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+              <div
+                key={idx}
+                className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
               >
-                ×
-              </button>
-            </div>
+                <span className="inline-flex items-center gap-1">
+                  <span>{isUrlAttachment ? 'Link' : 'File'}:</span>
+                  <span className="max-w-[220px] truncate">{label}</span>
+                </span>
+                <button
+                  onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                  className="ml-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  ×
+                </button>
+              </div>
             );
           })}
         </div>
@@ -860,44 +860,44 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           {/* Left Actions */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="flex items-center gap-1 shrink-0">
-            <AddFilesMenu
-              onFileSelect={handleFileSelect}
-              onUrlAdd={handleUrlAdd}
-              onCloudFileSelect={handleCloudFileSelect}
-              onConnectCloud={handleConnectCloud}
-              connectedProviders={connectedProviderIds}
-              isCloudImplemented={isCloudImplemented}
-              disabled={isInputDisabled}
-            />
-            <ToolsMenu
-              onToolSelect={handleToolSelect}
-              disabled={isInputDisabled}
-              icon={Pen}
-              hasActiveConversation={hasProjectAssignableConversation}
-            />
-            <CoThinkerMenu disabled={isInputDisabled} />
+              <AddFilesMenu
+                onFileSelect={handleFileSelect}
+                onUrlAdd={handleUrlAdd}
+                onCloudFileSelect={handleCloudFileSelect}
+                onConnectCloud={handleConnectCloud}
+                connectedProviders={connectedProviderIds}
+                isCloudImplemented={isCloudImplemented}
+                disabled={isInputDisabled}
+              />
+              <ToolsMenu
+                onToolSelect={handleToolSelect}
+                disabled={isInputDisabled}
+                icon={Pen}
+                hasActiveConversation={hasProjectAssignableConversation}
+              />
+              <CoThinkerMenu disabled={isInputDisabled} />
             </div>
             <div className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pr-1 scrollbar-none">
-            {/* C-IN1 — Next-message model hint. Read-only pill showing
+              {/* C-IN1 — Next-message model hint. Read-only pill showing
                 which model will handle the next send. Self-gates on
                 `isNextModelChipEnabled()` and renders null when the
                 user has no resolvable model id, so the action bar
                 collapses cleanly when the signal is unavailable. */}
-            <NextModelChip />
-            {/* C-IN2 — Input character counter. Invisible until the
+              <NextModelChip />
+              {/* C-IN2 — Input character counter. Invisible until the
                 message crosses the default 400-char threshold, then
                 colour-escalates through amber at 80% of the 8k soft
                 max and rose once over. Purely advisory; never blocks
                 Send. Self-gates on `isInputCharCounterEnabled()`. */}
-            <InputCharCounter value={value} />
-            {/* C-IN6-lite — one-shot soft-limit inline toast. Headless
+              <InputCharCounter value={value} />
+              {/* C-IN6-lite — one-shot soft-limit inline toast. Headless
                 sibling of the counter that fires a single
                 `toast.custom` the first time `value.length` crosses
                 the counter's rose threshold in this tab, with a
                 "Don't show again this session" escape. Self-gates on
                 `isInputSoftLimitToastEnabled()` and the sessionStorage
                 fired / dismiss sentinels. */}
-            <InputSoftLimitToast value={value} />
+              <InputSoftLimitToast value={value} />
             </div>
           </div>
 

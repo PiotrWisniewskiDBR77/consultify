@@ -78,6 +78,7 @@ import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
 import TeresaMark from '../shared/TeresaMark';
+import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import {
   isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
@@ -88,16 +89,15 @@ import { ContextBadge } from './ContextBadge';
 import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
+import { detectMindmapIntent } from './mindmapIntentDetector';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { OutputToolSelector } from './OutputToolSelector';
 import { PrivateModeDetails } from './PrivateModeDetails';
+import { detectProcessFlowIntent } from './processFlowIntentDetector';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
 import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
-import { detectMindmapIntent } from './mindmapIntentDetector';
-import { detectProcessFlowIntent } from './processFlowIntentDetector';
-import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 import { type ActiveCanvasDocument, WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
 

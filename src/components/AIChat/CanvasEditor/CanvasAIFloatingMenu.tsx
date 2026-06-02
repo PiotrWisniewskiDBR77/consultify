@@ -23,11 +23,36 @@ interface MenuPosition {
 }
 
 const QUICK_ACTIONS = [
-  { id: 'expand', labelEn: 'Expand', labelPl: 'Rozwiń', prompt: 'Expand this text with more detail.' },
-  { id: 'shorten', labelEn: 'Shorten', labelPl: 'Skróć', prompt: 'Make this text shorter and more concise.' },
-  { id: 'rewrite', labelEn: 'Rewrite', labelPl: 'Przepisz', prompt: 'Rewrite this text to be clearer and more professional.' },
-  { id: 'translate_en', labelEn: 'Translate → EN', labelPl: 'Tłumacz → EN', prompt: 'Translate this text to English.' },
-  { id: 'translate_pl', labelEn: 'Translate → PL', labelPl: 'Tłumacz → PL', prompt: 'Translate this text to Polish.' },
+  {
+    id: 'expand',
+    labelEn: 'Expand',
+    labelPl: 'Rozwiń',
+    prompt: 'Expand this text with more detail.',
+  },
+  {
+    id: 'shorten',
+    labelEn: 'Shorten',
+    labelPl: 'Skróć',
+    prompt: 'Make this text shorter and more concise.',
+  },
+  {
+    id: 'rewrite',
+    labelEn: 'Rewrite',
+    labelPl: 'Przepisz',
+    prompt: 'Rewrite this text to be clearer and more professional.',
+  },
+  {
+    id: 'translate_en',
+    labelEn: 'Translate → EN',
+    labelPl: 'Tłumacz → EN',
+    prompt: 'Translate this text to English.',
+  },
+  {
+    id: 'translate_pl',
+    labelEn: 'Translate → PL',
+    labelPl: 'Tłumacz → PL',
+    prompt: 'Translate this text to Polish.',
+  },
 ] as const;
 
 export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
@@ -123,7 +148,11 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
                 setCustomPrompt('');
               }
             }}
-            placeholder={isPolish ? 'Co Teresa ma zrobić z tym tekstem?' : 'What should Teresa do with this text?'}
+            placeholder={
+              isPolish
+                ? 'Co Teresa ma zrobić z tym tekstem?'
+                : 'What should Teresa do with this text?'
+            }
             className="w-64 bg-transparent text-sm outline-none text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
           />
           <button

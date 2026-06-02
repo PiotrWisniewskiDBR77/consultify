@@ -2342,7 +2342,9 @@ router.get(
     const homeSelect = [
       ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"',
       ideaColumns.has('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"',
-      ideaColumns.has('last_opened_at') ? 'last_opened_at as "lastOpenedAt"' : 'NULL as "lastOpenedAt"',
+      ideaColumns.has('last_opened_at')
+        ? 'last_opened_at as "lastOpenedAt"'
+        : 'NULL as "lastOpenedAt"',
     ].join(',\n          ');
 
     const folder = req.query.folder ? String(req.query.folder).trim() : '';

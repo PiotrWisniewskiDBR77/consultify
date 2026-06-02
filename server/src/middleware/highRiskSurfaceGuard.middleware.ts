@@ -3,13 +3,7 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 
-type HighRiskCategory =
-  | 'invite'
-  | 'upload'
-  | 'export'
-  | 'public_share'
-  | 'ai_memory'
-  | 'autopilot';
+type HighRiskCategory = 'invite' | 'upload' | 'export' | 'public_share' | 'ai_memory' | 'autopilot';
 
 type AccessScope = 'DEMO' | 'TRIAL_ENTRY' | 'TRIAL' | 'PAID' | 'UNKNOWN';
 
@@ -55,7 +49,9 @@ function normalizeId(value: unknown): string {
 }
 
 function normalizeMethod(value: unknown): string {
-  return String(value ?? '').trim().toUpperCase();
+  return String(value ?? '')
+    .trim()
+    .toUpperCase();
 }
 
 function normalizePath(value: unknown): string {
@@ -67,7 +63,11 @@ function normalizePath(value: unknown): string {
 }
 
 function isFlagEnabled(flagName: string): boolean {
-  return String(process.env[flagName] || '').trim().toLowerCase() === 'true';
+  return (
+    String(process.env[flagName] || '')
+      .trim()
+      .toLowerCase() === 'true'
+  );
 }
 
 function getRequestPath(req: Request): string {
@@ -150,7 +150,11 @@ async function resolveAccessScope(req: Request): Promise<AccessScope> {
       [userId],
       { fallback: false }
     );
-    if (String(user?.user_status || '').trim().toUpperCase() === 'TRIAL_ENTRY') {
+    if (
+      String(user?.user_status || '')
+        .trim()
+        .toUpperCase() === 'TRIAL_ENTRY'
+    ) {
       return 'TRIAL_ENTRY';
     }
   }
@@ -163,7 +167,9 @@ async function resolveAccessScope(req: Request): Promise<AccessScope> {
     [organizationId],
     { fallback: false }
   );
-  const orgType = String(org?.organization_type || '').trim().toUpperCase();
+  const orgType = String(org?.organization_type || '')
+    .trim()
+    .toUpperCase();
   if (orgType === ORG_TYPES.PAID) return 'PAID';
   if (orgType === ORG_TYPES.DEMO) return 'DEMO';
   if (orgType === ORG_TYPES.TRIAL) return 'TRIAL';

@@ -1,14 +1,22 @@
-import TeresaMark from '../shared/TeresaMark';
 /**
  * StudioChat - AI Chat Panel for Studio
  *
  * Chat interface for AI-powered diagram generation and modification.
  */
-
-import { ChevronDown, ChevronUp, Lightbulb, Loader2, Send, Sparkles, Trash2, User } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  Loader2,
+  Send,
+  Sparkles,
+  Trash2,
+  User,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Edge, Node } from 'reactflow';
 
+import TeresaMark from '../shared/TeresaMark';
 import { AIMessage } from './hooks/useStudioAI';
 
 interface StudioChatProps {

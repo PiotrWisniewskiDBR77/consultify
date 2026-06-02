@@ -1,16 +1,16 @@
-import TeresaMark from '../shared/TeresaMark';
 /**
  * CategoryChat
  *
  * Standalone chat component for a single interview category.
  * Can be used in modal or inline context.
  */
-
 import { Loader2, Send, User } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { useAppStore } from '@/store/useAppStore';
+
+import TeresaMark from '../shared/TeresaMark';
 
 type InsightCategory =
   | 'objective'

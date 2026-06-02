@@ -14,10 +14,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { AIAcceptRejectBar, CanvasAIFloatingMenu } from './CanvasAIFloatingMenu';
-import { CanvasEditorToolbar } from './CanvasEditorToolbar';
 import { acceptAiDiff, applyAiDiff, rejectAiDiff } from './canvasDiffOps';
-import { htmlToMarkdown, markdownToHtml } from './canvasMarkdownConversion';
 import { getCanvasEditorExtensions } from './canvasEditorExtensions';
+import { CanvasEditorToolbar } from './CanvasEditorToolbar';
+import { htmlToMarkdown, markdownToHtml } from './canvasMarkdownConversion';
 
 export interface CanvasSelection {
   selectedText: string;
@@ -150,8 +150,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
         const data = await response.json();
         const replacementRaw = data?.response ?? data?.content ?? data?.text;
-        const replacement =
-          typeof replacementRaw === 'string' ? replacementRaw.trim() : '';
+        const replacement = typeof replacementRaw === 'string' ? replacementRaw.trim() : '';
         if (!replacement) {
           setAiProcessing(false);
           return null;
@@ -253,9 +252,18 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
           <div className="sticky bottom-4 flex justify-center z-50 pointer-events-none">
             <div className="flex items-center gap-2 rounded-full border border-primary-200 dark:border-primary-500/30 bg-white dark:bg-navy-800 px-4 py-2 shadow-lg pointer-events-auto">
               <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce"
+                  style={{ animationDelay: '0ms' }}
+                />
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce"
+                  style={{ animationDelay: '150ms' }}
+                />
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-bounce"
+                  style={{ animationDelay: '300ms' }}
+                />
               </div>
               <span className="text-sm text-slate-600 dark:text-slate-300">
                 {isPolish ? 'Teresa pisze...' : 'Teresa is writing...'}

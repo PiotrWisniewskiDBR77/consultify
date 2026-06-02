@@ -31,7 +31,13 @@ export type PriorityLevel = 'P0' | 'P1' | 'P2';
 export type PrimaryDriver = 'deadline' | 'blocker' | 'variance' | 'escalation' | 'opportunity';
 export type TimeWindow = 'next_24h' | 'this_week' | 'this_month';
 export type HandoffIntent = 'open' | 'create' | 'append';
-export type TargetModule = 'initiatives' | 'execution' | 'notebook' | 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
+export type TargetModule =
+  | 'initiatives'
+  | 'execution'
+  | 'notebook'
+  | 'Inicjatywy'
+  | 'Wdrożenia'
+  | 'Notatki';
 
 export type P0Archetype =
   | 'critical_path_blocker'

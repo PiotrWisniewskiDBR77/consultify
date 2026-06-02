@@ -14,7 +14,11 @@ import i18n from '@/i18n';
 
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
-import { dispatchAccessBlocked, getAccessBlockedCode, isAccessBlockedCode } from '../utils/accessBlocked';
+import {
+  dispatchAccessBlocked,
+  getAccessBlockedCode,
+  isAccessBlockedCode,
+} from '../utils/accessBlocked';
 import { normalizeApiErrorMessage } from '../utils/apiError';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';

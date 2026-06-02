@@ -31,10 +31,7 @@ function getTurndown(): TurndownService {
   // Preserve task list checkboxes
   td.addRule('taskListItem', {
     filter: (node) => {
-      return (
-        node.nodeName === 'LI' &&
-        node.parentElement?.getAttribute('data-type') === 'taskList'
-      );
+      return node.nodeName === 'LI' && node.parentElement?.getAttribute('data-type') === 'taskList';
     },
     replacement: (_content, node) => {
       const checkbox = (node as HTMLElement).querySelector('input[type="checkbox"]');

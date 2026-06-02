@@ -1,9 +1,8 @@
 import { Globe, Mic, Monitor, MoreVertical, Plus, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Api } from '../../../services/api';
-
 import TeresaMark from '../../../components/shared/TeresaMark';
+import { Api } from '../../../services/api';
 interface VirtualWorker {
   id: string;
   slug: string;

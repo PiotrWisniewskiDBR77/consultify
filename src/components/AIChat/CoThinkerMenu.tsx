@@ -279,9 +279,9 @@ export const CoThinkerMenu: React.FC<{
                 <span className="flex-1 min-w-0">
                   <span
                     className={`block text-[13px] ${
-                    isActive
-                      ? 'text-primary-700 dark:text-primary-300 font-medium'
-                      : 'text-slate-700 dark:text-slate-200'
+                      isActive
+                        ? 'text-primary-700 dark:text-primary-300 font-medium'
+                        : 'text-slate-700 dark:text-slate-200'
                     }`}
                   >
                     {label}

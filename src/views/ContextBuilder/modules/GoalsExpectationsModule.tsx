@@ -1,11 +1,20 @@
-import { Ban, BarChart2, CheckCircle, GanttChartSquare, Maximize, Rocket, Sparkles, Target, Zap } from 'lucide-react';
+import {
+  Ban,
+  BarChart2,
+  CheckCircle,
+  GanttChartSquare,
+  Maximize,
+  Rocket,
+  Sparkles,
+  Target,
+  Zap,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
+import TeresaMark from '../../../components/shared/TeresaMark';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import { AITextArea } from '../shared/AITextArea';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
-
-import TeresaMark from '../../../components/shared/TeresaMark';
 export const GoalsExpectationsModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations'

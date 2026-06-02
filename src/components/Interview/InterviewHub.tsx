@@ -20,9 +20,9 @@ import {
   Brain,
   Calendar,
   Check,
-  CircleHelp,
   ChevronDown,
   ChevronRight,
+  CircleHelp,
   ClipboardList,
   Clock,
   Columns3,
@@ -83,11 +83,11 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { getPriorityStyle, getStatusStyle, getTypeStyle } from '@/constants/statusColors';
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
-import { useHelpSidePanel } from '@/contexts/HelpContext';
 
 import {
   type FilterChip,

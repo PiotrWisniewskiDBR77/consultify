@@ -1,10 +1,30 @@
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, ChevronRight, Clock, Cookie, CreditCard, Database, ExternalLink, FileText, Globe, Lock, Mail, Receipt, Scale, Shield, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Cookie,
+  CreditCard,
+  Database,
+  ExternalLink,
+  FileText,
+  Globe,
+  Lock,
+  Mail,
+  Receipt,
+  Scale,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { ROUTES } from '../routes/routeConfig';
-
 import TeresaMark from '../components/shared/TeresaMark';
+import { ROUTES } from '../routes/routeConfig';
 interface LegalDocumentCard {
   slug: string;
   title: string;

@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import { getQuestionsForAxis } from '@/services/drdStructure';
 
 import { AxisId } from '../types';
-
 import TeresaMark from './shared/TeresaMark';
 interface MaturityMatrixProps {
   axisId: number;

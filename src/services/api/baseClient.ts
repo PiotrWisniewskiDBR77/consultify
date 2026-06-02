@@ -3,12 +3,12 @@
  * Core utilities for making API requests
  */
 
-import { normalizeApiErrorMessage } from '../../utils/apiError';
 import {
   dispatchAccessBlocked,
   getAccessBlockedCode,
   isAccessBlockedCode,
 } from '../../utils/accessBlocked';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { tokenService } from '../tokenService';
 
 export const API_URL = '/api';

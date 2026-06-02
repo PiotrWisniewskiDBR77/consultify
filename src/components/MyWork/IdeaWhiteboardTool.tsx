@@ -31,12 +31,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
-import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   formatIdeaMapSyncLabel,
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {

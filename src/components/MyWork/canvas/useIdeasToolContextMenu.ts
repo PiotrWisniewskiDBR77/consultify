@@ -43,18 +43,15 @@ const INITIAL_STATE: ContextMenuState = {
 export function useCanvasContextMenu() {
   const [menuState, setMenuState] = useState<ContextMenuState>(INITIAL_STATE);
 
-  const openNodeMenu = useCallback(
-    (event: React.MouseEvent, nodeId: string, nodeType?: string) => {
-      event.preventDefault();
-      event.stopPropagation();
-      setMenuState({
-        open: true,
-        position: { x: event.clientX, y: event.clientY },
-        target: { kind: 'node', nodeId, nodeType },
-      });
-    },
-    []
-  );
+  const openNodeMenu = useCallback((event: React.MouseEvent, nodeId: string, nodeType?: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setMenuState({
+      open: true,
+      position: { x: event.clientX, y: event.clientY },
+      target: { kind: 'node', nodeId, nodeType },
+    });
+  }, []);
 
   const openEdgeMenu = useCallback((event: React.MouseEvent, edgeId: string) => {
     event.preventDefault();
@@ -105,7 +102,18 @@ export function getCommonContextMenuActions(options: {
   onCopy?: () => void;
   onPaste?: () => void;
 }): ContextMenuAction[] {
-  const { isPolish, locked, target, onAddChild, onAddSibling, onEdit, onDuplicate, onDelete, onCopy, onPaste } = options;
+  const {
+    isPolish,
+    locked,
+    target,
+    onAddChild,
+    onAddSibling,
+    onEdit,
+    onDuplicate,
+    onDelete,
+    onCopy,
+    onPaste,
+  } = options;
   const actions: ContextMenuAction[] = [];
 
   if (target?.kind === 'node') {

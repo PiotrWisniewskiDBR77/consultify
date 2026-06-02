@@ -1,4 +1,3 @@
-import TeresaMark from '../../shared/TeresaMark';
 /**
  * AIModelSelectionSettings - AI Model Selection & Configuration
  *
@@ -9,8 +8,23 @@ import TeresaMark from '../../shared/TeresaMark';
  * - Max tokens per request
  * - Cost tracking per model
  */
-
-import { BarChart3, Bot, Brain, CheckCircle, Clock, Code, DollarSign, FileSearch, Info, Loader2, MessageSquare, Save, Sliders, Sparkles, Zap } from 'lucide-react';
+import {
+  BarChart3,
+  Bot,
+  Brain,
+  CheckCircle,
+  Clock,
+  Code,
+  DollarSign,
+  FileSearch,
+  Info,
+  Loader2,
+  MessageSquare,
+  Save,
+  Sliders,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
+import TeresaMark from '../../shared/TeresaMark';
 
 interface AIModelSelectionSettingsProps {
   currentUser: User;

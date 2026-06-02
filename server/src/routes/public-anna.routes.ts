@@ -7,6 +7,10 @@ import {
   buildAnnaVoiceBootstrap,
 } from '../services/ai/annaKnowledgeService.js';
 import { resolveAnnaSiteConfig } from '../services/ai/annaSiteConfig.js';
+import {
+  mintGeminiLiveEphemeralToken,
+  resolveGeminiLiveServerKey,
+} from '../services/ai/geminiLiveTokenService.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { buildConversationIntelligence } from '../services/ai/virtualWorkerConversationIntelligence.js';
 import {
@@ -21,10 +25,6 @@ import {
 } from '../services/ai/virtualWorkerKnowledgeService.js';
 import { getWorkerWithProfile } from '../services/ai/virtualWorkerService.js';
 import { buildWorkerWebAccessResult } from '../services/ai/virtualWorkerWebAccessService.js';
-import {
-  mintGeminiLiveEphemeralToken,
-  resolveGeminiLiveServerKey,
-} from '../services/ai/geminiLiveTokenService.js';
 import {
   PUBLIC_ANNA_FUNNEL_EVENT_NAMES,
   recordPublicAnnaFunnelEvent,

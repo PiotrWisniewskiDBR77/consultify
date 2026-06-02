@@ -96,7 +96,14 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    if (!(await requireTables(res, ['radar_sources', 'radar_processed_signals', 'user_radar_profiles']))) return;
+    if (
+      !(await requireTables(res, [
+        'radar_sources',
+        'radar_processed_signals',
+        'user_radar_profiles',
+      ]))
+    )
+      return;
     const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
     const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
     const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');

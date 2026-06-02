@@ -1,4 +1,3 @@
-import TeresaMark from '../shared/TeresaMark';
 // @ts-nocheck
 /**
  * FeedbackSidePanel - Enterprise SaaS Feedback System
@@ -10,8 +9,31 @@ import TeresaMark from '../shared/TeresaMark';
  * - Smart suggestions based on context
  * - Analytics integration
  */
-
-import { AlertTriangle, BarChart3, Bug, CheckCircle2, ChevronRight, Frown, Lightbulb, Loader2, MapPin, Meh, MessageSquareWarning, Monitor, Paperclip, Send, Smile, Sparkles, Star, ThumbsDown, ThumbsUp, TrendingUp, Upload, X, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Bug,
+  CheckCircle2,
+  ChevronRight,
+  Frown,
+  Lightbulb,
+  Loader2,
+  MapPin,
+  Meh,
+  MessageSquareWarning,
+  Monitor,
+  Paperclip,
+  Send,
+  Smile,
+  Sparkles,
+  Star,
+  ThumbsDown,
+  ThumbsUp,
+  TrendingUp,
+  Upload,
+  X,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { buildFeedbackDossier } from '../../services/feedbackCollector';
 import { useAppStore } from '../../store/useAppStore';
+import TeresaMark from '../shared/TeresaMark';
 
 // ==================== TYPES ====================
 

@@ -108,75 +108,74 @@ export async function generatePartnerToolkitResourceFile(params: {
     const buffer = await unifiedExportService.renderPptx((pptx: any) => {
       pptx.layout = 'LAYOUT_WIDE';
 
-    const title =
-      language === 'pl' ? 'Consultify — Deck partnerski' : 'Consultify — Partner Sales Deck';
-    const subtitle =
-      language === 'pl'
-        ? 'Bezpieczne claimy • discovery-first • evidence-backed'
-        : 'Safe claims • discovery-first • evidence-backed';
+      const title =
+        language === 'pl' ? 'Consultify — Deck partnerski' : 'Consultify — Partner Sales Deck';
+      const subtitle =
+        language === 'pl'
+          ? 'Bezpieczne claimy • discovery-first • evidence-backed'
+          : 'Safe claims • discovery-first • evidence-backed';
 
-    const slide1 = pptx.addSlide();
-    slide1.addShape(pptx.ShapeType.rect, {
-      x: 0,
-      y: 0,
-      w: 13.33,
-      h: 7.5,
-      fill: { color: '4F46E5' },
-    });
-    slide1.addText(title, {
-      x: 0.7,
-      y: 2.4,
-      w: 12,
-      h: 1,
-      fontFace: 'Aptos Display',
-      fontSize: 36,
-      color: 'FFFFFF',
-      bold: true,
-    });
-    slide1.addText(subtitle, {
-      x: 0.7,
-      y: 3.4,
-      w: 12,
-      h: 0.6,
-      fontFace: 'Aptos',
-      fontSize: 16,
-      color: 'EDE9FE',
-    });
+      const slide1 = pptx.addSlide();
+      slide1.addShape(pptx.ShapeType.rect, {
+        x: 0,
+        y: 0,
+        w: 13.33,
+        h: 7.5,
+        fill: { color: '4F46E5' },
+      });
+      slide1.addText(title, {
+        x: 0.7,
+        y: 2.4,
+        w: 12,
+        h: 1,
+        fontFace: 'Aptos Display',
+        fontSize: 36,
+        color: 'FFFFFF',
+        bold: true,
+      });
+      slide1.addText(subtitle, {
+        x: 0.7,
+        y: 3.4,
+        w: 12,
+        h: 0.6,
+        fontFace: 'Aptos',
+        fontSize: 16,
+        color: 'EDE9FE',
+      });
 
-    const slide2 = pptx.addSlide();
-    slide2.addText(language === 'pl' ? 'Co to jest Consultify?' : 'What is Consultify?', {
-      x: 0.7,
-      y: 0.6,
-      w: 12,
-      h: 0.6,
-      fontFace: 'Aptos Display',
-      fontSize: 26,
-      color: '0F172A',
-      bold: true,
-    });
-    const bullets =
-      language === 'pl'
-        ? [
-            'Pomaga prowadzić uporządkowane discovery i uzgodnienia w programach transformacji.',
-            'Ułatwia pracę evidence‑backed: fakty, niewiadome, insighty i decyzje.',
-            'Wspiera governance bez “over‑claimingu” automatyzacji.',
-          ]
-        : [
-            'Helps run structured discovery and alignment in transformation programs.',
-            'Supports evidence‑backed work: facts, unknowns, insights and decisions.',
-            'Augments governance without over-claiming automation.',
-          ];
-    slide2.addText(bullets.map((b) => `• ${b}`).join('\n'), {
-      x: 1.0,
-      y: 1.6,
-      w: 11.5,
-      h: 5.2,
-      fontFace: 'Aptos',
-      fontSize: 18,
-      color: '334155',
-      valign: 'top',
-    });
-
+      const slide2 = pptx.addSlide();
+      slide2.addText(language === 'pl' ? 'Co to jest Consultify?' : 'What is Consultify?', {
+        x: 0.7,
+        y: 0.6,
+        w: 12,
+        h: 0.6,
+        fontFace: 'Aptos Display',
+        fontSize: 26,
+        color: '0F172A',
+        bold: true,
+      });
+      const bullets =
+        language === 'pl'
+          ? [
+              'Pomaga prowadzić uporządkowane discovery i uzgodnienia w programach transformacji.',
+              'Ułatwia pracę evidence‑backed: fakty, niewiadome, insighty i decyzje.',
+              'Wspiera governance bez “over‑claimingu” automatyzacji.',
+            ]
+          : [
+              'Helps run structured discovery and alignment in transformation programs.',
+              'Supports evidence‑backed work: facts, unknowns, insights and decisions.',
+              'Augments governance without over-claiming automation.',
+            ];
+      slide2.addText(bullets.map((b) => `• ${b}`).join('\n'), {
+        x: 1.0,
+        y: 1.6,
+        w: 11.5,
+        h: 5.2,
+        fontFace: 'Aptos',
+        fontSize: 18,
+        color: '334155',
+        valign: 'top',
+      });
     });
     return {
       buffer,

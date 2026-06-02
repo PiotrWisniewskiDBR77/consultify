@@ -193,15 +193,12 @@ export function useCanvasKeyboard({
     [enabled, locked]
   );
 
-  const handleKeyUp = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === ' ' && spaceHeldRef.current) {
-        spaceHeldRef.current = false;
-        callbacksRef.current.onPanModeEnd?.();
-      }
-    },
-    []
-  );
+  const handleKeyUp = useCallback((e: KeyboardEvent) => {
+    if (e.key === ' ' && spaceHeldRef.current) {
+      spaceHeldRef.current = false;
+      callbacksRef.current.onPanModeEnd?.();
+    }
+  }, []);
 
   useEffect(() => {
     const target = containerRef?.current || document;

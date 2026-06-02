@@ -1,4 +1,3 @@
-import TeresaMark from '../../shared/TeresaMark';
 /**
  * AIGovernancePanel — Unified AI governance panel for mindmap workspace.
  *
@@ -9,12 +8,29 @@ import TeresaMark from '../../shared/TeresaMark';
  * @see docs/product/MINDMAP_V1_SSOT.md §9
  * @see docs/product/IDEA_WORKSPACE_V5_SSOT.md §7
  */
-import { Activity, AlertCircle, BarChart3, Check, CheckCircle2, ChevronDown, ChevronUp, Clock, Eye, FileCheck, MessageSquare, Shield, ShieldCheck, Sparkles, X } from 'lucide-react';
+import {
+  Activity,
+  AlertCircle,
+  BarChart3,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Eye,
+  FileCheck,
+  MessageSquare,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 
+import TeresaMark from '../../shared/TeresaMark';
 import type { CanvasAIReplayEntry, CanvasGovernanceStatus } from '../ideaSelectionTypes';
 
 /* ------------------------------------------------------------------ */

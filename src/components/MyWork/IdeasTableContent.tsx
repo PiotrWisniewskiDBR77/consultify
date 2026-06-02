@@ -1096,8 +1096,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                               label: f.name,
                               icon: Folder,
                               onClick: () => onMoveToFolder(idea, f.id),
-                              rightLabel:
-                                (idea as any).folderId === f.id ? '✓' : undefined,
+                              rightLabel: (idea as any).folderId === f.id ? '✓' : undefined,
                             })),
                           ],
                         },

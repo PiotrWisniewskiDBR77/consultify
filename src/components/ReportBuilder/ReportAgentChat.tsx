@@ -1,4 +1,3 @@
-import TeresaMark from '../shared/TeresaMark';
 /**
  * ReportAgentChat — T060
  *
@@ -8,13 +7,26 @@ import TeresaMark from '../shared/TeresaMark';
  */
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertTriangle, ArrowRight, Check, CheckCircle2, ChevronDown, Loader2, MessageSquare, Send, Sparkles, User, X, Zap } from 'lucide-react';
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Loader2,
+  MessageSquare,
+  Send,
+  Sparkles,
+  User,
+  X,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import TeresaMark from '../shared/TeresaMark';
 
 // ── Types ──────────────────────────────────────────────────────
 

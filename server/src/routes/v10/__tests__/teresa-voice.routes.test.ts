@@ -17,10 +17,10 @@ type MockAuthRequest = {
 
 const { loggerInfoMock, mintGeminiLiveEphemeralTokenMock, resolveGeminiLiveServerKeyMock } =
   vi.hoisted(() => ({
-  loggerInfoMock: vi.fn(),
-  mintGeminiLiveEphemeralTokenMock: vi.fn(),
-  resolveGeminiLiveServerKeyMock: vi.fn(),
-}));
+    loggerInfoMock: vi.fn(),
+    mintGeminiLiveEphemeralTokenMock: vi.fn(),
+    resolveGeminiLiveServerKeyMock: vi.fn(),
+  }));
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   default: ((req: MockAuthRequest, _res: unknown, next: () => void) => {

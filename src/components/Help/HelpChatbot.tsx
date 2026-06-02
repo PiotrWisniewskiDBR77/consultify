@@ -1,11 +1,9 @@
-import TeresaMark from '../shared/TeresaMark';
 /**
  * Help Chatbot Component
  *
  * AI-powered help assistant that answers questions using
  * the help content knowledge base.
  */
-
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ExternalLink,
@@ -25,6 +23,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
+import TeresaMark from '../shared/TeresaMark';
 
 interface Message {
   id: string;

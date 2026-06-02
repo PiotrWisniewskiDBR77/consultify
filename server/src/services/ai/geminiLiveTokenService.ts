@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+
 import logger from '../../utils/Logger.js';
 
 const DEFAULT_EXPIRE_MS = 30 * 60 * 1000;
@@ -40,7 +41,9 @@ const isPlaceholderApiKey = (value: string): boolean => {
   );
 };
 
-const summarizeProviderError = (error: unknown): { message: string; reason?: string; status?: string } => {
+const summarizeProviderError = (
+  error: unknown
+): { message: string; reason?: string; status?: string } => {
   const rawMessage = error instanceof Error ? error.message : 'unknown_error';
   try {
     const parsed = JSON.parse(rawMessage) as {
@@ -51,7 +54,8 @@ const summarizeProviderError = (error: unknown): { message: string; reason?: str
       };
     };
     return {
-      message: typeof parsed.error?.code === 'number' ? `provider_${parsed.error.code}` : 'provider_error',
+      message:
+        typeof parsed.error?.code === 'number' ? `provider_${parsed.error.code}` : 'provider_error',
       reason:
         typeof parsed.error?.details?.[0]?.reason === 'string'
           ? parsed.error.details[0].reason

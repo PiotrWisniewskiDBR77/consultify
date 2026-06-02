@@ -1,3 +1,4 @@
+import type { Editor as TiptapEditor } from '@tiptap/react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -46,8 +47,6 @@ import {
 import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
-import type { Editor as TiptapEditor } from '@tiptap/react';
-
 import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
@@ -296,7 +295,11 @@ const menuWorkspaceActionIds: CanvasActionId[] = [
   'create-initiative',
 ];
 
-const menuOutputActionIds: CanvasActionId[] = ['create-presentation', 'create-table', 'create-report'];
+const menuOutputActionIds: CanvasActionId[] = [
+  'create-presentation',
+  'create-table',
+  'create-report',
+];
 
 const isVitestRuntime = typeof process !== 'undefined' && Boolean(process.env?.VITEST);
 
@@ -421,7 +424,6 @@ const actionIcons: Record<CanvasActionId, React.ComponentType<{ size?: number }>
 
 const toolbarGroupClass =
   'flex items-center gap-1 rounded-full border border-slate-200 px-1 dark:border-white/10';
-
 
 function createDocumentState(
   template: StarterTemplate,
@@ -2379,14 +2381,16 @@ export function WorkCanvasDocumentPanel({
                   {[
                     {
                       title: 'Rozwiń zaznaczoną myśl',
-                      detail: 'Użyj AI, aby rozwinąć aktualnie zaznaczony fragment w bardziej kompletny tekst.',
+                      detail:
+                        'Użyj AI, aby rozwinąć aktualnie zaznaczony fragment w bardziej kompletny tekst.',
                       actionLabel: 'Rozwiń',
                       onClick: () => applySelectionMenuAction('expand'),
                       disabled: !canvasSelection?.selectedText?.trim(),
                     },
                     {
                       title: 'Skróć lub przepisz zaznaczenie',
-                      detail: 'Szybko skróć, przepisz lub popraw ton wybranego fragmentu bez ręcznego przepisywania.',
+                      detail:
+                        'Szybko skróć, przepisz lub popraw ton wybranego fragmentu bez ręcznego przepisywania.',
                       actionLabel: 'Rewrite',
                       onClick: () => applySelectionMenuAction('rewrite'),
                       disabled: !canvasSelection?.selectedText?.trim(),
@@ -2399,7 +2403,8 @@ export function WorkCanvasDocumentPanel({
                     },
                     {
                       title: 'Zbuduj template pod konkretny cel',
-                      detail: 'Utwórz własny szablon pracy z nazwą, celem i sekcjami dopasowanymi do zadania.',
+                      detail:
+                        'Utwórz własny szablon pracy z nazwą, celem i sekcjami dopasowanymi do zadania.',
                       actionLabel: 'Nowy template',
                       onClick: () => setIsTemplateBuilderOpen((open) => !open),
                     },
@@ -2407,11 +2412,13 @@ export function WorkCanvasDocumentPanel({
                       title: 'Przełącz widok Rich/Dock/MD',
                       detail: 'Rich = edytor z toolbarem, Dock = podgląd, MD = surowy markdown.',
                       actionLabel: mode === 'rich' ? 'Dock' : mode === 'document' ? 'MD' : 'Rich',
-                      onClick: () => setMode(mode === 'rich' ? 'document' : mode === 'document' ? 'md' : 'rich'),
+                      onClick: () =>
+                        setMode(mode === 'rich' ? 'document' : mode === 'document' ? 'md' : 'rich'),
                     },
                     {
                       title: 'Zapisz i eksportuj wersję roboczą',
-                      detail: 'Zapisz zmiany oraz pobierz dokument jako Markdown lub CSV do dalszej pracy.',
+                      detail:
+                        'Zapisz zmiany oraz pobierz dokument jako Markdown lub CSV do dalszej pracy.',
                       actionLabel: documentState.saveState === 'unsaved' ? 'Zapisz' : 'Pobierz MD',
                       onClick:
                         documentState.saveState === 'unsaved'
@@ -2420,9 +2427,12 @@ export function WorkCanvasDocumentPanel({
                     },
                     {
                       title: 'Pracuj na danych z pliku',
-                      detail: 'Wgraj CSV/JSON/XLSX i generuj tabele, wykresy lub raporty w tym samym canvas.',
+                      detail:
+                        'Wgraj CSV/JSON/XLSX i generuj tabele, wykresy lub raporty w tym samym canvas.',
                       actionLabel: pendingDataset ? 'Użyj datasetu' : 'Wgraj plik',
-                      onClick: pendingDataset ? () => setQuickAddElement('table') : triggerDatasetUpload,
+                      onClick: pendingDataset
+                        ? () => setQuickAddElement('table')
+                        : triggerDatasetUpload,
                     },
                   ].map((hint) => (
                     <div
@@ -2799,7 +2809,10 @@ export function WorkCanvasDocumentPanel({
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span>Save</span>
-                        <strong className="font-semibold" data-testid="canvas-diagnostics-save-state">
+                        <strong
+                          className="font-semibold"
+                          data-testid="canvas-diagnostics-save-state"
+                        >
                           {saveStateLabel(documentState.saveState)}
                         </strong>
                       </div>
@@ -2819,7 +2832,10 @@ export function WorkCanvasDocumentPanel({
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span>Action</span>
-                        <strong className="font-semibold" data-testid="canvas-diagnostics-action-state">
+                        <strong
+                          className="font-semibold"
+                          data-testid="canvas-diagnostics-action-state"
+                        >
                           {activeActionId ? 'Running' : 'Idle'}
                         </strong>
                       </div>
@@ -3231,7 +3247,9 @@ export function WorkCanvasDocumentPanel({
                             <div className="font-semibold text-slate-700 dark:text-slate-100">
                               Version {versions.length - versionCursor} / {versions.length}
                             </div>
-                            <div>{new Date(versions[versionCursor].createdAt).toLocaleString()}</div>
+                            <div>
+                              {new Date(versions[versionCursor].createdAt).toLocaleString()}
+                            </div>
                           </div>
                           <button
                             type="button"

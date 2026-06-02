@@ -4,12 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import DynamicIcon from '../components/shared/DynamicIcon';
+import TeresaMark from '../components/shared/TeresaMark';
 import { getLocalizedText, getOverviewCards, HELP_SYSTEM_OVERVIEW } from '../config/helpExperience';
 import { ROUTES } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
-
-import TeresaMark from '../components/shared/TeresaMark';
 export const AppIntroView: React.FC = () => {
   const { i18n } = useTranslation();
   const lang = i18n.language === 'pl' ? 'pl' : 'en';

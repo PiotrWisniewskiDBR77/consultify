@@ -1,4 +1,3 @@
-import TeresaMark from '../components/shared/TeresaMark';
 /**
  * AppPricingView
  *
@@ -6,12 +5,27 @@ import TeresaMark from '../components/shared/TeresaMark';
  * Modern, minimalistic design that's welcoming and not intimidating.
  * Accessible from within the application (Admin panel).
  */
-
 import { motion } from 'framer-motion';
 import {
-  ArrowRight, Building2, Calendar, Check, Cpu, HelpCircle, Key, MessageCircle, Rocket, Server, Shield, Sparkles, Users, X, Zap } from 'lucide-react';
+  ArrowRight,
+  Building2,
+  Calendar,
+  Check,
+  Cpu,
+  HelpCircle,
+  Key,
+  MessageCircle,
+  Rocket,
+  Server,
+  Shield,
+  Sparkles,
+  Users,
+  X,
+  Zap,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
+import TeresaMark from '../components/shared/TeresaMark';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 

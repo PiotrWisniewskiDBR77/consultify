@@ -2,7 +2,6 @@ import { CheckCircle2, ChevronRight, Circle, Flag, Info, Map, Play, Target } fro
 import React from 'react';
 
 import { AppView, FullSession } from '../../types';
-
 import TeresaMark from '../shared/TeresaMark';
 interface OnboardingDashboardProps {
   onStartModule1: () => void;

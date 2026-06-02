@@ -101,6 +101,7 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
+import { CalendarView } from './Calendar/CalendarView';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
 import type { HomeScreenAction } from './Home/homeV2Types';
@@ -124,9 +125,8 @@ import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './Inbo
 import { MyIdeasListContent } from './MyIdeasListContent';
 import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
-import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
-import { CalendarView } from './Calendar/CalendarView';
 import { NotebookContent } from './NotebookContent';
+import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
@@ -2042,8 +2042,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           return;
         }
         case 'radar_feedback': {
-          const actionType =
-            action.feedback === 'watch' ? 'add_to_watchlist' : 'less_like_this';
+          const actionType = action.feedback === 'watch' ? 'add_to_watchlist' : 'less_like_this';
           const payload = {
             ...(action.topic ? { topic: action.topic } : {}),
             ...(action.source ? { source: action.source } : {}),

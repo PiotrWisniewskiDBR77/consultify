@@ -1,11 +1,35 @@
-import TeresaMark from '../../shared/TeresaMark';
 /**
  * NodeDetailDrawer — Slideout panel for deep-diving into a mind map node.
  *
  * Sections: Basic Info, Notes & Context, Tags & Classification,
  * Evidence & Artifacts, AI Expand, Company Context, Related Nodes.
  */
-import { AlertTriangle, ArrowRight, Bot, ChevronDown, ChevronRight, ExternalLink, FileText, GitBranch, Hash, Info, Lightbulb, Link2, Loader2, MessageSquare, Paperclip, Plus, Rocket, Sparkles, Star, StickyNote, Tag, Target, X, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Bot,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  GitBranch,
+  Hash,
+  Info,
+  Lightbulb,
+  Link2,
+  Loader2,
+  MessageSquare,
+  Paperclip,
+  Plus,
+  Rocket,
+  Sparkles,
+  Star,
+  StickyNote,
+  Tag,
+  Target,
+  X,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +38,7 @@ import { Callout, EmptyStateInline, ToggleBlock } from '@/components/shared/NMod
 import { Api } from '@/services/api';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
+import TeresaMark from '../../shared/TeresaMark';
 import { AddEvidenceModal } from './AddEvidenceModal';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

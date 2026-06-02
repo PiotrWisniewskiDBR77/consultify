@@ -1,4 +1,3 @@
-import TeresaMark from '../shared/TeresaMark';
 /**
  * IdeaProcessFlowTool — V3 Process Flow canvas for Idea Workspace.
  *
@@ -20,7 +19,16 @@ import TeresaMark from '../shared/TeresaMark';
 import 'reactflow/dist/style.css';
 
 import * as dagre from 'dagre';
-import { AlertTriangle, CheckCircle, GitMerge, Lightbulb, Loader2, MessageSquare, Plus, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  GitMerge,
+  Lightbulb,
+  Loader2,
+  MessageSquare,
+  Plus,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -50,6 +58,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
+import TeresaMark from '../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
@@ -57,6 +66,7 @@ import {
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
@@ -99,7 +109,6 @@ import {
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
-import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
 import {
@@ -549,9 +558,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     edges,
     autoValidate: false,
     onError: (message) =>
-      toast.error(
-        isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message
-      ),
+      toast.error(isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message),
   });
   const {
     activeProposal,

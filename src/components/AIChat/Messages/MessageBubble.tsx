@@ -1,9 +1,7 @@
-import TeresaMark from '../../shared/TeresaMark';
 /**
  * MessageBubble - Enhanced chat message component with actions
  * Renders user and AI messages with hover actions, artifacts, and thinking blocks
  */
-
 import { Check, ChevronDown, ChevronUp, Copy, FileCode, Sparkles, User } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +12,7 @@ import remarkGfm from 'remark-gfm';
 
 import { Artifact, ChatMessage, MessageFeedback } from '../../../types';
 import { isRtlLanguage, textDirection } from '../../../utils/textDirection';
+import TeresaMark from '../../shared/TeresaMark';
 import { CitationList } from '../CitationList';
 import { MessageActions } from './MessageActions';
 import { ThinkingBlock } from './ThinkingBlock';

@@ -2,7 +2,6 @@ import { AlertTriangle, CalendarClock, CheckCircle2, Play, ShieldCheck } from 'l
 import React from 'react';
 
 import { Api } from '../../services/api';
-
 import TeresaMark from '../shared/TeresaMark';
 type Wave8Agent = {
   agentId: string;

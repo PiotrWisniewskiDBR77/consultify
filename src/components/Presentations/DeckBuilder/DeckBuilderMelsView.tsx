@@ -33,8 +33,8 @@ import {
 } from './DeckBuilderMelsChips';
 import {
   buildDeckBuilderRightRailTools,
-  DeckBuilderRightRailPanel,
   type DeckBuilderRightRailLabels,
+  DeckBuilderRightRailPanel,
   type DeckBuilderRightRailPanelRenderers,
   type DeckBuilderRightRailState,
   type DeckBuilderRightRailToolId,
