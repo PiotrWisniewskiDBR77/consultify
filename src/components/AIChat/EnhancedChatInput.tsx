@@ -16,7 +16,7 @@
  */
 
 import { ArrowUp, AudioLines, Loader2, Mic, MicOff, Pen, Square, StopCircle } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -26,6 +26,15 @@ import { useConversationStore } from '../../store/useConversationStore';
 import { CHAT_V9_PII_CHECK_EVENT } from '../../utils/piiHeuristicToastFlag';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
+import { CommandPalette, type CommandPaletteItem } from './composer/CommandPalette';
+import {
+  buildMentionToken,
+  insertAtCaret,
+  type MentionCandidate,
+} from './composer/composerMentions';
+import { filterSlashCommands, type SlashCommand } from './composer/slashCommands';
+import { useComposerCommands } from './composer/useComposerCommands';
+import { useMentionSources } from './composer/useMentionSources';
 import { CoThinkerMenu } from './CoThinkerMenu';
 import { InputCharCounter } from './InputCharCounter';
 import { InputSoftLimitToast } from './InputSoftLimitToast';
@@ -71,6 +80,8 @@ interface EnhancedChatInputProps {
   startVoiceListening?: () => void;
   stopVoiceListening?: () => void;
   onToolSelect?: (tool: string) => void;
+  /** Start a fresh conversation (wired to the parent's existing new-chat handler). */
+  onNewChat?: () => void;
 
   /** Teresa real-time voice status: 'idle' | 'connecting' | 'live' | 'error' */
   teresaVoiceStatus?: string;
@@ -117,6 +128,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   startVoiceListening,
   stopVoiceListening,
   onToolSelect,
+  onNewChat,
   teresaVoiceStatus,
   teresaVoiceError,
   teresaVoiceAvailable = true,
@@ -126,7 +138,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   onTeresaVoiceMuteToggle,
 }) => {
   const { t, i18n } = useTranslation();
-  const { aiFreezeStatus } = useAppStore();
+  const { aiFreezeStatus, setAIConfig } = useAppStore();
   const uiLangBase = String(i18n.language || 'pl')
     .split('-')[0]
     .toLowerCase();
@@ -177,8 +189,121 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const isInputDisabled = isDisabled || isStreaming;
   const hasText = value.trim().length > 0;
   const canSend = hasText && !isInputDisabled;
-  const { activeConversationId, conversations } = useConversationStore();
+  const { activeConversationId, conversations, activeMessages } = useConversationStore();
   const [showMoveToProject, setShowMoveToProject] = useState(false);
+
+  // ========================================================================
+  // Composer command system (slash `/` + `@`-mention palettes)
+  // ========================================================================
+  const caretRef = useRef(0);
+  const commands = useComposerCommands();
+  const slashQuery = commands.state.mode === 'slash' ? commands.state.query : '';
+  const mentionQuery = commands.state.mode === 'mention' ? commands.state.query : '';
+  const slashResults = useMemo(
+    () => (commands.state.mode === 'slash' ? filterSlashCommands(slashQuery) : []),
+    [commands.state.mode, slashQuery]
+  );
+  // Hook must run unconditionally; it self-gates KB search on query length and is
+  // cheap for the store-derived candidates. Only surfaced while in mention mode.
+  const mentionSourceResults = useMentionSources(mentionQuery, attachments as any);
+  const mentionResults = commands.state.mode === 'mention' ? mentionSourceResults : [];
+  const paletteCount =
+    commands.state.mode === 'slash' ? slashResults.length : mentionResults.length;
+
+  const syncCaretFromTextarea = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    caretRef.current = ta.selectionStart ?? 0;
+    commands.update(ta.value, caretRef.current);
+  }, [commands]);
+
+  const applyInsertion = useCallback(
+    (nextValue: string, nextCaret: number) => {
+      setValue(nextValue);
+      caretRef.current = nextCaret;
+      commands.close();
+      requestAnimationFrame(() => {
+        const ta = textareaRef.current;
+        if (ta) {
+          ta.focus();
+          ta.setSelectionRange(nextCaret, nextCaret);
+        }
+      });
+    },
+    [commands]
+  );
+
+  const selectSlashCommand = useCallback(
+    (cmd: SlashCommand) => {
+      const start = commands.state.start;
+      const caret = caretRef.current;
+      if (cmd.apply.kind === 'config') {
+        setAIConfig(cmd.apply.patch as any);
+        const next = insertAtCaret(value, start, caret, '');
+        applyInsertion(next.value, next.caret);
+        toast.success(t(cmd.labelKey, cmd.labelFallback));
+      } else if (cmd.apply.kind === 'template') {
+        const text = t(cmd.apply.textKey, cmd.apply.textFallback);
+        const next = insertAtCaret(value, start, caret, text);
+        applyInsertion(next.value, next.caret);
+      } else if (cmd.apply.action === 'clear') {
+        setValue('');
+        setAttachments([]);
+        commands.close();
+      } else if (cmd.apply.action === 'newChat') {
+        setValue('');
+        setAttachments([]);
+        commands.close();
+        onNewChat?.();
+      }
+    },
+    [commands, value, setAIConfig, applyInsertion, t, onNewChat]
+  );
+
+  const selectMention = useCallback(
+    (candidate: MentionCandidate) => {
+      const next = insertAtCaret(
+        value,
+        commands.state.start,
+        caretRef.current,
+        buildMentionToken(candidate)
+      );
+      applyInsertion(next.value, next.caret);
+    },
+    [commands.state.start, value, applyInsertion]
+  );
+
+  const selectPaletteItemAt = useCallback(
+    (index: number) => {
+      if (commands.state.mode === 'slash') {
+        const cmd = slashResults[index];
+        if (cmd) selectSlashCommand(cmd);
+      } else if (commands.state.mode === 'mention') {
+        const candidate = mentionResults[index];
+        if (candidate) selectMention(candidate);
+      }
+    },
+    [commands.state.mode, slashResults, mentionResults, selectSlashCommand, selectMention]
+  );
+
+  const selectActivePaletteItem = useCallback(
+    () => selectPaletteItemAt(commands.state.activeIndex),
+    [selectPaletteItemAt, commands.state.activeIndex]
+  );
+
+  const paletteItems: CommandPaletteItem[] =
+    commands.state.mode === 'slash'
+      ? slashResults.map((c) => ({
+          id: c.id,
+          label: t(c.labelKey, c.labelFallback),
+          sublabel: t(c.descriptionKey, c.descriptionFallback),
+          icon: c.icon,
+        }))
+      : mentionResults.map((c) => ({
+          id: `${c.type}:${c.id}`,
+          label: c.label,
+          sublabel: c.sublabel,
+        }));
 
   // Use either internal or external voice state
   const isDictatingVal = isDictating;
@@ -640,13 +765,76 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // 1) Palette navigation takes priority while a `/` or `@` palette is open.
+      if (commands.isOpen) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          commands.move(1, paletteCount);
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          commands.move(-1, paletteCount);
+          return;
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') {
+          e.preventDefault();
+          e.stopPropagation();
+          selectActivePaletteItem();
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          commands.close();
+          return;
+        }
+      }
+
+      // 2) Esc stops an in-flight stream when no palette is open.
+      if (e.key === 'Escape') {
+        if (isStreaming) {
+          e.preventDefault();
+          onStopGenerating?.();
+        }
+        return;
+      }
+
+      // 3) Cmd/Ctrl+Enter force-sends (works even mid-palette intent).
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isStreaming) handleSend();
+        return;
+      }
+
+      // 4) Up-arrow on an empty composer recalls the last user message for editing.
+      if (e.key === 'ArrowUp' && value.trim().length === 0) {
+        const lastUser = [...activeMessages].reverse().find((m) => m.role === 'user');
+        if (lastUser?.content) {
+          e.preventDefault();
+          applyInsertion(lastUser.content, lastUser.content.length);
+        }
+        return;
+      }
+
+      // 5) Plain Enter sends.
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (isStreaming) return;
         handleSend();
       }
     },
-    [handleSend, isStreaming]
+    [
+      commands,
+      paletteCount,
+      selectActivePaletteItem,
+      handleSend,
+      isStreaming,
+      onStopGenerating,
+      value,
+      activeMessages,
+      applyInsertion,
+    ]
   );
 
   const handleDynamicButtonClick = useCallback(() => {
@@ -767,21 +955,21 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 ? att.name || att.url
                 : att.name || att.type;
             return (
-            <div
-              key={idx}
-              className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
-            >
-              <span className="inline-flex items-center gap-1">
-                <span>{isUrlAttachment ? 'Link' : 'File'}:</span>
-                <span className="max-w-[220px] truncate">{label}</span>
-              </span>
-              <button
-                onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
-                className="ml-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+              <div
+                key={idx}
+                className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
               >
-                ×
-              </button>
-            </div>
+                <span className="inline-flex items-center gap-1">
+                  <span>{isUrlAttachment ? 'Link' : 'File'}:</span>
+                  <span className="max-w-[220px] truncate">{label}</span>
+                </span>
+                <button
+                  onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                  className="ml-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  ×
+                </button>
+              </div>
             );
           })}
         </div>
@@ -824,6 +1012,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       {/* Main Input Container */}
       <div
         className={`
+                relative
                 bg-white dark:bg-navy-900 rounded-xl border transition-all duration-200
                 ${
                   isFocused
@@ -834,12 +1023,41 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 ${isDisabled ? 'opacity-60' : ''}
             `}
       >
+        {/* Slash / @-mention palette — floats above the composer */}
+        {commands.isOpen && (
+          <CommandPalette
+            header={
+              commands.state.mode === 'slash'
+                ? t('aiChat.composer.commands.header', 'Commands')
+                : t('aiChat.composer.mentions.header', 'Mention')
+            }
+            items={paletteItems}
+            activeIndex={commands.state.activeIndex}
+            emptyText={
+              commands.state.mode === 'slash'
+                ? t('aiChat.composer.commands.empty', 'No matching commands')
+                : t('aiChat.composer.mentions.empty', 'No matches')
+            }
+            onSelect={(index) => selectPaletteItemAt(index)}
+            onHover={commands.setActiveIndex}
+            onClose={commands.close}
+          />
+        )}
+
         {/* Textarea */}
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value;
+            const caret = e.target.selectionStart ?? next.length;
+            setValue(next);
+            caretRef.current = caret;
+            commands.update(next, caret);
+          }}
           onKeyDown={handleKeyDown}
+          onClick={syncCaretFromTextarea}
+          onSelect={syncCaretFromTextarea}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholderText}
@@ -860,44 +1078,44 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           {/* Left Actions */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="flex items-center gap-1 shrink-0">
-            <AddFilesMenu
-              onFileSelect={handleFileSelect}
-              onUrlAdd={handleUrlAdd}
-              onCloudFileSelect={handleCloudFileSelect}
-              onConnectCloud={handleConnectCloud}
-              connectedProviders={connectedProviderIds}
-              isCloudImplemented={isCloudImplemented}
-              disabled={isInputDisabled}
-            />
-            <ToolsMenu
-              onToolSelect={handleToolSelect}
-              disabled={isInputDisabled}
-              icon={Pen}
-              hasActiveConversation={hasProjectAssignableConversation}
-            />
-            <CoThinkerMenu disabled={isInputDisabled} />
+              <AddFilesMenu
+                onFileSelect={handleFileSelect}
+                onUrlAdd={handleUrlAdd}
+                onCloudFileSelect={handleCloudFileSelect}
+                onConnectCloud={handleConnectCloud}
+                connectedProviders={connectedProviderIds}
+                isCloudImplemented={isCloudImplemented}
+                disabled={isInputDisabled}
+              />
+              <ToolsMenu
+                onToolSelect={handleToolSelect}
+                disabled={isInputDisabled}
+                icon={Pen}
+                hasActiveConversation={hasProjectAssignableConversation}
+              />
+              <CoThinkerMenu disabled={isInputDisabled} />
             </div>
             <div className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pr-1 scrollbar-none">
-            {/* C-IN1 — Next-message model hint. Read-only pill showing
+              {/* C-IN1 — Next-message model hint. Read-only pill showing
                 which model will handle the next send. Self-gates on
                 `isNextModelChipEnabled()` and renders null when the
                 user has no resolvable model id, so the action bar
                 collapses cleanly when the signal is unavailable. */}
-            <NextModelChip />
-            {/* C-IN2 — Input character counter. Invisible until the
+              <NextModelChip />
+              {/* C-IN2 — Input character counter. Invisible until the
                 message crosses the default 400-char threshold, then
                 colour-escalates through amber at 80% of the 8k soft
                 max and rose once over. Purely advisory; never blocks
                 Send. Self-gates on `isInputCharCounterEnabled()`. */}
-            <InputCharCounter value={value} />
-            {/* C-IN6-lite — one-shot soft-limit inline toast. Headless
+              <InputCharCounter value={value} />
+              {/* C-IN6-lite — one-shot soft-limit inline toast. Headless
                 sibling of the counter that fires a single
                 `toast.custom` the first time `value.length` crosses
                 the counter's rose threshold in this tab, with a
                 "Don't show again this session" escape. Self-gates on
                 `isInputSoftLimitToastEnabled()` and the sessionStorage
                 fired / dismiss sentinels. */}
-            <InputSoftLimitToast value={value} />
+              <InputSoftLimitToast value={value} />
             </div>
           </div>
 

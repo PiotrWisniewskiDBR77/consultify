@@ -4410,6 +4410,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 <OutputToolSelector />
                 <EnhancedChatInput
                   onSend={handleSendMessage}
+                  onNewChat={handleNewChat}
                   onStopGenerating={() => {
                     const hadPartial = abortStream();
                     setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
@@ -4757,6 +4758,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             )}
             <EnhancedChatInput
               onSend={handleSendMessage}
+              onNewChat={handleNewChat}
               onStopGenerating={() => {
                 const hadPartial = abortStream();
                 setAbortFeedback(hadPartial ? 'partial' : 'cancelled');

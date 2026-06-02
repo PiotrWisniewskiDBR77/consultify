@@ -2068,6 +2068,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
               )}
               <EnhancedChatInput
                 onSend={handleSend}
+                onNewChat={handleNewChat}
                 onStopGenerating={abortStream}
                 onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
                 teresaVoiceStatus={teresaVoice.voiceStatus}
@@ -2202,6 +2203,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
             <OutputToolSelector />
             <EnhancedChatInput
               onSend={handleSend}
+              onNewChat={handleNewChat}
               onStopGenerating={abortStream}
               onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
               teresaVoiceStatus={teresaVoice.voiceStatus}
