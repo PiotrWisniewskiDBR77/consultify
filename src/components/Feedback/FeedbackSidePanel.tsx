@@ -292,7 +292,7 @@ export const FeedbackSidePanel: React.FC = () => {
   useEffect(() => {
     function onOpen() {
       try {
-        useAppStore.getState().openSidePanel?.('FEEDBACK');
+        useAppStore.getState().toggleSidePanel?.('FEEDBACK');
       } catch {
         // ignore
       }
@@ -483,7 +483,7 @@ export const FeedbackSidePanel: React.FC = () => {
       await Api.sendFeedback({
         userId: currentUser?.id || undefined,
         userEmail: currentUser?.email || undefined,
-        userName: currentUser?.full_name || currentUser?.firstName,
+        userName: currentUser?.firstName,
         type: reportType,
         title: reportTitle.trim() || undefined,
         message,
@@ -509,7 +509,10 @@ export const FeedbackSidePanel: React.FC = () => {
         consoleLogs: attachDiagnostics && dossier ? (dossier.consoleLogs as any) : undefined,
         networkErrors: attachDiagnostics && dossier ? (dossier.networkErrors as any) : undefined,
         breadcrumbs: attachDiagnostics && dossier ? (dossier.breadcrumbs as any) : undefined,
-        lastUncaughtError: attachDiagnostics && dossier ? dossier.lastUncaughtError : undefined,
+        lastUncaughtError:
+          attachDiagnostics && dossier
+            ? (dossier.lastUncaughtError as Record<string, unknown>)
+            : undefined,
         // Feedback #00835312 — user-uploaded image wins over the
         // auto-captured viewport so a tester who pastes / uploads their
         // own annotated screenshot always sees it travel with the
