@@ -78,7 +78,6 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(mdView.value).not.toContain('{"');
   });
 
-  // OBSOLETE — REMOVED UI: the capability-status/-note panel, workflow-capability badge and 'Workflow template' selector no longer exist after the rich-editor rollout.
   it('shows capability honesty labels for the active Canvas and workflow template', async () => {
     const user = userEvent.setup();
     render(<WorkCanvasDocumentPanel />);
@@ -98,7 +97,6 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getByText(/approval gate and output lineage are backed/i)).toBeInTheDocument();
   });
 
-  // OBSOLETE — REMOVED UI: the diagnostics 'canvas-research-session-id' readout is no longer rendered.
   it('links a research Canvas draft to a planned ResearchSession', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -395,7 +393,6 @@ describe('WorkCanvasDocumentPanel', () => {
     );
   });
 
-  // OBSOLETE — REMOVED UI: the 'Finalize research report' button was removed from diagnostics (handler is now dead code).
   it('finalizes research report from diagnostics with lineage feedback', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -482,7 +479,6 @@ describe('WorkCanvasDocumentPanel', () => {
     );
   });
 
-  // OBSOLETE — REMOVED UI: the 'canvas-selection-block-actions' chrome (Create table/chart/diagram/...) is no longer rendered (selectionBlockActions = null).
   it('turns selected Canvas text into native artifact blocks', async () => {
     const user = userEvent.setup();
     const generatedBlocks: any[] = [];
@@ -656,7 +652,6 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getAllByText('Define the business question.').length).toBeGreaterThan(1);
   });
 
-  // OBSOLETE — REMOVED UI: the 'canvas-selection-edit-panel' (Selection edit replacement / Preview edit) is no longer rendered.
   it('previews and applies a governed edit for selected Canvas text', async () => {
     const user = userEvent.setup();
     const originalContent = '# Company Work Note\n\n- [ ] Define the business question.';
@@ -784,7 +779,6 @@ describe('WorkCanvasDocumentPanel', () => {
     );
   });
 
-  // OBSOLETE — REMOVED UI: the 'canvas-selection-writing-shortcuts' panel is no longer rendered.
   it('uses writing shortcuts to draft replacement Markdown without bypassing preview', async () => {
     const user = userEvent.setup();
     const originalContent = '# Company Work Note\n\n- [ ] Define the business question.';
@@ -864,7 +858,6 @@ describe('WorkCanvasDocumentPanel', () => {
     );
   });
 
-  // OBSOLETE — REMOVED UI: dataset upload has no persistent input[type=file]; upload is now a transient programmatic input, so the dataset-actions flow cannot be driven from tests.
   it('turns an uploaded CSV dataset into a KPI dashboard block', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -1011,7 +1004,6 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getByText(/no arbitrary code execution/i)).toBeInTheDocument();
   });
 
-  // OBSOLETE — REMOVED UI: dataset upload has no persistent input[type=file]; the dataset-actions flow cannot be driven from tests.
   it('turns an uploaded XLSX dataset into a governed dashboard preview', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -1142,7 +1134,6 @@ describe('WorkCanvasDocumentPanel', () => {
     );
   });
 
-  // OBSOLETE — REMOVED UI: dataset upload has no persistent input[type=file]; the dataset-actions flow cannot be driven from tests.
   it('creates an aggregate analysis chart from an uploaded dataset through approval preview', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -1274,7 +1265,6 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getByTestId('canvas-artifact-block-aggregate-chart')).toHaveTextContent('Ada');
   });
 
-  // OBSOLETE — REMOVED UI: the workflow ledger, 'Workflow template' selector and 'Start workflow' control are no longer rendered (workflow helpers are now dead code).
   it('starts and resumes a governed workflow from Canvas diagnostics', async () => {
     const user = userEvent.setup();
     const workflowRun = {
@@ -1697,7 +1687,6 @@ describe('WorkCanvasDocumentPanel', () => {
     );
   });
 
-  // OBSOLETE — REMOVED UI: the 'Start workflow' control / workflow ledger is no longer rendered.
   it('disables workflow creation while start workflow is in flight', async () => {
     const user = userEvent.setup();
     const workflowRun = {
@@ -1777,7 +1766,6 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(await screen.findByText('Market research to report')).toBeInTheDocument();
   });
 
-  // OBSOLETE — REMOVED UI: the 'Start workflow' control is no longer rendered.
   it('shows friendly conflict copy when starting a workflow from a stale draft', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string) => {
@@ -1828,7 +1816,6 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getByRole('button', { name: 'Start workflow' })).toBeEnabled();
   });
 
-  // OBSOLETE — REMOVED UI: the workflow reviewer/approval ledger is no longer rendered.
   it('preserves an existing workflow reviewer when approving without editing the reviewer field', async () => {
     const user = userEvent.setup();
     const workflowRun = {
@@ -1992,7 +1979,6 @@ describe('WorkCanvasDocumentPanel', () => {
     );
   });
 
-  // OBSOLETE — REMOVED UI: the workflow 'Approve and run' ledger control is no longer rendered.
   it('disables workflow execution while run-next is in flight', async () => {
     const user = userEvent.setup();
     const workflowRun = {
