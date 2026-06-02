@@ -3,7 +3,8 @@ import JSZip from 'jszip';
 import path from 'path';
 import PDFDocument from 'pdfkit';
 import PptxGenJS from 'pptxgenjs';
-import { PassThrough } from 'stream';
+
+import { unifiedExportService } from './export/UnifiedExportService.js';
 
 export type PartnerResourceLanguage = 'en' | 'pl';
 
@@ -20,22 +21,12 @@ function toLanguage(lang: unknown): PartnerResourceLanguage {
 async function renderPdfToBuffer(
   build: (doc: InstanceType<typeof PDFDocument>) => void
 ): Promise<Buffer> {
-  const doc = new PDFDocument({ margin: 48, size: 'A4' });
-  const stream = new PassThrough();
-  const chunks: Buffer[] = [];
-
-  stream.on('data', (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-
-  const endPromise = new Promise<Buffer>((resolve, reject) => {
-    stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', reject);
+  // Delegates to the shared layout-agnostic PDF primitive (system-unification
+  // #5); the build callback (layout) is unchanged, so output is equivalent.
+  return unifiedExportService.renderPdf(build as (doc: any) => void, {
+    margin: 48,
+    size: 'A4',
   });
-
-  doc.pipe(stream);
-  build(doc);
-  doc.end();
-
-  return endPromise;
 }
 
 function safeReadFile(absPath: string): Buffer | null {
