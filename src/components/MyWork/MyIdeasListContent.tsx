@@ -468,6 +468,110 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     [activeFolderId, fetchIdeas, isPolish]
   );
 
+  // M2/C: home-shell bar (folders + starred + recents) shared across the
+  // table / grid / garden views so the home is consistent everywhere.
+  const homeShellBar = (
+    <>
+      {/* folders bar (only once the folders endpoint is live) */}
+      {foldersAvailable && (
+        <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => setActiveFolderId(null)}
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+              !activeFolderId
+                ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+            }`}
+          >
+            {isPolish ? 'Wszystkie' : 'All'}
+          </button>
+          {folders.map((f) => (
+            <span key={f.id} className="inline-flex items-center">
+              <button
+                type="button"
+                onClick={() => setActiveFolderId(f.id)}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  activeFolderId === f.id
+                    ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+                }`}
+              >
+                <Folder size={12} />
+                <span className="max-w-[140px] truncate">{f.name}</span>
+              </button>
+              {activeFolderId === f.id && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFolder(f.id)}
+                  title={isPolish ? 'Usuń folder' : 'Delete folder'}
+                  aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
+                  className="ml-0.5 rounded-full p-0.5 text-slate-400 hover:text-rose-500"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={handleCreateFolder}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-navy-600 dark:text-slate-400 dark:hover:bg-navy-800"
+          >
+            <FolderPlus size={12} />
+            {isPolish ? 'Nowy folder' : 'New folder'}
+          </button>
+        </div>
+      )}
+      {/* "Starred only" filter toggle (shown once anything is starred) */}
+      {(showStarredOnly || ideas.some((i) => isFavorite(i.id))) && (
+        <div className="px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => setShowStarredOnly((v) => !v)}
+            aria-pressed={showStarredOnly}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              showStarredOnly
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+            }`}
+          >
+            <Star size={13} className={showStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
+            {isPolish ? 'Tylko oznaczone' : 'Starred only'}
+          </button>
+        </div>
+      )}
+      {/* "Recently opened" rail (localStorage-backed, per device) */}
+      {recentIdeas.length > 0 && (
+        <div className="px-4 pt-3" data-testid="ideas-recents-rail">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {recentIdeas.map((idea) => {
+              const tc = getToolConfig(idea.preferredTool);
+              const ToolIcon = tc.icon;
+              return (
+                <button
+                  key={idea.id}
+                  type="button"
+                  onClick={() => openIdea(idea.id, idea)}
+                  title={idea.title || ''}
+                  className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
+                >
+                  <ToolIcon size={13} className="text-slate-400" />
+                  <span className="max-w-[160px] truncate">
+                    {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   useEffect(() => {
     const counts = {
       total: ideas.length,
@@ -1288,106 +1392,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
-        {/* M2: folders bar (only once the folders endpoint is live) */}
-        {foldersAvailable && (
-          <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
-            <button
-              type="button"
-              onClick={() => setActiveFolderId(null)}
-              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                !activeFolderId
-                  ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
-              }`}
-            >
-              {isPolish ? 'Wszystkie' : 'All'}
-            </button>
-            {folders.map((f) => (
-              <span key={f.id} className="inline-flex items-center">
-                <button
-                  type="button"
-                  onClick={() => setActiveFolderId(f.id)}
-                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                    activeFolderId === f.id
-                      ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
-                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
-                  }`}
-                >
-                  <Folder size={12} />
-                  <span className="max-w-[140px] truncate">{f.name}</span>
-                </button>
-                {activeFolderId === f.id && (
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteFolder(f.id)}
-                    title={isPolish ? 'Usuń folder' : 'Delete folder'}
-                    aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
-                    className="ml-0.5 rounded-full p-0.5 text-slate-400 hover:text-rose-500"
-                  >
-                    <X size={12} />
-                  </button>
-                )}
-              </span>
-            ))}
-            <button
-              type="button"
-              onClick={handleCreateFolder}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-navy-600 dark:text-slate-400 dark:hover:bg-navy-800"
-            >
-              <FolderPlus size={12} />
-              {isPolish ? 'Nowy folder' : 'New folder'}
-            </button>
-          </div>
-        )}
-        {/* M2: "Starred only" filter toggle (shown once anything is starred) */}
-        {(showStarredOnly || ideas.some((i) => isFavorite(i.id))) && (
-          <div className="px-4 pt-3">
-            <button
-              type="button"
-              onClick={() => setShowStarredOnly((v) => !v)}
-              aria-pressed={showStarredOnly}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                showStarredOnly
-                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
-              }`}
-            >
-              <Star
-                size={13}
-                className={showStarredOnly ? 'fill-amber-400 text-amber-400' : ''}
-              />
-              {isPolish ? 'Tylko oznaczone' : 'Starred only'}
-            </button>
-          </div>
-        )}
-        {/* M2: "Recently opened" rail (localStorage-backed, per device) */}
-        {recentIdeas.length > 0 && (
-          <div className="px-4 pt-3" data-testid="ideas-recents-rail">
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {recentIdeas.map((idea) => {
-                const tc = getToolConfig(idea.preferredTool);
-                const ToolIcon = tc.icon;
-                return (
-                  <button
-                    key={idea.id}
-                    type="button"
-                    onClick={() => openIdea(idea.id, idea)}
-                    title={idea.title || ''}
-                    className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
-                  >
-                    <ToolIcon size={13} className="text-slate-400" />
-                    <span className="max-w-[160px] truncate">
-                      {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {homeShellBar}
         {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
         <div className="flex flex-col flex-1 min-h-0">
           <IdeasTableContent
@@ -1460,6 +1465,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
         {convertModal}
         {tagModal}
+        {homeShellBar}
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sortedIdeas.map((idea) => {
@@ -1489,7 +1495,26 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                     isSelected ? 'ring-2 ring-primary-500/40' : '',
                   ].join(' ')}
                 >
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(idea.id);
+                      }}
+                      aria-label={isFavorite(idea.id) ? 'Unstar' : 'Star'}
+                      aria-pressed={isFavorite(idea.id)}
+                      className={`rounded p-0.5 transition-opacity ${
+                        isFavorite(idea.id)
+                          ? 'text-amber-400 opacity-100'
+                          : 'text-slate-300 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-600'
+                      }`}
+                    >
+                      <Star
+                        size={15}
+                        className={isFavorite(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
+                      />
+                    </button>
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -1602,6 +1627,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       {convertModal}
       {tagModal}
       {confirmDialog}
+      {homeShellBar}
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-primary-400/20 dark:from-amber-500/15 dark:to-primary-500/15">
@@ -1674,6 +1700,25 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(idea.id);
+                            }}
+                            aria-label={isFavorite(idea.id) ? 'Unstar' : 'Star'}
+                            aria-pressed={isFavorite(idea.id)}
+                            className={`rounded p-0.5 transition-colors ${
+                              isFavorite(idea.id)
+                                ? 'text-amber-400'
+                                : 'text-slate-300 hover:text-amber-400 dark:text-slate-600'
+                            }`}
+                          >
+                            <Star
+                              size={13}
+                              className={isFavorite(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
+                            />
+                          </button>
                           {renderStageBadge(stage)}
                           {renderToolBadge(idea.preferredTool)}
                           <button
