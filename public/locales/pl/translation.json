@@ -1005,7 +1005,9 @@
         },
         "hardGate": "Hard gate",
         "score": "Wynik"
-      }
+      },
+      "empty": "Brak sygnałów. Teresa skanuje.",
+      "emptyHint": "W miarę rozwoju Twoich projektów i kontekstu pojawią się tu sygnały warte uwagi."
     },
     "calendar": "Kalendarz",
     "tasks": "Zadania",
@@ -1125,6 +1127,13 @@
         "tableTooltip": "Widok tabeli — strukturalna lista pomysłów",
         "whiteboard": "Tablica",
         "whiteboardTooltip": "Tablica — swobodny canvas"
+      },
+      "teresa": {
+        "nudge": {
+          "cluster": "Pogrupować te węzły?",
+          "summarizeTable": "Podsumuj tę tabelę dla Teresy",
+          "open": "Zapytaj Teresę"
+        }
       }
     },
     "whiteboard": {
@@ -1355,7 +1364,8 @@
           "decisions": "Decyzje",
           "parkingLot": "Parking lot"
         }
-      }
+      },
+      "facilitationError": "Sesja facylitacji niedostępna"
     },
     "notebook": {
       "title": "Notebook",
@@ -1410,7 +1420,25 @@
       "aiActionPlan": "Plan działań AI",
       "insertIntoNote": "Wstaw do notatki",
       "dismiss": "Odrzuć",
-      "generatingResponse": "Generowanie odpowiedzi…"
+      "generatingResponse": "Generowanie odpowiedzi…",
+      "library": {
+        "title": "Notatniki",
+        "empty": "Brak notatników",
+        "emptyFiltered": "Brak notatników pasujących do filtrów",
+        "createFirst": "Utwórz pierwszy notatnik"
+      },
+      "scope": {
+        "personal": "Osobisty",
+        "team": "Zespół"
+      },
+      "context": {
+        "private": "Prywatny",
+        "org": "Kontekst org"
+      }
+    },
+    "processFlow": {
+      "degraded": "Dane przepływu niedostępne — ponowne łączenie",
+      "degradedHint": "Zmiany strukturalne są zapisywane lokalnie i zsynchronizują się po przywróceniu usługi."
     }
   },
   "step1": {

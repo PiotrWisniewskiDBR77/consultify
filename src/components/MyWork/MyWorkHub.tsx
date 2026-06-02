@@ -101,6 +101,7 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
+import { CalendarView } from './Calendar/CalendarView';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
 import type { HomeScreenAction } from './Home/homeV2Types';
@@ -124,9 +125,9 @@ import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './Inbo
 import { MyIdeasListContent } from './MyIdeasListContent';
 import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
-import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
-import { CalendarView } from './Calendar/CalendarView';
 import { NotebookContent } from './NotebookContent';
+import { NotebookLibraryContent } from './NotebookLibraryContent';
+import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
@@ -406,6 +407,7 @@ function getInitialMyWorkTab(
   if (allowIdeas && (searchParams.get('ideaId') || searchParams.get('idea'))) return 'ideas';
   if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
   if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
+  if (searchParams.get('notebook')) return 'notebook';
 
   return 'home';
 }
@@ -655,6 +657,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
   const [notebookOpenPageId, setNotebookOpenPageId] = useState<string | null>(null);
+  // L1 container (Notatnik) currently open. null => show the notebook library list.
+  const [notebookOpenId, setNotebookOpenId] = useState<string | null>(null);
+  const [notebookOpenTitle, setNotebookOpenTitle] = useState<string>('');
+  // Menu 2 "New notebook" CTA → opens the create-notebook modal inside the library (L1).
+  const [notebookCreateNotebookReqId, setNotebookCreateNotebookReqId] = useState(0);
+  // Menu 3 (Command Row) scope presets for the notebook library (L1).
+  const [notebookScopeFilter, setNotebookScopeFilter] = useState<'all' | 'personal' | 'team'>(
+    'all'
+  );
+  const [notebookScopeCounts, setNotebookScopeCounts] = useState({
+    all: 0,
+    personal: 0,
+    team: 0,
+  });
   const notebookActivePanel: WorkspacePanelKey = notebookChatOpen
     ? 'tools'
     : notebookLinkedIdeasOpen
@@ -1279,6 +1295,38 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setPendingUrlCleanup({ documentId: ideaId, keys: ['ideaId', 'idea'] });
     }
   }, [activeTab, handleOpenDocument, searchParams, isPolish]);
+
+  // Notebook container deep-link: ?notebook=<id> persists in the URL so a notebook
+  // is shareable and survives refresh (unlike the transient task/idea deep-links
+  // above). Reconcile URL -> state; covers cold load and browser back/forward.
+  // Page-level open (notebookOpenPageId) stays owned by the legacy intent/action
+  // flows and is intentionally not reconciled here.
+  useEffect(() => {
+    const nbId = searchParams.get('notebook');
+    if ((nbId || null) === (notebookOpenId || null)) return;
+    if (!nbId) {
+      setNotebookOpenId(null);
+      setNotebookOpenTitle('');
+      return;
+    }
+    setActiveTab('notebook');
+    setNotebookOpenId(nbId);
+    setNotebookOpenTitle('');
+    setNotebookOpenPageId(null);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { Api } = await import('@/services/api');
+        const nb = await Api.getNotebook(nbId);
+        if (!cancelled && nb?.title) setNotebookOpenTitle(String(nb.title));
+      } catch {
+        /* title is best-effort; header falls back to the default label */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, notebookOpenId]);
 
   useEffect(() => {
     const intent = parseMyWorkPathIntent(location.pathname, isPolish);
@@ -2042,8 +2090,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           return;
         }
         case 'radar_feedback': {
-          const actionType =
-            action.feedback === 'watch' ? 'add_to_watchlist' : 'less_like_this';
+          const actionType = action.feedback === 'watch' ? 'add_to_watchlist' : 'less_like_this';
           const payload = {
             ...(action.topic ? { topic: action.topic } : {}),
             ...(action.source ? { source: action.source } : {}),
@@ -2114,12 +2161,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           variant: 'primary' as const,
         };
       case 'notebook':
-        return {
-          label: isPolish ? 'Nowa notatka' : 'New note',
-          onClick: () => setNotebookCreateReqId((v) => v + 1),
-          tone: 'indigo' as const,
-          variant: 'primary' as const,
-        };
+        // Inside a notebook (L2) → create a note. On the library list (L1) → create a notebook.
+        return notebookOpenId
+          ? {
+              label: isPolish ? 'Nowa notatka' : 'New note',
+              onClick: () => setNotebookCreateReqId((v) => v + 1),
+              tone: 'indigo' as const,
+              variant: 'primary' as const,
+            }
+          : {
+              label: isPolish ? 'Nowy notatnik' : 'New notebook',
+              onClick: () => setNotebookCreateNotebookReqId((v) => v + 1),
+              tone: 'indigo' as const,
+              variant: 'primary' as const,
+            };
       default:
         return null;
     }
@@ -2130,6 +2185,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     handleCreateIdea,
     handleCreateDecision,
     setNotebookCreateReqId,
+    setNotebookCreateNotebookReqId,
+    notebookOpenId,
     setCalendarCreateReqId,
     activeDocumentId,
   ]);
@@ -2335,6 +2392,52 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // 3) Context counters row (list view default)
     if (activeDocumentId) return null;
+
+    // Notebook library (L1): scope presets in the single Command Row.
+    if (activeTab === 'notebook' && !notebookOpenId) {
+      const presets: Array<{ id: 'all' | 'personal' | 'team'; label: string; count: number }> = [
+        { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: notebookScopeCounts.all },
+        {
+          id: 'personal',
+          label: isPolish ? 'Osobiste' : 'Personal',
+          count: notebookScopeCounts.personal,
+        },
+        { id: 'team', label: isPolish ? 'Zespołowe' : 'Team', count: notebookScopeCounts.team },
+      ];
+      return (
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
+            <div className={MENU_3_LEFT_CLASS}>
+              {presets.map((p) => {
+                const isActive = notebookScopeFilter === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setNotebookScopeFilter(p.id)}
+                    className={`${MENU_3_CHIP_BASE} ${isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}`}
+                    title={p.label}
+                  >
+                    {p.id === 'all' ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
+                    ) : p.id === 'personal' ? (
+                      <Lock size={12} />
+                    ) : (
+                      <Users size={12} />
+                    )}
+                    {p.label}
+                    <span
+                      className={`${MENU_3_BADGE_BASE} ${isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}`}
+                    >
+                      {p.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     // Tasks: filters as a single Command Row (no extra toolbars/strips).
     if (activeTab === 'tasks') {
@@ -3113,10 +3216,44 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           />
         );
       case 'notebook':
+        // Show the L1 library only when neither a notebook nor a specific page
+        // is targeted. A deep-linked page (e.g. "open source note" from a task)
+        // bypasses the library and opens the editor directly.
+        if (!notebookOpenId && !notebookOpenPageId) {
+          return (
+            <NotebookLibraryContent
+              searchQuery={searchQuery}
+              refreshTrigger={refreshTrigger}
+              createRequestId={notebookCreateNotebookReqId}
+              scopeFilter={notebookScopeFilter}
+              onScopeCountsChange={setNotebookScopeCounts}
+              onOpenNotebook={(nb) => {
+                setNotebookOpenId(nb.id);
+                setNotebookOpenTitle(nb.title);
+                setNotebookOpenPageId(null);
+                const next = new URLSearchParams(searchParams);
+                next.set('notebook', nb.id);
+                next.delete('note');
+                setSearchParams(next, { replace: false });
+              }}
+            />
+          );
+        }
         return (
           <React.Suspense fallback={lazyFallback}>
             <NotebookContent
               projectId={null}
+              notebookId={notebookOpenId}
+              notebookTitle={notebookOpenTitle}
+              onBackToLibrary={() => {
+                setNotebookOpenId(null);
+                setNotebookOpenTitle('');
+                setNotebookOpenPageId(null);
+                const next = new URLSearchParams(searchParams);
+                next.delete('notebook');
+                next.delete('note');
+                setSearchParams(next, { replace: false });
+              }}
               searchQuery={searchQuery}
               openPageId={notebookOpenPageId}
               linkedIdeasOpen={notebookLinkedIdeasOpen}
@@ -3554,17 +3691,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </div>
               )}
 
-              {/* Workspace 3-tools strip — Notebook only */}
-              {activeTab === 'notebook' && !activeDocumentId && (
-                <WorkspacePanelStrip
-                  value={notebookActivePanel}
-                  onChange={(next) => {
-                    setNotebookChatOpen(next === 'tools');
-                    setNotebookLinkedIdeasOpen(next === 'context');
-                    setNotebookTopicsOpen(next === 'ai_suggestions');
-                  }}
-                />
-              )}
+              {/* Workspace 3-tools strip — Notebook only (when the editor is shown,
+                  i.e. inside an open notebook or on a deep-linked page) */}
+              {activeTab === 'notebook' &&
+                !activeDocumentId &&
+                (notebookOpenId || notebookOpenPageId) && (
+                  <WorkspacePanelStrip
+                    value={notebookActivePanel}
+                    onChange={(next) => {
+                      setNotebookChatOpen(next === 'tools');
+                      setNotebookLinkedIdeasOpen(next === 'context');
+                      setNotebookTopicsOpen(next === 'ai_suggestions');
+                    }}
+                  />
+                )}
             </div>
 
             {/* Primary Action Button (New Task/Decision/Notification) */}

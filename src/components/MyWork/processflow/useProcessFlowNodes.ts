@@ -23,6 +23,8 @@ export interface UseProcessFlowNodesOpts {
   isPl: boolean;
   pushUndo: () => void;
   onNodeDetail?: ((nodeId: string, data: any) => void) | undefined;
+  /** Fire-and-forget hook for persisting node deletions to the V8 tables. */
+  onNodesDeleted?: ((nodeIds: string[]) => void) | undefined;
 }
 
 export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
@@ -37,6 +39,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     isPl,
     pushUndo,
     onNodeDetail,
+    onNodesDeleted,
   } = opts;
 
   const deleteSelected = useCallback(() => {
@@ -45,6 +48,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
     let removedNodeIds: Set<string>;
     setNodes((prev: Node[]) => {
       removedNodeIds = new Set(prev.filter((n: Node) => n.selected).map((n: Node) => n.id));
+      if (removedNodeIds.size) onNodesDeleted?.(Array.from(removedNodeIds));
       return prev.filter((n: Node) => !n.selected);
     });
     setEdges((prev: Edge[]) =>
@@ -52,7 +56,7 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
         (e: Edge) => !e.selected && !removedNodeIds!.has(e.source) && !removedNodeIds!.has(e.target)
       )
     );
-  }, [locked, pushUndo, setEdges, setNodes]);
+  }, [locked, onNodesDeleted, pushUndo, setEdges, setNodes]);
 
   const duplicateSelected = useCallback(() => {
     if (locked) return;

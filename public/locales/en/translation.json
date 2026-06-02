@@ -1592,7 +1592,9 @@
         },
         "hardGate": "Hard gate",
         "score": "Score"
-      }
+      },
+      "empty": "No signals yet. Teresa is scanning.",
+      "emptyHint": "As your projects and context grow, signals worth your attention will appear here."
     },
     "calendar": "Calendar",
     "tasks": "Tasks",
@@ -1712,6 +1714,13 @@
         "tableTooltip": "Table view — structured list of ideas",
         "whiteboard": "Whiteboard",
         "whiteboardTooltip": "Whiteboard view — free-form canvas"
+      },
+      "teresa": {
+        "nudge": {
+          "cluster": "Want me to cluster these nodes?",
+          "summarizeTable": "Summarise this table for Teresa",
+          "open": "Ask Teresa"
+        }
       }
     },
     "whiteboard": {
@@ -1942,7 +1951,8 @@
           "decisions": "Decisions",
           "parkingLot": "Parking lot"
         }
-      }
+      },
+      "facilitationError": "Facilitation session unavailable"
     },
     "notebook": {
       "title": "Notebook",
@@ -1997,7 +2007,25 @@
       "aiActionPlan": "AI Action Plan",
       "insertIntoNote": "Insert into note",
       "dismiss": "Dismiss",
-      "generatingResponse": "Generating response…"
+      "generatingResponse": "Generating response…",
+      "library": {
+        "title": "Notebooks",
+        "empty": "No notebooks yet",
+        "emptyFiltered": "No notebooks match your filters",
+        "createFirst": "Create your first notebook"
+      },
+      "scope": {
+        "personal": "Personal",
+        "team": "Team"
+      },
+      "context": {
+        "private": "Private",
+        "org": "Org context"
+      }
+    },
+    "processFlow": {
+      "degraded": "Flow data unavailable — reconnecting",
+      "degradedHint": "Structural changes are saved locally and will sync once the service is back."
     }
   },
   "step1": {

@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   CheckSquare,
   ChevronDown,
+  ChevronLeft,
   Clock,
   FileText,
   Filter,
@@ -97,6 +98,11 @@ interface NotebookContentProps {
   createPageRequestId?: number;
   refreshTrigger?: number;
   openPageId?: string | null;
+  /** L1 container this workspace is scoped to (Notatnik). */
+  notebookId?: string | null;
+  notebookTitle?: string;
+  /** Return to the notebook library (L1). When set, a back button is shown. */
+  onBackToLibrary?: () => void;
 }
 
 type NotebookAIProposal = {
@@ -596,6 +602,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   createPageRequestId,
   refreshTrigger,
   openPageId,
+  notebookId,
+  notebookTitle,
+  onBackToLibrary,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -816,6 +825,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
         const list = await Api.getNotebookPages({
           projectId: projectId || undefined,
+          notebookId: notebookId || undefined,
           q: q || undefined,
           limit: 50,
         });
@@ -828,7 +838,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         toast.error(t('myWork.errors.fetchFailed', 'Failed to load'));
       }
     },
-    [projectId, searchQuery, t]
+    [projectId, notebookId, searchQuery, t]
   );
 
   const loadMore = useCallback(async () => {
@@ -836,6 +846,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       const q = String(searchQuery || '').trim();
       const list = await Api.getNotebookPages({
         projectId: projectId || undefined,
+        notebookId: notebookId || undefined,
         q: q || undefined,
         limit: 50,
         offset: pages.length,
@@ -847,7 +858,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       console.error('Failed to load more notebook pages', e);
       toast.error(t('myWork.errors.fetchFailed', 'Failed to load'));
     }
-  }, [projectId, searchQuery, pages.length, t]);
+  }, [projectId, notebookId, searchQuery, pages.length, t]);
 
   useEffect(() => {
     fetchPages();
@@ -1062,6 +1073,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         const created = await Api.createNotebookPage({
           title: defaultTitle,
           projectId: projectId || null,
+          notebookId: notebookId || undefined,
           visibility: projectId ? 'project' : 'private',
           tags: [],
           contentJson,
@@ -1735,13 +1747,30 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         {/* Sidebar header */}
         <div className="px-4 py-3 border-b border-slate-200/60 dark:border-navy-800/60">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shadow-sm">
-                <BookOpen size={14} className="text-white" />
-              </div>
-              <div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white">
-                  {t('myWork.notebook.title', 'Notebook')}
+            <div className="flex items-center gap-2.5 min-w-0">
+              {onBackToLibrary ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={onBackToLibrary}
+                      data-testid="notebook-back-to-library"
+                      className="w-7 h-7 shrink-0 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isPolish ? 'Wszystkie notatniki' : 'All notebooks'}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div className="w-7 h-7 shrink-0 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shadow-sm">
+                  <BookOpen size={14} className="text-white" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  {notebookTitle || t('myWork.notebook.title', 'Notebook')}
                 </div>
                 <div className="text-[10px] text-slate-400 dark:text-slate-500">
                   {filteredPages.length} {isPolish ? 'stron' : 'pages'}

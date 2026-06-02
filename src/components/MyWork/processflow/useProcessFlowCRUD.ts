@@ -1,38 +1,94 @@
 /**
- * useProcessFlowCRUD — Optional V8 API CRUD wiring for process flow nodes/edges.
+ * useProcessFlowCRUD — V8 API CRUD wiring for process flow nodes/edges.
  *
- * Wraps the 12 backend CRUD endpoints that are not covered by existing hooks.
- * Designed to run alongside workspace sync — calls are fire-and-forget to avoid
- * blocking the UI. Enable via the `enabled` option.
+ * Persists the *structural* graph (semantic nodes + typed edges) to the
+ * dedicated V8 process-flow tables (`v8.v8_process_flow_nodes/edges`) so the
+ * BPMN-ish semantics survive a reload — the shared map-sync blob alone loses
+ * object_type / gateway_kind / lane semantics.
+ *
+ * Runs *alongside* the shared workspace sync; every call is fire-and-forget and
+ * never blocks or throws into the canvas. Enable via `enabled: true`.
+ *
+ * The backend contract (server/src/routes/v8/processFlow.routes.ts) uses
+ * snake_case body fields: object_type, position_x/position_y, lane_id,
+ * source_node_id/target_node_id, gateway_kind. This hook owns that mapping so
+ * callers can pass the UI's `FlowShape` directly.
  */
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { Api } from '@/services/api';
+import { API_URL, getHeaders } from '@/services/api';
 
 interface UseProcessFlowCRUDOpts {
   processId: string;
   enabled?: boolean;
 }
 
-export function useProcessFlowCRUD({ processId, enabled = false }: UseProcessFlowCRUDOpts) {
-  const abortRef = useRef<AbortController | null>(null);
+/** Backend semantic object types (mirror of P14_SEMANTIC_OBJECTS). */
+export type ProcessFlowObjectType =
+  | 'start_event'
+  | 'end_event'
+  | 'task'
+  | 'decision_gateway'
+  | 'parallel_gateway'
+  | 'subprocess'
+  | 'lane'
+  | 'pool'
+  | 'sequence_flow'
+  | 'message_flow'
+  | 'annotation';
 
+/**
+ * Map a UI FlowShape to a backend semantic object type. Anything not a clear
+ * event/gateway/container collapses to `task` (the BPMN atomic unit), matching
+ * the server-side P14_NODE_KINDS_MAPPING posture.
+ */
+export function shapeToObjectType(shape: string): ProcessFlowObjectType {
+  switch (shape) {
+    case 'start':
+    case 'auto_trigger':
+    case 'bpmn_event':
+      return 'start_event';
+    case 'end':
+      return 'end_event';
+    case 'decision':
+    case 'bpmn_gateway':
+    case 'auto_condition':
+      return 'decision_gateway';
+    case 'system_db':
+    case 'system_service':
+    case 'vsm_inventory':
+    case 'vsm_supermarket':
+      return 'subprocess';
+    case 'org_handoff':
+    case 'vsm_push_arrow':
+    case 'vsm_pull_arrow':
+      return 'message_flow';
+    case 'org_role':
+    case 'org_team':
+      return 'lane';
+    default:
+      return 'task';
+  }
+}
+
+export function useProcessFlowCRUD({ processId, enabled = false }: UseProcessFlowCRUDOpts) {
   const callApi = useCallback(
-    async (method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown) => {
+    async <T = unknown>(
+      method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+      path: string,
+      body?: unknown
+    ): Promise<T | null> => {
       if (!enabled || !processId) return null;
       try {
-        abortRef.current?.abort();
-        abortRef.current = new AbortController();
-        const url = `/api/v8/process-flow/${path}`;
-        const opts: RequestInit = {
+        const res = await fetch(`${API_URL}/v8/process-flow/${path}`, {
           method,
-          headers: { 'Content-Type': 'application/json' },
-          signal: abortRef.current.signal,
+          headers: getHeaders(),
           body: body ? JSON.stringify(body) : undefined,
-        };
-        const res = await (Api as any).raw(url, opts);
-        return res;
+        });
+        if (!res.ok) return null;
+        return (await res.json().catch(() => null)) as T | null;
       } catch {
+        // Fire-and-forget: degraded mode is surfaced separately via the health poll.
         return null;
       }
     },
@@ -47,8 +103,21 @@ export function useProcessFlowCRUD({ processId, enabled = false }: UseProcessFlo
   );
 
   const createNode = useCallback(
-    (data: { type: string; label: string; position?: { x: number; y: number }; laneId?: string }) =>
-      callApi('POST', `${processId}/nodes`, data),
+    (data: {
+      shape: string;
+      label: string;
+      position?: { x: number; y: number };
+      laneId?: string | null;
+      gatewayKind?: 'xor' | 'and' | null;
+    }) =>
+      callApi('POST', `${processId}/nodes`, {
+        object_type: shapeToObjectType(data.shape),
+        label: data.label,
+        position_x: data.position?.x ?? 0,
+        position_y: data.position?.y ?? 0,
+        lane_id: data.laneId ?? null,
+        gateway_kind: data.gatewayKind ?? null,
+      }),
     [callApi, processId]
   );
 
@@ -59,18 +128,19 @@ export function useProcessFlowCRUD({ processId, enabled = false }: UseProcessFlo
 
   const moveNode = useCallback(
     (nodeId: string, position: { x: number; y: number }) =>
-      callApi('PUT', `nodes/${nodeId}/move`, position),
+      callApi('PUT', `nodes/${nodeId}/move`, { position_x: position.x, position_y: position.y }),
     [callApi]
   );
 
   const updateGatewayKind = useCallback(
     (nodeId: string, gatewayKind: 'xor' | 'and') =>
-      callApi('PUT', `nodes/${nodeId}/gateway-kind`, { gatewayKind }),
+      callApi('PUT', `nodes/${nodeId}/gateway-kind`, { gateway_kind: gatewayKind }),
     [callApi]
   );
 
   const updateNodeLane = useCallback(
-    (nodeId: string, laneId: string) => callApi('PUT', `nodes/${nodeId}/lane`, { laneId }),
+    (nodeId: string, laneId: string | null) =>
+      callApi('PUT', `nodes/${nodeId}/lane`, { lane_id: laneId }),
     [callApi]
   );
 
@@ -80,8 +150,13 @@ export function useProcessFlowCRUD({ processId, enabled = false }: UseProcessFlo
   );
 
   const createEdge = useCallback(
-    (data: { source: string; target: string; label?: string }) =>
-      callApi('POST', `${processId}/edges`, data),
+    (data: { source: string; target: string; label?: string; type?: string }) =>
+      callApi('POST', `${processId}/edges`, {
+        source_node_id: data.source,
+        target_node_id: data.target,
+        label: data.label,
+        edge_type: data.type ?? 'sequence_flow',
+      }),
     [callApi, processId]
   );
 
@@ -100,19 +175,36 @@ export function useProcessFlowCRUD({ processId, enabled = false }: UseProcessFlo
     [callApi]
   );
 
-  return {
-    enabled,
-    fetchContract,
-    fetchObjects,
-    createNode,
-    updateNodeLabel,
-    moveNode,
-    updateGatewayKind,
-    updateNodeLane,
-    deleteNode,
-    createEdge,
-    updateEdgeLabel,
-    deleteEdge,
-    fetchProposal,
-  };
+  return useMemo(
+    () => ({
+      enabled,
+      fetchContract,
+      fetchObjects,
+      createNode,
+      updateNodeLabel,
+      moveNode,
+      updateGatewayKind,
+      updateNodeLane,
+      deleteNode,
+      createEdge,
+      updateEdgeLabel,
+      deleteEdge,
+      fetchProposal,
+    }),
+    [
+      enabled,
+      fetchContract,
+      fetchObjects,
+      createNode,
+      updateNodeLabel,
+      moveNode,
+      updateGatewayKind,
+      updateNodeLane,
+      deleteNode,
+      createEdge,
+      updateEdgeLabel,
+      deleteEdge,
+      fetchProposal,
+    ]
+  );
 }

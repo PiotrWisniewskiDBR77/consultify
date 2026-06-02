@@ -1,4 +1,3 @@
-import TeresaMark from '../shared/TeresaMark';
 /**
  * IdeaProcessFlowTool — V3 Process Flow canvas for Idea Workspace.
  *
@@ -20,7 +19,16 @@ import TeresaMark from '../shared/TeresaMark';
 import 'reactflow/dist/style.css';
 
 import * as dagre from 'dagre';
-import { AlertTriangle, CheckCircle, GitMerge, Lightbulb, Loader2, MessageSquare, Plus, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  GitMerge,
+  Lightbulb,
+  Loader2,
+  MessageSquare,
+  Plus,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -50,6 +58,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
+import TeresaMark from '../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
@@ -57,6 +66,7 @@ import {
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
@@ -99,7 +109,6 @@ import {
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
-import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
 import {
@@ -112,6 +121,7 @@ import {
 import { ProcessFlowToolbar } from './processflow/ProcessFlowToolbar';
 import { ReadbackPanel } from './processflow/ReadbackPanel';
 import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
+import { useProcessFlowCRUD } from './processflow/useProcessFlowCRUD';
 import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
@@ -549,9 +559,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     edges,
     autoValidate: false,
     onError: (message) =>
-      toast.error(
-        isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message
-      ),
+      toast.error(isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message),
   });
   const {
     activeProposal,
@@ -575,6 +583,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     activeScenarios: degradedScenarios,
     checkHealth,
   } = useProcessFlowDegraded({ processId });
+
+  // Structural V8 CRUD — persists semantic nodes/edges to the dedicated
+  // v8_process_flow_* tables alongside the shared map-sync blob. Fire-and-forget;
+  // never blocks the canvas. Enabled (was dead code before WS-02 unification).
+  const pfCrud = useProcessFlowCRUD({ processId, enabled: !locked });
 
   // ── New UI state: panels, context menu, export dialog ─────────────────
   const [showValidationPanel, setShowValidationPanel] = useState(false);
@@ -990,8 +1003,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           eds
         )
       );
+      // Persist the structural edge to the V8 tables (fire-and-forget).
+      if (connection.source && connection.target) {
+        void pfCrud.createEdge({ source: connection.source, target: connection.target });
+      }
     },
-    [locked, pushUndo, setEdges]
+    [locked, pfCrud, pushUndo, setEdges]
   );
 
   // ── Add node ───────────────────────────────────────────────────────────
@@ -1038,6 +1055,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         },
       };
       setNodes((prev: Node[]) => [...prev, newNode]);
+
+      // Persist the structural node to the V8 tables (fire-and-forget).
+      void pfCrud.createNode({
+        shape,
+        label: String(newNode.data?.label ?? ''),
+        position: newNode.position,
+        laneId: lane.id,
+      });
 
       // Ghost nodes: AI suggests next steps
       if (!locked && shape !== 'end') {
@@ -1092,6 +1117,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       locked,
       nodes,
       onNodeDetail,
+      pfCrud,
       pushUndo,
       semanticKit,
       setNodes,
@@ -1354,6 +1380,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     isPl,
     pushUndo,
     onNodeDetail,
+    onNodesDeleted: (ids: string[]) => ids.forEach((id) => void pfCrud.deleteNode(id)),
   });
 
   // ── Quick action listener (extracted to useProcessFlowQuickActions) ─────

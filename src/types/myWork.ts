@@ -670,4 +670,30 @@ export interface NotebookCounts {
   active: number;
 }
 
+// ============================================================================
+// NOTEBOOK CONTAINER (Notatnik, L1) — see docs/product/NOTEBOOK_STRUCTURE_SSOT.md
+// ============================================================================
+
+/** Axis A — who can open/edit the notebook. */
+export type NotebookScope = 'personal' | 'team';
+/** Axis B — whether the notebook's content feeds org AI context. Default 'private'. */
+export type NotebookContextSharing = 'private' | 'org_context';
+
+export interface Notebook {
+  id: string;
+  ownerUserId: string;
+  organizationId: string;
+  title: string;
+  icon: string | null;
+  /** 'personal' = owner only; 'team' = owner + members of teamId. */
+  scope: NotebookScope;
+  /** Required when scope='team'; null otherwise. */
+  teamId: string | null;
+  /** Independent of scope; deny-by-default. */
+  contextSharing: NotebookContextSharing;
+  pageCount: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
 // Redundant re-exports removed to avoid index collisions

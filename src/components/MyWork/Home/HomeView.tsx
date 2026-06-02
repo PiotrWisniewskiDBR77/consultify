@@ -7,12 +7,13 @@ import {
   Eye,
   Lightbulb,
   MessageCircle,
+  Radar,
   Sparkles,
   Target,
   TrendingUp,
   UserRound,
-  Wrench,
   Workflow,
+  Wrench,
   XCircle,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -103,12 +104,13 @@ const QUADRANTS: QuadrantSpec[] = [
   },
 ];
 
-const RING_INFO: Array<{ ring: RadarMapSignal['ring']; label: string; helper: string; y: number }> = [
-  { ring: 'OBSERVE', label: 'OBSERVE', helper: 'keep on radar', y: 10 },
-  { ring: 'LEARN', label: 'LEARN', helper: 'build understanding', y: 21.5 },
-  { ring: 'PREPARE', label: 'PREPARE', helper: 'get ready', y: 33 },
-  { ring: 'NOW', label: 'NOW', helper: 'act or discuss now', y: 44.5 },
-];
+const RING_INFO: Array<{ ring: RadarMapSignal['ring']; label: string; helper: string; y: number }> =
+  [
+    { ring: 'OBSERVE', label: 'OBSERVE', helper: 'keep on radar', y: 10 },
+    { ring: 'LEARN', label: 'LEARN', helper: 'build understanding', y: 21.5 },
+    { ring: 'PREPARE', label: 'PREPARE', helper: 'get ready', y: 33 },
+    { ring: 'NOW', label: 'NOW', helper: 'act or discuss now', y: 44.5 },
+  ];
 
 const TYPE_META: Record<
   RadarSignalType,
@@ -190,61 +192,6 @@ const QUADRANT_START: Record<RadarMapSignal['quadrant'], number> = {
   MY_INDUSTRY: 0,
   MY_ROLE: Math.PI / 2,
 };
-
-const PROTOTYPE_RADAR_SIGNALS: RadarMapSignal[] = [
-  makeSignal('sig-ai-agents', 'AI Agents', 'NOW', 'MY_PROJECTS', 'new', 'TECHNOLOGY', 'large', 'high', 'AI agents can help automate repetitive knowledge work inside your current projects.'),
-  makeSignal('sig-digital-twin', 'Digital Twin', 'PREPARE', 'MY_INDUSTRY', 'updated', 'BUSINESS', 'medium', 'medium', 'Digital twin programs are becoming a key differentiator for industrial execution quality.'),
-  makeSignal('sig-prompt-skills', 'Prompt Skills', 'NOW', 'MY_DEVELOPMENT', 'new', 'SKILL', 'medium', 'high', 'Prompt literacy improves the quality and speed of AI-supported project work.'),
-  makeSignal('sig-ai-pmo', 'AI PMO', 'PREPARE', 'MY_ROLE', 'saved', 'PROCESS', 'medium', 'high', 'AI PMO patterns reduce reporting friction and keep delivery governance lightweight.'),
-  makeSignal('sig-robot-vision', 'Robot Vision', 'LEARN', 'MY_INDUSTRY', 'watching', 'TECHNOLOGY', 'small', 'medium', 'Vision systems are entering quality-control workflows beyond manufacturing pilots.'),
-  makeSignal('sig-data-quality', 'Data Quality', 'NOW', 'MY_PROJECTS', 'updated', 'RISK', 'large', 'high', 'Data quality remains the bottleneck for reliable AI recommendations in delivery ops.'),
-  makeSignal('sig-risk-radar', 'Risk Radar', 'PREPARE', 'MY_ROLE', 'watching', 'RISK', 'medium', 'high', 'Early risk sensing can reduce costly late-stage execution changes.'),
-  makeSignal('sig-sales-automation', 'Sales Automation', 'LEARN', 'MY_INDUSTRY', 'saved', 'TOOL', 'small', 'medium', 'AI-assisted sales workflows are reducing manual follow-up effort in B2B teams.'),
-  makeSignal('sig-private-llm', 'Private LLM', 'OBSERVE', 'MY_PROJECTS', 'saved', 'TECHNOLOGY', 'small', 'medium', 'Private model strategies are becoming practical for regulated enterprise contexts.'),
-  makeSignal('sig-meeting-notes', 'Meeting Notes', 'NOW', 'MY_PROJECTS', 'new', 'TOOL', 'medium', 'high', 'Structured AI notes can turn conversations into concrete next-step objects faster.'),
-  makeSignal('sig-process-mining', 'Process Mining', 'LEARN', 'MY_ROLE', 'updated', 'PROCESS', 'small', 'medium', 'Process mining can reveal hidden execution delays in transformation programs.'),
-  makeSignal('sig-ot-cyber', 'OT Cybersecurity', 'PREPARE', 'MY_INDUSTRY', 'watching', 'RISK', 'medium', 'high', 'OT security pressure is rising and now influences strategic roadmap decisions.'),
-  makeSignal('sig-workflow-auto', 'Workflow Automation', 'NOW', 'MY_PROJECTS', 'updated', 'PROCESS', 'large', 'high', 'Workflow automation helps remove repetitive coordination from project delivery.'),
-  makeSignal('sig-ai-leadership', 'AI Leadership', 'LEARN', 'MY_DEVELOPMENT', 'saved', 'SKILL', 'small', 'medium', 'Leadership teams need clearer AI framing to guide adoption without chaos.'),
-  makeSignal('sig-marketplace-model', 'Marketplace Model', 'OBSERVE', 'MY_INDUSTRY', 'new', 'BUSINESS', 'small', 'medium', 'Marketplace packaging can accelerate distribution of reusable transformation assets.'),
-  makeSignal('sig-smart-quality', 'Smart Quality', 'PREPARE', 'MY_ROLE', 'updated', 'TREND', 'medium', 'medium', 'Smart quality practices connect operational signals with continuous improvement loops.'),
-];
-
-function makeSignal(
-  id: string,
-  name: string,
-  ring: RadarMapSignal['ring'],
-  quadrant: RadarMapSignal['quadrant'],
-  status: RadarSignalStatus,
-  signalType: RadarSignalType,
-  importanceLevel: RadarMapSignal['importanceLevel'],
-  fitLevel: RadarMapSignal['fitLevel'],
-  shortDescription: string
-): RadarMapSignal {
-  return {
-    id,
-    name,
-    icon: name,
-    ring,
-    quadrant,
-    status,
-    signalType,
-    importanceLevel,
-    fitLevel,
-    preview: {
-      shortDescription,
-      whyItMatters:
-        'This signal can improve how teams prioritize, execute and communicate outcomes.',
-      whyItMattersForYou:
-        'It connects directly to your current Consultify and AI-supported execution context.',
-      howToThinkAboutIt:
-        'Treat it as a practical pattern to test, not a theoretical trend to collect.',
-      goodFirstQuestion: 'Which repeated project activity should be partially automated first?',
-      suggestedNextStep:
-        'Ask Teresa to map one workflow where this signal can support your current work.',
-    },
-  };
-}
 
 export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, onAction }) => {
   const { t, i18n } = useTranslation();
@@ -383,7 +330,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                   )}
                 >
                   {filter.label}
-                  <span className={cn('rounded-full px-1.5 text-[10px] tabular-nums', active ? 'bg-primary-400/30 text-white' : 'bg-white/10 text-slate-400')}>
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 text-[10px] tabular-nums',
+                      active ? 'bg-primary-400/30 text-white' : 'bg-white/10 text-slate-400'
+                    )}
+                  >
                     {statusCounts[filter.id] ?? 0}
                   </span>
                 </button>
@@ -392,15 +344,32 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
           </div>
         </div>
 
-        <div className="grid h-full grid-cols-1 gap-3 lg:grid-cols-[2.2fr_1fr]">
-          <RadarCanvas
-            signals={radarSignals}
-            selectedSignalId={selectedSignalId}
-            onSelectSignal={setSelectedSignalId}
-            ambientMotion={layout.ambientMotion}
-          />
-          <RadarPreviewPanel signal={selectedSignal} onAction={onAction} />
-        </div>
+        {radarSignalsAll.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
+            <div className="max-w-md rounded-2xl border border-white/[0.08] bg-white/[0.03] px-8 py-10 text-center">
+              <Radar className="mx-auto mb-3 h-9 w-9 text-primary-300/70" />
+              <p className="text-sm font-medium text-white">{t('myWork.radar.empty')}</p>
+              <p className="mt-1.5 text-[12px] text-slate-400">{t('myWork.radar.emptyHint')}</p>
+              <button
+                type="button"
+                onClick={() => void refresh()}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-1.5 text-[12px] font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/[0.1]"
+              >
+                {t('myWork.radar.retry')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid h-full grid-cols-1 gap-3 lg:grid-cols-[2.2fr_1fr]">
+            <RadarCanvas
+              signals={radarSignals}
+              selectedSignalId={selectedSignalId}
+              onSelectSignal={setSelectedSignalId}
+              ambientMotion={layout.ambientMotion}
+            />
+            <RadarPreviewPanel signal={selectedSignal} onAction={onAction} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -429,7 +398,11 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
           ? { x: [0, 12, 0], y: [0, 10, 0], scale: [1, 1.03, 1] }
           : { x: [0, 30, -18, 0], y: [0, 22, -28, 0], scale: [1, 1.08, 0.94, 1] }
       }
-      transition={{ duration: ambientMotion === 'soft' ? 34 : 28, repeat: Infinity, ease: 'easeInOut' }}
+      transition={{
+        duration: ambientMotion === 'soft' ? 34 : 28,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
     />
   </>
 );
@@ -450,7 +423,9 @@ function deriveRadarSignals(
   }
 
   if (!changedSignals || changedSignals.length === 0) {
-    return PROTOTYPE_RADAR_SIGNALS;
+    // No real radar data and nothing changed — return an empty set so the view
+    // renders a purposeful empty state (never the prototype sample signals).
+    return [];
   }
 
   const rings: RadarMapSignal['ring'][] = ['NOW', 'PREPARE', 'LEARN', 'OBSERVE'];
@@ -524,7 +499,9 @@ function RadarCanvas({
 }) {
   const selectedSignal =
     signals.find((signal) => signal.id === selectedSignalId) ?? signals[0] ?? null;
-  const selectedIndex = selectedSignal ? signals.findIndex((signal) => signal.id === selectedSignal.id) : -1;
+  const selectedIndex = selectedSignal
+    ? signals.findIndex((signal) => signal.id === selectedSignal.id)
+    : -1;
   const selectedPosition =
     selectedSignal && selectedIndex >= 0
       ? getSignalPosition(selectedSignal, selectedIndex, signals.length)
@@ -534,7 +511,10 @@ function RadarCanvas({
     if (!signals.length) return;
     if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) return;
     event.preventDefault();
-    const current = Math.max(0, signals.findIndex((signal) => signal.id === selectedSignalId));
+    const current = Math.max(
+      0,
+      signals.findIndex((signal) => signal.id === selectedSignalId)
+    );
     const delta = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
     const next = (current + delta + signals.length) % signals.length;
     onSelectSignal(signals[next].id);
@@ -561,10 +541,40 @@ function RadarCanvas({
             <rect key={q.key} x={q.x} y={q.y} width="44" height="44" fill={q.fill} rx="1.8" />
           ))}
 
-          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(148,163,184,0.28)" strokeWidth="0.45" />
-          <circle cx="50" cy="50" r="33" fill="none" stroke="rgba(148,163,184,0.22)" strokeWidth="0.35" strokeDasharray="0.5 0.8" />
-          <circle cx="50" cy="50" r="22" fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth="0.35" strokeDasharray="0.5 0.8" />
-          <circle cx="50" cy="50" r="11" fill="none" stroke="rgba(148,163,184,0.2)" strokeWidth="0.35" />
+          <circle
+            cx="50"
+            cy="50"
+            r="44"
+            fill="none"
+            stroke="rgba(148,163,184,0.28)"
+            strokeWidth="0.45"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="33"
+            fill="none"
+            stroke="rgba(148,163,184,0.22)"
+            strokeWidth="0.35"
+            strokeDasharray="0.5 0.8"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="22"
+            fill="none"
+            stroke="rgba(148,163,184,0.18)"
+            strokeWidth="0.35"
+            strokeDasharray="0.5 0.8"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="11"
+            fill="none"
+            stroke="rgba(148,163,184,0.2)"
+            strokeWidth="0.35"
+          />
 
           <line x1="50" y1="6" x2="50" y2="94" stroke="rgba(148,163,184,0.2)" strokeWidth="0.32" />
           <line x1="6" y1="50" x2="94" y2="50" stroke="rgba(148,163,184,0.2)" strokeWidth="0.32" />
@@ -578,7 +588,11 @@ function RadarCanvas({
               dur={`${ambientMotion === 'soft' ? 26 : 18}s`}
               repeatCount="indefinite"
             />
-            <path d="M50,50 L50,6 A44,44 0 0,1 87.8,27.8 Z" fill="url(#radarSweep)" opacity="0.55" />
+            <path
+              d="M50,50 L50,6 A44,44 0 0,1 87.8,27.8 Z"
+              fill="url(#radarSweep)"
+              opacity="0.55"
+            />
           </g>
 
           {RING_INFO.map((ring) => (
@@ -602,7 +616,12 @@ function RadarCanvas({
               className="group absolute rounded-md bg-black/20 px-1.5 py-1 text-[10px] leading-tight"
               style={{ left: `${q.x + 1.2}%`, top: `${q.y + 1.2}%` }}
             >
-              <div className={cn('inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide', q.chip)}>
+              <div
+                className={cn(
+                  'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide',
+                  q.chip
+                )}
+              >
                 <Icon className="h-3 w-3" />
                 {q.title}
               </div>
@@ -638,7 +657,8 @@ function RadarCanvas({
                 className={cn(
                   'relative flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition',
                   typeMeta.tone,
-                  selected && 'h-10 w-10 border-white bg-white text-slate-900 ring-2 ring-primary-300/70'
+                  selected &&
+                    'h-10 w-10 border-white bg-white text-slate-900 ring-2 ring-primary-300/70'
                 )}
                 title={`${signal.name} · ${signal.ring} · ${signal.quadrant.replaceAll('_', ' ')}`}
               >
@@ -705,9 +725,16 @@ function RadarCanvas({
       </div>
 
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-[10px] text-slate-300">
-        <div className="truncate"><span className="text-slate-400">Areas:</span> My Development · My Projects · My Industry · My Role</div>
-        <div className="truncate"><span className="text-slate-400">Horizon:</span> Now · Prepare · Learn · Observe</div>
-        <div className="truncate"><span className="text-slate-400">Types:</span> Technology · Skill · Business · Risk · Tool</div>
+        <div className="truncate">
+          <span className="text-slate-400">Areas:</span> My Development · My Projects · My Industry
+          · My Role
+        </div>
+        <div className="truncate">
+          <span className="text-slate-400">Horizon:</span> Now · Prepare · Learn · Observe
+        </div>
+        <div className="truncate">
+          <span className="text-slate-400">Types:</span> Technology · Skill · Business · Risk · Tool
+        </div>
       </div>
     </div>
   );
@@ -746,7 +773,12 @@ function RadarPreviewPanel({
       className="flex h-full flex-col rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.07] to-white/[0.03] p-4"
     >
       <div className="flex items-start gap-3">
-        <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl border', typeMeta.tone)}>
+        <div
+          className={cn(
+            'flex h-11 w-11 items-center justify-center rounded-xl border',
+            typeMeta.tone
+          )}
+        >
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -756,13 +788,19 @@ function RadarPreviewPanel({
             <Badge>{quadrantTitle(signal.quadrant)}</Badge>
             <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
           </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-slate-300">{signal.preview.shortDescription}</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-300">
+            {signal.preview.shortDescription}
+          </p>
         </div>
       </div>
 
       <div className="mt-3 rounded-xl border border-primary-400/20 bg-primary-500/10 p-3">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-primary-200">Why this is on your radar</div>
-        <p className="mt-1 text-[12px] leading-relaxed text-primary-50/90">{signal.preview.whyItMattersForYou}</p>
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-primary-200">
+          Why this is on your radar
+        </div>
+        <p className="mt-1 text-[12px] leading-relaxed text-primary-50/90">
+          {signal.preview.whyItMattersForYou}
+        </p>
       </div>
 
       <div className="mt-3 flex-1 space-y-2 overflow-auto rounded-xl border border-white/10 bg-white/[0.02] p-3">
@@ -798,8 +836,16 @@ function RadarPreviewPanel({
         </button>
 
         <div className="mt-2 grid grid-cols-3 gap-1.5">
-          <ActionChip icon={<BookOpen className="h-3.5 w-3.5" />} label="Save to Notebook" onClick={() => onAction({ type: 'create', target: 'note' })} />
-          <ActionChip icon={<Lightbulb className="h-3.5 w-3.5" />} label="Create Idea" onClick={() => onAction({ type: 'create', target: 'idea' })} />
+          <ActionChip
+            icon={<BookOpen className="h-3.5 w-3.5" />}
+            label="Save to Notebook"
+            onClick={() => onAction({ type: 'create', target: 'note' })}
+          />
+          <ActionChip
+            icon={<Lightbulb className="h-3.5 w-3.5" />}
+            label="Create Idea"
+            onClick={() => onAction({ type: 'create', target: 'idea' })}
+          />
           <ActionChip
             icon={<Sparkles className="h-3.5 w-3.5" />}
             label="Explore Deeper"
@@ -853,13 +899,7 @@ function RadarPreviewPanel({
   );
 }
 
-function Badge({
-  children,
-  tone,
-}: {
-  children: React.ReactNode;
-  tone?: string;
-}) {
+function Badge({ children, tone }: { children: React.ReactNode; tone?: string }) {
   return (
     <span
       className={cn(
@@ -875,7 +915,9 @@ function Badge({
 function Section({ title, body }: { title: string; body: string }) {
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{title}</div>
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        {title}
+      </div>
       <p className="text-[12px] leading-relaxed text-slate-200">{clampText(body, 220)}</p>
     </div>
   );

@@ -20,6 +20,15 @@ import {
   resolveNotebookAttachmentFile,
   toPublicNotebookAttachments,
 } from '../../services/notebookAttachmentService.js';
+import {
+  canAccessNotebook,
+  canMutateNotebook,
+  defaultNotebookId,
+  isTeamMember,
+  normalizeContextSharing,
+  normalizeScope,
+  toPublicNotebook,
+} from '../../services/notebookContainerService.js';
 import notebookService from '../../services/notebookService.js';
 import {
   resolveStoredNotebookSourceFile,
@@ -169,8 +178,218 @@ const notebookAttachmentUpload = multer({
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 
+// ── Notebook containers (Notatniki, L1) ──────────────────────────────────────
+
 /**
- * GET /api/my-work/notebook/pages?projectId?&q?&status?&pinned?&sort?&limit?&offset?
+ * GET /api/my-work/notebooks — notebooks the user can access (own + team).
+ * Each row carries page_count for the list view.
+ */
+router.get(
+  '/notebooks',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebooks']))) return;
+
+    const rows = await queryHelpers.queryAll<any>(
+      `SELECT n.id, n.owner_user_id, n.organization_id, n.title, n.icon, n.scope,
+              n.team_id, n.context_sharing, n.created_at, n.updated_at,
+              (SELECT COUNT(*) FROM notebook_pages np WHERE np.notebook_id = n.id) AS page_count
+         FROM notebooks n
+        WHERE n.organization_id = ?
+          AND ( n.owner_user_id = ?
+                OR ( lower(coalesce(n.scope, 'personal')) = 'team'
+                     AND n.team_id IN (SELECT team_id FROM team_members WHERE user_id = ?) ) )
+        ORDER BY n.updated_at DESC`,
+      [orgId, userId, userId]
+    );
+    res.json({ notebooks: (rows || []).map(toPublicNotebook) });
+  })
+);
+
+/**
+ * POST /api/my-work/notebooks — create a notebook.
+ * Body: { title, icon?, scope?: 'personal'|'team', teamId?, contextSharing?: 'private'|'org_context' }
+ */
+router.post(
+  '/notebooks',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebooks']))) return;
+
+    const title = String(req.body?.title || '').trim();
+    if (!title) return res.status(400).json({ error: 'title is required' });
+
+    const scope = normalizeScope(req.body?.scope);
+    const contextSharing = normalizeContextSharing(req.body?.contextSharing);
+    const icon = typeof req.body?.icon === 'string' ? req.body.icon : null;
+
+    let teamId: string | null = null;
+    if (scope === 'team') {
+      teamId = req.body?.teamId ? String(req.body.teamId) : '';
+      if (!teamId) return res.status(400).json({ error: 'teamId is required for scope=team' });
+      if (!(await isTeamMember(teamId, userId))) {
+        return res.status(403).json({ error: 'Not a team member' });
+      }
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `INSERT INTO notebooks
+         (id, owner_user_id, organization_id, title, icon, scope, team_id, context_sharing, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, orgId, title, icon, scope, teamId, contextSharing, now, now]
+    );
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT n.*, 0 AS page_count FROM notebooks n WHERE n.id = ? LIMIT 1`,
+      [id]
+    );
+    res.status(201).json(toPublicNotebook(row));
+  })
+);
+
+/** GET /api/my-work/notebooks/:id — single notebook (access-checked). */
+router.get(
+  '/notebooks/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebooks']))) return;
+    const id = String(req.params.id);
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT n.*, (SELECT COUNT(*) FROM notebook_pages np WHERE np.notebook_id = n.id) AS page_count
+         FROM notebooks n WHERE n.id = ? LIMIT 1`,
+      [id]
+    );
+    if (!row || !(await canAccessNotebook(userId, orgId, row))) {
+      return res.status(404).json({ error: 'Notebook not found' });
+    }
+    res.json(toPublicNotebook(row));
+  })
+);
+
+/**
+ * PUT /api/my-work/notebooks/:id — update container metadata (owner only).
+ * Body: any of { title, icon, scope, teamId, contextSharing }.
+ */
+router.put(
+  '/notebooks/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebooks']))) return;
+    const id = String(req.params.id);
+
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT * FROM notebooks WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!existing) return res.status(404).json({ error: 'Notebook not found' });
+    if (!canMutateNotebook(userId, orgId, existing)) {
+      return res.status(403).json({ error: 'Only the owner can modify this notebook' });
+    }
+
+    const body = req.body || {};
+    const sets: string[] = [];
+    const params: unknown[] = [];
+
+    if (typeof body.title === 'string') {
+      const t = body.title.trim();
+      if (t) {
+        sets.push('title = ?');
+        params.push(t);
+      }
+    }
+    if ('icon' in body) {
+      sets.push('icon = ?');
+      params.push(typeof body.icon === 'string' ? body.icon : null);
+    }
+    if ('contextSharing' in body) {
+      sets.push('context_sharing = ?');
+      params.push(normalizeContextSharing(body.contextSharing));
+    }
+    if ('scope' in body) {
+      const scope = normalizeScope(body.scope);
+      let teamId: string | null = null;
+      if (scope === 'team') {
+        teamId = body.teamId ? String(body.teamId) : String(existing.team_id || '');
+        if (!teamId) return res.status(400).json({ error: 'teamId is required for scope=team' });
+        if (!(await isTeamMember(teamId, userId))) {
+          return res.status(403).json({ error: 'Not a team member' });
+        }
+      }
+      sets.push('scope = ?');
+      params.push(scope);
+      sets.push('team_id = ?');
+      params.push(teamId);
+    } else if ('teamId' in body) {
+      const teamId = body.teamId ? String(body.teamId) : null;
+      if (teamId && !(await isTeamMember(teamId, userId))) {
+        return res.status(403).json({ error: 'Not a team member' });
+      }
+      sets.push('team_id = ?');
+      params.push(teamId);
+    }
+
+    if (!sets.length) return res.status(400).json({ error: 'No updatable fields' });
+    sets.push('updated_at = ?');
+    params.push(new Date().toISOString());
+    params.push(id);
+
+    await queryHelpers.queryRun(`UPDATE notebooks SET ${sets.join(', ')} WHERE id = ?`, params);
+
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT n.*, (SELECT COUNT(*) FROM notebook_pages np WHERE np.notebook_id = n.id) AS page_count
+         FROM notebooks n WHERE n.id = ? LIMIT 1`,
+      [id]
+    );
+    res.json(toPublicNotebook(row));
+  })
+);
+
+/** DELETE /api/my-work/notebooks/:id — owner only; refuses when non-empty. */
+router.delete(
+  '/notebooks/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['notebooks']))) return;
+    const id = String(req.params.id);
+
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT * FROM notebooks WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!existing) return res.status(404).json({ error: 'Notebook not found' });
+    if (!canMutateNotebook(userId, orgId, existing)) {
+      return res.status(403).json({ error: 'Only the owner can delete this notebook' });
+    }
+
+    const cnt = await queryHelpers.queryOne<{ c: number }>(
+      `SELECT COUNT(*) AS c FROM notebook_pages WHERE notebook_id = ?`,
+      [id]
+    );
+    const pageCount = Number((cnt as any)?.c || 0);
+    if (pageCount > 0) {
+      return res.status(409).json({ error: 'Notebook is not empty', pageCount });
+    }
+
+    await queryHelpers.queryRun(`DELETE FROM notebooks WHERE id = ?`, [id]);
+    res.json({ ok: true });
+  })
+);
+
+/**
+ * GET /api/my-work/notebook/pages?notebookId?&projectId?&q?&status?&pinned?&sort?&limit?&offset?
  */
 router.get(
   '/notebook/pages',
@@ -182,6 +401,7 @@ router.get(
     const nbCols = await getTableColumns('notebook_pages');
 
     const projectId = req.query.projectId ? String(req.query.projectId) : null;
+    const notebookId = req.query.notebookId ? String(req.query.notebookId) : null;
     const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
     const statusFilter = req.query.status ? String(req.query.status).trim().toLowerCase() : '';
     const pinnedFilter = req.query.pinned !== undefined ? String(req.query.pinned) : '';
@@ -197,6 +417,11 @@ router.get(
     if (projectId) {
       where.push('np.project_id = ?');
       params.push(projectId);
+    }
+
+    if (notebookId && nbCols.has('notebook_id')) {
+      where.push('np.notebook_id = ?');
+      params.push(notebookId);
     }
 
     if (statusFilter && ['inbox', 'active', 'converted', 'archived'].includes(statusFilter)) {
@@ -396,6 +621,46 @@ router.post(
     if (nbCols.has('capture_metadata')) {
       insertColumns.push('capture_metadata');
       insertValues.push(JSON.stringify(captureMetadata));
+    }
+
+    // Assign the page to its notebook container (L1). Honor an explicit
+    // notebookId (access-checked) or fall back to the owner's default notebook.
+    if (nbCols.has('notebook_id')) {
+      const requestedNotebookId = req.body?.notebookId ? String(req.body.notebookId) : '';
+      let targetNotebookId: string;
+      if (requestedNotebookId) {
+        const nb = await queryHelpers.queryOne<any>(
+          `SELECT * FROM notebooks WHERE id = ? LIMIT 1`,
+          [requestedNotebookId]
+        );
+        if (!nb || !(await canAccessNotebook(userId, orgId, nb))) {
+          return res.status(403).json({ error: 'No access to target notebook' });
+        }
+        targetNotebookId = requestedNotebookId;
+      } else {
+        targetNotebookId = defaultNotebookId(orgId, userId);
+        // Ensure the default notebook row exists (idempotent) so the FK is valid.
+        await queryHelpers.queryRun(
+          `INSERT INTO notebooks
+             (id, owner_user_id, organization_id, title, icon, scope, team_id, context_sharing, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT (id) DO NOTHING`,
+          [
+            targetNotebookId,
+            userId,
+            orgId,
+            'Moje notatki',
+            null,
+            'personal',
+            null,
+            'private',
+            now,
+            now,
+          ]
+        );
+      }
+      insertColumns.push('notebook_id');
+      insertValues.push(targetNotebookId);
     }
 
     await queryHelpers.queryRun(
