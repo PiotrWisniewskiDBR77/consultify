@@ -2626,6 +2626,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               title: activeCanvasDocument?.title || null,
               mode: activeCanvasSelection.mode,
               selectedText: activeCanvasSelection.selectedText,
+              startOffset: activeCanvasSelection.startOffset ?? null,
+              endOffset: activeCanvasSelection.endOffset ?? null,
               packetSchemaVersion: canvasContextPacket?.schemaVersion || null,
             }
           : activeCanvasDocument

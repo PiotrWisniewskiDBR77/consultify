@@ -1,4 +1,6 @@
 import {
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Download,
   FileText,
@@ -8,6 +10,7 @@ import {
   Presentation,
   RefreshCw,
   Rocket,
+  RotateCcw,
   Save,
   Share2,
   StickyNote,
@@ -584,6 +587,8 @@ export function WorkCanvasDocumentPanel({
   // Live TipTap editor instance (rich mode), lifted so Teresa can stream into it.
   const [richEditor, setRichEditor] = React.useState<TiptapEditor | null>(null);
   const [versions, setVersions] = React.useState<CanvasVersionSummary[]>([]);
+  // Prev/Next stepper cursor into `versions` (0 = latest, list is DESC by date).
+  const [versionCursor, setVersionCursor] = React.useState(0);
   const [isVersionsOpen, setIsVersionsOpen] = React.useState(false);
   const [isVersionsLoading, setIsVersionsLoading] = React.useState(false);
   const [latestDiff, setLatestDiff] = React.useState<CanvasDiffSummary | null>(null);
@@ -833,6 +838,11 @@ export function WorkCanvasDocumentPanel({
   React.useEffect(() => {
     persistCanvasMode(mode);
   }, [mode]);
+
+  // Keep the version stepper cursor in range whenever the list reloads.
+  React.useEffect(() => {
+    setVersionCursor((cursor) => Math.min(Math.max(cursor, 0), Math.max(versions.length - 1, 0)));
+  }, [versions]);
 
   React.useEffect(() => {
     onActiveDocumentChange?.({
@@ -2686,26 +2696,71 @@ export function WorkCanvasDocumentPanel({
                     ) : versions.length === 0 ? (
                       <div className="text-slate-500 dark:text-slate-400">No versions yet.</div>
                     ) : (
-                      versions.map((version) => (
-                        <div
-                          key={version.id}
-                          className="rounded-xl bg-slate-50 p-2 text-[11px] dark:bg-white/[0.06]"
-                        >
-                          <div className="font-semibold text-slate-700 dark:text-slate-100">
-                            {version.operationType}
-                          </div>
-                          <div className="mt-0.5 text-slate-500 dark:text-slate-300">
-                            {new Date(version.createdAt).toLocaleString()} · {version.summary}
+                      <>
+                        {/* Prev/Next stepper across the version timeline */}
+                        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-xl bg-slate-100 px-2 py-1.5 dark:bg-white/10">
+                          <button
+                            type="button"
+                            disabled={versionCursor >= versions.length - 1}
+                            onClick={() =>
+                              setVersionCursor((c) => Math.min(c + 1, versions.length - 1))
+                            }
+                            title="Older version"
+                            aria-label="Older version"
+                            className="rounded-full p-1 text-slate-600 hover:text-slate-950 disabled:opacity-30 dark:text-slate-300 dark:hover:text-white"
+                          >
+                            <ChevronLeft size={14} />
+                          </button>
+                          <div className="text-center text-[11px] leading-tight text-slate-600 dark:text-slate-300">
+                            <div className="font-semibold text-slate-700 dark:text-slate-100">
+                              Version {versions.length - versionCursor} / {versions.length}
+                            </div>
+                            <div>{new Date(versions[versionCursor].createdAt).toLocaleString()}</div>
                           </div>
                           <button
                             type="button"
-                            onClick={() => void restoreVersion(version)}
-                            className="mt-2 rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
+                            disabled={versionCursor <= 0}
+                            onClick={() => setVersionCursor((c) => Math.max(c - 1, 0))}
+                            title="Newer version"
+                            aria-label="Newer version"
+                            className="rounded-full p-1 text-slate-600 hover:text-slate-950 disabled:opacity-30 dark:text-slate-300 dark:hover:text-white"
                           >
+                            <ChevronRight size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void restoreVersion(versions[versionCursor])}
+                            className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
+                          >
+                            <RotateCcw size={12} />
                             Restore
                           </button>
                         </div>
-                      ))
+                        {versions.map((version, idx) => (
+                          <div
+                            key={version.id}
+                            className={`rounded-xl p-2 text-[11px] dark:bg-white/[0.06] ${
+                              idx === versionCursor
+                                ? 'bg-slate-100 ring-1 ring-primary-400 dark:bg-white/10'
+                                : 'bg-slate-50'
+                            }`}
+                          >
+                            <div className="font-semibold text-slate-700 dark:text-slate-100">
+                              {version.operationType}
+                            </div>
+                            <div className="mt-0.5 text-slate-500 dark:text-slate-300">
+                              {new Date(version.createdAt).toLocaleString()} · {version.summary}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void restoreVersion(version)}
+                              className="mt-2 rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
+                            >
+                              Restore
+                            </button>
+                          </div>
+                        ))}
+                      </>
                     )}
                   </div>
                 ) : null}
@@ -2844,6 +2899,10 @@ export function WorkCanvasDocumentPanel({
                         selectedText: sel.selectedText,
                         mode: 'rich',
                         draftId: documentState.draftId ?? undefined,
+                        // Preserve ProseMirror positions so chat-side ops can be
+                        // anchored to the exact range, not just the text.
+                        startOffset: sel.from,
+                        endOffset: sel.to,
                       });
                     } else {
                       setCanvasSelection(null);
