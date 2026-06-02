@@ -1,5 +1,4 @@
 /**
-<<<<<<<< HEAD:src/utils/melsTabeleFlag.ts
  * EPIC-T16 — feature flag for the Tabele MELS shell migration.
  *
  * Where this flag gates
@@ -18,11 +17,6 @@
  *   3. `import.meta.env.VITE_MELS_TABELE` — build-time default.
  *   4. Default: OFF. The MELS migration ships behind a closed flag
  *      until EPIC-T16-S4 visual review + DBR77 hex scan pass.
-========
- * Chat V10 / V10-ART artifact-type registry feature flag.
- *
- * Default OFF until artifact renderers and supported operations use the registry.
->>>>>>>> origin/main:src/utils/v10/artifactTypeRegistryFlag.ts
  */
 
 const LS_KEY = 'ff.mels_tabele';
