@@ -502,7 +502,6 @@ describe('Wave 6 context and controlled learning runtime', () => {
     const api = readFileSync('src/services/api.ts', 'utf8');
     const panel = readFileSync('src/components/AIChat/Wave6ContextLearningPanel.tsx', 'utf8');
     const chat = readFileSync('src/components/AIChat/UnifiedChatPanel.tsx', 'utf8');
-    const welcomeChat = readFileSync('src/views/AIChatWelcomeView.tsx', 'utf8');
     const streamHook = readFileSync('src/hooks/useAIStream.ts', 'utf8');
     const appRoutes = readFileSync('src/routes/AppRoutes.tsx', 'utf8');
     const aiRoutes = readFileSync('server/src/routes/ai.routes.ts', 'utf8');
@@ -528,7 +527,6 @@ describe('Wave 6 context and controlled learning runtime', () => {
     expect(streamHook).toContain("evt.type === 'memory_candidate'");
     expect(chat).toContain('Memory candidate created');
     expect(chat).not.toContain('<PendingActionsIndicator');
-    expect(welcomeChat).not.toContain('Pending Actions Banner');
     expect(appRoutes).toContain('path={ROUTES.AI_OS.CONTEXT}');
     expect(aiRoutes).toContain('captureWave6ContextSnapshot');
     expect(aiRoutes).toContain('recordWave6ContextLedgerEntry');

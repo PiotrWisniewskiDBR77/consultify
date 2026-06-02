@@ -6188,6 +6188,61 @@
     }
   },
   "aiChat": {
+    "composer": {
+      "commands": {
+        "research": {
+          "label": "Głębokie badania",
+          "desc": "Włącz wieloetapowe badania dla następnej wiadomości"
+        },
+        "search": {
+          "label": "Wyszukiwanie web",
+          "desc": "Odpowiedź oparta na aktualnych wynikach wyszukiwania"
+        },
+        "market": {
+          "label": "Badania rynku",
+          "desc": "Analiza rynkowa z wyszukiwaniem web"
+        },
+        "reasoning": {
+          "label": "Tryb rozumowania",
+          "desc": "Włącz widoczne rozumowanie krok po kroku"
+        },
+        "summarize": {
+          "label": "Podsumuj",
+          "desc": "Wstaw szablon podsumowania",
+          "template": "Podsumuj dotychczasową rozmowę w zwięzłych punktach, obejmując kluczowe tematy, decyzje i działania do wykonania."
+        },
+        "table": {
+          "label": "Utwórz tabelę",
+          "desc": "Wstaw szablon tabeli",
+          "template": "Przedstaw poniższe jako czytelną, dobrze ustrukturyzowaną tabelę: "
+        },
+        "image": {
+          "label": "Generuj obraz",
+          "desc": "Wstaw szablon generowania obrazu",
+          "template": "Wygeneruj obraz przedstawiający: "
+        },
+        "clear": {
+          "label": "Wyczyść",
+          "desc": "Wyczyść tekst i załączniki w polu wiadomości"
+        },
+        "new": {
+          "label": "Nowa rozmowa",
+          "desc": "Rozpocznij nową rozmowę"
+        }
+      }
+    },
+    "voice": {
+      "startVoice": "Rozmawiaj głosem",
+      "stopVoice": "Zakończ rozmowę",
+      "voiceLive": "Słucham…",
+      "voiceConnecting": "Łączę się…",
+      "voiceError": "Głos niedostępny. Spróbuj ponownie.",
+      "voiceUnavailable": "Głos jest teraz niedostępny.",
+      "ttsPlay": "Odczytaj na głos",
+      "ttsStop": "Zatrzymaj czytanie",
+      "ttsLoading": "Przygotowuję dźwięk…",
+      "ttsUnavailable": "Czytanie na głos jest teraz niedostępne."
+    },
     "language": "Język rozmowy",
     "chatMenuTitle": "Menu",
     "openSidebar": "Otwórz panel boczny",

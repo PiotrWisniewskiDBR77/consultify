@@ -7,6 +7,7 @@ import { createAppQueryClient } from '@/lib/createAppQueryClient';
 import { installQueryFailureWebPerf } from '@/lib/installQueryFailureWebPerf';
 import { V8Provider } from '@/providers/V8Provider';
 
+import { VoiceConversationOverlay } from '../components/AIChat/VoiceConversationOverlay';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TourProvider } from '../components/Onboarding/TourProvider';
 import { AccessPolicyProvider } from '../contexts/AccessPolicyContext';
@@ -75,7 +76,10 @@ const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = React.me
         <AccessPolicyProvider>
           <TrialProvider>
             <AIProvider>
-              <TeresaVoiceProvider>{children}</TeresaVoiceProvider>
+              <TeresaVoiceProvider>
+                {children}
+                <VoiceConversationOverlay />
+              </TeresaVoiceProvider>
             </AIProvider>
           </TrialProvider>
         </AccessPolicyProvider>

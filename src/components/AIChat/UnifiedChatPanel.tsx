@@ -23,7 +23,9 @@ import {
   Calculator,
   CheckCircle2,
   History,
+  Loader2,
   MessageSquare,
+  Mic,
   PanelRight,
   Plus,
   Search,
@@ -78,6 +80,7 @@ import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
 import TeresaMark from '../shared/TeresaMark';
+import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import {
   isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
@@ -88,16 +91,16 @@ import { ContextBadge } from './ContextBadge';
 import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
+import { detectMindmapIntent } from './mindmapIntentDetector';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { OutputToolSelector } from './OutputToolSelector';
 import { PrivateModeDetails } from './PrivateModeDetails';
+import { detectProcessFlowIntent } from './processFlowIntentDetector';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
 import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
+import { TeresaTTSPlayer } from './TeresaTTSPlayer';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
-import { detectMindmapIntent } from './mindmapIntentDetector';
-import { detectProcessFlowIntent } from './processFlowIntentDetector';
-import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 import { type ActiveCanvasDocument, WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
 
@@ -4031,6 +4034,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isRehydratingConversation =
     !hasRenderableMessages && activeConversationId && isConversationLoading;
   const isWelcomeEmptyState = !hasRenderableMessages && !isRehydratingConversation;
+
+  // Latest completed AI reply — fed to TeresaTTSPlayer for "talking Teresa" read-aloud.
+  const latestAiMessageText = useMemo(() => {
+    if (isStreaming) return '';
+    for (let i = displayMessages.length - 1; i >= 0; i -= 1) {
+      const m = displayMessages[i] as any;
+      if (m?.role === 'ai' && !m?.isStreaming) {
+        const content = String(m?.content || '').trim();
+        if (content) return content;
+      }
+    }
+    return '';
+  }, [displayMessages, isStreaming]);
+
   const canUseWorkPanel = mode === 'full';
   const showWorkPanel = isWorkPanelMode;
 
@@ -4384,6 +4401,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   'Work through decisions, notes, and next steps with your internal AI partner'
                 )}
               </p>
+
+              {teresaVoice.voiceAvailable && (
+                <button
+                  type="button"
+                  onClick={() => void teresaVoice.handleVoiceToggle()}
+                  data-testid="welcome-voice-cta"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-crimson-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-crimson-600/20 transition-all hover:bg-crimson-700 hover:shadow-lg hover:shadow-crimson-600/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/40 active:scale-95"
+                >
+                  {teresaVoice.voiceStatus === 'connecting' ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <span className="relative flex h-4 w-4 items-center justify-center">
+                      {teresaVoice.voiceStatus === 'live' && (
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/50" />
+                      )}
+                      <Mic size={16} />
+                    </span>
+                  )}
+                  {teresaVoice.voiceStatus === 'live'
+                    ? t('aiChat.voice.stopVoice', 'End voice')
+                    : teresaVoice.voiceStatus === 'connecting'
+                      ? t('aiChat.voice.voiceConnecting', 'Connecting…')
+                      : t('aiChat.voice.startVoice', 'Talk to Teresa')}
+                </button>
+              )}
 
               <div id="chat-input" className="mt-8 w-full max-w-5xl text-left">
                 {!!lastError && !isStreaming && (
@@ -4754,6 +4796,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     {prompt}
                   </button>
                 ))}
+              </div>
+            )}
+            {!isCompact && latestAiMessageText && !isStreaming && (
+              <div className="flex items-center gap-2 px-3 pb-2">
+                <TeresaTTSPlayer text={latestAiMessageText} language={chatLanguage} />
               </div>
             )}
             <EnhancedChatInput

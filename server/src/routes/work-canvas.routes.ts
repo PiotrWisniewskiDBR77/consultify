@@ -3475,15 +3475,23 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
       });
     }
   } else {
-    // Honest placeholder for targets without a materialization home
+    // Honest 422 for targets without a materialization home in Wave 1
     // (project_brief / research_report / client_deliverable / task).
-    readBack = {
+    // Returning a real status here (instead of a silent "approved_with_placeholder")
+    // lets the client surface an inline "not available yet" message rather than
+    // implying the resource was created.
+    logger.info('[work-canvas] canvas.proposal.target_not_yet_supported', {
+      proposalId: proposal.id,
       target: proposal.target,
-      targetObjectId: null,
-      status: 'approved_with_placeholder',
-      entityStatus: 'placeholder_pending_conversion',
-      auditEventId,
-    };
+    });
+    return res.status(422).json({
+      error: 'target_not_yet_supported',
+      code: 'CANVAS_TARGET_NOT_YET_SUPPORTED',
+      target: proposal.target,
+      message: `Converting this draft into a "${proposal.target}" is not available yet in this release. You can still save it to an idea, note, or initiative, or export it.`,
+      recoverable: true,
+      supportedTargets: Array.from(MATERIALIZABLE_TARGETS),
+    });
   }
 
   const updated: WorkCanvasProposal = {

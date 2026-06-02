@@ -14,14 +14,16 @@ last_updated: 2026-05-10
 - Sidebar entry: `AI_CHAT` with `viewId: AppView.AI_CHAT` in `src/components/navigation/Sidebar/menuConfig.ts`.
 - Canonical routes in `src/routes/routeConfig.ts`: `/chat`, `/chat/:conversationId`, `/internal/v10-runtime`.
 - Route render map in `src/routes/AppRoutes.tsx`:
-  - `/chat` -> `AIChatWelcomeView` (`src/views/AIChatWelcomeView.tsx`)
-  - `/chat/:conversationId` -> `UnifiedChatPanel` (`src/components/AIChat/UnifiedChatPanel.tsx`)
+  - `/chat` -> `UnifiedChatPanel mode="full"` (`src/components/AIChat/UnifiedChatPanel.tsx`)
+  - `/chat/:conversationId` -> `UnifiedChatPanel mode="full"` (`src/components/AIChat/UnifiedChatPanel.tsx`)
   - `/internal/v10-runtime` -> `V10RuntimeWorkspaceView`
+  - NOTE: `AIChatWelcomeView` was deleted (Wave 1) — it was dead code never routed; `UnifiedChatPanel` is the sole canonical chat surface.
 
 ## Main Component Paths (As-Is)
 
-- `src/views/AIChatWelcomeView.tsx` — full-screen chat runtime, conversation history, suggestions, proposal cards, citations.
-- `src/components/AIChat/UnifiedChatPanel.tsx` — chat panel used in full/split modes with workspace context and chat actions.
+- `src/components/AIChat/UnifiedChatPanel.tsx` — canonical chat surface; full/split modes with workspace context, welcome/empty state, Teresa voice CTA, and chat actions.
+- `src/components/AIChat/TeresaTTSPlayer.tsx` — server-routed "talking Teresa" read-aloud (replaces the removed `TTSIndicator` browser polling component).
+- `src/components/AIChat/VoiceConversationOverlay.tsx` — globally-mounted floating overlay for the shared Teresa live-voice session.
 - `src/components/AIChat/ConversationRouteSync.tsx` — route <-> conversation synchronization (mounted in chat routes).
 - `src/components/AIChat/EnhancedChatInput.tsx` — primary input shell and action bar.
 - `src/components/AIChat/WorkModeMenu.tsx` — pre-send work mode preset selector.
@@ -35,7 +37,7 @@ last_updated: 2026-05-10
 
 | Function | Route scope | Core components | Notes |
 | --- | --- | --- | --- |
-| `CZ_CHAT_ENGINE` | `/chat`, `/chat/:conversationId` | `AIChatWelcomeView`, `UnifiedChatPanel`, `MessageRenderer`, `EnhancedChatInput`, `WorkModeMenu`, `ToolsMenu`, `ActiveModeStrip`, `CitationList`, `TeresaProposalCard` | Primary production chat runtime and input control layer. |
+| `CZ_CHAT_ENGINE` | `/chat`, `/chat/:conversationId` | `UnifiedChatPanel`, `MessageRenderer`, `EnhancedChatInput`, `TeresaTTSPlayer`, `VoiceConversationOverlay`, `WorkModeMenu`, `ToolsMenu`, `ActiveModeStrip`, `CitationList`, `TeresaProposalCard` | Primary production chat runtime and input control layer. |
 | `CZ_CANVAS_WORKSPACE` | `/internal/v10-runtime` + chat workspace bridge flows | `V10RuntimeWorkspaceView`, `ChatV10RuntimesPanel`, `V8ArtifactRunControl`, `KimiWorkspaceShell`, `UnifiedChatPanel`, `MainLayout` | Startup incomplete / `NO_GO`: runtime bridge exists, but user-facing Canvas startup path is not proven end-to-end; KIMI lane routes are still coming-soon/gated. |
 
 ## API / Services / Models (Confirmable)
@@ -64,13 +66,13 @@ last_updated: 2026-05-10
 
 ## Test / Evidence References (Confirmable)
 
-- `tests/components/AppRoutes.ai-chat-routing.test.tsx`
+- `tests/components/AppRoutes.ai-chat-routing.test.tsx` — chat routing contract (added Wave 1)
+- `tests/unit/routes/appRoutes.chat-shell.test.ts` — canonical chat shell wiring
 - `tests/components/AIChat/UnifiedChatPanel.test.tsx`
-- `tests/components/AIChat/AIChatWelcomeView.v8-controls.test.tsx`
 - `tests/integration/ai/ai-chat.routes.test.ts`
-- `src/components/AIChat/__tests__/EnhancedChatInput.teresaVoice.test.tsx`
-- `src/hooks/v10/__tests__/runtimeCapabilities.test.ts`
-- `src/utils/__tests__/chatV10Rollout.test.ts`
+- `src/components/AIChat/__tests__/EnhancedChatInput.teresaVoice.test.tsx` — voice CTA (added Wave 1)
+- `src/components/AIChat/__tests__/TeresaTTSPlayer.test.tsx` — server TTS read-aloud (added Wave 1)
+- `server/src/routes/v10/__tests__/teresa.voice-config.test.ts` — voice-config / ephemeral token
 - `server/src/services/ai/__tests__/chatPolicyGateway.contract.test.ts`
 
 ## Known Gaps (As-Is)

@@ -5637,6 +5637,61 @@
     }
   },
   "aiChat": {
+    "composer": {
+      "commands": {
+        "research": {
+          "label": "Deep research",
+          "desc": "Turn on multi-step deep research for the next message"
+        },
+        "search": {
+          "label": "Web search",
+          "desc": "Ground the next answer in real-time web results"
+        },
+        "market": {
+          "label": "Market research",
+          "desc": "Market analysis mode with live web data"
+        },
+        "reasoning": {
+          "label": "Show reasoning",
+          "desc": "Reveal the model's thinking for the next answer"
+        },
+        "summarize": {
+          "label": "Summarize",
+          "desc": "Insert a prompt to summarize the conversation so far",
+          "template": "Summarize the conversation so far into concise bullet points covering the key topics, decisions, and action items."
+        },
+        "table": {
+          "label": "Make a table",
+          "desc": "Insert a prompt to present information as a table",
+          "template": "Present the following as a clear, well-structured table: "
+        },
+        "image": {
+          "label": "Generate image",
+          "desc": "Insert an image-generation prompt",
+          "template": "Generate an image of: "
+        },
+        "clear": {
+          "label": "Clear input",
+          "desc": "Clear the composer text and attachments"
+        },
+        "new": {
+          "label": "New chat",
+          "desc": "Start a fresh conversation"
+        }
+      }
+    },
+    "voice": {
+      "startVoice": "Talk to Teresa",
+      "stopVoice": "End voice",
+      "voiceLive": "Listening…",
+      "voiceConnecting": "Connecting…",
+      "voiceError": "Voice unavailable. Try again.",
+      "voiceUnavailable": "Voice is unavailable right now.",
+      "ttsPlay": "Read aloud",
+      "ttsStop": "Stop reading",
+      "ttsLoading": "Preparing audio…",
+      "ttsUnavailable": "Read-aloud is unavailable right now."
+    },
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
     "openSidebar": "Open sidebar",

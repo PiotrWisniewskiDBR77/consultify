@@ -18,8 +18,8 @@ export { AddFilesMenu } from './AddFilesMenu';
 export { CloudFilePicker } from './CloudFilePicker';
 export { EnhancedChatInput } from './EnhancedChatInput';
 export { FocusModeBadge, FocusModeSelector } from './Input/FocusModeSelector';
+export { TeresaTTSPlayer } from './TeresaTTSPlayer';
 export { ToolsMenu } from './ToolsMenu';
-export { TTSIndicator } from './TTSIndicator';
 
 // Response components
 export { CitationList, CitationMarker } from './CitationList';

@@ -2043,6 +2043,37 @@ export const Api = {
     return handleResponse(res, 'Failed to load Teresa proposal');
   },
 
+  /**
+   * Phase 1A unidirectional TTS — synthesize Teresa's reply to an audio blob.
+   * Throws an Error with `.code`/`.reason` on a non-OK response so the caller can
+   * distinguish "not configured" (server_missing_gemini_live_key) from transient
+   * failures and surface an honest, recoverable message.
+   */
+  teresaSynthesizeSpeech: async (input: {
+    text: string;
+    language?: string | null;
+    voiceName?: string | null;
+  }): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/v10/teresa/tts`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        text: input.text,
+        language: input.language ?? undefined,
+        voiceName: input.voiceName ?? undefined,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}) as Record<string, unknown>);
+      const err: any = new Error((data as any)?.error || `Teresa TTS failed (HTTP ${res.status})`);
+      err.code = (data as any)?.code;
+      err.reason = (data as any)?.reason;
+      err.status = res.status;
+      throw err;
+    }
+    return res.blob();
+  },
+
   approveTeresaProposal: async (proposalId: string) => {
     const res = await fetchWithRetry(
       `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/approve`,
@@ -2408,9 +2439,13 @@ export const Api = {
                     onChunk(friendly);
                   }
                 } else if (dataCode === 'DEEP_THINKING_CONFIRM_REQUIRED') {
-                  // Deep Thinking requires Confirm step - this is a flow control error, not a user-facing error.
-                  // The frontend should handle this by calling /api/ai/chat/confirm first.
-                  // Show a user-friendly message instead of the raw error.
+                  // Deep Thinking is a two-step contract, not an error:
+                  //   1. POST /api/ai/chat/confirm (Api.chatConfirm) to surface the
+                  //      understanding/confirm card the user must accept, then
+                  //   2. retry POST /api/ai/chat/stream with
+                  //      context.deepThinkingConfirmed = true.
+                  // This branch only fires when step 2 is attempted before step 1, so
+                  // we render a recoverable hint instead of leaking the raw flow-control code.
                   const uiLang = getCachedUserLanguage();
                   const friendly =
                     uiLang === 'pl'

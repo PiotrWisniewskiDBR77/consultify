@@ -39,7 +39,7 @@ export type WorkspaceType =
 
 /**
  * Display mode for the chat interface
- * - 'full': Full-screen AI Chat (AIChatWelcomeView)
+ * - 'full': Full-screen AI Chat (UnifiedChatPanel mode="full")
  * - 'split': Split-screen with workspace panel
  * - 'collapsed': Chat minimized to sidebar icon
  */
