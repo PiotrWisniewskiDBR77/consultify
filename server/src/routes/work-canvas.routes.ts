@@ -31,7 +31,18 @@ type DraftKind =
   | 'sheet'
   | 'deck';
 type ProposalStatus = 'proposed' | 'approved' | 'rejected';
-type WorkspaceTarget = 'idea' | 'note' | 'initiative';
+type WorkspaceTarget = 'idea' | 'note' | 'initiative' | 'decision';
+
+// Proposal targets that approval can MATERIALIZE into a real entity. Targets
+// outside this set (project_brief, research_report, client_deliverable, task —
+// which need project/initiative context they don't have here) stay honest
+// placeholders rather than being faked.
+const MATERIALIZABLE_TARGETS: ReadonlySet<string> = new Set([
+  'idea',
+  'note',
+  'initiative',
+  'decision',
+]);
 type OutputType = 'presentation' | 'table' | 'report';
 type ExportFormat = 'markdown' | 'csv' | 'json' | 'pdf' | 'docx' | 'xlsx' | 'pptx';
 type WorkflowTemplate =
@@ -2205,6 +2216,37 @@ async function createWorkspaceResource(
     };
   }
 
+  if (target === 'decision') {
+    const decisionId = randomUUID();
+    // decisions.project_id is nullable; required NOT NULL cols are id,
+    // organization_id, title, type, decision_maker_id, created_by.
+    await insertDynamic(
+      'decisions',
+      {
+        id: decisionId,
+        organization_id: organizationId,
+        project_id: null,
+        title,
+        description: summary,
+        type: 'strategic',
+        decision_maker_id: userId,
+        decision_owner_id: userId,
+        status: 'pending',
+        created_by: userId,
+        created_at: now,
+        updated_at: now,
+      },
+      ['id']
+    );
+    return {
+      type: 'decision' as const,
+      id: decisionId,
+      title,
+      url: `/decisions/${decisionId}`,
+      readBack: { target, decisionId, status: 'created' },
+    };
+  }
+
   const initiativeId = randomUUID();
   await insertDynamic(
     'initiatives',
@@ -3427,19 +3469,65 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
       requiredCapability: proposal.requiredCapability,
     });
   }
-  const readBack = {
-    target: proposal.target,
-    targetObjectId: null,
-    status: 'approved_with_placeholder',
-    entityStatus: 'placeholder_pending_conversion',
-    auditEventId: `ae-${randomUUID()}`,
-  };
+  const auditEventId = `ae-${randomUUID()}`;
+  let materializedId: string | null = null;
+  let readBack: Record<string, unknown>;
+
+  if (MATERIALIZABLE_TARGETS.has(proposal.target)) {
+    // Governed materialization: approval now actually CREATES the target entity
+    // (idea/note/initiative/decision) instead of leaving a placeholder.
+    const draft = await ownedDraft(req, proposal.draftId);
+    if (!draft) {
+      return res.status(404).json({ error: 'Canvas draft for proposal not found' });
+    }
+    try {
+      const { organizationId, userId } = authContext(req);
+      const resource = await createWorkspaceResource(
+        draft,
+        proposal.target as WorkspaceTarget,
+        userId,
+        organizationId
+      );
+      materializedId = resource.id;
+      readBack = {
+        ...resource.readBack,
+        target: proposal.target,
+        targetObjectId: resource.id,
+        status: 'approved',
+        entityStatus: 'created',
+        url: resource.url,
+        auditEventId,
+      };
+    } catch (error) {
+      logger.error('[work-canvas] canvas.proposal.materialize_failed', {
+        proposalId: proposal.id,
+        target: proposal.target,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return res.status(500).json({
+        error: 'Failed to create the approved workspace resource.',
+        code: 'CANVAS_PROPOSAL_MATERIALIZE_FAILED',
+        recoverable: true,
+      });
+    }
+  } else {
+    // Honest placeholder for targets without a materialization home
+    // (project_brief / research_report / client_deliverable / task).
+    readBack = {
+      target: proposal.target,
+      targetObjectId: null,
+      status: 'approved_with_placeholder',
+      entityStatus: 'placeholder_pending_conversion',
+      auditEventId,
+    };
+  }
+
   const updated: WorkCanvasProposal = {
     ...proposal,
     status: 'approved',
-    targetObjectId: null,
+    targetObjectId: materializedId,
     readBack,
-    auditEventId: String(readBack.auditEventId),
+    auditEventId,
     updatedAt: new Date().toISOString(),
   };
   await dbRun(
@@ -3448,7 +3536,7 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
      WHERE id = ? AND organization_id = ?`,
     [
       updated.status,
-      null,
+      materializedId,
       JSON.stringify(updated.readBack),
       updated.auditEventId,
       updated.updatedAt,
