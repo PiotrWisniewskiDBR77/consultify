@@ -291,6 +291,62 @@ const attachmentsUpload = multer({
   },
 });
 
+// ==================== SHARED AI HANDLER PRELUDE (standard formula) ====================
+// Single source of truth for the provider-availability + access-policy gate that
+// every direct LLM endpoint needs. Returns an error descriptor to send, or null
+// when the request may proceed (usage is incremented as a side effect).
+async function ensureAiProviderAndAccess(
+  req: AuthRequest
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+  const hasDbProvider = !!(await dbGet(
+    `SELECT 1 AS ok
+       FROM llm_providers
+       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       LIMIT 1`
+  ));
+  if (!hasEnvProvider && !hasDbProvider) {
+    return {
+      status: 500,
+      body: {
+        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
+        code: 'NO_LLM_PROVIDER',
+      },
+    };
+  }
+
+  const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+  const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
+  if (!aiAccessCheck.allowed) {
+    return {
+      status: 403,
+      body: {
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      },
+    };
+  }
+  AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
+    logger.warn('[AI] Failed to increment ai_calls usage:', err?.message || err);
+  });
+  return null;
+}
+
+// Standard mapping for a failed direct llmService call.
+function mapLlmCallError(error: any): { status: number; body: Record<string, unknown> } {
+  if (error?.isBudgetError) {
+    return {
+      status: 403,
+      body: {
+        error: error.message,
+        code: 'AI_BUDGET_EXHAUSTED',
+        budgetStatus: error.budgetStatus,
+      },
+    };
+  }
+  return { status: 502, body: { error: 'LLM call failed', code: 'LLM_CALL_FAILED' } };
+}
+
 router.post(
   '/attachments/ingest',
   verifyToken,
@@ -1182,37 +1238,9 @@ router.post(
       focusMode: bodyFocusMode,
     } = body;
 
-    // Fast-fail when no LLM provider is configured (dev UX parity with stream)
-    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
-    const hasDbProvider = !!(await dbGet(
-      `SELECT 1 AS ok
-       FROM llm_providers
-       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
-       LIMIT 1`
-    ));
-
-    if (!hasEnvProvider && !hasDbProvider) {
-      return res.status(500).json({
-        error:
-          'No LLM provider configured on the backend. Set OPENROUTER_API_KEY or configure OpenRouter in llm_providers.',
-        code: 'NO_LLM_PROVIDER',
-      });
-    }
-
-    // Access policy enforcement (same semantics as streaming)
-    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
-    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
-    if (!aiAccessCheck.allowed) {
-      return res.status(403).json({
-        error: aiAccessCheck.reason || 'Access blocked',
-        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
-      });
-    }
-
-    // Count the AI call (confirm is a real model call)
-    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
-      logger.warn('[AI Confirm] Failed to increment ai_calls usage:', err?.message || err);
-    });
+    // --- Provider + access gate (standard formula) ---
+    const aiGate = await ensureAiProviderAndAccess(req);
+    if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // Language instruction (keep behavior consistent with stream)
     const languageMap: Record<string, string> = {
@@ -5189,36 +5217,9 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { text, mode, systemInstruction, fieldLabel, artifactContext, language } = req.body;
 
-    // --- Provider check ---
-    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
-    const hasDbProvider = !!(await dbGet(
-      `SELECT 1 AS ok
-       FROM llm_providers
-       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
-       LIMIT 1`
-    ));
-
-    if (!hasEnvProvider && !hasDbProvider) {
-      return res.status(500).json({
-        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
-        code: 'NO_LLM_PROVIDER',
-      });
-    }
-
-    // --- Access policy ---
-    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
-    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
-    if (!aiAccessCheck.allowed) {
-      return res.status(403).json({
-        error: aiAccessCheck.reason || 'Access blocked',
-        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
-      });
-    }
-
-    // Count the call
-    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
-      logger.warn('[AI RefineText] Failed to increment ai_calls usage:', err?.message || err);
-    });
+    // --- Provider + access gate (standard formula) ---
+    const aiGate = await ensureAiProviderAndAccess(req);
+    if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // --- Build prompts ---
     const langCode = (language || 'pl').split('-')[0];
@@ -5319,34 +5320,9 @@ router.post(
       language?: string;
     };
 
-    // --- Provider check ---
-    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
-    const hasDbProvider = !!(await dbGet(
-      `SELECT 1 AS ok
-       FROM llm_providers
-       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
-       LIMIT 1`
-    ));
-
-    if (!hasEnvProvider && !hasDbProvider) {
-      return res.status(500).json({
-        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
-        code: 'NO_LLM_PROVIDER',
-      });
-    }
-
-    // --- Access policy ---
-    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
-    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
-    if (!aiAccessCheck.allowed) {
-      return res.status(403).json({
-        error: aiAccessCheck.reason || 'Access blocked',
-        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
-      });
-    }
-    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
-      logger.warn('[AI ChatQuick] Failed to increment ai_calls usage:', err?.message || err);
-    });
+    // --- Provider + access gate (standard formula) ---
+    const aiGate = await ensureAiProviderAndAccess(req);
+    if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // --- System prompt: return ONLY the modified fragment ---
     const langCode = (language || 'pl').split('-')[0];
@@ -5397,16 +5373,9 @@ router.post(
         },
       } as any)) as any;
     } catch (err: any) {
-      const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
-      if (error.isBudgetError) {
-        return res.status(403).json({
-          error: error.message,
-          code: 'AI_BUDGET_EXHAUSTED',
-          budgetStatus: error.budgetStatus,
-        });
-      }
-      logger.error('[AI ChatQuick] LLM call failed:', error?.message || error);
-      return res.status(502).json({ error: 'LLM call failed', code: 'LLM_CALL_FAILED' });
+      logger.error('[AI ChatQuick] LLM call failed:', err?.message || err);
+      const mapped = mapLlmCallError(err);
+      return res.status(mapped.status).json(mapped.body);
     }
 
     const responseText = String(result?.content || result?.text || '').trim();
