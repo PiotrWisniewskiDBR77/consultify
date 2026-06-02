@@ -43,7 +43,10 @@ import {
 import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
+import type { Editor as TiptapEditor } from '@tiptap/react';
+
 import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
+import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
 
 export type { ActiveCanvasDocument } from '@/types/canvasWorkspace';
@@ -585,6 +588,8 @@ export function WorkCanvasDocumentPanel({
   const [actionFeedbackTone, setActionFeedbackTone] = React.useState<'status' | 'alert'>('status');
   const [activeActionId, setActiveActionId] = React.useState<CanvasActionId | null>(null);
   const [canvasSelection, setCanvasSelection] = React.useState<CanvasSelection | null>(null);
+  // Live TipTap editor instance (rich mode), lifted so Teresa can stream into it.
+  const [richEditor, setRichEditor] = React.useState<TiptapEditor | null>(null);
   const [versions, setVersions] = React.useState<CanvasVersionSummary[]>([]);
   const [isVersionsOpen, setIsVersionsOpen] = React.useState(false);
   const [isVersionsLoading, setIsVersionsLoading] = React.useState(false);
@@ -1198,6 +1203,29 @@ export function WorkCanvasDocumentPanel({
       projectionError: null,
     }));
   };
+
+  // ── Teresa streams into the document (chat-driven) ──────────────────
+  // The hook owns the SSE → TipTap insertion; onComplete reconciles the
+  // canonical markdown. The chat composer (UnifiedChatPanel) only dispatches a
+  // 'canvas-stream-request' CustomEvent — no direct coupling — so this works
+  // without threading the editor instance back through the chat tree.
+  const { isStreaming, streamToCanvas, stopStream } = useCanvasAIStream({
+    editor: richEditor,
+    onComplete: (finalMd) => updateMarkdown(finalMd),
+  });
+
+  React.useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as
+        | { prompt?: string; mode?: 'append' | 'replace' | 'generate' }
+        | undefined;
+      const prompt = detail?.prompt?.trim();
+      if (!prompt || !richEditor) return;
+      streamToCanvas(prompt, detail?.mode || 'append');
+    };
+    window.addEventListener('canvas-stream-request', handler);
+    return () => window.removeEventListener('canvas-stream-request', handler);
+  }, [richEditor, streamToCanvas]);
 
   const buildQuickAddMarkdown = (element: CanvasQuickAddElement, prompt: string) => {
     const cleanedPrompt = prompt.trim();
@@ -2537,7 +2565,7 @@ export function WorkCanvasDocumentPanel({
                   </button>
                   <button
                     type="button"
-                    onClick={() => void exportMetadata()}
+                    onClick={() => void exportDocument('json')}
                     className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
                   >
                     <Download size={14} />
@@ -2818,6 +2846,9 @@ export function WorkCanvasDocumentPanel({
                       setCanvasSelection(null);
                     }
                   }}
+                  onEditorReady={setRichEditor}
+                  isStreaming={isStreaming}
+                  onStopStream={stopStream}
                   editable={true}
                 />
                 {documentState.blocks?.length ? (

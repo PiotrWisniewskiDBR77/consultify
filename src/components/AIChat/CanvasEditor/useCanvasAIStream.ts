@@ -127,6 +127,18 @@ export function useCanvasAIStream({
         abortControllerRef.current = null;
 
         if (!abortController.signal.aborted) {
+          // 'replace' marked the original selection as aiRemoved and streamed the
+          // new content right after it — now drop the original so the document
+          // reflects a true replacement.
+          if (mode === 'replace') {
+            const { collectMarkedRanges, AI_REMOVED_MARK } = await import('./canvasDiffOps');
+            const removed = collectMarkedRanges(editor, AI_REMOVED_MARK);
+            let chain = editor.chain();
+            for (let i = removed.length - 1; i >= 0; i--) {
+              chain = chain.deleteRange(removed[i]);
+            }
+            chain.run();
+          }
           const { htmlToMarkdown } = await import('./canvasMarkdownConversion');
           const finalMd = htmlToMarkdown(editor.getHTML());
           onComplete?.(finalMd);

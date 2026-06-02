@@ -97,6 +97,7 @@ import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectMindmapIntent } from './mindmapIntentDetector';
 import { detectProcessFlowIntent } from './processFlowIntentDetector';
+import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 import { type ActiveCanvasDocument, WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
 
@@ -2101,6 +2102,38 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Whiteboard: intercept brainstorm/whiteboard/workshop intents
+      // Canvas streaming: when a canvas doc is open and the user asks Teresa to
+      // write INTO it, stream into the rich editor instead of replying in chat.
+      // Bridged via a CustomEvent the WorkCanvasDocumentPanel listens for — no
+      // direct coupling to the editor instance.
+      const canvasStreamMode = activeCanvasDocument ? detectCanvasWriteIntent(text) : null;
+      if (canvasStreamMode) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `canvas-stream-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Piszę w dokumencie…' : 'Writing in the document…',
+          timestamp: new Date(),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('canvas-stream-request', {
+            detail: { prompt: content, mode: canvasStreamMode },
+          })
+        );
+
+        onMessageSent?.(content);
+        return;
+      }
+
       const wbAction = detectWhiteboardIntent(text);
       if (wbAction) {
         const userMessage: ChatMessage = {
