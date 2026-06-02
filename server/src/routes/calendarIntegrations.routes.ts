@@ -8,6 +8,7 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+
 import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/calendarIntegrations.js');

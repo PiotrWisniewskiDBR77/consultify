@@ -427,8 +427,11 @@ const chatToSchemaService = {
     const resolvedBaseId = context?.baseId ?? workspaceId;
     if (resolvedBaseId) {
       try {
-        const svResult = await db.query('SELECT schema_version FROM tp_bases WHERE id = $1', [resolvedBaseId]);
-        schemaVersionAtCreation = (svResult.rows[0] as { schema_version?: number })?.schema_version ?? null;
+        const svResult = await db.query('SELECT schema_version FROM tp_bases WHERE id = $1', [
+          resolvedBaseId,
+        ]);
+        schemaVersionAtCreation =
+          (svResult.rows[0] as { schema_version?: number })?.schema_version ?? null;
       } catch {
         // Non-critical: fall back to time-based stale detection
       }
@@ -485,9 +488,10 @@ const chatToSchemaService = {
     const workspaceId = proposal.workspace_id;
     if (proposalSchemaVersion != null) {
       try {
-        const baseIdForCheck = (proposal.operations as SchemaOperation[])?.[0]?.target?.baseId
-          ?? (proposal.operations as SchemaOperation[])?.[0]?.target?.base_id
-          ?? workspaceId;
+        const baseIdForCheck =
+          (proposal.operations as SchemaOperation[])?.[0]?.target?.baseId ??
+          (proposal.operations as SchemaOperation[])?.[0]?.target?.base_id ??
+          workspaceId;
         if (baseIdForCheck) {
           const currentVersion = await db.query(
             'SELECT schema_version FROM tp_bases WHERE id = $1',

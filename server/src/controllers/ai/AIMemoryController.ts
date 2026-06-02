@@ -2,6 +2,11 @@ import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AuthRequest } from '../../middleware/auth.middleware.js';
+import {
+  canReadMemory,
+  canWriteMemory,
+  getUserPrivacySettings,
+} from '../../services/ai/userPrivacyService.js';
 import { all, get, run } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -12,6 +17,15 @@ export class AIMemoryController {
   static async listMemories(req: AuthRequest, res: Response) {
     try {
       const { source } = req.query;
+      const privateMode = req.query?.privateMode === 'true' || req.query?.privateMode === true;
+      const privacy = await getUserPrivacySettings(String(req.userId));
+      if (!canReadMemory(privacy, Boolean(privateMode))) {
+        return res.json({
+          memories: [],
+          privateMode: Boolean(privateMode),
+          memoryReadBlocked: true,
+        });
+      }
       let query = 'SELECT * FROM ai_user_memory WHERE user_id = ?';
       const params: any[] = [req.userId];
 
@@ -33,6 +47,16 @@ export class AIMemoryController {
    */
   static async getContext(req: AuthRequest, res: Response) {
     try {
+      const privateMode = req.query?.privateMode === 'true' || req.query?.privateMode === true;
+      const privacy = await getUserPrivacySettings(String(req.userId));
+      if (!canReadMemory(privacy, Boolean(privateMode))) {
+        return res.json({
+          context: {},
+          memories: [],
+          privateMode: Boolean(privateMode),
+          memoryReadBlocked: true,
+        });
+      }
       const memories = await all('SELECT * FROM ai_user_memory WHERE user_id = ?', [req.userId]);
 
       const context = memories.reduce((acc: any, m: any) => {
@@ -54,6 +78,25 @@ export class AIMemoryController {
     try {
       const { key } = req.params;
       const { value, source, confidence, metadata } = req.body;
+      const isWave6Stewardship = source === 'wave6_stewardship';
+      const explicitConsent = req.body?.explicitConsent === true;
+      const privateMode = req.body?.privateMode === true;
+      const privacy = await getUserPrivacySettings(String(req.userId));
+
+      if (!canWriteMemory(privacy, privateMode)) {
+        return res.status(403).json({
+          error: 'Memory writes are disabled by privacy settings or private mode.',
+          code: 'MEMORY_WRITE_DISABLED',
+        });
+      }
+
+      if (!isWave6Stewardship && !explicitConsent) {
+        return res.status(409).json({
+          error:
+            'Memory writes require explicit consent or Wave 6 stewardship. Create a memory candidate first.',
+          code: 'MEMORY_REQUIRES_STEWARDSHIP',
+        });
+      }
 
       await run(
         `INSERT INTO ai_user_memory (id, user_id, organization_id, key, value, source, confidence, metadata, updated_at)

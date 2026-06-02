@@ -42,8 +42,8 @@ interface BottleneckMapProps {
 // Type icon mapping
 const typeConfig = {
   task: { icon: CheckCircle2, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  decision: { icon: Clock, color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-  resource: { icon: User, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+  decision: { icon: Clock, color: 'text-primary-500', bg: 'bg-primary-100 dark:bg-primary-900/30' },
+  resource: { icon: User, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30' },
   external: {
     icon: Link,
     color: 'text-slate-500 dark:text-slate-400',
@@ -60,10 +60,10 @@ const severityConfig = {
     text: 'text-rose-700 dark:text-rose-300',
   },
   high: {
-    bg: 'bg-orange-50 dark:bg-orange-900/20',
-    border: 'border-orange-200 dark:border-orange-500/30',
-    badge: 'bg-orange-500 text-white',
-    text: 'text-orange-700 dark:text-orange-300',
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    border: 'border-amber-200 dark:border-amber-500/30',
+    badge: 'bg-amber-500 text-white',
+    text: 'text-amber-700 dark:text-amber-300',
   },
   medium: {
     bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -251,8 +251,8 @@ export const BottleneckMap: React.FC<BottleneckMapProps> = ({
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
                 criticalCount > 0
-                  ? 'bg-gradient-to-br from-rose-500 to-red-600 shadow-rose-500/30'
-                  : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/30'
+                  ? 'bg-gradient-to-br from-rose-500 to-rose-600 shadow-rose-500/30'
+                  : 'bg-gradient-to-br from-amber-500 to-amber-600 shadow-amber-500/30'
               }`}
             >
               <AlertTriangle size={20} className="text-slate-900 dark:text-white" />

@@ -12,12 +12,12 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
+// @ts-ignore -- aiQueue module lacks type declarations
+import _aiQueue from '../queues/aiQueue.js';
 import promptAssembler from '../services/ai/promptAssembler.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-// @ts-ignore -- aiQueue module lacks type declarations
-import _aiQueue from '../queues/aiQueue.js';
 // @ts-ignore -- aiQueue module lacks type declarations
 const aiQueue: any = _aiQueue as any;
 
@@ -379,7 +379,9 @@ router.put(
               await dbRun(
                 `UPDATE ai_eval_auto_triggers SET last_triggered_at = datetime('now') WHERE id = ?`,
                 [trigger.id]
-              ).catch((err: unknown) => logger.warn('[AI Prompts] trigger timestamp update failed', err));
+              ).catch((err: unknown) =>
+                logger.warn('[AI Prompts] trigger timestamp update failed', err)
+              );
               logger.info(`[AI Prompts] Triggered eval suite for prompt ${id} v${newVersion}`);
             }
           }

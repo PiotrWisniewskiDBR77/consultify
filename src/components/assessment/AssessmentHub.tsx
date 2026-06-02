@@ -31,6 +31,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -108,43 +109,37 @@ const FRAMEWORK_META: Record<
     shortName: string;
     icon: React.ReactNode;
     color: string;
-    filterColor: string;
   }
 > = {
   DRD: {
     name: 'Digital Readiness Diagnosis',
     shortName: 'DRD',
     icon: <Activity size={16} />,
-    color: 'purple',
-    filterColor: 'border-l-purple-500',
+    color: 'blue',
   },
   SIRI: {
     name: 'Smart Industry Readiness Index',
     shortName: 'SIRI',
     icon: <Cpu size={16} />,
-    color: 'blue',
-    filterColor: 'border-l-blue-500',
+    color: 'emerald',
   },
   ADMA: {
     name: 'Advanced Digital Maturity Assessment',
     shortName: 'ADMA',
     icon: <Database size={16} />,
-    color: 'teal',
-    filterColor: 'border-l-teal-500',
+    color: 'violet',
   },
   CMMI: {
     name: 'Capability Maturity Model Integration',
     shortName: 'CMMI',
     icon: <Layers size={16} />,
-    color: 'orange',
-    filterColor: 'border-l-orange-500',
+    color: 'amber',
   },
   LEAN: {
     name: 'Lean 4.0',
     shortName: 'LEAN',
     icon: <Workflow size={16} />,
-    color: 'green',
-    filterColor: 'border-l-green-500',
+    color: 'rose',
   },
 };
 
@@ -320,7 +315,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [initiatives, setInitiatives] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
-  const [hubAiPanel, setHubAiPanel] = useState<'triage' | 'interpretation' | null>(null);
   const [hubChatId, setHubChatId] = useState<string | null>(null);
 
   // Deep link support:
@@ -578,7 +572,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
         value: key,
         label: meta.shortName,
-        color: `bg-${meta.color}-500`,
+        color: 'bg-slate-500',
       })),
       render: (row) => {
         const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
@@ -588,7 +582,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           );
         return (
           <div className="flex items-center gap-2">
-            <span className={`text-${meta.color}-400`}>{meta.icon}</span>
+            <span className="text-slate-500 dark:text-slate-400">{meta.icon}</span>
             <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
               {meta.shortName}
             </span>
@@ -603,7 +597,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
           {row._isImported && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+            <span className="inline-flex items-center gap-1 rounded border border-slate-300/80 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-300">
               <Upload size={10} />
               PDF import
             </span>
@@ -658,13 +652,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 },
                 initiatives_created: {
                   label: 'Initiatives created',
-                  color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/20',
+                  color: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
                 },
                 completed: {
                   label: 'Completed',
                   color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
                 },
-                failed: { label: 'Failed', color: 'bg-red-500/15 text-red-400 border-red-500/20' },
+                failed: {
+                  label: 'Failed',
+                  color: 'bg-rose-500/15 text-rose-400 border-rose-500/20',
+                },
               };
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
               return (
@@ -708,10 +705,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           filterOptions: [
             { value: 'DRAFT', label: 'Draft', color: 'bg-slate-500' },
             { value: 'REVIEW', label: 'In Review', color: 'bg-amber-500' },
-            { value: 'PLANNING', label: 'Planning', color: 'bg-indigo-500' },
+            { value: 'PLANNING', label: 'Planning', color: 'bg-blue-500' },
             { value: 'APPROVED', label: 'Approved', color: 'bg-emerald-500' },
-            { value: 'EXECUTING', label: 'Executing', color: 'bg-cyan-500' },
-            { value: 'CANCELLED', label: 'Cancelled', color: 'bg-gray-500' },
+            { value: 'EXECUTING', label: 'Executing', color: 'bg-blue-500' },
+            { value: 'CANCELLED', label: 'Cancelled', color: 'bg-rose-500' },
           ],
         },
         {
@@ -720,21 +717,22 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           width: '100px',
           filterable: true,
           filterOptions: [
-            { value: 'critical', label: 'Critical', color: 'bg-red-500' },
-            { value: 'high', label: 'High', color: 'bg-orange-500' },
+            { value: 'critical', label: 'Critical', color: 'bg-rose-500' },
+            { value: 'high', label: 'High', color: 'bg-amber-500' },
             { value: 'medium', label: 'Medium', color: 'bg-blue-500' },
             { value: 'low', label: 'Low', color: 'bg-slate-500' },
           ],
           render: (row) => {
-            const colors: Record<string, string> = {
-              critical: 'text-red-400 bg-red-500/10',
-              high: 'text-orange-400 bg-orange-500/10',
-              medium: 'text-blue-400 bg-blue-500/10',
-              low: 'text-slate-400 bg-slate-500/10',
+            const dots: Record<string, string> = {
+              critical: 'bg-rose-500',
+              high: 'bg-amber-500',
+              medium: 'bg-blue-500',
+              low: 'bg-slate-400',
             };
-            const c = colors[row.priority] || colors.medium;
+            const dot = dots[row.priority] || dots.medium;
             return (
-              <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${c}`}>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-200">
+                <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
                 {row.priority || 'medium'}
               </span>
             );
@@ -1228,8 +1226,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         return;
       }
 
-      setHubAiPanel(null);
-
       if (hubChatId) {
         setActiveConversation(hubChatId);
       } else {
@@ -1297,10 +1293,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         id: 'report',
         label: 'Generate Report',
         icon: FileText,
-        onClick: () => {
-          setHubAiPanel(null);
-          setShowNewReportModal(true);
-        },
+        onClick: () => setShowNewReportModal(true),
         active: false,
         disabled: assessments.length === 0,
       };
@@ -1311,10 +1304,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         id: 'initiative',
         label: 'Initiative Pack',
         icon: Lightbulb,
-        onClick: () => {
-          setHubAiPanel(null);
-          setShowInitiativesWizard(true);
-        },
+        onClick: () => setShowInitiativesWizard(true),
         active: false,
         disabled: assessments.length === 0,
       };
@@ -1325,37 +1315,61 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       label: 'Interpretation Draft',
       icon: Lightbulb,
       onClick: openInterpretationDraft,
-      active: hubAiPanel === 'interpretation',
+      active: false,
       disabled: assessments.length === 0,
     };
-  }, [activeTab, assessments.length, hubAiPanel, openInterpretationDraft]);
+  }, [activeTab, assessments.length, openInterpretationDraft]);
+
+  const hubMenu3Actions = useMemo(
+    () => [
+      {
+        id: 'triage',
+        label: 'AI Triage',
+        icon: Layers,
+        onClick: () => void handleOpenHubChat(),
+        active: isHubChatActive,
+        disabled: isLoading,
+      },
+      {
+        id: 'chat',
+        label: 'Chat',
+        icon: MessageSquare,
+        onClick: () => void handleOpenHubChat(),
+        active: isHubChatActive,
+        disabled: isLoading,
+      },
+      thirdHubAction,
+    ],
+    [handleOpenHubChat, isHubChatActive, isLoading, thirdHubAction]
+  );
 
   const hubCommandRowContent = useMemo(
+    () => <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />,
+    [hubMenu3Actions, hubMenu3Chips]
+  );
+
+  const hubCommandRowRightContent = useMemo(
     () => (
-      <AssessmentMenu3ActionBar
-        chips={hubMenu3Chips}
-        actions={[
-          {
-            id: 'triage',
-            label: 'AI Triage',
-            icon: Layers,
-            onClick: () => setHubAiPanel((prev) => (prev === 'triage' ? null : 'triage')),
-            active: hubAiPanel === 'triage',
-            disabled: isLoading,
-          },
-          {
-            id: 'chat',
-            label: 'Chat',
-            icon: MessageSquare,
-            onClick: () => void handleOpenHubChat(),
-            active: isHubChatActive,
-            disabled: isLoading,
-          },
-          thirdHubAction,
-        ]}
-      />
+      <>
+        {hubMenu3Actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={action.id}
+              type="button"
+              onClick={action.onClick}
+              disabled={action.disabled}
+              className={getMenu3AiButtonClass(Boolean(action.active))}
+              title={action.label}
+            >
+              <Icon size={12} />
+              {action.label}
+            </button>
+          );
+        })}
+      </>
     ),
-    [handleOpenHubChat, hubAiPanel, hubMenu3Chips, isHubChatActive, isLoading, thirdHubAction]
+    [hubMenu3Actions]
   );
 
   // Render content based on active document or list
@@ -1444,8 +1458,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
               <div className="max-w-4xl mx-auto">
                 <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8">
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                      <Activity className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                    <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                      <Activity className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-navy-900 dark:text-white mb-2">
                       {doc.name}
@@ -1456,7 +1470,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     <div className="flex justify-center gap-3">
                       <button
                         onClick={() => navigate(`/assessment/${framework.toLowerCase()}/${doc.id}`)}
-                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+                        className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
                       >
                         Open Full Editor
                       </button>
@@ -1642,7 +1656,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
           <p className="text-slate-500 dark:text-slate-400">Loading assessments...</p>
         </div>
       </div>
@@ -1670,6 +1684,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         newItemLabel={getNewItemLabel()}
         rightControls={statusDropdownControl}
         commandRowContent={hubCommandRowContent}
+        commandRowRightContent={hubCommandRowRightContent}
       >
         <div className="space-y-3">
           {loadWarning && (
@@ -1684,57 +1699,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
                 >
                   Retry
-                </button>
-              </div>
-            </div>
-          )}
-          {hubAiPanel === 'triage' && (
-            <div className="mx-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 px-4 py-4">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                    AI Triage
-                  </div>
-                  <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">
-                    The hub is prioritizing the next best move from the current lane without
-                    creating a second source of truth.
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setHubAiPanel(null)}
-                  className="h-9 rounded-full border border-slate-200 dark:border-navy-700 px-4 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <div className="rounded-lg bg-slate-50 dark:bg-navy-950/50 px-3 py-3 text-sm text-slate-700 dark:text-slate-200">
-                  {activeTab === 'list'
-                    ? `Open an assessment session and move the run from evidence to review. ${statusCounts.all} assessments are currently visible.`
-                    : activeTab === 'reports'
-                      ? `Reports should be generated from the same assessment run. ${statusCounts.all} report entries are visible here.`
-                      : `Initiatives stay bounded to approved assessment findings. ${statusCounts.all} initiative entries are visible here.`}
-                </div>
-                <button
-                  type="button"
-                  onClick={
-                    activeTab === 'reports'
-                      ? () => setShowNewReportModal(true)
-                      : handleNewAssessment
-                  }
-                  className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                >
-                  {activeTab === 'reports'
-                    ? 'Create a report from the selected assessment lane'
-                    : 'Open or create the assessment run that needs attention'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleOpenHubChat()}
-                  className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                >
-                  Continue triage in Chat with the same module context
                 </button>
               </div>
             </div>
@@ -1806,8 +1770,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/80">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <FileText size={14} className="text-purple-400" />
+                <div className="w-7 h-7 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                  <FileText size={14} className="text-primary-400" />
                 </div>
                 <h3 className="text-slate-900 dark:text-white font-semibold text-sm">
                   Report Summary
@@ -1853,7 +1817,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     const targetId = slideOverBuilderReportId || slideOverReportId;
                     if (targetId) navigate(`/reports/builder/${targetId}`);
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30 transition-colors"
                 >
                   Open Full Editor
                   <ArrowRight size={14} />
@@ -1912,14 +1876,14 @@ const REPORT_STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'text-red-600 dark:text-red-300',
-    bgColor: 'bg-red-500/20 border-red-500/30',
+    color: 'text-rose-600 dark:text-rose-300',
+    bgColor: 'bg-rose-500/20 border-rose-500/30',
     icon: 'clock',
   },
   UTILIZED: {
     label: 'Utilized',
-    color: 'text-cyan-600 dark:text-cyan-300',
-    bgColor: 'bg-cyan-500/20 border-cyan-500/30',
+    color: 'text-blue-600 dark:text-blue-300',
+    bgColor: 'bg-blue-500/20 border-blue-500/30',
     icon: 'check',
   },
 };
@@ -1935,14 +1899,14 @@ const EXPORT_FORMAT_CONFIG: Record<
   pdf: {
     label: 'PDF',
     icon: <FileText size={14} />,
-    color: 'text-red-400',
-    bgColor: 'bg-red-500/15',
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/15',
   },
   pptx: {
     label: 'PowerPoint',
     icon: <Presentation size={14} />,
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500/15',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/15',
   },
   docx: {
     label: 'Word',
@@ -2055,7 +2019,7 @@ const ReportSlideOverContent: React.FC<{
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500" />
       </div>
     );
   }
@@ -2305,7 +2269,7 @@ const ReportSlideOverContent: React.FC<{
                   : section?.title || section?.name || `Section ${idx + 1}`;
               return (
                 <div key={idx} className="flex items-center gap-2 py-1">
-                  <span className="w-4 h-4 rounded bg-purple-500/15 text-purple-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-4 h-4 rounded bg-primary-500/15 text-primary-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 truncate">

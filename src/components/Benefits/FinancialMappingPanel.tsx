@@ -194,7 +194,7 @@ export const FinancialMappingPanel: React.FC = () => {
   const STMT_LABELS: Record<string, { en: string; pl: string; color: string }> = {
     'P&L': { en: 'Profit & Loss', pl: 'Rachunek zysków i strat', color: 'text-emerald-500' },
     BS: { en: 'Balance Sheet', pl: 'Bilans', color: 'text-blue-500' },
-    CF: { en: 'Cash Flow', pl: 'Przepływy pieniężne', color: 'text-purple-500' },
+    CF: { en: 'Cash Flow', pl: 'Przepływy pieniężne', color: 'text-primary-500' },
   };
 
   if (loading) {
@@ -276,7 +276,7 @@ export const FinancialMappingPanel: React.FC = () => {
                           </span>
                         </div>
                         {lineMappings.length > 0 && (
-                          <span className="text-xs bg-purple-500/10 text-purple-500 px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-primary-500/10 text-primary-500 px-2 py-0.5 rounded-full">
                             {lineMappings.length} KPIs
                           </span>
                         )}
@@ -295,7 +295,7 @@ export const FinancialMappingPanel: React.FC = () => {
                                 </span>
                                 <ArrowRight size={12} className="text-slate-300" />
                                 <span
-                                  className={`text-xs font-medium ${m.direction === 'positive' ? 'text-green-500' : m.direction === 'negative' ? 'text-red-500' : 'text-slate-400'}`}
+                                  className={`text-xs font-medium ${m.direction === 'positive' ? 'text-green-500' : m.direction === 'negative' ? 'text-rose-500' : 'text-slate-400'}`}
                                 >
                                   {m.direction === 'positive'
                                     ? '↑ improves'
@@ -316,7 +316,7 @@ export const FinancialMappingPanel: React.FC = () => {
                                 </button>
                                 <button
                                   onClick={() => handleDelete(m.id)}
-                                  className="text-red-400 hover:text-red-300"
+                                  className="text-rose-400 hover:text-rose-300"
                                   title="Remove"
                                 >
                                   <Trash2 size={14} />
@@ -361,7 +361,7 @@ export const FinancialMappingPanel: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-400">Δ KPI: {imp.kpiDelta.toFixed(2)}</span>
                   <span
-                    className={`font-medium ${imp.estimatedImpact >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                    className={`font-medium ${imp.estimatedImpact >= 0 ? 'text-green-600' : 'text-rose-600'}`}
                   >
                     {imp.estimatedImpact >= 0 ? '+' : ''}
                     {imp.estimatedImpact.toFixed(2)}
@@ -556,7 +556,7 @@ const ConfBadgeSmall: React.FC<{ level: string }> = ({ level }) => {
   const cls: Record<string, string> = {
     high: 'bg-green-500/20 text-green-600 dark:text-green-400',
     medium: 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
-    low: 'bg-red-500/20 text-red-600 dark:text-red-400',
+    low: 'bg-rose-500/20 text-rose-600 dark:text-rose-400',
   };
   return (
     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${cls[level] || cls.low}`}>

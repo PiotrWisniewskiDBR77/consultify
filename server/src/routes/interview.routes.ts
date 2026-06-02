@@ -14,6 +14,7 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { requireAnyPermission, requirePermission } from '../middleware/permission.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 
 const router = Router();
 const templateSourceUpload = multer({
@@ -32,6 +33,7 @@ const templateSourceUpload = multer({
 // Middleware
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 // ==========================================
@@ -417,32 +419,76 @@ router.post('/sessions/:sessionId/export', InterviewController.exportContext);
 // ==========================================
 
 /** GET /interview/insights - List insights */
-router.get('/insights', InterviewController.listInsights);
+router.get(
+  '/insights',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  InterviewController.listInsights
+);
 
 /** GET /interview/insights/:id - Get single insight */
-router.get('/insights/:id', InterviewController.getInsight);
+router.get(
+  '/insights/:id',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  InterviewController.getInsight
+);
 
 /** POST /interview/insights - Create new insight (starts AI generation) */
-router.post('/insights', InterviewController.createInsight);
+router.post(
+  '/insights',
+  requirePermission('INTERVIEW_INSIGHTS_CREATE'),
+  InterviewController.createInsight
+);
 
 /** POST /interview/insights/:id/regenerate - Regenerate an insight */
-router.post('/insights/:id/regenerate', InterviewController.regenerateInsight);
+router.post(
+  '/insights/:id/regenerate',
+  requirePermission('INTERVIEW_INSIGHTS_CREATE'),
+  InterviewController.regenerateInsight
+);
 
 /** PATCH /interview/insights/:id - Update insight (status, etc.) */
-router.patch('/insights/:id', InterviewController.updateInsight);
+router.patch(
+  '/insights/:id',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  InterviewController.updateInsight
+);
 
 /** POST /interview/insights/:id/export - Export insight to Tools or Assessment */
-router.post('/insights/:id/export', InterviewController.exportInsight);
+router.post(
+  '/insights/:id/export',
+  requirePermission('INTERVIEW_INSIGHTS_HANDOFF'),
+  InterviewController.exportInsight
+);
 
 /** GET /interview/insights/:id/activity - Activity log for insight */
-router.get('/insights/:id/activity', InterviewController.getInsightActivity);
+router.get(
+  '/insights/:id/activity',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  InterviewController.getInsightActivity
+);
 
 /** GET/POST/DELETE /interview/insights/:id/comments - Comments for insight */
-router.get('/insights/:id/comments', InterviewController.getInsightComments);
-router.post('/insights/:id/comments', InterviewController.createInsightComment);
-router.delete('/insights/:id/comments/:commentId', InterviewController.deleteInsightComment);
+router.get(
+  '/insights/:id/comments',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  InterviewController.getInsightComments
+);
+router.post(
+  '/insights/:id/comments',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  InterviewController.createInsightComment
+);
+router.delete(
+  '/insights/:id/comments/:commentId',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  InterviewController.deleteInsightComment
+);
 
 /** DELETE /interview/insights/:id - Delete insight */
-router.delete('/insights/:id', InterviewController.deleteInsight);
+router.delete(
+  '/insights/:id',
+  requirePermission('INTERVIEW_INSIGHTS_PUBLISH'),
+  InterviewController.deleteInsight
+);
 
 export default router;

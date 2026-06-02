@@ -155,8 +155,8 @@ const RiskLevelBadge: React.FC<{ level: string }> = ({ level }) => {
       label: t('executive.kpi.riskMedium', 'Medium'),
     },
     high: {
-      bg: 'bg-orange-100 dark:bg-orange-900/30',
-      text: 'text-orange-700 dark:text-orange-300',
+      bg: 'bg-amber-100 dark:bg-amber-900/30',
+      text: 'text-amber-700 dark:text-amber-300',
       label: t('executive.kpi.riskHigh', 'High'),
     },
     critical: {
@@ -177,7 +177,7 @@ const RiskLevelBadge: React.FC<{ level: string }> = ({ level }) => {
           level === 'critical'
             ? 'bg-rose-500 animate-pulse'
             : level === 'high'
-              ? 'bg-orange-500'
+              ? 'bg-amber-500'
               : level === 'medium'
                 ? 'bg-amber-500'
                 : 'bg-emerald-500'
@@ -193,16 +193,29 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
 
   const kpiData = {
     tasks: data?.tasks ?? {
-      completed: 0, total: 0, overdueCount: 0, onTimeRate: 0, trend: 'stable' as const,
+      completed: 0,
+      total: 0,
+      overdueCount: 0,
+      onTimeRate: 0,
+      trend: 'stable' as const,
     },
     decisions: data?.decisions ?? {
-      pending: 0, avgWaitDays: 0, critical: 0, trend: 'stable' as const,
+      pending: 0,
+      avgWaitDays: 0,
+      critical: 0,
+      trend: 'stable' as const,
     },
     team: data?.team ?? {
-      avgCapacity: 0, overloaded: 0, available: 0, trend: 'stable' as const,
+      avgCapacity: 0,
+      overloaded: 0,
+      available: 0,
+      trend: 'stable' as const,
     },
     risk: data?.risk ?? {
-      level: 'low' as const, blockers: 0, escalations: 0, trend: 'stable' as const,
+      level: 'low' as const,
+      blockers: 0,
+      escalations: 0,
+      trend: 'stable' as const,
     },
   };
 
@@ -277,8 +290,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Decisions KPI – A1.1: data source: /decisions?limit=10 */}
       <KPICard
         title={t('executive.kpi.decisions', 'Decisions Pending')}
-        icon={<FileQuestion size={16} className="text-violet-500" />}
-        iconBg="bg-violet-500/10"
+        icon={<FileQuestion size={16} className="text-blue-500" />}
+        iconBg="bg-blue-500/10"
         value={hasDecisionData ? kpiData.decisions.pending : '—'}
         subValue={
           hasDecisionData
@@ -317,8 +330,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
       {/* Team Capacity KPI – A1.1: data source: /my-work/team-workload */}
       <KPICard
         title={t('executive.kpi.teamCapacity', 'Team Capacity')}
-        icon={<Users size={16} className="text-cyan-500" />}
-        iconBg="bg-cyan-500/10"
+        icon={<Users size={16} className="text-blue-500" />}
+        iconBg="bg-blue-500/10"
         value={hasTeamData ? `${kpiData.team.avgCapacity}%` : '—'}
         subValue={
           hasTeamData

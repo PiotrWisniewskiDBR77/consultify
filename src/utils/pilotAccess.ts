@@ -1,9 +1,6 @@
 import { isPilotRestrictedRole } from './roleGuards';
 
-export const PILOT_VISIBLE_MENU_IDS = new Set([
-  'AI_CHAT',
-  'INTERVIEW',
-]);
+export const PILOT_VISIBLE_MENU_IDS = new Set(['AI_CHAT', 'INTERVIEW']);
 
 export const PILOT_ALLOWED_SETTINGS_SECTIONS = new Set([
   'profile',
@@ -12,16 +9,9 @@ export const PILOT_ALLOWED_SETTINGS_SECTIONS = new Set([
   'theme',
 ]);
 
-const PILOT_ALLOWED_ROUTE_PREFIXES = [
-  '/chat',
-  '/interview',
-  '/settings',
-  '/share/',
-] as const;
+const PILOT_ALLOWED_ROUTE_PREFIXES = ['/chat', '/interview', '/settings', '/share/'] as const;
 
-const PILOT_ALLOWED_ARTIFACT_TYPES = new Set([
-  'insight',
-]);
+const PILOT_ALLOWED_ARTIFACT_TYPES = new Set(['insight']);
 
 export function getPilotLockedAreaDetail(
   areaId?: string | null,

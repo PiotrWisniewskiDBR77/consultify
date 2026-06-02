@@ -14,11 +14,11 @@ import React, { forwardRef, useId } from 'react';
 
 // Base input styles
 const baseInputClass = `
-    w-full px-3.5 py-2.5 
-    bg-slate-800/50 border border-white/[0.06] rounded-lg 
-    text-slate-200 text-sm 
-    placeholder:text-slate-500 dark:text-slate-400 
-    focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 
+    w-full px-3.5 py-2.5
+    bg-slate-800/50 border border-white/[0.06] rounded-lg
+    text-slate-200 text-sm
+    placeholder:text-slate-500 dark:text-slate-400
+    focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20
     transition-colors
     disabled:opacity-50 disabled:cursor-not-allowed
 `
@@ -50,10 +50,10 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
         <input
           ref={ref}
           id={inputId}
-          className={`${baseInputClass} ${error ? 'border-red-500/50' : ''} ${className}`}
+          className={`${baseInputClass} ${error ? 'border-rose-500/50' : ''} ${className}`}
           {...props}
         />
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-rose-400">{error}</p>}
         {hint && !error && <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>}
       </div>
     );
@@ -87,10 +87,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           ref={ref}
           id={inputId}
-          className={`${baseInputClass} min-h-[100px] resize-y ${error ? 'border-red-500/50' : ''} ${className}`}
+          className={`${baseInputClass} min-h-[100px] resize-y ${error ? 'border-rose-500/50' : ''} ${className}`}
           {...props}
         />
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-rose-400">{error}</p>}
         {hint && !error && <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>}
       </div>
     );
@@ -132,11 +132,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={`
-                    ${baseInputClass} 
+                    ${baseInputClass}
                     appearance-none cursor-pointer pr-10
                     bg-[url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394A3B8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")]
                     bg-[length:16px] bg-[right_12px_center] bg-no-repeat
-                    ${error ? 'border-red-500/50' : ''} 
+                    ${error ? 'border-rose-500/50' : ''}
                     ${className}
                 `.trim()}
           {...props}
@@ -148,7 +148,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-rose-400">{error}</p>}
       </div>
     );
   }
@@ -194,13 +194,13 @@ export const Toggle: React.FC<ToggleProps> = ({
           className={`
                     ${trackSize} rounded-full transition-colors
                     bg-slate-700 peer-checked:bg-blue-600
-                    peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/50 peer-focus-visible:ring-offset-2 
+                    peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/50 peer-focus-visible:ring-offset-2
                     peer-focus-visible:ring-offset-slate-900
                 `}
         />
         <div
           className={`
-                    absolute top-0.5 left-0.5 ${thumbSize} rounded-full bg-white dark:bg-navy-900 
+                    absolute top-0.5 left-0.5 ${thumbSize} rounded-full bg-white dark:bg-navy-900
                     transition-transform peer-checked:${thumbTranslate}
                 `}
         />

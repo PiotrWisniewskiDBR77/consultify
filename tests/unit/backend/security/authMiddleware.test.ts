@@ -300,14 +300,14 @@ describe('__private__ helpers (L1)', () => {
   });
 
   it('covers role mapping edge cases', () => {
-    expect(__private__.mapRole('super_admin')).toBe('owner');
+    expect(__private__.mapRole('super_admin')).toBe('superadmin');
     expect(__private__.mapRole('member')).toBe('team_member');
-    expect(__private__.mapRole('weird_role')).toBe('weird_role' as any);
+    expect(__private__.mapRole('weird_role')).toBe('team_member');
   });
 
   it('covers permission-role normalization edge cases', () => {
     expect(__private__.normalizePermissionRole(undefined)).toBe('VIEWER');
-    expect(__private__.normalizePermissionRole('owner')).toBe('SUPERADMIN');
+    expect(__private__.normalizePermissionRole('owner')).toBe('OWNER');
     expect(__private__.normalizePermissionRole('administrator')).toBe('ADMIN');
     expect(__private__.normalizePermissionRole('client')).toBe('VIEWER');
     expect(__private__.normalizePermissionRole('custom_role')).toBe('CUSTOM_ROLE');

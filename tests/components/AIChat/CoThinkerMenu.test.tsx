@@ -80,5 +80,13 @@ describe('CoThinkerMenu (L2)', () => {
     expect(screen.getByTestId('chat-cothinker-active-label')).toBeInTheDocument();
     expect(screen.getByText(/analyst/i)).toBeInTheDocument();
   });
+
+  it('renders persona descriptions in menu rows', () => {
+    render(<CoThinkerMenu />);
+    fireEvent.click(screen.getByTestId('chat-cothinker-button'));
+
+    expect(screen.getByText(/broad strategy framing/i)).toBeInTheDocument();
+    expect(screen.getByText(/web-backed market signals/i)).toBeInTheDocument();
+  });
 });
 

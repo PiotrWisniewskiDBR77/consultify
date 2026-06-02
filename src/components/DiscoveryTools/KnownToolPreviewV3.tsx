@@ -191,6 +191,88 @@ export const KnownToolPreviewV3Body: React.FC<{
           };
     }
 
+    if (tool.toolType === 'market-forces') {
+      return isPolish
+        ? {
+            goal: 'Zamienia kontekst rynku i wywiadu w ocenę presji konkurencyjnej, defensibility i presji marży.',
+            outcome:
+              'Scorecard 5 sił, implikacje strategiczne, rekomendowane ruchy i kandydaci na inicjatywy.',
+            team: 'Zarząd, strategy lead, commercial lead lub właściciel rynku',
+            aiRole: 'Analityk rynku, moderator evidence i generator propozycji do akceptacji',
+            duration: '60-90 min',
+          }
+        : {
+            goal: 'Turns market and interview context into a read on competitive pressure, defensibility, and margin pressure.',
+            outcome:
+              'Five Forces scorecard, strategic implications, recommended moves, and initiative candidates.',
+            team: 'Leadership, strategy lead, commercial lead, or market owner',
+            aiRole: 'Market analyst, evidence moderator, and proposal generator for approval',
+            duration: '60-90 min',
+          };
+    }
+
+    if (tool.toolType === 'growth-paths') {
+      return isPolish
+        ? {
+            goal: 'Zamienia ambicję wzrostu i sygnały z wywiadu w opcje Ansoffa oraz sekwencję decyzji.',
+            outcome:
+              'Macierz opcji, porównanie trade-offów, rekomendowane ruchy i kandydaci na inicjatywy.',
+            team: 'Zarząd, strategy lead, commercial lead lub właściciel wzrostu',
+            aiRole: 'Moderator growth evidence, generator opcji i konsultant sekwencji ruchów',
+            duration: '60-90 min',
+          }
+        : {
+            goal: 'Turns growth ambition and interview signals into Ansoff options and a decision sequence.',
+            outcome:
+              'Option matrix, trade-off comparison, recommended moves, and initiative candidates.',
+            team: 'Leadership, strategy lead, commercial lead, or growth owner',
+            aiRole: 'Growth evidence moderator, option generator, and move-sequencing consultant',
+            duration: '60-90 min',
+          };
+    }
+
+    if (tool.toolType === 'portfolio-priority') {
+      return isPolish
+        ? {
+            goal: 'Zamienia kontekst organizacji i wywiadu w decyzje, które elementy portfolio finansować, testować, utrzymać lub wygasić.',
+            outcome:
+              'Macierz BCG, trade-offy alokacji zasobów, rekomendowane ruchy i kandydaci na inicjatywy.',
+            team: 'Zarząd, strategy lead, product lead, CFO lub właściciel portfolio',
+            aiRole:
+              'Analityk portfolio, generator kart do akceptacji i konsultant alokacji zasobów',
+            duration: '60-90 min',
+          }
+        : {
+            goal: 'Turns organization and interview context into decisions on which portfolio items to fund, test, maintain, or stop.',
+            outcome:
+              'BCG matrix, resource allocation trade-offs, recommended moves, and initiative candidates.',
+            team: 'Leadership, strategy lead, product lead, CFO, or portfolio owner',
+            aiRole:
+              'Portfolio analyst, card proposal generator, and resource allocation consultant',
+            duration: '60-90 min',
+          };
+    }
+
+    if (tool.toolType === 'risk-uncertainty') {
+      return isPolish
+        ? {
+            goal: 'Zamienia kontekst decyzji i sygnały z wywiadu w mapę założeń, ryzyk i scenariuszy.',
+            outcome:
+              'Założenia do walidacji, ryzyka, scenariusze, ruchy odporności i kandydaci na inicjatywy.',
+            team: 'Zarząd, strategy lead, transformation lead, PMO lub właściciel ryzyka',
+            aiRole: 'Analityk ryzyka, generator kart do akceptacji i konsultant odporności',
+            duration: '60-90 min',
+          }
+        : {
+            goal: 'Turns decision context and interview signals into an assumption, risk, and scenario map.',
+            outcome:
+              'Assumptions to validate, risks, scenarios, resilience moves, and initiative candidates.',
+            team: 'Leadership, strategy lead, transformation lead, PMO, or risk owner',
+            aiRole: 'Risk analyst, card proposal generator, and resilience consultant',
+            duration: '60-90 min',
+          };
+    }
+
     const desc = String(full?.description || tool.description || '').trim();
     const fallbackGoal = desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
     const fallbackOutcome =

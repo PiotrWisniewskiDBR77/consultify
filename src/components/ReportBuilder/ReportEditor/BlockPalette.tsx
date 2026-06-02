@@ -146,7 +146,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Highlighted quote or key statement',
     descriptionPl: 'Wyróżniony cytat lub kluczowe stwierdzenie',
     icon: <Quote className="w-6 h-6" />,
-    color: 'from-violet-500 to-violet-600',
+    color: 'from-primary-500 to-primary-600',
     category: 'content',
   },
   {
@@ -203,7 +203,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Visual matrix showing assessment scores',
     descriptionPl: 'Wizualna macierz pokazująca wyniki oceny',
     icon: <LayoutGrid className="w-6 h-6" />,
-    color: 'from-purple-500 to-purple-600',
+    color: 'from-primary-500 to-primary-600',
     category: 'data',
     sourceTypes: ['ASSESSMENT'],
   },
@@ -215,7 +215,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Structured data in table format',
     descriptionPl: 'Dane strukturalne w formacie tabeli',
     icon: <Table className="w-6 h-6" />,
-    color: 'from-cyan-500 to-cyan-600',
+    color: 'from-blue-500 to-blue-600',
     category: 'data',
   },
   {
@@ -248,7 +248,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Structured summary of scores and targets',
     descriptionPl: 'Strukturalne podsumowanie wyników i celów',
     icon: <Table className="w-6 h-6" />,
-    color: 'from-cyan-500 to-cyan-600',
+    color: 'from-blue-500 to-blue-600',
     category: 'data',
   },
   {
@@ -283,7 +283,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Pie chart for proportional data',
     descriptionPl: 'Wykres kołowy dla danych proporcjonalnych',
     icon: <PieChart className="w-6 h-6" />,
-    color: 'from-orange-500 to-orange-600',
+    color: 'from-amber-500 to-amber-600',
     category: 'visual',
   },
   {
@@ -294,7 +294,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Custom image or diagram',
     descriptionPl: 'Własny obraz lub diagram',
     icon: <Image className="w-6 h-6" />,
-    color: 'from-teal-500 to-teal-600',
+    color: 'from-blue-500 to-blue-600',
     category: 'visual',
   },
   {
@@ -305,7 +305,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Phased timeline with milestones',
     descriptionPl: 'Harmonogram z kamieniami milowymi',
     icon: <BarChart3 className="w-6 h-6" />,
-    color: 'from-teal-500 to-teal-600',
+    color: 'from-blue-500 to-blue-600',
     category: 'visual',
   },
   {
@@ -316,7 +316,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Metrics to track progress and outcomes',
     descriptionPl: 'Metryki do śledzenia postępu i efektów',
     icon: <PieChart className="w-6 h-6" />,
-    color: 'from-orange-500 to-orange-600',
+    color: 'from-amber-500 to-amber-600',
     category: 'visual',
   },
   {
@@ -327,7 +327,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Risk register and mitigation',
     descriptionPl: 'Rejestr ryzyk i mitygacje',
     icon: <MessageSquare className="w-6 h-6" />,
-    color: 'from-violet-500 to-violet-600',
+    color: 'from-primary-500 to-primary-600',
     category: 'visual',
   },
   {
@@ -338,7 +338,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Impact vs effort, initiative prioritization',
     descriptionPl: 'Wpływ vs nakład, priorytety inicjatyw',
     icon: <LayoutGrid className="w-6 h-6" />,
-    color: 'from-purple-500 to-purple-600',
+    color: 'from-primary-500 to-primary-600',
     category: 'visual',
   },
   {
@@ -349,7 +349,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Rich initiative cards with strategy, effort, metrics',
     descriptionPl: 'Karty inicjatyw ze strategią, wysiłkiem, metrykami',
     icon: <Zap className="w-6 h-6" />,
-    color: 'from-indigo-500 to-violet-600',
+    color: 'from-indigo-500 to-primary-600',
     category: 'visual',
     renderKind: 'initiatives',
     defaultLength: 'long',
@@ -407,11 +407,11 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
             rk === 'chart'
               ? 'from-pink-500 to-pink-600'
               : rk === 'matrix'
-                ? 'from-purple-500 to-purple-600'
+                ? 'from-primary-500 to-primary-600'
                 : rk === 'table'
-                  ? 'from-cyan-500 to-cyan-600'
+                  ? 'from-blue-500 to-blue-600'
                   : rk === 'callout'
-                    ? 'from-violet-500 to-violet-600'
+                    ? 'from-primary-500 to-primary-600'
                     : rk === 'json'
                       ? 'from-emerald-500 to-emerald-600'
                       : 'from-blue-500 to-blue-600';

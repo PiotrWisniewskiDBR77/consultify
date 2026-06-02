@@ -359,7 +359,7 @@ export const useActionHandler = () => {
         const initiativeId = String(action.payload?.initiativeId || '');
         const initiativeName = String(action.payload?.name || action.payload?.title || '');
         if (initiativeId) {
-          navigate(`/initiatives?id=${initiativeId}`);
+          navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
           toast.success(`Opening initiative: ${initiativeName || initiativeId}`, {
             duration: 2000,
             icon: '🎯',

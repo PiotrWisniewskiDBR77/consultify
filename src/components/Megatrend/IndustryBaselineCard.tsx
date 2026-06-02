@@ -47,7 +47,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
       )}
 
       {error && (
-        <div className="p-4 bg-red-100 text-red-600 rounded">Error loading baseline: {error}</div>
+        <div className="p-4 bg-rose-100 text-rose-600 rounded">Error loading baseline: {error}</div>
       )}
 
       {!loading && !error && (
@@ -55,7 +55,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
           {megatrends.map((trend) => (
             <div
               key={trend.id}
-              className="p-5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:shadow-lg hover:border-purple-200 dark:hover:border-purple-500/30 transition-all duration-200 group relative overflow-hidden"
+              className="p-5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 hover:shadow-lg hover:border-primary-200 dark:hover:border-primary-500/30 transition-all duration-200 group relative overflow-hidden"
             >
               {/* Accent Bar */}
               <div
@@ -63,8 +63,8 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
                   trend.type === 'Technology'
                     ? 'bg-blue-500'
                     : trend.type === 'Business'
-                      ? 'bg-purple-500'
-                      : 'bg-orange-500'
+                      ? 'bg-primary-500'
+                      : 'bg-amber-500'
                 }`}
               ></div>
 
@@ -74,8 +74,8 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
                     trend.type === 'Technology'
                       ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                       : trend.type === 'Business'
-                        ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                        : 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                        : 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                   }`}
                 >
                   {trend.type}
@@ -83,7 +83,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
                 <span
                   className={`text-[10px] font-bold px-2 py-1 rounded ${
                     trend.impactScore >= 6
-                      ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300'
+                      ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300'
                       : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                   }`}
                 >
@@ -91,7 +91,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
                 </span>
               </div>
 
-              <h3 className="font-bold text-navy-900 dark:text-white text-lg pl-3 mb-2 group-hover:text-purple-500 transition-colors">
+              <h3 className="font-bold text-navy-900 dark:text-white text-lg pl-3 mb-2 group-hover:text-primary-500 transition-colors">
                 {trend.label}
               </h3>
 
@@ -100,7 +100,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
               </p>
 
               <div
-                className="pl-3 mt-auto flex items-center gap-2 text-xs font-bold text-purple-600 hover:text-purple-700 cursor-pointer"
+                className="pl-3 mt-auto flex items-center gap-2 text-xs font-bold text-primary-600 hover:text-primary-700 cursor-pointer"
                 onClick={() => onTrendSelect(trend.id)}
               >
                 See Strategic Impact{' '}

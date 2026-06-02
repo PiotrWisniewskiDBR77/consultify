@@ -34,7 +34,7 @@ on:
         type: string
 
 concurrency:
-  group: railway-deploy-${{ github.event_name == 'push' && 'staging' || github.event.inputs.environment }}
+  group: railway-deploy-${{ github.event.inputs.environment }}
   cancel-in-progress: false
 
 jobs:
@@ -161,6 +161,12 @@ jobs:
           if [ -n "${FRONTEND_URL:-}" ]; then
             fetch_url "$FRONTEND_URL"
           fi
+
+      - name: Dump staging runtime logs on failure
+        if: failure()
+        run: |
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --lines 300 --json || true
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --build --lines 200 --json || true
 
       - name: Record successful staging SHA (tag)
         env:
@@ -314,3 +320,9 @@ jobs:
           if [ -n "${FRONTEND_URL:-}" ]; then
             fetch_url "$FRONTEND_URL"
           fi
+
+      - name: Dump production runtime logs on failure
+        if: failure()
+        run: |
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --lines 300 --json || true
+          railway logs --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --build --lines 200 --json || true

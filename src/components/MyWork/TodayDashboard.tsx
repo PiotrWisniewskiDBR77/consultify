@@ -57,7 +57,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-navy-700">
             <div className="text-sm text-slate-500 dark:text-slate-400">Overdue</div>
-            <div className="text-2xl font-bold text-red-600">{data?.overdueCount || 0}</div>
+            <div className="text-2xl font-bold text-rose-600">{data?.overdueCount || 0}</div>
           </div>
           <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-navy-700">
             <div className="text-sm text-slate-500 dark:text-slate-400">Due This Week</div>
@@ -76,7 +76,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               {t('pmo.blockingProgress', 'Blocking Progress')}
             </div>
             <div
-              className={`text-2xl font-bold ${blockingIssues.length > 0 ? 'text-red-600' : 'text-green-600'}`}
+              className={`text-2xl font-bold ${blockingIssues.length > 0 ? 'text-rose-600' : 'text-green-600'}`}
             >
               {blockingIssues.length}
             </div>
@@ -109,9 +109,9 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium uppercase ${
                         task.priority === 'urgent'
-                          ? 'bg-red-100 text-red-700'
+                          ? 'bg-rose-100 text-rose-700'
                           : task.priority === 'high'
-                            ? 'bg-orange-100 text-orange-700'
+                            ? 'bg-amber-100 text-amber-700'
                             : 'bg-blue-100 text-blue-700'
                       }`}
                     >
@@ -151,12 +151,12 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
 
           {/* PMO Blocking Issues Alert */}
           {blockingIssues.length > 0 && (
-            <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/20">
-              <h3 className="font-semibold text-red-900 dark:text-red-100 mb-2 flex items-center gap-2">
+            <div className="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-xl border border-rose-100 dark:border-rose-900/20">
+              <h3 className="font-semibold text-rose-900 dark:text-rose-100 mb-2 flex items-center gap-2">
                 <AlertCircle size={16} />
                 {t('pmo.blockingIssues', 'Blocking Phase Progress')}
               </h3>
-              <ul className="text-sm text-red-700 dark:text-red-300 space-y-1">
+              <ul className="text-sm text-rose-700 dark:text-rose-300 space-y-1">
                 {blockingIssues.slice(0, 3).map((issue, idx) => (
                   <li key={idx} className="truncate">
                     • {issue.title}

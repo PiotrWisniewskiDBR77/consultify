@@ -19,15 +19,18 @@
  */
 
 import {
-  Bot,
   Briefcase,
+  Calculator,
+  CheckCircle2,
   History,
-  Lock,
   MessageSquare,
+  PanelRight,
   Plus,
+  Search,
   Sparkles,
   Volume2,
   VolumeX,
+  Wrench,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -42,11 +45,11 @@ import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
+// import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
+import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useChatActions } from '../../hooks/useChatActions';
 import { useDemoSession } from '../../hooks/useDemoSession';
-// import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
-import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -63,28 +66,40 @@ import {
   ResponseFeedback,
   ThinkingStep,
 } from '../../types';
+import type {
+  CanvasContextPacket,
+  CanvasSelection,
+  CanvasStarterId,
+} from '../../types/canvasWorkspace';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
+import { notifyBargeIn } from '../../utils/bargeInToast';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
+import TeresaMark from '../shared/TeresaMark';
 import {
   isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
-import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
 import { ContextBadge } from './ContextBadge';
+import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
-import { PendingActionsIndicator } from './PendingActionsIndicator';
-import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
+import { OutputToolSelector } from './OutputToolSelector';
+import { PrivateModeDetails } from './PrivateModeDetails';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
-import { detectWhiteboardIntent } from './whiteboardIntentDetector';
+import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
+import { detectMindmapIntent } from './mindmapIntentDetector';
+import { detectProcessFlowIntent } from './processFlowIntentDetector';
+import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
+import { detectWhiteboardIntent } from './whiteboardIntentDetector';
+import { type ActiveCanvasDocument, WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
 
 // ============================================================================
 // Types
@@ -92,9 +107,169 @@ import { V8ContextIndicator } from './V8ContextIndicator';
 
 type ChatSaveTarget = 'idea' | 'note';
 
+const WORK_CANVAS_SPLIT_STORAGE_KEY = 'workCanvas.splitWidthPercent';
+const DEFAULT_WORK_CANVAS_WIDTH_PERCENT = 60;
+const MIN_WORK_CANVAS_WIDTH_PERCENT = 45;
+const MAX_WORK_CANVAS_WIDTH_PERCENT = 72;
+
 interface ChatSaveIntent {
   target: ChatSaveTarget;
   cleanPrompt: string;
+}
+
+interface ChatCanvasIntent {
+  starterId: CanvasStarterId;
+  cleanPrompt: string;
+}
+
+function clampWorkCanvasWidth(value: number): number {
+  return Math.min(MAX_WORK_CANVAS_WIDTH_PERCENT, Math.max(MIN_WORK_CANVAS_WIDTH_PERCENT, value));
+}
+
+function getInitialWorkCanvasWidth(): number {
+  if (typeof window === 'undefined') return DEFAULT_WORK_CANVAS_WIDTH_PERCENT;
+  const stored = Number(window.localStorage.getItem(WORK_CANVAS_SPLIT_STORAGE_KEY));
+  return Number.isFinite(stored) ? clampWorkCanvasWidth(stored) : DEFAULT_WORK_CANVAS_WIDTH_PERCENT;
+}
+
+function truncateCanvasContextText(value: unknown, max = 6000): string {
+  const text = String(value || '').trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, max)}\n\n[Canvas context truncated to ${max} characters]`;
+}
+
+export function buildCanvasContextPacket(
+  document: ActiveCanvasDocument | null,
+  selection: CanvasSelection | null
+): CanvasContextPacket | null {
+  if (!document) return null;
+  const blockSummaries = (document.blocks || []).slice(0, 12).map((block) => ({
+    blockId: block.id,
+    kind: block.kind,
+    title: block.title,
+    status: block.status,
+    projectionStatus: block.markdownProjectionStatus,
+    markdownProjection: truncateCanvasContextText(block.markdownProjection, 1200),
+  }));
+  const workflowRuns = (document.workflowRuns || []).slice(0, 5);
+  const workflowEventSummaries = workflowRuns
+    .flatMap((workflow) =>
+      (workflow.events || []).slice(-3).map((event) => ({
+        workflowRunId: workflow.id,
+        workflowTitle: workflow.title,
+        eventType: event.type,
+        actorId: event.actorId,
+        summary: truncateCanvasContextText(event.summary, 280),
+        createdAt: event.createdAt,
+      }))
+    )
+    .slice(-12);
+  const workflowOutputSummaries = workflowRuns
+    .flatMap((workflow) =>
+      (workflow.outputs || []).slice(-5).map((output) => ({
+        workflowRunId: workflow.id,
+        workflowTitle: workflow.title,
+        stepId: output.stepId,
+        type: output.type,
+        id: output.id,
+        title: truncateCanvasContextText(output.title, 180),
+        url: output.url,
+      }))
+    )
+    .slice(-12);
+  const workflowRunSummaries = workflowRuns.map((workflow) => ({
+    id: workflow.id,
+    draftId: workflow.draftId,
+    conversationId: workflow.conversationId,
+    template: workflow.template,
+    title: workflow.title,
+    status: workflow.status,
+    lifecycle: workflow.collaboration?.lifecycle,
+    stepSummaries: (workflow.steps || []).slice(0, 8).map((step) => ({
+      id: step.id,
+      kind: step.kind,
+      title: step.title,
+      status: step.status,
+      approvalRequired: step.approvalRequired,
+      outputType: step.outputType,
+      outputId: step.outputId,
+    })),
+    approvalStatuses: (workflow.approvals || []).slice(0, 8).map((approval) => ({
+      stepId: approval.stepId,
+      status: approval.status,
+    })),
+    outputCount: (workflow.outputs || []).length,
+    updatedAt: workflow.updatedAt,
+  }));
+  const workflowRunIds = workflowRuns.map((workflow) => workflow.id);
+  const blockIds = blockSummaries.map((block) => block.blockId);
+  const summaryParts = [
+    `Active Canvas "${document.title}"`,
+    document.draftId ? `draft ${document.draftId}` : 'unsaved draft',
+    document.kind ? `kind ${document.kind}` : '',
+    blockSummaries.length ? `${blockSummaries.length} block summaries` : 'no native blocks',
+    workflowRuns.length ? `${workflowRuns.length} workflow runs` : 'no workflow runs',
+  ].filter(Boolean);
+
+  return {
+    schemaVersion: 'canvas-context/v1',
+    activeDraft: {
+      draftId: document.draftId || null,
+      researchSessionId: document.researchSessionId || null,
+      title: document.title,
+      kind: document.kind,
+      lifecycleState: document.lifecycleState,
+      saveState: document.saveState,
+      markdownProjectionStatus: document.markdownProjectionStatus,
+    },
+    markdownProjection: truncateCanvasContextText(document.contentMd, 6000),
+    selection: selection
+      ? {
+          ...selection,
+          draftId: selection.draftId || document.draftId,
+          selectedText: truncateCanvasContextText(selection.selectedText, 2000),
+        }
+      : null,
+    blockSummaries,
+    workflowRuns: workflowRunSummaries,
+    workflowEventSummaries,
+    workflowOutputSummaries,
+    linkedOutputs: document.linkedOutputs || [],
+    memorySnapshot: {
+      summary: summaryParts.join(' · '),
+      anchors: {
+        draftId: document.draftId || null,
+        researchSessionId: document.researchSessionId || null,
+        title: document.title,
+        kind: document.kind,
+        workflowRunIds,
+        blockIds,
+      },
+      limitations: [
+        'Canvas packet uses Markdown projection and summaries only; raw native block JSON is not included.',
+      ],
+    },
+  };
+}
+
+function mapChatArtifactToWave5Type(artifact: Artifact): string {
+  switch ((artifact as any).type) {
+    case 'table':
+      return 'spreadsheet';
+    case 'diagram':
+      return 'diagram';
+    case 'pmo-document':
+    case 'markdown':
+    case 'html':
+      return 'report';
+    case 'code':
+      return 'note';
+    case 'comparison-matrix':
+    case 'decision-timeline':
+      return 'decision';
+    default:
+      return 'note';
+  }
 }
 
 const firstMatchIndex = (input: string, patterns: RegExp[]): number => {
@@ -138,6 +313,37 @@ const extractSlashPayload = (raw: string, commands: string[]): string | null => 
 const isUuidLike = (value: unknown): value is string =>
   typeof value === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+
+const canvasStarterFromText = (input: string): CanvasStarterId => {
+  if (/research|badani|researchu|market|rynek|evidence|źród|zrodl|source/i.test(input)) {
+    return 'research';
+  }
+  if (/decyz|decision|wyb[oó]r|opcj/i.test(input)) return 'decision';
+  if (/plan|roadmap|harmonogram|krok|działan|dzialan/i.test(input)) return 'plan';
+  if (/notatk|note|myśli|mysli|thought/i.test(input)) return 'thoughts';
+  return 'document';
+};
+
+const parseChatCanvasIntent = (rawContent: string): ChatCanvasIntent | null => {
+  const raw = String(rawContent || '').trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+
+  const slashPayload = extractSlashPayload(raw, ['/canvas', '/kanwa', '/research-canvas']);
+  if (slashPayload !== null) {
+    const prompt = slashPayload || raw;
+    return { starterId: canvasStarterFromText(prompt), cleanPrompt: prompt };
+  }
+
+  const mentionsCanvas = /\bcanvas\b|\bkanw[ayęe]?\b|obszar roboczy|work area/i.test(lower);
+  if (!mentionsCanvas) return null;
+  const asksToRoute =
+    /wrzu[cć]|przenie[sś]|otw[oó]rz|zrob|zrób|stw[oó]rz|utw[oó]rz|review|open|create|start/i.test(
+      lower
+    );
+  if (!asksToRoute) return null;
+  return { starterId: canvasStarterFromText(lower), cleanPrompt: raw };
+};
 
 const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
   const raw = String(rawContent || '').trim();
@@ -190,6 +396,7 @@ export const __private__ = {
   firstMatchIndex,
   isLikelyAiFailureText,
   extractSlashPayload,
+  parseChatCanvasIntent,
   parseChatSaveIntent,
 };
 
@@ -229,6 +436,14 @@ interface UnifiedChatPanelProps {
 
   /** Callback when user sends a message */
   onMessageSent?: (content: string) => void;
+
+  /** Optional active-module handler. When handled, Teresa owns the visible turn. */
+  onModuleIntent?: (
+    content: string
+  ) =>
+    | Promise<boolean | { handled: boolean; reply?: string }>
+    | boolean
+    | { handled: boolean; reply?: string };
 
   /** Callback when user clicks "View All Actions" */
   onNavigateToActions?: () => void;
@@ -274,6 +489,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   disabled = false,
   maxHeight,
   onMessageSent,
+  onModuleIntent,
   onNavigateToActions,
   systemPrompt,
   roleName,
@@ -358,9 +574,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
+  const [isWorkPanelOpen, setIsWorkPanelOpen] = useState(false);
+  const [requestedCanvasStarterId, setRequestedCanvasStarterId] = useState<CanvasStarterId | null>(
+    null
+  );
+  const [requestedCanvasDraftId, setRequestedCanvasDraftId] = useState<string | null>(null);
+  const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
+    null
+  );
+  const [activeCanvasSelection, setActiveCanvasSelection] = useState<CanvasSelection | null>(null);
+  const [workCanvasWidthPercent, setWorkCanvasWidthPercent] = useState(getInitialWorkCanvasWidth);
   const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
   const lastKickoffSentRef = useRef<string | null>(null);
+  const splitShellRef = useRef<HTMLDivElement | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
     originalUserMessage: string;
@@ -505,16 +732,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // rather than the snapshot frozen into each message's metadata at write time.
   useEffect(() => {
     if (!activeConversationId) return;
-    void useProposalLifecycleStore
-      .getState()
-      .loadForConversation(activeConversationId);
+    void useProposalLifecycleStore.getState().loadForConversation(activeConversationId);
   }, [activeConversationId]);
 
   // Session hook: create new session when model/preset changes mid-conversation (§2.3.1)
   const prevModelRef = useRef<string | null>(null);
   useEffect(() => {
     const currentModel = (aiConfig as any)?.selectedModelId ?? null;
-    if (prevModelRef.current !== null && currentModel !== prevModelRef.current && activeConversationId) {
+    if (
+      prevModelRef.current !== null &&
+      currentModel !== prevModelRef.current &&
+      activeConversationId
+    ) {
       void notifyModelChange({
         modelId: currentModel || undefined,
         presetId: (aiConfig as any)?.selectedTier || undefined,
@@ -522,7 +751,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       });
     }
     prevModelRef.current = currentModel;
-  }, [(aiConfig as any)?.selectedModelId, activeConversationId, notifyModelChange, draftChatLanguage]);
+  }, [
+    (aiConfig as any)?.selectedModelId,
+    activeConversationId,
+    notifyModelChange,
+    draftChatLanguage,
+  ]);
 
   // Ref for incremental TTS (defined here, used in effects after useAIStream)
   const spokenCharsRef = useRef(0);
@@ -549,7 +783,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   }, []);
 
   // Computed values
-  const isSplitMode = mode === 'split' || displayMode === 'split';
+  const isWorkPanelMode = mode === 'full' && isWorkPanelOpen;
+  const isSplitMode =
+    isWorkPanelMode || mode === 'split' || (mode !== 'full' && displayMode === 'split');
   const isCompact = isSplitMode;
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
@@ -742,6 +978,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     streamedContent,
     policyDecision,
     policyNotices,
+    memoryCandidate,
+    teresaProposal,
     researchProgress,
     researchVisibility,
     deepThinkingState,
@@ -784,44 +1022,44 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               artifacts: artifacts as any,
               citations: meta?.citations,
               streamSessionId: meta?.sessionId,
-            extra:
-              aiConfig?.deepResearch ||
-              (aiConfig as any)?.marketResearch ||
-              meta?.policyDecision ||
-              meta?.sourceLedger ||
-              (meta?.policyNotices && meta.policyNotices.length) ||
-              meta?.trustBundle
-                ? {
-                    ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-                      ? {
-                          options: [
-                            { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
-                            { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
-                            {
-                              id: 'dt-challenge',
-                              label: 'Challenge this conclusion',
-                              value: 'Challenge this conclusion',
-                            },
-                          ],
-                          multiSelect: false,
-                          deepThinking: { kind: 'report' },
-                        }
-                      : {}),
-                    ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
-                      ? {
-                          policyDecision: meta?.policyDecision,
-                          policyNotices: meta?.policyNotices,
-                        }
-                      : {}),
-                    ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
-                    // V8 / Wave A7 — forward the canonical trust bundle so
-                    // the persisted AI row carries the same pills rendered
-                    // live in the bubble. Server also enriches on write;
-                    // this keeps client + server in lockstep and avoids
-                    // depending on a refetch for live hydration.
-                    ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
-                  }
-                : undefined,
+              extra:
+                aiConfig?.deepResearch ||
+                (aiConfig as any)?.marketResearch ||
+                meta?.policyDecision ||
+                (meta?.policyNotices && meta.policyNotices.length) ||
+                meta?.trustBundle ||
+                meta?.proposal
+                  ? {
+                      ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                        ? {
+                            options: [
+                              { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
+                              { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
+                              {
+                                id: 'dt-challenge',
+                                label: 'Challenge this conclusion',
+                                value: 'Challenge this conclusion',
+                              },
+                            ],
+                            multiSelect: false,
+                            deepThinking: { kind: 'report' },
+                          }
+                        : {}),
+                      ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
+                        ? {
+                            policyDecision: meta?.policyDecision,
+                            policyNotices: meta?.policyNotices,
+                          }
+                        : {}),
+                      // V8 / Wave A7 — forward the canonical trust bundle so
+                      // the persisted AI row carries the same pills rendered
+                      // live in the bubble. Server also enriches on write;
+                      // this keeps client + server in lockstep and avoids
+                      // depending on a refetch for live hydration.
+                      ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
+                      ...(meta?.proposal ? { proposal: meta.proposal } : {}),
+                    }
+                  : undefined,
             }),
           });
           savedAiMessageId = String((saved as any)?.id || '') || null;
@@ -857,9 +1095,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             ? { deepThinking: { kind: 'report' } }
             : {}),
           ...(meta?.policyDecision ? { policyDecision: meta.policyDecision } : {}),
-          ...(meta?.policyNotices && meta.policyNotices.length ? { policyNotices: meta.policyNotices } : {}),
-          ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
+          ...(meta?.policyNotices && meta.policyNotices.length
+            ? { policyNotices: meta.policyNotices }
+            : {}),
           ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
+          ...(meta?.proposal ? { proposal: meta.proposal } : {}),
         },
       });
 
@@ -1101,8 +1341,75 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     onThinkingUpdate: (steps) => {
       setThinkingSteps(steps);
     },
-    onArtifactDetected: (artifact) => {
-      addArtifact(artifact);
+    onArtifactDetected: (artifact, artifactMeta) => {
+      const contentEnvelope =
+        (artifact as any).contentEnvelope || (artifact as any).metadata?.contentEnvelope;
+      const governedDraft = {
+        ...artifact,
+        metadata: {
+          ...((artifact as any).metadata || {}),
+          contentEnvelope,
+          wave5Governance: {
+            localDraftOnly: true,
+            requiresMutationProposal: true,
+            source: 'chat_artifact_detection',
+            citationsLinked: Array.isArray(artifactMeta?.citations)
+              ? artifactMeta.citations.length
+              : 0,
+            trustBundleId:
+              (artifactMeta?.trustBundle as any)?.id ||
+              (artifactMeta?.trustBundle as any)?.traceId ||
+              null,
+          },
+        },
+      } as Artifact;
+      addArtifact(governedDraft);
+      void Api.createWave5Artifact({
+        artifactType: mapChatArtifactToWave5Type(artifact),
+        title: artifact.title || 'Chat artifact',
+        content: contentEnvelope?.contentMd || artifact.content || '',
+        canonicalFormat: contentEnvelope?.canonicalFormat,
+        contentMd: contentEnvelope?.contentMd,
+        contentJson: contentEnvelope?.contentJson,
+        contentSchemaVersion: contentEnvelope?.contentSchemaVersion,
+        conversationId: activeConversationId || undefined,
+        projectId: (workspaceContext as any)?.projectId || undefined,
+        trustBundleId:
+          (artifactMeta?.trustBundle as any)?.id ||
+          (artifactMeta?.trustBundle as any)?.traceId ||
+          undefined,
+        aiRunId:
+          (artifactMeta?.proposal as any)?.runId ||
+          (artifactMeta?.proposal as any)?.metadata?.runId ||
+          undefined,
+        citations: Array.isArray(artifactMeta?.citations) ? artifactMeta?.citations : [],
+        sourceRefs: [
+          {
+            sourceClass: 'chat',
+            conversationId: activeConversationId || null,
+            streamSessionId: artifactMeta?.sessionId || null,
+          },
+          ...((Array.isArray((artifactMeta?.sourceLedger as any)?.sources)
+            ? (artifactMeta?.sourceLedger as any).sources
+            : []) as any[]),
+        ],
+        metadata: {
+          source: 'unified_chat',
+          localArtifactId: artifact.id,
+          localArtifactType: (artifact as any).type,
+          policyDecision: artifactMeta?.policyDecision || null,
+        },
+      }).catch((err: any) => {
+        console.warn('[UnifiedChatPanel] Wave 5 artifact persistence failed', err?.message || err);
+        addChatMessage({
+          id: `wave5-artifact-persist-failed-${Date.now()}`,
+          role: 'ai',
+          content:
+            'Artifact was kept as a local draft, but saving it to the governed Wave 5 runtime failed. Try again from /ai/artifacts before treating it as committed workspace output.',
+          timestamp: new Date(),
+          type: 'text',
+        } as any);
+      });
     },
   });
 
@@ -1186,6 +1493,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             researchVisibility,
             policyDecision,
             policyNotices,
+            memoryCandidate,
+            ...(teresaProposal ? { proposal: teresaProposal } : {}),
           },
         },
       ];
@@ -1203,7 +1512,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     researchVisibility,
     policyDecision,
     policyNotices,
+    memoryCandidate,
+    teresaProposal,
   ]);
+
+  useEffect(() => {
+    if (!memoryCandidate) return;
+    if (memoryCandidate.blocked) {
+      toast('Private mode blocked this memory request. Nothing was saved.');
+      return;
+    }
+    if (memoryCandidate.candidate?.candidateId) {
+      toast('Memory candidate created. Review it in AI Context before it is retained.');
+    }
+  }, [memoryCandidate]);
 
   const latestUserGoalHint = useMemo(() => {
     const latestUserMessage = [...displayMessages]
@@ -1269,28 +1591,46 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       items.push(
         {
           id: 'generate-insights',
-          label: t('chat.suggestions.generateInsights', 'Generate AI insights from completed sessions'),
+          label: t(
+            'chat.suggestions.generateInsights',
+            'Generate AI insights from completed sessions'
+          ),
           type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.generateInsightsPrompt', 'Generate AI insights from completed interview sessions') },
+          action: {
+            type: 'chat',
+            prompt: t(
+              'chat.suggestions.generateInsightsPrompt',
+              'Generate AI insights from completed interview sessions'
+            ),
+          },
         },
         {
           id: 'submit-review',
           label: t('chat.suggestions.submitReview', 'Submit this insight for review'),
           type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review') },
+          action: {
+            type: 'chat',
+            prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review'),
+          },
         },
         {
           id: 'export-initiative',
           label: t('chat.suggestions.exportInsight', 'Export insight to initiative'),
           type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.exportInsightPrompt', 'Export this insight to an initiative') },
+          action: {
+            type: 'chat',
+            prompt: t(
+              'chat.suggestions.exportInsightPrompt',
+              'Export this insight to an initiative'
+            ),
+          },
         },
         {
           id: 'view-evidence',
           label: t('chat.suggestions.viewEvidence', 'View evidence map'),
           type: 'interview' as any,
           action: { type: 'NAVIGATE', targetModule: 'interview' },
-        },
+        }
       );
     }
 
@@ -1329,7 +1669,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           label: t('chat.suggestions.reviewPending', 'Review pending artifacts'),
           type: 'outputs' as any,
           action: { type: 'NAVIGATE', targetModule: 'presentations', params: { tab: 'review' } },
-        },
+        }
       );
     }
 
@@ -1418,13 +1758,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (outputTool !== 'auto') {
         const routeMap: Record<string, string> = {
           wordy: '/wordy',
-          excele: '/excele',
+          excele: '/tabele',
+          tabele: '/tabele',
           prezentacje: '/prezentacje',
         };
         const uiLangExplicit = (i18n.language || 'en').split('-')[0];
         const labelMap: Record<string, { pl: string; en: string }> = {
           wordy: { pl: 'Dokumenty', en: 'Documents' },
-          excele: { pl: 'Tabele', en: 'Tables' },
+          excele: { pl: 'Tabele Studio', en: 'Table Studio' },
+          tabele: { pl: 'Tabele Studio', en: 'Table Studio' },
           prezentacje: { pl: 'Prezentacje', en: 'Presentations' },
         };
         const label = labelMap[outputTool]?.[uiLangExplicit === 'pl' ? 'pl' : 'en'] || outputTool;
@@ -1467,7 +1809,79 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
 
-      // P23 Excele: intercept workbook/excel/financial model intents before Table Builder
+      const canvasIntent = parseChatCanvasIntent(text);
+      if (canvasIntent && canUseWorkPanel) {
+        let conversationId = useConversationStore.getState().activeConversationId;
+        if (!conversationId) {
+          try {
+            const conv = await createConversation();
+            conversationId = conv.id;
+          } catch (err) {
+            console.error('[UnifiedChatPanel] Failed to create conversation for Canvas:', err);
+          }
+        }
+
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (conversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+              metadata: {
+                canvasCommand: {
+                  starterId: canvasIntent.starterId,
+                  cleanPrompt: canvasIntent.cleanPrompt,
+                },
+              },
+            });
+          } catch {
+            /* best-effort persist */
+          }
+        }
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        const starterLabel =
+          canvasIntent.starterId === 'research'
+            ? uiLang === 'pl'
+              ? 'Research Canvas'
+              : 'Research Canvas'
+            : canvasIntent.starterId === 'decision'
+              ? uiLang === 'pl'
+                ? 'Decision Canvas'
+                : 'Decision Canvas'
+              : canvasIntent.starterId === 'plan'
+                ? uiLang === 'pl'
+                  ? 'Plan Canvas'
+                  : 'Plan Canvas'
+                : uiLang === 'pl'
+                  ? 'Canvas'
+                  : 'Canvas';
+        addChatMessage({
+          id: `canvas-route-${Date.now()}`,
+          role: 'ai',
+          content:
+            uiLang === 'pl'
+              ? `Otwieram ${starterLabel} po prawej stronie. Będziemy pracować w tej samej rozmowie.`
+              : `Opening ${starterLabel} on the right. We'll keep working in the same conversation.`,
+          timestamp: new Date(),
+        });
+
+        setRequestedCanvasStarterId(canvasIntent.starterId);
+        setIsWorkPanelOpen(true);
+        onMessageSent?.(content);
+        return;
+      }
+
+      // Tables / workbook intents now land in the single canonical Table Studio module.
       if (detectExceleIntent(text)) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
@@ -1496,13 +1910,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content:
             uiLang === 'pl'
-              ? 'Otwieram Tabele \u2014 zaraz przygotuję Twój skoroszyt.'
-              : "Opening Tables \u2014 I'll prepare your workbook.",
+              ? 'Otwieram Tabele Studio — zaraz przygotuję Twoją tabelę.'
+              : "Opening Table Studio — I'll prepare your table.",
           timestamp: new Date(),
         });
 
         useAppStore.getState().setChatKickoffMessage(text);
-        navigateToRoute('/excele');
+        navigateToRoute('/tabele');
         onMessageSent?.(content);
         return;
       }
@@ -1629,7 +2043,116 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
 
+      // Mind Map: intercept mind map / idea map intents
+      const mmAction = detectMindmapIntent(text);
+      if (mmAction) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `mm-intent-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Pracuję nad mapą myśli…' : 'Working on mind map…',
+          timestamp: new Date(),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: mmAction },
+          })
+        );
+
+        onMessageSent?.(content);
+        return;
+      }
+
+      // Process Flow: intercept process/workflow intents
+      const pfAction = detectProcessFlowIntent(text);
+      if (pfAction) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `pf-intent-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Buduję przepływ procesu…' : 'Building process flow…',
+          timestamp: new Date(),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: pfAction },
+          })
+        );
+
+        onMessageSent?.(content);
+        return;
+      }
+
       // Whiteboard: intercept brainstorm/whiteboard/workshop intents
+      // Canvas streaming: when a canvas doc is open and the user asks Teresa to
+      // write INTO it, stream into the rich editor instead of replying in chat.
+      // Bridged via a CustomEvent the WorkCanvasDocumentPanel listens for — no
+      // direct coupling to the editor instance.
+      const canvasStreamMode = activeCanvasDocument ? detectCanvasWriteIntent(text) : null;
+      if (canvasStreamMode) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `canvas-stream-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Piszę w dokumencie…' : 'Writing in the document…',
+          timestamp: new Date(),
+        });
+
+        // Give Teresa document + conversation awareness while streaming (same
+        // canvasContextPacket shape /chat/stream reads, plus chat history/lang).
+        const canvasStreamPacket = buildCanvasContextPacket(
+          activeCanvasDocument,
+          activeCanvasSelection
+        );
+        const canvasStreamHistory = (customMessages || messages || []).map(
+          (m: { role: string; content: string }) => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }],
+          })
+        );
+
+        window.dispatchEvent(
+          new CustomEvent('canvas-stream-request', {
+            detail: {
+              prompt: content,
+              mode: canvasStreamMode,
+              language: chatLanguage,
+              canvasContextPacket: canvasStreamPacket,
+              history: canvasStreamHistory,
+            },
+          })
+        );
+
+        onMessageSent?.(content);
+        return;
+      }
+
       const wbAction = detectWhiteboardIntent(text);
       if (wbAction) {
         const userMessage: ChatMessage = {
@@ -1644,10 +2167,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         addChatMessage({
           id: `wb-intent-${Date.now()}`,
           role: 'ai',
-          content:
-            uiLang === 'pl'
-              ? 'Wykonuję akcję na tablicy…'
-              : 'Running whiteboard action…',
+          content: uiLang === 'pl' ? 'Wykonuję akcję na tablicy…' : 'Running whiteboard action…',
           timestamp: new Date(),
         });
 
@@ -1695,22 +2215,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         consumeAIInteraction();
       }
 
-      // Create conversation if none exists
-      let conversationId = activeConversationId;
+      // Read the active conversation from the store at send time. A quick
+      // "new chat -> send" can otherwise reuse the previous render's id.
+      let conversationId = useConversationStore.getState().activeConversationId;
       if (!conversationId) {
         try {
           const conv = await createConversation();
           conversationId = conv.id;
         } catch (err) {
           console.error('[UnifiedChatPanel] Failed to create conversation:', err);
+          toast.error(getTeresaStartFailureMessage(i18n.language));
+          return;
         }
       }
+      const liveConversationMessages =
+        useConversationStore.getState().activeConversationId === conversationId
+          ? useConversationStore.getState().activeMessages
+          : [];
+      const sourceMessages =
+        customMessages ||
+        (activeConversationId === conversationId ? messages : liveConversationMessages);
 
       // Conversation-scoped attachments: upload supported files to Knowledge Base and
       // pass doc filters to the backend so RAG only searches within these attachments.
       const existingAttachmentDocIds = Array.from(
         new Set(
-          (customMessages || messages || [])
+          (sourceMessages || [])
             .flatMap((m: any) =>
               Array.isArray(m?.metadata?.attachments) ? m.metadata.attachments : []
             )
@@ -1744,6 +2274,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         mimeType?: string;
         size?: number;
         sourceUrl?: string;
+        kind?: 'file' | 'url';
+      }> = [];
+      const failedAttachments: Array<{
+        filename: string;
+        error: string;
+        code?: string;
+        extractionStatus?: string;
+        mimeType?: string;
         kind?: 'file' | 'url';
       }> = [];
 
@@ -1815,6 +2353,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         } catch (err: any) {
           console.error('[UnifiedChatPanel] Failed to upload attachment:', err);
           const errMsg = String(err?.message || '');
+          const data = (err as any)?.data || (err as any)?.response?.data || {};
+          failedAttachments.push({
+            filename: file.name,
+            error:
+              String(data?.error || errMsg || '').trim() ||
+              t(
+                'aiChat.attachments.extractionFailedShort',
+                'Could not extract readable text from this file.'
+              ),
+            code: typeof data?.code === 'string' ? data.code : undefined,
+            extractionStatus:
+              typeof data?.extractionStatus === 'string' ? data.extractionStatus : undefined,
+            mimeType: file.type || undefined,
+            kind: 'file',
+          });
           const isTextExtraction = errMsg.includes('extract') || errMsg.includes('text');
           toast.error(
             isTextExtraction
@@ -1859,6 +2412,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           toast.success(t('aiChat.attachments.urlReady', 'Link przetworzony.'), { duration: 1500 });
         } catch (err: any) {
           console.error('[UnifiedChatPanel] Failed to ingest URL attachment:', err);
+          failedAttachments.push({
+            filename: urlAtt.name || url,
+            error: String((err as any)?.data?.error || err?.message || 'URL ingestion failed'),
+            code: typeof (err as any)?.data?.code === 'string' ? (err as any).data.code : undefined,
+            extractionStatus:
+              typeof (err as any)?.data?.extractionStatus === 'string'
+                ? (err as any).data.extractionStatus
+                : undefined,
+            mimeType: undefined,
+            kind: 'url',
+          });
           toast.error(
             t('aiChat.attachments.urlError', 'Błąd przetwarzania linku: {{error}}', {
               error: String(err?.message || '').slice(0, 120),
@@ -1920,21 +2484,60 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
       );
 
+      const canvasContextPacket = buildCanvasContextPacket(
+        activeCanvasDocument,
+        activeCanvasSelection
+      );
+
       // Save user message to conversation store
       if (conversationId) {
         try {
+          const userMessageMetadata =
+            uploadedAttachments.length > 0 ||
+            failedAttachments.length > 0 ||
+            attachmentDocIds.length > 0 ||
+            canvasContextPacket
+              ? {
+                  ...(uploadedAttachments.length > 0 ? { attachments: uploadedAttachments } : {}),
+                  ...(failedAttachments.length > 0 ? { failedAttachments } : {}),
+                  // Persist the KB doc ids attached to this turn so the RAG scope can be
+                  // reconstructed after a page reload (previously only sent to the live AI call).
+                  ...(attachmentDocIds.length > 0 ? { attachmentDocIds } : {}),
+                  ...(canvasContextPacket
+                    ? {
+                        canvasContext: {
+                          schemaVersion: canvasContextPacket.schemaVersion,
+                          activeDraft: canvasContextPacket.activeDraft,
+                          memorySnapshot: canvasContextPacket.memorySnapshot,
+                          selection: canvasContextPacket.selection
+                            ? {
+                                mode: canvasContextPacket.selection.mode,
+                                selectedText: canvasContextPacket.selection.selectedText,
+                              }
+                            : null,
+                        },
+                      }
+                    : {}),
+                }
+              : undefined;
           await addMessageToConversation({
             conversationId,
             role: 'user',
             content,
             messageType: 'text',
-            metadata:
-              uploadedAttachments.length > 0
-                ? ({ attachments: uploadedAttachments } as any)
-                : undefined,
+            metadata: userMessageMetadata as any,
           });
         } catch (err) {
+          // Don't silently swallow: the store keeps the optimistic bubble flagged with
+          // localError and retries in the background (idempotent via clientMessageId), but
+          // surface a non-blocking warning so the user knows this turn may not be persisted.
           console.error('[UnifiedChatPanel] Failed to save user message:', err);
+          toast.error(
+            t(
+              'aiChat.errors.messageSaveFailed',
+              "Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds."
+            )
+          );
         }
       }
 
@@ -1947,10 +2550,74 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       };
       addChatMessage(userMessage);
 
+      if (onModuleIntent) {
+        try {
+          const moduleIntentResult = await onModuleIntent(effectivePrompt);
+          const handledByModule =
+            typeof moduleIntentResult === 'object'
+              ? moduleIntentResult.handled
+              : Boolean(moduleIntentResult);
+          if (handledByModule) {
+            const moduleReply =
+              typeof moduleIntentResult === 'object'
+                ? String(moduleIntentResult.reply || '').trim()
+                : '';
+            if (moduleReply) {
+              addChatMessage({
+                id: `module-intent-${Date.now()}`,
+                role: 'ai',
+                content: moduleReply,
+                timestamp: new Date(),
+              });
+              if (conversationId) {
+                try {
+                  await addMessageToConversation({
+                    conversationId,
+                    role: 'ai',
+                    content: moduleReply,
+                    messageType: 'text',
+                  });
+                } catch {
+                  /* best-effort persist */
+                }
+              }
+            }
+            onMessageSent?.(content);
+            return;
+          }
+        } catch (err) {
+          console.error('[UnifiedChatPanel] Module intent handler failed:', err);
+          const errorContent = i18n.language?.startsWith('pl')
+            ? 'Nie udało się wykonać tej akcji w aktywnym module.'
+            : 'I could not complete that action in the active module.';
+          addChatMessage({
+            id: `module-intent-error-${Date.now()}`,
+            role: 'ai',
+            content: errorContent,
+            timestamp: new Date(),
+          });
+          if (conversationId) {
+            try {
+              await addMessageToConversation({
+                conversationId,
+                role: 'ai',
+                content: errorContent,
+                messageType: 'text',
+              });
+            } catch {
+              /* best-effort persist */
+            }
+          }
+          onMessageSent?.(content);
+          return;
+        }
+      }
+
       // Build context for AI — include file metadata so the model can cite/reference attachments (C4.1)
       const context = {
         focusMode,
         attachments: uploadedAttachments,
+        failedAttachments,
         attachmentDocIds,
         // Provide file names and types so the AI can reference them in its response
         attachmentFileNames: uploadedAttachments.map((a) => a.filename),
@@ -1966,13 +2633,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           page: (workspaceContext as any)?.entityData || null,
         },
         workspaceContext,
+        canvasContextPacket,
+        canvasMemorySnapshot: canvasContextPacket?.memorySnapshot || null,
+        canvasContext: activeCanvasSelection
+          ? {
+              draftId: activeCanvasSelection.draftId || activeCanvasDocument?.draftId || null,
+              title: activeCanvasDocument?.title || null,
+              mode: activeCanvasSelection.mode,
+              selectedText: activeCanvasSelection.selectedText,
+              startOffset: activeCanvasSelection.startOffset ?? null,
+              endOffset: activeCanvasSelection.endOffset ?? null,
+              packetSchemaVersion: canvasContextPacket?.schemaVersion || null,
+            }
+          : activeCanvasDocument
+            ? {
+                draftId: activeCanvasDocument.draftId || null,
+                title: activeCanvasDocument.title,
+                packetSchemaVersion: canvasContextPacket?.schemaVersion || null,
+              }
+            : null,
         conversationId,
         conversationLanguage: chatLanguage,
         virtualWorkerSlug: 'teresa',
       };
 
       // Backend expects history roles as: user | model (Gemini-style)
-      const history = (customMessages || messages).map((m) => ({
+      const history = sourceMessages.map((m) => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }],
       }));
@@ -1995,7 +2681,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // Deep Thinking: force-depth triggers bypass Confirm (they are a quality control action)
       if ((aiConfig?.deepResearch || (aiConfig as any)?.marketResearch) && isForceDepth) {
-        const base = (customMessages || messages).filter(
+        const base = sourceMessages.filter(
           (m) => !((m as any).metadata?.deepThinking?.kind === 'confirm')
         );
         const history = base.map((m) => ({
@@ -2004,7 +2690,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }));
 
         // Reuse last confirm payload if present (keeps flow deterministic while not blocking)
-        const lastConfirm = (customMessages || messages)
+        const lastConfirm = sourceMessages
           .slice()
           .reverse()
           .find((m: any) => m?.metadata?.deepThinking?.kind === 'confirm') as any;
@@ -2200,6 +2886,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       focusMode,
       chatLanguage,
       workspaceContext,
+      mode,
+      activeCanvasDocument,
+      activeCanvasSelection,
       startStream,
       isDisabled,
       isDemo,
@@ -2208,6 +2897,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       aiInteractionsLimit,
       consumeAIInteraction,
       onMessageSent,
+      onModuleIntent,
       aiConfig,
       dtConfirmBusy,
       addMessageToConversation,
@@ -2361,6 +3051,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       isStreaming: true,
     });
 
+    // Consume the confirm card before streaming starts. If the stream is slow,
+    // subsequent user input must not regenerate another confirm card for the
+    // same task and look like a Deep Thinking loop.
+    setDtPendingConfirm(null);
+
     // Start stream with Deep Thinking context hints
     await startStream(
       dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage,
@@ -2383,8 +3078,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       roleName,
       chatLanguage
     );
-
-    setDtPendingConfirm(null);
   }, [
     dtPendingConfirm,
     isDisabled,
@@ -2645,8 +3338,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setActiveConversation(conv.id);
     } catch (err) {
       console.error('[UnifiedChatPanel] Failed to create new chat:', err);
+      toast.error(getTeresaStartFailureMessage(i18n.language));
     }
-  }, [clearActiveChat, createConversation, setActiveConversation]);
+  }, [clearActiveChat, createConversation, i18n.language, setActiveConversation]);
 
   const handleSelectConversation = useCallback(
     (id: string) => {
@@ -3056,7 +3750,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // ========================================================================
 
   const [proposalBusyById, setProposalBusyById] = useState<
-    Record<string, { approve?: boolean; reject?: boolean }>
+    Record<string, { approve?: boolean; reject?: boolean; execute?: boolean }>
   >({});
 
   const handleProposalApprove = useCallback(
@@ -3162,6 +3856,87 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [activeConversationId, addChatMessage]
   );
 
+  const handleProposalExecute = useCallback(
+    async (proposalId: string, msg: ChatMessage) => {
+      if (!proposalId) return;
+      setProposalBusyById((prev) => ({
+        ...prev,
+        [proposalId]: { ...(prev[proposalId] || {}), execute: true },
+      }));
+      try {
+        const result: any = await Api.executeAIAction(
+          proposalId,
+          {},
+          activeConversationId || undefined
+        );
+        const actionType = (msg as any)?.metadata?.executionProposal?.actionType;
+        if (result?.success !== false) {
+          useProposalLifecycleStore.getState().patchLifecycle(proposalId, {
+            lifecycleState: result?.lifecycleState === 'audited' ? 'audited' : 'executed',
+            actionType,
+            latestMessageType: 'execution_result',
+          });
+          addChatMessage({
+            id: `exec-result-${proposalId}-${Date.now()}`,
+            role: 'ai',
+            content: 'Proposal executed successfully.',
+            timestamp: new Date(),
+            type: 'execution_result',
+            metadata: {
+              executionProposal: {
+                proposalId,
+                runId: result?.runId,
+                lifecycleState: result?.lifecycleState === 'audited' ? 'audited' : 'executed',
+                actionType,
+                result: result?.result,
+              },
+            },
+          } as any);
+        } else {
+          useProposalLifecycleStore.getState().patchLifecycle(proposalId, {
+            lifecycleState: 'failed',
+            actionType,
+            latestMessageType: 'execution_result',
+          });
+          addChatMessage({
+            id: `exec-failed-${proposalId}-${Date.now()}`,
+            role: 'ai',
+            content: `Proposal execution failed — ${result?.error || 'Unknown error'}`,
+            timestamp: new Date(),
+            type: 'execution_result',
+            metadata: {
+              executionProposal: {
+                proposalId,
+                runId: result?.runId,
+                lifecycleState: 'failed',
+                actionType,
+              },
+            },
+          } as any);
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Proposal execute failed:', err);
+      } finally {
+        setProposalBusyById((prev) => {
+          const next = { ...prev };
+          const entry = { ...(next[proposalId] || {}) };
+          delete entry.execute;
+          if (Object.keys(entry).length === 0) delete next[proposalId];
+          else next[proposalId] = entry;
+          return next;
+        });
+      }
+    },
+    [activeConversationId, addChatMessage]
+  );
+
+  const handleProposalInspect = useCallback(
+    (proposalId: string) => {
+      navigateToRoute(`/ai/action-center?actionId=${encodeURIComponent(proposalId)}`);
+    },
+    [navigateToRoute]
+  );
+
   // ========================================================================
   // Render helpers
   // ========================================================================
@@ -3236,6 +4011,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       isRtlChatLanguage={isRtlChatLanguage}
       onProposalApprove={handleProposalApprove}
       onProposalReject={handleProposalReject}
+      onProposalExecute={handleProposalExecute}
+      onProposalInspect={handleProposalInspect}
       proposalBusyById={proposalBusyById}
     />
   );
@@ -3243,356 +4020,823 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // ========================================================================
   // Render
   // ========================================================================
+  const hasRenderableMessages = displayMessages.some((message) => {
+    const metadata = (message as any)?.metadata || {};
+    return (
+      Boolean((message as any)?.isStreaming) ||
+      String((message as any)?.content || '').trim().length > 0 ||
+      Boolean(metadata.proposal || metadata.executionProposal || metadata.deepThinking)
+    );
+  });
+  const isRehydratingConversation =
+    !hasRenderableMessages && activeConversationId && isConversationLoading;
+  const isWelcomeEmptyState = !hasRenderableMessages && !isRehydratingConversation;
+  const canUseWorkPanel = mode === 'full';
+  const showWorkPanel = isWorkPanelMode;
+
+  // Deep-link support: open the Work Canvas split panel from canonical /chat.
+  // Used by `/ai/work-canvas` redirect and external links.
+  useEffect(() => {
+    if (mode !== 'full') return;
+    const params = new URLSearchParams(location.search);
+    const shouldOpen =
+      params.get('workPanel') === '1' ||
+      params.get('workPanel') === 'true' ||
+      params.get('workCanvas') === '1';
+    if (!shouldOpen) return;
+
+    setIsWorkPanelOpen(true);
+
+    const draftId = String(params.get('canvasDraftId') || params.get('draftId') || '').trim();
+    if (draftId) setRequestedCanvasDraftId(draftId);
+
+    // Consume params to avoid re-triggering on subsequent renders/navigation.
+    const consumedKeys = [
+      'workPanel',
+      'workCanvas',
+      'canvasDraftId',
+      'draftId',
+      'canvasKind',
+      'kind',
+    ];
+    let changed = false;
+    for (const key of consumedKeys) {
+      if (params.has(key)) {
+        params.delete(key);
+        changed = true;
+      }
+    }
+    if (changed) {
+      const nextSearch = params.toString();
+      navigateToRoute(
+        { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
+        { replace: true }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.search, mode, navigateToRoute]);
+  // Full `/chat` must always use the rich start screen, regardless of persisted displayMode.
+  // Once the work panel is open, the left side behaves like an active conversation panel:
+  // no marketing welcome surface, input stays pinned at the bottom.
+  const showFullWelcomeEmptyState = isWelcomeEmptyState && mode === 'full' && !isCompact;
+  const showWorkPanelEmptyState = isWelcomeEmptyState && showWorkPanel;
+  const showCompactEmptyState = isWelcomeEmptyState && mode !== 'full';
+  const rootStyle = {
+    maxHeight: maxHeight || '100%',
+    ...(showWorkPanel ? { '--work-canvas-width': `${workCanvasWidthPercent}%` } : {}),
+  } as React.CSSProperties;
+
+  const setPersistedWorkCanvasWidth = useCallback((nextWidth: number) => {
+    const clamped = clampWorkCanvasWidth(nextWidth);
+    setWorkCanvasWidthPercent(clamped);
+    window.localStorage.setItem(WORK_CANVAS_SPLIT_STORAGE_KEY, String(clamped));
+  }, []);
+
+  const updateWorkCanvasWidthFromClientX = useCallback(
+    (clientX: number) => {
+      const rect = splitShellRef.current?.getBoundingClientRect();
+      if (!rect?.width) return;
+      const leftPercent = ((clientX - rect.left) / rect.width) * 100;
+      setPersistedWorkCanvasWidth(100 - leftPercent);
+    },
+    [setPersistedWorkCanvasWidth]
+  );
+
+  const handleWorkCanvasEdgeMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      updateWorkCanvasWidthFromClientX(event.clientX);
+
+      const previousCursor = document.body.style.cursor;
+      const previousUserSelect = document.body.style.userSelect;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        updateWorkCanvasWidthFromClientX(moveEvent.clientX);
+      };
+      const handleMouseUp = () => {
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousUserSelect;
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    },
+    [updateWorkCanvasWidthFromClientX]
+  );
+
+  const handleWorkCanvasEdgeKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setPersistedWorkCanvasWidth(workCanvasWidthPercent + 2);
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setPersistedWorkCanvasWidth(workCanvasWidthPercent - 2);
+      }
+      if (event.key === 'Home') {
+        event.preventDefault();
+        setPersistedWorkCanvasWidth(MIN_WORK_CANVAS_WIDTH_PERCENT);
+      }
+      if (event.key === 'End') {
+        event.preventDefault();
+        setPersistedWorkCanvasWidth(MAX_WORK_CANVAS_WIDTH_PERCENT);
+      }
+    },
+    [setPersistedWorkCanvasWidth, workCanvasWidthPercent]
+  );
 
   return (
     <div
-      className={`flex flex-col h-full bg-slate-50 dark:bg-navy-950 ${
+      ref={splitShellRef}
+      className={`relative flex h-full overflow-hidden bg-slate-50 dark:bg-navy-950 ${
         isPrivateMode
-          ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
+          ? 'ring-1 ring-primary-200/70 dark:ring-primary-800/45'
           : 'ring-1 ring-transparent'
       } ${className}`}
-      style={{ maxHeight: maxHeight || '100%' }}
+      style={rootStyle}
     >
-      {/* Skip links for keyboard users */}
-      <a
-        href="#chat-input"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
-      >
-        {t('wcag.skipToInput', 'Skip to chat input')}
-      </a>
-
-      {/* Header — Tech Sexy (T104/T105) */}
       <div
-        className={`flex items-center justify-between ${isCompact ? 'px-3 py-1.5' : 'px-4 py-2'} border-b border-slate-200/60 dark:border-white/[0.06] bg-white/50 dark:bg-navy-950/60 backdrop-blur-sm`}
+        className={`flex min-w-0 flex-col h-full transition-[width] duration-200 ${
+          showWorkPanel ? 'w-full lg:w-[calc(100%_-_var(--work-canvas-width))]' : 'w-full'
+        }`}
       >
-        <div className="flex items-center gap-0.5">
-          <button
-            onClick={handleNewChat}
-            data-testid="chat-new-button"
-            className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
-            title={t('aiChat.newChat', 'New chat')}
-            aria-label={t('aiChat.newChat', 'New chat')}
-          >
-            <Plus size={18} strokeWidth={1.75} />
-          </button>
+        {/* Skip links for keyboard users */}
+        <a
+          href="#chat-input"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
+        >
+          {t('wcag.skipToInput', 'Skip to chat input')}
+        </a>
 
-          {showHistoryTrigger && (
+        {/* Header — Tech Sexy (T104/T105) */}
+        <div
+          className={`flex h-[42px] items-center justify-between ${isCompact ? 'px-3' : 'px-4'} border-b border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-white/[0.06] dark:bg-navy-950/60`}
+        >
+          <div className="flex items-center gap-0.5">
             <button
-              onClick={() => toggleSidebar()}
-              data-testid="chat-history-button"
-              data-chat-toggle
-              className={`p-1.5 rounded-lg transition-colors ${
-                isSidebarOpen
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/20'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-              title={t('aiChat.history', 'History')}
-              aria-label={t('aiChat.history', 'Chat history')}
-            >
-              <History size={18} strokeWidth={1.75} />
-            </button>
-          )}
-
-          {/* Show the business/actions button only when a real navigation target exists. */}
-          {onNavigateToActions && (
-            <button
-              onClick={() => {
-                trackFunnelEvent('chat_business_button_clicked', {
-                  mode: isSplitMode ? 'split' : 'full',
-                  pendingCount: pendingActionsCount,
-                });
-                onNavigateToActions();
-              }}
-              data-testid="chat-business-button"
-              className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
-              title={t('aiChat.business', 'Business actions')}
-              aria-label={t('aiChat.business', 'Business actions')}
-            >
-              <Briefcase size={18} strokeWidth={1.75} />
-              {pendingActionsCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
-                  {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* T012: Important signals (chat-active) */}
-          {signalsEnabled && (
-            <button
-              onClick={() => setSignalsOpen(true)}
-              data-testid="chat-signals-button"
+              onClick={handleNewChat}
+              data-testid="chat-new-button"
               className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
-              title={t('aiChat.signals.title', 'Important signals')}
-              aria-label={t('aiChat.signals.title', 'Important signals')}
+              title={t('aiChat.newChat', 'New chat')}
+              aria-label={t('aiChat.newChat', 'New chat')}
             >
-              <Sparkles size={18} strokeWidth={1.75} />
+              <Plus size={18} strokeWidth={1.75} />
             </button>
-          )}
-        </div>
 
-        <div className="flex items-center gap-0.5">
-          <V8ArtifactRunControl
-            conversationId={activeConversationId}
-            defaultGoal={latestUserGoalHint}
-            snapshotContext={v8SnapshotContext}
-          />
-          <V8ContextIndicator
-            conversationId={activeConversationId}
-            defaultGoal={latestUserGoalHint}
-          />
-          {isPrivateMode && (
-            <div
-              className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"
-              title={t(
-                'aiChat.menu.modes.privateMode.desc',
-                'Disable memory injection and personalization for this chat'
-              )}
-              aria-label={t('aiChat.menu.modes.privateMode.label', 'Private mode')}
-            >
-              <Lock size={11} strokeWidth={2} />
-              <span>{t('aiChat.menu.modes.privateMode.label', 'Private mode')}</span>
-            </div>
-          )}
-          {ttsSupported && (
-            <button
-              onClick={() => {
-                // While speaking, this button must always mute/turn OFF.
-                if (voiceState.isSpeaking) {
-                  stopSpeaking();
+            {showHistoryTrigger && (
+              <button
+                onClick={() => toggleSidebar()}
+                data-testid="chat-history-button"
+                data-chat-toggle
+                className={`p-1.5 rounded-lg transition-colors ${
+                  isSidebarOpen
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/20'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+                title={t('aiChat.history', 'History')}
+                aria-label={t('aiChat.history', 'Chat history')}
+              >
+                <History size={18} strokeWidth={1.75} />
+              </button>
+            )}
+
+            {/* Show the business/actions button only when a real navigation target exists. */}
+            {onNavigateToActions && (
+              <button
+                onClick={() => {
+                  trackFunnelEvent('chat_business_button_clicked', {
+                    mode: isSplitMode ? 'split' : 'full',
+                    pendingCount: pendingActionsCount,
+                  });
+                  onNavigateToActions();
+                }}
+                data-testid="chat-business-button"
+                className="relative p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+                title={t('aiChat.business', 'Business actions')}
+                aria-label={t('aiChat.business', 'Business actions')}
+              >
+                <Briefcase size={18} strokeWidth={1.75} />
+                {pendingActionsCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary-500 text-[10px] font-medium text-white px-1 leading-none">
+                    {pendingActionsCount > 9 ? '9+' : pendingActionsCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* T012: Important signals (chat-active) */}
+            {signalsEnabled && (
+              <button
+                onClick={() => setSignalsOpen(true)}
+                data-testid="chat-signals-button"
+                className="p-1.5 rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200"
+                title={t('aiChat.signals.title', 'Important signals')}
+                aria-label={t('aiChat.signals.title', 'Important signals')}
+              >
+                <Sparkles size={18} strokeWidth={1.75} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <V8ArtifactRunControl
+              conversationId={activeConversationId}
+              defaultGoal={latestUserGoalHint}
+              snapshotContext={v8SnapshotContext}
+            />
+            <V8ContextIndicator
+              conversationId={activeConversationId}
+              defaultGoal={latestUserGoalHint}
+            />
+            {/* TRUST T-PM1 — `PrivateModeDetails` replaces the legacy static
+              chip. When the feature flag is on, the badge becomes a button
+              that opens a short popover explaining what private mode
+              does and does NOT do (RODO honesty). When the flag is off
+              the component renders the original read-only chip with the
+              same classes, so disabling the flag is visually invisible. */}
+            {isPrivateMode && <PrivateModeDetails />}
+            {canUseWorkPanel && (
+              <button
+                onClick={() => setIsWorkPanelOpen((open) => !open)}
+                data-testid="chat-work-panel-button"
+                aria-pressed={showWorkPanel}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  showWorkPanel
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+                title={t('aiChat.workPanel.open', 'Open work panel')}
+                aria-label={t('aiChat.workPanel.open', 'Open work panel')}
+              >
+                <PanelRight size={18} strokeWidth={1.75} />
+              </button>
+            )}
+            {ttsSupported && (
+              <button
+                onClick={() => {
+                  // VM4 — snapshot `isSpeaking` BEFORE `stopSpeaking()` flips
+                  // it to false so the barge-in toast only fires when the
+                  // click actually interrupted an ongoing read. Debounce
+                  // (1.5 s) is enforced inside `notifyBargeIn`, so repeated
+                  // mute gestures produce at most one visible toast.
+                  const wasBargeIn = voiceState.isSpeaking;
+                  if (wasBargeIn) {
+                    stopSpeaking();
+                    notifyBargeIn({
+                      message: t('voice.bargeInToast', 'Reading interrupted.'),
+                      source: 'mute_button',
+                    });
+                  }
+                  const nextState = wasBargeIn ? false : !autoReadEnabled;
+                  setAutoReadEnabled(nextState);
+                  updateVoiceSettings({ autoSpeakResponses: nextState });
+                  setAIConfig({ textToSpeech: nextState } as any);
+                }}
+                data-testid="chat-autoread-button"
+                className={`p-1.5 rounded-lg transition-colors ${
+                  autoReadEnabled
+                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+                title={
+                  voiceState.isSpeaking
+                    ? t('aiChat.muteNow', 'Mute now')
+                    : autoReadEnabled
+                      ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                      : t('aiChat.autoReadOn', 'Turn on auto-read')
                 }
-                const nextState = voiceState.isSpeaking ? false : !autoReadEnabled;
-                setAutoReadEnabled(nextState);
-                updateVoiceSettings({ autoSpeakResponses: nextState });
-                setAIConfig({ textToSpeech: nextState } as any);
-              }}
-              data-testid="chat-autoread-button"
-              className={`p-1.5 rounded-lg transition-colors ${
-                autoReadEnabled
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-              title={
-                voiceState.isSpeaking
-                  ? t('aiChat.muteNow', 'Mute now')
-                  : autoReadEnabled
-                    ? t('aiChat.autoReadOff', 'Turn off auto-read')
-                    : t('aiChat.autoReadOn', 'Turn on auto-read')
-              }
-              aria-label={
-                voiceState.isSpeaking
-                  ? t('aiChat.muteNow', 'Mute now')
-                  : autoReadEnabled
-                    ? t('aiChat.autoReadOff', 'Turn off auto-read')
-                    : t('aiChat.autoReadOn', 'Turn on auto-read')
-              }
-            >
-              {autoReadEnabled ? (
-                <Volume2 size={18} strokeWidth={1.75} />
-              ) : (
-                <VolumeX size={18} strokeWidth={1.75} />
-              )}
-            </button>
-          )}
+                aria-label={
+                  voiceState.isSpeaking
+                    ? t('aiChat.muteNow', 'Mute now')
+                    : autoReadEnabled
+                      ? t('aiChat.autoReadOff', 'Turn off auto-read')
+                      : t('aiChat.autoReadOn', 'Turn on auto-read')
+                }
+              >
+                {autoReadEnabled ? (
+                  <Volume2 size={18} strokeWidth={1.75} />
+                ) : (
+                  <VolumeX size={18} strokeWidth={1.75} />
+                )}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Pending Actions Indicator - Inline visibility for AI actions */}
-      <div className={`${isCompact ? 'px-2 pt-2' : 'px-3 pt-3'}`}>
-        <PendingActionsIndicator
-          projectId={workspaceContext?.projectId}
-          compact={isCompact}
-          onViewAll={onNavigateToActions}
-          onActionDecided={() => {}}
-          maxPreview={isCompact ? 2 : 3}
-        />
-      </div>
-
-      {/* Context Badge - shows what AI "sees" */}
-      <div className={`${isCompact ? 'px-2' : 'px-3'}`}>
-        <ContextBadge
-          workspaceContext={workspaceContext}
-          focusMode={focusMode}
-          compact={isCompact}
-        />
-      </div>
-
-      {/* Organization Memory panel removed — unused / WIP feature */}
-
-      {/* Messages Area */}
-      <div
-        ref={messagesContainerRef}
-        className={`flex-1 overflow-y-auto ${isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}
-      >
-        {displayMessages.length === 0 && activeConversationId && isConversationLoading ? (
-          /* Loading state — conversation selected but messages still loading */
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-3" />
-            <p
-              className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-400 dark:text-slate-500`}
-            >
-              {t('aiChat.loadingConversation', 'Loading conversation…')}
-            </p>
+        {/* Context Badge - shows what AI "sees" outside the Canvas split. */}
+        {!showWorkPanel && (
+          <div className={`${isCompact ? 'px-2' : 'px-3'}`}>
+            <ContextBadge
+              workspaceContext={workspaceContext}
+              focusMode={focusMode}
+              compact={isCompact}
+            />
           </div>
-        ) : displayMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
-              <MessageSquare size={24} className="text-primary-500" />
-            </div>
-            <h3
-              className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-navy-900 dark:text-white mb-1`}
-            >
-              {t('aiChat.teresaWelcome', 'Talk to Teresa')}
-            </h3>
-            <p
-              className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-500 dark:text-slate-400 max-w-xs`}
-            >
-              {t(
-                'aiChat.teresaWelcomeSubtitle',
-                'Work through decisions, notes, and next steps with your internal AI partner'
-              )}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Conversation state banners (§2.3.5 — deep-link + degraded posture) */}
-            {_activeConversationState === 'archived' && (
-              <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40 flex items-center gap-2">
-                <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                <span className="text-xs text-amber-700 dark:text-amber-400">
-                  {t('aiChat.archivedBanner', 'This conversation is archived. Unarchive it to continue chatting.')}
-                </span>
-              </div>
-            )}
-            {_activeConversationState === 'deleted' && (
-              <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200/60 dark:border-red-700/40 flex items-center gap-2">
-                <svg className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                <span className="text-xs text-red-700 dark:text-red-400">
-                  {_activeConversationStateMessage || t('aiChat.deletedBanner', 'This conversation has been deleted.')}
-                </span>
-              </div>
-            )}
-            {_activeConversationState === 'permission_denied' && (
-              <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
-                <svg className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                <span className="text-xs text-slate-700 dark:text-slate-300">
-                  {_activeConversationStateMessage || t('aiChat.permissionDenied', 'You do not have access to this conversation. Contact the folder owner for access.')}
-                </span>
-              </div>
-            )}
-            {_activeConversationState === 'not_found' && (
-              <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
-                <svg className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-xs text-slate-600 dark:text-slate-400">
-                  {t('aiChat.notFound', 'This conversation does not exist or has been permanently removed.')}
-                </span>
-              </div>
-            )}
-            {displayMessages.map((msg, index) => renderMessage(msg, index))}
-          </>
         )}
 
-        {/* Typing indicator */}
-        {isBotTyping && !streamedContent && (
-          <div className="flex gap-2 justify-start">
+        {/* Organization Memory panel removed — unused / WIP feature */}
+
+        {/* Messages Area */}
+        <div
+          ref={messagesContainerRef}
+          className={`flex-1 ${showWorkPanelEmptyState ? 'overflow-hidden' : 'overflow-y-auto'} ${
+            isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'
+          }`}
+        >
+          {isRehydratingConversation ? (
+            /* Loading state — conversation selected but messages still loading */
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-3" />
+              <p
+                className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-400 dark:text-slate-500`}
+              >
+                {t('aiChat.loadingConversation', 'Loading conversation…')}
+              </p>
+            </div>
+          ) : showFullWelcomeEmptyState ? (
             <div
-              className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
+              data-testid="chat-full-welcome"
+              className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center"
             >
-              <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
+              <div className="mb-3 inline-flex items-center rounded-full border border-primary-200/70 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:border-primary-800/60 dark:bg-primary-900/20 dark:text-primary-300">
+                Teresa
+              </div>
+              <h3
+                className={`${isCompact ? 'text-2xl' : 'text-4xl md:text-5xl'} font-semibold text-navy-900 dark:text-white`}
+              >
+                {t('aiChat.teresaWelcome', 'Talk to Teresa')}
+                {currentUser?.firstName && (
+                  <span className="text-primary-600 dark:text-primary-400">
+                    , {currentUser.firstName}
+                  </span>
+                )}
+              </h3>
+              <p
+                className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-slate-500 dark:text-slate-400`}
+              >
+                {t(
+                  'aiChat.teresaWelcomeSubtitle',
+                  'Work through decisions, notes, and next steps with your internal AI partner'
+                )}
+              </p>
+
+              <div id="chat-input" className="mt-8 w-full max-w-5xl text-left">
+                {!!lastError && !isStreaming && (
+                  <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-900/20">
+                    <div className="text-xs text-amber-800 dark:text-amber-200">
+                      {t('aiChat.streamError', 'Last request failed. You can retry.')}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => retryLastStream()}
+                        className="rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
+                      >
+                        {t('common.tryAgain', 'Try again')}
+                      </button>
+                      <button
+                        onClick={() => clearLastError()}
+                        className="rounded-md bg-slate-50 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-slate-100 dark:bg-white/10 dark:text-amber-200 dark:hover:bg-white/15"
+                      >
+                        {t('common.dismiss', 'Dismiss')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <OutputToolSelector />
+                <EnhancedChatInput
+                  onSend={handleSendMessage}
+                  onStopGenerating={() => {
+                    const hadPartial = abortStream();
+                    setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
+                    setTimeout(() => setAbortFeedback(null), 3000);
+                  }}
+                  onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
+                  teresaVoiceStatus={teresaVoice.voiceStatus}
+                  teresaVoiceAvailable={teresaVoice.voiceAvailable}
+                  teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
+                  teresaVoiceMuted={teresaVoice.isMuted}
+                  onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
+                  isStreaming={isStreaming}
+                  disabled={isDisabled}
+                  placeholder={t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')}
+                  voiceModeEnabled={voiceModeEnabled}
+                  onVoiceModeChange={setVoiceModeEnabled}
+                  chatLanguage={chatLanguage}
+                  voiceState={voiceState}
+                  startVoiceListening={startListening}
+                  stopVoiceListening={stopListening}
+                />
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                {[
+                  {
+                    label: t('aiChat.quickClicks.brief.label', 'Daily brief'),
+                    prompt: t(
+                      'aiChat.quickClicks.brief.prompt',
+                      'Give me a short daily brief: priorities, risks, decisions, and next best actions.'
+                    ),
+                  },
+                  {
+                    label: t('aiChat.quickClicks.savings.label', 'Quick savings'),
+                    prompt: t(
+                      'aiChat.quickClicks.savings.prompt',
+                      'Find quick savings opportunities without reducing quality. Ask me for missing context first.'
+                    ),
+                  },
+                  {
+                    label: t('aiChat.quickClicks.newProduct.label', 'Product idea'),
+                    prompt: t(
+                      'aiChat.quickClicks.newProduct.prompt',
+                      'Help me shape a new product idea with market, ROI, risks, and first implementation steps.'
+                    ),
+                  },
+                  {
+                    label: t('aiChat.quickClicks.planReview.label', 'Plan review'),
+                    prompt: t(
+                      'aiChat.quickClicks.planReview.prompt',
+                      'Review my plan like a senior consultant: find gaps, risks, assumptions, and next actions.'
+                    ),
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => handleSendMessage(item.prompt)}
+                    className="rounded-full border border-slate-200/70 bg-white/60 px-3 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 dark:hover:border-primary-700/60 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6 grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  {
+                    icon: Search,
+                    label: t('aiChat.homeCards.market.label', 'Analiza rynku'),
+                    desc: t(
+                      'aiChat.homeCards.market.desc',
+                      'Research a market, competitors, and positioning'
+                    ),
+                    prompt: t(
+                      'aiChat.homeCards.market.kickoff',
+                      'Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań.'
+                    ),
+                    color: 'text-primary-500',
+                    bg: 'bg-primary-50 dark:bg-primary-900/20',
+                  },
+                  {
+                    icon: Calculator,
+                    label: t('aiChat.homeCards.finance.label', 'Analiza finansowa'),
+                    desc: t('aiChat.homeCards.finance.desc', 'Analyze ROI, budgets, and scenarios'),
+                    prompt: t(
+                      'aiChat.homeCards.finance.kickoff',
+                      'Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy.'
+                    ),
+                    color: 'text-emerald-500',
+                    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+                  },
+                  {
+                    icon: Wrench,
+                    label: t('aiChat.homeCards.consulting.label', 'Klasyczny consulting'),
+                    desc: t('aiChat.homeCards.consulting.desc', 'Use classic frameworks and tools'),
+                    prompt: t(
+                      'aiChat.homeCards.consulting.kickoff',
+                      'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
+                    ),
+                    color: 'text-amber-500',
+                    bg: 'bg-amber-50 dark:bg-amber-900/20',
+                  },
+                  {
+                    icon: CheckCircle2,
+                    label: t('aiChat.homeCards.digital.label', 'Transformacja cyfrowa'),
+                    desc: t(
+                      'aiChat.homeCards.digital.desc',
+                      'Run licensed diagnostics and assessments'
+                    ),
+                    prompt: t(
+                      'aiChat.homeCards.digital.kickoff',
+                      'Chcę ocenić gotowość do transformacji cyfrowej. Jakie obszary mamy ocenić i jakie są kryteria? Zadaj mi 5 pytań i zaproponuj szybki plan diagnozy.'
+                    ),
+                    color: 'text-blue-500',
+                    bg: 'bg-blue-50 dark:bg-blue-900/20',
+                  },
+                ].map((cap) => (
+                  <button
+                    key={cap.label}
+                    type="button"
+                    onClick={() => handleSendMessage(cap.prompt)}
+                    className="group flex flex-col items-start gap-1.5 rounded-lg border border-slate-200/60 bg-white/60 p-2.5 text-left transition-all duration-200 hover:border-slate-300 hover:bg-white dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/10 dark:hover:bg-white/5"
+                  >
+                    <div className={`rounded-md p-1.5 ${cap.bg}`}>
+                      <cap.icon size={15} className={cap.color} />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-semibold text-navy-900 transition-colors group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
+                        {cap.label}
+                      </div>
+                      <div className="mt-0.5 text-[9px] leading-tight text-slate-400 dark:text-slate-500">
+                        {cap.desc}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-600">
+                <Sparkles size={11} />
+                {t(
+                  'aiChat.onboarding.hint',
+                  'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis'
+                )}
+              </p>
+
+              <div className="mt-12 flex flex-col items-center gap-1 pointer-events-none select-none">
+                <img
+                  src="/assets/logos/logo-dark.svg?v=20260319"
+                  alt="Consultify"
+                  className="hidden h-20 w-auto opacity-100 drop-shadow-[0_18px_40px_rgba(0,0,0,0.35)] dark:block sm:h-24 md:h-28"
+                  draggable={false}
+                />
+                <img
+                  src="/assets/logos/logo-light.svg?v=20260319"
+                  alt="Consultify"
+                  className="h-20 w-auto opacity-35 dark:hidden sm:h-24 md:h-28"
+                  draggable={false}
+                />
+                <p className="-mt-0.5 text-center text-[11px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-600">
+                  <span className="text-primary-600 dark:text-primary-400">DBR77</span>{' '}
+                  <span>Industrial Intelligence</span>
+                </p>
+              </div>
             </div>
-            <div className="bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl rounded-tl-none px-3 py-2 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
-              <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-100"></span>
-              <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-200"></span>
+          ) : showWorkPanelEmptyState ? (
+            <div data-testid="chat-work-panel-empty-state" className="min-h-full" />
+          ) : showCompactEmptyState ? (
+            <div
+              data-testid="chat-compact-empty-state"
+              className="flex min-h-full flex-col justify-end px-2 py-3"
+            >
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left">
+                <div className="inline-flex items-center rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-300">
+                  Teresa
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                  {t(
+                    'aiChat.sidebarEmptyHint',
+                    'Ask Teresa from this side panel when you need quick context or next-step help.'
+                  )}
+                </p>
+              </div>
             </div>
+          ) : (
+            <>
+              {/* Conversation state banners (§2.3.5 — deep-link + degraded posture) */}
+              {_activeConversationState === 'archived' && (
+                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40 flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
+                  </svg>
+                  <span className="text-xs text-amber-700 dark:text-amber-400">
+                    {t(
+                      'aiChat.archivedBanner',
+                      'This conversation is archived. Unarchive it to continue chatting.'
+                    )}
+                  </span>
+                </div>
+              )}
+              {_activeConversationState === 'deleted' && (
+                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200/60 dark:border-rose-700/40 flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  <span className="text-xs text-rose-700 dark:text-rose-400">
+                    {_activeConversationStateMessage ||
+                      t('aiChat.deletedBanner', 'This conversation has been deleted.')}
+                  </span>
+                </div>
+              )}
+              {_activeConversationState === 'permission_denied' && (
+                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                  <span className="text-xs text-slate-700 dark:text-slate-300">
+                    {_activeConversationStateMessage ||
+                      t(
+                        'aiChat.permissionDenied',
+                        'You do not have access to this conversation. Contact the folder owner for access.'
+                      )}
+                  </span>
+                </div>
+              )}
+              {_activeConversationState === 'not_found' && (
+                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    {t(
+                      'aiChat.notFound',
+                      'This conversation does not exist or has been permanently removed.'
+                    )}
+                  </span>
+                </div>
+              )}
+              {displayMessages.map((msg, index) => renderMessage(msg, index))}
+            </>
+          )}
+
+          {/* Typing indicator */}
+          {isBotTyping && !streamedContent && (
+            <div className="flex gap-2 justify-start">
+              <div
+                className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
+              >
+                <TeresaMark
+                  size={isCompact ? 12 : 14}
+                  className="text-primary-600 dark:text-primary-400"
+                />
+              </div>
+              <div className="bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl rounded-tl-none px-3 py-2 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-100"></span>
+                <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-200"></span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        {!showFullWelcomeEmptyState && (
+          <div
+            id="chat-input"
+            className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} border-t border-slate-200 bg-slate-50 dark:border-navy-800 dark:bg-navy-950`}
+          >
+            {!!lastError && !isStreaming && (
+              <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <div className="text-xs text-amber-800 dark:text-amber-200">
+                  {t('aiChat.streamError', 'Last request failed. You can retry.')}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => retryLastStream()}
+                    className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    {t('common.tryAgain', 'Try again')}
+                  </button>
+                  <button
+                    onClick={() => clearLastError()}
+                    className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+                  >
+                    {t('common.dismiss', 'Dismiss')}
+                  </button>
+                </div>
+              </div>
+            )}
+            {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
+              <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+                {quickPrompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleSendMessage(prompt)}
+                    className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
+            <EnhancedChatInput
+              onSend={handleSendMessage}
+              onStopGenerating={() => {
+                const hadPartial = abortStream();
+                setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
+                setTimeout(() => setAbortFeedback(null), 3000);
+              }}
+              onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
+              teresaVoiceStatus={teresaVoice.voiceStatus}
+              teresaVoiceAvailable={teresaVoice.voiceAvailable}
+              teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
+              teresaVoiceMuted={teresaVoice.isMuted}
+              onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
+              isStreaming={isStreaming}
+              disabled={isDisabled}
+              placeholder={
+                workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
+                  ? t('aiChat.teresaContextPlaceholder', {
+                      defaultValue: 'How can Teresa help with {{context}}?',
+                      context: workspaceContext.entityName,
+                    })
+                  : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
+              }
+              voiceModeEnabled={voiceModeEnabled}
+              onVoiceModeChange={setVoiceModeEnabled}
+              chatLanguage={chatLanguage}
+              voiceState={voiceState}
+              startVoiceListening={startListening}
+              stopVoiceListening={stopListening}
+            />
+            {chatSuggestions.length > 0 && (
+              <ChatSmartSuggestions
+                suggestions={chatSuggestions}
+                onSuggestionClick={handleSuggestionClick}
+                className="pt-2"
+              />
+            )}
           </div>
         )}
 
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Area */}
-      <div
-        id="chat-input"
-        className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-950`}
-      >
-        {!!lastError && !isStreaming && (
-          <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
-            <div className="text-xs text-amber-800 dark:text-amber-200">
-              {t('aiChat.streamError', 'Last request failed. You can retry.')}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => retryLastStream()}
-                className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                {t('common.tryAgain', 'Try again')}
-              </button>
-              <button
-                onClick={() => clearLastError()}
-                className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
-              >
-                {t('common.dismiss', 'Dismiss')}
-              </button>
-            </div>
-          </div>
-        )}
-        {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
-          <div className="flex flex-wrap gap-1.5 px-3 pb-2">
-            {quickPrompts.map((prompt) => (
-              <button
-                key={prompt}
-                onClick={() => handleSendMessage(prompt)}
-                className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        )}
-        <EnhancedChatInput
-          onSend={handleSendMessage}
-          onStopGenerating={() => {
-            const hadPartial = abortStream();
-            setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
-            setTimeout(() => setAbortFeedback(null), 3000);
-          }}
-          onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
-          teresaVoiceStatus={teresaVoice.voiceStatus}
-          teresaVoiceMuted={teresaVoice.isMuted}
-          onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
-          isStreaming={isStreaming}
-          disabled={isDisabled}
-          placeholder={
-            workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
-              ? t('aiChat.teresaContextPlaceholder', {
-                  defaultValue: 'How can Teresa help with {{context}}?',
-                  context: workspaceContext.entityName,
-                })
-              : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
-          }
-          voiceModeEnabled={voiceModeEnabled}
-          onVoiceModeChange={setVoiceModeEnabled}
-          chatLanguage={chatLanguage}
-          voiceState={voiceState}
-          startVoiceListening={startListening}
-          stopVoiceListening={stopListening}
+        {/* Sliding History Panel */}
+        <ChatSlidingPanel
+          onNewChat={handleNewChat}
+          onSelectConversation={handleSelectConversation}
+          activeConversationId={activeConversationId}
         />
-        {chatSuggestions.length > 0 && (
-          <ChatSmartSuggestions
-            suggestions={chatSuggestions}
-            onSuggestionClick={handleSuggestionClick}
-            className="pt-2"
-          />
-        )}
       </div>
 
-      {/* Sliding History Panel */}
-      <ChatSlidingPanel
-        onNewChat={handleNewChat}
-        onSelectConversation={handleSelectConversation}
-        activeConversationId={activeConversationId}
-      />
+      {showWorkPanel && (
+        <aside
+          data-testid="chat-work-panel"
+          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-slate-50 shadow-2xl dark:bg-navy-950 lg:relative lg:z-auto lg:w-[var(--work-canvas-width)] lg:shadow-none"
+          aria-label={t('aiChat.workPanel.title', 'Canvas work area')}
+        >
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t('aiChat.workPanel.resizeDivider', 'Resize Canvas panel')}
+            aria-valuemin={MIN_WORK_CANVAS_WIDTH_PERCENT}
+            aria-valuemax={MAX_WORK_CANVAS_WIDTH_PERCENT}
+            aria-valuenow={Math.round(workCanvasWidthPercent)}
+            tabIndex={0}
+            data-testid="chat-work-panel-edge-resizer"
+            onMouseDown={handleWorkCanvasEdgeMouseDown}
+            onDoubleClick={() => setPersistedWorkCanvasWidth(DEFAULT_WORK_CANVAS_WIDTH_PERCENT)}
+            onKeyDown={handleWorkCanvasEdgeKeyDown}
+            className="group absolute inset-y-0 left-0 z-50 hidden w-4 -translate-x-1/2 cursor-col-resize touch-none outline-none lg:block"
+          >
+            <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-300/45 transition-colors group-hover:bg-primary-400/70 group-focus:bg-primary-400 dark:bg-white/10 dark:group-hover:bg-primary-400/70" />
+          </div>
+          <div className="min-h-0 flex-1">
+            <WorkCanvasDocumentPanel
+              conversationId={activeConversationId}
+              initialStarterId={requestedCanvasStarterId}
+              initialDraftId={requestedCanvasDraftId}
+              onActiveDocumentChange={setActiveCanvasDocument}
+              onCanvasSelectionChange={setActiveCanvasSelection}
+              onClose={() => setIsWorkPanelOpen(false)}
+            />
+          </div>
+        </aside>
+      )}
 
       {/* Important signals panel (T012) */}
       {signalsEnabled && (
@@ -3602,7 +4846,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           projectId={workspaceContext?.projectId || null}
         />
       )}
-
 
       {/* AI Table Builder slide-over panel */}
       {tableBuilderOpen && (

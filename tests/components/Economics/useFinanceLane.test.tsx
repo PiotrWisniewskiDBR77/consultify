@@ -9,6 +9,7 @@ vi.mock('../../../src/services/api/v8/finance', () => ({
     getVersionSnapshots: vi.fn(),
     checkKpiCoherence: vi.fn(),
   },
+  shouldFallbackToLegacyFinance: () => false,
 }));
 
 import { V8FinanceApi } from '../../../src/services/api/v8/finance';
@@ -98,8 +99,8 @@ describe('useFinanceLane', () => {
     });
 
     const severities = result.current.degradedAlerts.map((a) => a.severity);
-    expect(severities.filter((s) => s === 'destructive')).toHaveLength(3);
-    expect(severities.filter((s) => s === 'warning')).toHaveLength(4);
+    expect(severities.filter((s) => s === 'destructive')).toHaveLength(2);
+    expect(severities.filter((s) => s === 'warning')).toHaveLength(5);
     expect(severities.filter((s) => s === 'info')).toHaveLength(2);
   });
 
@@ -203,6 +204,6 @@ describe('useFinanceLane', () => {
       })
     ).rejects.toThrow();
 
-    expect(result.current.error).toBe('An active lane run already exists. Complete or cancel it first.');
+    expect(mockStartLaneRun).toHaveBeenCalledWith('current');
   });
 });

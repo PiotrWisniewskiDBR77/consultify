@@ -22,20 +22,38 @@ export interface TeresaVoiceContext {
 
 function buildOrgContext(ctx: TeresaVoiceContext, pl: boolean): string {
   const parts: string[] = [];
-  if (ctx.organizationName) parts.push(pl ? `Organizacja: ${ctx.organizationName}` : `Organization: ${ctx.organizationName}`);
-  if (ctx.activeProject) parts.push(pl ? `Aktywny projekt: ${ctx.activeProject}` : `Active project: ${ctx.activeProject}`);
-  if (ctx.workspaceType) parts.push(pl ? `Typ workspace: ${ctx.workspaceType}` : `Workspace type: ${ctx.workspaceType}`);
+  if (ctx.organizationName)
+    parts.push(
+      pl ? `Organizacja: ${ctx.organizationName}` : `Organization: ${ctx.organizationName}`
+    );
+  if (ctx.activeProject)
+    parts.push(
+      pl ? `Aktywny projekt: ${ctx.activeProject}` : `Active project: ${ctx.activeProject}`
+    );
+  if (ctx.workspaceType)
+    parts.push(pl ? `Typ workspace: ${ctx.workspaceType}` : `Workspace type: ${ctx.workspaceType}`);
   if (ctx.userName) parts.push(pl ? `Użytkownik: ${ctx.userName}` : `User: ${ctx.userName}`);
-  if (parts.length === 0) return pl ? 'Brak danych organizacji w bieżącym kontekście.' : 'No organization data available in the current context.';
+  if (parts.length === 0)
+    return pl
+      ? 'Brak danych organizacji w bieżącym kontekście.'
+      : 'No organization data available in the current context.';
   return parts.join('\n');
 }
 
 function buildScreenContext(ctx: TeresaVoiceContext, pl: boolean): string {
   const parts: string[] = [];
-  if (ctx.currentScreen) parts.push(pl ? `Bieżący ekran: ${ctx.currentScreen}` : `Current screen: ${ctx.currentScreen}`);
-  if (ctx.entityName) parts.push(pl ? `Encja w fokusie: ${ctx.entityName}` : `Focused entity: ${ctx.entityName}`);
-  if (ctx.recentModules?.length) parts.push(pl ? `Ostatnio odwiedzone moduły: ${ctx.recentModules.join(', ')}` : `Recently visited modules: ${ctx.recentModules.join(', ')}`);
-  if (parts.length === 0) return pl ? 'Brak informacji o bieżącym widoku.' : 'No active surface info.';
+  if (ctx.currentScreen)
+    parts.push(pl ? `Bieżący ekran: ${ctx.currentScreen}` : `Current screen: ${ctx.currentScreen}`);
+  if (ctx.entityName)
+    parts.push(pl ? `Encja w fokusie: ${ctx.entityName}` : `Focused entity: ${ctx.entityName}`);
+  if (ctx.recentModules?.length)
+    parts.push(
+      pl
+        ? `Ostatnio odwiedzone moduły: ${ctx.recentModules.join(', ')}`
+        : `Recently visited modules: ${ctx.recentModules.join(', ')}`
+    );
+  if (parts.length === 0)
+    return pl ? 'Brak informacji o bieżącym widoku.' : 'No active surface info.';
   return parts.join('\n');
 }
 

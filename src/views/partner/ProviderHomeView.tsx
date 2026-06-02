@@ -71,11 +71,11 @@ const WelcomeHeroBanner: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-800 p-8 md:p-12">
+    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-800 p-8 md:p-12">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white dark:bg-navy-900 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-300 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary-300 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
       </div>
 
       <div className="relative z-10 max-w-3xl">
@@ -87,7 +87,7 @@ const WelcomeHeroBanner: React.FC = () => {
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
           {t('partner.hero.title1', 'Be Our Partner.')}
           <br />
-          <span className="text-violet-200">
+          <span className="text-primary-200">
             {t('partner.hero.title2', "Let's Grow Together.")}
           </span>
         </h1>
@@ -102,7 +102,7 @@ const WelcomeHeroBanner: React.FC = () => {
         <div className="flex flex-wrap gap-4">
           <button
             onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-navy-900 text-violet-700 font-semibold rounded-lg hover:bg-violet-50 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-navy-900 text-primary-700 font-semibold rounded-lg hover:bg-primary-50 transition-colors"
           >
             {t('partner.hero.getStarted', 'Open onboarding')}
             <ArrowRight className="w-5 h-5" />
@@ -174,7 +174,7 @@ const ValueCardsSection: React.FC = () => {
         {valueCards.map((card, index) => (
           <div
             key={index}
-            className="group bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-600 transition-all duration-300"
+            className="group bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-300"
           >
             {/* Custom illustration */}
             <div className="w-24 h-24 mb-4 rounded-xl overflow-hidden group-hover:scale-105 transition-transform">
@@ -187,7 +187,7 @@ const ValueCardsSection: React.FC = () => {
 
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{card.description}</p>
 
-            <span className="inline-flex items-center gap-1 text-sm font-medium text-violet-600 dark:text-violet-400">
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-primary-600 dark:text-primary-400">
               <Star className="w-4 h-4" />
               {card.highlight}
             </span>
@@ -260,7 +260,7 @@ const BetaSuccessStories: React.FC = () => {
               </div>
             </div>
 
-            <blockquote className="text-slate-600 dark:text-slate-300 italic mb-4 border-l-2 border-violet-400 pl-4">
+            <blockquote className="text-slate-600 dark:text-slate-300 italic mb-4 border-l-2 border-primary-400 pl-4">
               "{story.quote}"
             </blockquote>
 
@@ -290,8 +290,8 @@ const BetaSuccessStories: React.FC = () => {
         ))}
       </div>
 
-      <div className="text-center p-4 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-xl border border-violet-200 dark:border-violet-800">
-        <p className="text-sm text-violet-700 dark:text-violet-300">
+      <div className="text-center p-4 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+        <p className="text-sm text-primary-700 dark:text-primary-300">
           <Rocket className="w-4 h-4 inline mr-2" />
           <span
             dangerouslySetInnerHTML={{
@@ -321,7 +321,7 @@ const TierProgressionSection: React.FC = () => {
     'bg-amber-600',
     'bg-slate-300',
     'bg-yellow-500',
-    'bg-violet-600',
+    'bg-primary-600',
   ];
   const tierBadges = [
     '/images/partner/tier-registered.png',
@@ -369,7 +369,7 @@ const TierProgressionSection: React.FC = () => {
               </div>
               <div className="mt-3 text-center">
                 <p className="font-semibold text-sm text-navy-900 dark:text-white">{tier.name}</p>
-                <p className="text-lg font-bold text-violet-600 dark:text-violet-400">
+                <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
                   {tier.commission}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -553,7 +553,7 @@ const OnboardingChecklistSection: React.FC = () => {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
             {completedCount}/{steps.length}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -565,12 +565,12 @@ const OnboardingChecklistSection: React.FC = () => {
       {/* Progress bar */}
       <div className="h-2 bg-slate-100 dark:bg-navy-700 rounded-full mb-6 overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-500"
+          className="h-full bg-gradient-to-r from-primary-500 to-indigo-500 rounded-full transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <div className="mb-6 rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/80 dark:bg-violet-900/20 p-4">
+      <div className="mb-6 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-900/20 p-4">
         <p className="text-sm text-slate-700 dark:text-slate-300">
           This is the same shared application flow used from the public landing page and from inside
           the product. Review the application guide, check a proof case, or go straight to custom
@@ -579,21 +579,21 @@ const OnboardingChecklistSection: React.FC = () => {
         <div className="mt-4 flex flex-wrap gap-3">
           <button
             onClick={openApplicationGuide}
-            className="inline-flex items-center gap-2 rounded-lg border border-violet-300 dark:border-violet-700 px-4 py-2 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+            className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
           >
             <FileText className="w-4 h-4" />
             Open application guide
           </button>
           <button
             onClick={openCaseStudy}
-            className="inline-flex items-center gap-2 rounded-lg border border-violet-300 dark:border-violet-700 px-4 py-2 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+            className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
           >
             <BookOpen className="w-4 h-4" />
             Review proof case
           </button>
           <button
             onClick={openCustomTerms}
-            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             <MessageCircle className="w-4 h-4" />
             Discuss custom terms
@@ -610,7 +610,7 @@ const OnboardingChecklistSection: React.FC = () => {
               'rounded-xl border p-4 transition-all',
               step.completed
                 ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800'
-                : 'bg-slate-50 dark:bg-navy-700/30 border-slate-200 dark:border-navy-600 hover:border-violet-300 dark:hover:border-violet-700'
+                : 'bg-slate-50 dark:bg-navy-700/30 border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-700'
             )}
           >
             <div className="flex items-start gap-4">
@@ -671,7 +671,7 @@ const OnboardingChecklistSection: React.FC = () => {
                 {!step.completed && (
                   <button
                     onClick={goToOnboarding}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     {step.cta}
                     <ChevronRight className="w-4 h-4" />
@@ -711,9 +711,9 @@ const CommissionCalculatorSection: React.FC = () => {
   const annualCommission = annualRevenue * tier.rate;
 
   return (
-    <div className="bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 rounded-xl border border-violet-200 dark:border-violet-800 p-6">
+    <div className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-800 p-6">
       <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 mb-2">
+        <div className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-2">
           <Calculator className="w-5 h-5" />
           <span className="font-semibold">Commission Calculator</span>
         </div>
@@ -739,8 +739,8 @@ const CommissionCalculatorSection: React.FC = () => {
                 className={cn(
                   'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
                   clientsPerMonth === num
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-white dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-primary-100 dark:hover:bg-primary-900/30'
                 )}
               >
                 {num}
@@ -761,11 +761,11 @@ const CommissionCalculatorSection: React.FC = () => {
             step="100"
             value={avgClientValue}
             onChange={(e) => setAvgClientValue(Number(e.target.value))}
-            className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-lg appearance-none cursor-pointer accent-violet-600"
+            className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-lg appearance-none cursor-pointer accent-primary-600"
           />
           <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1">
             <span>€500</span>
-            <span className="font-semibold text-violet-600 dark:text-violet-400">
+            <span className="font-semibold text-primary-600 dark:text-primary-400">
               €{avgClientValue.toLocaleString()}
             </span>
             <span>€5,000</span>
@@ -777,8 +777,8 @@ const CommissionCalculatorSection: React.FC = () => {
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 text-center">
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
           Your tier:{' '}
-          <span className="font-semibold text-violet-600 dark:text-violet-400">{tier.name}</span> (
-          {Math.round(tier.rate * 100)}% commission)
+          <span className="font-semibold text-primary-600 dark:text-primary-400">{tier.name}</span>{' '}
+          ({Math.round(tier.rate * 100)}% commission)
         </p>
 
         <div className="my-4">
@@ -800,7 +800,7 @@ const CommissionCalculatorSection: React.FC = () => {
 
         <button
           onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors"
         >
           <Rocket className="w-5 h-5" />
           Start Earning Now - Generate Your Code
@@ -861,28 +861,27 @@ const AcademyPreviewSection: React.FC = () => {
       {/* Left: Courses list */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <GraduationCap className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          <GraduationCap className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           <h2 className="text-xl font-bold text-navy-900 dark:text-white">
             Sharpen Your Skills with Partner Academy
           </h2>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-          Structured partner enablement beyond support docs: foundations, role-specific tracks, and certification readiness.
+          Structured partner enablement beyond support docs: foundations, role-specific tracks, and
+          certification readiness.
         </p>
-        <div className="mb-6 rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/80 dark:bg-violet-900/20 p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">
+        <div className="mb-6 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-900/20 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-300">
             Academy boundary
           </div>
           <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
-            Help and partner docs explain workflows when you are working. Partner Academy is the separate learning layer for structured progression, repeatable enablement, and certification signals.
+            Help and partner docs explain workflows when you are working. Partner Academy is the
+            separate learning layer for structured progression, repeatable enablement, and
+            certification signals.
           </p>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
-              Foundations
-            </div>
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
-              Role path
-            </div>
+            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">Foundations</div>
+            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">Role path</div>
             <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
               Certification
             </div>
@@ -890,14 +889,14 @@ const AcademyPreviewSection: React.FC = () => {
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`)}
-              className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
               Open learning path
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => navigate(PARTNER_DOCS.certification.href)}
-              className="inline-flex items-center gap-2 rounded-lg border border-violet-300 dark:border-violet-700 px-4 py-2 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+              className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
             >
               Open certification guide
             </button>
@@ -911,8 +910,8 @@ const AcademyPreviewSection: React.FC = () => {
               className={cn(
                 'rounded-lg border transition-all cursor-pointer',
                 expandedCourse === index
-                  ? 'border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-violet-200 dark:hover:border-violet-800'
+                  ? 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-200 dark:hover:border-primary-800'
               )}
               onClick={() => setExpandedCourse(index)}
             >
@@ -921,7 +920,7 @@ const AcademyPreviewSection: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <ChevronDown
                       className={cn(
-                        'w-5 h-5 text-violet-500 transition-transform',
+                        'w-5 h-5 text-primary-500 transition-transform',
                         expandedCourse === index ? 'rotate-0' : '-rotate-90'
                       )}
                     />
@@ -943,7 +942,7 @@ const AcademyPreviewSection: React.FC = () => {
                       </span>
                     )}
                     {course.advanced && (
-                      <span className="px-2 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-medium rounded">
+                      <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs font-medium rounded">
                         ADVANCED
                       </span>
                     )}
@@ -969,7 +968,7 @@ const AcademyPreviewSection: React.FC = () => {
                         event.stopPropagation();
                         navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded transition-colors"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded transition-colors"
                     >
                       Start Course
                       <ArrowRight className="w-4 h-4" />
@@ -1008,7 +1007,7 @@ const ContactPartnerManagerSection: React.FC = () => {
 
       {/* Partner Manager Card */}
       <div className="flex flex-col items-center mb-6">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-violet-100 dark:ring-violet-900/50">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-primary-100 dark:ring-primary-900/50">
           BS
         </div>
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Bartosz Sotomski</h3>
@@ -1027,16 +1026,16 @@ const ContactPartnerManagerSection: React.FC = () => {
           href="https://calendly.com/bartosz-sotomski"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors group"
+          className="flex items-center gap-3 p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors group"
         >
-          <div className="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center">
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
             <p className="font-medium text-navy-900 dark:text-white">Book a Call</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">Schedule 15-min intro call</p>
           </div>
-          <ExternalLink className="w-4 h-4 text-violet-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ExternalLink className="w-4 h-4 text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>
 
         <a
@@ -1124,7 +1123,7 @@ const FAQSection: React.FC = () => {
   return (
     <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
       <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 text-violet-600 dark:text-violet-400 mb-2">
+        <div className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-2">
           <HelpCircle className="w-5 h-5" />
           <span className="font-semibold">FAQ</span>
         </div>
@@ -1140,7 +1139,7 @@ const FAQSection: React.FC = () => {
             className={cn(
               'rounded-lg border transition-all',
               openFaq === index
-                ? 'border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/10'
+                ? 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/10'
                 : 'border-slate-200 dark:border-navy-700'
             )}
           >
@@ -1151,7 +1150,7 @@ const FAQSection: React.FC = () => {
               <span className="font-medium text-navy-900 dark:text-white pr-4">{faq.question}</span>
               <ChevronDown
                 className={cn(
-                  'w-5 h-5 text-violet-500 flex-shrink-0 transition-transform',
+                  'w-5 h-5 text-primary-500 flex-shrink-0 transition-transform',
                   openFaq === index ? 'rotate-180' : ''
                 )}
               />
@@ -1171,7 +1170,7 @@ const FAQSection: React.FC = () => {
       <div className="mt-6 flex justify-center">
         <button
           onClick={() => navigate(PARTNER_DOCS.faq.href)}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-navy-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-navy-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-primary-300 hover:text-primary-600 dark:hover:text-primary-400"
         >
           Open full partner FAQ
           <ArrowRight className="w-4 h-4" />
@@ -1230,7 +1229,7 @@ const FooterResourcesSection: React.FC = () => {
           className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
         >
           <div className="flex items-center gap-2 mb-4">
-            <column.icon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            <column.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             <h3 className="font-semibold text-navy-900 dark:text-white">{column.title}</h3>
           </div>
 
@@ -1240,7 +1239,7 @@ const FooterResourcesSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate(link.href)}
-                  className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                  className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 >
                   {link.label}
                 </button>

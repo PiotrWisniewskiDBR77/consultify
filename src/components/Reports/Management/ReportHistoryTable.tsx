@@ -81,7 +81,7 @@ const reportTypeLabels = {
   },
   STEERING_COMMITTEE: {
     label: 'Steering Committee',
-    color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
   },
   PORTFOLIO_HEALTH: {
     label: 'Portfolio Health',
@@ -115,7 +115,7 @@ const statusLabels: Record<ManagementReportStatus, { label: string; color: strin
   },
   APPROVED: {
     label: 'Approved',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
   },
   ARCHIVED: {
     label: 'Archived',
@@ -176,7 +176,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     reportType: (e.target.value as ManagementReportType) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">All Types</option>
                 <option value="TEAM_MEETING">Team Meeting</option>
@@ -201,7 +201,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     scope: (e.target.value as ManagementReportScope) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">All Scopes</option>
                 <option value="PROJECT">Project</option>
@@ -223,7 +223,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     status: (e.target.value as ManagementReportStatus) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">All Status</option>
                 <option value="DRAFT">Draft</option>
@@ -378,28 +378,28 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                         {onDownloadPDF && report.pdfPath && (
                           <button
                             onClick={() => onDownloadPDF(report.id)}
-                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                             title="Download PDF"
                           >
-                            <FileText size={16} className="text-red-500" />
+                            <FileText size={16} className="text-rose-500" />
                           </button>
                         )}
                         {onDownloadPPTX && report.pptxPath && (
                           <button
                             onClick={() => onDownloadPPTX(report.id)}
-                            className="p-2 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
                             title="Download PPTX"
                           >
-                            <Download size={16} className="text-orange-500" />
+                            <Download size={16} className="text-amber-500" />
                           </button>
                         )}
                         {onShare && (
                           <button
                             onClick={() => onShare(report.id)}
-                            className="p-2 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                             title="Share"
                           >
-                            <Share2 size={16} className="text-violet-500" />
+                            <Share2 size={16} className="text-primary-500" />
                           </button>
                         )}
                         {/* B5.4: Rename report */}
@@ -411,10 +411,10 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                                 onRenameReport(report.id, newTitle.trim());
                               }
                             }}
-                            className="p-2 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                             title="Rename"
                           >
-                            <FileText size={16} className="text-cyan-500" />
+                            <FileText size={16} className="text-blue-500" />
                           </button>
                         )}
                       </div>
@@ -471,7 +471,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     onClick={() => handlePageChange(pageNum)}
                     className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
                       page === pageNum
-                        ? 'bg-violet-500 text-white'
+                        ? 'bg-primary-500 text-white'
                         : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
                     }`}
                   >

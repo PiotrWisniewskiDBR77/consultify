@@ -4,7 +4,16 @@
  * Shows platform usage statistics per organization.
  */
 
-import { BarChart3, Building2, Loader2, RefreshCw, TrendingUp, Users, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Building2,
+  Loader2,
+  RefreshCw,
+  TrendingUp,
+  Users,
+  Zap,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
@@ -21,6 +30,7 @@ interface OrgUsage {
 
 export const UsageStatsPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [orgUsage, setOrgUsage] = useState<OrgUsage[]>([]);
   const [totals, setTotals] = useState({
     totalOrgs: 0,
@@ -35,10 +45,11 @@ export const UsageStatsPanel: React.FC = () => {
 
   const fetchUsageData = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       // Fetch real usage data from the new endpoint
       const [usageData, dashboard] = await Promise.all([
-        Api.getUsageByOrganization().catch(() => []),
+        Api.getUsageByOrganization(),
         Api.getSuperAdminDashboard(),
       ]);
 
@@ -61,6 +72,7 @@ export const UsageStatsPanel: React.FC = () => {
       });
     } catch (error) {
       console.error('Failed to fetch usage data:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to fetch usage data');
     } finally {
       setLoading(false);
     }
@@ -76,6 +88,20 @@ export const UsageStatsPanel: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {loadError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-4 text-rose-700 dark:text-rose-300">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} />
+            <span>{loadError}</span>
+          </div>
+          <button
+            onClick={fetchUsageData}
+            className="px-3 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-sm font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
@@ -107,7 +133,7 @@ export const UsageStatsPanel: React.FC = () => {
         </div>
         <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingUp size={20} className="text-purple-400" />
+            <TrendingUp size={20} className="text-primary-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Tokens Used</span>
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -164,7 +190,7 @@ export const UsageStatsPanel: React.FC = () => {
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
                         org.plan === 'enterprise'
-                          ? 'bg-purple-500/20 text-purple-400'
+                          ? 'bg-primary-500/20 text-primary-400'
                           : org.plan === 'pro'
                             ? 'bg-blue-500/20 text-blue-400'
                             : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'

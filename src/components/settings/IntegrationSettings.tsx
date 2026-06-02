@@ -213,7 +213,7 @@ function getIntegrationReadinessMeta(
       isReady: false,
       isPending: false,
       badgeLabel: t('settings.integrations.readiness.reauthRequired', 'Reauth Required'),
-      badgeClassName: 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300',
+      badgeClassName: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
       guidance: t(
         'settings.integrations.readiness.reauthRequiredGuidance',
         'Governed sync marked this connection as requiring re-authorization before sync can resume.'
@@ -230,7 +230,7 @@ function getIntegrationReadinessMeta(
       isReady: false,
       isPending: false,
       badgeLabel: t('settings.integrations.readiness.error', 'Error'),
-      badgeClassName: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300',
+      badgeClassName: 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300',
       guidance: t(
         'settings.integrations.readiness.errorGuidance',
         'The last governed sync run failed. Review the latest error before resuming sync.'
@@ -544,7 +544,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
       </div>
     );
   }
@@ -1093,7 +1093,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                             </span>
                           </div>
                           {connected.last_error ? (
-                            <div className="text-red-600 dark:text-red-400 mt-1">
+                            <div className="text-rose-600 dark:text-rose-400 mt-1">
                               Last error: {String(connected.last_error).slice(0, 120)}
                             </div>
                           ) : null}
@@ -1155,7 +1155,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </button>
                         <button
                           onClick={() => handleDelete(connected.id)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
                         >
                           Disconnect
                         </button>
@@ -1205,7 +1205,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         )}
                         <button
                           onClick={() => handleDelete(connected.id)}
-                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                          className="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
                         >
                           Disconnect
                         </button>
@@ -1325,7 +1325,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-600 hover:text-red-600 hover:bg-red-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-300"
+                          className="px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-300"
                         >
                           Remove
                         </button>
@@ -1452,7 +1452,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               l.status === 'success'
                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                                 : l.status === 'failed'
-                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400'
                                   : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
                             }`}
                           >
@@ -1505,7 +1505,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           <div className="flex justify-end">
             <button
               onClick={() => setIsWebhookModalOpen(true)}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
             >
               <Plus size={18} />
               Add Webhook
@@ -1552,7 +1552,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       <button
                         onClick={() => handleTestWebhook(webhook.targetUrl)}
                         disabled={testingWebhook}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-violet-600 transition-colors"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary-600 transition-colors"
                         title="Test webhook"
                       >
                         {testingWebhook ? (
@@ -1563,7 +1563,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                       </button>
                       <button
                         onClick={() => handleDeleteWebhook(webhook.id)}
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600 transition-colors"
+                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600 transition-colors"
                         title="Delete webhook"
                       >
                         <Trash2 size={18} />
@@ -1575,7 +1575,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     {webhook.eventTypes.map((event) => (
                       <span
                         key={event}
-                        className="px-2 py-1 text-xs font-medium bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded"
+                        className="px-2 py-1 text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded"
                       >
                         {event}
                       </span>
@@ -1630,7 +1630,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   type="text"
                   value={webhookForm.name}
                   onChange={(e) => setWebhookForm({ ...webhookForm, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="My Webhook"
                 />
               </div>
@@ -1643,7 +1643,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   type="url"
                   value={webhookForm.targetUrl}
                   onChange={(e) => setWebhookForm({ ...webhookForm, targetUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="https://your-server.com/webhook"
                 />
               </div>
@@ -1668,7 +1668,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               type="checkbox"
                               checked={webhookForm.eventTypes.includes(event.type)}
                               onChange={() => toggleEventType(event.type)}
-                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
                             />
                             <div>
                               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -1704,7 +1704,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                     !webhookForm.targetUrl ||
                     webhookForm.eventTypes.length === 0
                   }
-                  className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium flex items-center gap-2"
                 >
                   {connecting && <Loader2 size={16} className="animate-spin" />}
                   {connecting ? 'Creating...' : 'Create Webhook'}
@@ -1801,7 +1801,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                         </span>
                       </div>
                       {p.last_error ? (
-                        <div className="text-sm text-red-600 dark:text-red-400 mt-2">
+                        <div className="text-sm text-rose-600 dark:text-rose-400 mt-2">
                           {t('common.error', 'Error')}: {String(p.last_error).slice(0, 160)}
                         </div>
                       ) : null}
@@ -1859,7 +1859,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           }
                         }}
                         disabled={!isAdmin}
-                        className="px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 flex items-center gap-2 disabled:opacity-60"
+                        className="px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 flex items-center gap-2 disabled:opacity-60"
                       >
                         <Trash2 size={16} />
                         {t('common.delete', 'Delete')}

@@ -69,20 +69,20 @@ describe('BecomePartnerView marketing shell parity', () => {
     renderView();
 
     expect(screen.getByTestId('landing-mobile-menu-trigger')).toBeInTheDocument();
-    expect(screen.getByText('Terms')).toBeInTheDocument();
+    expect(screen.getAllByText('Consultify Partner Program').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
-    expect(screen.getByText('One path from application to active partner')).toBeInTheDocument();
+    expect(screen.getByText('What You Get as a Partner')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mam już konto partnera' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się jako partner' }));
 
-    expect(navigateMock).toHaveBeenCalledWith(ROUTES.PARTNER.LANDING);
+    expect(navigateMock).toHaveBeenCalledWith('/login');
   });
 
   it('routes the main application CTA to partner onboarding', () => {
     renderView();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Aplikuj o Partnerstwo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply for Partnership' }));
 
-    expect(navigateMock).toHaveBeenCalledWith(ROUTES.PARTNER.ONBOARDING);
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.PARTNER.PUBLIC_APPLY);
   });
 });

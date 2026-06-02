@@ -1,5 +1,5 @@
-import { type AuthenticatedRequest, catchAsync, deps, tableExists } from './shared.js';
 import logger from '../../utils/Logger.js';
+import { type AuthenticatedRequest, catchAsync, deps, tableExists } from './shared.js';
 
 // =========================================
 // INTEGRATIONS & WEBHOOKS

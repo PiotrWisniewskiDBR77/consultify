@@ -69,7 +69,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Ryzyko',
     descEn: 'Risk item with probability & impact',
     descPl: 'Ryzyko z prawdopodobieństwem i wpływem',
-    color: '#ef4444',
+    color: '#f43f5e',
     defaults: { type: 'risk', status: 'To Do', priority: 'High' },
   },
   {
@@ -79,7 +79,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Interesariusz',
     descEn: 'Person or group with influence & interest',
     descPl: 'Osoba lub grupa z wpływem i zainteresowaniem',
-    color: '#8b5cf6',
+    color: '#6366f1',
     defaults: { type: 'stakeholder', status: 'In Progress' },
   },
   {
@@ -99,7 +99,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Decyzja',
     descEn: 'Decision to be made with options',
     descPl: 'Decyzja do podjęcia z opcjami',
-    color: '#06b6d4',
+    color: '#3b82f6',
     defaults: { type: 'decision', status: 'To Do' },
   },
   {
@@ -119,7 +119,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'KPI / Metryka',
     descEn: 'Key performance indicator to track',
     descPl: 'Kluczowy wskaźnik do śledzenia',
-    color: '#f97316',
+    color: '#f59e0b',
     defaults: { type: 'kpi' },
   },
   {

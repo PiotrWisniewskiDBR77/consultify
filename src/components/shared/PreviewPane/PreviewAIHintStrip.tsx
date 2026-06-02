@@ -84,7 +84,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
           {applyButton && result ? (
             <button
               onClick={applyButton.onClick}
-              className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[11px] font-medium border border-purple-400/30 dark:border-purple-500/20 bg-transparent text-purple-600 dark:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 transition-colors"
+              className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[11px] font-medium border border-primary-400/30 dark:border-primary-500/20 bg-transparent text-primary-600 dark:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-500/10 transition-colors"
             >
               <Check size={11} />
               {applyButton.label}
@@ -111,7 +111,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
                         }}
                         className={KEBAB_ITEM}
                       >
-                        <Sparkles size={12} className="text-purple-500" />
+                        <Sparkles size={12} className="text-primary-500" />
                         {isPolish ? 'Regeneruj' : 'Regenerate'}
                       </button>
                     ) : null}
@@ -161,9 +161,9 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
               onRunHint?.(hint);
             }}
             disabled={loading}
-            className={`${PREVIEW_HINT_CHIP} border-purple-300/40 dark:border-purple-500/20${disabled ? ' opacity-50' : ''}`}
+            className={`${PREVIEW_HINT_CHIP} border-primary-300/40 dark:border-primary-500/20${disabled ? ' opacity-50' : ''}`}
           >
-            <Zap size={10} className="text-purple-500 dark:text-purple-400" />
+            <Zap size={10} className="text-primary-500 dark:text-primary-400" />
             {hint}
           </button>
         ))}
@@ -180,14 +180,14 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
             disabled={loading}
             className={`${PREVIEW_HINT_CHIP}${disabled ? ' opacity-50' : ''}`}
           >
-            <Sparkles size={10} className="text-purple-400/70 dark:text-purple-500/70" />
+            <Sparkles size={10} className="text-primary-400/70 dark:text-primary-500/70" />
             {hint}
           </button>
         ))}
       </div>
 
       {error ? (
-        <div className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</div>
+        <div className="mt-2 text-xs text-rose-600 dark:text-rose-400">{error}</div>
       ) : result ? (
         <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
           {result}
@@ -196,7 +196,7 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
 
       {chatAnswer ? (
         <div className="mt-2 flex items-start gap-1.5 text-xs text-slate-700 dark:text-slate-200">
-          <MessageCircle size={11} className="text-purple-400 shrink-0 mt-0.5" />
+          <MessageCircle size={11} className="text-primary-400 shrink-0 mt-0.5" />
           <span className="whitespace-pre-wrap">{chatAnswer}</span>
         </div>
       ) : null}
@@ -214,15 +214,15 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
             }}
             placeholder={isPolish ? 'Zapytaj o to...' : 'Ask about this...'}
             disabled={chatLoading}
-            className="flex-1 h-7 px-2.5 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-400/40"
+            className="flex-1 h-7 px-2.5 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-primary-400/40"
           />
           <button
             onClick={handleChatSubmit}
             disabled={!chatInput.trim() || chatLoading}
-            className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-purple-500 dark:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 transition-colors disabled:opacity-40"
+            className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-primary-500 dark:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-500/10 transition-colors disabled:opacity-40"
           >
             {chatLoading ? (
-              <span className="h-3 w-3 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />
+              <span className="h-3 w-3 rounded-full border-2 border-primary-400 border-t-transparent animate-spin" />
             ) : (
               <Send size={12} />
             )}

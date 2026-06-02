@@ -138,11 +138,11 @@ const getSeverityCardStyle = (severity?: string) => {
   switch (severity?.toUpperCase()) {
     case 'CRITICAL':
       return {
-        border: 'border-l-4 border-l-red-500',
-        bg: 'bg-red-500/5 dark:bg-red-500/10',
-        badge: 'bg-red-500/15 text-red-400 border border-red-500/20',
+        border: 'border-l-4 border-l-rose-500',
+        bg: 'bg-rose-500/5 dark:bg-rose-500/10',
+        badge: 'bg-rose-500/15 text-rose-400 border border-rose-500/20',
         label: 'Critical',
-        dot: 'bg-red-500',
+        dot: 'bg-rose-500',
         icon: Zap,
       };
     case 'WARNING':

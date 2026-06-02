@@ -32,6 +32,16 @@ type SanityReport = {
   timestamp: string;
 };
 
+const contextCategories: ContextCategory[] = [
+  'ORG_PROFILE',
+  'ORG_TERMINOLOGY',
+  'ORG_PATTERNS',
+  'ORG_STRATEGY',
+  'ORG_SECURITY_POSTURE',
+  'ORG_FINANCIAL_SUMMARY',
+  'ORG_DOCUMENTS',
+];
+
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -47,6 +57,8 @@ export const AIGovernanceTab: React.FC = () => {
   const [sanityReport, setSanityReport] = useState<SanityReport | null>(null);
 
   const [hasChanges, setHasChanges] = useState(false);
+  const [governanceUnavailable, setGovernanceUnavailable] = useState<string | null>(null);
+  const [healthUnavailable, setHealthUnavailable] = useState<string | null>(null);
 
   const errorCount = useMemo(() => {
     if (!sanityReport?.healthChecks) return 0;
@@ -58,19 +70,85 @@ export const AIGovernanceTab: React.FC = () => {
     return sanityReport.healthChecks.filter((c) => c.status === 'warn').length;
   }, [sanityReport]);
 
-  const loadAll = async () => {
+  const normalizeBoolean = (value: unknown): boolean => {
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return Boolean(value);
+  };
+
+  const extractContextPolicy = (payload: any): ContextPolicy => {
+    const source = payload?.data?.data ?? payload?.data ?? payload;
+    if (!source || typeof source !== 'object') {
+      throw new Error('Governance context policy response was incomplete');
+    }
+    const categories = source.categories;
+    if (!categories || typeof categories !== 'object') {
+      throw new Error('Governance context policy response was incomplete');
+    }
+    const normalizedCategories = contextCategories.reduce(
+      (acc, key) => ({ ...acc, [key]: normalizeBoolean(categories[key]) }),
+      {} as Record<ContextCategory, boolean>
+    );
+    return {
+      categories: normalizedCategories,
+      piiRedaction:
+        source.piiRedaction === 'off' || source.piiRedaction === 'on'
+          ? source.piiRedaction
+          : 'inherit',
+      retention: source.retention === 'strict' ? 'strict' : 'standard',
+    };
+  };
+
+  const extractPolicySummary = (payload: any): PolicySummary => {
+    const source = payload?.data?.data?.summary ?? payload?.data?.summary ?? payload?.summary;
+    if (!source || typeof source !== 'object') {
+      throw new Error('Governance policy summary response was incomplete');
+    }
+    return {
+      currentLevel: String(source.currentLevel || 'balanced'),
+      description: String(source.description || ''),
+      internetEnabled: normalizeBoolean(source.internetEnabled),
+      auditRequired: normalizeBoolean(source.auditRequired),
+    };
+  };
+
+  const extractHealthReport = (payload: any): SanityReport => {
+    const source = payload?.data?.data ?? payload?.data ?? payload;
+    if (!source || typeof source !== 'object') {
+      throw new Error('Health report response was incomplete');
+    }
+    return {
+      duplicateMounts: Array.isArray(source.duplicateMounts) ? source.duplicateMounts : [],
+      healthChecks: Array.isArray(source.healthChecks) ? source.healthChecks : [],
+      timestamp: source.timestamp || new Date().toISOString(),
+    };
+  };
+
+  const getErrorMessage = (error: any, fallback: string) => {
+    const message = error?.message || fallback;
+    const code = error?.data?.code;
+    return code ? `${message} (${code})` : message;
+  };
+
+  const loadAll = async (): Promise<{ ok: true } | { ok: false; message: string }> => {
     setLoading(true);
     try {
       const [ctxJson, polJson] = await Promise.all([
         Api.getAIGovernanceContextPolicy(),
         Api.getAIGovernancePolicy(),
       ]);
-
-      setContextPolicy(ctxJson?.data || null);
-      setPolicySummary(polJson?.data?.summary || null);
+      setContextPolicy(extractContextPolicy(ctxJson));
+      setPolicySummary(extractPolicySummary(polJson));
+      setGovernanceUnavailable(null);
       setHasChanges(false);
+      return { ok: true };
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to load governance settings');
+      const message = getErrorMessage(e, 'Failed to load governance settings');
+      setContextPolicy(null);
+      setPolicySummary(null);
+      setGovernanceUnavailable(message);
+      return { ok: false, message };
     } finally {
       setLoading(false);
     }
@@ -80,9 +158,13 @@ export const AIGovernanceTab: React.FC = () => {
     setRefreshingHealth(true);
     try {
       const json = await Api.getAIGovernanceHealth();
-      setSanityReport(json?.data || null);
+      setSanityReport(extractHealthReport(json));
+      setHealthUnavailable(null);
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to load health report');
+      const message = getErrorMessage(e, 'Failed to load health report');
+      toast.error(message);
+      setHealthUnavailable(message);
+      setSanityReport(null);
     } finally {
       setRefreshingHealth(false);
     }
@@ -102,7 +184,7 @@ export const AIGovernanceTab: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!contextPolicy || !policySummary) return;
+    if (!contextPolicy || !policySummary || governanceUnavailable) return;
     setSaving(true);
     try {
       await Promise.all([
@@ -113,12 +195,15 @@ export const AIGovernanceTab: React.FC = () => {
           policyLevel: policySummary.currentLevel,
         }),
       ]);
-
+      const readBack = await loadAll();
+      if (!readBack.ok) {
+        toast.error(readBack.message);
+        return;
+      }
       toast.success('Governance settings saved');
       setHasChanges(false);
-      await loadAll();
     } catch (e: any) {
-      toast.error(e?.message || 'Save failed');
+      toast.error(getErrorMessage(e, 'Save failed'));
     } finally {
       setSaving(false);
     }
@@ -159,7 +244,7 @@ export const AIGovernanceTab: React.FC = () => {
           </button>
           <button
             onClick={handleSave}
-            disabled={!hasChanges || saving}
+            disabled={!hasChanges || saving || Boolean(governanceUnavailable)}
             className="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors flex items-center gap-2"
             title="Save"
           >
@@ -175,7 +260,12 @@ export const AIGovernanceTab: React.FC = () => {
           Context policy
         </h3>
 
-        {!contextPolicy ? (
+        {governanceUnavailable ? (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+            <div className="font-medium mb-1">AI governance unavailable</div>
+            <div>{governanceUnavailable}</div>
+          </div>
+        ) : !contextPolicy ? (
           <div className="text-slate-500 dark:text-slate-400 text-sm">No policy loaded.</div>
         ) : (
           <>
@@ -255,7 +345,11 @@ export const AIGovernanceTab: React.FC = () => {
           Internet & audit policy
         </h3>
 
-        {!policySummary ? (
+        {governanceUnavailable ? (
+          <div className="text-slate-500 dark:text-slate-400 text-sm">
+            Governance policy unavailable.
+          </div>
+        ) : !policySummary ? (
           <div className="text-slate-500 dark:text-slate-400 text-sm">No policy loaded.</div>
         ) : (
           <>
@@ -323,7 +417,12 @@ export const AIGovernanceTab: React.FC = () => {
           </button>
         </div>
 
-        {!sanityReport ? (
+        {healthUnavailable ? (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+            <div className="font-medium mb-1">Health report unavailable</div>
+            <div>{healthUnavailable}</div>
+          </div>
+        ) : !sanityReport ? (
           <div className="text-slate-500 dark:text-slate-400 text-sm">No report loaded.</div>
         ) : (
           <>

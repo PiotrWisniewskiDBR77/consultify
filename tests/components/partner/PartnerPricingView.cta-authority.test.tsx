@@ -39,10 +39,10 @@ describe('PartnerPricingView CTA authority', () => {
   it('routes entry CTAs to onboarding and governed partner docs', () => {
     render(<PartnerPricingView />);
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Otwórz onboarding partnera' })[0]);
-    expect(navigateMock).toHaveBeenCalledWith(ROUTES.PARTNER.ONBOARDING);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Apply' })[0]);
+    expect(navigateMock).toHaveBeenCalledWith(ROUTES.PARTNER.PUBLIC_APPLY);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Otwórz materiały partnera' }));
-    expect(navigateMock).toHaveBeenCalledWith(`${ROUTES.PARTNER.LANDING}?tab=documentation`);
+    fireEvent.click(screen.getByRole('button', { name: 'Odkrywaj program' }));
+    expect(navigateMock).toHaveBeenCalledWith('/docs/consultify-partner-program/partner-program-overview');
   });
 });

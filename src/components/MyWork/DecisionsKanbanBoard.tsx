@@ -139,9 +139,9 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     statuses: ['escalated'],
     apiStatus: 'ESCALATED',
     icon: <TrendingUp size={14} />,
-    headerColor: 'text-purple-400',
-    dotColor: 'bg-purple-500',
-    dropHighlight: 'ring-purple-500/40 bg-purple-500/5',
+    headerColor: 'text-amber-400',
+    dotColor: 'bg-amber-500',
+    dropHighlight: 'ring-amber-500/40 bg-amber-500/5',
   },
   {
     id: 'approved',
@@ -159,9 +159,9 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     statuses: ['rejected'],
     apiStatus: 'REJECTED',
     icon: <X size={14} />,
-    headerColor: 'text-red-400',
-    dotColor: 'bg-red-500',
-    dropHighlight: 'ring-red-500/40 bg-red-500/5',
+    headerColor: 'text-rose-400',
+    dotColor: 'bg-rose-500',
+    dropHighlight: 'ring-rose-500/40 bg-rose-500/5',
   },
   {
     id: 'deferred',
@@ -192,20 +192,20 @@ const getPriorityCardStyle = (priority?: string) => {
   switch (priority?.toUpperCase()) {
     case 'CRITICAL':
       return {
-        border: 'border-l-4 border-l-red-500',
-        bg: 'bg-red-500/5 dark:bg-red-500/10',
-        badge: 'bg-red-500/15 text-red-400 border border-red-500/20',
+        border: 'border-l-4 border-l-rose-500',
+        bg: 'bg-rose-500/5 dark:bg-rose-500/10',
+        badge: 'bg-rose-500/15 text-rose-400 border border-rose-500/20',
         label: 'Critical',
-        dot: 'bg-red-500',
+        dot: 'bg-rose-500',
         icon: Zap,
       };
     case 'HIGH':
       return {
-        border: 'border-l-4 border-l-orange-500',
-        bg: 'bg-orange-500/5 dark:bg-orange-500/10',
-        badge: 'bg-orange-500/15 text-orange-400 border border-orange-500/20',
+        border: 'border-l-4 border-l-amber-500',
+        bg: 'bg-amber-500/5 dark:bg-amber-500/10',
+        badge: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
         label: 'High',
-        dot: 'bg-orange-500',
+        dot: 'bg-amber-500',
         icon: Flag,
       };
     case 'MEDIUM':
@@ -351,7 +351,7 @@ const KanbanCardContent: React.FC<{
         {dueLabel ? (
           <span
             className={`flex items-center gap-1 text-[11px] font-medium ${
-              overdue ? 'text-red-400' : 'text-slate-500 dark:text-slate-400'
+              overdue ? 'text-rose-400' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             <Calendar size={11} />
@@ -365,7 +365,7 @@ const KanbanCardContent: React.FC<{
         )}
         {decision.ownerName ? (
           <div className="flex items-center gap-1.5" title={decision.ownerName}>
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-[10px] font-bold text-white ring-1 ring-white/10">
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-[10px] font-bold text-white ring-1 ring-white/10">
               {getInitials(decision.ownerName)}
             </div>
           </div>
@@ -882,7 +882,7 @@ export const DecisionsKanbanBoard: React.FC<DecisionsKanbanBoardProps> = ({
             {onCreateDecision && (
               <button
                 onClick={onCreateDecision}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-400 border border-purple-500/50 rounded-lg hover:bg-purple-500/10 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-400 border border-primary-500/50 rounded-lg hover:bg-primary-500/10 transition-colors"
               >
                 <Plus size={16} />
                 {t('myWork.decisions.createCta', 'Create Decision')}

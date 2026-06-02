@@ -87,7 +87,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
           {t('presentations.setup.subtitle', 'Set the mode, audience, visuals, and style.')}
         </p>
         {smartDefaultsApplied && (
-          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 text-xs text-purple-600 dark:text-purple-400">
+          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-500/10 text-xs text-primary-600 dark:text-primary-400">
             <Wand2 size={12} />
             {t(
               'presentations.setup.smartDefaults',
@@ -97,7 +97,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
         )}
         {smartDefaultsLoading && (
           <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 dark:bg-navy-800 text-xs text-slate-400">
-            <div className="w-3 h-3 border border-purple-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-3 h-3 border border-primary-400 border-t-transparent rounded-full animate-spin" />
             {t('presentations.setup.loadingDefaults', 'Loading smart defaults...')}
           </div>
         )}
@@ -135,11 +135,11 @@ export const SetupStep: React.FC<SetupStepProps> = ({
             onClick={() => onChange('selectedTemplate', '')}
             className={`p-4 rounded-xl border-2 text-left transition-all ${
               !settings.selectedTemplate
-                ? 'border-purple-500 bg-purple-500/5'
+                ? 'border-primary-500 bg-primary-500/5'
                 : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
             }`}
           >
-            <Sparkles className="w-5 h-5 text-purple-400 mb-2" />
+            <Sparkles className="w-5 h-5 text-primary-400 mb-2" />
             <p className="font-medium text-slate-900 dark:text-white text-sm">
               {t('presentations.setup.aiGenerates', 'AI Generates')}
             </p>
@@ -147,23 +147,28 @@ export const SetupStep: React.FC<SetupStepProps> = ({
               {t('presentations.setup.aiGeneratesDesc', 'AI proposes structure from your sources')}
             </p>
           </button>
-          {templates
-            .filter((tmpl) => tmpl.is_system)
-            .map((tmpl) => (
-              <button
-                key={tmpl.id}
-                onClick={() => onChange('selectedTemplate', tmpl.id)}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${
-                  settings.selectedTemplate === tmpl.id
-                    ? 'border-purple-500 bg-purple-500/5'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
-                }`}
-              >
-                <Layout className="w-5 h-5 text-blue-400 mb-2" />
+          {templates.map((tmpl) => (
+            <button
+              key={tmpl.id}
+              onClick={() => onChange('selectedTemplate', tmpl.id)}
+              className={`p-4 rounded-xl border-2 text-left transition-all ${
+                settings.selectedTemplate === tmpl.id
+                  ? 'border-primary-500 bg-primary-500/5'
+                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+              }`}
+            >
+              <Layout className="w-5 h-5 text-blue-400 mb-2" />
+              <div className="flex items-start justify-between gap-2">
                 <p className="font-medium text-slate-900 dark:text-white text-sm">{tmpl.name}</p>
-                <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{tmpl.description}</p>
-              </button>
-            ))}
+                {!tmpl.is_system && (
+                  <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-300">
+                    ORG
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{tmpl.description}</p>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -181,7 +186,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
                 onClick={() => onChange('communicationRegister', reg.id)}
                 className={`px-3 py-2.5 rounded-lg border text-left transition-all ${
                   settings.communicationRegister === reg.id
-                    ? 'border-purple-500 bg-purple-500/10 text-slate-900 dark:text-white'
+                    ? 'border-primary-500 bg-primary-500/10 text-slate-900 dark:text-white'
                     : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:border-slate-300'
                 }`}
               >
@@ -204,7 +209,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
                 onClick={() => onChange('contentDepth', depth.id)}
                 className={`px-3 py-2.5 rounded-lg border text-left transition-all ${
                   settings.contentDepth === depth.id
-                    ? 'border-purple-500 bg-purple-500/10 text-slate-900 dark:text-white'
+                    ? 'border-primary-500 bg-primary-500/10 text-slate-900 dark:text-white'
                     : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:border-slate-300'
                 }`}
               >
@@ -274,7 +279,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
             onClick={() => onChange('visualsEnabled', !settings.visualsEnabled)}
             className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
               settings.visualsEnabled
-                ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-500'
+                ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-500'
                 : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-navy-600 hover:border-slate-300'
             }`}
           >
@@ -311,7 +316,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
                     onClick={() => onChange('cardSize', size.id)}
                     className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
                       settings.cardSize === size.id
-                        ? 'border-purple-500 bg-purple-500/10 text-slate-900 dark:text-white'
+                        ? 'border-primary-500 bg-primary-500/10 text-slate-900 dark:text-white'
                         : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'
                     }`}
                   >
@@ -341,7 +346,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
                   onClick={() => onChange('visualsPriority', p)}
                   className={`px-3 py-2 rounded-lg border text-sm transition-all ${
                     settings.visualsPriority === p
-                      ? 'border-purple-500 bg-purple-500/10 text-slate-900 dark:text-white'
+                      ? 'border-primary-500 bg-primary-500/10 text-slate-900 dark:text-white'
                       : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'
                   }`}
                 >
@@ -393,7 +398,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
         <button
           onClick={onNext}
           disabled={!canProceed}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-500 disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-500 disabled:opacity-50"
         >
           <Sparkles size={16} /> {t('presentations.setup.generateOutline', 'Generate Outline')}
         </button>

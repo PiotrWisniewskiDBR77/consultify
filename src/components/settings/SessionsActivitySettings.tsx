@@ -8,7 +8,6 @@
 import {
   AlertTriangle,
   CheckCircle,
-  Clock,
   Globe,
   History,
   Monitor,
@@ -23,6 +22,8 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { SettingsDivider, SettingsSection } from './shared/SettingsSection';
 
 // ---------------------------------------------------------------------------
@@ -59,17 +60,24 @@ const getDeviceIcon = (deviceInfo: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  try {
-    return new Date(dateString).toLocaleString();
-  } catch {
-    return dateString;
-  }
+  const date = new Date(dateString);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
 };
 
 const statusConfig = {
-  success: { icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Success' },
+  success: {
+    icon: CheckCircle,
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-500/10',
+    label: 'Success',
+  },
   failed: { icon: XCircle, color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Failed' },
-  suspicious: { icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Suspicious' },
+  suspicious: {
+    icon: AlertTriangle,
+    color: 'text-amber-400',
+    bg: 'bg-amber-500/10',
+    label: 'Suspicious',
+  },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -81,17 +89,25 @@ const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ acti
   const { t } = useTranslation();
   return (
     <div className="inline-flex rounded-lg bg-navy-900/50 p-0.5">
-      {([
-        { id: 'sessions' as Tab, icon: Globe, label: t('settings.security.tabSessions', 'Active Sessions') },
-        { id: 'history' as Tab, icon: History, label: t('settings.security.tabHistory', 'Login History') },
-      ]).map((tab) => (
+      {[
+        {
+          id: 'sessions' as Tab,
+          icon: Globe,
+          label: t('settings.security.tabSessions', 'Active Sessions'),
+        },
+        {
+          id: 'history' as Tab,
+          icon: History,
+          label: t('settings.security.tabHistory', 'Login History'),
+        },
+      ].map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
             active === tab.id
-              ? 'bg-violet-600 text-white shadow-sm'
+              ? 'bg-primary-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-white hover:bg-white/5'
           )}
         >
@@ -113,6 +129,8 @@ export const SessionsActivitySettings: React.FC = () => {
   // Sessions state
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionsLoadError, setSessionsLoadError] = useState<string | null>(null);
+  const [sessionActionError, setSessionActionError] = useState<string | null>(null);
 
   // History state
   const [history, setHistory] = useState<LoginEvent[]>([]);
@@ -121,14 +139,23 @@ export const SessionsActivitySettings: React.FC = () => {
   // ---------------------------------------------------------------------------
   // Data fetching
   // ---------------------------------------------------------------------------
-  const fetchSessions = useCallback(async () => {
+  const fetchSessions = useCallback(async (): Promise<Session[] | null> => {
     setSessionsLoading(true);
     try {
+      setSessionsLoadError(null);
       const response = await Api.getActiveSessions();
-      setSessions(response.sessions || []);
-    } catch {
-      toast.error(t('settings.security.sessionsError', 'Failed to load active sessions'));
+      const nextSessions = Array.isArray(response?.sessions) ? response.sessions : [];
+      setSessions(nextSessions);
+      return nextSessions;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.security.sessionsError', 'Failed to load active sessions')
+      );
+      setSessionsLoadError(message);
+      toast.error(message);
       setSessions([]);
+      return null;
     } finally {
       setSessionsLoading(false);
     }
@@ -157,36 +184,55 @@ export const SessionsActivitySettings: React.FC = () => {
   const terminateSession = useCallback(
     async (sessionId: string) => {
       try {
+        setSessionActionError(null);
         await Api.revokeSession(sessionId);
-        setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        const refreshed = await fetchSessions();
+        if (!refreshed || refreshed.some((session) => session.id === sessionId)) {
+          throw new Error('Session termination was not confirmed by the server');
+        }
         toast.success(t('settings.security.sessionTerminated', 'Session terminated'));
-      } catch {
-        toast.error(t('settings.security.sessionError', 'Failed to terminate session'));
+      } catch (error: unknown) {
+        const message = normalizeApiErrorMessage(
+          error,
+          t('settings.security.sessionError', 'Failed to terminate session')
+        );
+        setSessionActionError(message);
+        toast.error(message);
       }
     },
-    [t]
+    [fetchSessions, t]
   );
 
   const revokeAll = useCallback(async () => {
     try {
+      setSessionActionError(null);
       await Api.revokeAllSessions();
-      setSessions((prev) => prev.filter((s) => s.current));
+      const refreshed = await fetchSessions();
+      if (!refreshed || refreshed.some((session) => !session.current)) {
+        throw new Error('Session revocation was not confirmed by the server');
+      }
       toast.success(t('settings.security.allSessionsRevoked', 'All other sessions revoked'));
-    } catch {
-      toast.error(t('settings.security.revokeAllError', 'Failed to revoke all sessions'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.security.revokeAllError', 'Failed to revoke all sessions')
+      );
+      setSessionActionError(message);
+      toast.error(message);
     }
-  }, [t]);
+  }, [fetchSessions, t]);
 
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
-  const isLoading = tab === 'sessions' ? sessionsLoading : historyLoading;
-
   return (
     <SettingsSection
       icon={Globe}
       title={t('settings.security.sessionsActivityTitle', 'Sessions & Activity')}
-      description={t('settings.security.sessionsActivityDesc', 'Monitor your active sessions and review login history')}
+      description={t(
+        'settings.security.sessionsActivityDesc',
+        'Monitor your active sessions and review login history'
+      )}
       cardId="security-sessions-activity"
       actions={
         <div className="flex items-center gap-2">
@@ -206,14 +252,25 @@ export const SessionsActivitySettings: React.FC = () => {
       {/* ── Active Sessions Tab ── */}
       {tab === 'sessions' && (
         <div className="space-y-2">
+          {sessionsLoadError && (
+            <DegradedState title="Active sessions unavailable" description={sessionsLoadError} />
+          )}
+          {sessionActionError && (
+            <div
+              role="alert"
+              className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+            >
+              {sessionActionError}
+            </div>
+          )}
           {sessionsLoading ? (
             <LoadingSkeleton rows={3} />
-          ) : sessions.length === 0 ? (
+          ) : sessions.length === 0 && !sessionsLoadError ? (
             <EmptyState
               icon={Globe}
               message={t('settings.security.noSessions', 'No active sessions found')}
             />
-          ) : (
+          ) : !sessionsLoadError ? (
             <>
               {sessions.map((session) => {
                 const DeviceIcon = getDeviceIcon(session.deviceInfo || session.device || '');
@@ -242,7 +299,8 @@ export const SessionsActivitySettings: React.FC = () => {
                         )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5 truncate">
-                        {session.location || session.ipAddress || 'Unknown'} · {session.lastActive || session.lastUsedAt || 'Recently'}
+                        {session.location || session.ipAddress || 'Unknown'} ·{' '}
+                        {session.lastActive || session.lastUsedAt || 'Recently'}
                       </p>
                     </div>
                     {!session.current && (
@@ -272,7 +330,7 @@ export const SessionsActivitySettings: React.FC = () => {
                 </>
               )}
             </>
-          )}
+          ) : null}
         </div>
       )}
 

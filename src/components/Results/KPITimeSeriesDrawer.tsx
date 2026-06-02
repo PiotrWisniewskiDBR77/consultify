@@ -39,7 +39,13 @@ interface KPITimeSeriesDrawerProps {
 }
 
 type QuickStat = { label: string; value: string; color?: string };
-type MetricStat = { label: string; value: string; hint: string; color?: string; icon: React.ReactNode };
+type MetricStat = {
+  label: string;
+  value: string;
+  hint: string;
+  color?: string;
+  icon: React.ReactNode;
+};
 type TimelineItem = { label: string; value: string; hint: string };
 
 type DeviationAction = {
@@ -285,7 +291,8 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       setAuditLog(
         (drawerAuditLog || []).sort(
           (a: any, b: any) =>
-            new Date(String(b?.createdAt || 0)).getTime() - new Date(String(a?.createdAt || 0)).getTime()
+            new Date(String(b?.createdAt || 0)).getTime() -
+            new Date(String(a?.createdAt || 0)).getTime()
         )
       );
 
@@ -381,7 +388,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         onValueRecorded?.();
         toast.success(t('results.drawer.recorded', 'Measurement recorded'));
       } catch (error: any) {
-        toast.error(error?.message || t('results.drawer.recordFailed', 'Failed to record measurement'));
+        toast.error(
+          error?.message || t('results.drawer.recordFailed', 'Failed to record measurement')
+        );
       } finally {
         setSubmitting(false);
       }
@@ -604,12 +613,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         label: t('results.columns.current', 'Current'),
         value:
           kpi.latestValue != null ? `${kpi.latestValue}${kpi.unit ? ' ' + kpi.unit : ''}` : '—',
-        color: kpi.isOnTarget ? 'text-emerald-400' : 'text-red-400',
+        color: kpi.isOnTarget ? 'text-emerald-400' : 'text-rose-400',
       },
       {
         label: t('results.drawer.gap', 'Gap'),
         value: gap != null ? `${gap > 0 ? '+' : ''}${gap}${kpi.unit ? ' ' + kpi.unit : ''}` : '—',
-        color: gap != null ? (gap <= 0 ? 'text-emerald-400' : 'text-red-400') : undefined,
+        color: gap != null ? (gap <= 0 ? 'text-emerald-400' : 'text-rose-400') : undefined,
       },
     ];
   }, [kpi, t]);
@@ -620,7 +629,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     const staleDays = latestDate
       ? Math.max(
           0,
-          Math.floor((Date.now() - new Date(`${latestDate}T00:00:00`).getTime()) / (1000 * 60 * 60 * 24))
+          Math.floor(
+            (Date.now() - new Date(`${latestDate}T00:00:00`).getTime()) / (1000 * 60 * 60 * 24)
+          )
         )
       : null;
     return [
@@ -762,7 +773,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     const latest = ordered.at(-1) || null;
     const previous = ordered.length > 1 ? ordered.at(-2) || null : null;
     const delta =
-      latest && previous && Number.isFinite(Number(latest.value)) && Number.isFinite(Number(previous.value))
+      latest &&
+      previous &&
+      Number.isFinite(Number(latest.value)) &&
+      Number.isFinite(Number(previous.value))
         ? Number(latest.value) - Number(previous.value)
         : null;
     const latestValue = latest ? Number(latest.value) : null;
@@ -796,7 +810,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         hint: previous
           ? `${measurementLabel(previous)} -> ${measurementLabel(latest!)}`
           : t('results.drawer.periodOnPeriodHint', 'Need at least two measurements'),
-        color: delta == null ? undefined : delta >= 0 ? 'text-emerald-400' : 'text-red-400',
+        color: delta == null ? undefined : delta >= 0 ? 'text-emerald-400' : 'text-rose-400',
         icon: <GitBranch size={14} className="text-sky-400" />,
       },
       {
@@ -804,8 +818,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         value: achievement == null ? '—' : `${Math.round(achievement)}%`,
         hint: t('results.drawer.achievementHint', 'Current actual compared to governed target'),
         color:
-          achievement == null ? undefined : achievement >= 100 ? 'text-emerald-400' : 'text-amber-400',
-        icon: <Target size={14} className="text-violet-400" />,
+          achievement == null
+            ? undefined
+            : achievement >= 100
+              ? 'text-emerald-400'
+              : 'text-amber-400',
+        icon: <Target size={14} className="text-primary-400" />,
       },
       {
         label: t('results.drawer.projection', 'Projection'),
@@ -819,7 +837,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             ? undefined
             : projection >= Number(kpi.targetValue)
               ? 'text-emerald-400'
-              : 'text-red-400',
+              : 'text-rose-400',
         icon: <TrendingUp size={14} className="text-emerald-400" />,
       },
     ] satisfies MetricStat[];
@@ -831,7 +849,8 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       ? Math.max(
           0,
           Math.floor(
-            (Date.now() - new Date(String(kpi.latestMeasurementDate)).getTime()) / (1000 * 60 * 60 * 24)
+            (Date.now() - new Date(String(kpi.latestMeasurementDate)).getTime()) /
+              (1000 * 60 * 60 * 24)
           )
         )
       : null;
@@ -877,21 +896,27 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         ),
         color:
           kpi.status === 'below'
-            ? 'text-red-400'
+            ? 'text-rose-400'
             : kpi.status === 'on-target'
               ? 'text-emerald-400'
               : 'text-slate-400',
-        icon: <AlertTriangle size={14} className="text-red-400" />,
+        icon: <AlertTriangle size={14} className="text-rose-400" />,
       },
       {
         label: t('results.drawer.alertReconciliation', 'Reconciliation'),
-        value: openCase ? `${openCase.severity} · ${openCase.status}` : t('results.drawer.aligned', 'Aligned'),
+        value: openCase
+          ? `${openCase.severity} · ${openCase.status}`
+          : t('results.drawer.aligned', 'Aligned'),
         hint: t(
           'results.drawer.alertReconciliationHint',
           'Deviation cases stay visible until evidence, RCA, and closure are complete.'
         ),
-        color: openCase ? (openCase.severity === 'RED' ? 'text-red-400' : 'text-amber-400') : 'text-emerald-400',
-        icon: <ShieldAlert size={14} className="text-cyan-400" />,
+        color: openCase
+          ? openCase.severity === 'RED'
+            ? 'text-rose-400'
+            : 'text-amber-400'
+          : 'text-emerald-400',
+        icon: <ShieldAlert size={14} className="text-blue-400" />,
       },
       {
         label: t('results.drawer.alertActionAgeing', 'Action ageing'),
@@ -903,8 +928,11 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           'results.drawer.alertActionAgeingHint',
           'Shows how long the oldest due action has been sitting in the deviation lane.'
         ),
-        color: actionAgeing != null && actionAgeing > 7 ? 'text-red-400' : 'text-slate-900 dark:text-white',
-        icon: <Calendar size={14} className="text-violet-400" />,
+        color:
+          actionAgeing != null && actionAgeing > 7
+            ? 'text-rose-400'
+            : 'text-slate-900 dark:text-white',
+        icon: <Calendar size={14} className="text-primary-400" />,
       },
     ] satisfies MetricStat[];
   }, [kpi, openCase, t]);
@@ -936,7 +964,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       {
         label: t('results.columns.target', 'Target'),
         value: formatMetricValue(kpi.targetValue ?? null, kpi.unit),
-        hint: t('results.drawer.timeline.currentTargetHint', 'Current governed target used by the runtime lane'),
+        hint: t(
+          'results.drawer.timeline.currentTargetHint',
+          'Current governed target used by the runtime lane'
+        ),
       },
     ] satisfies TimelineItem[];
   }, [kpi, t]);
@@ -966,7 +997,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
   const caseBadgeCls =
     openCase?.severity === 'RED'
-      ? 'bg-red-500/10 text-red-400 border-red-500/30'
+      ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
       : openCase?.severity === 'AMBER'
         ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
         : 'bg-slate-500/10 text-slate-400 border-slate-500/30';
@@ -1117,7 +1148,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       kpi.isOnTarget
                         ? 'bg-emerald-500/10 text-emerald-400'
                         : kpi.latestValue != null
-                          ? 'bg-red-500/10 text-red-400'
+                          ? 'bg-rose-500/10 text-rose-400'
                           : 'bg-slate-500/10 text-slate-400'
                     }`}
                   >
@@ -1126,7 +1157,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         kpi.isOnTarget
                           ? 'bg-emerald-500'
                           : kpi.latestValue != null
-                            ? 'bg-red-500'
+                            ? 'bg-rose-500'
                             : 'bg-slate-400'
                       }`}
                     />
@@ -1138,7 +1169,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={() => void openKpiAiChat(t('results.drawer.ai.defaultPrompt', 'Analyze this KPI'))}
+              onClick={() =>
+                void openKpiAiChat(t('results.drawer.ai.defaultPrompt', 'Analyze this KPI'))
+              }
               className="p-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-500/10 text-primary-500 transition-colors"
               title={t('results.drawer.ai.askAi', 'Ask AI')}
             >
@@ -1163,15 +1196,17 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           ) : (
             <div className="p-5 space-y-6">
               <div className="flex flex-wrap gap-2">
-                {([
-                  ['summary', t('common.overview', 'Overview')],
-                  ['definition', t('results.drawer.definitionTitle', 'Definition')],
-                  ['targets', t('results.drawer.targetsTitle', 'Targets')],
-                  ['deviation', t('results.deviation.title', 'Deviation case')],
-                  ['record', t('results.drawer.recordTitle', 'Record New Value')],
-                  ['history', t('results.drawer.history', 'History')],
-                  ['lineage', t('results.drawer.lineageTitle', 'Lineage')],
-                ] as Array<[KpiDrawerSection, string]>).map(([section, label]) => (
+                {(
+                  [
+                    ['summary', t('common.overview', 'Overview')],
+                    ['definition', t('results.drawer.definitionTitle', 'Definition')],
+                    ['targets', t('results.drawer.targetsTitle', 'Targets')],
+                    ['deviation', t('results.deviation.title', 'Deviation case')],
+                    ['record', t('results.drawer.recordTitle', 'Record New Value')],
+                    ['history', t('results.drawer.history', 'History')],
+                    ['lineage', t('results.drawer.lineageTitle', 'Lineage')],
+                  ] as Array<[KpiDrawerSection, string]>
+                ).map(([section, label]) => (
                   <button
                     key={section}
                     type="button"
@@ -1238,11 +1273,15 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                                 {item.icon}
                                 {item.label}
                               </div>
-                              <div className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}>
+                              <div
+                                className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}
+                              >
                                 {item.value}
                               </div>
                             </div>
-                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {item.hint}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1263,11 +1302,15 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                                 {item.icon}
                                 {item.label}
                               </div>
-                              <div className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}>
+                              <div
+                                className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}
+                              >
                                 {item.value}
                               </div>
                             </div>
-                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {item.hint}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1283,202 +1326,204 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     id="kpi-drawer-deviation"
                     className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
                   >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {t('results.deviation.title', 'Deviation case')}
-                    </div>
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${caseBadgeCls}`}
-                    >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('results.deviation.title', 'Deviation case')}
+                      </div>
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'}`}
-                      />
-                      {openCase.severity} · {openCase.status}
-                    </span>
-                  </div>
-
-                  {openCase.deviationSummary ? (
-                    <div className="text-sm text-slate-700 dark:text-slate-200">
-                      {openCase.deviationSummary}
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${caseBadgeCls}`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${openCase.severity === 'RED' ? 'bg-rose-500' : 'bg-amber-500'}`}
+                        />
+                        {openCase.severity} · {openCase.status}
+                      </span>
                     </div>
-                  ) : null}
 
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {openCase.status === 'OPEN' ? (
+                    {openCase.deviationSummary ? (
+                      <div className="text-sm text-slate-700 dark:text-slate-200">
+                        {openCase.deviationSummary}
+                      </div>
+                    ) : null}
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {openCase.status === 'OPEN' ? (
+                        <button
+                          type="button"
+                          disabled={caseBusy}
+                          onClick={() => void handleAcknowledge()}
+                          className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-60"
+                        >
+                          {t('results.deviation.ack', 'Acknowledge')}
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         disabled={caseBusy}
-                        onClick={() => void handleAcknowledge()}
+                        onClick={() => void handleResolve()}
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/15 transition-colors disabled:opacity-60"
+                      >
+                        {t('results.deviation.resolve', 'Resolve')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void openDeviationAiChat(openCase)}
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15 transition-colors inline-flex items-center gap-1.5"
+                      >
+                        <MessageCircle size={13} />
+                        {t('results.deviation.askAi', 'Ask AI')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          caseBusy || (!closeEvidenceText.trim() && !closeEvidenceRef.trim())
+                        }
+                        onClick={() => void handleClose()}
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
+                      >
+                        {t('results.deviation.close', 'Close')}
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('results.deviation.rca', 'Root cause analysis')}
+                      </div>
+                      <textarea
+                        className={`w-full min-h-[90px] px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30`}
+                        value={rcaDraft}
+                        onChange={(e) => setRcaDraft(e.target.value)}
+                        placeholder={t(
+                          'results.deviation.rcaPlaceholder',
+                          'Explain the root cause...'
+                        )}
+                      />
+                      <button
+                        type="button"
+                        disabled={caseBusy}
+                        onClick={() => void handleSaveRca()}
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
+                      >
+                        {t('common.save', 'Save')}
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('results.deviation.actions', 'Action plan')}
+                      </div>
+                      {(openCase.actions || []).length > 0 ? (
+                        <div className="space-y-1">
+                          {(openCase.actions || []).map((a) => (
+                            <div
+                              key={a.id}
+                              className="flex items-center justify-between gap-2 text-sm"
+                            >
+                              <button
+                                type="button"
+                                disabled={caseBusy}
+                                onClick={() =>
+                                  void handleUpdateActionStatus(
+                                    a,
+                                    a.status === 'DONE' ? 'OPEN' : 'DONE'
+                                  )
+                                }
+                                className="flex min-w-0 items-center gap-2 text-left"
+                              >
+                                <span
+                                  className={`inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border text-[10px] ${
+                                    a.status === 'DONE'
+                                      ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+                                      : 'border-slate-300 dark:border-navy-600 text-slate-400'
+                                  }`}
+                                >
+                                  {a.status === 'DONE' ? '✓' : ''}
+                                </span>
+                                <span
+                                  className={`truncate ${
+                                    a.status === 'DONE'
+                                      ? 'text-slate-500 line-through dark:text-slate-400'
+                                      : 'text-slate-700 dark:text-slate-200'
+                                  }`}
+                                >
+                                  {a.title}
+                                </span>
+                              </button>
+                              <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
+                                {a.status}
+                                {a.dueDate ? ` · ${a.dueDate}` : ''}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                          {t('results.deviation.noActions', 'No actions yet')}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          className={inputCls}
+                          value={newActionTitle}
+                          onChange={(e) => setNewActionTitle(e.target.value)}
+                          placeholder={t('results.deviation.actionPlaceholder', 'New action')}
+                        />
+                        <input
+                          className={inputCls}
+                          type="date"
+                          value={newActionDue}
+                          onChange={(e) => setNewActionDue(e.target.value)}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        disabled={caseBusy || !newActionTitle.trim()}
+                        onClick={() => void handleAddAction()}
                         className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-60"
                       >
-                        {t('results.deviation.ack', 'Acknowledge')}
+                        {t('results.deviation.addAction', 'Add action')}
                       </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      disabled={caseBusy}
-                      onClick={() => void handleResolve()}
-                      className="h-8 px-3 rounded-full text-xs font-medium border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/15 transition-colors disabled:opacity-60"
-                    >
-                      {t('results.deviation.resolve', 'Resolve')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void openDeviationAiChat(openCase)}
-                      className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15 transition-colors inline-flex items-center gap-1.5"
-                    >
-                      <MessageCircle size={13} />
-                      {t('results.deviation.askAi', 'Ask AI')}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={caseBusy || (!closeEvidenceText.trim() && !closeEvidenceRef.trim())}
-                      onClick={() => void handleClose()}
-                      className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
-                    >
-                      {t('results.deviation.close', 'Close')}
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {t('results.deviation.rca', 'Root cause analysis')}
                     </div>
-                    <textarea
-                      className={`w-full min-h-[90px] px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30`}
-                      value={rcaDraft}
-                      onChange={(e) => setRcaDraft(e.target.value)}
-                      placeholder={t(
-                        'results.deviation.rcaPlaceholder',
-                        'Explain the root cause...'
-                      )}
-                    />
-                    <button
-                      type="button"
-                      disabled={caseBusy}
-                      onClick={() => void handleSaveRca()}
-                      className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
-                    >
-                      {t('common.save', 'Save')}
-                    </button>
-                  </div>
 
-                  <div className="space-y-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {t('results.deviation.actions', 'Action plan')}
-                    </div>
-                    {(openCase.actions || []).length > 0 ? (
-                      <div className="space-y-1">
-                        {(openCase.actions || []).map((a) => (
-                          <div
-                            key={a.id}
-                            className="flex items-center justify-between gap-2 text-sm"
-                          >
-                            <button
-                              type="button"
-                              disabled={caseBusy}
-                              onClick={() =>
-                                void handleUpdateActionStatus(
-                                  a,
-                                  a.status === 'DONE' ? 'OPEN' : 'DONE'
-                                )
-                              }
-                              className="flex min-w-0 items-center gap-2 text-left"
-                            >
-                              <span
-                                className={`inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border text-[10px] ${
-                                  a.status === 'DONE'
-                                    ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
-                                    : 'border-slate-300 dark:border-navy-600 text-slate-400'
-                                }`}
-                              >
-                                {a.status === 'DONE' ? '✓' : ''}
-                              </span>
-                              <span
-                                className={`truncate ${
-                                  a.status === 'DONE'
-                                    ? 'text-slate-500 line-through dark:text-slate-400'
-                                    : 'text-slate-700 dark:text-slate-200'
-                                }`}
-                              >
-                                {a.title}
-                              </span>
-                            </button>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
-                              {a.status}
-                              {a.dueDate ? ` · ${a.dueDate}` : ''}
-                            </span>
-                          </div>
-                        ))}
+                    <div className="space-y-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('results.deviation.closeEvidence', 'Closure evidence')}
                       </div>
-                    ) : (
-                      <div className="text-sm text-slate-500 dark:text-slate-400">
-                        {t('results.deviation.noActions', 'No actions yet')}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        className={inputCls}
-                        value={newActionTitle}
-                        onChange={(e) => setNewActionTitle(e.target.value)}
-                        placeholder={t('results.deviation.actionPlaceholder', 'New action')}
+                      <textarea
+                        className={`${inputCls} min-h-[88px] resize-none py-2`}
+                        value={closeEvidenceText}
+                        onChange={(e) => setCloseEvidenceText(e.target.value)}
+                        placeholder={t(
+                          'results.deviation.closeEvidenceText',
+                          'Describe the evidence that confirms the deviation is closed.'
+                        )}
                       />
                       <input
                         className={inputCls}
-                        type="date"
-                        value={newActionDue}
-                        onChange={(e) => setNewActionDue(e.target.value)}
+                        value={closeEvidenceRef}
+                        onChange={(e) => setCloseEvidenceRef(e.target.value)}
+                        placeholder={t(
+                          'results.deviation.closeEvidenceRef',
+                          'Link to task, report, attachment, or external proof (optional)'
+                        )}
                       />
+                      <textarea
+                        className={`${inputCls} min-h-[72px] resize-none py-2`}
+                        value={closeResolutionNotes}
+                        onChange={(e) => setCloseResolutionNotes(e.target.value)}
+                        placeholder={t(
+                          'results.deviation.closeResolutionNotes',
+                          'Resolution notes for audit trail (optional)'
+                        )}
+                      />
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t(
+                          'results.deviation.closeEvidenceHint',
+                          'At least one evidence field is required to close the case.'
+                        )}
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      disabled={caseBusy || !newActionTitle.trim()}
-                      onClick={() => void handleAddAction()}
-                      className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-60"
-                    >
-                      {t('results.deviation.addAction', 'Add action')}
-                    </button>
-                  </div>
-
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {t('results.deviation.closeEvidence', 'Closure evidence')}
-                    </div>
-                    <textarea
-                      className={`${inputCls} min-h-[88px] resize-none py-2`}
-                      value={closeEvidenceText}
-                      onChange={(e) => setCloseEvidenceText(e.target.value)}
-                      placeholder={t(
-                        'results.deviation.closeEvidenceText',
-                        'Describe the evidence that confirms the deviation is closed.'
-                      )}
-                    />
-                    <input
-                      className={inputCls}
-                      value={closeEvidenceRef}
-                      onChange={(e) => setCloseEvidenceRef(e.target.value)}
-                      placeholder={t(
-                        'results.deviation.closeEvidenceRef',
-                        'Link to task, report, attachment, or external proof (optional)'
-                      )}
-                    />
-                    <textarea
-                      className={`${inputCls} min-h-[72px] resize-none py-2`}
-                      value={closeResolutionNotes}
-                      onChange={(e) => setCloseResolutionNotes(e.target.value)}
-                      placeholder={t(
-                        'results.deviation.closeResolutionNotes',
-                        'Resolution notes for audit trail (optional)'
-                      )}
-                    />
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {t(
-                        'results.deviation.closeEvidenceHint',
-                        'At least one evidence field is required to close the case.'
-                      )}
-                    </div>
-                  </div>
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/[0.08] px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -1495,46 +1540,47 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   </h3>
                   {chartBars.length > 0 ? (
                     <div className="relative h-32 flex items-end gap-1">
-                    {kpi?.targetValue != null && (
-                      <div
-                        className="absolute left-0 right-0 border-t border-dashed border-primary-500/40"
-                        style={{ bottom: `${(kpi.targetValue / maxVal) * 100}%` }}
-                      >
-                        <span className="absolute -top-3 right-0 text-[10px] text-primary-400">
-                          {t('results.columns.target', 'Target')}
-                        </span>
-                      </div>
-                    )}
-                    {chartBars.map((m) => {
-                      const pct = (m.value / maxVal) * 100;
-                      const isAboveTarget = kpi?.targetValue != null && m.value >= kpi.targetValue;
-                      return (
+                      {kpi?.targetValue != null && (
                         <div
-                          key={m.id}
-                          className="flex-1 min-w-[12px] group/bar relative"
-                          title={`${measurementLabel(m)}: ${m.value}`}
+                          className="absolute left-0 right-0 border-t border-dashed border-primary-500/40"
+                          style={{ bottom: `${(kpi.targetValue / maxVal) * 100}%` }}
                         >
-                          <div
-                            className={`w-full rounded-t transition-all ${
-                              isAboveTarget ? 'bg-emerald-500/60' : 'bg-red-500/40'
-                            } group-hover/bar:opacity-80`}
-                            style={{ height: `${Math.max(pct, 2)}%` }}
-                          />
+                          <span className="absolute -top-3 right-0 text-[10px] text-primary-400">
+                            {t('results.columns.target', 'Target')}
+                          </span>
                         </div>
-                      );
-                    })}
-                    {chartSemantics[3]?.value !== '—' && kpi?.targetValue != null ? (
-                      <div
-                        className="absolute right-0 w-5 border-t-2 border-dotted border-emerald-400/80"
-                        style={{
-                          bottom: `${(Number(String(chartSemantics[3].value).replace(/[^\d.-]/g, '')) / maxVal) * 100}%`,
-                        }}
-                      >
-                        <span className="absolute -top-3 right-0 text-[10px] text-emerald-400">
-                          {t('results.drawer.projection', 'Projection')}
-                        </span>
-                      </div>
-                    ) : null}
+                      )}
+                      {chartBars.map((m) => {
+                        const pct = (m.value / maxVal) * 100;
+                        const isAboveTarget =
+                          kpi?.targetValue != null && m.value >= kpi.targetValue;
+                        return (
+                          <div
+                            key={m.id}
+                            className="flex-1 min-w-[12px] group/bar relative"
+                            title={`${measurementLabel(m)}: ${m.value}`}
+                          >
+                            <div
+                              className={`w-full rounded-t transition-all ${
+                                isAboveTarget ? 'bg-emerald-500/60' : 'bg-rose-500/40'
+                              } group-hover/bar:opacity-80`}
+                              style={{ height: `${Math.max(pct, 2)}%` }}
+                            />
+                          </div>
+                        );
+                      })}
+                      {chartSemantics[3]?.value !== '—' && kpi?.targetValue != null ? (
+                        <div
+                          className="absolute right-0 w-5 border-t-2 border-dotted border-emerald-400/80"
+                          style={{
+                            bottom: `${(Number(String(chartSemantics[3].value).replace(/[^\d.-]/g, '')) / maxVal) * 100}%`,
+                          }}
+                        >
+                          <span className="absolute -top-3 right-0 text-[10px] text-emerald-400">
+                            {t('results.drawer.projection', 'Projection')}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   ) : (
                     <div className="h-32 flex items-center justify-center text-sm text-slate-500 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
@@ -1547,186 +1593,192 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               {/* Record new value */}
               {normalizedSection === 'record' && (
                 <div id="kpi-drawer-record" className="scroll-mt-4">
-                <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
-                  {t('results.drawer.recordTitle', 'Record New Value')}
-                </h3>
-                <form onSubmit={handleRecord} className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <input
-                        className={inputCls}
-                        type="number"
-                        step="any"
-                        value={newValue}
-                        onChange={(e) => setNewValue(e.target.value)}
-                        placeholder={t('results.drawer.valuePlaceholder', 'Value')}
-                        required
-                      />
+                  <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
+                    {t('results.drawer.recordTitle', 'Record New Value')}
+                  </h3>
+                  <form onSubmit={handleRecord} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <input
+                          className={inputCls}
+                          type="number"
+                          step="any"
+                          value={newValue}
+                          onChange={(e) => setNewValue(e.target.value)}
+                          placeholder={t('results.drawer.valuePlaceholder', 'Value')}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <input
+                          className={inputCls}
+                          type="date"
+                          value={newDate}
+                          onChange={(e) => setNewDate(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <input
-                        className={inputCls}
-                        type="date"
-                        value={newDate}
-                        onChange={(e) => setNewDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <input
-                    className={inputCls}
-                    value={newNotes}
-                    onChange={(e) => setNewNotes(e.target.value)}
-                    placeholder={t(
-                      'results.drawer.notesPlaceholder',
-                      'Notes, source, or audit comment (optional)'
-                    )}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newValue || submitting}
-                    className="w-full h-9 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {submitting
-                      ? t('common.saving', 'Saving...')
-                      : t('results.drawer.record', 'Record')}
-                  </button>
-                </form>
+                    <input
+                      className={inputCls}
+                      value={newNotes}
+                      onChange={(e) => setNewNotes(e.target.value)}
+                      placeholder={t(
+                        'results.drawer.notesPlaceholder',
+                        'Notes, source, or audit comment (optional)'
+                      )}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newValue || submitting}
+                      className="w-full h-9 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {submitting
+                        ? t('common.saving', 'Saving...')
+                        : t('results.drawer.record', 'Record')}
+                    </button>
+                  </form>
                 </div>
               )}
 
               {/* History table */}
               {normalizedSection === 'history' && (
                 <div id="kpi-drawer-history" className="scroll-mt-4">
-                <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
-                  {t('results.drawer.history', 'History')}
-                  {measurements.length > 0 && (
-                    <span className="ml-1 text-slate-600">({measurements.length})</span>
-                  )}
-                </h3>
-                <div className="mb-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-800/50 p-3">
-                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('results.drawer.timelineTitle', 'Governed target checkpoints')}
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                    {targetTimeline.map((item) => (
-                      <div
-                        key={item.label}
-                        className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
-                      >
-                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                          {item.label}
-                        </div>
-                        <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                          {item.value}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {measurements.length > 0 ? (
-                  <div className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-slate-50 dark:bg-navy-800">
-                          <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">
-                            {t('results.drawer.historyDate', 'Date')}
-                          </th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">
-                            {t('results.drawer.historyValue', 'Value')}
-                          </th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">
-                            {t('results.drawer.historyVariance', 'Variance')}
-                          </th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">
-                            {t('results.drawer.historyNotes', 'Notes')}
-                          </th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">
-                            {t('results.drawer.historyBy', 'By')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200 dark:divide-navy-700/50">
-                        {measurements.map((m) => (
-                          <tr key={m.id} className="hover:bg-white/5 transition-colors">
-                            <td className="px-3 py-2 text-slate-400">
-                              <div className="flex items-center gap-1.5">
-                                <Calendar size={12} className="text-slate-500" />
-                                {measurementDate(m)
-                                  ? new Date(measurementDate(m)).toLocaleDateString()
-                                  : '—'}
-                                {m.periodKey && m.periodKey !== measurementDate(m) ? (
-                                  <span className="ml-2 text-[10px] uppercase tracking-wide text-slate-500">
-                                    {m.periodKey}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 text-right font-medium text-slate-300">
-                              {m.value.toLocaleString()}
-                              {kpi?.unit && (
-                                <span className="ml-0.5 text-xs text-slate-500">{kpi.unit}</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2 text-right text-xs">
-                              <span
-                                className={
-                                  kpi?.targetValue != null && Number(m.value) >= Number(kpi.targetValue)
-                                    ? 'text-emerald-400'
-                                    : 'text-red-400'
-                                }
-                              >
-                                {kpi?.targetValue != null
-                                  ? `${Number(m.value) - Number(kpi.targetValue) > 0 ? '+' : ''}${(
-                                      Number(m.value) - Number(kpi.targetValue)
-                                    ).toLocaleString()}${kpi?.unit ? ` ${kpi.unit}` : ''}`
-                                  : '—'}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-slate-500 truncate max-w-[120px]">
-                              {m.notes || '—'}
-                            </td>
-                            <td className="px-3 py-2 text-slate-500 text-xs">
-                              {m.createdBy
-                                ? `${m.createdBy.firstName} ${m.createdBy.lastName}`
-                                : '—'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500 text-center py-6">
-                    {t('results.drawer.noMeasurements', 'No measurements yet')}
-                  </p>
-                )}
-                <div className="mt-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
-                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('results.drawer.measurementAudit', 'Measurement audit')}
-                  </div>
-                  <div className="space-y-2">
-                    {historyAudit.length > 0 ? (
-                      historyAudit.map((entry) => (
+                  <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
+                    {t('results.drawer.history', 'History')}
+                    {measurements.length > 0 && (
+                      <span className="ml-1 text-slate-600">({measurements.length})</span>
+                    )}
+                  </h3>
+                  <div className="mb-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-800/50 p-3">
+                    <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.drawer.timelineTitle', 'Governed target checkpoints')}
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      {targetTimeline.map((item) => (
                         <div
-                          key={entry.id}
+                          key={item.label}
                           className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
                         >
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {entry.summary || entry.eventType}
+                          <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                            {item.label}
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                            {item.value}
                           </div>
                           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {new Date(entry.createdAt).toLocaleString()} · {entry.source}
+                            {item.hint}
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-sm text-slate-500 dark:text-slate-400">
-                        {t('results.drawer.noMeasurementAuditYet', 'No measurement audit entries yet.')}
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                  {measurements.length > 0 ? (
+                    <div className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-slate-50 dark:bg-navy-800">
+                            <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                              {t('results.drawer.historyDate', 'Date')}
+                            </th>
+                            <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">
+                              {t('results.drawer.historyValue', 'Value')}
+                            </th>
+                            <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">
+                              {t('results.drawer.historyVariance', 'Variance')}
+                            </th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                              {t('results.drawer.historyNotes', 'Notes')}
+                            </th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">
+                              {t('results.drawer.historyBy', 'By')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 dark:divide-navy-700/50">
+                          {measurements.map((m) => (
+                            <tr key={m.id} className="hover:bg-white/5 transition-colors">
+                              <td className="px-3 py-2 text-slate-400">
+                                <div className="flex items-center gap-1.5">
+                                  <Calendar size={12} className="text-slate-500" />
+                                  {measurementDate(m)
+                                    ? new Date(measurementDate(m)).toLocaleDateString()
+                                    : '—'}
+                                  {m.periodKey && m.periodKey !== measurementDate(m) ? (
+                                    <span className="ml-2 text-[10px] uppercase tracking-wide text-slate-500">
+                                      {m.periodKey}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 text-right font-medium text-slate-300">
+                                {m.value.toLocaleString()}
+                                {kpi?.unit && (
+                                  <span className="ml-0.5 text-xs text-slate-500">{kpi.unit}</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-right text-xs">
+                                <span
+                                  className={
+                                    kpi?.targetValue != null &&
+                                    Number(m.value) >= Number(kpi.targetValue)
+                                      ? 'text-emerald-400'
+                                      : 'text-rose-400'
+                                  }
+                                >
+                                  {kpi?.targetValue != null
+                                    ? `${Number(m.value) - Number(kpi.targetValue) > 0 ? '+' : ''}${(
+                                        Number(m.value) - Number(kpi.targetValue)
+                                      ).toLocaleString()}${kpi?.unit ? ` ${kpi.unit}` : ''}`
+                                    : '—'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 text-slate-500 truncate max-w-[120px]">
+                                {m.notes || '—'}
+                              </td>
+                              <td className="px-3 py-2 text-slate-500 text-xs">
+                                {m.createdBy
+                                  ? `${m.createdBy.firstName} ${m.createdBy.lastName}`
+                                  : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500 text-center py-6">
+                      {t('results.drawer.noMeasurements', 'No measurements yet')}
+                    </p>
+                  )}
+                  <div className="mt-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                    <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.drawer.measurementAudit', 'Measurement audit')}
+                    </div>
+                    <div className="space-y-2">
+                      {historyAudit.length > 0 ? (
+                        historyAudit.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
+                          >
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">
+                              {entry.summary || entry.eventType}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {new Date(entry.createdAt).toLocaleString()} · {entry.source}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                          {t(
+                            'results.drawer.noMeasurementAuditYet',
+                            'No measurement audit entries yet.'
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1763,8 +1815,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             key={item.label}
                             className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700"
                           >
-                            <p className="text-[10px] uppercase text-slate-500 mb-1">{item.label}</p>
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.value}</p>
+                            <p className="text-[10px] uppercase text-slate-500 mb-1">
+                              {item.label}
+                            </p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                              {item.value}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -1848,7 +1904,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             ))
                           ) : (
                             <div className="text-sm text-slate-500 dark:text-slate-400">
-                              {t('results.drawer.noAuditYet', 'No definition changes recorded yet.')}
+                              {t(
+                                'results.drawer.noAuditYet',
+                                'No definition changes recorded yet.'
+                              )}
                             </div>
                           )}
                         </div>
@@ -1862,8 +1921,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             key={item.label}
                             className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700"
                           >
-                            <p className="text-[10px] uppercase text-slate-500 mb-1">{item.label}</p>
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.value}</p>
+                            <p className="text-[10px] uppercase text-slate-500 mb-1">
+                              {item.label}
+                            </p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                              {item.value}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -1884,7 +1947,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                               <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
                                 {item.value}
                               </div>
-                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                {item.hint}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -2001,7 +2066,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             ))
                           ) : (
                             <div className="text-sm text-slate-500 dark:text-slate-400">
-                              {t('results.drawer.noTargetAuditYet', 'No target changes recorded yet.')}
+                              {t(
+                                'results.drawer.noTargetAuditYet',
+                                'No target changes recorded yet.'
+                              )}
                             </div>
                           )}
                         </div>
@@ -2017,7 +2085,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         onClick={() => void handleSaveSettings()}
                         className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
                       >
-                        {savingSettings ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
+                        {savingSettings
+                          ? t('common.saving', 'Saving...')
+                          : t('common.save', 'Save')}
                       </button>
                       <button
                         type="button"
@@ -2028,16 +2098,24 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           setSettingsDescription(String((kpi as any)?.description || ''));
                           setSettingsUnit(String((kpi as any)?.unit || ''));
                           setSettingsBaseline(
-                            (kpi as any)?.baselineValue != null ? String((kpi as any).baselineValue) : ''
+                            (kpi as any)?.baselineValue != null
+                              ? String((kpi as any).baselineValue)
+                              : ''
                           );
                           setSettingsTarget(
-                            (kpi as any)?.targetValue != null ? String((kpi as any).targetValue) : ''
+                            (kpi as any)?.targetValue != null
+                              ? String((kpi as any).targetValue)
+                              : ''
                           );
-                          setSettingsFrequency(((kpi as any)?.measurementFrequency || 'MONTHLY') as any);
+                          setSettingsFrequency(
+                            ((kpi as any)?.measurementFrequency || 'MONTHLY') as any
+                          );
                           setSettingsDirection(
                             (kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase'
                           );
-                          setSettingsThresholdMode(((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any);
+                          setSettingsThresholdMode(
+                            ((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any
+                          );
                           setSettingsAmberThreshold(
                             (kpi as any)?.thresholdMode === 'ABSOLUTE'
                               ? (kpi as any)?.amberThresholdAbs != null
@@ -2067,16 +2145,18 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   {normalizedSection === 'definition' && (
                     <div
                       id="kpi-drawer-danger"
-                      className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 scroll-mt-4"
+                      className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 scroll-mt-4"
                     >
                       <button
                         type="button"
                         disabled={deleting}
                         onClick={() => void handleDeleteKpi()}
-                        className="w-full h-9 text-sm font-medium rounded-full border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300 hover:bg-red-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        className="w-full h-9 text-sm font-medium rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-300 hover:bg-rose-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                       >
                         <Trash2 size={16} />
-                        {deleting ? t('common.deleting', 'Deleting...') : t('common.delete', 'Delete')}
+                        {deleting
+                          ? t('common.deleting', 'Deleting...')
+                          : t('common.delete', 'Delete')}
                       </button>
                     </div>
                   )}
@@ -2126,7 +2206,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       <p className="text-[10px] uppercase text-slate-500 mb-1">
                         {t('results.tabs.initiatives', 'Initiatives')}
                       </p>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{mappings.length}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {mappings.length}
+                      </p>
                     </div>
                   </div>
 
@@ -2148,7 +2230,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                               type="button"
                               disabled={mappingBusy}
                               onClick={() => void handleUnlinkMapping(m.id)}
-                              className="text-slate-400 hover:text-red-400 transition-colors disabled:opacity-60"
+                              className="text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-60"
                               title={t('common.remove', 'Remove')}
                             >
                               <X size={12} />
@@ -2180,12 +2262,17 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                                   {connector.connectorName}
                                 </div>
                                 <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                  {connector.connectorType || 'api'} · {connector.scheduleCron || 'manual'}
+                                  {connector.connectorType || 'api'} ·{' '}
+                                  {connector.scheduleCron || 'manual'}
                                 </div>
                               </div>
                               <div className="text-right text-xs text-slate-500 dark:text-slate-400">
                                 <div>{connector.lastRunStatus || 'never'}</div>
-                                <div>{connector.lastRunAt ? new Date(connector.lastRunAt).toLocaleString() : '—'}</div>
+                                <div>
+                                  {connector.lastRunAt
+                                    ? new Date(connector.lastRunAt).toLocaleString()
+                                    : '—'}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -2193,7 +2280,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       </div>
                     ) : (
                       <div className="text-sm text-slate-500 dark:text-slate-400">
-                        {t('results.drawer.lineageNoConnectors', 'No connectors linked to this KPI yet.')}
+                        {t(
+                          'results.drawer.lineageNoConnectors',
+                          'No connectors linked to this KPI yet.'
+                        )}
                       </div>
                     )}
                   </div>
@@ -2212,7 +2302,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           if (!initiativeSearch.trim()) return true;
                           return i.name.toLowerCase().includes(initiativeSearch.toLowerCase());
                         })
-                        .filter((i) => !mappings.some((m) => String(m.initiative_id) === String(i.id)))
+                        .filter(
+                          (i) => !mappings.some((m) => String(m.initiative_id) === String(i.id))
+                        )
                         .slice(0, 25)
                         .map((i) => (
                           <button

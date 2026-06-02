@@ -66,9 +66,9 @@ const MODULE_CONFIG = {
   },
   execution: {
     icon: Zap,
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
-    borderColor: 'border-violet-200 dark:border-violet-500/20',
+    color: 'text-primary-600',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/20',
   },
   initiatives: {
     icon: Rocket,
@@ -209,7 +209,7 @@ function ModuleLinkSection({
             {status.recordCount} {isPl ? 'rek.' : 'rec.'}
           </span>
           {status.errors.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-red-500">
+            <span className="inline-flex items-center gap-1 text-[10px] text-rose-500">
               <XCircle size={10} /> {status.errors.length} {isPl ? 'błędów' : 'errors'}
             </span>
           )}

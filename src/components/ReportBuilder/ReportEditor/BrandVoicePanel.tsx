@@ -225,7 +225,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -234,8 +234,8 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-purple-500/10 p-2.5 dark:bg-purple-500/20">
-          <MessageSquare className="h-5 w-5 text-purple-500" />
+        <div className="rounded-xl bg-primary-500/10 p-2.5 dark:bg-primary-500/20">
+          <MessageSquare className="h-5 w-5 text-primary-500" />
         </div>
         <div>
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">{t.title}</h3>
@@ -244,7 +244,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+        <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-400">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           {error}
         </div>
@@ -269,7 +269,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               key={opt}
               className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
                 register === opt
-                  ? 'border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/20'
+                  ? 'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/20'
                   : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
               }`}
             >
@@ -279,7 +279,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
                 value={opt}
                 checked={register === opt}
                 onChange={() => setRegister(opt)}
-                className="accent-purple-500"
+                className="accent-primary-500"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">{t.registers[opt]}</span>
             </label>
@@ -299,7 +299,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               value={preferredWords}
               onChange={(e) => setPreferredWords(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
               placeholder={
                 isPl
                   ? 'np. transformacja, optymalizacja, strategia'
@@ -316,7 +316,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               value={forbiddenWords}
               onChange={(e) => setForbiddenWords(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
               placeholder={
                 isPl
                   ? 'np. synergia, holistyczny, game-changer'
@@ -353,7 +353,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               max={20}
               value={maxHedging}
               onChange={(e) => setMaxHedging(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-center text-sm text-gray-900 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-center text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
           </div>
         </div>
@@ -401,7 +401,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       <button
         onClick={handleSave}
         disabled={saving}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50 dark:bg-purple-500 dark:hover:bg-purple-600"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-600"
       >
         {saving ? (
           <>
@@ -442,7 +442,7 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ label, description, checked, onCh
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-        checked ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'
+        checked ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
       }`}
     >
       <span

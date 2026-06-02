@@ -12,19 +12,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   P02_ACCEPTANCE_CHECKLIST,
   P02_ACCEPTANCE_CHECKLIST_EXTENDED,
+  P02_ADAPTER_REGISTRY,
   P02_ANTI_DUPLICATE_RULES,
   P02_CONFLICT_WRITES_MODEL,
   P02_DECLARED_PROVIDERS,
   P02_ERROR_POSTURE,
-  P02_LIFECYCLE_STATES,
-  P02_LIFECYCLE_TRANSITIONS,
-  P02_PERMISSION_GRADIENTS,
-  P02_RECURRENCE_DOCTRINE,
-  P02_P01_BRIDGE,
-  P02_ADAPTER_REGISTRY,
-  P02_SYNC_RUNTIME,
   P02_FRONTEND_CONTRACT,
   P02_ITEM_TYPES,
+  P02_LIFECYCLE_STATES,
+  P02_LIFECYCLE_TRANSITIONS,
+  P02_P01_BRIDGE,
+  P02_PERMISSION_GRADIENTS,
+  P02_RECURRENCE_DOCTRINE,
+  P02_SYNC_RUNTIME,
 } from '../../../services/v8/calendarInteropCanon.js';
 
 // ── Mock DbPromise before service import ───────────────────────────────
@@ -44,21 +44,21 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 // ── Service imports (after mock) ───────────────────────────────────────
 import {
+  type CalendarSource,
   computeEffectiveMode,
   conditionalWriteItem,
   createCalendarSource,
+  type EffectiveMode,
   getSourceHealth,
   handleSyncError,
   ItemTypeValues,
   mapProviderError,
   performFullResync,
   performIncrementalSync,
-  resolveConflict,
-  updateSourceLifecycle,
-  type CalendarSource,
-  type EffectiveMode,
   type PermissionGradient,
+  resolveConflict,
   type SourceLifecycleState,
+  updateSourceLifecycle,
 } from '../../../services/v8/calendarInteropService.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ describe('P02 Canon — frozen constants', () => {
   it('P02_LIFECYCLE_STATES has exactly 5 states', () => {
     expect(P02_LIFECYCLE_STATES).toHaveLength(5);
     expect([...P02_LIFECYCLE_STATES]).toEqual(
-      expect.arrayContaining(['connected', 'degraded', 'requires_action', 'blocked', 'recoverable']),
+      expect.arrayContaining(['connected', 'degraded', 'requires_action', 'blocked', 'recoverable'])
     );
   });
 
@@ -241,7 +241,7 @@ describe('computeEffectiveMode', () => {
         lifecycleState: lifecycle,
       } as CalendarSource);
       expect(result).toBe(expected);
-    },
+    }
   );
 });
 
@@ -286,7 +286,7 @@ describe('createCalendarSource', () => {
         provider: 'microsoft',
         accountRef: 'test@outlook.com',
         declaredMode: 'write',
-      }),
+      })
     ).rejects.toThrow('Failed to read back created source');
   });
 });
@@ -299,7 +299,9 @@ describe('updateSourceLifecycle', () => {
   it('transitions state and recomputes effectiveMode', async () => {
     mockDbGet
       .mockResolvedValueOnce(fakeSourceRow({ lifecycle_state: 'connected' }))
-      .mockResolvedValueOnce(fakeSourceRow({ lifecycle_state: 'degraded', effective_mode: 'bidir' }));
+      .mockResolvedValueOnce(
+        fakeSourceRow({ lifecycle_state: 'degraded', effective_mode: 'bidir' })
+      );
     mockDbRun.mockResolvedValue({ changes: 1 });
 
     const result = await updateSourceLifecycle('src-1', 'org-1', 'degraded', 'rate limit');
@@ -325,7 +327,7 @@ describe('updateSourceLifecycle', () => {
 describe('performIncrementalSync', () => {
   it('skips sync for blocked source', async () => {
     mockDbGet.mockResolvedValue(
-      fakeSourceRow({ lifecycle_state: 'blocked', requires_action_reason: 'account suspended' }),
+      fakeSourceRow({ lifecycle_state: 'blocked', requires_action_reason: 'account suspended' })
     );
 
     const result = await performIncrementalSync('src-1', 'org-1');
@@ -337,7 +339,7 @@ describe('performIncrementalSync', () => {
 
   it('skips sync for requires_action source', async () => {
     mockDbGet.mockResolvedValue(
-      fakeSourceRow({ lifecycle_state: 'requires_action', requires_action_reason: 'reauth needed' }),
+      fakeSourceRow({ lifecycle_state: 'requires_action', requires_action_reason: 'reauth needed' })
     );
 
     const result = await performIncrementalSync('src-1', 'org-1');
@@ -409,7 +411,12 @@ describe('conditionalWriteItem', () => {
     mockDbGet.mockResolvedValue(fakeItemRow({ etag: 'etag-server' }));
     mockDbRun.mockResolvedValue({ changes: 1 });
 
-    const result = await conditionalWriteItem('item-1', 'org-1', { title: 'Updated' }, 'etag-stale');
+    const result = await conditionalWriteItem(
+      'item-1',
+      'org-1',
+      { title: 'Updated' },
+      'etag-stale'
+    );
 
     expect('itemId' in result).toBe(true);
     if ('itemId' in result) {
@@ -426,7 +433,12 @@ describe('conditionalWriteItem', () => {
       .mockResolvedValueOnce(fakeItemRow({ etag: 'etag-new', title: 'Updated' }));
     mockDbRun.mockResolvedValue({ changes: 1 });
 
-    const result = await conditionalWriteItem('item-1', 'org-1', { title: 'Updated' }, 'etag-match');
+    const result = await conditionalWriteItem(
+      'item-1',
+      'org-1',
+      { title: 'Updated' },
+      'etag-match'
+    );
 
     expect('calendarItemId' in result).toBe(true);
   });
@@ -434,7 +446,7 @@ describe('conditionalWriteItem', () => {
   it('throws when item not found', async () => {
     mockDbGet.mockResolvedValue(null);
     await expect(
-      conditionalWriteItem('missing', 'org-1', { title: 'X' }, 'etag-x'),
+      conditionalWriteItem('missing', 'org-1', { title: 'X' }, 'etag-x')
     ).rejects.toThrow('not found');
   });
 });
@@ -620,7 +632,7 @@ describe('P02-D: P01 Bridge canon', () => {
 
   it('lists all calendar providers in catalog', () => {
     expect(P02_P01_BRIDGE.providerCatalog).toEqual(
-      expect.arrayContaining(['google_calendar', 'outlook_calendar', 'apple_calendar']),
+      expect.arrayContaining(['google_calendar', 'outlook_calendar', 'apple_calendar'])
     );
   });
 });

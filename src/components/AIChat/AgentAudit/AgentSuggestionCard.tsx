@@ -100,7 +100,7 @@ const AgentKindBadge: React.FC<{ kind: AgentKind; language: string }> = ({ kind,
     },
     adversarial: {
       label: isPl ? 'Kontrarianin' : 'Adversarial',
-      className: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+      className: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
     },
   };
 
@@ -195,7 +195,7 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-navy-800 dark:to-purple-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 ${className}`}
+      className={`bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 ${className}`}
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-indigo-200 dark:border-indigo-800">

@@ -63,9 +63,9 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       className={`
-                inline-flex items-center justify-center font-medium rounded-lg 
-                transition-colors focus:outline-none focus-visible:ring-2 
-                focus-visible:ring-primary-500/50 focus-visible:ring-offset-2 
+                inline-flex items-center justify-center font-medium rounded-lg
+                transition-colors focus:outline-none focus-visible:ring-2
+                focus-visible:ring-primary-500/50 focus-visible:ring-offset-2
                 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${variantClasses[variant]}
@@ -112,14 +112,14 @@ export const IconButton: React.FC<IconButtonProps> = ({
 
   const variantClass =
     variant === 'danger'
-      ? 'text-slate-600 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10'
+      ? 'text-slate-600 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10'
       : 'text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]';
 
   return (
     <button
       className={`
                 ${paddingClass} rounded-lg transition-colors
-                focus:outline-none focus-visible:ring-2 
+                focus:outline-none focus-visible:ring-2
                 focus-visible:ring-primary-500/50
                 disabled:opacity-50 disabled:cursor-not-allowed
                 ${variantClass}

@@ -1,0 +1,1142 @@
+import { createHash } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+
+import { getDatabase } from '../database/Database.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import decisionService from './decisionService.js';
+import initiativeService from './initiativeService.js';
+import { TaskService } from './TaskService.js';
+import {
+  acceptArtifactRunPlan,
+  createArtifactRunFromChat,
+  getArtifactRun,
+  materializeArtifactRun,
+  preflightArtifactRun,
+} from './v8/artifactRegistryService.js';
+import * as contextSnapshotService from './v8/contextSnapshotService.js';
+import * as executionSpineService from './v8/executionSpineService.js';
+
+export type WorkCanvasKind =
+  | 'markdown'
+  | 'table'
+  | 'checklist'
+  | 'research'
+  | 'document'
+  | 'sheet'
+  | 'deck'
+  | 'decision';
+
+export type WorkCanvasTarget =
+  | 'note'
+  | 'idea'
+  | 'initiative'
+  | 'task'
+  | 'project_brief'
+  | 'decision'
+  | 'research_report'
+  | 'client_deliverable'
+  | 'kpi_roi_artifact';
+
+export type WorkCanvasProposalStatus = 'proposed' | 'approved' | 'rejected';
+
+export interface WorkCanvasDraftInput {
+  conversationId: string;
+  kind: WorkCanvasKind;
+  title: string;
+  content: unknown;
+  sources?: unknown[];
+  provenance?: Record<string, unknown>;
+  clientId?: string | null;
+  projectId?: string | null;
+  ownerId?: string | null;
+  researchSessionId?: string | null;
+  artifactRunId?: string | null;
+  artifactId?: string | null;
+}
+
+export interface WorkCanvasDraftRecord extends WorkCanvasDraftInput {
+  id: string;
+  organizationId: string;
+  createdBy: string;
+  saveState: 'unsaved' | 'saving' | 'saved' | 'failed';
+  lifecycleState: 'draft' | 'in_review' | 'approved' | 'finalized';
+  dirtyState: 'clean' | 'dirty' | 'stale' | 'conflicted';
+  visibility: 'private' | 'project' | 'organization' | 'external';
+  auditStatus: 'not_required' | 'pending' | 'recorded' | 'failed';
+  artifactVersion: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkCanvasProposalRecord {
+  id: string;
+  draftId: string;
+  organizationId: string;
+  createdBy: string;
+  target: WorkCanvasTarget;
+  title: string;
+  summary: string;
+  status: WorkCanvasProposalStatus;
+  payload: Record<string, unknown>;
+  requiredCapability: string;
+  targetObjectId: string | null;
+  readBack: Record<string, unknown> | null;
+  auditEventId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkCanvasActionReadBack {
+  status: string;
+  proposalStatus?: 'approved' | 'rejected';
+  entityStatus?: string | null;
+  target: WorkCanvasTarget;
+  targetObjectId: string | null;
+  title?: string;
+  projectId?: string | null;
+  ownerId?: string | null;
+  assigneeId?: string | null;
+  artifactId?: string | null;
+  artifactRunId?: string | null;
+  artifactVersion?: number | null;
+  sourceDraftId: string;
+  auditEventId?: string | null;
+  reason?: string | null;
+  code?: string;
+}
+
+type DraftRow = {
+  id: string;
+  organization_id: string;
+  created_by: string;
+  conversation_id: string;
+  kind: WorkCanvasKind;
+  title: string;
+  content_json: string;
+  sources_json: string | null;
+  provenance_json: string | null;
+  client_id: string | null;
+  project_id: string | null;
+  owner_id: string | null;
+  research_session_id: string | null;
+  artifact_run_id: string | null;
+  artifact_id: string | null;
+  artifact_version: number | null;
+  save_state: WorkCanvasDraftRecord['saveState'];
+  lifecycle_state: WorkCanvasDraftRecord['lifecycleState'];
+  dirty_state: WorkCanvasDraftRecord['dirtyState'];
+  visibility: WorkCanvasDraftRecord['visibility'];
+  audit_status: WorkCanvasDraftRecord['auditStatus'];
+  created_at: string;
+  updated_at: string;
+};
+
+type ProposalRow = {
+  id: string;
+  draft_id: string;
+  organization_id: string;
+  created_by: string;
+  target: WorkCanvasTarget;
+  title: string;
+  summary: string;
+  status: WorkCanvasProposalStatus;
+  payload_json: string | null;
+  required_capability: string | null;
+  target_object_id: string | null;
+  read_back_json: string | null;
+  audit_event_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+let schemaReady: Promise<void> | null = null;
+
+function parseJson<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableJson((value as Record<string, unknown>)[key])}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function contentHashForDraft(draft: Pick<WorkCanvasDraftRecord, 'content' | 'sources'>): string {
+  return createHash('sha256')
+    .update(stableJson({ content: draft.content, sources: draft.sources || [] }))
+    .digest('hex');
+}
+
+function readString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+function normalizeDateTime(value: unknown): string | undefined {
+  const raw = readString(value);
+  if (!raw) return undefined;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toISOString();
+}
+
+async function ensureSchema(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = (async () => {
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS work_canvas_drafts (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL,
+          created_by TEXT NOT NULL,
+          conversation_id TEXT NOT NULL,
+          kind TEXT NOT NULL,
+          title TEXT NOT NULL,
+          content_json TEXT NOT NULL,
+          sources_json TEXT,
+          provenance_json TEXT,
+          client_id TEXT,
+          project_id TEXT,
+          owner_id TEXT,
+          research_session_id TEXT,
+          artifact_run_id TEXT,
+          artifact_id TEXT,
+          artifact_version INTEGER,
+          save_state TEXT NOT NULL,
+          lifecycle_state TEXT NOT NULL,
+          dirty_state TEXT NOT NULL,
+          visibility TEXT NOT NULL,
+          audit_status TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )`,
+        []
+      );
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS work_canvas_proposals (
+          id TEXT PRIMARY KEY,
+          draft_id TEXT NOT NULL,
+          organization_id TEXT NOT NULL,
+          created_by TEXT NOT NULL,
+          target TEXT NOT NULL,
+          title TEXT NOT NULL,
+          summary TEXT NOT NULL,
+          status TEXT NOT NULL,
+          payload_json TEXT,
+          required_capability TEXT,
+          target_object_id TEXT,
+          read_back_json TEXT,
+          audit_event_id TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )`,
+        []
+      );
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS work_canvas_ideas (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL,
+          project_id TEXT,
+          title TEXT NOT NULL,
+          summary TEXT,
+          source_draft_id TEXT NOT NULL,
+          source_proposal_id TEXT NOT NULL,
+          created_by TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )`,
+        []
+      );
+      await dbRun(
+        `CREATE INDEX IF NOT EXISTS idx_work_canvas_drafts_org_conversation
+         ON work_canvas_drafts (organization_id, conversation_id, updated_at)`,
+        []
+      );
+      await dbRun(
+        `CREATE INDEX IF NOT EXISTS idx_work_canvas_proposals_draft
+         ON work_canvas_proposals (organization_id, draft_id, updated_at)`,
+        []
+      );
+    })();
+  }
+  return schemaReady;
+}
+
+function mapDraft(row: DraftRow): WorkCanvasDraftRecord {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    createdBy: row.created_by,
+    conversationId: row.conversation_id,
+    kind: row.kind,
+    title: row.title,
+    content: parseJson(row.content_json, ''),
+    sources: parseJson(row.sources_json, []),
+    provenance: parseJson(row.provenance_json, {}),
+    clientId: row.client_id,
+    projectId: row.project_id,
+    ownerId: row.owner_id,
+    researchSessionId: row.research_session_id,
+    artifactRunId: row.artifact_run_id,
+    artifactId: row.artifact_id,
+    artifactVersion: row.artifact_version,
+    saveState: row.save_state,
+    lifecycleState: row.lifecycle_state,
+    dirtyState: row.dirty_state,
+    visibility: row.visibility,
+    auditStatus: row.audit_status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapProposal(row: ProposalRow): WorkCanvasProposalRecord {
+  return {
+    id: row.id,
+    draftId: row.draft_id,
+    organizationId: row.organization_id,
+    createdBy: row.created_by,
+    target: row.target,
+    title: row.title,
+    summary: row.summary,
+    status: row.status,
+    payload: parseJson(row.payload_json, {}),
+    requiredCapability: row.required_capability || requiredCapabilityForTarget(row.target),
+    targetObjectId: row.target_object_id,
+    readBack: parseJson(row.read_back_json, null),
+    auditEventId: row.audit_event_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function requiredCapabilityForTarget(target: WorkCanvasTarget): string {
+  switch (target) {
+    case 'task':
+      return 'canvas.convert.task';
+    case 'initiative':
+      return 'canvas.convert.initiative';
+    case 'decision':
+      return 'canvas.convert.decision';
+    case 'idea':
+      return 'canvas.convert.idea';
+    case 'project_brief':
+    case 'client_deliverable':
+      return 'artifact.create';
+    case 'research_report':
+      return 'canvas.convert.note';
+    case 'kpi_roi_artifact':
+      return 'artifact.create';
+    default:
+      return 'canvas.convert.note';
+  }
+}
+
+export async function listDrafts(params: {
+  organizationId: string;
+  actorUserId?: string | null;
+  conversationId?: string | null;
+  projectId?: string | null;
+  limit?: number;
+}): Promise<WorkCanvasDraftRecord[]> {
+  await ensureSchema();
+  const limit = Math.min(100, Math.max(1, params.limit || 25));
+  const where = ['organization_id = ?'];
+  const queryParams: unknown[] = [params.organizationId];
+  if (params.conversationId) {
+    where.push('conversation_id = ?');
+    queryParams.push(params.conversationId);
+  }
+  if (params.projectId) {
+    where.push('project_id = ?');
+    queryParams.push(params.projectId);
+  } else if (params.actorUserId) {
+    // Without an explicit project scope, only return the caller's own drafts.
+    where.push('created_by = ?');
+    queryParams.push(params.actorUserId);
+  }
+  queryParams.push(limit);
+  const rows = await dbAll<DraftRow>(
+    `SELECT * FROM work_canvas_drafts
+     WHERE ${where.join(' AND ')}
+     ORDER BY updated_at DESC
+     LIMIT ?`,
+    queryParams
+  );
+  return rows.map(mapDraft);
+}
+
+export async function getDraft(params: {
+  organizationId: string;
+  draftId: string;
+}): Promise<WorkCanvasDraftRecord | null> {
+  await ensureSchema();
+  const row = await dbGet<DraftRow>(
+    `SELECT * FROM work_canvas_drafts WHERE id = ? AND organization_id = ?`,
+    [params.draftId, params.organizationId]
+  );
+  return row ? mapDraft(row) : null;
+}
+
+export async function createDraft(params: {
+  organizationId: string;
+  actorUserId: string;
+  input: WorkCanvasDraftInput;
+}): Promise<WorkCanvasDraftRecord> {
+  await ensureSchema();
+  const id = uuidv4();
+  const now = nowIso();
+  await dbRun(
+    `INSERT INTO work_canvas_drafts (
+      id, organization_id, created_by, conversation_id, kind, title, content_json,
+      sources_json, provenance_json, client_id, project_id, owner_id,
+      research_session_id, artifact_run_id, artifact_id, artifact_version,
+      save_state, lifecycle_state, dirty_state, visibility, audit_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      params.organizationId,
+      params.actorUserId,
+      params.input.conversationId,
+      params.input.kind,
+      params.input.title,
+      JSON.stringify(params.input.content ?? ''),
+      JSON.stringify(params.input.sources || []),
+      JSON.stringify(params.input.provenance || { conversationId: params.input.conversationId }),
+      params.input.clientId || null,
+      params.input.projectId || null,
+      params.input.ownerId || null,
+      params.input.researchSessionId || null,
+      params.input.artifactRunId || null,
+      params.input.artifactId || null,
+      null,
+      'unsaved',
+      'draft',
+      'dirty',
+      'project',
+      'not_required',
+      now,
+      now,
+    ]
+  );
+  const draft = await getDraft({ organizationId: params.organizationId, draftId: id });
+  if (!draft) throw new Error('Canvas draft read-back failed');
+  return draft;
+}
+
+export async function updateDraft(params: {
+  organizationId: string;
+  draftId: string;
+  patch: Partial<WorkCanvasDraftInput>;
+}): Promise<WorkCanvasDraftRecord> {
+  await ensureSchema();
+  const existing = await getDraft(params);
+  if (!existing) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
+  const now = nowIso();
+  await dbRun(
+    `UPDATE work_canvas_drafts
+     SET kind = ?, title = ?, content_json = ?, sources_json = ?, provenance_json = ?,
+         client_id = ?, project_id = ?, owner_id = ?, research_session_id = ?,
+         artifact_run_id = ?, artifact_id = ?, dirty_state = ?, updated_at = ?
+     WHERE id = ? AND organization_id = ?`,
+    [
+      params.patch.kind || existing.kind,
+      params.patch.title || existing.title,
+      JSON.stringify(params.patch.content ?? existing.content),
+      JSON.stringify(params.patch.sources || existing.sources || []),
+      JSON.stringify(params.patch.provenance || existing.provenance || {}),
+      params.patch.clientId ?? existing.clientId ?? null,
+      params.patch.projectId ?? existing.projectId ?? null,
+      params.patch.ownerId ?? existing.ownerId ?? null,
+      params.patch.researchSessionId ?? existing.researchSessionId ?? null,
+      params.patch.artifactRunId ?? existing.artifactRunId ?? null,
+      params.patch.artifactId ?? existing.artifactId ?? null,
+      'dirty',
+      now,
+      params.draftId,
+      params.organizationId,
+    ]
+  );
+  const updated = await getDraft({
+    organizationId: params.organizationId,
+    draftId: params.draftId,
+  });
+  if (!updated) throw new Error('Canvas draft read-back failed');
+  return updated;
+}
+
+export async function markDraftSavedAsArtifact(params: {
+  organizationId: string;
+  draftId: string;
+  artifactId?: string | null;
+  artifactRunId?: string | null;
+  artifactVersion?: number | null;
+  provenance?: Record<string, unknown> | null;
+  auditEventId?: string | null;
+}): Promise<WorkCanvasDraftRecord> {
+  await ensureSchema();
+  const existing = await getDraft(params);
+  if (!existing) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
+  const now = nowIso();
+  if (!params.artifactId) {
+    throw Object.assign(new Error('Canonical artifact id is required'), { statusCode: 502 });
+  }
+  const nextArtifactId = params.artifactId;
+  const nextVersion = params.artifactVersion ?? Number(existing.artifactVersion || 0) + 1;
+  await dbRun(
+    `UPDATE work_canvas_drafts
+     SET save_state = ?, lifecycle_state = ?, dirty_state = ?, audit_status = ?,
+         artifact_id = ?, artifact_run_id = ?, artifact_version = ?, provenance_json = ?, updated_at = ?
+     WHERE id = ? AND organization_id = ?`,
+    [
+      'saved',
+      existing.lifecycleState || 'draft',
+      'clean',
+      params.auditEventId ? 'recorded' : 'pending',
+      nextArtifactId,
+      params.artifactRunId || existing.artifactRunId || null,
+      nextVersion,
+      JSON.stringify({
+        ...(existing.provenance || {}),
+        ...(params.provenance || {}),
+        artifactId: nextArtifactId,
+        artifactRunId: params.artifactRunId || existing.artifactRunId || null,
+        sourceSummary: 'Saved from V10 Expanded Canvas through V8 artifact runtime',
+      }),
+      now,
+      params.draftId,
+      params.organizationId,
+    ]
+  );
+  const saved = await getDraft({ organizationId: params.organizationId, draftId: params.draftId });
+  if (!saved) throw new Error('Canvas draft read-back failed');
+  return saved;
+}
+
+export async function markDraftArtifactSaveFailed(params: {
+  organizationId: string;
+  draftId: string;
+  reason: string;
+  auditEventId?: string | null;
+}): Promise<WorkCanvasDraftRecord> {
+  await ensureSchema();
+  const existing = await getDraft(params);
+  if (!existing) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
+  const now = nowIso();
+  await dbRun(
+    `UPDATE work_canvas_drafts
+     SET save_state = ?, dirty_state = ?, audit_status = ?, provenance_json = ?, updated_at = ?
+     WHERE id = ? AND organization_id = ?`,
+    [
+      'failed',
+      existing.dirtyState || 'dirty',
+      params.auditEventId ? 'recorded' : 'failed',
+      JSON.stringify({
+        ...(existing.provenance || {}),
+        artifactSaveFailure: params.reason,
+        failedAt: now,
+      }),
+      now,
+      params.draftId,
+      params.organizationId,
+    ]
+  );
+  const failed = await getDraft({ organizationId: params.organizationId, draftId: params.draftId });
+  if (!failed) throw new Error('Canvas draft read-back failed');
+  return failed;
+}
+
+function artifactPlanForCanvas(kind: WorkCanvasKind): {
+  requestedArtifactFamily: 'document' | 'presentation' | 'sheet';
+  requestedOutputType: 'report' | 'presentation' | 'sheet';
+} {
+  if (kind === 'deck') {
+    return { requestedArtifactFamily: 'presentation', requestedOutputType: 'presentation' };
+  }
+  if (kind === 'table' || kind === 'sheet') {
+    return { requestedArtifactFamily: 'sheet', requestedOutputType: 'sheet' };
+  }
+  return { requestedArtifactFamily: 'document', requestedOutputType: 'report' };
+}
+
+async function ensureCanvasContextSnapshot(params: {
+  draft: WorkCanvasDraftRecord;
+  actorUserId: string;
+}): Promise<string> {
+  const existing =
+    typeof params.draft.provenance?.contextSnapshotId === 'string'
+      ? params.draft.provenance.contextSnapshotId
+      : null;
+  if (existing) return existing;
+
+  const snapshot = await contextSnapshotService.captureSnapshot({
+    workspaceId: params.draft.projectId || params.draft.organizationId,
+    organizationId: params.draft.organizationId,
+    projectId: params.draft.projectId || null,
+    conversationId: params.draft.conversationId,
+    executionRunId: null,
+    artifactRefs: params.draft.artifactId
+      ? [
+          {
+            artifactId: params.draft.artifactId,
+            artifactType: params.draft.kind,
+            artifactModule: 'work_canvas',
+            relationship: 'source',
+          },
+        ]
+      : [],
+    effectiveScopeRef: params.draft.projectId
+      ? `project:${params.draft.projectId}`
+      : `organization:${params.draft.organizationId}`,
+    resolvedRoleRef: 'work_canvas',
+    initiatorUserId: params.actorUserId,
+    consumerClass: 'execution',
+    privacyMode: false,
+    sourceContextRefs: [
+      {
+        sourceId: params.draft.id,
+        scopeType: params.draft.projectId ? 'organization' : 'user_private',
+        sourceKind: 'tool',
+        freshnessAt: params.draft.updatedAt,
+      },
+    ],
+  });
+  return snapshot.snapshotId;
+}
+
+export async function saveDraftAsArtifact(params: {
+  organizationId: string;
+  actorUserId: string;
+  draftId: string;
+  auditEventId?: string | null;
+}): Promise<{ draft: WorkCanvasDraftRecord; readBack: WorkCanvasActionReadBack }> {
+  await ensureSchema();
+  const draft = await getDraft({ organizationId: params.organizationId, draftId: params.draftId });
+  if (!draft) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
+
+  try {
+    const contextSnapshotId = await ensureCanvasContextSnapshot({
+      draft,
+      actorUserId: params.actorUserId,
+    });
+    const plan = artifactPlanForCanvas(draft.kind);
+    const existingRun = draft.artifactRunId
+      ? await getArtifactRun(draft.artifactRunId, params.organizationId)
+      : null;
+    const shouldCreateRun =
+      !existingRun ||
+      ['completed', 'failed', 'cancelled', 'rejected'].includes(existingRun.runStatus);
+    const planned = shouldCreateRun
+      ? await createArtifactRunFromChat({
+          organizationId: params.organizationId,
+          userId: params.actorUserId,
+          conversationId: draft.conversationId,
+          contextSnapshotId,
+          goal: draft.title,
+          requestedArtifactFamily: plan.requestedArtifactFamily,
+          requestedOutputType: plan.requestedOutputType,
+        }).then((created) => created.run)
+      : existingRun;
+    if (!planned) {
+      throw new Error(`ArtifactRun ${draft.artifactRunId} not found`);
+    }
+
+    await preflightArtifactRun({
+      runId: planned.runId,
+      organizationId: params.organizationId,
+      actorUserId: params.actorUserId,
+    });
+    const accepted = await acceptArtifactRunPlan({
+      runId: planned.runId,
+      organizationId: params.organizationId,
+      actorUserId: params.actorUserId,
+    });
+    await executionSpineService.submitForReview(
+      accepted.executionRunId,
+      params.organizationId,
+      params.actorUserId
+    );
+    await executionSpineService.approveRun(
+      accepted.executionRunId,
+      params.organizationId,
+      params.actorUserId,
+      'V10 Work Canvas save-as-artifact approved by explicit user action'
+    );
+    const materialized = await materializeArtifactRun({
+      runId: accepted.runId,
+      organizationId: params.organizationId,
+      actorUserId: params.actorUserId,
+      title: draft.title,
+      description: readString(
+        (draft.content as Record<string, unknown>)?.summary,
+        `Materialized from canvas draft ${draft.id}`
+      ),
+      sourceType: plan.requestedOutputType === 'report' ? 'TOOL' : undefined,
+      sourceId: plan.requestedOutputType === 'report' ? draft.id : undefined,
+      sourceName: draft.title,
+      config:
+        plan.requestedOutputType === 'sheet'
+          ? { tableName: draft.title }
+          : { canvasDraftId: draft.id, canvasKind: draft.kind },
+    });
+    if (!materialized.artifactId) {
+      throw new Error('V8 materialization completed without canonical artifact id');
+    }
+
+    const saved = await markDraftSavedAsArtifact({
+      organizationId: params.organizationId,
+      draftId: draft.id,
+      artifactId: materialized.artifactId,
+      artifactRunId: materialized.runId,
+      artifactVersion: Number(draft.artifactVersion || 0) + 1,
+      auditEventId: params.auditEventId || null,
+      provenance: {
+        contextSnapshotId,
+        executionRunId: materialized.executionRunId,
+        artifactPlan: materialized.plan,
+      },
+    });
+    return {
+      draft: saved,
+      readBack: {
+        status: 'saved',
+        target: 'project_brief',
+        targetObjectId: materialized.artifactId,
+        title: saved.title,
+        projectId: saved.projectId,
+        artifactId: materialized.artifactId,
+        artifactRunId: materialized.runId,
+        artifactVersion: saved.artifactVersion,
+        sourceDraftId: saved.id,
+        auditEventId: params.auditEventId || null,
+      },
+    };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'V8 artifact materialization failed';
+    const failed = await markDraftArtifactSaveFailed({
+      organizationId: params.organizationId,
+      draftId: draft.id,
+      reason,
+      auditEventId: params.auditEventId || null,
+    });
+    throw Object.assign(new Error(reason), {
+      statusCode: 502,
+      code: 'V8_ARTIFACT_SAVE_FAILED',
+      draft: failed,
+    });
+  }
+}
+
+export async function createProposal(params: {
+  organizationId: string;
+  actorUserId: string;
+  draftId: string;
+  target: WorkCanvasTarget;
+  payload?: Record<string, unknown>;
+}): Promise<WorkCanvasProposalRecord> {
+  await ensureSchema();
+  const draft = await getDraft({ organizationId: params.organizationId, draftId: params.draftId });
+  if (!draft) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
+  const id = uuidv4();
+  const now = nowIso();
+  const label = params.target.replace(/_/g, ' ');
+  const payload = {
+    title: `${label}: ${draft.title}`,
+    summary: `Proposal generated from canvas draft ${draft.id}.`,
+    sourceDraftId: draft.id,
+    artifactId: draft.artifactId || null,
+    draftUpdatedAt: draft.updatedAt,
+    contentHash: contentHashForDraft(draft),
+    provenance: draft.provenance || {},
+    ...(params.payload || {}),
+  };
+  const requiredCapability = requiredCapabilityForTarget(params.target);
+  await dbRun(
+    `INSERT INTO work_canvas_proposals (
+      id, draft_id, organization_id, created_by, target, title, summary, status,
+      payload_json, required_capability, target_object_id, read_back_json,
+      audit_event_id, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      draft.id,
+      params.organizationId,
+      params.actorUserId,
+      params.target,
+      String(payload.title),
+      String(payload.summary),
+      'proposed',
+      JSON.stringify(payload),
+      requiredCapability,
+      null,
+      null,
+      null,
+      now,
+      now,
+    ]
+  );
+  const proposal = await getProposal({ organizationId: params.organizationId, proposalId: id });
+  if (!proposal) throw new Error('Canvas proposal read-back failed');
+  return proposal;
+}
+
+export async function getProposal(params: {
+  organizationId: string;
+  proposalId: string;
+}): Promise<WorkCanvasProposalRecord | null> {
+  await ensureSchema();
+  const row = await dbGet<ProposalRow>(
+    `SELECT * FROM work_canvas_proposals WHERE id = ? AND organization_id = ?`,
+    [params.proposalId, params.organizationId]
+  );
+  return row ? mapProposal(row) : null;
+}
+
+export async function listProposals(params: {
+  organizationId: string;
+  draftId: string;
+}): Promise<WorkCanvasProposalRecord[]> {
+  await ensureSchema();
+  const rows = await dbAll<ProposalRow>(
+    `SELECT * FROM work_canvas_proposals
+     WHERE organization_id = ? AND draft_id = ?
+     ORDER BY updated_at DESC`,
+    [params.organizationId, params.draftId]
+  );
+  return rows.map(mapProposal);
+}
+
+function assertProposalFresh(
+  proposal: WorkCanvasProposalRecord,
+  draft: WorkCanvasDraftRecord
+): void {
+  const expectedHash = readString(proposal.payload.contentHash);
+  const expectedUpdatedAt = readString(proposal.payload.draftUpdatedAt);
+  const currentHash = contentHashForDraft(draft);
+  if (
+    (expectedHash && expectedHash !== currentHash) ||
+    (expectedUpdatedAt && expectedUpdatedAt !== draft.updatedAt)
+  ) {
+    throw Object.assign(new Error('Canvas proposal is stale because the draft changed'), {
+      statusCode: 409,
+      code: 'STALE_CANVAS_PROPOSAL',
+      recovery: 'Regenerate or review the proposal against the current canvas draft.',
+    });
+  }
+}
+
+async function createCanvasIdea(params: {
+  organizationId: string;
+  actorUserId: string;
+  draft: WorkCanvasDraftRecord;
+  proposal: WorkCanvasProposalRecord;
+}): Promise<WorkCanvasActionReadBack> {
+  const id = uuidv4();
+  const now = nowIso();
+  const title = readString(params.proposal.payload.title, params.proposal.title);
+  const summary = readString(params.proposal.payload.summary, params.proposal.summary);
+  await dbRun(
+    `INSERT INTO work_canvas_ideas (
+      id, organization_id, project_id, title, summary, source_draft_id,
+      source_proposal_id, created_by, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      params.organizationId,
+      params.draft.projectId || null,
+      title,
+      summary || null,
+      params.draft.id,
+      params.proposal.id,
+      params.actorUserId,
+      now,
+      now,
+    ]
+  );
+  return {
+    status: 'created',
+    entityStatus: 'created',
+    target: 'idea',
+    targetObjectId: id,
+    title,
+    projectId: params.draft.projectId,
+    ownerId: params.draft.ownerId,
+    sourceDraftId: params.draft.id,
+  };
+}
+
+async function commitProposalToDomain(params: {
+  organizationId: string;
+  actorUserId: string;
+  proposal: WorkCanvasProposalRecord;
+  draft: WorkCanvasDraftRecord;
+  auditEventId?: string | null;
+}): Promise<WorkCanvasActionReadBack> {
+  const title = readString(params.proposal.payload.title, params.proposal.title);
+  const description = readString(params.proposal.payload.description, params.proposal.summary);
+  const projectId = readString(params.proposal.payload.projectId, params.draft.projectId || '');
+  const ownerId = readString(
+    params.proposal.payload.ownerId,
+    params.draft.ownerId || params.actorUserId
+  );
+  const assigneeId = readString(params.proposal.payload.assigneeId, ownerId);
+
+  switch (params.proposal.target) {
+    case 'task': {
+      const dueDate = normalizeDateTime(params.proposal.payload.dueDate);
+      const taskService = new TaskService(getDatabase() as any);
+      const task = await taskService.createTask(
+        {
+          projectId: projectId || null,
+          title,
+          description,
+          status: 'todo',
+          priority:
+            params.proposal.payload.priority === 'low' ||
+            params.proposal.payload.priority === 'high' ||
+            params.proposal.payload.priority === 'critical'
+              ? (params.proposal.payload.priority as any)
+              : 'medium',
+          assigneeId: assigneeId || undefined,
+          dueDate,
+          tags: ['ai', 'work-canvas'],
+        },
+        params.actorUserId
+      );
+      return {
+        status: task.status,
+        entityStatus: task.status,
+        target: 'task',
+        targetObjectId: task.id,
+        title: task.title,
+        projectId: task.projectId,
+        assigneeId: task.assigneeId,
+        artifactId: params.draft.artifactId,
+        sourceDraftId: params.draft.id,
+      };
+    }
+    case 'initiative': {
+      const initiative = await initiativeService.createInitiative({
+        organization_id: params.organizationId,
+        project_id: projectId || undefined,
+        title,
+        summary: description,
+        status: readString(params.proposal.payload.status, 'DRAFT'),
+        owner_id: ownerId || undefined,
+        market_context: `Created from Work Canvas draft ${params.draft.id}`,
+      } as any);
+      return {
+        status: initiative.status,
+        entityStatus: initiative.status,
+        target: 'initiative',
+        targetObjectId: initiative.id,
+        title: initiative.title,
+        projectId: initiative.project_id || params.draft.projectId,
+        ownerId: initiative.owner_id || ownerId,
+        artifactId: params.draft.artifactId,
+        sourceDraftId: params.draft.id,
+      };
+    }
+    case 'decision': {
+      const decision = await decisionService.createDecision({
+        organizationId: params.organizationId,
+        projectId: projectId || undefined,
+        title,
+        description,
+        type:
+          params.proposal.payload.decisionType === 'GO_NO_GO' ||
+          params.proposal.payload.decisionType === 'RESOURCE_ALLOCATION' ||
+          params.proposal.payload.decisionType === 'OTHER'
+            ? (params.proposal.payload.decisionType as any)
+            : 'APPROVAL',
+        decisionMakerId: ownerId || params.actorUserId,
+        createdBy: params.actorUserId,
+        criteria: readString(params.proposal.payload.criteria) || undefined,
+        deadline: readString(params.proposal.payload.dueDate) || undefined,
+      });
+      return {
+        status: decision.status,
+        entityStatus: decision.status,
+        target: 'decision',
+        targetObjectId: decision.id,
+        title: decision.title,
+        projectId: decision.projectId || params.draft.projectId,
+        ownerId: decision.decisionMakerId,
+        artifactId: params.draft.artifactId,
+        sourceDraftId: params.draft.id,
+      };
+    }
+    case 'idea':
+      return createCanvasIdea(params);
+    case 'note':
+      return {
+        status: 'unsupported',
+        entityStatus: null,
+        target: 'note',
+        targetObjectId: null,
+        title,
+        projectId: params.draft.projectId,
+        sourceDraftId: params.draft.id,
+        code: 'CANVAS_NOTE_COMMIT_UNSUPPORTED',
+      };
+    case 'project_brief':
+    case 'client_deliverable':
+    case 'research_report':
+    case 'kpi_roi_artifact': {
+      const saved = await saveDraftAsArtifact({
+        organizationId: params.organizationId,
+        actorUserId: params.actorUserId,
+        draftId: params.draft.id,
+        auditEventId: params.auditEventId || null,
+      });
+      return {
+        ...saved.readBack,
+        target: params.proposal.target,
+      };
+    }
+    default:
+      return createCanvasIdea({
+        organizationId: params.organizationId,
+        actorUserId: params.actorUserId,
+        draft: params.draft,
+        proposal: params.proposal,
+      });
+  }
+}
+
+export async function rejectProposal(params: {
+  organizationId: string;
+  proposalId: string;
+  auditEventId?: string | null;
+  reason?: string | null;
+}): Promise<WorkCanvasProposalRecord> {
+  await ensureSchema();
+  const existing = await getProposal(params);
+  if (!existing) throw Object.assign(new Error('Canvas proposal not found'), { statusCode: 404 });
+  if (existing.status !== 'proposed') return existing;
+  const now = nowIso();
+  const readBack: WorkCanvasActionReadBack = {
+    status: 'rejected',
+    target: existing.target,
+    targetObjectId: null,
+    sourceDraftId: existing.draftId,
+    reason: params.reason || 'Rejected by user',
+    auditEventId: params.auditEventId || null,
+  };
+  await dbRun(
+    `UPDATE work_canvas_proposals
+     SET status = ?, target_object_id = ?, read_back_json = ?, audit_event_id = ?, updated_at = ?
+     WHERE id = ? AND organization_id = ?`,
+    [
+      'rejected',
+      null,
+      JSON.stringify(readBack),
+      params.auditEventId || null,
+      now,
+      params.proposalId,
+      params.organizationId,
+    ]
+  );
+  const rejected = await getProposal({
+    organizationId: params.organizationId,
+    proposalId: params.proposalId,
+  });
+  if (!rejected) throw new Error('Canvas proposal read-back failed');
+  return rejected;
+}
+
+export async function approveProposal(params: {
+  organizationId: string;
+  proposalId: string;
+  actorUserId: string;
+  auditEventId?: string | null;
+}): Promise<WorkCanvasProposalRecord> {
+  await ensureSchema();
+  if (!params.actorUserId) {
+    throw Object.assign(new Error('Actor user is required to approve canvas proposal'), {
+      statusCode: 403,
+      code: 'CANVAS_ACTOR_REQUIRED',
+    });
+  }
+  const existing = await getProposal(params);
+  if (!existing) throw Object.assign(new Error('Canvas proposal not found'), { statusCode: 404 });
+  if (existing.status !== 'proposed') {
+    return existing;
+  }
+  const draft = await getDraft({
+    organizationId: params.organizationId,
+    draftId: existing.draftId,
+  });
+  if (!draft) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
+  assertProposalFresh(existing, draft);
+  const readBack = await commitProposalToDomain({
+    organizationId: params.organizationId,
+    actorUserId: params.actorUserId,
+    proposal: existing,
+    draft,
+    auditEventId: params.auditEventId || null,
+  });
+  const now = nowIso();
+  const approvedReadBack = {
+    ...readBack,
+    status: 'approved',
+    proposalStatus: 'approved',
+    entityStatus: readBack.entityStatus || readBack.status || null,
+    auditEventId: params.auditEventId || null,
+  };
+  await dbRun(
+    `UPDATE work_canvas_proposals
+     SET status = ?, target_object_id = ?, read_back_json = ?, audit_event_id = ?, updated_at = ?
+     WHERE id = ? AND organization_id = ?`,
+    [
+      'approved',
+      readBack.targetObjectId,
+      JSON.stringify(approvedReadBack),
+      params.auditEventId || null,
+      now,
+      params.proposalId,
+      params.organizationId,
+    ]
+  );
+  const decided = await getProposal({
+    organizationId: params.organizationId,
+    proposalId: params.proposalId,
+  });
+  if (!decided) throw new Error('Canvas proposal read-back failed');
+  return decided;
+}
+
+export async function decideProposal(params: {
+  organizationId: string;
+  proposalId: string;
+  actorUserId?: string;
+  status: 'approved' | 'rejected';
+  auditEventId?: string | null;
+  reason?: string | null;
+}): Promise<WorkCanvasProposalRecord> {
+  if (params.status === 'rejected') return rejectProposal(params);
+  if (!params.actorUserId) {
+    throw Object.assign(new Error('Actor user is required to approve canvas proposal'), {
+      statusCode: 403,
+      code: 'CANVAS_ACTOR_REQUIRED',
+    });
+  }
+  return approveProposal({
+    organizationId: params.organizationId,
+    proposalId: params.proposalId,
+    actorUserId: params.actorUserId || '',
+    auditEventId: params.auditEventId || null,
+  });
+}

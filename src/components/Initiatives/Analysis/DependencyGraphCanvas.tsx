@@ -6,11 +6,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   Background,
+  type Connection,
   Controls,
+  type Edge,
   MarkerType,
   MiniMap,
-  type Connection,
-  type Edge,
   type Node,
   useEdgesState,
   useNodesState,
@@ -37,8 +37,8 @@ const NODE_WIDTH = 220;
 const NODE_HEIGHT = 84;
 
 const PRIORITY_RING: Record<string, string> = {
-  CRITICAL: '#ef4444',
-  HIGH: '#f97316',
+  CRITICAL: '#f43f5e',
+  HIGH: '#f59e0b',
   MEDIUM: '#a855f7',
   LOW: '#64748b',
 };
@@ -87,7 +87,10 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
     [dependencies]
   );
 
-  const positionedNodes = useMemo(() => layoutGraph(initiatives, dependencies), [dependencies, initiatives]);
+  const positionedNodes = useMemo(
+    () => layoutGraph(initiatives, dependencies),
+    [dependencies, initiatives]
+  );
 
   const baseNodes = useMemo<Node[]>(
     () =>
@@ -158,14 +161,14 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
           animated: hasConflict,
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: hasConflict ? '#ef4444' : isCritical ? '#f59e0b' : '#94a3b8',
+            color: hasConflict ? '#f43f5e' : isCritical ? '#f59e0b' : '#94a3b8',
           },
           style: {
-            stroke: hasConflict ? '#ef4444' : isCritical ? '#f59e0b' : '#94a3b8',
+            stroke: hasConflict ? '#f43f5e' : isCritical ? '#f59e0b' : '#94a3b8',
             strokeWidth: isCritical ? 2.4 : 1.8,
           },
           labelStyle: {
-            fill: hasConflict ? '#ef4444' : isCritical ? '#f59e0b' : '#94a3b8',
+            fill: hasConflict ? '#f43f5e' : isCritical ? '#f59e0b' : '#94a3b8',
             fontSize: 10,
             fontWeight: 700,
           },
@@ -186,7 +189,11 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
   }, [baseEdges, setEdges]);
 
   const selectedEdge = useMemo(
-    () => dependencies.find((dependency) => (dependency.id || `${dependency.fromId}::${dependency.toId}`) === selectedEdgeId) || null,
+    () =>
+      dependencies.find(
+        (dependency) =>
+          (dependency.id || `${dependency.fromId}::${dependency.toId}`) === selectedEdgeId
+      ) || null,
     [dependencies, selectedEdgeId]
   );
 
@@ -224,12 +231,9 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
     [onOpenInitiative]
   );
 
-  const handleEdgeClick = useCallback(
-    (_event: React.MouseEvent, edge: Edge) => {
-      setSelectedEdgeId(edge.id);
-    },
-    []
-  );
+  const handleEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    setSelectedEdgeId(edge.id);
+  }, []);
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
@@ -241,9 +245,11 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
           </h3>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span>{t('initiatives.analysis.logic.graph.hint', 'Drag from predecessor to successor')}</span>
+          <span>
+            {t('initiatives.analysis.logic.graph.hint', 'Drag from predecessor to successor')}
+          </span>
           {selectedEdge?.hasTimingConflict && (
-            <span className="inline-flex items-center gap-1 text-red-500">
+            <span className="inline-flex items-center gap-1 text-rose-500">
               <AlertTriangle size={12} />
               {t('initiatives.analysis.logic.graph.timingConflict', 'Timing conflict')}
             </span>

@@ -97,6 +97,19 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         desktopPosition,
         desktopDuration,
       } as SoundPreferences);
+      const persisted = (await Api.get('/settings/notifications/sounds').catch(
+        () => null
+      )) as Partial<SoundPreferences> | null;
+      if (persisted && typeof persisted === 'object') {
+        setSoundEnabled(persisted.soundEnabled !== false);
+        setSoundPerType(persisted.soundPerType || soundPerType);
+        setDesktopPosition((persisted.desktopPosition as DesktopPosition) || desktopPosition);
+        setDesktopDuration(
+          typeof persisted.desktopDuration === 'number'
+            ? persisted.desktopDuration
+            : desktopDuration
+        );
+      }
 
       setSaveStatus('success');
       toast.success(t('settings.notifications.sounds.saved', 'Sound preferences saved'));
@@ -131,7 +144,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
       <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">
           {soundEnabled ? (
-            <Volume2 size={20} className="text-purple-600" />
+            <Volume2 size={20} className="text-primary-600" />
           ) : (
             <VolumeX size={20} className="text-slate-400 dark:text-slate-500" />
           )}
@@ -150,7 +163,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            soundEnabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
+            soundEnabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
           }`}
         >
           <span
@@ -169,15 +182,17 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
           </label>
           {NOTIFICATION_TYPES.map((type) => (
             <div key={type.id} className="flex items-center justify-between">
-              <span className="text-sm text-slate-600 dark:text-slate-400">{type.label}</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                {t(`settings.notifications.sounds.type_${type.id}`, type.label)}
+              </span>
               <select
                 value={soundPerType[type.id] || 'default'}
                 onChange={(e) => setSoundPerType({ ...soundPerType, [type.id]: e.target.value })}
-                className="px-3 py-1.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+                className="px-3 py-1.5 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
               >
                 {SOUND_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(`settings.notifications.sounds.sound_${option.value}`, option.label)}
                   </option>
                 ))}
               </select>
@@ -199,11 +214,11 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
               onClick={() => setDesktopPosition(option.value)}
               className={`px-4 py-2 rounded-lg border-2 transition-all text-sm ${
                 desktopPosition === option.value
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
-                  : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-purple-300'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
+                  : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
               }`}
             >
-              {option.label}
+              {t(`settings.notifications.sounds.pos_${option.value}`, option.label)}
             </button>
           ))}
         </div>
@@ -235,7 +250,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
@@ -259,7 +274,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
           <AlertCircle size={16} />
           {t('settings.notifications.sounds.error', 'Failed to save sound preferences')}
         </div>

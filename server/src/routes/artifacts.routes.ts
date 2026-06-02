@@ -11,9 +11,27 @@ import * as artifactRegistryService from '../services/v8/artifactRegistryService
 import * as executionSpineService from '../services/v8/executionSpineService.js';
 import * as publishReviewService from '../services/v8/publishReviewService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
+import {
+  approveAndCommitWave5Mutation,
+  approveWave5Mutation,
+  buildWave5ExportManifest,
+  commitWave5Mutation,
+  createWave5Artifact,
+  fillWave5DocumentTemplate,
+  generateWave5StructuredArtifact,
+  getWave5Artifact,
+  listWave5Artifacts,
+  listWave5ArtifactVersions,
+  listWave5Mutations,
+  markWave5ArtifactExported,
+  proposeWave5Mutation,
+  rejectWave5Mutation,
+  WAVE5_ARTIFACT_LIFECYCLE,
+  WAVE5_ARTIFACT_TYPES,
+} from '../services/wave5ArtifactRuntimeService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
@@ -47,7 +65,9 @@ function canManageArtifactAccess(params: {
 
 function canPublishOrgTemplate(roleKey: string | null): boolean {
   const normalizedRole = String(roleKey || '').toUpperCase();
-  return normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN' || normalizedRole === 'OWNER';
+  return (
+    normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN' || normalizedRole === 'OWNER'
+  );
 }
 
 function buildActionTargetPayload(artifact: {
@@ -172,9 +192,10 @@ async function updateTemplateArtifactPostPublish(params: {
   }
 
   const nextSummary = summary && typeof summary === 'object' ? { ...summary } : {};
-  const template = (nextSummary as any).template && typeof (nextSummary as any).template === 'object'
-    ? { ...(nextSummary as any).template }
-    : {};
+  const template =
+    (nextSummary as any).template && typeof (nextSummary as any).template === 'object'
+      ? { ...(nextSummary as any).template }
+      : {};
   template.status = 'published';
   template.metadata = {
     ...(template.metadata && typeof template.metadata === 'object' ? template.metadata : {}),
@@ -213,7 +234,10 @@ async function buildArtifactTrustPayload(params: {
 
   const [links, grants, executionRun] = await Promise.all([
     artifactRegistryService.getArtifactOriginLinks(artifact.artifactId, params.organizationId),
-    artifactRegistryService.getArtifactAccessGrantsForArtifact(artifact.artifactId, params.organizationId),
+    artifactRegistryService.getArtifactAccessGrantsForArtifact(
+      artifact.artifactId,
+      params.organizationId
+    ),
     artifact.executionRunId
       ? executionSpineService.getRun(artifact.executionRunId, params.organizationId)
       : Promise.resolve(null),
@@ -368,6 +392,223 @@ router.get(
   })
 );
 
+router.get(
+  '/wave5/schema',
+  asyncHandler(async (_req: Request, res: Response) =>
+    res.json({
+      success: true,
+      artifactTypes: WAVE5_ARTIFACT_TYPES,
+      lifecycle: WAVE5_ARTIFACT_LIFECYCLE,
+    })
+  )
+);
+
+router.get(
+  '/wave5',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const artifacts = await listWave5Artifacts({
+      organizationId,
+      status: typeof req.query.status === 'string' ? req.query.status : null,
+      artifactType: typeof req.query.artifactType === 'string' ? req.query.artifactType : null,
+      limit: req.query.limit ? Number(req.query.limit) : 50,
+    });
+    return res.json({ success: true, artifacts });
+  })
+);
+
+router.post(
+  '/wave5',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const artifact = await createWave5Artifact({
+      organizationId,
+      userId,
+      artifactType: req.body.artifactType,
+      title: String(req.body.title || 'Untitled artifact'),
+      content: String(req.body.content || ''),
+      canonicalFormat: req.body.canonicalFormat,
+      contentMd: req.body.contentMd,
+      contentJson: req.body.contentJson,
+      contentSchemaVersion: req.body.contentSchemaVersion,
+      projectId: req.body.projectId || null,
+      conversationId: req.body.conversationId || null,
+      researchSessionId: req.body.researchSessionId || null,
+      aiRunId: req.body.aiRunId || null,
+      trustBundleId: req.body.trustBundleId || null,
+      citations: Array.isArray(req.body.citations) ? req.body.citations : [],
+      sourceRefs: Array.isArray(req.body.sourceRefs) ? req.body.sourceRefs : [],
+      metadata: req.body.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
+    });
+    return res.status(201).json({ success: true, artifact });
+  })
+);
+
+router.post(
+  '/wave5/fill-template',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const result = await fillWave5DocumentTemplate({
+      organizationId,
+      userId,
+      artifactId: req.body.artifactId || null,
+      artifactType: req.body.artifactType,
+      title: req.body.title,
+      template: String(req.body.template || ''),
+      fields: req.body.fields && typeof req.body.fields === 'object' ? req.body.fields : {},
+      projectId: req.body.projectId || null,
+      conversationId: req.body.conversationId || null,
+    });
+    return res.status(result.needsInput ? 200 : 201).json(result);
+  })
+);
+
+router.post(
+  '/wave5/generate',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const artifact = await generateWave5StructuredArtifact({
+      organizationId,
+      userId,
+      outputKind: req.body.outputKind,
+      prompt: String(req.body.prompt || ''),
+      title: req.body.title || null,
+      projectId: req.body.projectId || null,
+      conversationId: req.body.conversationId || null,
+      researchSessionId: req.body.researchSessionId || null,
+      aiRunId: req.body.aiRunId || null,
+      trustBundleId: req.body.trustBundleId || null,
+      citations: Array.isArray(req.body.citations) ? req.body.citations : [],
+      sourceRefs: Array.isArray(req.body.sourceRefs) ? req.body.sourceRefs : [],
+    });
+    return res.status(201).json({ success: true, artifact });
+  })
+);
+
+router.get(
+  '/wave5/:artifactId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const artifact = await getWave5Artifact(String(req.params.artifactId), organizationId);
+    if (!artifact) return res.status(404).json({ success: false, error: 'Artifact not found' });
+    return res.json({ success: true, artifact });
+  })
+);
+
+router.get(
+  '/wave5/:artifactId/versions',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const versions = await listWave5ArtifactVersions(String(req.params.artifactId), organizationId);
+    return res.json({ success: true, versions });
+  })
+);
+
+router.get(
+  '/wave5/:artifactId/mutations',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const mutations = await listWave5Mutations(String(req.params.artifactId), organizationId);
+    return res.json({ success: true, mutations });
+  })
+);
+
+router.post(
+  '/wave5/:artifactId/mutations',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const mutation = await proposeWave5Mutation({
+      organizationId,
+      userId,
+      artifactId: String(req.params.artifactId),
+      proposedContent: String(req.body.proposedContent || ''),
+      summary: req.body.summary || null,
+      mutationType: req.body.mutationType || null,
+      metadata: req.body.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
+    });
+    return res.status(201).json({ success: true, mutation });
+  })
+);
+
+router.post(
+  '/wave5/mutations/:mutationId/reject',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const mutation = await rejectWave5Mutation({
+      mutationId: String(req.params.mutationId),
+      organizationId,
+      userId,
+    });
+    return res.json({ success: true, mutation });
+  })
+);
+
+router.post(
+  '/wave5/mutations/:mutationId/approve',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const mutation = await approveWave5Mutation({
+      mutationId: String(req.params.mutationId),
+      organizationId,
+      userId,
+    });
+    return res.json({ success: true, mutation });
+  })
+);
+
+router.post(
+  '/wave5/mutations/:mutationId/commit',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const artifact = await commitWave5Mutation({
+      mutationId: String(req.params.mutationId),
+      organizationId,
+      userId,
+    });
+    return res.json({ success: true, artifact });
+  })
+);
+
+router.post(
+  '/wave5/mutations/:mutationId/approve-and-commit',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const artifact = await approveAndCommitWave5Mutation({
+      mutationId: String(req.params.mutationId),
+      organizationId,
+      userId,
+    });
+    return res.json({ success: true, artifact });
+  })
+);
+
+router.get(
+  '/wave5/:artifactId/export-manifest',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const manifest = await buildWave5ExportManifest(String(req.params.artifactId), organizationId);
+    return res.json({ success: true, manifest });
+  })
+);
+
+router.post(
+  '/wave5/:artifactId/exported',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const artifact = await markWave5ArtifactExported(String(req.params.artifactId), organizationId);
+    return res.json({ success: true, artifact });
+  })
+);
+
 // Legacy compatibility alias. Canonical ArtifactRun contract lives under /api/artifact-runs/*.
 router.post(
   '/runs/from-chat',
@@ -494,8 +735,7 @@ router.post(
       String(process.env.V8_TEMPLATES_REVIEW_ENABLED || 'true').toLowerCase() === 'false'
     ) {
       return res.status(503).json({
-        error:
-          'Template review is temporarily disabled (rollback posture). Please retry later.',
+        error: 'Template review is temporarily disabled (rollback posture). Please retry later.',
       });
     }
 
@@ -538,17 +778,19 @@ router.post(
         after: { reviewers, publishState: started?.publishState || 'reviewable_share' },
       });
 
-      activityService.log({
-        organizationId,
-        userId,
-        action: 'artifact_review_started',
-        entityType: 'artifact',
-        entityId: artifact.artifactId,
-        entityName: (artifact as any).title || artifact.artifactId,
-        metadata: { reviewers, artifactFamily: artifact.artifactFamily },
-      }).catch((err) => {
-        logger.warn('[artifacts] Failed to log review activity', { error: err });
-      });
+      activityService
+        .log({
+          organizationId,
+          userId,
+          action: 'artifact_review_started',
+          entityType: 'artifact',
+          entityId: artifact.artifactId,
+          entityName: (artifact as any).title || artifact.artifactId,
+          metadata: { reviewers, artifactFamily: artifact.artifactFamily },
+        })
+        .catch((err) => {
+          logger.warn('[artifacts] Failed to log review activity', { error: err });
+        });
 
       return res.status(200).json({ data: started });
     } catch (error) {
@@ -576,8 +818,11 @@ router.post(
     const { userId, organizationId, roleKey } = getAuthContext(req);
     const sourceArtifactId = String(req.params.id || '');
     const name = String(req.body?.name || '').trim();
-    const description = typeof req.body?.description === 'string' ? req.body.description.trim() : '';
-    const scope = String(req.body?.scope || 'user').trim().toLowerCase(); // user | org
+    const description =
+      typeof req.body?.description === 'string' ? req.body.description.trim() : '';
+    const scope = String(req.body?.scope || 'user')
+      .trim()
+      .toLowerCase(); // user | org
 
     if (!name) {
       return res.status(422).json({ error: 'Template name is required' });
@@ -593,7 +838,9 @@ router.post(
       return res.status(404).json({ error: 'Artifact not found' });
     }
     if (source.originRuntime !== 'report' && source.originRuntime !== 'presentation') {
-      return res.status(409).json({ error: 'Only report or presentation outputs can be saved as templates' });
+      return res
+        .status(409)
+        .json({ error: 'Only report or presentation outputs can be saved as templates' });
     }
 
     const templateScope = scope === 'org' ? 'org' : 'user';
@@ -648,7 +895,9 @@ router.post(
             status: 'draft',
             description,
             reportType: String(reportBundle.report.reportType || 'custom'),
-            structureBlueprint: { sections: sections.map((s: any) => ({ key: s.key, title: s.title })) },
+            structureBlueprint: {
+              sections: sections.map((s: any) => ({ key: s.key, title: s.title })),
+            },
             metadata: {
               createdBy: userId,
               createdAt: new Date().toISOString(),
@@ -760,7 +1009,9 @@ router.post(
     const comments = typeof req.body?.comments === 'string' ? req.body.comments : null;
 
     if (!canPublishOrgTemplate(roleKey)) {
-      return res.status(403).json({ error: 'Only admins/owners can publish organization templates' });
+      return res
+        .status(403)
+        .json({ error: 'Only admins/owners can publish organization templates' });
     }
 
     const artifact = await artifactRegistryService.getArtifactForUser({
@@ -773,22 +1024,31 @@ router.post(
       return res.status(404).json({ error: 'Artifact not found' });
     }
     if (artifact.artifactFamily !== 'template') {
-      return res.status(409).json({ error: 'Only template artifacts can be published via this endpoint' });
+      return res
+        .status(409)
+        .json({ error: 'Only template artifacts can be published via this endpoint' });
     }
 
     // P24-C rollback posture: disable template publish without disabling browse/generate.
     if (String(process.env.V8_TEMPLATES_PUBLISH_ENABLED || 'true').toLowerCase() === 'false') {
       return res.status(503).json({
-        error: 'Template publishing is temporarily disabled (rollback posture). Please retry later.',
+        error:
+          'Template publishing is temporarily disabled (rollback posture). Please retry later.',
       });
     }
 
     const templateScope = String((artifact.originSummary as any)?.template?.scope || '')
       .trim()
       .toLowerCase();
-    if (templateScope !== 'org' && templateScope !== 'organization' && templateScope !== 'app' && templateScope !== 'application') {
+    if (
+      templateScope !== 'org' &&
+      templateScope !== 'organization' &&
+      templateScope !== 'app' &&
+      templateScope !== 'application'
+    ) {
       return res.status(409).json({
-        error: 'Only organization/system templates can be published. Create an org-scope template first.',
+        error:
+          'Only organization/system templates can be published. Create an org-scope template first.',
       });
     }
 
@@ -801,7 +1061,8 @@ router.post(
       String(process.env.V8_PROVENANCE_STAMP_ENABLED || 'true').toLowerCase() === 'false'
     ) {
       return res.status(503).json({
-        error: 'Provenance stamp unavailable (P18). Publishing is blocked (fail closed). Please retry later.',
+        error:
+          'Provenance stamp unavailable (P18). Publishing is blocked (fail closed). Please retry later.',
       });
     }
 
@@ -881,8 +1142,12 @@ router.post(
     const { userId, organizationId, roleKey } = getAuthContext(req);
     const artifactId = String(req.params.id || '');
     const deprecationReason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
-    const migrationHint = typeof req.body?.migrationHint === 'string' ? req.body.migrationHint.trim() : null;
-    const replacedByArtifactId = typeof req.body?.replacedByArtifactId === 'string' ? req.body.replacedByArtifactId.trim() : null;
+    const migrationHint =
+      typeof req.body?.migrationHint === 'string' ? req.body.migrationHint.trim() : null;
+    const replacedByArtifactId =
+      typeof req.body?.replacedByArtifactId === 'string'
+        ? req.body.replacedByArtifactId.trim()
+        : null;
 
     if (!canPublishOrgTemplate(roleKey)) {
       return res.status(403).json({ error: 'Only admins/owners can deprecate templates' });
@@ -898,7 +1163,9 @@ router.post(
       return res.status(404).json({ error: 'Artifact not found' });
     }
     if (artifact.artifactFamily !== 'template') {
-      return res.status(409).json({ error: 'Only template artifacts can be deprecated via this endpoint' });
+      return res
+        .status(409)
+        .json({ error: 'Only template artifacts can be deprecated via this endpoint' });
     }
 
     const now = new Date().toISOString();
@@ -915,9 +1182,10 @@ router.post(
     }
 
     const nextSummary = summary && typeof summary === 'object' ? { ...summary } : {};
-    const template = (nextSummary as any).template && typeof (nextSummary as any).template === 'object'
-      ? { ...(nextSummary as any).template }
-      : {};
+    const template =
+      (nextSummary as any).template && typeof (nextSummary as any).template === 'object'
+        ? { ...(nextSummary as any).template }
+        : {};
     template.status = 'deprecated';
     template.deprecationReason = deprecationReason || null;
     template.migrationHint = migrationHint;
@@ -957,7 +1225,12 @@ router.post(
       action: 'deprecate',
       resourceType: 'artifact',
       resourceId: artifactId,
-      after: { status: 'deprecated', deprecationReason: deprecationReason || null, migrationHint, replacedByArtifactId },
+      after: {
+        status: 'deprecated',
+        deprecationReason: deprecationReason || null,
+        migrationHint,
+        replacedByArtifactId,
+      },
     });
 
     res.status(200).json({

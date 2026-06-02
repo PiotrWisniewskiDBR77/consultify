@@ -50,8 +50,8 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
       label: t('focusMode.all', 'Wszystko'),
       description: t('focusMode.allDesc', 'Wszystkie dostępne źródła'),
       icon: Sparkles,
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+      color: 'text-primary-600 dark:text-primary-400',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/30',
     },
     {
       value: 'pmo-docs',
@@ -82,8 +82,8 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
       label: t('focusMode.web', 'Web'),
       description: t('focusMode.webDesc', 'Wyszukiwanie w czasie rzeczywistym'),
       icon: Globe,
-      color: 'text-cyan-600 dark:text-cyan-400',
-      bgColor: 'bg-cyan-100 dark:bg-cyan-900/30',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
     },
   ];
 
@@ -240,7 +240,7 @@ export const FocusModeBadge: React.FC<{
     all: {
       label: t('focusMode.all', 'All'),
       icon: <Sparkles size={12} />,
-      color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+      color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
     },
     'pmo-docs': {
       label: t('focusMode.pmoDocs', 'PMO'),
@@ -260,7 +260,7 @@ export const FocusModeBadge: React.FC<{
     web: {
       label: t('focusMode.web', 'Web'),
       icon: <Globe size={12} />,
-      color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+      color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
     },
   };
 

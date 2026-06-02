@@ -46,13 +46,15 @@ const COPY: Record<'en' | 'pl', Record<AssessmentV8CanonMode, LocalizedCopy>> = 
         {
           id: 'evidence',
           title: 'Collect answers and evidence',
-          description: 'The workbench captures scored inputs, notes, and supporting evidence in one runtime.',
+          description:
+            'The workbench captures scored inputs, notes, and supporting evidence in one runtime.',
           icon: FileCheck2,
         },
         {
           id: 'ai',
           title: 'Interpret with governed AI',
-          description: 'AI helps with interpretation while methodology authority and evidence stay explicit.',
+          description:
+            'AI helps with interpretation while methodology authority and evidence stay explicit.',
           icon: Bot,
         },
         {
@@ -87,13 +89,15 @@ const COPY: Record<'en' | 'pl', Record<AssessmentV8CanonMode, LocalizedCopy>> = 
         {
           id: 'scoring',
           title: 'Scoring follows the method',
-          description: 'Interpretation is grounded in the assessment family rather than ad hoc judgment.',
+          description:
+            'Interpretation is grounded in the assessment family rather than ad hoc judgment.',
           icon: ShieldCheck,
         },
         {
           id: 'promotion',
           title: 'Promotion starts from completed findings',
-          description: 'Downstream reports and initiatives inherit the assessment source and its evidence.',
+          description:
+            'Downstream reports and initiatives inherit the assessment source and its evidence.',
           icon: FolderOutput,
         },
       ],
@@ -118,7 +122,8 @@ const COPY: Record<'en' | 'pl', Record<AssessmentV8CanonMode, LocalizedCopy>> = 
         {
           id: 'method',
           title: 'Wybierz wlasciwa metodologie',
-          description: 'DRD, SIRI, ADMA i kolejne frameworki naleza do jednej rodziny assessmentowej.',
+          description:
+            'DRD, SIRI, ADMA i kolejne frameworki naleza do jednej rodziny assessmentowej.',
           icon: Microscope,
         },
         {
@@ -130,7 +135,8 @@ const COPY: Record<'en' | 'pl', Record<AssessmentV8CanonMode, LocalizedCopy>> = 
         {
           id: 'ai',
           title: 'Interpretuj z governed AI',
-          description: 'AI pomaga w interpretacji, ale autorytet metody i evidence pozostaja jawne.',
+          description:
+            'AI pomaga w interpretacji, ale autorytet metody i evidence pozostaja jawne.',
           icon: Bot,
         },
         {
@@ -159,13 +165,15 @@ const COPY: Record<'en' | 'pl', Record<AssessmentV8CanonMode, LocalizedCopy>> = 
         {
           id: 'answers',
           title: 'Odpowiedzi i evidence sa razem',
-          description: 'Rekord sesji utrzymuje obserwacje, notatki i kontekst scoringu w jednym miejscu.',
+          description:
+            'Rekord sesji utrzymuje obserwacje, notatki i kontekst scoringu w jednym miejscu.',
           icon: FileCheck2,
         },
         {
           id: 'scoring',
           title: 'Scoring podaza za metoda',
-          description: 'Interpretacja jest zakotwiczona w rodzinie assessmentu, a nie w ad hoc judgment.',
+          description:
+            'Interpretacja jest zakotwiczona w rodzinie assessmentu, a nie w ad hoc judgment.',
           icon: ShieldCheck,
         },
         {
@@ -214,12 +222,16 @@ export const AssessmentV8CanonPanel: React.FC<AssessmentV8CanonPanelProps> = ({
           >
             {copy.title}
           </h2>
-          <p className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
+          >
             {copy.subtitle}
           </p>
         </div>
 
-        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}>
+        <div
+          className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}
+        >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
               {copy.journeyTitle}

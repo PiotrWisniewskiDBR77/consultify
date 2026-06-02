@@ -44,13 +44,14 @@ import { useNavigate } from 'react-router-dom';
 
 import { type UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
+import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import {
   getInitiativeGateReadinessTruth,
   getInitiativeStatusPreflightTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
-import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
@@ -125,8 +126,8 @@ interface RaidItem {
 // ==========================================
 
 const PRIORITY_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  critical: { bg: 'bg-red-500/10', text: 'text-red-500', dot: 'bg-red-500' },
-  high: { bg: 'bg-orange-500/10', text: 'text-orange-500', dot: 'bg-orange-500' },
+  critical: { bg: 'bg-rose-500/10', text: 'text-rose-500', dot: 'bg-rose-500' },
+  high: { bg: 'bg-amber-500/10', text: 'text-amber-500', dot: 'bg-amber-500' },
   medium: { bg: 'bg-amber-500/10', text: 'text-amber-500', dot: 'bg-amber-500' },
   low: { bg: 'bg-emerald-500/10', text: 'text-emerald-500', dot: 'bg-emerald-500' },
 };
@@ -138,26 +139,26 @@ const TASK_STATUS_COLORS: Record<string, string> = {
   IN_PROGRESS: 'text-blue-500',
   todo: 'text-slate-500 dark:text-slate-400',
   TODO: 'text-slate-500 dark:text-slate-400',
-  blocked: 'text-red-500',
-  BLOCKED: 'text-red-500',
+  blocked: 'text-rose-500',
+  BLOCKED: 'text-rose-500',
 };
 
 const DECISION_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   PENDING: { bg: 'bg-amber-500/10', text: 'text-amber-500' },
   APPROVED: { bg: 'bg-emerald-500/10', text: 'text-emerald-500' },
-  REJECTED: { bg: 'bg-red-500/10', text: 'text-red-500' },
+  REJECTED: { bg: 'bg-rose-500/10', text: 'text-rose-500' },
   DEFERRED: { bg: 'bg-slate-500/10', text: 'text-slate-500' },
 };
 
 const RAID_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string }> = {
-  risk: { icon: AlertTriangle, color: 'text-red-500' },
-  RISK: { icon: AlertTriangle, color: 'text-red-500' },
+  risk: { icon: AlertTriangle, color: 'text-rose-500' },
+  RISK: { icon: AlertTriangle, color: 'text-rose-500' },
   issue: { icon: AlertTriangle, color: 'text-amber-500' },
   ISSUE: { icon: AlertTriangle, color: 'text-amber-500' },
   assumption: { icon: Target, color: 'text-blue-500' },
   ASSUMPTION: { icon: Target, color: 'text-blue-500' },
-  dependency: { icon: ChevronRight, color: 'text-purple-500' },
-  DEPENDENCY: { icon: ChevronRight, color: 'text-purple-500' },
+  dependency: { icon: ChevronRight, color: 'text-primary-500' },
+  DEPENDENCY: { icon: ChevronRight, color: 'text-primary-500' },
 };
 
 const COMPACT_TABS: { id: CompactTab; labelKey: string; icon: React.ElementType }[] = [
@@ -185,7 +186,7 @@ const formatDate = (d?: string) => {
 const ProgressBar: React.FC<{ value: number; max: number; color?: string }> = ({
   value,
   max,
-  color = 'bg-purple-500',
+  color = 'bg-primary-500',
 }) => {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
@@ -312,7 +313,9 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
   const wfStatus = getWorkflowStatusForInitiative(initiative as any);
   const status = (
-    (Object.values(InitiativeStatus) as string[]).includes(wfStatus) ? wfStatus : InitiativeStatus.DRAFT
+    (Object.values(InitiativeStatus) as string[]).includes(wfStatus)
+      ? wfStatus
+      : InitiativeStatus.DRAFT
   ) as InitiativeStatus;
   const statusMeta = getStatusMeta(status);
   const statusActions = getStatusActions(status);
@@ -491,7 +494,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               <button
                 key={action.targetStatus}
                 onClick={() => handleStatusAction(action)}
-                className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors"
+                className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition-colors"
               >
                 <ArrowRight size={10} />
                 {action.label}
@@ -535,7 +538,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               {blockingItems.slice(0, 3).map((item: any) => (
                 <span
                   key={item.key || item.label}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400"
                 >
                   <AlertTriangle size={10} />
                   {item.label || item.key}
@@ -611,7 +614,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             value={(initiative as any)?.ownerBusiness ? '✓' : '—'}
             color={
               (initiative as any)?.ownerBusiness
-                ? 'text-purple-500'
+                ? 'text-primary-500'
                 : 'text-slate-500 dark:text-slate-400'
             }
           />
@@ -626,7 +629,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                   })
                 : '—'
             }
-            color="text-cyan-500"
+            color="text-blue-500"
           />
           <MetricBox
             icon={DollarSign}
@@ -647,7 +650,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             icon={AlertTriangle}
             label={t('initiatives.compact.risks')}
             value={`${riskCount}R/${issueCount}I`}
-            color={riskCount > 0 ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'}
+            color={riskCount > 0 ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'}
           />
         </div>
       </div>
@@ -682,7 +685,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -690,7 +693,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               {t(tab.labelKey)}
               {count !== undefined && count > 0 && (
                 <span
-                  className={`ml-0.5 px-1 py-0 rounded text-[9px] font-bold ${activeTab === tab.id ? 'bg-purple-500/15 text-purple-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500'}`}
+                  className={`ml-0.5 px-1 py-0 rounded text-[9px] font-bold ${activeTab === tab.id ? 'bg-primary-500/15 text-primary-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500'}`}
                 >
                   {count}
                 </span>
@@ -704,7 +707,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 size={20} className="animate-spin text-purple-500" />
+            <Loader2 size={20} className="animate-spin text-primary-500" />
           </div>
         ) : (
           <>
@@ -723,7 +726,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                 onOpen={(row) => {
                   const targetPath =
                     row.kind === 'sheet'
-                      ? buildMyWorkSheetTableOpenPath(row.originRecordId)
+                      ? getArtifactPath('sheet', row.originRecordId)
                       : getArtifactPath(
                           row.kind === 'presentation' ? 'presentation' : 'report',
                           row.originRecordId
@@ -736,7 +739,6 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           </>
         )}
       </div>
-
     </motion.div>
   );
 
@@ -796,6 +798,7 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
   users,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   if (!initiative) return null;
   const init = initiative as any;
 
@@ -880,15 +883,29 @@ const SummaryTab: React.FC<{ initiative: PortfolioInitiative | null; users: User
         </div>
       )}
 
+      {init.id ? (
+        <button
+          onClick={() =>
+            navigate(
+              `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(String(init.id))}`
+            )
+          }
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+        >
+          <ExternalLink size={12} className="text-purple-500 shrink-0" />
+          <span>{t('initiatives.preview.resultsAndReports', 'Results & KPI reports')}</span>
+        </button>
+      ) : null}
+
       {/* Kill Criteria / Scope */}
       {init.killCriteria?.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1.5">
+          <p className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider mb-1.5">
             {t('initiatives.compact.killCriteria')}
           </p>
           <ul className="space-y-1">
             {init.killCriteria.map((kc: string, i: number) => (
-              <li key={i} className="flex items-start gap-1.5 text-xs text-red-500/80">
+              <li key={i} className="flex items-start gap-1.5 text-xs text-rose-500/80">
                 <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" />
                 <span>{kc}</span>
               </li>
@@ -953,7 +970,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
       {/* Milestones */}
       {milestones.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+          <p className="text-[10px] font-semibold text-primary-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
             <Flag size={10} /> {t('initiatives.compact.milestones')}
           </p>
           {milestones.map((ms) => (
@@ -961,7 +978,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
               key={ms.id}
               className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors"
             >
-              <Flag size={11} className="text-purple-500 flex-shrink-0" />
+              <Flag size={11} className="text-primary-500 flex-shrink-0" />
               <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">
                 {ms.title}
               </span>
@@ -976,7 +993,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
       {/* Blocked first — B7.3: truncated */}
       {byStatus.blocked.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1">
+          <p className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider mb-1">
             {t('initiatives.compact.blocked', { count: byStatus.blocked.length })}
           </p>
           {visibleBlocked.map((t) => (
@@ -985,7 +1002,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
           {byStatus.blocked.length > MAX_VISIBLE_TASKS && (
             <button
               onClick={() => setShowAllBlocked((v) => !v)}
-              className="w-full text-center py-1 text-[10px] font-medium text-red-400 hover:text-red-300 transition-colors"
+              className="w-full text-center py-1 text-[10px] font-medium text-rose-400 hover:text-rose-300 transition-colors"
             >
               {showAllBlocked
                 ? t('initiatives.compact.showLess')
@@ -1193,7 +1210,7 @@ const RaidTab: React.FC<{ items: RaidItem[]; onMitigationSaved?: () => void }> =
                   </span>
                   {item.severity && (
                     <span
-                      className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-[9px] font-medium ${item.severity === 'CRITICAL' || item.severity === 'HIGH' ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {item.severity}
                     </span>
@@ -1201,7 +1218,7 @@ const RaidTab: React.FC<{ items: RaidItem[]; onMitigationSaved?: () => void }> =
                   {isExpandable && (
                     <button
                       onClick={() => setExpandedMitigationId(isExpanded ? null : item.id)}
-                      className="ml-auto text-[10px] font-semibold text-cyan-600 dark:text-cyan-400 hover:underline"
+                      className="ml-auto text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {isExpanded
                         ? t('execution.mitigation.hide', 'Hide mitigation')
@@ -1285,7 +1302,7 @@ const FinanceTab: React.FC<{
             labelKey: 'initiatives.compact.impact',
             value: init.impact || init.strategicImpact || '—',
             icon: Target,
-            color: 'text-purple-500',
+            color: 'text-primary-500',
           },
         ].map((item) => (
           <div
@@ -1310,7 +1327,7 @@ const FinanceTab: React.FC<{
           <ProgressBar
             value={Number(spent)}
             max={Number(budget)}
-            color={Number(spent) > Number(budget) ? 'bg-red-500' : 'bg-blue-500'}
+            color={Number(spent) > Number(budget) ? 'bg-rose-500' : 'bg-blue-500'}
           />
         </div>
       )}
@@ -1348,7 +1365,7 @@ const OutputsTab: React.FC<{
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <Loader2 size={18} className="animate-spin text-purple-500" />
+        <Loader2 size={18} className="animate-spin text-primary-500" />
       </div>
     );
   }

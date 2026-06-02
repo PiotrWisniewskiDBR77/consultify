@@ -212,6 +212,52 @@ describe('P35-B: useConversationStore — History Library', () => {
       });
     });
 
+    it('renameConversation keeps the server-confirmed title and user title source', async () => {
+      mockApi.updateConversation.mockResolvedValueOnce({
+        id: 'c1',
+        title: 'Renamed by user',
+        title_source: 'user',
+        version: 6,
+        archived: false,
+        starred: false,
+        created_at: '2026-01-01',
+        updated_at: '2026-01-02',
+      });
+      useConversationStore.setState({
+        conversations: [
+          { id: 'c1', title: 'New conversation', version: 5, archived: false, starred: false },
+        ] as any[],
+      });
+
+      await useConversationStore.getState().renameConversation('c1', 'Renamed by user');
+
+      const renamed = useConversationStore.getState().conversations.find((c: any) => c.id === 'c1');
+      expect(mockApi.updateConversation).toHaveBeenCalledWith('c1', {
+        title: 'Renamed by user',
+        titleSource: 'user',
+        expectedVersion: 5,
+      });
+      expect(renamed.title).toBe('Renamed by user');
+      expect(renamed.titleSource).toBe('user');
+      expect(renamed.version).toBe(6);
+    });
+
+    it('renameConversation rolls back optimistic title when the API update fails', async () => {
+      mockApi.updateConversation.mockRejectedValueOnce(new Error('rename failed'));
+      useConversationStore.setState({
+        conversations: [
+          { id: 'c1', title: 'Original title', version: 5, archived: false, starred: false },
+        ] as any[],
+      });
+
+      await expect(
+        useConversationStore.getState().renameConversation('c1', 'Broken rename')
+      ).rejects.toThrow('rename failed');
+
+      const current = useConversationStore.getState().conversations.find((c: any) => c.id === 'c1');
+      expect(current.title).toBe('Original title');
+    });
+
     it('updateConversation handles 409 conflict by refreshing', async () => {
       const conflictError: any = new Error('Conflict');
       conflictError.response = { status: 409 };
@@ -313,6 +359,78 @@ describe('P35-B: useConversationStore — History Library', () => {
       expect(conv.chatProjectId).toBe('folder-1');
       expect(conv.projectId).toBe('pmo-project-1');
       expect(conv.chatProjectId).not.toBe(conv.projectId);
+    });
+
+    it('createConversation sends active chat folder as chatProjectId, not PMO projectId', async () => {
+      mockApi.createConversation.mockResolvedValueOnce({
+        id: 'folder-conv',
+        title: 'Folder conversation',
+        chat_project_id: 'folder-1',
+        created_at: '2026-01-01',
+        updated_at: '2026-01-01',
+      });
+
+      const state = useConversationStore.getState();
+      await state.createConversation({ chatProjectId: 'folder-1' });
+
+      expect(mockApi.createConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chatProjectId: 'folder-1',
+          projectId: undefined,
+        })
+      );
+      expect(useConversationStore.getState().conversations[0].chatProjectId).toBe('folder-1');
+    });
+
+    it('folder helper filters by chatProjectId instead of PMO projectId', () => {
+      useConversationStore.setState({
+        conversations: [
+          { id: 'folder-match', title: 'In folder', chatProjectId: 'folder-1', projectId: 'pmo-1' },
+          { id: 'pmo-only', title: 'PMO only', chatProjectId: null, projectId: 'folder-1' },
+        ] as any[],
+      });
+
+      const result = useConversationStore.getState().getConversationsByProject('folder-1');
+
+      expect(result.map((c: any) => c.id)).toEqual(['folder-match']);
+    });
+  });
+
+  describe('Conversation loader dedupe', () => {
+    it('reuses cached messages and releases loader inside the fetch dedupe window', async () => {
+      mockApi.getConversation.mockResolvedValueOnce({
+        id: 'c-cache',
+        title: 'Cached conversation',
+        language: 'pl',
+        created_at: '2026-01-01',
+        updated_at: '2026-01-01',
+        messages: [
+          {
+            id: 'm1',
+            conversation_id: 'c-cache',
+            role: 'ai',
+            content: 'Cached reply',
+            message_type: 'text',
+            created_at: '2026-01-01',
+          },
+        ],
+      });
+
+      const state = useConversationStore.getState();
+      await state.fetchConversation('c-cache');
+
+      useConversationStore.setState({
+        activeConversationId: 'other-conv',
+        activeMessages: [],
+        isLoading: false,
+      });
+
+      useConversationStore.getState().setActiveConversation('c-cache');
+
+      const after = useConversationStore.getState();
+      expect(after.isLoading).toBe(false);
+      expect(after.activeMessages.map((m: any) => m.id)).toEqual(['m1']);
+      expect(mockApi.getConversation).toHaveBeenCalledTimes(1);
     });
   });
 });

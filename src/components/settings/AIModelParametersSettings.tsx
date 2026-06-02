@@ -7,7 +7,6 @@
  */
 
 import {
-  AlertCircle,
   Brain,
   CheckCircle,
   Circle,
@@ -15,7 +14,6 @@ import {
   Globe,
   HardDrive,
   Info,
-  Loader2,
   Sparkles,
   Zap,
 } from 'lucide-react';
@@ -25,13 +23,9 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
-import {
-  SettingsDivider,
-  SettingsFormRow,
-  SettingsInput,
-  SettingsSection,
-  SettingsToggle,
-} from './shared';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
+import { SettingsDivider, SettingsFormRow, SettingsInput, SettingsSection } from './shared';
 
 interface LLMProvider {
   id: string;
@@ -54,16 +48,8 @@ interface UserModelPrefs {
   maxTokens: number;
 }
 
-const PROVIDER_ICONS: Record<string, React.ElementType> = {
-  dbr77: Zap,
-  openai: Sparkles,
-  anthropic: Brain,
-  google: Globe,
-  ollama: HardDrive,
-};
-
 const TIER_BADGE: Record<string, { label: string; className: string } | null> = {
-  PLATFORM: { label: 'PLATFORM', className: 'bg-violet-600 text-white' },
+  PLATFORM: { label: 'PLATFORM', className: 'bg-primary-600 text-white' },
   PREMIUM: { label: 'PRO', className: 'bg-amber-500/20 text-amber-400' },
   REASONING: { label: 'REASONING', className: 'bg-blue-500/20 text-blue-400' },
   STANDARD: null,
@@ -88,9 +74,32 @@ const groupModels = (models: LLMProvider[]) => {
   return { platform, cloud, local };
 };
 
-export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
-  className = '',
-}) => {
+const mapUserSettingsToPrefs = (
+  userSettings: Record<string, unknown> | null | undefined,
+  modelList: LLMProvider[]
+): UserModelPrefs => {
+  const loaded: UserModelPrefs = {
+    preferredModelId:
+      typeof userSettings?.preferred_model_id === 'string' ? userSettings.preferred_model_id : null,
+    visibleModelIds: Array.isArray(userSettings?.visible_model_ids)
+      ? (userSettings.visible_model_ids as string[])
+      : [],
+    temperature:
+      typeof userSettings?.model_temperature === 'number' ? userSettings.model_temperature : 0.7,
+    maxTokens: typeof userSettings?.max_tokens === 'number' ? userSettings.max_tokens : 4096,
+  };
+
+  if (loaded.visibleModelIds.length === 0 && modelList.length > 0) {
+    loaded.visibleModelIds = modelList.map((m) => m.id);
+  }
+
+  return loaded;
+};
+
+const prefsMatch = (left: UserModelPrefs, right: UserModelPrefs) =>
+  JSON.stringify(left) === JSON.stringify(right);
+
+export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [models, setModels] = useState<LLMProvider[]>([]);
   const [prefs, setPrefs] = useState<UserModelPrefs>({
@@ -120,27 +129,13 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
         const modelList: LLMProvider[] = Array.isArray(availableModels) ? availableModels : [];
         setModels(modelList);
 
-        const loaded: UserModelPrefs = {
-          preferredModelId: userSettings?.preferred_model_id || null,
-          visibleModelIds: Array.isArray(userSettings?.visible_model_ids)
-            ? userSettings.visible_model_ids
-            : [],
-          temperature: userSettings?.model_temperature ?? 0.7,
-          maxTokens: userSettings?.max_tokens ?? 4096,
-        };
-
-        // If user has no visible models yet, default to all available
-        if (loaded.visibleModelIds.length === 0 && modelList.length > 0) {
-          loaded.visibleModelIds = modelList.map((m) => m.id);
-        }
+        const loaded = mapUserSettingsToPrefs(userSettings, modelList);
 
         setPrefs(loaded);
         setOriginalPrefs(loaded);
-      } catch (err) {
-        console.error('Failed to load model settings:', err);
-        setLoadError(
-          err instanceof Error ? err.message : 'Failed to load model settings'
-        );
+      } catch (err: unknown) {
+        setModels([]);
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load model settings'));
       } finally {
         setLoading(false);
       }
@@ -157,14 +152,25 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
         model_temperature: prefs.temperature,
         max_tokens: prefs.maxTokens,
       });
-      setOriginalPrefs(prefs);
+      const persistedSettings = await Api.getAIUserSettings();
+      const persistedPrefs = mapUserSettingsToPrefs(persistedSettings, models);
+      if (!prefsMatch(persistedPrefs, prefs)) {
+        throw new Error('Model preferences were not confirmed by the server');
+      }
+      setPrefs(persistedPrefs);
+      setOriginalPrefs(persistedPrefs);
       toast.success(t('settings.ai.modelParamsSaved', 'Model & parameters saved'));
-    } catch {
-      toast.error(t('settings.ai.modelParamsError', 'Failed to save model & parameters'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.ai.modelParamsError', 'Failed to save model & parameters')
+        )
+      );
     } finally {
       setSaving(false);
     }
-  }, [prefs, t]);
+  }, [models, prefs, t]);
 
   const toggleModel = (modelId: string) => {
     setPrefs((prev) => {
@@ -201,8 +207,8 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
           'flex items-center justify-between p-3 rounded-lg border transition-all duration-200 cursor-pointer',
           isEnabled
             ? isPlatform
-              ? 'border-violet-500/50 bg-gradient-to-r from-violet-600/10 to-violet-500/5'
-              : 'border-violet-500/40 bg-violet-600/5'
+              ? 'border-primary-500/50 bg-gradient-to-r from-primary-600/10 to-primary-500/5'
+              : 'border-primary-500/40 bg-primary-600/5'
             : 'border-white/5 bg-navy-900/30 hover:border-white/10'
         )}
         onClick={() => toggleModel(model.id)}
@@ -211,7 +217,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
           <div
             className={cn(
               'flex-shrink-0',
-              isEnabled ? (isPlatform ? 'text-violet-300' : 'text-violet-400') : 'text-slate-600'
+              isEnabled ? (isPlatform ? 'text-primary-300' : 'text-primary-400') : 'text-slate-600'
             )}
           >
             {isEnabled ? <CheckCircle size={18} /> : <Circle size={18} />}
@@ -221,7 +227,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
               <span
                 className={cn(
                   'text-sm font-medium',
-                  isPlatform ? 'text-violet-200' : 'text-white'
+                  isPlatform ? 'text-primary-200' : 'text-white'
                 )}
               >
                 {model.name}
@@ -242,14 +248,15 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
                 </span>
               )}
               {isPreferred && (
-                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-violet-600 text-white rounded">
+                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-primary-600 text-white rounded">
                   {t('settings.ai.preferred', 'PREFERRED')}
                 </span>
               )}
             </div>
             <span className="text-xs text-slate-500">
               {model.provider} &middot; {model.model_id}
-              {model.context_window > 0 && ` &middot; ${(model.context_window / 1000).toFixed(0)}K ctx`}
+              {model.context_window > 0 &&
+                ` &middot; ${(model.context_window / 1000).toFixed(0)}K ctx`}
             </span>
           </div>
         </div>
@@ -262,8 +269,8 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
             className={cn(
               'px-2.5 py-1 text-xs rounded-md transition-colors flex-shrink-0',
               isPreferred
-                ? 'bg-violet-600 text-white'
-                : 'bg-white/5 text-slate-400 hover:bg-violet-600/20 hover:text-violet-300'
+                ? 'bg-primary-600 text-white'
+                : 'bg-white/5 text-slate-400 hover:bg-primary-600/20 hover:text-primary-300'
             )}
           >
             {isPreferred
@@ -308,22 +315,14 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
         )}
         cardId="settings-ai-model-params"
         isDirty={isDirty}
-        onSave={handleSave}
+        onSave={loadError ? undefined : handleSave}
         saving={saving}
         loading={loading}
       >
         <div className="space-y-6">
           {/* Error state */}
           {loadError && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-              <AlertCircle size={16} className="text-red-400 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-red-300 font-medium">
-                  {t('settings.ai.loadError', 'Failed to load models')}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">{loadError}</p>
-              </div>
-            </div>
+            <DegradedState title="AI model preferences unavailable" description={loadError} />
           )}
 
           {/* Empty state */}
@@ -340,69 +339,74 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
           )}
 
           {/* Platform models */}
-          {renderSection(
-            t('settings.ai.platformModel', 'Platform Model'),
-            Zap,
-            'text-violet-400',
-            platform,
-            platform.length > 0 && (
-              <div className="mt-3 p-3 bg-gradient-to-r from-violet-600/10 to-indigo-600/5 border border-violet-500/20 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Sparkles size={16} className="text-violet-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-violet-300 font-medium mb-1">
-                      Vector DBR77 — Platform AI
-                    </p>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      {t(
-                        'settings.ai.vectorDesc',
-                        'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations. Currently in beta for early adopters.'
-                      )}
-                    </p>
-                    <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 rounded-full">
-                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                      {t('settings.ai.betaActive', 'Beta active for your account')}
-                    </span>
+          {!loadError &&
+            renderSection(
+              t('settings.ai.platformModel', 'Platform Model'),
+              Zap,
+              'text-primary-400',
+              platform,
+              platform.length > 0 && (
+                <div className="mt-3 p-3 bg-gradient-to-r from-primary-600/10 to-indigo-600/5 border border-primary-500/20 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Sparkles size={16} className="text-primary-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-primary-300 font-medium mb-1">
+                        Vector DBR77 — Platform AI
+                      </p>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        {t(
+                          'settings.ai.vectorDesc',
+                          'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations. Currently in beta for early adopters.'
+                        )}
+                      </p>
+                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 rounded-full">
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                        {t('settings.ai.betaActive', 'Beta active for your account')}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          )}
+              )
+            )}
 
-          {platform.length > 0 && (cloud.length > 0 || local.length > 0) && <SettingsDivider />}
+          {!loadError && platform.length > 0 && (cloud.length > 0 || local.length > 0) && (
+            <SettingsDivider />
+          )}
 
           {/* Cloud models */}
-          {renderSection(
-            t('settings.ai.cloudModels', 'Cloud Providers'),
-            Globe,
-            'text-blue-400',
-            cloud
-          )}
+          {!loadError &&
+            renderSection(
+              t('settings.ai.cloudModels', 'Cloud Providers'),
+              Globe,
+              'text-blue-400',
+              cloud
+            )}
 
-          {cloud.length > 0 && local.length > 0 && <SettingsDivider />}
+          {!loadError && cloud.length > 0 && local.length > 0 && <SettingsDivider />}
 
           {/* Local models */}
-          {renderSection(
-            t('settings.ai.localModels', 'Local Models'),
-            HardDrive,
-            'text-emerald-400',
-            local,
-            local.length > 0 && (
-              <div className="mt-2 flex items-center gap-2">
-                <a
-                  href="https://ollama.com/library"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  <ExternalLink size={12} />
-                  {t('settings.ai.browseOllamaModels', 'Browse Ollama model library')}
-                </a>
-              </div>
-            )
-          )}
+          {!loadError &&
+            renderSection(
+              t('settings.ai.localModels', 'Local Models'),
+              HardDrive,
+              'text-emerald-400',
+              local,
+              local.length > 0 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <a
+                    href="https://ollama.com/library"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    <ExternalLink size={12} />
+                    {t('settings.ai.browseOllamaModels', 'Browse Ollama model library')}
+                  </a>
+                </div>
+              )
+            )}
 
-          {models.length > 0 && (
+          {!loadError && models.length > 0 && (
             <>
               {/* Info box */}
               <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg flex items-start gap-3">
@@ -420,7 +424,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
               {/* Generation Parameters */}
               <div>
                 <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <Sparkles size={14} className="text-violet-400" />
+                  <Sparkles size={14} className="text-primary-400" />
                   {t('settings.ai.generationParams', 'Generation Parameters')}
                 </h4>
 
@@ -443,7 +447,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
                           onChange={(e) =>
                             setPrefs((prev) => ({ ...prev, temperature: Number(e.target.value) }))
                           }
-                          className="flex-1 accent-violet-500"
+                          className="flex-1 accent-primary-500"
                         />
                         <span className="text-sm font-mono text-white w-10 text-right">
                           {prefs.temperature.toFixed(1)}

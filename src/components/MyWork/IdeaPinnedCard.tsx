@@ -269,7 +269,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
           {onAISummarize && (
             <button
               onClick={onAISummarize}
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-violet-500 dark:text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors"
             >
               <Sparkles size={10} />
               {isPl ? 'AI podsumowanie' : 'AI summarize'}

@@ -80,7 +80,7 @@ const EVIDENCE_TYPES: Record<
   DEMO: {
     label: { en: 'Demo', pl: 'Demo' },
     icon: Monitor,
-    color: 'text-purple-500',
+    color: 'text-primary-500',
   },
   APPROVAL: {
     label: { en: 'Approval', pl: 'Zatwierdzenie' },
@@ -213,8 +213,8 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                         disabled={readOnly}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           isSelected
-                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-500/50'
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600 hover:border-purple-300 dark:hover:border-purple-500/50'
+                            ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-500/50'
+                            : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50'
                         }`}
                       >
                         <Icon size={12} className={isSelected ? config.color : ''} />
@@ -235,7 +235,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                   {!readOnly && (
                     <button
                       onClick={() => setShowAddEvidence(true)}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
                     >
                       <Plus size={12} />
                       {isPolish ? 'Dodaj' : 'Add'}
@@ -289,7 +289,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                             {!readOnly && (
                               <button
                                 onClick={() => onRemoveEvidence(item.id)}
-                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                                className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -315,7 +315,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                     }
                     disabled={readOnly}
                     className={`w-10 h-5 rounded-full transition-colors ${
-                      requiresAcceptance ? 'bg-purple-500' : 'bg-slate-300 dark:bg-navy-600'
+                      requiresAcceptance ? 'bg-primary-500' : 'bg-slate-300 dark:bg-navy-600'
                     }`}
                   >
                     <div
@@ -327,7 +327,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                 </div>
 
                 {requiresAcceptance && (
-                  <div className="space-y-3 pl-2 border-l-2 border-purple-200 dark:border-purple-500/30">
+                  <div className="space-y-3 pl-2 border-l-2 border-primary-200 dark:border-primary-500/30">
                     {/* Acceptance Type */}
                     <div className="flex gap-2">
                       <button
@@ -335,7 +335,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                         disabled={readOnly}
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                           acceptanceType === 'manual'
-                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-500/50'
+                            ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-500/50'
                             : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600'
                         }`}
                       >
@@ -349,7 +349,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                         disabled={readOnly}
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                           acceptanceType === 'automatic'
-                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-500/50'
+                            ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-500/50'
                             : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600'
                         }`}
                       >
@@ -370,7 +370,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                             !readOnly && onAcceptanceChange(true, 'manual', e.target.value || null)
                           }
                           disabled={readOnly}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                         >
                           <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
                           {availableUsers.map((user) => (
@@ -391,7 +391,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onSignOff}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium hover:brightness-110 transition-all shadow-lg shadow-emerald-500/20"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-medium hover:brightness-110 transition-all shadow-lg shadow-emerald-500/20"
                 >
                   <CheckCircle2 size={18} />
                   <span>{isPolish ? 'Podpisz (Sign-off)' : 'Sign Off'}</span>
@@ -461,7 +461,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                           onClick={() => setNewEvidenceType(type as EvidenceType)}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                             newEvidenceType === type
-                              ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-500/50'
+                              ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-500/50'
                               : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-600'
                           }`}
                         >
@@ -484,14 +484,14 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                     value={newEvidenceTitle}
                     onChange={(e) => setNewEvidenceTitle(e.target.value)}
                     placeholder={isPolish ? 'Nazwa dowodu...' : 'Evidence name...'}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-purple-400"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-primary-400"
                     autoFocus
                   />
                 </div>
                 <button
                   onClick={handleAddEvidence}
                   disabled={!newEvidenceTitle.trim()}
-                  className="w-full px-4 py-2.5 rounded-lg bg-purple-500 text-white font-medium hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPolish ? 'Dodaj' : 'Add'}
                 </button>

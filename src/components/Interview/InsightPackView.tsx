@@ -148,11 +148,11 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  risk: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  risk: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   opportunity: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   constraint: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   priority: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  trend: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  trend: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
   gap: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
 };
 
@@ -168,10 +168,7 @@ const EVIDENCE_TYPE_ICONS: Record<P10EvidencePointerType, React.ReactNode> = {
 
 // ── P10 Confidence Badge ──────────────────────────────────────────────────────
 
-const P10_CONFIDENCE_STYLES: Record<
-  P10ConfidenceLevel,
-  { bg: string; label: string }
-> = {
+const P10_CONFIDENCE_STYLES: Record<P10ConfidenceLevel, { bg: string; label: string }> = {
   high: {
     bg: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     label: 'High confidence',
@@ -185,14 +182,15 @@ const P10_CONFIDENCE_STYLES: Record<
     label: 'Hypothesis',
   },
   insufficient: {
-    bg: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    bg: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
     label: 'Insufficient — draft only',
   },
 };
 
-export function resolveConfidenceLevel(
-  row: { confidenceLevel?: string; confidenceScore?: number }
-): P10ExtendedConfidenceLevel {
+export function resolveConfidenceLevel(row: {
+  confidenceLevel?: string;
+  confidenceScore?: number;
+}): P10ExtendedConfidenceLevel {
   if (row.confidenceLevel === 'contradicted') return 'contradicted';
   if (row.confidenceLevel && row.confidenceLevel !== 'unknown') {
     return row.confidenceLevel as P10ExtendedConfidenceLevel;
@@ -207,7 +205,7 @@ export const P10ConfidenceBadge: React.FC<{
     return (
       <span
         data-testid="confidence-badge"
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
       >
         <AlertTriangle className="w-3 h-3" />
         Contradicted
@@ -262,7 +260,7 @@ const AddEvidenceForm: React.FC<AddEvidenceFormProps> = ({ onAdd, onCancel }) =>
   };
 
   return (
-    <div className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20 p-3 space-y-2">
+    <div className="rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-950/20 p-3 space-y-2">
       <div className="flex items-center gap-2">
         <select
           value={type}
@@ -296,7 +294,7 @@ const AddEvidenceForm: React.FC<AddEvidenceFormProps> = ({ onAdd, onCancel }) =>
       <div className="flex gap-2">
         <button
           onClick={handleSubmit}
-          className="text-xs px-3 py-1 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+          className="text-xs px-3 py-1 rounded-md bg-primary-600 text-white hover:bg-primary-700 transition-colors"
         >
           Add
         </button>
@@ -326,13 +324,13 @@ const RemovalReasonInput: React.FC<RemovalReasonInputProps> = ({ onConfirm, onCa
         placeholder="Removal reason (required)"
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        className="flex-1 text-xs rounded border border-red-300 dark:border-red-700 px-1.5 py-0.5"
+        className="flex-1 text-xs rounded border border-rose-300 dark:border-rose-700 px-1.5 py-0.5"
         aria-label="Removal reason"
       />
       <button
         onClick={() => reason.trim() && onConfirm(reason.trim())}
         disabled={!reason.trim()}
-        className="text-xs px-2 py-0.5 rounded bg-red-600 text-white disabled:opacity-40"
+        className="text-xs px-2 py-0.5 rounded bg-rose-600 text-white disabled:opacity-40"
       >
         Confirm
       </button>
@@ -358,7 +356,11 @@ function isEvidenceBroken(e: EvidencePointer): boolean {
 
 function isEvidenceRedacted(e: EvidencePointer): boolean {
   const exc = getEvidenceExcerpt(e);
-  return exc === '[REDACTED]' || exc === '[redacted]' || (e.removalReason?.toLowerCase().includes('redact') ?? false);
+  return (
+    exc === '[REDACTED]' ||
+    exc === '[redacted]' ||
+    (e.removalReason?.toLowerCase().includes('redact') ?? false)
+  );
 }
 
 function isEvidenceDrifted(e: EvidencePointer & { currentFingerprint?: string }): boolean {
@@ -533,7 +535,7 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
           onClick={() => setSelectedCategory(null)}
           className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 transition-colors ${
             !selectedCategory
-              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 font-medium'
+              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 font-medium'
               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
           }`}
         >
@@ -546,7 +548,7 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
             onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
             className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 flex items-center gap-2 transition-colors ${
               selectedCategory === cat
-                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 font-medium'
+                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 font-medium'
                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
           >
@@ -562,11 +564,11 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
             <div className="px-2 text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1.5 mb-1">
                 {latestRun.status === 'running' && (
-                  <Loader2 className="w-3 h-3 animate-spin text-purple-500" />
+                  <Loader2 className="w-3 h-3 animate-spin text-primary-500" />
                 )}
                 {latestRun.status === 'completed' && <Check className="w-3 h-3 text-green-500" />}
                 {latestRun.status === 'failed' && (
-                  <AlertTriangle className="w-3 h-3 text-red-500" />
+                  <AlertTriangle className="w-3 h-3 text-rose-500" />
                 )}
                 <span className="capitalize">{latestRun.status}</span>
               </div>
@@ -590,7 +592,7 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
             <button
               onClick={runInference}
               disabled={runningInference || sessionIds.length === 0}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {runningInference ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -605,7 +607,7 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
         <div className="p-6 space-y-3">
           {loadingInsights && (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
             </div>
           )}
 
@@ -710,9 +712,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
 
   const handleRemoveEvidence = useCallback((idx: number, reason: string) => {
     setLocalEvidence((prev) =>
-      prev.map((e, i) =>
-        i === idx ? { ...e, isTombstone: true, removalReason: reason } : e
-      )
+      prev.map((e, i) => (i === idx ? { ...e, isTombstone: true, removalReason: reason } : e))
     );
     setRemovingIdx(null);
     toast.success('Evidence removed (tombstone created)');
@@ -724,13 +724,13 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
       {level === 'contradicted' && (
         <div
           data-testid="contradiction-callout"
-          className="bg-orange-50 dark:bg-orange-950/20 rounded-xl p-3 border border-orange-200 dark:border-orange-900/50"
+          className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3 border border-amber-200 dark:border-amber-900/50"
         >
-          <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400 text-sm font-medium">
+          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm font-medium">
             <AlertTriangle className="w-4 h-4" />
             Contradictory evidence detected
           </div>
-          <p className="text-xs text-orange-600 dark:text-orange-400/80 mt-1">
+          <p className="text-xs text-amber-600 dark:text-amber-400/80 mt-1">
             Automatic handoff is blocked. Resolve, split, or keep with warning.
           </p>
         </div>
@@ -775,7 +775,8 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            {t('interview.inference.evidence')} ({localEvidence.filter((e) => !e.isTombstone).length}
+            {t('interview.inference.evidence')} (
+            {localEvidence.filter((e) => !e.isTombstone).length}
             {localEvidence.some((e) => e.isTombstone) &&
               ` + ${localEvidence.filter((e) => e.isTombstone).length} removed`}
             )
@@ -783,7 +784,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
           {!locked && (
             <button
               onClick={() => setShowAddEvidence(true)}
-              className="text-xs px-2 py-1 rounded-md bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40 transition-colors flex items-center gap-1"
+              className="text-xs px-2 py-1 rounded-md bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-400 dark:hover:bg-primary-900/40 transition-colors flex items-center gap-1"
             >
               <Plus className="w-3 h-3" />
               Add evidence
@@ -800,8 +801,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
             const exc = getEvidenceExcerpt(e);
             const broken = isEvidenceBroken(e);
             const isDuplicate =
-              e.sourceRef &&
-              duplicateKeys.has(`${e.sourceRef}:${e.sourceFingerprint || ''}`);
+              e.sourceRef && duplicateKeys.has(`${e.sourceRef}:${e.sourceFingerprint || ''}`);
 
             if (e.isTombstone) {
               return (
@@ -813,7 +813,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
                   <span className="line-through">
                     {exc ? `"${exc}"` : e.sourceRef || 'Evidence item'}
                   </span>
-                  <span className="ml-2 text-red-500 dark:text-red-400 font-medium not-italic">
+                  <span className="ml-2 text-rose-500 dark:text-rose-400 font-medium not-italic">
                     Removed: {e.removalReason}
                   </span>
                 </div>
@@ -827,18 +827,27 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
               >
                 <div className="flex items-start gap-2">
                   {e.type && EVIDENCE_TYPE_ICONS[e.type] && (
-                    <span className="mt-0.5 text-gray-400 dark:text-gray-500 flex-shrink-0" title={e.type.replace(/_/g, ' ')}>
+                    <span
+                      className="mt-0.5 text-gray-400 dark:text-gray-500 flex-shrink-0"
+                      title={e.type.replace(/_/g, ' ')}
+                    >
                       {EVIDENCE_TYPE_ICONS[e.type]}
                     </span>
                   )}
                   <div className="flex-1 min-w-0">
                     {isEvidenceRedacted(e) ? (
-                      <span data-testid="redacted-pointer" className="text-orange-500 dark:text-orange-400 flex items-center gap-1">
+                      <span
+                        data-testid="redacted-pointer"
+                        className="text-amber-500 dark:text-amber-400 flex items-center gap-1"
+                      >
                         <Shield className="w-3 h-3" />
                         Redacted — pointer preserved for audit
                       </span>
                     ) : broken ? (
-                      <span data-testid="broken-pointer" className="text-red-500 dark:text-red-400 flex items-center gap-1">
+                      <span
+                        data-testid="broken-pointer"
+                        className="text-rose-500 dark:text-rose-400 flex items-center gap-1"
+                      >
                         <AlertTriangle className="w-3 h-3" />
                         Source unavailable
                       </span>
@@ -848,7 +857,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
                     {isEvidenceDrifted(e as EvidencePointer & { currentFingerprint?: string }) && (
                       <span
                         data-testid="drift-indicator"
-                        className="ml-2 text-orange-500 dark:text-orange-400 text-[10px] font-medium flex items-center gap-0.5"
+                        className="ml-2 text-amber-500 dark:text-amber-400 text-[10px] font-medium flex items-center gap-0.5"
                       >
                         <RefreshCw className="w-2.5 h-2.5" />
                         Source changed since capture
@@ -866,7 +875,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
                   {!locked && removingIdx !== i && (
                     <button
                       onClick={() => setRemovingIdx(i)}
-                      className="flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                      className="flex-shrink-0 text-gray-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                       title="Remove evidence"
                       aria-label="Remove evidence"
                     >
@@ -913,13 +922,13 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {sc.counterpoints && sc.counterpoints.length > 0 && (
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-red-600 dark:text-red-400 mb-1">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1">
               {t('interview.inference.counterpoints')}
             </h4>
             <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
               {sc.counterpoints.map((c, i) => (
                 <li key={i} className="flex items-start gap-1">
-                  <span className="text-red-400 mt-0.5">•</span>
+                  <span className="text-rose-400 mt-0.5">•</span>
                   {c}
                 </li>
               ))}
@@ -975,7 +984,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
               trackFunnelEvent('insight_regenerated', { insightId: insight.id });
               toast('Regeneration requested');
             }}
-            className="text-xs px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40 transition-colors"
+            className="text-xs px-3 py-1.5 rounded-lg bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-400 dark:hover:bg-primary-900/40 transition-colors"
           >
             <RefreshCw className="w-3 h-3 inline mr-1" />
             {t('interview.inference.regenerate')}

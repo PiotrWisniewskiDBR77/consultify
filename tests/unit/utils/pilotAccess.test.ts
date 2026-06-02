@@ -14,9 +14,11 @@ describe('pilotAccess', () => {
   it('allows only the pilot routes', () => {
     expect(isPilotAllowedPath('/chat')).toBe(true);
     expect(isPilotAllowedPath('/interview')).toBe(true);
-    expect(isPilotAllowedPath('/my-work')).toBe(true);
-    expect(isPilotAllowedPath('/initiatives')).toBe(true);
-    expect(isPilotAllowedPath('/implementation')).toBe(true);
+    expect(isPilotAllowedPath('/settings')).toBe(true);
+    expect(isPilotAllowedPath('/share/abc')).toBe(true);
+    expect(isPilotAllowedPath('/my-work')).toBe(false);
+    expect(isPilotAllowedPath('/initiatives')).toBe(false);
+    expect(isPilotAllowedPath('/implementation')).toBe(false);
     expect(isPilotAllowedPath('/finance')).toBe(false);
     expect(isPilotAllowedPath('/wordy')).toBe(false);
   });
@@ -24,7 +26,7 @@ describe('pilotAccess', () => {
   it('filters sidebar entries and internal tabs for pilot participants', () => {
     expect(isPilotAllowedMenuId('AI_CHAT')).toBe(true);
     expect(isPilotAllowedMenuId('INTERVIEW')).toBe(true);
-    expect(isPilotAllowedMenuId('MODULE_EXECUTION')).toBe(true);
+    expect(isPilotAllowedMenuId('MODULE_EXECUTION')).toBe(false);
     expect(isPilotAllowedMenuId('MODULE_WORDY')).toBe(false);
     expect(isPilotAllowedMyWorkTab('ideas')).toBe(false);
     expect(isPilotAllowedMyWorkTab('tasks')).toBe(true);
@@ -40,8 +42,9 @@ describe('pilotAccess', () => {
   });
 
   it('blocks non-pilot artifact deep links', () => {
-    expect(isPilotAllowedArtifactType('task')).toBe(true);
-    expect(isPilotAllowedArtifactType('initiative')).toBe(true);
+    expect(isPilotAllowedArtifactType('insight')).toBe(true);
+    expect(isPilotAllowedArtifactType('task')).toBe(false);
+    expect(isPilotAllowedArtifactType('initiative')).toBe(false);
     expect(isPilotAllowedArtifactType('idea')).toBe(false);
     expect(isPilotAllowedArtifactType('report')).toBe(false);
   });

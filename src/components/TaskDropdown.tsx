@@ -106,7 +106,7 @@ export const TaskDropdown = () => {
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
       case 'high':
-        return 'text-red-500 bg-red-50 dark:bg-red-500/10';
+        return 'text-rose-500 bg-rose-50 dark:bg-rose-500/10';
       case 'medium':
         return 'text-amber-500 bg-amber-50 dark:bg-amber-500/10';
       case 'low':
@@ -140,14 +140,14 @@ export const TaskDropdown = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-purple-500/20"
+        className="relative text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-primary-500/20"
         title={t('taskDropdown.titleButton', "Today's tasks")}
       >
         <CheckSquare size={20} />
         {stats.today > 0 && (
           <span
             className={`absolute top-0.5 right-0.5 min-w-[16px] h-4 text-slate-900 dark:text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-white dark:border-navy-950 shadow-sm
-                        ${stats.overdue > 0 ? 'bg-red-500' : 'bg-blue-500'}`}
+                        ${stats.overdue > 0 ? 'bg-rose-500' : 'bg-blue-500'}`}
           >
             {stats.today > 99 ? '99+' : stats.today}
           </span>
@@ -170,7 +170,7 @@ export const TaskDropdown = () => {
             </div>
             <button
               onClick={handleNavigateToTasks}
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors flex items-center gap-1"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-1"
             >
               {t('taskDropdown.viewAll', 'View all')} <ArrowRight size={12} />
             </button>
@@ -183,7 +183,7 @@ export const TaskDropdown = () => {
                 {t('taskDropdown.overdue', 'Overdue')}
               </div>
               <div
-                className={`text-sm font-bold ${stats.overdue > 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}
+                className={`text-sm font-bold ${stats.overdue > 0 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}`}
               >
                 {stats.overdue}
               </div>
@@ -200,7 +200,7 @@ export const TaskDropdown = () => {
           <div className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
             {loading ? (
               <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
-                <Loader2 className="animate-spin w-5 h-5 mx-auto mb-2 text-purple-500" />
+                <Loader2 className="animate-spin w-5 h-5 mx-auto mb-2 text-primary-500" />
                 {t('taskDropdown.loading', 'Loading tasks...')}
               </div>
             ) : tasks.length === 0 ? (
@@ -213,7 +213,7 @@ export const TaskDropdown = () => {
                 </p>
                 <button
                   onClick={handleNavigateToTasks}
-                  className="text-xs text-purple-600 font-medium mt-2"
+                  className="text-xs text-primary-600 font-medium mt-2"
                 >
                   {t('taskDropdown.createNew', 'Create new task')}
                 </button>
@@ -241,7 +241,7 @@ export const TaskDropdown = () => {
                                 task.status === TaskStatus.IN_PROGRESS
                                   ? 'border-blue-500 text-blue-500 bg-blue-500'
                                   : task.status === TaskStatus.BLOCKED
-                                    ? 'border-red-500 text-red-500 bg-red-500'
+                                    ? 'border-rose-500 text-rose-500 bg-rose-500'
                                     : 'border-slate-500 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800/300'
                               }`}
                             >
@@ -265,7 +265,7 @@ export const TaskDropdown = () => {
                           <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {task.dueDate && (
                               <div
-                                className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== TaskStatus.DONE ? 'text-red-500 font-medium' : ''}`}
+                                className={`flex items-center gap-1 ${isOverdue(task.dueDate) && task.status !== TaskStatus.DONE ? 'text-rose-500 font-medium' : ''}`}
                               >
                                 <Calendar size={12} />
                                 {formatDueDate(task.dueDate)}
@@ -289,7 +289,7 @@ export const TaskDropdown = () => {
                   <div className="p-2 text-center bg-slate-50/50 dark:bg-white/5">
                     <button
                       onClick={handleNavigateToTasks}
-                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors"
+                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors"
                     >
                       {t('taskDropdown.viewMore', 'View {{count}} more tasks', {
                         count: tasks.length - 5,

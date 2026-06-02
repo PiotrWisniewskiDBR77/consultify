@@ -66,7 +66,12 @@ export type ModuleTab =
   | 'my_assignments'
   | 'managed'
   | 'insights'
-  | 'pending_review';
+  | 'pending_review'
+  // Wnioski module
+  | 'inbox'
+  | 'readout'
+  | 'conversions'
+  | 'documents';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 
@@ -100,6 +105,7 @@ export interface OpenDocument {
     | 'decision'
     | 'presentation'
     | 'idea'
+    | 'conclusion'
     | 'notification'
     | 'interview_session'
     | 'interview_insight'

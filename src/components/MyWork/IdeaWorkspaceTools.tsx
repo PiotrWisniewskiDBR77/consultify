@@ -45,7 +45,7 @@ import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesP
 import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 
 const FIELD_CLASS =
-  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-purple-400 dark:focus:border-purple-400 transition-colors';
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-primary-400 dark:focus:border-primary-400 transition-colors';
 
 type ConvertTarget =
   | 'initiative'
@@ -102,11 +102,23 @@ interface IdeaWorkspaceToolsProps {
   onProcessFlowGatewayKindChange?: (nodeId: string, kind: 'xor' | 'and') => void;
   onProcessFlowLaneChange?: (nodeId: string, laneId: string) => void;
   onProcessFlowEdgeLabelChange?: (edgeId: string, label: string) => void;
-  onProcessFlowNodeMetricsChange?: (nodeId: string, metrics: { duration?: string; durationUnit?: string; cost?: string; fteCount?: string }) => void;
+  onProcessFlowNodeMetricsChange?: (
+    nodeId: string,
+    metrics: { duration?: string; durationUnit?: string; cost?: string; fteCount?: string }
+  ) => void;
   onProcessFlowEdgeConditionChange?: (edgeId: string, conditionType: string) => void;
-  onProcessFlowNodeMetadataChange?: (nodeId: string, metadata: { description?: string; assignee?: string; system?: string }) => void;
+  onProcessFlowNodeMetadataChange?: (
+    nodeId: string,
+    metadata: { description?: string; assignee?: string; system?: string }
+  ) => void;
 
-  whiteboardSession?: { role?: string; phase?: string; timerActive?: boolean; followActive?: boolean; participantCount?: number };
+  whiteboardSession?: {
+    role?: string;
+    phase?: string;
+    timerActive?: boolean;
+    followActive?: boolean;
+    participantCount?: number;
+  };
   whiteboardOutcomes?: Array<{ type: string; label: string }>;
 }
 
@@ -143,7 +155,7 @@ const PRIORITY_COLORS: Record<number, string> = {
   25: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
   50: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
   75: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
-  100: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300',
+  100: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
 };
 
 export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
@@ -261,7 +273,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       labelEn: 'Initiative',
       descPl: 'Utwórz w PMO',
       descEn: 'Create in PMO',
-      gradient: 'from-amber-500/15 to-orange-500/10',
+      gradient: 'from-amber-500/15 to-amber-500/10',
       textColor: 'text-amber-600 dark:text-amber-400',
     },
     {
@@ -281,7 +293,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       labelEn: 'Decision',
       descPl: 'Artefakt decyzyjny',
       descEn: 'Decision artifact',
-      gradient: 'from-blue-500/15 to-cyan-500/10',
+      gradient: 'from-blue-500/15 to-blue-500/10',
       textColor: 'text-blue-600 dark:text-blue-400',
     },
     {
@@ -291,8 +303,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       labelEn: 'Team Chat',
       descPl: 'Wątek do omówienia',
       descEn: 'Discussion thread',
-      gradient: 'from-violet-500/15 to-purple-500/10',
-      textColor: 'text-violet-600 dark:text-violet-400',
+      gradient: 'from-primary-500/15 to-primary-500/10',
+      textColor: 'text-primary-600 dark:text-primary-400',
     },
     {
       id: 'report',
@@ -321,8 +333,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       labelEn: 'Action Plan',
       descPl: 'Plan z timeline',
       descEn: 'Plan with timeline',
-      gradient: 'from-teal-500/15 to-cyan-500/10',
-      textColor: 'text-teal-600 dark:text-teal-400',
+      gradient: 'from-blue-500/15 to-blue-500/10',
+      textColor: 'text-blue-600 dark:text-blue-400',
     },
     {
       id: 'raid_log',
@@ -331,8 +343,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       labelEn: 'RAID Log',
       descPl: 'Risks, Actions, Issues, Dependencies',
       descEn: 'Risks, Actions, Issues, Dependencies',
-      gradient: 'from-red-500/15 to-orange-500/10',
-      textColor: 'text-red-600 dark:text-red-400',
+      gradient: 'from-rose-500/15 to-amber-500/10',
+      textColor: 'text-rose-600 dark:text-rose-400',
     },
   ];
 
@@ -343,7 +355,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       title={title || (isPl ? 'Bez tytułu' : 'Untitled')}
       subtitle={toolLabel}
       icon={
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-sm shadow-amber-500/20">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-sm shadow-amber-500/20">
           <Lightbulb size={13} className="text-white" />
         </div>
       }
@@ -382,7 +394,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <button
                 onClick={onAcceptChallenge}
                 disabled={saving || isDraft || !seedText.trim()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm transition-all hover:shadow-md disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-sm transition-all hover:shadow-md disabled:opacity-40"
               >
                 <CheckCircle2 size={12} />
                 {isPl ? 'Akceptuj' : 'Accept'}
@@ -487,7 +499,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {onAISummarize && (
               <button
                 onClick={onAISummarize}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-violet-500 dark:text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-500/5 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-primary-500/5 transition-colors"
               >
                 <Sparkles size={10} />
                 {isPl ? 'AI podsumuj' : 'AI summarize'}
@@ -496,7 +508,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {onAIExpand && (
               <button
                 onClick={onAIExpand}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/15 transition-colors"
               >
                 <Sparkles size={10} />
                 {isPl ? 'AI rozbuduj' : 'AI expand'}
@@ -569,7 +581,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               onKeyDown={(e) => e.key === 'Enter' && handleBranchBlur()}
               placeholder={isPl ? 'Gałąź…' : 'Branch…'}
               autoFocus
-              className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-purple-400 text-slate-700 dark:text-slate-300 outline-none w-28"
+              className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-primary-400 text-slate-700 dark:text-slate-300 outline-none w-28"
             />
           ) : (
             <button
@@ -591,7 +603,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               onKeyDown={(e) => e.key === 'Enter' && handleAreaBlur()}
               placeholder={isPl ? 'Obszar…' : 'Area…'}
               autoFocus
-              className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-purple-400 text-slate-700 dark:text-slate-300 outline-none w-28"
+              className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-primary-400 text-slate-700 dark:text-slate-300 outline-none w-28"
             />
           ) : (
             <button
@@ -643,30 +655,32 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         >
           <div className="space-y-3 text-[11px]">
             {/* Selected node info */}
-            {selection.type === 'node' && selection.primaryId && (() => {
-              const node = (graphNodes ?? []).find((n: any) => n.id === selection.primaryId);
-              if (!node) return null;
-              return (
-                <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
-                  <div className="font-semibold text-slate-700 dark:text-slate-200">
-                    {isPl ? 'Zaznaczony element' : 'Selected element'}
-                  </div>
-                  <div className="text-slate-600 dark:text-slate-300 truncate">
-                    {node.data?.label || (isPl ? '(bez etykiety)' : '(no label)')}
-                  </div>
-                  {node.data?.semanticType && (
-                    <div className="text-[9px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">
-                      {String(node.data.semanticType)}
+            {selection.type === 'node' &&
+              selection.primaryId &&
+              (() => {
+                const node = (graphNodes ?? []).find((n: any) => n.id === selection.primaryId);
+                if (!node) return null;
+                return (
+                  <div className="rounded-lg bg-slate-50 dark:bg-navy-800/60 p-2.5 space-y-1.5">
+                    <div className="font-semibold text-slate-700 dark:text-slate-200">
+                      {isPl ? 'Zaznaczony element' : 'Selected element'}
                     </div>
-                  )}
-                  {node.data?.locked && (
-                    <div className="text-[9px] text-amber-600 dark:text-amber-400">
-                      {isPl ? 'Zablokowany' : 'Locked'}
+                    <div className="text-slate-600 dark:text-slate-300 truncate">
+                      {node.data?.label || (isPl ? '(bez etykiety)' : '(no label)')}
                     </div>
-                  )}
-                </div>
-              );
-            })()}
+                    {node.data?.semanticType && (
+                      <div className="text-[9px] font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400">
+                        {String(node.data.semanticType)}
+                      </div>
+                    )}
+                    {node.data?.locked && (
+                      <div className="text-[9px] text-amber-600 dark:text-amber-400">
+                        {isPl ? 'Zablokowany' : 'Locked'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
             {/* Session info */}
             {whiteboardSession && (
@@ -676,20 +690,32 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                 </div>
                 {whiteboardSession.role && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 dark:text-slate-400">{isPl ? 'Rola:' : 'Role:'}</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">{whiteboardSession.role}</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {isPl ? 'Rola:' : 'Role:'}
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
+                      {whiteboardSession.role}
+                    </span>
                   </div>
                 )}
                 {whiteboardSession.phase && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 dark:text-slate-400">{isPl ? 'Faza:' : 'Phase:'}</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">{whiteboardSession.phase}</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {isPl ? 'Faza:' : 'Phase:'}
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200 capitalize">
+                      {whiteboardSession.phase}
+                    </span>
                   </div>
                 )}
                 {(whiteboardSession.participantCount ?? 0) > 0 && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-slate-500 dark:text-slate-400">{isPl ? 'Uczestnicy:' : 'Participants:'}</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-200">{whiteboardSession.participantCount}</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {isPl ? 'Uczestnicy:' : 'Participants:'}
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200">
+                      {whiteboardSession.participantCount}
+                    </span>
                   </div>
                 )}
               </div>
@@ -705,12 +731,16 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   {whiteboardOutcomes.slice(0, 8).map((o, i) => (
                     <div key={i} className="flex items-center gap-1.5">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                      <span className="text-[9px] font-bold uppercase text-slate-400 w-14 shrink-0">{o.type}</span>
+                      <span className="text-[9px] font-bold uppercase text-slate-400 w-14 shrink-0">
+                        {o.type}
+                      </span>
                       <span className="text-slate-600 dark:text-slate-300 truncate">{o.label}</span>
                     </div>
                   ))}
                   {whiteboardOutcomes.length > 8 && (
-                    <div className="text-[9px] text-slate-400">+{whiteboardOutcomes.length - 8} {isPl ? 'więcej' : 'more'}</div>
+                    <div className="text-[9px] text-slate-400">
+                      +{whiteboardOutcomes.length - 8} {isPl ? 'więcej' : 'more'}
+                    </div>
                   )}
                 </div>
               </div>
@@ -728,12 +758,12 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           <ProcessFlowPropertiesPanel
             selectedNode={
               selection.type === 'node' && selection.primaryId
-                ? (graphNodes ?? []).find((n: any) => n.id === selection.primaryId) ?? null
+                ? ((graphNodes ?? []).find((n: any) => n.id === selection.primaryId) ?? null)
                 : null
             }
             selectedEdge={
               selection.type === 'edge' && selection.primaryId
-                ? (graphEdges ?? []).find((e: any) => e.id === selection.primaryId) ?? null
+                ? ((graphEdges ?? []).find((e: any) => e.id === selection.primaryId) ?? null)
                 : null
             }
             lanes={processFlowLanes ?? []}
@@ -751,15 +781,8 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       )}
 
       {activeTool === 'process_flow' && (
-        <Section
-          title={isPl ? 'Zdrowie procesu' : 'Process health'}
-          icon={<Activity size={13} />}
-        >
-          <ProcessFlowHealthScore
-            nodes={graphNodes ?? []}
-            edges={graphEdges ?? []}
-            isPl={isPl}
-          />
+        <Section title={isPl ? 'Zdrowie procesu' : 'Process health'} icon={<Activity size={13} />}>
+          <ProcessFlowHealthScore nodes={graphNodes ?? []} edges={graphEdges ?? []} isPl={isPl} />
         </Section>
       )}
 

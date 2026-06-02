@@ -206,7 +206,7 @@ const ItemRow: React.FC<ItemRowProps> = ({ children, onRemove, color, badge }) =
       </span>
       <button
         onClick={onRemove}
-        className="text-slate-400 hover:text-red-500 transition-colors shrink-0"
+        className="text-slate-400 hover:text-rose-500 transition-colors shrink-0"
       >
         <X size={12} />
       </button>
@@ -1125,7 +1125,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
                 <button
                   onClick={() => void applyAIProposal()}
                   disabled={isAIProposing}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                 >
                   {isAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
                   {isPolish ? 'Zastosuj' : 'Apply'}

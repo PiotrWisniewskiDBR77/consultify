@@ -31,16 +31,16 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
           <span className="text-xs text-slate-500 dark:text-slate-400">{t.subtitle}</span>
         </div>
         <div className="w-full h-1 bg-slate-50 dark:bg-navy-800 rounded-full overflow-hidden">
-          <div className="h-full bg-purple-500 w-1/3 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+          <div className="h-full bg-primary-500 w-1/3 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
         </div>
       </div>
 
       {/* Content Scrollable */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6">
         {/* Card 1: Basic Info */}
-        <div className="bg-gradient-to-br from-slate-50 dark:from-navy-950/80 to-white dark:to-navy-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative group hover:border-purple-500/30 transition-colors backdrop-blur-sm shadow-xl">
+        <div className="bg-gradient-to-br from-slate-50 dark:from-navy-950/80 to-white dark:to-navy-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-6 relative group hover:border-primary-500/30 transition-colors backdrop-blur-sm shadow-xl">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-            <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
+            <span className="w-1 h-6 bg-primary-500 rounded-full"></span>
             {t.profile}
           </h3>
           <div className="grid grid-cols-2 gap-6">
@@ -67,7 +67,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
 
         {/* Card 2: Business Model */}
         <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-purple-200 mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-primary-200 mb-4 flex items-center gap-2">
             <Box size={20} />
             Business Model
           </h3>
@@ -80,7 +80,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
                 {profile.businessModel?.type?.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2 py-0.5 rounded text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                    className="px-2 py-0.5 rounded text-xs bg-primary-500/20 text-primary-300 border border-primary-500/30"
                   >
                     {tag}
                   </span>
@@ -166,7 +166,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
           disabled={!isStepComplete}
           className={`flex items-center gap-2 px-8 py-4 rounded-lg font-semibold text-sm transition-all shadow-lg ${
             isStepComplete
-              ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/30'
+              ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-primary-900/30'
               : 'bg-slate-50 dark:bg-navy-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
           } `}
         >

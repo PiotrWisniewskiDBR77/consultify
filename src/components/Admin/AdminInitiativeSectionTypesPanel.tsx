@@ -109,18 +109,18 @@ const getIcon = (iconName: string | null): React.ElementType => {
 const getTypeBadge = (isSystem: boolean) =>
   isSystem
     ? {
-        color: 'text-cyan-400',
-        bg: 'bg-cyan-500/20',
+        color: 'text-blue-400',
+        bg: 'bg-blue-500/20',
         label: 'APP',
         icon: Package,
-        dot: 'bg-cyan-500',
+        dot: 'bg-blue-500',
       }
     : {
-        color: 'text-purple-400',
-        bg: 'bg-purple-500/20',
+        color: 'text-primary-400',
+        bg: 'bg-primary-500/20',
         label: 'ORG',
         icon: Building2,
-        dot: 'bg-purple-500',
+        dot: 'bg-primary-500',
       };
 
 const getCategoryBadge = (category: string) => {
@@ -128,7 +128,7 @@ const getCategoryBadge = (category: string) => {
     case 'content':
       return { color: 'text-blue-400', bg: 'bg-blue-500/15', label: 'Content' };
     case 'control':
-      return { color: 'text-purple-400', bg: 'bg-purple-500/15', label: 'Control' };
+      return { color: 'text-primary-400', bg: 'bg-primary-500/15', label: 'Control' };
     case 'meta':
       return { color: 'text-slate-400', bg: 'bg-slate-500/15', label: 'Meta' };
     default:
@@ -265,7 +265,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -281,7 +281,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
               onClick={() => setShowSearch(!showSearch)}
               className={`flex items-center justify-center h-9 w-9 rounded-lg border transition-all duration-200 ${
                 showSearch
-                  ? 'bg-purple-500/15 border-purple-500 text-purple-400'
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300'
               }`}
             >
@@ -293,14 +293,14 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
               onClick={() => setFilter('all')}
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'all'
-                  ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300'
               }`}
             >
               <Layers size={14} />
               <span>All</span>
               <span
-                className={`px-1.5 text-xs rounded-full ${filter === 'all' ? 'bg-purple-500/30 text-purple-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
+                className={`px-1.5 text-xs rounded-full ${filter === 'all' ? 'bg-primary-500/30 text-primary-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
               >
                 {sectionTypes.length}
               </span>
@@ -311,14 +311,14 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
               onClick={() => setFilter('app')}
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'app'
-                  ? 'bg-cyan-500/15 border-cyan-500 text-cyan-300'
+                  ? 'bg-blue-500/15 border-blue-500 text-blue-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300'
               }`}
             >
               <Package size={14} />
               <span>App</span>
               <span
-                className={`px-1.5 text-xs rounded-full ${filter === 'app' ? 'bg-cyan-500/30 text-cyan-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
+                className={`px-1.5 text-xs rounded-full ${filter === 'app' ? 'bg-blue-500/30 text-blue-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
               >
                 {appCount}
               </span>
@@ -329,14 +329,14 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
               onClick={() => setFilter('org')}
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'org'
-                  ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300'
               }`}
             >
               <Building2 size={14} />
               <span>Org</span>
               <span
-                className={`px-1.5 text-xs rounded-full ${filter === 'org' ? 'bg-purple-500/30 text-purple-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
+                className={`px-1.5 text-xs rounded-full ${filter === 'org' ? 'bg-primary-500/30 text-primary-300' : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'}`}
               >
                 {orgCount}
               </span>
@@ -351,11 +351,11 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                 className={`h-9 px-2.5 text-xs font-medium rounded-lg border transition-all ${
                   filterCategory === c
                     ? c === 'all'
-                      ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                      ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                       : c === 'content'
                         ? 'bg-blue-500/15 border-blue-500 text-blue-300'
                         : c === 'control'
-                          ? 'bg-violet-500/15 border-violet-500 text-violet-300'
+                          ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                           : 'bg-slate-500/15 border-slate-500 text-slate-300'
                     : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-300'
                 }`}
@@ -373,7 +373,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                 className={`h-9 px-2.5 text-xs font-medium rounded-lg border transition-all ${
                   filterColumn === col
                     ? col === 'all'
-                      ? 'bg-purple-500/15 border-purple-500 text-purple-300'
+                      ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                       : col === 'left'
                         ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300'
                         : 'bg-amber-500/15 border-amber-500 text-amber-300'
@@ -386,7 +386,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
           </div>
 
           {/* Right: + New Section */}
-          <button className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-purple-500/25 transition-all duration-200">
+          <button className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200">
             <Plus size={14} />
             <span>New Section</span>
           </button>
@@ -406,7 +406,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search section types by name, key, description..."
                 autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all"
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
               />
               {searchQuery && (
                 <button
@@ -492,7 +492,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                           onClick={() => setExpandedId(isExpanded ? null : st.id)}
                           className={`
                             group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
-                            ${selectedIds.has(st.id) ? 'bg-purple-50 dark:bg-purple-500/10' : ''}
+                            ${selectedIds.has(st.id) ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
                             ${isExpanded ? 'bg-slate-50 dark:bg-navy-800/50' : ''}
                             transition-colors duration-150
                             hover:bg-slate-50 dark:hover:bg-navy-800/50
@@ -507,8 +507,8 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(st.id)
-                                  ? 'bg-purple-500 border-purple-500 text-white'
-                                  : 'border-slate-300 dark:border-navy-500 hover:border-purple-400'
+                                  ? 'bg-primary-500 border-primary-500 text-white'
+                                  : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                               }`}
                             >
                               {selectedIds.has(st.id) && <CheckSquare size={12} />}
@@ -586,10 +586,10 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                           <td className="px-3 py-2.5">
                             {hasAI ? (
                               <div
-                                className="w-6 h-6 rounded-full bg-violet-500/15 flex items-center justify-center"
+                                className="w-6 h-6 rounded-full bg-primary-500/15 flex items-center justify-center"
                                 title="AI prompt configured"
                               >
-                                <Sparkles size={12} className="text-violet-400" />
+                                <Sparkles size={12} className="text-primary-400" />
                               </div>
                             ) : (
                               <div
@@ -621,7 +621,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                     handleDuplicate(st.id);
                                   }}
                                   disabled={isMutating}
-                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors disabled:opacity-50"
+                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
                                   title="Duplicate to organization"
                                 >
                                   <Copy size={15} />
@@ -643,7 +643,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       handleDelete(st.id);
                                     }}
                                     disabled={isMutating}
-                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
                                     title="Deactivate"
                                   >
                                     <Trash2 size={15} />
@@ -746,11 +746,11 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                 {/* Col 3: AI Prompt */}
                                 <div className="space-y-3">
                                   <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                                    <Sparkles size={12} className="text-violet-400" />
+                                    <Sparkles size={12} className="text-primary-400" />
                                     AI Prompt Template
                                   </h4>
                                   {st.aiPromptTemplate ? (
-                                    <pre className="text-[11px] text-slate-500 p-3 rounded-lg bg-violet-50/50 dark:bg-violet-500/5 border border-violet-200/50 dark:border-violet-500/10 overflow-auto max-h-40 whitespace-pre-wrap font-mono leading-relaxed">
+                                    <pre className="text-[11px] text-slate-500 p-3 rounded-lg bg-primary-50/50 dark:bg-primary-500/5 border border-primary-200/50 dark:border-primary-500/10 overflow-auto max-h-40 whitespace-pre-wrap font-mono leading-relaxed">
                                       {st.aiPromptTemplate}
                                     </pre>
                                   ) : (

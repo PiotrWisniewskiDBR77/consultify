@@ -199,7 +199,7 @@ export const ApprovalPatternManager: React.FC = () => {
     const colors = {
       LOW: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       MEDIUM: 'bg-amber-100 text-amber-700 border-amber-200',
-      HIGH: 'bg-red-100 text-red-700 border-red-200',
+      HIGH: 'bg-rose-100 text-rose-700 border-rose-200',
     };
     return (
       <span
@@ -216,7 +216,7 @@ export const ApprovalPatternManager: React.FC = () => {
     return (
       <span
         className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded ${
-          isApproved ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+          isApproved ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
         }`}
       >
         {isApproved ? <Check size={12} /> : <X size={12} />}
@@ -293,11 +293,11 @@ export const ApprovalPatternManager: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-500/20">
-            <div className="text-2xl font-bold text-red-700 dark:text-red-400">
+          <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-500/20">
+            <div className="text-2xl font-bold text-rose-700 dark:text-rose-400">
               {stats.totalRejections}
             </div>
-            <div className="text-xs text-red-600 dark:text-red-500 flex items-center gap-1 mt-1">
+            <div className="text-xs text-rose-600 dark:text-rose-500 flex items-center gap-1 mt-1">
               <X size={12} />
               {language === 'pl' ? 'Odrzuceń' : 'Rejections'}
             </div>
@@ -402,7 +402,7 @@ export const ApprovalPatternManager: React.FC = () => {
                         handleDeletePattern(pattern.id);
                       }}
                       disabled={deletingPatterns.has(pattern.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
                     >
                       {deletingPatterns.has(pattern.id) ? (
                         <RefreshCw size={16} className="animate-spin" />

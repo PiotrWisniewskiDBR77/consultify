@@ -32,9 +32,7 @@ import { useTranslation } from 'react-i18next';
 import type { PortfolioInitiative } from '@/types';
 
 import { DependencyGraphCanvas } from './DependencyGraphCanvas';
-import {
-  getMenu3AiButtonClass,
-} from './menu3ActionButtonStyles';
+import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   DependencyLink,
@@ -140,7 +138,10 @@ function getKeywordGroups(text: string): string[] {
 
 function daysBetween(a: string | null | undefined, b: string | null | undefined): number {
   if (!a || !b) return 0;
-  return Math.max(0, Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / (1000 * 60 * 60 * 24)));
+  return Math.max(
+    0,
+    Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / (1000 * 60 * 60 * 24))
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -189,7 +190,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   const handleSort = useCallback(
     (col: SortCol) => {
       if (sortCol === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-      else { setSortCol(col); setSortDir('asc'); }
+      else {
+        setSortCol(col);
+        setSortDir('asc');
+      }
     },
     [sortCol]
   );
@@ -199,9 +203,15 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     list.sort((a, b) => {
       let cmp = 0;
       switch (sortCol) {
-        case 'from': cmp = a.fromName.localeCompare(b.fromName); break;
-        case 'to': cmp = a.toName.localeCompare(b.toName); break;
-        case 'type': cmp = a.type.localeCompare(b.type); break;
+        case 'from':
+          cmp = a.fromName.localeCompare(b.fromName);
+          break;
+        case 'to':
+          cmp = a.toName.localeCompare(b.toName);
+          break;
+        case 'type':
+          cmp = a.type.localeCompare(b.type);
+          break;
         case 'status':
           cmp = (a.hasTimingConflict ? 0 : 1) - (b.hasTimingConflict ? 0 : 1);
           break;
@@ -214,7 +224,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   /* ---------- stats ---------- */
 
   const conflictCount = dependencies.filter((d) => d.hasTimingConflict).length;
-  const criticalIssues = issues.filter((i) => i.severity === 'critical' || i.severity === 'high').length;
+  const criticalIssues = issues.filter(
+    (i) => i.severity === 'critical' || i.severity === 'high'
+  ).length;
 
   /* ---------- AI Discover Dependencies ---------- */
 
@@ -257,9 +269,17 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
           let successor = b;
           let reason = '';
 
-          if (a.plannedEndDate && b.plannedStartDate && new Date(a.plannedEndDate) <= new Date(b.plannedStartDate)) {
+          if (
+            a.plannedEndDate &&
+            b.plannedStartDate &&
+            new Date(a.plannedEndDate) <= new Date(b.plannedStartDate)
+          ) {
             reason = `"${a.name}" should precede "${b.name}" — natural sequence in ${overlap.join(', ')} domain`;
-          } else if (b.plannedEndDate && a.plannedStartDate && new Date(b.plannedEndDate) <= new Date(a.plannedStartDate)) {
+          } else if (
+            b.plannedEndDate &&
+            a.plannedStartDate &&
+            new Date(b.plannedEndDate) <= new Date(a.plannedStartDate)
+          ) {
             predecessor = b;
             successor = a;
             reason = `"${b.name}" should precede "${a.name}" — natural sequence in ${overlap.join(', ')} domain`;
@@ -274,7 +294,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
           }
 
           const confidence: DiscoveredDep['confidence'] =
-            overlap.length >= 2 ? 'high' : (reason.includes('natural sequence') ? 'high' : 'medium');
+            overlap.length >= 2 ? 'high' : reason.includes('natural sequence') ? 'high' : 'medium';
 
           proposals.push({
             fromId: predecessor.id,
@@ -553,180 +573,187 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     [onQuickUpdate, t]
   );
 
-  const discoveredDepsPanel = discoveredDeps !== null ? (
-    <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-          <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-            {t('initiatives.analysis.logic.discoveredDeps', 'AI discovered potential dependencies')}
-          </h3>
-          <span className="text-xs text-purple-500 dark:text-purple-400">
-            ({discoveredDeps.length})
-          </span>
-        </div>
-        <button
-          onClick={closeWorkspacePanels}
-          className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
-        >
-          <X size={14} />
-        </button>
-      </div>
-      {discoveredDeps.length === 0 ? (
-        <div className="px-4 py-6 text-center">
-          <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t('initiatives.analysis.logic.noNewDeps', 'No additional dependencies discovered')}
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
-          {discoveredDeps.map((dep, idx) => {
-            const key = `${dep.fromId}::${dep.toId}`;
-            const isAccepted = acceptedDiscovered.has(key);
-            return (
-              <div
-                key={`${key}-${idx}`}
-                className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                  isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
-                }`}
-              >
-                <span
-                  className={`shrink-0 w-2 h-2 rounded-full ${
-                    dep.confidence === 'high'
-                      ? 'bg-emerald-500'
-                      : dep.confidence === 'medium'
-                        ? 'bg-amber-500'
-                        : 'bg-slate-400'
-                  }`}
-                  title={`Confidence: ${dep.confidence}`}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
-                      {dep.fromName}
-                    </span>
-                    <ArrowRight size={14} className="text-purple-400 shrink-0" />
-                    <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
-                      {dep.toName}
-                    </span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                        dep.confidence === 'high'
-                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                          : dep.confidence === 'medium'
-                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                            : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
-                      }`}
-                    >
-                      {dep.confidence}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{dep.reason}</p>
-                </div>
-                {isAccepted ? (
-                  <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    <Check size={12} /> Accepted
-                  </span>
-                ) : (
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => handleAcceptDiscovered(dep)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                    >
-                      <Check size={12} /> Accept
-                    </button>
-                    <button
-                      onClick={() =>
-                        setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)
-                      }
-                      className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  ) : null;
-
-  const cyclesPanel = cycles !== null ? (
-    <div
-      className={`m-4 rounded-xl border overflow-hidden ${
-        cycles.length > 0
-          ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
-          : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
-      }`}
-    >
-      <div
-        className={`px-4 py-3 border-b flex items-center justify-between ${
-          cycles.length > 0
-            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50'
-            : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <Shuffle
-            size={16}
-            className={
-              cycles.length > 0
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-emerald-600 dark:text-emerald-400'
-            }
-          />
-          <h3
-            className={`text-sm font-semibold ${
-              cycles.length > 0
-                ? 'text-red-700 dark:text-red-300'
-                : 'text-emerald-700 dark:text-emerald-300'
-            }`}
+  const discoveredDepsPanel =
+    discoveredDeps !== null ? (
+      <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+              {t(
+                'initiatives.analysis.logic.discoveredDeps',
+                'AI discovered potential dependencies'
+              )}
+            </h3>
+            <span className="text-xs text-primary-500 dark:text-primary-400">
+              ({discoveredDeps.length})
+            </span>
+          </div>
+          <button
+            onClick={closeWorkspacePanels}
+            className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
           >
-            {cycles.length > 0
-              ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
-                  count: cycles.length,
-                })
-              : t('initiatives.analysis.logic.noCycles', 'No cycles detected')}
-          </h3>
+            <X size={14} />
+          </button>
         </div>
-        <button
-          onClick={closeWorkspacePanels}
-          className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50"
-        >
-          <X size={14} />
-        </button>
-      </div>
-      {cycles.map((c, idx) => (
-        <div key={idx} className="px-4 py-3 border-b border-red-200/50 dark:border-red-900/30">
-          <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-            {c.pathNames.map((name, ni) => (
-              <React.Fragment key={ni}>
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded ${
-                    ni === 0 || ni === c.pathNames.length - 1
-                      ? 'bg-red-500/20 text-red-700 dark:text-red-300'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+        {discoveredDeps.length === 0 ? (
+          <div className="px-4 py-6 text-center">
+            <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {t('initiatives.analysis.logic.noNewDeps', 'No additional dependencies discovered')}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+            {discoveredDeps.map((dep, idx) => {
+              const key = `${dep.fromId}::${dep.toId}`;
+              const isAccepted = acceptedDiscovered.has(key);
+              return (
+                <div
+                  key={`${key}-${idx}`}
+                  className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                    isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
                   }`}
                 >
-                  {name}
-                </span>
-                {ni < c.pathNames.length - 1 && (
-                  <ArrowRight size={12} className="text-red-400 shrink-0" />
-                )}
-              </React.Fragment>
-            ))}
+                  <span
+                    className={`shrink-0 w-2 h-2 rounded-full ${
+                      dep.confidence === 'high'
+                        ? 'bg-emerald-500'
+                        : dep.confidence === 'medium'
+                          ? 'bg-amber-500'
+                          : 'bg-slate-400'
+                    }`}
+                    title={`Confidence: ${dep.confidence}`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
+                        {dep.fromName}
+                      </span>
+                      <ArrowRight size={14} className="text-primary-400 shrink-0" />
+                      <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
+                        {dep.toName}
+                      </span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                          dep.confidence === 'high'
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                            : dep.confidence === 'medium'
+                              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                              : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                        }`}
+                      >
+                        {dep.confidence}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {dep.reason}
+                    </p>
+                  </div>
+                  {isAccepted ? (
+                    <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      <Check size={12} /> Accepted
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleAcceptDiscovered(dep)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                      >
+                        <Check size={12} /> Accept
+                      </button>
+                      <button
+                        onClick={() =>
+                          setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)
+                        }
+                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400">
-            <Sparkles size={10} className="inline mr-1" />
-            {c.suggestion}
-          </p>
+        )}
+      </div>
+    ) : null;
+
+  const cyclesPanel =
+    cycles !== null ? (
+      <div
+        className={`m-4 rounded-xl border overflow-hidden ${
+          cycles.length > 0
+            ? 'border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10'
+            : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
+        }`}
+      >
+        <div
+          className={`px-4 py-3 border-b flex items-center justify-between ${
+            cycles.length > 0
+              ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/50'
+              : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Shuffle
+              size={16}
+              className={
+                cycles.length > 0
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : 'text-emerald-600 dark:text-emerald-400'
+              }
+            />
+            <h3
+              className={`text-sm font-semibold ${
+                cycles.length > 0
+                  ? 'text-rose-700 dark:text-rose-300'
+                  : 'text-emerald-700 dark:text-emerald-300'
+              }`}
+            >
+              {cycles.length > 0
+                ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
+                    count: cycles.length,
+                  })
+                : t('initiatives.analysis.logic.noCycles', 'No cycles detected')}
+            </h3>
+          </div>
+          <button
+            onClick={closeWorkspacePanels}
+            className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50"
+          >
+            <X size={14} />
+          </button>
         </div>
-      ))}
-    </div>
-  ) : null;
+        {cycles.map((c, idx) => (
+          <div key={idx} className="px-4 py-3 border-b border-rose-200/50 dark:border-rose-900/30">
+            <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+              {c.pathNames.map((name, ni) => (
+                <React.Fragment key={ni}>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded ${
+                      ni === 0 || ni === c.pathNames.length - 1
+                        ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                        : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {name}
+                  </span>
+                  {ni < c.pathNames.length - 1 && (
+                    <ArrowRight size={12} className="text-rose-400 shrink-0" />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              <Sparkles size={10} className="inline mr-1" />
+              {c.suggestion}
+            </p>
+          </div>
+        ))}
+      </div>
+    ) : null;
 
   const criticalPathPanel = showCriticalPath ? (
     <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
@@ -1013,12 +1040,16 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
               {t('initiatives.analysis.logic.totalDeps', 'Total dependencies')}
             </div>
           </div>
-          <div className={`rounded-xl border p-3 ${
-            conflictCount > 0
-              ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
-              : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
-          }`}>
-            <div className={`text-xl font-semibold ${conflictCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>
+          <div
+            className={`rounded-xl border p-3 ${
+              conflictCount > 0
+                ? 'border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10'
+                : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+            }`}
+          >
+            <div
+              className={`text-xl font-semibold ${conflictCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}
+            >
               {conflictCount}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -1118,19 +1149,24 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
 
       {/* AI Discover Dependencies panel */}
       {!onRegisterWorkspacePanel && discoveredDeps !== null && (
-        <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-          <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+        <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-                {t('initiatives.analysis.logic.discoveredDeps', 'AI discovered potential dependencies')}
+              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                {t(
+                  'initiatives.analysis.logic.discoveredDeps',
+                  'AI discovered potential dependencies'
+                )}
               </h3>
-              <span className="text-xs text-purple-500 dark:text-purple-400">
+              <span className="text-xs text-primary-500 dark:text-primary-400">
                 ({discoveredDeps.length})
               </span>
             </div>
-            <button onClick={() => setDiscoveredDeps(null)}
-              className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30">
+            <button
+              onClick={() => setDiscoveredDeps(null)}
+              className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+            >
               <X size={14} />
             </button>
           </div>
@@ -1142,37 +1178,50 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
               {discoveredDeps.map((dep, idx) => {
                 const key = `${dep.fromId}::${dep.toId}`;
                 const isAccepted = acceptedDiscovered.has(key);
                 return (
-                  <div key={`${key}-${idx}`} className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors
-                    ${isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''}`}>
-                    <span className={`shrink-0 w-2 h-2 rounded-full ${
-                      dep.confidence === 'high' ? 'bg-emerald-500' :
-                      dep.confidence === 'medium' ? 'bg-amber-500' : 'bg-slate-400'
-                    }`} title={`Confidence: ${dep.confidence}`} />
+                  <div
+                    key={`${key}-${idx}`}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors
+                    ${isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''}`}
+                  >
+                    <span
+                      className={`shrink-0 w-2 h-2 rounded-full ${
+                        dep.confidence === 'high'
+                          ? 'bg-emerald-500'
+                          : dep.confidence === 'medium'
+                            ? 'bg-amber-500'
+                            : 'bg-slate-400'
+                      }`}
+                      title={`Confidence: ${dep.confidence}`}
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
                           {dep.fromName}
                         </span>
-                        <ArrowRight size={14} className="text-purple-400 shrink-0" />
+                        <ArrowRight size={14} className="text-primary-400 shrink-0" />
                         <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
                           {dep.toName}
                         </span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                          dep.confidence === 'high'
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                            : dep.confidence === 'medium'
-                              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                              : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
-                        }`}>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            dep.confidence === 'high'
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : dep.confidence === 'medium'
+                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                          }`}
+                        >
                           {dep.confidence}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{dep.reason}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {dep.reason}
+                      </p>
                     </div>
                     {isAccepted ? (
                       <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
@@ -1189,7 +1238,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                           <Check size={12} /> Accept
                         </button>
                         <button
-                          onClick={() => setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)}
+                          onClick={() =>
+                            setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)
+                          }
                           className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium
                             text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                         >
@@ -1207,49 +1258,72 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
 
       {/* Cycle detection results */}
       {!onRegisterWorkspacePanel && cycles !== null && (
-        <div className={`rounded-xl border overflow-hidden ${
-          cycles.length > 0
-            ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
-            : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
-        }`}>
-          <div className={`px-4 py-3 border-b flex items-center justify-between ${
+        <div
+          className={`rounded-xl border overflow-hidden ${
             cycles.length > 0
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50'
-              : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
-          }`}>
+              ? 'border-rose-200 dark:border-rose-900/50 bg-rose-500/5 dark:bg-rose-500/10'
+              : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
+          }`}
+        >
+          <div
+            className={`px-4 py-3 border-b flex items-center justify-between ${
+              cycles.length > 0
+                ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/50'
+                : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
+            }`}
+          >
             <div className="flex items-center gap-2">
-              <Shuffle size={16} className={cycles.length > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'} />
-              <h3 className={`text-sm font-semibold ${cycles.length > 0 ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
+              <Shuffle
+                size={16}
+                className={
+                  cycles.length > 0
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : 'text-emerald-600 dark:text-emerald-400'
+                }
+              />
+              <h3
+                className={`text-sm font-semibold ${cycles.length > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}
+              >
                 {cycles.length > 0
-                  ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', { count: cycles.length })
+                  ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
+                      count: cycles.length,
+                    })
                   : t('initiatives.analysis.logic.noCycles', 'No cycles detected')}
               </h3>
             </div>
-            <button onClick={() => setCycles(null)}
-              className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50">
+            <button
+              onClick={() => setCycles(null)}
+              className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50"
+            >
               <X size={14} />
             </button>
           </div>
           {cycles.map((c, idx) => (
-            <div key={idx} className="px-4 py-3 border-b border-red-200/50 dark:border-red-900/30">
+            <div
+              key={idx}
+              className="px-4 py-3 border-b border-rose-200/50 dark:border-rose-900/30"
+            >
               <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
                 {c.pathNames.map((name, ni) => (
                   <React.Fragment key={ni}>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                      ni === 0 || ni === c.pathNames.length - 1
-                        ? 'bg-red-500/20 text-red-700 dark:text-red-300'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
-                    }`}>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded ${
+                        ni === 0 || ni === c.pathNames.length - 1
+                          ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
                       {name}
                     </span>
                     {ni < c.pathNames.length - 1 && (
-                      <ArrowRight size={12} className="text-red-400 shrink-0" />
+                      <ArrowRight size={12} className="text-rose-400 shrink-0" />
                     )}
                   </React.Fragment>
                 ))}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                <Sparkles size={10} className="inline mr-1" />{c.suggestion}
+                <Sparkles size={10} className="inline mr-1" />
+                {c.suggestion}
               </p>
             </div>
           ))}
@@ -1271,15 +1345,20 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 )}
               </h3>
             </div>
-            <button onClick={() => setShowCriticalPath(false)}
-              className="p-1 rounded text-amber-500 hover:bg-amber-200/30 dark:hover:bg-amber-800/30">
+            <button
+              onClick={() => setShowCriticalPath(false)}
+              className="p-1 rounded text-amber-500 hover:bg-amber-200/30 dark:hover:bg-amber-800/30"
+            >
               <X size={14} />
             </button>
           </div>
           {criticalPath.path.length === 0 ? (
             <div className="px-4 py-6 text-center">
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                {t('initiatives.analysis.logic.noCriticalPath', 'No dependency chain found — add dependencies first')}
+                {t(
+                  'initiatives.analysis.logic.noCriticalPath',
+                  'No dependency chain found — add dependencies first'
+                )}
               </p>
             </div>
           ) : (
@@ -1297,7 +1376,8 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       </div>
                       {step.startDate && step.endDate && (
                         <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                          {new Date(step.startDate).toLocaleDateString()} — {new Date(step.endDate).toLocaleDateString()}
+                          {new Date(step.startDate).toLocaleDateString()} —{' '}
+                          {new Date(step.endDate).toLocaleDateString()}
                           <span className="ml-1 text-amber-500">
                             ({daysBetween(step.startDate, step.endDate)}d)
                           </span>
@@ -1332,7 +1412,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       {b.initiativeName}
                     </button>
                     <span className="ml-auto shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium">
-                      {t('initiatives.analysis.logic.blockerBadge', '{{count}} dependent(s)', { count: b.dependentCount })}
+                      {t('initiatives.analysis.logic.blockerBadge', '{{count}} dependent(s)', {
+                        count: b.dependentCount,
+                      })}
                     </span>
                     <div className="text-xs text-slate-400 dark:text-slate-500 max-w-[200px] truncate">
                       {b.dependentNames.join(', ')}
@@ -1352,11 +1434,16 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             <div className="flex items-center gap-2">
               <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
               <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                {t('initiatives.analysis.logic.sequencerTitle', 'AI Recommended Execution Sequence')}
+                {t(
+                  'initiatives.analysis.logic.sequencerTitle',
+                  'AI Recommended Execution Sequence'
+                )}
               </h3>
             </div>
-            <button onClick={() => setShowSequencer(false)}
-              className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30 dark:hover:bg-indigo-800/30">
+            <button
+              onClick={() => setShowSequencer(false)}
+              className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30 dark:hover:bg-indigo-800/30"
+            >
               <X size={14} />
             </button>
           </div>
@@ -1413,26 +1500,38 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
               <tr className="bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
                 <th className="w-8 px-4 py-2.5" />
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('from')} className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400">
+                  <button
+                    onClick={() => handleSort('from')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400"
+                  >
                     {t('initiatives.analysis.logic.from', 'Predecessor')}
                     <SortIcon col="from" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="w-8" />
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('to')} className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400">
+                  <button
+                    onClick={() => handleSort('to')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400"
+                  >
                     {t('initiatives.analysis.logic.to', 'Successor')}
                     <SortIcon col="to" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('type')} className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400">
+                  <button
+                    onClick={() => handleSort('type')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400"
+                  >
                     {t('initiatives.analysis.logic.type', 'Type')}
                     <SortIcon col="type" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('status')} className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400">
+                  <button
+                    onClick={() => handleSort('status')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400"
+                  >
                     {t('initiatives.analysis.logic.status', 'Status')}
                     <SortIcon col="status" cur={sortCol} dir={sortDir} />
                   </button>
@@ -1452,7 +1551,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                     <tr
                       className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
                         hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
-                        ${d.hasTimingConflict ? 'bg-red-500/5 dark:bg-red-500/10' : ''}`}
+                        ${d.hasTimingConflict ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
                       onClick={() => setExpandedDep(isExpanded ? null : depKey)}
                     >
                       <td className="px-4 py-3 text-slate-400">
@@ -1460,18 +1559,27 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={(e) => { e.stopPropagation(); onOpenInitiative(d.fromId); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenInitiative(d.fromId);
+                          }}
                           className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px] block"
                         >
                           {d.fromName}
                         </button>
                       </td>
                       <td className="text-center">
-                        <ArrowRight size={14} className={d.hasTimingConflict ? 'text-red-400' : 'text-slate-400'} />
+                        <ArrowRight
+                          size={14}
+                          className={d.hasTimingConflict ? 'text-rose-400' : 'text-slate-400'}
+                        />
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={(e) => { e.stopPropagation(); onOpenInitiative(d.toId); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenInitiative(d.toId);
+                          }}
                           className="text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px] block"
                         >
                           {d.toName}
@@ -1484,7 +1592,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       </td>
                       <td className="px-4 py-3 text-center">
                         {d.hasTimingConflict ? (
-                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400">
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400">
                             Conflict
                           </span>
                         ) : (
@@ -1503,26 +1611,37 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                               {relatedIssue && (
                                 <div className="flex-1">
                                   <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                                    <AlertTriangle size={12} className="inline mr-1 text-red-500" />
+                                    <AlertTriangle
+                                      size={12}
+                                      className="inline mr-1 text-rose-500"
+                                    />
                                     {relatedIssue.description}
                                   </p>
                                   {relatedIssue.fixSuggestion && (
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                                      <Sparkles size={10} className="inline mr-1 text-purple-500" />
+                                      <Sparkles
+                                        size={10}
+                                        className="inline mr-1 text-primary-500"
+                                      />
                                       {relatedIssue.fixSuggestion}
                                     </p>
                                   )}
                                   {relatedIssue.autoFixPayload && onQuickUpdate && (
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); handleApplyAiFix(relatedIssue); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleApplyAiFix(relatedIssue);
+                                      }}
                                       disabled={applyingFix === relatedIssue.id}
                                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                                        bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20
+                                        bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20
                                         disabled:opacity-50 transition-colors"
                                     >
-                                      {applyingFix === relatedIssue.id
-                                        ? <Loader2 size={12} className="animate-spin" />
-                                        : <Sparkles size={12} />}
+                                      {applyingFix === relatedIssue.id ? (
+                                        <Loader2 size={12} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={12} />
+                                      )}
                                       Apply fix
                                     </button>
                                   )}
@@ -1536,7 +1655,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                               )}
                               <div className="flex items-center gap-2 shrink-0">
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); onOpenInitiative(d.fromId); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenInitiative(d.fromId);
+                                  }}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
                                     bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
                                 >
@@ -1544,7 +1666,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                   {d.fromName}
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); onOpenInitiative(d.toId); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenInitiative(d.toId);
+                                  }}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
                                     bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
                                 >
@@ -1566,30 +1691,40 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       )}
 
       {/* Empty state */}
-      {dependencies.length === 0 && discoveredDeps === null && !showCriticalPath && !showSequencer && (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-500 dark:text-slate-400">
-          <GitBranch size={40} className="mb-4 opacity-40" />
-          <p className="text-sm font-medium mb-1">
-            {t('initiatives.analysis.logic.noData', 'No dependency data available.')}
-          </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
-            {t('initiatives.analysis.logic.emptyHint', 'Click "AI Discover Dependencies" to let AI analyze your initiatives and suggest connections.')}
-          </p>
-          {initiatives.length >= 2 && (
-            <button
-              onClick={computeDiscoverDeps}
-              disabled={discoverRunning}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold
-                bg-gradient-to-r from-purple-600 to-indigo-600 text-white
-                hover:from-purple-700 hover:to-indigo-700
-                disabled:opacity-60 shadow-lg shadow-purple-500/20 transition-all"
-            >
-              {discoverRunning ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {t('initiatives.analysis.logic.aiDiscover', 'AI Discover Dependencies')}
-            </button>
-          )}
-        </div>
-      )}
+      {dependencies.length === 0 &&
+        discoveredDeps === null &&
+        !showCriticalPath &&
+        !showSequencer && (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-500 dark:text-slate-400">
+            <GitBranch size={40} className="mb-4 opacity-40" />
+            <p className="text-sm font-medium mb-1">
+              {t('initiatives.analysis.logic.noData', 'No dependency data available.')}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+              {t(
+                'initiatives.analysis.logic.emptyHint',
+                'Click "AI Discover Dependencies" to let AI analyze your initiatives and suggest connections.'
+              )}
+            </p>
+            {initiatives.length >= 2 && (
+              <button
+                onClick={computeDiscoverDeps}
+                disabled={discoverRunning}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold
+                bg-gradient-to-r from-primary-600 to-indigo-600 text-white
+                hover:from-primary-700 hover:to-indigo-700
+                disabled:opacity-60 shadow-lg shadow-primary-500/20 transition-all"
+              >
+                {discoverRunning ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Sparkles size={16} />
+                )}
+                {t('initiatives.analysis.logic.aiDiscover', 'AI Discover Dependencies')}
+              </button>
+            )}
+          </div>
+        )}
     </div>
   );
 };

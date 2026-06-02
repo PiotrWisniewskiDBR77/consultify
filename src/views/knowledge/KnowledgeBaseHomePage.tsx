@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
-import { KNOWLEDGE_BASE_SITE, isKbCategoryForCurrentSite } from '@/config/knowledgeBaseSite';
+import { isKbCategoryForCurrentSite, KNOWLEDGE_BASE_SITE } from '@/config/knowledgeBaseSite';
 import {
   KbArticleListItem,
   useDocsArticles,
@@ -35,8 +35,8 @@ import {
 } from '@/hooks/useDocs';
 import {
   KbCollection,
-  useKnowledgeCollections,
   useKnowledgeCollectionArticles,
+  useKnowledgeCollections,
   useKnowledgeTags,
 } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
@@ -46,21 +46,21 @@ type AccentTheme = { gradient: string; border: string; glow: string; text: strin
 
 const ACCENT_THEMES: AccentTheme[] = [
   {
-    gradient: 'from-rose-400 to-red-500',
+    gradient: 'from-rose-400 to-rose-500',
     border: 'border-rose-500/20 hover:border-rose-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(244,63,94,0.35)]',
     text: 'text-rose-400',
     bg: 'bg-rose-500/10',
   },
   {
-    gradient: 'from-emerald-400 to-teal-500',
+    gradient: 'from-emerald-400 to-blue-500',
     border: 'border-emerald-500/20 hover:border-emerald-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(16,185,129,0.35)]',
     text: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
   },
   {
-    gradient: 'from-amber-400 to-orange-500',
+    gradient: 'from-amber-400 to-amber-500',
     border: 'border-amber-500/20 hover:border-amber-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(245,158,11,0.35)]',
     text: 'text-amber-400',
@@ -211,7 +211,8 @@ export const KnowledgeBaseHomePage: React.FC = () => {
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
-              backgroundImage: 'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
+              backgroundImage:
+                'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
               backgroundSize: '64px 64px',
               mask: 'radial-gradient(ellipse at 50% 30%, black 0%, transparent 72%)',
               WebkitMask: 'radial-gradient(ellipse at 50% 30%, black 0%, transparent 72%)',
@@ -244,7 +245,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               {/* Search */}
               <form onSubmit={handleSearch} className="mt-8 sm:mt-10 max-w-xl mx-auto">
                 <div className="relative">
-                  <Search size={18} className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+                  <Search
+                    size={18}
+                    className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40"
+                  />
                   <input
                     type="text"
                     value={searchQuery}
@@ -255,7 +259,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                   {searchQuery && (
                     <button
                       type="button"
-                      onClick={() => { setSearchQuery(''); setActiveSearch(''); }}
+                      onClick={() => {
+                        setSearchQuery('');
+                        setActiveSearch('');
+                      }}
                       className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
                     >
                       <X size={18} />
@@ -269,101 +276,115 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
         {/* Section Navigation Cards — clickable, link to category page */}
         {!activeSearch && (
-        <section className="relative z-10 px-4 sm:px-6 pb-10 sm:pb-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6">
-              <div>
-                <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
-                  {t('kb.sections.eyebrow', KNOWLEDGE_BASE_SITE.sectionsEyebrow)}
+          <section className="relative z-10 px-4 sm:px-6 pb-10 sm:pb-12">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6">
+                <div>
+                  <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
+                    {t('kb.sections.eyebrow', KNOWLEDGE_BASE_SITE.sectionsEyebrow)}
+                  </p>
+                  <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                    {t('kb.sections.title', KNOWLEDGE_BASE_SITE.sectionsTitle)}
+                  </h2>
+                </div>
+                <p className="hidden max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/50 md:block">
+                  {t('kb.sections.subtitle', KNOWLEDGE_BASE_SITE.sectionsSubtitle)}
                 </p>
-                <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                  {t('kb.sections.title', KNOWLEDGE_BASE_SITE.sectionsTitle)}
-                </h2>
               </div>
-              <p className="hidden max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/50 md:block">
-                {t(
-                  'kb.sections.subtitle',
-                  KNOWLEDGE_BASE_SITE.sectionsSubtitle
-                )}
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
-              {siteCollections.map((coll: KbCollection) => {
-                const accent = accentForSlug(coll.slug);
-                const eyebrow = t('kb.sections.defaultEyebrow', 'Collection');
-                const statLabel = t('kb.sections.defaultStatLabel', 'articles');
-                return (
-                  <Link
-                    key={coll.id}
-                    to={`/knowledge-base/${coll.slug}`}
-                    className={cn(
-                      'group relative overflow-hidden rounded-2xl sm:rounded-[28px] border p-5 sm:p-6 text-left transition-all duration-300',
-                      'min-h-[220px] sm:min-h-[260px] md:min-h-[290px]',
-                      `border-slate-200 bg-white/95 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.08] dark:bg-slate-950/65 dark:hover:bg-slate-950/78`,
-                      accent.glow
-                    )}
-                  >
-                    <div className="pointer-events-none absolute inset-0">
-                      <div className={cn('absolute right-[-18%] top-[-10%] h-40 w-40 rounded-full blur-3xl opacity-25', accent.bg)} />
-                      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/14" />
-                    </div>
-                    <div className="relative flex h-full flex-col">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 dark:text-white/45">
-                            {eyebrow}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
+                {siteCollections.map((coll: KbCollection) => {
+                  const accent = accentForSlug(coll.slug);
+                  const eyebrow = t('kb.sections.defaultEyebrow', 'Collection');
+                  const statLabel = t('kb.sections.defaultStatLabel', 'articles');
+                  return (
+                    <Link
+                      key={coll.id}
+                      to={`/knowledge-base/${coll.slug}`}
+                      className={cn(
+                        'group relative overflow-hidden rounded-2xl sm:rounded-[28px] border p-5 sm:p-6 text-left transition-all duration-300',
+                        'min-h-[220px] sm:min-h-[260px] md:min-h-[290px]',
+                        `border-slate-200 bg-white/95 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.08] dark:bg-slate-950/65 dark:hover:bg-slate-950/78`,
+                        accent.glow
+                      )}
+                    >
+                      <div className="pointer-events-none absolute inset-0">
+                        <div
+                          className={cn(
+                            'absolute right-[-18%] top-[-10%] h-40 w-40 rounded-full blur-3xl opacity-25',
+                            accent.bg
+                          )}
+                        />
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/14" />
+                      </div>
+                      <div className="relative flex h-full flex-col">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 dark:text-white/45">
+                              {eyebrow}
+                            </p>
+                            <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-slate-900 dark:text-white">
+                              {coll.title}
+                            </h3>
+                          </div>
+                          <div
+                            className={cn(
+                              'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg shadow-black/10',
+                              accent.gradient
+                            )}
+                          >
+                            <FolderOpen size={22} />
+                          </div>
+                        </div>
+
+                        {coll.description && (
+                          <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
+                            {coll.description}
                           </p>
-                          <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-slate-900 dark:text-white">
-                            {coll.title}
-                          </h3>
-                        </div>
-                        <div className={cn(
-                          'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg shadow-black/10',
-                          accent.gradient
-                        )}>
-                          <FolderOpen size={22} />
+                        )}
+
+                        {coll.featured && (
+                          <div className="mt-5">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em]',
+                                'border-amber-400/30 bg-amber-500/10 text-amber-600 dark:border-amber-500/20 dark:text-amber-400'
+                              )}
+                            >
+                              <Sparkles size={10} />
+                              {t('kb.sections.featured', 'Featured')}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="mt-auto flex items-end justify-between gap-4 pt-8">
+                          <div>
+                            <div className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                              {coll.article_count}
+                            </div>
+                            <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/42">
+                              {statLabel}
+                            </div>
+                          </div>
+                          <div
+                            className={cn(
+                              'inline-flex items-center gap-2 text-sm font-bold',
+                              accent.text
+                            )}
+                          >
+                            <span>{t('kb.sections.openLane', 'Open lane')}</span>
+                            <ChevronRight
+                              size={15}
+                              className="transition-transform group-hover:translate-x-1"
+                            />
+                          </div>
                         </div>
                       </div>
-
-                      {coll.description && (
-                        <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
-                          {coll.description}
-                        </p>
-                      )}
-
-                      {coll.featured && (
-                        <div className="mt-5">
-                          <span className={cn(
-                            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em]',
-                            'border-amber-400/30 bg-amber-500/10 text-amber-600 dark:border-amber-500/20 dark:text-amber-400'
-                          )}>
-                            <Sparkles size={10} />
-                            {t('kb.sections.featured', 'Featured')}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="mt-auto flex items-end justify-between gap-4 pt-8">
-                        <div>
-                          <div className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                            {coll.article_count}
-                          </div>
-                          <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/42">
-                            {statLabel}
-                          </div>
-                        </div>
-                        <div className={cn('inline-flex items-center gap-2 text-sm font-bold', accent.text)}>
-                          <span>{t('kb.sections.openLane', 'Open lane')}</span>
-                          <ChevronRight size={15} className="transition-transform group-hover:translate-x-1" />
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
         )}
 
         {/* Tags */}
@@ -406,7 +427,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                   {activeSearch && <span>Search: &ldquo;{activeSearch}&rdquo;</span>}
                   {selectedCollection && (
                     <span className="px-2.5 py-0.5 rounded-full bg-primary-600/15 border border-primary-500/25 text-primary-300 text-xs font-semibold">
-                      {siteCollections.find((c: KbCollection) => c.slug === selectedCollection)?.title}
+                      {
+                        siteCollections.find((c: KbCollection) => c.slug === selectedCollection)
+                          ?.title
+                      }
                     </span>
                   )}
                   {selectedTag && (
@@ -415,7 +439,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <button onClick={clearFilters} className="text-sm text-primary-400 hover:text-primary-300 font-semibold transition-colors">
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-primary-400 hover:text-primary-300 font-semibold transition-colors"
+                >
                   {t('kb.filtering.clear', 'Clear filters')}
                 </button>
               </div>
@@ -431,7 +458,9 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 {activeSearch
                   ? t('kb.results.searchTitle', 'Search results')
                   : t('kb.results.categoryTitle', 'Articles')}
-                <span className="ml-2 text-base sm:text-lg font-normal text-slate-500 dark:text-white/40">({displayArticles.length})</span>
+                <span className="ml-2 text-base sm:text-lg font-normal text-slate-500 dark:text-white/40">
+                  ({displayArticles.length})
+                </span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {displayArticles.map((article: KbArticleListItem) => (
@@ -508,7 +537,8 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                           {t('kb.browse.title', 'Browse All Articles')}
                         </h2>
                         <p className="text-xs sm:text-sm text-slate-500 dark:text-white/40">
-                          {browseArticles.length} {t('kb.articles', 'articles')} {t('kb.browse.subtitle', 'across all categories')}
+                          {browseArticles.length} {t('kb.articles', 'articles')}{' '}
+                          {t('kb.browse.subtitle', 'across all categories')}
                         </p>
                       </div>
                     </div>
@@ -534,7 +564,6 @@ export const KnowledgeBaseHomePage: React.FC = () => {
             </div>
           )}
         </div>
-
       </div>
     </MarketingLayout>
   );
@@ -542,7 +571,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
 /* ─────────────────────────── Article Card (Featured grid) ─────────────────────────── */
 
-const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> = ({ article, featured }) => {
+const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> = ({
+  article,
+  featured,
+}) => {
   const { t } = useTranslation();
   const visibleTags = getVisibleArticleTags(article);
 
@@ -629,7 +661,10 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
         <span className="text-xs font-bold text-primary-500 dark:text-primary-400">
           {t('kb.card.read', 'Read article')}
         </span>
-        <ArrowRight size={13} className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform" />
+        <ArrowRight
+          size={13}
+          className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform"
+        />
       </div>
     </Link>
   );
@@ -686,15 +721,16 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
 
 /* ─────────────────────────── Section Preview ─────────────────────────── */
 
-const SectionPreview: React.FC<{ collection: KbCollection; language: string; selectedTag: string | null }> = ({
-  collection,
-  language,
-  selectedTag,
-}) => {
+const SectionPreview: React.FC<{
+  collection: KbCollection;
+  language: string;
+  selectedTag: string | null;
+}> = ({ collection, language, selectedTag }) => {
   const { t } = useTranslation();
   const { data: articlesData } = useKnowledgeCollectionArticles(collection.slug, 4, 0, language);
   const articles = useMemo(
-    () => (articlesData?.articles || []).filter((article) => matchesSelectedTag(article, selectedTag)),
+    () =>
+      (articlesData?.articles || []).filter((article) => matchesSelectedTag(article, selectedTag)),
     [articlesData?.articles, selectedTag]
   );
 
@@ -706,22 +742,31 @@ const SectionPreview: React.FC<{ collection: KbCollection; language: string; sel
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className={cn(
-            'w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br text-white flex-shrink-0',
-            accent.gradient
-          )}>
+          <div
+            className={cn(
+              'w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br text-white flex-shrink-0',
+              accent.gradient
+            )}
+          >
             <FolderOpen size={20} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">{collection.title}</h2>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">
+              {collection.title}
+            </h2>
             {collection.description && (
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-white/40 line-clamp-1">{collection.description}</p>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-white/40 line-clamp-1">
+                {collection.description}
+              </p>
             )}
           </div>
         </div>
         <Link
           to={`/knowledge-base/${collection.slug}`}
-          className={cn('flex items-center gap-1 text-sm font-bold transition-colors flex-shrink-0', accent.text)}
+          className={cn(
+            'flex items-center gap-1 text-sm font-bold transition-colors flex-shrink-0',
+            accent.text
+          )}
         >
           {t('kb.section.viewAll', 'View all')}
           <ChevronRight size={14} />

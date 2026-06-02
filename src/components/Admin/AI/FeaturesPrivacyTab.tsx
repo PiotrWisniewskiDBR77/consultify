@@ -159,7 +159,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -170,7 +170,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Sparkles className="text-primary-600 dark:text-violet-400" size={20} />
+            <Sparkles className="text-primary-600 dark:text-primary-400" size={20} />
             Features & Privacy
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -208,7 +208,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
           onClick={() => setActiveSubTab('features')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'features'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -219,7 +219,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
           onClick={() => setActiveSubTab('data')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'data'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -230,7 +230,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
           onClick={() => setActiveSubTab('instructions')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'instructions'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -241,7 +241,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
           onClick={() => setActiveSubTab('personas')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeSubTab === 'personas'
-              ? 'border-primary-500 text-primary-600 dark:text-violet-400'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
           }`}
         >
@@ -256,7 +256,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
           title="AI Features"
           description="Enable or disable specific AI capabilities for your organization"
           icon={Sparkles}
-          iconColor="text-violet-400"
+          iconColor="text-primary-400"
         >
           <div className="space-y-4">
             <SettingsToggle
@@ -272,7 +272,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
               label="Thinking Steps (Chain of Thought)"
               description="Show AI reasoning process with expandable thinking blocks"
               icon={Brain}
-              iconColor="text-violet-400"
+              iconColor="text-primary-400"
               checked={settings.thinkingStepsEnabled}
               onChange={(v) => updateSetting('thinkingStepsEnabled', v)}
             />
@@ -281,7 +281,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
               label="Focus Modes"
               description="Allow users to filter AI context (PMO Docs, Project Data, Research)"
               icon={Focus}
-              iconColor="text-cyan-400"
+              iconColor="text-blue-400"
               checked={settings.focusModesEnabled}
               onChange={(v) => updateSetting('focusModesEnabled', v)}
             />
@@ -352,7 +352,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-navy-900 dark:text-white">{opt.label}</span>
                     {dataRetention === opt.value && (
-                      <Check size={14} className="text-primary-600 dark:text-violet-400" />
+                      <Check size={14} className="text-primary-600 dark:text-primary-400" />
                     )}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{opt.description}</p>
@@ -440,7 +440,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
             title="External Data Policy"
             description="Control AI access to external data sources"
             icon={Globe}
-            iconColor="text-cyan-400"
+            iconColor="text-blue-400"
           >
             <div
               className={`p-4 rounded-xl transition-all cursor-pointer ${
@@ -459,7 +459,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
                       size={18}
                       className={
                         externalDataEnabled
-                          ? 'text-info-600 dark:text-cyan-400'
+                          ? 'text-info-600 dark:text-blue-400'
                           : 'text-slate-500 dark:text-slate-400'
                       }
                     />
@@ -476,7 +476,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
                 <div
                   className={`w-11 h-6 rounded-full transition-colors ${
                     externalDataEnabled
-                      ? 'bg-info-600 dark:bg-cyan-500'
+                      ? 'bg-info-600 dark:bg-blue-500'
                       : 'bg-slate-300 dark:bg-slate-600'
                   }`}
                 >
@@ -633,7 +633,7 @@ Example:
                 onClick={() => setEditingPrompt(p)}
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   editingPrompt?.key === p.key
-                    ? 'bg-violet-500/20 border-violet-500'
+                    ? 'bg-primary-500/20 border-primary-500'
                     : 'bg-navy-900 border-white/5 hover:border-white/20'
                 }`}
               >
@@ -676,14 +676,14 @@ Example:
                       onChange={(e) =>
                         setEditingPrompt({ ...editingPrompt, content: e.target.value })
                       }
-                      className="w-full h-64 bg-navy-950 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-violet-500 outline-none resize-none"
+                      className="w-full h-64 bg-navy-950 border border-white/10 rounded p-4 text-white font-mono text-sm leading-relaxed focus:border-primary-500 outline-none resize-none"
                     />
                   </div>
 
                   {/* Context Injection Controls */}
                   <div className="bg-navy-950 border border-white/5 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                      <Shield size={14} className="text-violet-400" />
+                      <Shield size={14} className="text-primary-400" />
                       Context Injection
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
@@ -719,7 +719,7 @@ Example:
                                   context_config: newConfig,
                                 });
                               }}
-                              className="w-4 h-4 rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700"
+                              className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-slate-700"
                             />
                             <span className="text-xs text-slate-300">{opt.label}</span>
                           </label>
@@ -738,7 +738,7 @@ Example:
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium flex items-center gap-2"
+                      className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium flex items-center gap-2"
                     >
                       <Save size={16} /> Save Persona
                     </button>

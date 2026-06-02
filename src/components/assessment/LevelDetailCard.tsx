@@ -141,7 +141,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
         <div
           className={`${isCompact ? 'mb-4' : 'mb-8'} ${isTouchDevice ? 'sticky top-0 bg-white/95 dark:bg-navy-950/95 backdrop-blur-sm -mx-4 px-4 py-3 md:-mx-6 md:px-6 z-20 border-b border-slate-100 dark:border-navy-700' : ''}`}
         >
-          <span className="text-purple-400 font-bold tracking-wider text-xs uppercase mb-2 block">
+          <span className="text-primary-400 font-bold tracking-wider text-xs uppercase mb-2 block">
             {cardT.level || 'LEVEL'} {level}
           </span>
           <h1
@@ -161,7 +161,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
           <div
             className={`bg-slate-50 dark:bg-white/5 rounded-xl text-left border border-slate-200 dark:border-navy-700 ${isCompact ? 'p-4 mb-4' : 'p-6 mb-8'}`}
           >
-            <div className="flex items-center gap-2 mb-3 text-purple-400 dark:text-purple-300 font-semibold text-sm">
+            <div className="flex items-center gap-2 mb-3 text-primary-400 dark:text-primary-300 font-semibold text-sm">
               <AlertCircle size={16} />
               <span>{cardT.helperQuestions || 'Helper Questions'}</span>
             </div>
@@ -171,7 +171,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                   key={idx}
                   className={`text-slate-600 dark:text-slate-400 flex gap-2 ${isCompact ? 'text-xs' : 'text-sm'}`}
                 >
-                  <span className="text-purple-500/50 shrink-0">•</span>
+                  <span className="text-primary-500/50 shrink-0">•</span>
                   <span>{q}</span>
                 </li>
               ))}
@@ -203,7 +203,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                             touch-target touch-ripple rounded-xl font-bold transition-all border flex items-center justify-center gap-2
                             ${getAssessmentButtonClasses('actual', isActual)}
                             ${isCompact ? 'px-3 py-4 text-sm flex-col' : 'px-6 py-3 text-sm min-w-[160px]'}
-                            ${isAutoFilling && autoFillSource === 'actual' ? 'ring-2 ring-purple-500 ring-offset-2' : ''}
+                            ${isAutoFilling && autoFillSource === 'actual' ? 'ring-2 ring-primary-500 ring-offset-2' : ''}
                         `}
           >
             {isAutoFilling && autoFillSource === 'actual' ? (
@@ -221,7 +221,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                             touch-target touch-ripple rounded-xl font-bold transition-all border flex items-center justify-center gap-2
                             ${getAssessmentButtonClasses('target', isTarget)}
                             ${isCompact ? 'px-3 py-4 text-sm flex-col' : 'px-6 py-3 text-sm min-w-[160px]'}
-                            ${isAutoFilling && autoFillSource === 'target' ? 'ring-2 ring-purple-500 ring-offset-2' : ''}
+                            ${isAutoFilling && autoFillSource === 'target' ? 'ring-2 ring-primary-500 ring-offset-2' : ''}
                         `}
           >
             {isAutoFilling && autoFillSource === 'target' ? (
@@ -235,8 +235,8 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
           <button
             onClick={onSetNA}
             className={`
-                            touch-target touch-ripple rounded-xl font-medium transition-all border 
-                            bg-slate-100 dark:bg-navy-950/30 border-slate-200 dark:border-navy-700 
+                            touch-target touch-ripple rounded-xl font-medium transition-all border
+                            bg-slate-100 dark:bg-navy-950/30 border-slate-200 dark:border-navy-700
                             text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-slate-200 dark:active:bg-white/10
                             flex items-center justify-center gap-2
                             ${
@@ -263,7 +263,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
 
             {/* AI Generated Badge */}
             {showAutoFillBadge && (
-              <span className="flex items-center gap-1 text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded-full animate-pulse">
+              <span className="flex items-center gap-1 text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 rounded-full animate-pulse">
                 <Wand2 size={10} />
                 AI Generated - Review & Edit
               </span>
@@ -278,7 +278,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                 cardT.notePlaceholder ||
                 'Type your observations... AI will help you expand and format them.'
               }
-              className="w-full bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all min-h-[150px] resize-y"
+              className="w-full bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all min-h-[150px] resize-y"
             />
           </div>
 
@@ -303,8 +303,8 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                   disabled={isAiLoading}
                   className={`flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full transition-all border ${
                     isAiLoading
-                      ? 'text-purple-300 bg-purple-500/10 border-purple-500/20 cursor-wait'
-                      : 'text-purple-400 hover:text-white bg-purple-500/20 hover:bg-purple-500 border-purple-500/30'
+                      ? 'text-primary-300 bg-primary-500/10 border-primary-500/20 cursor-wait'
+                      : 'text-primary-400 hover:text-white bg-primary-500/20 hover:bg-primary-500 border-primary-500/30'
                   }`}
                 >
                   {isAiLoading ? (

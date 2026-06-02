@@ -1,6 +1,8 @@
+import { AlertCircle, AlertTriangle, CheckCircle2, ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { AlertTriangle, AlertCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
+
 import { Button } from '@/components/ui/Button';
+
 import type { ValidationIssue, ValidationResult } from './useProcessFlowValidation';
 
 export type { ValidationIssue, ValidationResult };
@@ -44,7 +46,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
         {isPl ? 'Poprawny' : 'Valid'}
       </span>
     ) : result && !result.valid ? (
-      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200">
+      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">
         {isPl ? 'Błędy' : 'Invalid'}
       </span>
     ) : (
@@ -62,12 +64,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
           </h2>
           {validBadge}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onValidate}
-          disabled={isValidating}
-        >
+        <Button variant="outline" size="sm" onClick={onValidate} disabled={isValidating}>
           {isPl ? 'Uruchom walidację' : 'Run validation'}
         </Button>
       </div>
@@ -89,9 +86,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
         ) : result.issues.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="h-10 w-10" strokeWidth={1.5} />
-            <p className="text-sm font-medium">
-              {isPl ? 'Brak problemów' : 'No issues found'}
-            </p>
+            <p className="text-sm font-medium">{isPl ? 'Brak problemów' : 'No issues found'}</p>
             {result.validated_at && (
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {new Date(result.validated_at).toLocaleString(isPl ? 'pl-PL' : 'en-US')}
@@ -121,7 +116,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                       const Icon = issue.severity === 'error' ? AlertCircle : AlertTriangle;
                       const iconClass =
                         issue.severity === 'error'
-                          ? 'text-red-500 dark:text-red-400'
+                          ? 'text-rose-500 dark:text-rose-400'
                           : 'text-amber-500 dark:text-amber-400';
                       const rowClass = `flex w-full items-start gap-2 rounded-lg border border-transparent px-2 py-2 text-left text-xs ${
                         clickable

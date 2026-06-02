@@ -28,7 +28,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({ step, onClose, childre
       <div className="border-b border-slate-200 dark:border-navy-700 px-6 py-4">
         <div className="flex items-center justify-between max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
-            <Sparkles className="w-6 h-6 text-purple-500" />
+            <Sparkles className="w-6 h-6 text-primary-500" />
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">
               {t('presentations.wizard.title', 'Presentation Generator')}
             </h1>
@@ -49,7 +49,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({ step, onClose, childre
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
                   step === s.key || (step === 'generating' && s.key === 'result')
-                    ? 'bg-purple-500 text-white'
+                    ? 'bg-primary-500 text-white'
                     : currentIndex > STEP_ORDER.indexOf(s.key)
                       ? 'bg-green-500/20 text-green-600 dark:text-green-400'
                       : 'bg-slate-100 dark:bg-navy-800 text-slate-500'

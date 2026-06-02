@@ -213,9 +213,9 @@ const GATE_CONFIG: Record<
   },
   APPROVE_REPORT: {
     icon: FileCheck,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-50 dark:bg-purple-500/10',
-    borderColor: 'border-purple-200 dark:border-purple-500/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
+    borderColor: 'border-primary-200 dark:border-primary-500/30',
     actionLabel: 'Approve Report',
   },
   APPROVE_ASSESSMENT: {
@@ -227,9 +227,9 @@ const GATE_CONFIG: Record<
   },
   GENERATE_REPORT: {
     icon: FileText,
-    color: 'text-cyan-600 dark:text-cyan-400',
-    bgColor: 'bg-cyan-50 dark:bg-cyan-500/10',
-    borderColor: 'border-cyan-200 dark:border-cyan-500/30',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/30',
     actionLabel: 'Generate Report',
   },
   GENERATE_INITIATIVES: {
@@ -270,8 +270,8 @@ const STATUS_CONFIG: Record<
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-500/20',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
     icon: X,
   },
   SKIPPED: {
@@ -378,9 +378,9 @@ const WorkflowStageRow: FC<{
         animate={{ opacity: 1, y: 0 }}
         className={`
           group border-b border-slate-200 dark:border-navy-700/50 transition-colors
-          ${stage.isCurrent ? 'bg-purple-50/50 dark:bg-purple-500/5' : ''}
+          ${stage.isCurrent ? 'bg-primary-50/50 dark:bg-primary-500/5' : ''}
           ${stage.isCompleted ? 'bg-emerald-50/30 dark:bg-emerald-500/5' : ''}
-          ${stage.isBlocked ? 'bg-red-50/30 dark:bg-red-500/5' : ''}
+          ${stage.isBlocked ? 'bg-rose-50/30 dark:bg-rose-500/5' : ''}
           hover:bg-slate-50 dark:hover:bg-navy-800/50
         `}
       >
@@ -393,9 +393,9 @@ const WorkflowStageRow: FC<{
               stage.isCompleted
                 ? 'bg-emerald-500 text-white'
                 : stage.isCurrent
-                  ? 'bg-purple-500 text-white animate-pulse'
+                  ? 'bg-primary-500 text-white animate-pulse'
                   : stage.isBlocked
-                    ? 'bg-red-500/20 text-red-600 dark:text-red-400 border-2 border-red-500/50'
+                    ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-2 border-rose-500/50'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'
             }
           `}
@@ -428,7 +428,7 @@ const WorkflowStageRow: FC<{
                 <span
                   className={`text-sm font-medium ${
                     stage.isCurrent
-                      ? 'text-purple-700 dark:text-purple-300'
+                      ? 'text-primary-700 dark:text-primary-300'
                       : stage.isCompleted
                         ? 'text-emerald-700 dark:text-emerald-300'
                         : 'text-slate-900 dark:text-white'
@@ -437,7 +437,7 @@ const WorkflowStageRow: FC<{
                   {stage.label}
                 </span>
                 {stage.isCurrent && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-purple-500 text-white">
+                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-primary-500 text-white">
                     CURRENT
                   </span>
                 )}
@@ -471,7 +471,7 @@ const WorkflowStageRow: FC<{
           {stage.requirements.length > 0 ? (
             <div className="flex items-center gap-1.5">
               {hasBlockingRequirements ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300">
                   <X size={10} />
                   {
                     stage.requirements.filter((r) => r.severity === 'blocking' && !r.pass).length
@@ -528,7 +528,7 @@ const WorkflowStageRow: FC<{
               >
                 {gateDecision?.assigneeId ? (
                   <>
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-[10px] font-medium text-white">
                       {(gateDecision.assigneeName || '?').charAt(0).toUpperCase()}
                     </div>
                     <div className="text-left">
@@ -580,7 +580,7 @@ const WorkflowStageRow: FC<{
                             onClick={() => handleAssign(user.userId)}
                             className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
                           >
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
                               {(user.userName || user.userEmail || '?').charAt(0).toUpperCase()}
                             </div>
                             <div className="text-left flex-1 min-w-0">
@@ -636,7 +636,7 @@ const WorkflowStageRow: FC<{
             <button
               onClick={() => handleAction('request')}
               disabled={actionBusy}
-              className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-300 text-white text-xs font-semibold transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-xs font-semibold transition-colors"
             >
               {actionBusy ? <Loader2 size={12} className="animate-spin" /> : 'Generate Report'}
             </button>
@@ -654,7 +654,7 @@ const WorkflowStageRow: FC<{
                 <button
                   onClick={() => handleAction('request')}
                   disabled={actionBusy}
-                  className="px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white text-xs font-semibold transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-xs font-semibold transition-colors"
                 >
                   {actionBusy ? (
                     <Loader2 size={12} className="animate-spin" />
@@ -676,7 +676,7 @@ const WorkflowStageRow: FC<{
                   <button
                     onClick={() => handleAction('reject')}
                     disabled={actionBusy}
-                    className="p-1.5 rounded-lg bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30 transition-colors"
+                    className="p-1.5 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/30 transition-colors"
                     title="Reject"
                   >
                     <X size={14} />
@@ -691,7 +691,7 @@ const WorkflowStageRow: FC<{
               )}
             </div>
           ) : stage.gate && hasBlockingRequirements ? (
-            <span className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+            <span className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
               <Lock size={12} />
               Blocked
             </span>
@@ -730,7 +730,7 @@ const WorkflowStageRow: FC<{
                           req.pass
                             ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30'
                             : req.severity === 'blocking'
-                              ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
+                              ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
                               : 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
                         }
                       `}
@@ -743,7 +743,7 @@ const WorkflowStageRow: FC<{
                             req.pass
                               ? 'bg-emerald-500 text-white'
                               : req.severity === 'blocking'
-                                ? 'bg-red-500 text-white'
+                                ? 'bg-rose-500 text-white'
                                 : 'bg-amber-500 text-white'
                           }
                         `}
@@ -762,7 +762,7 @@ const WorkflowStageRow: FC<{
                               req.pass
                                 ? 'text-emerald-800 dark:text-emerald-200'
                                 : req.severity === 'blocking'
-                                  ? 'text-red-800 dark:text-red-200'
+                                  ? 'text-rose-800 dark:text-rose-200'
                                   : 'text-amber-800 dark:text-amber-200'
                             }`}
                           >
@@ -793,7 +793,7 @@ const WorkflowStageRow: FC<{
                             req.pass
                               ? 'bg-emerald-200 dark:bg-emerald-500/30 text-emerald-800 dark:text-emerald-200'
                               : req.severity === 'blocking'
-                                ? 'bg-red-200 dark:bg-red-500/30 text-red-800 dark:text-red-200'
+                                ? 'bg-rose-200 dark:bg-rose-500/30 text-rose-800 dark:text-rose-200'
                                 : 'bg-amber-200 dark:bg-amber-500/30 text-amber-800 dark:text-amber-200'
                           }
                         `}
@@ -927,7 +927,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
       <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-600 text-white rounded-lg">
+            <div className="p-2 bg-gradient-to-br from-primary-500 to-blue-600 text-white rounded-lg">
               <Zap size={18} />
             </div>
             <div>
@@ -1008,7 +1008,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
             <span>Completed</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-purple-500 animate-pulse" />
+            <div className="w-3 h-3 rounded-full bg-primary-500 animate-pulse" />
             <span>Current</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -1016,7 +1016,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
             <span>Pending</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/50 border border-red-500" />
+            <div className="w-3 h-3 rounded-full bg-rose-500/50 border border-rose-500" />
             <span>Blocked</span>
           </div>
           <div className="flex items-center gap-1.5">

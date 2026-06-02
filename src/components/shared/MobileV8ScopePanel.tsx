@@ -31,17 +31,20 @@ const COPY: Record<Locale, MobileCopy> = {
       {
         id: 'first',
         title: 'Mobile-first',
-        description: 'Navigation, chat, approvals, alerts, and quick review actions should work well on phones.',
+        description:
+          'Navigation, chat, approvals, alerts, and quick review actions should work well on phones.',
       },
       {
         id: 'safe',
         title: 'Mobile-safe',
-        description: 'Settings, status checks, and bounded admin reviews can be supported responsively without full desktop parity.',
+        description:
+          'Settings, status checks, and bounded admin reviews can be supported responsively without full desktop parity.',
       },
       {
         id: 'desktop',
         title: 'Desktop-only',
-        description: 'Dense builders, deep workbenches, and complex editing remain desktop territory until explicitly upgraded.',
+        description:
+          'Dense builders, deep workbenches, and complex editing remain desktop territory until explicitly upgraded.',
       },
     ],
     boundaries: [
@@ -61,17 +64,20 @@ const COPY: Record<Locale, MobileCopy> = {
       {
         id: 'first',
         title: 'Mobile-first',
-        description: 'Nawigacja, chat, approvals, alerty i szybkie akcje review powinny dobrze dzialac na telefonach.',
+        description:
+          'Nawigacja, chat, approvals, alerty i szybkie akcje review powinny dobrze dzialac na telefonach.',
       },
       {
         id: 'safe',
         title: 'Mobile-safe',
-        description: 'Settings, status checks i bounded admin reviews moga byc wspierane responsywnie bez pelnej parytetowej wersji desktop.',
+        description:
+          'Settings, status checks i bounded admin reviews moga byc wspierane responsywnie bez pelnej parytetowej wersji desktop.',
       },
       {
         id: 'desktop',
         title: 'Desktop-only',
-        description: 'Gestsze buildery, glebokie workbenche i zlozona edycja pozostaja domena desktopu, dopoki nie zostana jawnie podniesione.',
+        description:
+          'Gestsze buildery, glebokie workbenche i zlozona edycja pozostaja domena desktopu, dopoki nie zostana jawnie podniesione.',
       },
     ],
     boundaries: [
@@ -110,12 +116,16 @@ export const MobileV8ScopePanel: React.FC<MobileV8ScopePanelProps> = ({
           >
             {copy.title}
           </h2>
-          <p className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
+          >
             {copy.subtitle}
           </p>
         </div>
 
-        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.25fr_1fr]'}`}>
+        <div
+          className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.25fr_1fr]'}`}
+        >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
               {copy.matrixTitle}

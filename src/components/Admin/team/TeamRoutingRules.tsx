@@ -277,7 +277,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                   rule.enabled
                     ? 'border-slate-200 dark:border-navy-700'
                     : 'border-slate-200 dark:border-navy-700 opacity-60',
-                  isExpanded && 'ring-2 ring-violet-500/20'
+                  isExpanded && 'ring-2 ring-primary-500/20'
                 )}
               >
                 {/* Rule Header */}
@@ -429,9 +429,9 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                           {rule.actions.map((action) => (
                             <div
                               key={action.id}
-                              className="flex items-center gap-2 text-sm p-2 bg-violet-50 dark:bg-violet-900/20 rounded-lg"
+                              className="flex items-center gap-2 text-sm p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg"
                             >
-                              <span className="text-violet-600 dark:text-violet-400">
+                              <span className="text-primary-600 dark:text-primary-400">
                                 {getActionLabel(action.type)}:
                               </span>
                               <span className="font-medium text-navy-900 dark:text-white">

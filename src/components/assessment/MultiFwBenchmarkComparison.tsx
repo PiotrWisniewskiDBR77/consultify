@@ -228,7 +228,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
     return Object.entries(benchmarkData.categoryComparison).map(([catId, data]) => ({
       name: labels[catId] || catId,
       gap: data.gap,
-      fill: data.gap >= 0 ? '#10B981' : '#EF4444',
+      fill: data.gap >= 0 ? '#10B981' : '#F43F5E',
     }));
   }, [benchmarkData, framework]);
 
@@ -353,11 +353,11 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
               {benchmarkData.gapToAverage >= 0 ? (
                 <TrendingUp className="w-5 h-5 text-green-500" />
               ) : (
-                <TrendingDown className="w-5 h-5 text-red-500" />
+                <TrendingDown className="w-5 h-5 text-rose-500" />
               )}
               <span
                 className={`text-lg font-semibold ${
-                  benchmarkData.gapToAverage >= 0 ? 'text-green-500' : 'text-red-500'
+                  benchmarkData.gapToAverage >= 0 ? 'text-green-500' : 'text-rose-500'
                 }`}
               >
                 {benchmarkData.gapToAverage > 0 ? '+' : ''}
@@ -493,8 +493,8 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
         </div>
 
         {/* Weaknesses */}
-        <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-200 dark:border-red-800">
-          <h3 className="font-semibold text-red-800 dark:text-red-200 mb-4 flex items-center gap-2">
+        <div className="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-6 border border-rose-200 dark:border-rose-800">
+          <h3 className="font-semibold text-rose-800 dark:text-rose-200 mb-4 flex items-center gap-2">
             <TrendingDown className="w-5 h-5" />
             Improvement Areas (Below Benchmark)
           </h3>
@@ -502,15 +502,15 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
             <div className="space-y-3">
               {benchmarkData.weaknesses.map((w) => (
                 <div key={w.id} className="flex items-center justify-between">
-                  <span className="text-sm text-red-700 dark:text-red-300">
+                  <span className="text-sm text-rose-700 dark:text-rose-300">
                     {CATEGORY_LABELS[framework]?.[w.id] || w.id}
                   </span>
-                  <span className="text-sm font-medium text-red-600">{w.gap.toFixed(1)}</span>
+                  <span className="text-sm font-medium text-rose-600">{w.gap.toFixed(1)}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-red-600 dark:text-red-400 opacity-70">
+            <p className="text-sm text-rose-600 dark:text-rose-400 opacity-70">
               All categories at or above benchmark
             </p>
           )}

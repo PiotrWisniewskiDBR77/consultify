@@ -5,6 +5,22 @@
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
+export class UserPrivacyMemoryStoreError extends Error {
+  code = 'AI_GOVERNANCE_MEMORY_INVALID_STORE' as const;
+  constructor(message = 'Memory store is invalid') {
+    super(message);
+    this.name = 'UserPrivacyMemoryStoreError';
+  }
+}
+
+export class UserPrivacyMemoryDeleteError extends Error {
+  code = 'AI_GOVERNANCE_MEMORY_DELETE_FAILED' as const;
+  constructor(message = 'Memory could not be deleted') {
+    super(message);
+    this.name = 'UserPrivacyMemoryDeleteError';
+  }
+}
+
 export interface UserPrivacySettings {
   memoryEnabled: boolean;
   memoryWriteEnabled: boolean;
@@ -113,15 +129,22 @@ export async function previewMemory(userId: string): Promise<Record<string, unkn
         }
       | undefined;
     if (!memory) return { empty: true };
-    return {
-      preferences: memory.preferences ? JSON.parse(memory.preferences) : null,
-      expertise: memory.expertise ? JSON.parse(memory.expertise) : null,
-      recentTopics: memory.recent_topics ? JSON.parse(memory.recent_topics) : null,
-      interactionCount: memory.interaction_count || 0,
-      lastInteractionAt: memory.last_interaction_at,
-    };
-  } catch {
-    return { empty: true, error: 'Memory table not available' };
+    try {
+      return {
+        preferences: memory.preferences ? JSON.parse(memory.preferences) : null,
+        expertise: memory.expertise ? JSON.parse(memory.expertise) : null,
+        recentTopics: memory.recent_topics ? JSON.parse(memory.recent_topics) : null,
+        interactionCount: memory.interaction_count || 0,
+        lastInteractionAt: memory.last_interaction_at,
+      };
+    } catch {
+      throw new UserPrivacyMemoryStoreError('Memory store is invalid');
+    }
+  } catch (error) {
+    if (error instanceof UserPrivacyMemoryStoreError) {
+      throw error;
+    }
+    return { empty: true };
   }
 }
 
@@ -137,7 +160,7 @@ export async function deleteMemory(userId: string): Promise<{ success: boolean }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.warn(`[UserPrivacy] Failed to delete memory: ${msg}`);
-    return { success: false };
+    throw new UserPrivacyMemoryDeleteError('Memory could not be deleted');
   }
 }
 

@@ -73,6 +73,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
   const [query, setQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<ArtifactLinkRole>('related');
   const [filterType, setFilterType] = useState<ArtifactType | null>(null);
+  const [pasteStatus, setPasteStatus] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = useCallback(
@@ -87,14 +88,21 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
     (text: string) => {
       const parsed = parseArtifactRef(text);
       if (parsed) {
+        setPasteStatus('');
         onAttach(
           { type: parsed.type, id: parsed.id, title: `${parsed.type}:${parsed.id}` },
           selectedRole
         );
         onClose();
+        return;
       }
+      setPasteStatus(
+        isPl
+          ? 'Nieprawidlowy ref artefaktu. Uzyj formatu typ:id.'
+          : 'Invalid artifact ref. Use type:id format.'
+      );
     },
-    [onAttach, onClose, selectedRole]
+    [onAttach, onClose, selectedRole, isPl]
   );
 
   const filteredResults = filterType
@@ -142,6 +150,15 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
               autoFocus
             />
           </div>
+          {pasteStatus && (
+            <div
+              role="status"
+              className="mt-1 text-[10px] text-amber-700 dark:text-amber-400"
+              data-testid="artifact-paste-status"
+            >
+              {pasteStatus}
+            </div>
+          )}
         </div>
 
         {/* Type filter */}
@@ -183,7 +200,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
               onClick={() => setSelectedRole(r.value)}
               className={`px-1.5 py-0.5 rounded text-[8px] font-medium transition-colors ${
                 selectedRole === r.value
-                  ? 'bg-violet-500/15 text-violet-600 dark:text-violet-400'
+                  ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >

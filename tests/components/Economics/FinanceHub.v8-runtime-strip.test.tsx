@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -22,6 +23,13 @@ const financeDataState = vi.hoisted(() => ({
   statusCounts: { all: 0, draft: 0, review: 0, approved: 0 },
   lastActiveTab: '' as string,
   lastSearchQuery: '' as string,
+}));
+
+const financeLaneState = vi.hoisted(() => ({
+  startRun: vi.fn(),
+  advanceStep: vi.fn(),
+  refreshLane: vi.fn(),
+  refreshCoherence: vi.fn(),
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -126,6 +134,33 @@ vi.mock('../../../src/components/Economics/FinancePreviewPanel', () => ({
   }),
 }));
 
+vi.mock('../../../src/components/Economics/hooks/useFinanceLane', () => ({
+  useFinanceLane: () => ({
+    activeLaneRun: null,
+    laneHistory: [],
+    mutationAudits: [],
+    kpiCoherence: null,
+    versionSnapshots: [],
+    degradedAlerts: [],
+    isRunInProgress: false,
+    loading: false,
+    error: null,
+    startRun: financeLaneState.startRun,
+    advanceStep: financeLaneState.advanceStep,
+    refreshLane: financeLaneState.refreshLane,
+    refreshCoherence: financeLaneState.refreshCoherence,
+  }),
+}));
+
+vi.mock('../../../src/hooks/useV8FeatureFlag', () => ({
+  useV8FeatureFlag: () => ({
+    isEnabled: true,
+    isLoading: false,
+    error: null,
+    flags: { finance: true },
+  }),
+}));
+
 vi.mock('../../../src/components/Benefits/BudgetWorkspace', () => ({
   BudgetWorkspace: () => <div>budget-workspace</div>,
 }));
@@ -161,6 +196,12 @@ vi.mock('../../../src/components/Economics/modals/CreateValuationModal', () => (
   CreateValuationModal: () => null,
 }));
 
+vi.mock('../../../src/contexts/AccessPolicyContext', () => ({
+  usePolicySnapshot: () => ({
+    isFeatureBlocked: () => false,
+  }),
+}));
+
 vi.mock('../../../src/services/api/v8/finance', () => ({
   V8FinanceApi: {
     getDashboard: vi.fn(),
@@ -190,6 +231,21 @@ const LocationProbe = () => {
   const location = useLocation();
   return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
 };
+
+function renderWithProviders(children: React.ReactNode, initialEntries = ['/']) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
+    </QueryClientProvider>
+  );
+}
 
 describe('FinanceHub V8 runtime strip', () => {
   beforeEach(() => {
@@ -238,11 +294,7 @@ describe('FinanceHub V8 runtime strip', () => {
   });
 
   it('shows governed runtime pills and keeps them after switching tabs', async () => {
-    render(
-      <MemoryRouter>
-        <FinanceHub />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<FinanceHub />);
 
     await waitFor(() => {
       expect(V8FinanceApi.getDashboard).toHaveBeenCalled();
@@ -276,11 +328,7 @@ describe('FinanceHub V8 runtime strip', () => {
   it('keeps the finance runtime strip visible with unavailable markers when the dashboard fails', async () => {
     vi.mocked(V8FinanceApi.getDashboard).mockRejectedValue(new Error('dashboard down'));
 
-    render(
-      <MemoryRouter>
-        <FinanceHub />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<FinanceHub />);
 
     await waitFor(() => {
       expect(V8FinanceApi.getDashboard).toHaveBeenCalled();
@@ -314,11 +362,7 @@ describe('FinanceHub V8 runtime strip', () => {
       count: 1,
     } as any);
 
-    render(
-      <MemoryRouter>
-        <FinanceHub />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<FinanceHub />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
     fireEvent.click(screen.getByRole('button', { name: '+ Importuj statement' }));
@@ -363,11 +407,7 @@ describe('FinanceHub V8 runtime strip', () => {
       count: 1,
     } as any);
 
-    render(
-      <MemoryRouter>
-        <FinanceHub />
-      </MemoryRouter>,
-    );
+    renderWithProviders(<FinanceHub />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
     fireEvent.click(screen.getByRole('button', { name: '+ Importuj statement' }));
@@ -382,15 +422,18 @@ describe('FinanceHub V8 runtime strip', () => {
   });
 
   it('canonicalizes economics deep links to finance and preserves valuation context', async () => {
-    render(
-      <MemoryRouter initialEntries={['/economics?tab=valuation&initiativeId=init-1&initiativeName=Initiative%20Alpha']}>
+    renderWithProviders(
+      <>
         <LocationProbe />
         <FinanceHub />
-      </MemoryRouter>
+      </>,
+      ['/economics?tab=valuation&initiativeId=init-1&initiativeName=Initiative%20Alpha']
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('location')).toHaveTextContent('/finance?tab=valuation&initiativeId=init-1&initiativeName=Initiative%20Alpha');
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/finance?tab=valuation&initiativeId=init-1&initiativeName=Initiative%20Alpha'
+      );
       expect(screen.getByTestId('active-tab')).toHaveTextContent('valuation');
     });
 
@@ -398,11 +441,12 @@ describe('FinanceHub V8 runtime strip', () => {
   });
 
   it('syncs the active finance tab back into the url', async () => {
-    render(
-      <MemoryRouter initialEntries={['/finance?tab=statements']}>
+    renderWithProviders(
+      <>
         <LocationProbe />
         <FinanceHub />
-      </MemoryRouter>
+      </>,
+      ['/finance?tab=statements']
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Predykcja' }));

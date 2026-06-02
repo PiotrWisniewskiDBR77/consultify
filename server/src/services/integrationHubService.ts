@@ -15,17 +15,17 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import _logger from '../utils/Logger.js';
 
 // ==========================================
 // CONSTANTS
 // ==========================================
 
 export const CATEGORIES = {
-  EMAIL: 'email',
+  EMAIL: 'communication',
   CALENDAR: 'calendar',
-  TASK_MANAGEMENT: 'task_management',
+  TASK_MANAGEMENT: 'project_management',
   CLOUD_STORAGE: 'cloud_storage',
 } as const;
 
@@ -57,7 +57,7 @@ export const CONNECTORS: Record<string, Connector> = {
     category: CATEGORIES.EMAIL,
     capabilities: ['email', 'contacts', 'labels'],
     authType: 'oauth2',
-    configFields: [],
+    configFields: ['domain'],
   },
   outlook: {
     id: 'outlook',
@@ -73,7 +73,7 @@ export const CONNECTORS: Record<string, Connector> = {
     category: CATEGORIES.EMAIL,
     capabilities: ['messages', 'channels', 'notifications'],
     authType: 'oauth2',
-    configFields: [],
+    configFields: ['workspace_id'],
   },
   teams: {
     id: 'teams',
@@ -125,7 +125,7 @@ export const CONNECTORS: Record<string, Connector> = {
     category: CATEGORIES.TASK_MANAGEMENT,
     capabilities: ['issues', 'projects', 'sprints', 'boards'],
     authType: 'oauth2',
-    configFields: ['site_url'],
+    configFields: ['site_url', 'cloud_id'],
   },
   asana: {
     id: 'asana',
@@ -133,7 +133,7 @@ export const CONNECTORS: Record<string, Connector> = {
     category: CATEGORIES.TASK_MANAGEMENT,
     capabilities: ['tasks', 'projects', 'portfolios'],
     authType: 'oauth2',
-    configFields: [],
+    configFields: ['workspace_gid'],
   },
   trello: {
     id: 'trello',
@@ -372,7 +372,11 @@ class IntegrationHubServiceClass {
    */
   async getConnectedIntegrations(organizationId: string): Promise<Integration[]> {
     const cols = await this.getIntegrationsColumns();
-    const orderBy = cols.has('created_at') ? 'created_at' : cols.has('updated_at') ? 'updated_at' : 'id';
+    const orderBy = cols.has('created_at')
+      ? 'created_at'
+      : cols.has('updated_at')
+        ? 'updated_at'
+        : 'id';
     const rows = (await this.deps.db.all<IntegrationRecord>(
       `SELECT * FROM integrations
              WHERE organization_id = ?
@@ -456,18 +460,7 @@ class IntegrationHubServiceClass {
       'auth_type',
     ];
     const columns = [...baseCols, ...timestampCols];
-    const values = [
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      '?',
-      ...timestampValues,
-    ];
+    const values = ['?', '?', '?', '?', '?', '?', '?', '?', '?', ...timestampValues];
     const params = [
       integrationId,
       organizationId,
@@ -799,16 +792,25 @@ async function slackSyncAdapter(
   _options: Record<string, unknown>
 ): Promise<ProviderSyncResult> {
   try {
-    const token = String(config.botToken || config.bot_token || config.accessToken || config.access_token || '');
+    const token = String(
+      config.botToken || config.bot_token || config.accessToken || config.access_token || ''
+    );
     if (!token) return { recordsSynced: 0, error: 'No Slack bot token configured' };
 
-    const resp = await fetch('https://slack.com/api/conversations.list?types=public_channel,private_channel&limit=100', {
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    });
+    const resp = await fetch(
+      'https://slack.com/api/conversations.list?types=public_channel,private_channel&limit=100',
+      {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      }
+    );
 
     if (!resp.ok) return { recordsSynced: 0, error: `Slack API ${resp.status}` };
 
-    const data = (await resp.json()) as { ok?: boolean; channels?: Array<{ id: string; name: string }>; error?: string };
+    const data = (await resp.json()) as {
+      ok?: boolean;
+      channels?: Array<{ id: string; name: string }>;
+      error?: string;
+    };
     if (!data.ok) return { recordsSynced: 0, error: `Slack error: ${data.error || 'unknown'}` };
 
     const channels = data.channels || [];
@@ -844,7 +846,8 @@ async function teamsSyncAdapter(
     });
 
     if (!resp.ok) {
-      if (resp.status === 401) return { recordsSynced: 0, error: 'Teams token expired — reauth required' };
+      if (resp.status === 401)
+        return { recordsSynced: 0, error: 'Teams token expired — reauth required' };
       return { recordsSynced: 0, error: `Graph API ${resp.status}` };
     }
 
@@ -883,7 +886,8 @@ async function googleSyncAdapter(
     );
 
     if (!resp.ok) {
-      if (resp.status === 401) return { recordsSynced: 0, error: 'Google token expired — reauth required' };
+      if (resp.status === 401)
+        return { recordsSynced: 0, error: 'Google token expired — reauth required' };
       return { recordsSynced: 0, error: `Google API ${resp.status}` };
     }
 
@@ -954,10 +958,7 @@ async function genericWebhookSyncAdapter(
       };
 
       if (reg.secret_key) {
-        const signature = crypto
-          .createHmac('sha256', reg.secret_key)
-          .update(payload)
-          .digest('hex');
+        const signature = crypto.createHmac('sha256', reg.secret_key).update(payload).digest('hex');
         headers['X-Webhook-Signature'] = `sha256=${signature}`;
       }
 
@@ -1043,7 +1044,9 @@ async function cloudStorageSyncAdapter(
     if (!orgId) return { recordsSynced: 0, error: 'No organization ID for cloud sync' };
 
     const sources = await listCloudSources(orgId);
-    const matchingSource = sources.find((s: any) => s.id === integrationId || s.status === 'active');
+    const matchingSource = sources.find(
+      (s: any) => s.id === integrationId || s.status === 'active'
+    );
     if (!matchingSource) return { recordsSynced: 0 };
 
     const { listCloudFiles } = await import('./cloudDataService.js');
@@ -1056,7 +1059,16 @@ async function cloudStorageSyncAdapter(
         `INSERT INTO integration_sync_mappings (id, integration_id, external_id, external_type, local_type, metadata, synced_at)
          VALUES (gen_random_uuid()::TEXT, ?, ?, 'cloud_file', 'file', ?::JSONB, NOW())
          ON CONFLICT (integration_id, external_id) DO UPDATE SET metadata = EXCLUDED.metadata, synced_at = NOW()`,
-        [integrationId, file.id, JSON.stringify({ name: file.name, mimeType: file.mimeType, size: file.size, isFolder: file.isFolder })]
+        [
+          integrationId,
+          file.id,
+          JSON.stringify({
+            name: file.name,
+            mimeType: file.mimeType,
+            size: file.size,
+            isFolder: file.isFolder,
+          }),
+        ]
       );
       synced++;
     }

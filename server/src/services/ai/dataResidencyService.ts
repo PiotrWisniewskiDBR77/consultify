@@ -20,12 +20,12 @@ const EU_REGIONS = ['EU', 'EU-WEST', 'EU-CENTRAL', 'EUROPE', 'DE', 'FR', 'NL', '
 
 class DataResidencyService {
   async getPolicy(organizationId: string): Promise<DataResidencyPolicy> {
-    const config = await dbGet(
+    const config = (await dbGet(
       `SELECT data_residency_region, enforce_eu_only
        FROM organization_ai_config
        WHERE organization_id = ?`,
       [organizationId]
-    ).catch(() => null) as any;
+    ).catch(() => null)) as any;
 
     if (!config) {
       return {
@@ -57,7 +57,7 @@ class DataResidencyService {
     );
 
     if (existing) {
-      const sets: string[] = ['updated_at = datetime(\'now\')', 'updated_by = ?'];
+      const sets: string[] = ["updated_at = datetime('now')", 'updated_by = ?'];
       const params: unknown[] = [updatedBy];
 
       if (policy.enforceEuOnly !== undefined) {
@@ -104,9 +104,7 @@ class DataResidencyService {
     }
 
     if (policy.enforceEuOnly) {
-      const hasEuRegion = modelRegions.some((r) =>
-        EU_REGIONS.includes(r.toUpperCase())
-      );
+      const hasEuRegion = modelRegions.some((r) => EU_REGIONS.includes(r.toUpperCase()));
       if (!hasEuRegion) {
         return {
           allowed: false,
@@ -135,13 +133,15 @@ class DataResidencyService {
     policy: Partial<DataResidencyPolicy>
   ): Promise<void> {
     try {
-      const orgPolicy = await dbGet(
+      const orgPolicy = (await dbGet(
         `SELECT policy FROM organization_ai_policy WHERE organization_id = ?`,
         [organizationId]
-      ) as any;
+      )) as any;
 
       const existingPolicy = orgPolicy?.policy
-        ? (typeof orgPolicy.policy === 'string' ? JSON.parse(orgPolicy.policy) : orgPolicy.policy)
+        ? typeof orgPolicy.policy === 'string'
+          ? JSON.parse(orgPolicy.policy)
+          : orgPolicy.policy
         : {};
 
       if (policy.enforceEuOnly) {

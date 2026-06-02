@@ -19,9 +19,9 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> =
     dot: 'bg-amber-500',
   },
   danger: {
-    bg: 'bg-red-100 dark:bg-red-500/20',
-    text: 'text-red-700 dark:text-red-400',
-    dot: 'bg-red-500',
+    bg: 'bg-rose-100 dark:bg-rose-500/20',
+    text: 'text-rose-700 dark:text-rose-400',
+    dot: 'bg-rose-500',
   },
   info: {
     bg: 'bg-blue-50/70 dark:bg-blue-500/10',
@@ -68,7 +68,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 /* ─────────────── Priority Dot ─────────────── */
 
 const PRIORITY_COLORS: Record<string, string> = {
-  critical: 'text-red-500',
+  critical: 'text-rose-500',
   high: 'text-amber-500',
   medium: 'text-blue-500',
   low: 'text-slate-400',
@@ -121,7 +121,7 @@ export const Avatar: React.FC<AvatarProps> = ({ name, url, size = 'sm' }) => {
   }
   return (
     <span
-      className={`${sizeClass} rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center font-semibold ring-1 ring-white dark:ring-navy-800`}
+      className={`${sizeClass} rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-semibold ring-1 ring-white dark:ring-navy-800`}
       title={name}
     >
       {initial}

@@ -10,6 +10,8 @@ vi.hoisted(() => {
   process.env.MOCK_DB = 'false';
   process.env.TEST_TYPE = 'integration';
   process.env.NODE_ENV = 'test';
+  process.env.DB_TYPE = 'sqlite';
+  delete process.env.DATABASE_URL;
   process.env.MOCK_REDIS = 'true';
   process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
 
@@ -241,7 +243,8 @@ describe('Billing routes integration (L3)', () => {
     expect(res.status).toBe(503);
     expect(res.body).toEqual(
       expect.objectContaining({
-        error: expect.stringContaining('not available'),
+        message: expect.stringContaining('temporarily unavailable'),
+        type: 'not_configured',
       })
     );
   });

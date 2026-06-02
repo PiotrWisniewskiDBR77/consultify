@@ -23,7 +23,7 @@ import { getCardDocumentation } from '../../config/cardDocumentation';
 const infoAnimationStyle = `
 @keyframes infoColorPulse {
     0%, 100% {
-        background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+        background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
         box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
     }
     50% {
@@ -33,10 +33,10 @@ const infoAnimationStyle = `
 }
 
 @keyframes infoIconGlow {
-    0%, 100% { 
+    0%, 100% {
         filter: drop-shadow(0 0 1px rgba(255,255,255,0.2));
     }
-    50% { 
+    50% {
         filter: drop-shadow(0 0 4px rgba(255,255,255,0.5));
     }
 }
@@ -266,7 +266,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
               {docs.relatedDocs && docs.relatedDocs.length > 0 && (
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <ExternalLink size={16} className="text-purple-500" />
+                    <ExternalLink size={16} className="text-primary-500" />
                     Related Documentation
                   </h3>
                   <div className="space-y-2">

@@ -72,34 +72,34 @@ const COLOR_CLASSES: Record<ColorKey, ColorClasses> = {
     text600_70: 'text-green-600/70',
   },
   purple: {
-    bg50: 'bg-purple-50 dark:bg-purple-900/20',
-    bg100: 'bg-purple-100 dark:bg-purple-900/30',
-    bg500: 'bg-purple-500',
-    bg900_20: 'bg-purple-900/20',
-    bg900_30: 'bg-purple-900/30',
-    text400: 'text-purple-400',
-    text600: 'text-purple-600 dark:text-purple-400',
-    text600_70: 'text-purple-600/70',
+    bg50: 'bg-primary-50 dark:bg-primary-900/20',
+    bg100: 'bg-primary-100 dark:bg-primary-900/30',
+    bg500: 'bg-primary-500',
+    bg900_20: 'bg-primary-900/20',
+    bg900_30: 'bg-primary-900/30',
+    text400: 'text-primary-400',
+    text600: 'text-primary-600 dark:text-primary-400',
+    text600_70: 'text-primary-600/70',
   },
   red: {
-    bg50: 'bg-red-50 dark:bg-red-900/20',
-    bg100: 'bg-red-100 dark:bg-red-900/30',
-    bg500: 'bg-red-500',
-    bg900_20: 'bg-red-900/20',
-    bg900_30: 'bg-red-900/30',
-    text400: 'text-red-400',
-    text600: 'text-red-600 dark:text-red-400',
-    text600_70: 'text-red-600/70',
+    bg50: 'bg-rose-50 dark:bg-rose-900/20',
+    bg100: 'bg-rose-100 dark:bg-rose-900/30',
+    bg500: 'bg-rose-500',
+    bg900_20: 'bg-rose-900/20',
+    bg900_30: 'bg-rose-900/30',
+    text400: 'text-rose-400',
+    text600: 'text-rose-600 dark:text-rose-400',
+    text600_70: 'text-rose-600/70',
   },
   orange: {
-    bg50: 'bg-orange-50 dark:bg-orange-900/20',
-    bg100: 'bg-orange-100 dark:bg-orange-900/30',
-    bg500: 'bg-orange-500',
-    bg900_20: 'bg-orange-900/20',
-    bg900_30: 'bg-orange-900/30',
-    text400: 'text-orange-400',
-    text600: 'text-orange-600 dark:text-orange-400',
-    text600_70: 'text-orange-600/70',
+    bg50: 'bg-amber-50 dark:bg-amber-900/20',
+    bg100: 'bg-amber-100 dark:bg-amber-900/30',
+    bg500: 'bg-amber-500',
+    bg900_20: 'bg-amber-900/20',
+    bg900_30: 'bg-amber-900/30',
+    text400: 'text-amber-400',
+    text600: 'text-amber-600 dark:text-amber-400',
+    text600_70: 'text-amber-600/70',
   },
   yellow: {
     bg50: 'bg-yellow-50 dark:bg-yellow-900/20',
@@ -374,7 +374,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                   </td>
                   <td className="py-2 pr-0 text-center">
                     {s.gap > 0 ? (
-                      <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded font-bold text-xs">
+                      <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded font-bold text-xs">
                         -{s.gap.toFixed(1)}
                       </span>
                     ) : (
@@ -433,7 +433,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                         {dim.target}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded font-bold text-sm">
+                        <span className="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded font-bold text-sm">
                           -{dim.gap}
                         </span>
                       </td>
@@ -460,8 +460,8 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                 key={dim.id}
                 className="flex items-start gap-3 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-lg"
               >
-                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-purple-600">{idx + 1}</span>
+                <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary-600">{idx + 1}</span>
                 </div>
                 <div>
                   <h4 className="font-medium text-navy-900 dark:text-white">Poprawa {dim.name}</h4>
@@ -575,8 +575,8 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                 </div>
               )}
               {longTerm.length > 0 && (
-                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
-                  <h4 className="font-semibold text-purple-700 dark:text-purple-400 mb-2 text-sm">
+                <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4">
+                  <h4 className="font-semibold text-primary-700 dark:text-primary-400 mb-2 text-sm">
                     Long-term (18-36m)
                   </h4>
                   {longTerm.map((d) => (

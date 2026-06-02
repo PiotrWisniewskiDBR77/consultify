@@ -40,6 +40,8 @@ import {
 } from 'recharts';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 
 interface APIKey {
   id: string;
@@ -62,7 +64,19 @@ interface APIKey {
 
 interface APIAccessSettingsProps {
   className?: string;
+  currentUser?: unknown;
 }
+
+type ApiKeyRow = {
+  id?: string;
+  name?: string;
+  keyPrefix?: string;
+  createdAt?: string;
+  lastUsedAt?: string;
+  rateLimit?: number;
+  expiresAt?: string;
+  permissions?: string[] | string;
+};
 
 const AVAILABLE_SCOPES = [
   { id: 'read', name: 'Read', description: 'Read-only access' },
@@ -71,9 +85,7 @@ const AVAILABLE_SCOPES = [
   { id: 'admin', name: 'Admin', description: 'Full administrative access' },
 ];
 
-export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
-  className = '',
-}) => {
+export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [keys, setKeys] = useState<APIKey[]>([]);
   const [loadingKeys, setLoadingKeys] = useState(true);
@@ -84,6 +96,8 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
   const [showSettings, setShowSettings] = useState<string | null>(null);
   const [keyUsage, setKeyUsage] = useState<Record<string, any>>({});
   const [rotatingKey, setRotatingKey] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Settings form state
   const [keySettings, setKeySettings] = useState<
@@ -109,22 +123,58 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
     }
   }, [selectedKey]);
 
-  const fetchKeys = async () => {
+  const normalizePermissions = (permissions: ApiKeyRow['permissions']) => {
+    if (Array.isArray(permissions)) return permissions;
+    if (typeof permissions !== 'string') return [];
+    try {
+      const parsed = JSON.parse(permissions || '[]');
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const normalizeApiKeys = (rows: unknown): APIKey[] =>
+    Array.isArray(rows)
+      ? rows
+          .map((k: ApiKeyRow) => ({
+            id: String(k.id || ''),
+            name: String(k.name || ''),
+            prefix: String(k.keyPrefix || ''),
+            createdAt: String(k.createdAt || ''),
+            lastUsed: k.lastUsedAt,
+            rateLimit: k.rateLimit,
+            expiresAt: k.expiresAt,
+            scopes: normalizePermissions(k.permissions),
+          }))
+          .filter((key) => key.id)
+      : [];
+
+  const stringArraysMatch = (left: string[] = [], right: string[] = []) =>
+    left.length === right.length && left.every((item) => right.includes(item));
+
+  const keySettingsMatch = (
+    key: APIKey | undefined,
+    settings: {
+      rateLimit: string;
+      scopes: string[];
+    }
+  ) => {
+    if (!key) return false;
+    const expectedRateLimit = settings.rateLimit ? parseInt(settings.rateLimit) : undefined;
+    const actualRateLimit = key.rateLimit ?? undefined;
+    return (
+      actualRateLimit === expectedRateLimit && stringArraysMatch(key.scopes || [], settings.scopes)
+    );
+  };
+
+  const fetchKeys = async (): Promise<APIKey[] | null> => {
     setLoadingKeys(true);
     try {
+      setLoadError(null);
       const response = await Api.get('/api/settings/api-keys');
       const data = response?.data?.keys || [];
-      const mappedKeys = data.map((k: any) => ({
-        id: k.id,
-        name: k.name,
-        prefix: k.keyPrefix,
-        createdAt: k.createdAt,
-        lastUsed: k.lastUsedAt,
-        rateLimit: k.rateLimit,
-        expiresAt: k.expiresAt,
-        scopes:
-          typeof k.permissions === 'string' ? JSON.parse(k.permissions || '[]') : k.permissions,
-      }));
+      const mappedKeys = normalizeApiKeys(data);
       setKeys(mappedKeys);
       const settings: Record<string, any> = {};
       mappedKeys.forEach((key: APIKey) => {
@@ -137,11 +187,17 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
         };
       });
       setKeySettings(settings);
-    } catch (error) {
-      console.error('Failed to load API keys:', error);
-      toast.error(t('settings.api.loadError', 'Failed to load API keys'));
+      return mappedKeys;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.api.loadError', 'Failed to load API keys')
+      );
+      setLoadError(message);
+      toast.error(message);
       setKeys([]);
       setKeySettings({});
+      return null;
     } finally {
       setLoadingKeys(false);
     }
@@ -168,27 +224,30 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
     if (!newKeyName.trim()) return;
 
     try {
+      setActionError(null);
       const response = await Api.post('/api/settings/api-keys', { name: newKeyName });
       const payload = response?.data;
 
       if (payload?.key) {
+        const refreshed = await fetchKeys();
+        const confirmed = refreshed?.some(
+          (key) => key.id === payload.key.id || key.prefix === payload.key.keyPrefix
+        );
+        if (!confirmed) {
+          throw new Error('API key creation was not confirmed by the server');
+        }
         setNewKey(payload.key.key);
-        setKeys((prev) => [
-          ...prev,
-          {
-            id: payload.key.id,
-            name: payload.key.name,
-            prefix: payload.key.keyPrefix,
-            createdAt: payload.key.createdAt,
-          },
-        ]);
         toast.success(t('settings.api.keyCreated', 'API key created'));
         setNewKeyName('');
         setShowNew(false);
       }
-    } catch (error: any) {
-      console.error('Failed to create API key:', error);
-      toast.error(error.message || t('settings.api.createError', 'Failed to create API key'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.api.createError', 'Failed to create API key')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -197,11 +256,20 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
       return;
 
     try {
+      setActionError(null);
       await Api.delete(`/api/settings/api-keys/${keyId}`);
-      setKeys((prev) => prev.filter((k) => k.id !== keyId));
+      const refreshed = await fetchKeys();
+      if (!refreshed || refreshed.some((key) => key.id === keyId)) {
+        throw new Error('API key deletion was not confirmed by the server');
+      }
       toast.success(t('settings.api.keyDeleted', 'API key deleted'));
-    } catch (_error) {
-      toast.error(t('settings.api.deleteError', 'Failed to delete key'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.api.deleteError', 'Failed to delete key')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -224,16 +292,32 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
 
     setRotatingKey(keyId);
     try {
+      setActionError(null);
       const response = await Api.post(`/api/settings/api-keys/${keyId}/rotate`, {});
       const payload = response?.data;
+      const rotatedKey = payload?.key;
+      const newSecret = typeof rotatedKey === 'string' ? rotatedKey : rotatedKey?.key;
+      const expectedPrefix =
+        typeof rotatedKey === 'object' && rotatedKey !== null
+          ? rotatedKey.keyPrefix
+          : payload?.keyPrefix;
 
-      if (payload?.key) {
-        setNewKey(payload.key);
+      const refreshed = await fetchKeys();
+      const confirmed = expectedPrefix
+        ? refreshed?.some((key) => key.id === keyId && key.prefix === expectedPrefix)
+        : refreshed?.some((key) => key.id === keyId);
+      if (!confirmed) {
+        throw new Error('API key rotation was not confirmed by the server');
       }
+      if (newSecret) setNewKey(newSecret);
       toast.success(t('settings.api.keyRotated', 'API key rotated successfully'));
-      fetchKeys();
-    } catch (error) {
-      toast.error(t('settings.api.rotateError', 'Failed to rotate key'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.api.rotateError', 'Failed to rotate key')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setRotatingKey(null);
     }
@@ -244,16 +328,26 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
     if (!settings) return;
 
     try {
+      setActionError(null);
       await Api.put(`/api/settings/api-keys/${keyId}`, {
         rateLimit: settings.rateLimit ? parseInt(settings.rateLimit) : null,
         permissions: settings.scopes,
       });
 
+      const refreshed = await fetchKeys();
+      const persisted = refreshed?.find((key) => key.id === keyId);
+      if (!keySettingsMatch(persisted, settings)) {
+        throw new Error('API key settings save was not confirmed by the server');
+      }
       toast.success(t('settings.api.settingsSaved', 'Settings saved'));
       setShowSettings(null);
-      fetchKeys();
-    } catch (error) {
-      toast.error(t('settings.api.saveError', 'Failed to save settings'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.api.saveError', 'Failed to save settings')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -316,6 +410,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
         </div>
         <button
           onClick={() => setShowNew(true)}
+          disabled={!!loadError}
           className="flex items-center gap-2 px-3 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
         >
           <Plus size={16} />
@@ -323,8 +418,19 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
         </button>
       </div>
 
+      {loadError && <DegradedState title="API keys unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* Empty state */}
-      {keys.length === 0 && !showNew && (
+      {keys.length === 0 && !showNew && !loadError && (
         <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
           <Key className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -332,6 +438,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
           </p>
           <button
             onClick={() => setShowNew(true)}
+            disabled={!!loadError}
             className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm"
           >
             <Plus size={16} />
@@ -425,7 +532,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-medium text-slate-900 dark:text-white">{key.name}</p>
                     {expired && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 rounded-full">
                         {t('settings.api.expired', 'Expired')}
                       </span>
                     )}
@@ -481,7 +588,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
                   </button>
                   <button
                     onClick={() => deleteKey(key.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                     title={t('common.delete', 'Delete')}
                   >
                     <Trash2 size={16} />
@@ -504,7 +611,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
                     <div
                       className={`h-2 rounded-full transition-all ${
                         quotaPercent >= 90
-                          ? 'bg-red-500'
+                          ? 'bg-rose-500'
                           : quotaPercent >= 70
                             ? 'bg-amber-500'
                             : 'bg-green-500'
@@ -562,11 +669,23 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
                   {usage.requests && usage.requests.length > 0 && (
                     <ResponsiveContainer width="100%" height={200}>
                       <LineChart data={usage.requests}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-navy-700, #334155)" />
-                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="var(--color-navy-400, #94a3b8)" />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--color-navy-700, #334155)"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 10 }}
+                          stroke="var(--color-navy-400, #94a3b8)"
+                        />
                         <YAxis tick={{ fontSize: 10 }} stroke="var(--color-navy-400, #94a3b8)" />
                         <Tooltip />
-                        <Line type="monotone" dataKey="count" stroke="var(--color-brand, #7C3AED)" strokeWidth={2} />
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke="var(--color-brand, #7C3AED)"
+                          strokeWidth={2}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   )}

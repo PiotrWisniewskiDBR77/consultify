@@ -2,7 +2,20 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { V8FinanceApi, type V8FinanceModelOutputsResult } from '../../services/api/v8/finance';
-import { type FinanceModelForecastLine, type FinanceModelPreviewDetail, type FinanceModelRow } from './financeTypes';
+import {
+  type FinanceModelForecastLine,
+  type FinanceModelPreviewDetail,
+  type FinanceModelRow,
+} from './financeTypes';
+
+type ServerOutputLine = {
+  lineCode: string;
+  lineName?: string;
+  value?: number;
+  level?: number;
+  isTotal?: boolean;
+  isSubtotal?: boolean;
+};
 
 type Props = {
   row: FinanceModelRow;
@@ -39,7 +52,9 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
       }
     }
     loadOutputs();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [row.id, selectedVariant]);
 
   const activeVariant = useMemo(() => {
@@ -52,7 +67,8 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
   const serverRows = useMemo((): FinanceModelForecastLine[] | null => {
     if (!serverOutputs?.grouped) return null;
     const statementKey = selectedStatement === 'P&L' ? 'PL' : selectedStatement;
-    const periodGroups = serverOutputs.grouped[statementKey] || serverOutputs.grouped[selectedStatement];
+    const periodGroups =
+      serverOutputs.grouped[statementKey] || serverOutputs.grouped[selectedStatement];
     if (!periodGroups) return null;
     const periods = Object.keys(periodGroups);
     if (periods.length === 0) return null;
@@ -61,10 +77,12 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
     return uniqueLines.map((code) => {
       const firstLine = periods
         .map((p) => periodGroups[p].find((l) => l.lineCode === code))
-        .find(Boolean);
+        .find(Boolean) as ServerOutputLine | undefined;
       const values: Record<string, number> = {};
       for (const p of periods) {
-        const found = periodGroups[p].find((l) => l.lineCode === code);
+        const found = periodGroups[p].find((l) => l.lineCode === code) as
+          | ServerOutputLine
+          | undefined;
         values[p] = found?.value ?? 0;
       }
       return {
@@ -171,7 +189,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
               onClick={() => setSelectedVariant(variant)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 activeVariant === variant
-                  ? 'bg-cyan-500 text-slate-950'
+                  ? 'bg-blue-500 text-slate-950'
                   : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
               }`}
             >

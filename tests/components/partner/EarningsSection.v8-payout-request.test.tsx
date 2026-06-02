@@ -30,6 +30,7 @@ vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
     getCommissionTransactions: vi.fn(),
     getEarningsSummary: vi.fn(),
+    getProgramStatus: vi.fn(),
     getPayouts: vi.fn(),
     requestPayout: vi.fn(),
   },
@@ -90,6 +91,19 @@ describe('EarningsSection V8 payout request seam', () => {
     } as any);
     vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({
       payouts: [],
+    } as any);
+    vi.mocked(V8PartnerApi.getProgramStatus).mockResolvedValue({
+      lifecyclePhase: 'payout',
+      payoutSettingsComplete: true,
+      balances: {
+        grossEarned: 1200,
+        paidOut: 500,
+        heldAmount: 0,
+        availableToPayout: 150,
+        currency: 'EUR',
+      },
+      whatNext: [],
+      hold: null,
     } as any);
   });
 
@@ -272,7 +286,7 @@ describe('EarningsSection V8 payout request seam', () => {
     ).toBeDisabled();
   });
 
-  it('falls back to legacy payout request on bounded compatibility statuses', async () => {
+  it('does not issue a legacy payout request when governed payout request fails', async () => {
     vi.mocked(V8PartnerApi.requestPayout).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockResolvedValue({
       success: true,
@@ -288,7 +302,8 @@ describe('EarningsSection V8 payout request seam', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Request Payout' }));
 
     await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/api/partners/payouts/request', { amount: 150 });
+      expect(V8PartnerApi.requestPayout).toHaveBeenCalledWith({ amount: 150 });
     });
+    expect(Api.post).not.toHaveBeenCalledWith('/api/partners/payouts/request', expect.anything());
   });
 });

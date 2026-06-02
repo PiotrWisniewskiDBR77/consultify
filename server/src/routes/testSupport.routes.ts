@@ -21,7 +21,6 @@ function deny(res: Response) {
 
 function assertEnabled(req: Request, res: Response): boolean {
   if (process.env.NODE_ENV === 'production') return false;
-  if (process.env.NODE_ENV !== 'test') return false;
   if (process.env.ENABLE_TEST_SUPPORT !== 'true') return false;
 
   const expected = process.env.TEST_SUPPORT_KEY;
@@ -570,7 +569,14 @@ router.post(
     const requestedRole = String(req.body?.role || 'ADMIN')
       .trim()
       .toUpperCase();
-    const userRole = requestedRole === 'SUPERADMIN' ? 'SUPERADMIN' : 'ADMIN';
+
+    // Accepted personas: SUPERADMIN, ADMIN, USER, GUEST
+    const VALID_ROLES = ['SUPERADMIN', 'ADMIN', 'USER', 'GUEST'] as const;
+    type ValidRole = (typeof VALID_ROLES)[number];
+    const userRole: ValidRole = (VALID_ROLES as readonly string[]).includes(requestedRole)
+      ? (requestedRole as ValidRole)
+      : 'ADMIN';
+    // org membership role maps platform SUPERADMIN → ADMIN (org member), others stay as-is
     const memberRole = userRole === 'SUPERADMIN' ? 'ADMIN' : userRole;
     if (!runId || runId.length > 128) {
       return res.status(400).json({ error: 'runId is required' });
@@ -607,7 +613,22 @@ router.post(
       await DbPromise.run(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, organizationId, email, 'e2e-not-used', userRole, 'active', 'E2E', userRole === 'SUPERADMIN' ? 'SuperAdmin' : 'Admin'],
+        [
+          userId,
+          organizationId,
+          email,
+          'e2e-not-used',
+          userRole,
+          'active',
+          'E2E',
+          userRole === 'SUPERADMIN'
+            ? 'SuperAdmin'
+            : userRole === 'ADMIN'
+              ? 'Admin'
+              : userRole === 'GUEST'
+                ? 'Guest'
+                : 'User',
+        ],
         { fallback: false }
       );
 
@@ -639,12 +660,22 @@ router.post(
     // P25-B: Ensure contextual help primers exist for deterministic runtime tests.
     await ensureP25bKbSeedMinimum();
 
+    const displayName =
+      userRole === 'SUPERADMIN'
+        ? 'E2E SuperAdmin'
+        : userRole === 'ADMIN'
+          ? 'E2E Admin'
+          : userRole === 'GUEST'
+            ? 'E2E Guest'
+            : 'E2E User';
+
     const token = makeSignedToken({
       id: userId,
       email: `e2e+${runId}@local.test`,
-      name: userRole === 'SUPERADMIN' ? 'E2E SuperAdmin' : 'E2E Admin',
+      name: displayName,
       role: userRole,
       organizationId,
+      isSuperAdmin: userRole === 'SUPERADMIN',
       runId,
       jti: uuidv4(),
     });

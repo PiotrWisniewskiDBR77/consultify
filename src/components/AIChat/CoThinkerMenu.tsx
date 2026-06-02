@@ -27,6 +27,8 @@ const PERSONAS: Array<{
   icon: React.ElementType;
   labelKey: string;
   fallbackLabel: string;
+  descKey: string;
+  fallbackDesc: string;
   mapToCoThinkerMode?:
     | 'multi_consultant'
     | 'idea_maker'
@@ -39,6 +41,8 @@ const PERSONAS: Array<{
     icon: Users,
     labelKey: 'chat.coThinker.personas.consultant',
     fallbackLabel: 'Consultant',
+    descKey: 'chat.coThinker.personas.consultantDesc',
+    fallbackDesc: 'Broad strategy framing and decision-ready recommendations.',
     mapToCoThinkerMode: 'multi_consultant',
   },
   {
@@ -46,6 +50,8 @@ const PERSONAS: Array<{
     icon: Lightbulb,
     labelKey: 'chat.coThinker.personas.ideaCreator',
     fallbackLabel: 'Idea Creator',
+    descKey: 'chat.coThinker.personas.ideaCreatorDesc',
+    fallbackDesc: 'Generates options, variants, and creative solution pathways.',
     mapToCoThinkerMode: 'idea_maker',
   },
   {
@@ -53,6 +59,8 @@ const PERSONAS: Array<{
     icon: BarChart3,
     labelKey: 'chat.coThinker.personas.analyst',
     fallbackLabel: 'Analyst',
+    descKey: 'chat.coThinker.personas.analystDesc',
+    fallbackDesc: 'Evaluates assumptions, metrics, and comparative scenarios.',
     mapToCoThinkerMode: 'competitive_analyst',
   },
   {
@@ -60,6 +68,8 @@ const PERSONAS: Array<{
     icon: ShieldCheck,
     labelKey: 'chat.coThinker.personas.auditor',
     fallbackLabel: 'Auditor',
+    descKey: 'chat.coThinker.personas.auditorDesc',
+    fallbackDesc: 'Challenges risk, compliance, and evidence gaps.',
     mapToCoThinkerMode: 'risk_challenger',
   },
   {
@@ -67,6 +77,8 @@ const PERSONAS: Array<{
     icon: FileText,
     labelKey: 'chat.coThinker.personas.editor',
     fallbackLabel: 'Editor',
+    descKey: 'chat.coThinker.personas.editorDesc',
+    fallbackDesc: 'Improves structure, clarity, and executive readability.',
     mapToCoThinkerMode: 'executive_editor',
   },
   {
@@ -74,6 +86,8 @@ const PERSONAS: Array<{
     icon: Search,
     labelKey: 'chat.coThinker.personas.marketResearcher',
     fallbackLabel: 'Market Researcher',
+    descKey: 'chat.coThinker.personas.marketResearcherDesc',
+    fallbackDesc: 'Prioritizes web-backed market signals and external context.',
   },
 ];
 
@@ -262,14 +276,19 @@ export const CoThinkerMenu: React.FC<{
                   size={16}
                   className={`shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}`}
                 />
-                <span
-                  className={`flex-1 text-[13px] ${
+                <span className="flex-1 min-w-0">
+                  <span
+                    className={`block text-[13px] ${
                     isActive
                       ? 'text-primary-700 dark:text-primary-300 font-medium'
                       : 'text-slate-700 dark:text-slate-200'
-                  }`}
-                >
-                  {label}
+                    }`}
+                  >
+                    {label}
+                  </span>
+                  <span className="block text-[11px] leading-snug text-slate-500 dark:text-slate-400 mt-0.5">
+                    {t(p.descKey, p.fallbackDesc)}
+                  </span>
                 </span>
                 {isActive && <Check size={16} className="shrink-0 text-primary-500" />}
               </button>

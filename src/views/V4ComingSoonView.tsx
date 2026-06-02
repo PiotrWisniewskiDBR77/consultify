@@ -1,28 +1,13 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import {
-  Bell,
-  Bot,
-  Brain,
-  Calendar,
-  Check,
-  Cpu,
-  ExternalLink,
-  Globe,
-  Handshake,
-  Link2,
-  Shield,
-  ShoppingCart,
-  Sparkles,
-  Target,
-  TrendingUp,
-  Zap,
-} from 'lucide-react';
+  BarChart3, Bell, Brain, Calendar, Check, Cpu, ExternalLink, FileText, Globe, Handshake, Layout, Link2, Lock, PenTool, PieChart, Shield, ShoppingCart, Sparkles, Table2, Target, TrendingUp, Wand2, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { apiGet, apiPost } from '../services/api/baseClient';
 
-type ModuleKey = 'iris' | 'marketplace' | 'meeting';
+import TeresaMark from '../components/shared/TeresaMark';
+type ModuleKey = 'iris' | 'marketplace' | 'meeting' | 'wordy' | 'excele' | 'prezentacje';
 
 interface ModuleConfig {
   title: string;
@@ -48,6 +33,10 @@ const IRIS_IMAGE =
 const MARKETPLACE_IMAGE =
   'https://images.unsplash.com/photo-1611078489935-0cb964de46d6?w=800&q=80&auto=format&fit=crop';
 
+const WORDY_IMAGE = '/images/kimi-wordy-hero.jpg';
+const EXCELE_IMAGE = '/images/kimi-excele-hero.jpg';
+const PREZENTACJE_IMAGE = '/images/kimi-prezentacje-hero.jpg';
+
 const IRIS_LP_URL = 'https://iris.dbr77.com';
 const MARKETPLACE_LP_URL = 'https://marketplace.dbr77.com/marketplace';
 
@@ -66,7 +55,7 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
           'AI analizuje kontekst projektu, wcześniejsze decyzje i otwarte punkty, by wygenerować precyzyjną agendę jeszcze przed rozpoczęciem spotkania.',
       },
       {
-        icon: <Bot size={20} />,
+        icon: <TeresaMark size={20} />,
         title: 'Teresa — AI moderator spotkań',
         description:
           'Teresa uczestniczy w spotkaniu jako konsultant AI, który zna kontekst Twojej organizacji, projektów i wcześniejszych ustaleń. Moderuje dyskusję, pilnuje agendy i na bieżąco podpowiada kluczowe dane i rekomendacje.',
@@ -91,7 +80,7 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
     ],
     imageUrl: MEETING_IMAGE,
     imageAlt: 'Zespół współpracujący na produktywnym spotkaniu',
-    gradient: 'from-blue-600/20 via-indigo-600/10 to-purple-600/5',
+    gradient: 'from-blue-600/20 via-indigo-600/10 to-primary-600/5',
     accentColor: 'blue',
     bannerTitle: 'Bądź na bieżąco z Meeting Intelligence',
     bannerDescription:
@@ -136,7 +125,7 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
     ],
     imageUrl: IRIS_IMAGE,
     imageAlt: 'Automatyka przemysłowa i technologia produkcji',
-    gradient: 'from-purple-600/20 via-violet-600/10 to-fuchsia-600/5',
+    gradient: 'from-primary-600/20 via-primary-600/10 to-fuchsia-600/5',
     accentColor: 'purple',
     lpUrl: IRIS_LP_URL,
     lpLabel: 'Dowiedz się więcej o IRIS',
@@ -183,7 +172,7 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
     ],
     imageUrl: MARKETPLACE_IMAGE,
     imageAlt: 'Roboty przemysłowe na linii produkcyjnej',
-    gradient: 'from-emerald-600/20 via-teal-600/10 to-cyan-600/5',
+    gradient: 'from-emerald-600/20 via-blue-600/10 to-blue-600/5',
     accentColor: 'emerald',
     lpUrl: MARKETPLACE_LP_URL,
     lpLabel: 'Dowiedz się więcej o Marketplace',
@@ -191,16 +180,157 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
     bannerDescription:
       'Odwiedź stronę produktu, by zobaczyć katalog dostawców, proces zakupowy i dostępne integracje.',
   },
+  wordy: {
+    title: 'Dokumenty AI',
+    badge: 'Kontakt wymagany',
+    headline: 'Generuj profesjonalne dokumenty z pomocą sztucznej inteligencji',
+    description:
+      'Dokumenty AI to zaawansowany moduł tworzenia treści, który rozumie kontekst Twojej organizacji. Generuj raporty strategiczne, analizy biznesowe, dokumentację techniczną i briefy projektowe — wszystko w oparciu o rzeczywiste dane z Twoich inicjatyw i projektów.',
+    features: [
+      {
+        icon: <PenTool size={20} />,
+        title: 'Inteligentne szablony',
+        description:
+          'Gotowe szablony raportów, analiz i dokumentów strategicznych dopasowane do Twojej branży i metodologii doradczej.',
+      },
+      {
+        icon: <Brain size={20} />,
+        title: 'Kontekst organizacyjny',
+        description:
+          'AI czerpie z danych Twoich inicjatyw, KPI, decyzji i wyników — każdy dokument jest osadzony w rzeczywistym kontekście projektu.',
+      },
+      {
+        icon: <FileText size={20} />,
+        title: 'Wersjonowanie i współpraca',
+        description:
+          'Pełna historia zmian, komentarze inline i współdzielenie dokumentów z zespołem i klientami.',
+      },
+      {
+        icon: <Wand2 size={20} />,
+        title: 'Automatyczna redakcja',
+        description:
+          'AI dopasowuje ton, styl i poziom szczegółowości do odbiorcy — od zarządu po zespół operacyjny.',
+      },
+    ],
+    highlights: [
+      { value: '10x', label: 'Szybsze tworzenie' },
+      { value: '100%', label: 'Kontekst projektowy' },
+      { value: '15+', label: 'Typów dokumentów' },
+    ],
+    imageUrl: WORDY_IMAGE,
+    imageAlt: 'Przestrzeń tworzenia dokumentów z AI',
+    gradient: 'from-blue-600/20 via-blue-600/10 to-blue-600/5',
+    accentColor: 'cyan',
+    bannerTitle: 'Zainteresowany modułem Dokumenty AI?',
+    bannerDescription:
+      'Ten moduł jest dostępny w ramach rozszerzonego planu. Skontaktuj się z nami, aby uzyskać dostęp i poznać szczegóły.',
+  },
+  excele: {
+    title: 'Tabele AI',
+    badge: 'Kontakt wymagany',
+    headline: 'Analizuj dane i twórz inteligentne arkusze wspierane przez AI',
+    description:
+      'Tabele AI to moduł analityczny nowej generacji. Importuj dane, twórz zaawansowane tabele przestawne, uruchamiaj analizy what-if i generuj wizualizacje — wszystko z naturalnym interfejsem konwersacyjnym. AI rozumie Twoje dane i proponuje najlepsze sposoby ich prezentacji.',
+    features: [
+      {
+        icon: <Table2 size={20} />,
+        title: 'Inteligentne arkusze',
+        description:
+          'Twórz arkusze za pomocą języka naturalnego. AI automatycznie dobiera formuły, formatowanie i strukturę danych.',
+      },
+      {
+        icon: <BarChart3 size={20} />,
+        title: 'Wizualizacja danych',
+        description:
+          'Generuj wykresy, dashboardy i raporty graficzne bezpośrednio z danych tabelarycznych jednym poleceniem.',
+      },
+      {
+        icon: <PieChart size={20} />,
+        title: 'Analizy predykcyjne',
+        description:
+          'Uruchamiaj scenariusze what-if, modelowanie trendów i prognozy oparte na historycznych danych projektowych.',
+      },
+      {
+        icon: <Zap size={20} />,
+        title: 'Import i integracja',
+        description:
+          'Importuj dane z CSV, Excel i systemów zewnętrznych. Automatyczna synchronizacja z KPI i wynikami inicjatyw.',
+      },
+    ],
+    highlights: [
+      { value: '5x', label: 'Szybsza analiza' },
+      { value: 'AI', label: 'Formuły i wykresy' },
+      { value: 'Real-time', label: 'Dane z projektów' },
+    ],
+    imageUrl: EXCELE_IMAGE,
+    imageAlt: 'Zaawansowane arkusze danych wspierane przez AI',
+    gradient: 'from-amber-600/20 via-amber-600/10 to-yellow-600/5',
+    accentColor: 'amber',
+    bannerTitle: 'Zainteresowany modułem Tabele AI?',
+    bannerDescription:
+      'Ten moduł jest dostępny w ramach rozszerzonego planu. Skontaktuj się z nami, aby uzyskać dostęp i poznać szczegóły.',
+  },
+  prezentacje: {
+    title: 'Prezentacje AI',
+    badge: 'Kontakt wymagany',
+    headline: 'Twórz profesjonalne prezentacje w kilka minut z pomocą AI',
+    description:
+      'Prezentacje AI automatycznie przekształcają dane, wyniki i analizy w eleganckie slajdy gotowe do zarządu. AI dobiera layout, wizualizacje i narrację — Ty skupiasz się na przekazie strategicznym. Każda prezentacja jest spójna z identyfikacją wizualną i osadzona w kontekście projektu.',
+    features: [
+      {
+        icon: <Layout size={20} />,
+        title: 'Automatyczny design',
+        description:
+          'AI projektuje slajdy z profesjonalnym layoutem, typografią i paletą kolorów dopasowaną do Twojej marki.',
+      },
+      {
+        icon: <TrendingUp size={20} />,
+        title: 'Dane na żywo',
+        description:
+          'Prezentacje czerpią z aktualnych KPI, wyników finansowych i postępów inicjatyw — zawsze aktualne dane.',
+      },
+      {
+        icon: <Sparkles size={20} />,
+        title: 'Narracja strategiczna',
+        description:
+          'AI buduje spójną historię biznesową, łącząc dane ilościowe z kontekstem jakościowym i rekomendacjami.',
+      },
+      {
+        icon: <Target size={20} />,
+        title: 'Eksport i współdzielenie',
+        description:
+          'Eksportuj do PDF, PPTX lub udostępniaj interaktywne prezentacje online z kontrolą dostępu.',
+      },
+    ],
+    highlights: [
+      { value: '15min', label: 'Od danych do slajdów' },
+      { value: 'Brand', label: 'Spójność wizualna' },
+      { value: 'Live', label: 'Dane w prezentacji' },
+    ],
+    imageUrl: PREZENTACJE_IMAGE,
+    imageAlt: 'Tworzenie prezentacji z AI w nowoczesnym środowisku',
+    gradient: 'from-rose-600/20 via-pink-600/10 to-fuchsia-600/5',
+    accentColor: 'rose',
+    bannerTitle: 'Zainteresowany modułem Prezentacje AI?',
+    bannerDescription:
+      'Ten moduł jest dostępny w ramach rozszerzonego planu. Skontaktuj się z nami, aby uzyskać dostęp i poznać szczegóły.',
+  },
 };
 
 function resolveModuleKey(pathname: string): ModuleKey {
   if (pathname.includes('marketplace')) return 'marketplace';
   if (pathname.includes('mcp') || pathname.includes('iris')) return 'iris';
   if (pathname.includes('meeting')) return 'meeting';
+  if (pathname.includes('wordy')) return 'wordy';
+  if (pathname.includes('excele')) return 'excele';
+  if (pathname.includes('prezentacje')) return 'prezentacje';
   return 'iris';
 }
 
-const accentMap: Record<string, { badge: string; icon: string; highlight: string; button: string; buttonRegistered: string }> = {
+const accentMap: Record<
+  string,
+  { badge: string; icon: string; highlight: string; button: string; buttonRegistered: string }
+> = {
   blue: {
     badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     icon: 'text-blue-400',
@@ -209,11 +339,11 @@ const accentMap: Record<string, { badge: string; icon: string; highlight: string
     buttonRegistered: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
   },
   purple: {
-    badge: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    icon: 'text-purple-400',
-    highlight: 'from-purple-500/10 to-purple-600/5 border-purple-500/10',
-    button: 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20',
-    buttonRegistered: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+    badge: 'bg-primary-500/10 text-primary-400 border-primary-500/20',
+    icon: 'text-primary-400',
+    highlight: 'from-primary-500/10 to-primary-600/5 border-primary-500/10',
+    button: 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-600/20',
+    buttonRegistered: 'bg-primary-500/10 text-primary-400 border border-primary-500/20',
   },
   emerald: {
     badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -222,14 +352,35 @@ const accentMap: Record<string, { badge: string; icon: string; highlight: string
     button: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20',
     buttonRegistered: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
   },
+  cyan: {
+    badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    icon: 'text-blue-400',
+    highlight: 'from-blue-500/10 to-blue-600/5 border-blue-500/10',
+    button: 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20',
+    buttonRegistered: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+  },
+  amber: {
+    badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    icon: 'text-amber-400',
+    highlight: 'from-amber-500/10 to-amber-600/5 border-amber-500/10',
+    button: 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/20',
+    buttonRegistered: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+  },
+  rose: {
+    badge: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    icon: 'text-rose-400',
+    highlight: 'from-rose-500/10 to-rose-600/5 border-rose-500/10',
+    button: 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20',
+    buttonRegistered: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
+  },
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
   }),
 };
 
@@ -245,6 +396,7 @@ export const V4ComingSoonView: React.FC = () => {
 
   const isRegistered = registeredModules.has(moduleKey);
   const hasLpUrl = Boolean(copy.lpUrl);
+  const isContactRequired = copy.badge === 'Kontakt wymagany';
 
   useEffect(() => {
     let cancelled = false;
@@ -256,7 +408,9 @@ export const V4ComingSoonView: React.FC = () => {
         // not critical
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleRegister = useCallback(async () => {
@@ -295,6 +449,37 @@ export const V4ComingSoonView: React.FC = () => {
       );
     }
 
+    if (isContactRequired) {
+      return (
+        <button
+          onClick={handleRegister}
+          disabled={isRegistered || isSubmitting}
+          className={[
+            'shrink-0 inline-flex items-center gap-2 rounded-lg font-medium transition-all duration-200',
+            isLg ? 'px-6 py-3 text-sm' : 'px-5 py-2.5 text-sm',
+            isRegistered ? accent.buttonRegistered : accent.button,
+            isSubmitting
+              ? 'opacity-70 cursor-wait'
+              : isRegistered
+                ? 'cursor-default'
+                : 'cursor-pointer',
+          ].join(' ')}
+        >
+          {isRegistered ? (
+            <>
+              <Check size={isLg ? 16 : 14} />
+              Zgłoszenie wysłane
+            </>
+          ) : (
+            <>
+              <Lock size={isLg ? 16 : 14} />
+              {isSubmitting ? 'Wysyłanie...' : 'Poproś o dostęp'}
+            </>
+          )}
+        </button>
+      );
+    }
+
     return (
       <button
         onClick={handleRegister}
@@ -303,7 +488,11 @@ export const V4ComingSoonView: React.FC = () => {
           'shrink-0 inline-flex items-center gap-2 rounded-lg font-medium transition-all duration-200',
           isLg ? 'px-6 py-3 text-sm' : 'px-5 py-2.5 text-sm',
           isRegistered ? accent.buttonRegistered : accent.button,
-          isSubmitting ? 'opacity-70 cursor-wait' : isRegistered ? 'cursor-default' : 'cursor-pointer',
+          isSubmitting
+            ? 'opacity-70 cursor-wait'
+            : isRegistered
+              ? 'cursor-default'
+              : 'cursor-pointer',
         ].join(' ')}
       >
         {isRegistered ? (
@@ -334,7 +523,9 @@ export const V4ComingSoonView: React.FC = () => {
               className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg bg-emerald-500 text-white text-sm font-medium shadow-lg"
             >
               <Check size={16} />
-              Powiadomimy Cię, gdy {copy.title} będzie dostępny!
+              {isContactRequired
+                ? `Dziękujemy! Skontaktujemy się z Tobą w sprawie ${copy.title}.`
+                : `Powiadomimy Cię, gdy ${copy.title} będzie dostępny!`}
             </motion.div>
           )}
         </AnimatePresence>
@@ -345,7 +536,9 @@ export const V4ComingSoonView: React.FC = () => {
           animate="visible"
           className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900"
         >
-          <div className={`absolute inset-0 bg-gradient-to-br ${copy.gradient} pointer-events-none`} />
+          <div
+            className={`absolute inset-0 bg-gradient-to-br ${copy.gradient} pointer-events-none`}
+          />
 
           <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-0">
             {/* Left: Content */}
@@ -354,7 +547,7 @@ export const V4ComingSoonView: React.FC = () => {
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border ${accent.badge}`}
                 >
-                  <Sparkles size={12} />
+                  {isContactRequired ? <Lock size={12} /> : <Sparkles size={12} />}
                   {copy.badge}
                 </span>
               </motion.div>
@@ -387,8 +580,12 @@ export const V4ComingSoonView: React.FC = () => {
               <motion.div variants={fadeUp} custom={4} className="mt-6 flex gap-6">
                 {copy.highlights.map((h) => (
                   <div key={h.label}>
-                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{h.value}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{h.label}</div>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {h.value}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {h.label}
+                    </div>
                   </div>
                 ))}
               </motion.div>
@@ -400,11 +597,7 @@ export const V4ComingSoonView: React.FC = () => {
             </div>
 
             {/* Right: Image */}
-            <motion.div
-              variants={fadeUp}
-              custom={2}
-              className="relative hidden lg:block"
-            >
+            <motion.div variants={fadeUp} custom={2} className="relative hidden lg:block">
               <div className="absolute inset-0 bg-gradient-to-l from-transparent to-white/80 dark:to-navy-900/80 z-10 pointer-events-none" />
               <img
                 src={copy.imageUrl}
@@ -443,7 +636,13 @@ export const V4ComingSoonView: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className={`mt-0.5 shrink-0 ${accent.icon}`}>
-                {hasLpUrl ? <ExternalLink size={20} /> : <Bell size={20} />}
+                {isContactRequired ? (
+                  <Lock size={20} />
+                ) : hasLpUrl ? (
+                  <ExternalLink size={20} />
+                ) : (
+                  <Bell size={20} />
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">

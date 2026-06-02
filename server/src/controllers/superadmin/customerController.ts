@@ -324,7 +324,14 @@ export const createContractAmendment = catchAsync(async (req, res, next) => {
   await deps.db.run(
     `INSERT INTO contract_amendments (id, contract_id, amendment_type, amendment_date, changes_json, approved_by, approved_at)
          VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-    [amendmentId, id, amendmentType, amendmentDate, JSON.stringify(changes || {}), (req as AuthenticatedRequest).user!.id]
+    [
+      amendmentId,
+      id,
+      amendmentType,
+      amendmentDate,
+      JSON.stringify(changes || {}),
+      (req as AuthenticatedRequest).user!.id,
+    ]
   );
 
   res.json({ id: amendmentId, contractId: id, amendmentType, amendmentDate, changes });

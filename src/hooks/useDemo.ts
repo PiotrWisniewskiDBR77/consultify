@@ -11,9 +11,15 @@ import { useCallback, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import Api from '../services/api';
 import { normalizeLanguageCode } from '../i18n';
+import Api from '../services/api';
+import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { useAppStore } from '../store/useAppStore';
+
+const DEMO_STATUS_CACHE_TTL_MS = 60_000;
+
+let demoStatusCache: { response: any; fetchedAt: number } | null = null;
+let demoStatusInflight: Promise<any> | null = null;
 
 const normalizeDemoLocaleClient = (value?: string | null): 'en' | 'pl' | null => {
   const normalized = normalizeLanguageCode(value || '');
@@ -22,11 +28,27 @@ const normalizeDemoLocaleClient = (value?: string | null): 'en' | 'pl' | null =>
   return null;
 };
 
+const inferDemoExperienceType = (
+  source?: string | null,
+  fallback: DemoExperienceType = 'sales_demo'
+): DemoExperienceType => {
+  const normalized = String(source || '')
+    .trim()
+    .toLowerCase();
+
+  if (!normalized) return fallback;
+  if (normalized.includes('profile_menu') || normalized.includes('workspace')) {
+    return 'workspace_demo';
+  }
+  return 'sales_demo';
+};
+
 export const useDemo = () => {
   const { t, i18n } = useTranslation();
   const {
     isDemoMode,
     demoLocale,
+    demoExperienceType,
     demoOrganization,
     demoStats,
     demoHints,
@@ -35,6 +57,7 @@ export const useDemo = () => {
     availableTours,
     setDemoMode,
     setDemoSessionOrgId,
+    setDemoExperienceType,
     setDemoLocale,
     setDemoOrganization,
     setDemoStats,
@@ -45,7 +68,8 @@ export const useDemo = () => {
     resetDemoState,
   } = useAppStore();
 
-  const currentAppLocale = normalizeDemoLocaleClient(i18n.resolvedLanguage || i18n.language) || 'en';
+  const currentAppLocale =
+    normalizeDemoLocaleClient(i18n.resolvedLanguage || i18n.language) || 'en';
   const isDemoLocaleMismatch = Boolean(demoLocale && demoLocale !== currentAppLocale);
 
   /**
@@ -67,6 +91,9 @@ export const useDemo = () => {
           if (response.isDemoMode && response.demoOrganization) {
             sessionStorage.setItem('demo_entry_source', source);
             setDemoSessionOrgId(response.demoSession?.organizationId || null);
+            setDemoExperienceType(
+              response.demoExperienceType || inferDemoExperienceType(source, 'workspace_demo')
+            );
             setDemoLocale(response.demoLocale || response.demoSession?.locale || currentAppLocale);
             setDemoOrganization(response.demoOrganization);
             setDemoStats(response.stats || null);
@@ -82,14 +109,18 @@ export const useDemo = () => {
           } else {
             sessionStorage.removeItem('demo_entry_source');
             setDemoSessionOrgId(null);
+            setDemoExperienceType(null);
             setDemoLocale(null);
             setDemoOrganization(null);
             setDemoStats(null);
             setDemoHints([]);
 
-            toast.success(t('demo.toast.disabled', 'Demo mode disabled. You are back in your own workspace.'), {
-              duration: 3000,
-            });
+            toast.success(
+              t('demo.toast.disabled', 'Demo mode disabled. You are back in your own workspace.'),
+              {
+                duration: 3000,
+              }
+            );
           }
         }
       } catch (error: any) {
@@ -103,6 +134,7 @@ export const useDemo = () => {
     [
       currentAppLocale,
       isDemoMode,
+      setDemoExperienceType,
       setDemoLocale,
       setDemoMode,
       setDemoSessionOrgId,
@@ -118,11 +150,13 @@ export const useDemo = () => {
   const clearDemoState = useCallback(() => {
     setDemoMode(false);
     setDemoSessionOrgId(null);
+    setDemoExperienceType(null);
     setDemoLocale(null);
     setDemoOrganization(null);
     setDemoStats(null);
     setDemoHints([]);
   }, [
+    setDemoExperienceType,
     setDemoHints,
     setDemoLocale,
     setDemoMode,
@@ -136,11 +170,31 @@ export const useDemo = () => {
    */
   const fetchDemoStatus = useCallback(async () => {
     try {
-      const response = await Api.getDemoStatus();
+      const now = Date.now();
+      const cached = demoStatusCache;
+      const response =
+        cached && now - cached.fetchedAt < DEMO_STATUS_CACHE_TTL_MS
+          ? cached.response
+          : await (demoStatusInflight ||
+              (demoStatusInflight = Api.getDemoStatus()
+                .then((nextResponse) => {
+                  demoStatusCache = { response: nextResponse, fetchedAt: Date.now() };
+                  return nextResponse;
+                })
+                .finally(() => {
+                  demoStatusInflight = null;
+                })));
 
       if (response.success && response.isDemoMode) {
         setDemoMode(true);
         setDemoSessionOrgId(response.demoSession?.organizationId || null);
+        setDemoExperienceType(
+          response.demoExperienceType ||
+            inferDemoExperienceType(
+              sessionStorage.getItem('demo_entry_source'),
+              demoExperienceType || 'sales_demo'
+            )
+        );
         setDemoLocale(response.demoLocale || response.demoSession?.locale || currentAppLocale);
         setDemoOrganization(response.demoOrganization || null);
         setDemoStats(response.stats || null);
@@ -150,12 +204,16 @@ export const useDemo = () => {
       }
     } catch (error) {
       console.error('[useDemo] Status fetch failed:', error);
-      clearDemoState();
+      // Keep the last known local state on transient throttling/network errors.
+      // Clearing it here causes every mounted demo-aware component to retry and
+      // can amplify a single 429 into an Action Center-wide loading failure.
     }
   }, [
     clearDemoState,
     currentAppLocale,
+    demoExperienceType,
     setDemoHints,
+    setDemoExperienceType,
     setDemoLocale,
     setDemoMode,
     setDemoOrganization,
@@ -210,6 +268,7 @@ export const useDemo = () => {
     isDemoMode,
     demoOrganization,
     demoLocale,
+    demoExperienceType,
     isDemoLocaleMismatch,
     demoStats,
     demoHints,

@@ -1,15 +1,16 @@
-import { KeyRound, Link2, Shield, UserCog, UsersRound } from 'lucide-react';
+import { KeyRound, Link2, Shield, ShieldAlert, UserCog, UsersRound } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { ApiKeysManagementView } from '../../views/admin/ApiKeysManagementView';
 import { cn } from '../../utils/cn';
+import { ApiKeysManagementView } from '../../views/admin/ApiKeysManagementView';
 import { AdminCollaborationControlsPanel } from './AdminCollaborationControlsPanel';
 import { AdminIamPolicyPanel } from './AdminIamPolicyPanel';
+import { AdminRiskSummaryPanel } from './AdminRiskSummaryPanel';
 import { AdminScimLifecyclePanel } from './AdminScimLifecyclePanel';
 import { AdminSecurityPolicyPanel } from './AdminSecurityPolicyPanel';
 
-type TabId = 'policy' | 'collaboration' | 'api-access' | 'iam' | 'scim';
+type TabId = 'policy' | 'collaboration' | 'api-access' | 'iam' | 'scim' | 'risk';
 
 const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: 'policy', label: 'Security policy', icon: Shield },
@@ -17,6 +18,7 @@ const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: 'api-access', label: 'API access', icon: KeyRound },
   { id: 'iam', label: 'Delegated IAM', icon: UserCog },
   { id: 'scim', label: 'SCIM & lifecycle', icon: UsersRound },
+  { id: 'risk', label: 'Risk summary', icon: ShieldAlert },
 ];
 
 export const AdminSecurityIdentityPanel: React.FC = () => {
@@ -46,7 +48,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
         </h3>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
           One tenant-admin surface for authentication policy, collaboration controls, API access,
-          delegated admin governance, and SCIM identity lifecycle.
+          delegated admin governance, SCIM identity lifecycle, and risk follow-up.
         </p>
       </div>
 
@@ -61,7 +63,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
                 className={cn(
                   'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
                   activeTab === tab.id
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5'
                 )}
               >
@@ -78,6 +80,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
       {activeTab === 'api-access' && <ApiKeysManagementView />}
       {activeTab === 'iam' && <AdminIamPolicyPanel />}
       {activeTab === 'scim' && <AdminScimLifecyclePanel />}
+      {activeTab === 'risk' && <AdminRiskSummaryPanel />}
     </div>
   );
 };

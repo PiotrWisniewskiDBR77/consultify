@@ -57,7 +57,7 @@ const LockedFrameworkOverlay: React.FC<LockedFrameworkOverlayProps> = ({
               trackFunnelEvent('licensed_tool_unlock_cta_clicked', { framework: frameworkId });
               onRequestAccess?.();
             }}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-primary-600 text-white font-medium rounded-xl hover:from-blue-600 hover:to-primary-700 transition-all shadow-lg"
           >
             <ArrowRight size={18} />
             {upgradeCTA || t('licensedTools.requestAccess', 'Request Access / Upgrade')}

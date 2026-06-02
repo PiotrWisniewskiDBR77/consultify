@@ -36,7 +36,7 @@ export function InterviewProgress({
   return (
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
       <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-        <Play size={16} className="text-purple-500" />
+        <Play size={16} className="text-primary-500" />
         Interview Progress
       </h3>
 
@@ -55,7 +55,7 @@ export function InterviewProgress({
                 w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all
                 ${
                   status === 'current'
-                    ? 'bg-purple-50 dark:bg-purple-900/20 ring-1 ring-purple-200 dark:ring-purple-800'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-200 dark:ring-primary-800'
                     : 'hover:bg-slate-50 dark:hover:bg-white/5'
                 }
                 ${!onCategoryClick ? 'cursor-default' : 'cursor-pointer'}
@@ -69,7 +69,7 @@ export function InterviewProgress({
                   status === 'completed'
                     ? 'bg-emerald-100 dark:bg-emerald-900/30'
                     : status === 'current'
-                      ? 'bg-purple-100 dark:bg-purple-900/30 animate-pulse'
+                      ? 'bg-primary-100 dark:bg-primary-900/30 animate-pulse'
                       : 'bg-slate-100 dark:bg-slate-800'
                 }
               `}
@@ -77,7 +77,10 @@ export function InterviewProgress({
                 {status === 'completed' ? (
                   <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
                 ) : status === 'current' ? (
-                  <Circle size={14} className="text-purple-600 dark:text-purple-400 fill-current" />
+                  <Circle
+                    size={14}
+                    className="text-primary-600 dark:text-primary-400 fill-current"
+                  />
                 ) : (
                   <Circle size={14} className="text-slate-400 dark:text-slate-500" />
                 )}
@@ -92,7 +95,7 @@ export function InterviewProgress({
                     status === 'completed'
                       ? config.color
                       : status === 'current'
-                        ? 'text-purple-600 dark:text-purple-400'
+                        ? 'text-primary-600 dark:text-primary-400'
                         : 'text-slate-400 dark:text-slate-500'
                   }
                 `}
@@ -105,7 +108,7 @@ export function InterviewProgress({
                   status === 'completed'
                     ? 'text-slate-700 dark:text-slate-300'
                     : status === 'current'
-                      ? 'text-purple-700 dark:text-purple-300'
+                      ? 'text-primary-700 dark:text-primary-300'
                       : 'text-slate-400 dark:text-slate-500'
                 }
               `}
@@ -132,7 +135,7 @@ export function InterviewProgress({
         </div>
         <div className="mt-2 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-emerald-500 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-primary-500 to-emerald-500 rounded-full transition-all duration-500"
             style={{ width: `${(completed.length / ALL_CATEGORIES.length) * 100}%` }}
           />
         </div>

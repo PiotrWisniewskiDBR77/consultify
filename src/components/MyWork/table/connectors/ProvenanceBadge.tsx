@@ -227,7 +227,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
                                 ? '#f59e0b'
                                 : step.type === 'manual'
                                   ? '#94a3b8'
-                                  : '#8b5cf6',
+                                  : '#6366f1',
                     }}
                   >
                     {step.type === 'connector' && <Link2 size={9} />}

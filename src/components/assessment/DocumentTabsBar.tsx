@@ -62,7 +62,7 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
   const getTypeColor = (type: DocumentType, isActive: boolean) => {
     if (isActive) {
       return type === 'report'
-        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
+        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
         : 'border-amber-500 bg-amber-50 dark:bg-amber-900/30';
     }
     return 'border-transparent bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700';
@@ -71,7 +71,7 @@ export const DocumentTabsBar: React.FC<DocumentTabsBarProps> = ({
   const getIconColor = (type: DocumentType, isActive: boolean) => {
     if (isActive) {
       return type === 'report'
-        ? 'text-purple-600 dark:text-purple-400'
+        ? 'text-primary-600 dark:text-primary-400'
         : 'text-amber-600 dark:text-amber-400';
     }
     return 'text-slate-500 dark:text-slate-400';

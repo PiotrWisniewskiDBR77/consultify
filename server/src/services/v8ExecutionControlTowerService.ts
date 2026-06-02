@@ -4,9 +4,13 @@
  * overloaded, stale from org-scoped execution graph.
  */
 
-import { detectDelaySignals, type DelaySignal } from './delayDetectionService.js';
-import { getOverloadAlerts, type OverloadAlert, type OverloadWindow } from './workloadCapacityService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
+import { type DelaySignal, detectDelaySignals } from './delayDetectionService.js';
+import {
+  getOverloadAlerts,
+  type OverloadAlert,
+  type OverloadWindow,
+} from './workloadCapacityService.js';
 
 export const V8_EXECUTION_CONTROL_TOWER_CONTRACT = 'execution_control_tower_v1';
 
@@ -87,7 +91,8 @@ function defaultWhatNextForQueue(queue: ControlTowerQueue): ControlTowerWhatNext
         {
           action: 'replan',
           detail: 'Aktualizuj datę końca / forecast w inicjatywie lub zadaniu.',
-          readbackHint: 'Po zapisie kolejka „late” i variancja baseline powinny odświeżyć się w tej samej sesji.',
+          readbackHint:
+            'Po zapisie kolejka „late” i variancja baseline powinny odświeżyć się w tej samej sesji.',
         },
         {
           action: 'escalate',
@@ -121,7 +126,8 @@ function defaultWhatNextForQueue(queue: ControlTowerQueue): ControlTowerWhatNext
         {
           action: 'reassign',
           detail: 'Przepisz część zadań na innego assignee.',
-          readbackHint: 'Kolejka „overloaded” i capacity readback odświeżą się po zmianie właściciela.',
+          readbackHint:
+            'Kolejka „overloaded” i capacity readback odświeżą się po zmianie właściciela.',
         },
         {
           action: 'smooth',
@@ -389,7 +395,11 @@ function mergeItem(into: Map<string, ControlTowerItem>, item: ControlTowerItem):
 
 export async function getExecutionControlTowerQueues(
   organizationId: string,
-  options?: { projectId?: string; queue?: ControlTowerQueue | 'all'; overloadWindow?: OverloadWindow }
+  options?: {
+    projectId?: string;
+    queue?: ControlTowerQueue | 'all';
+    overloadWindow?: OverloadWindow;
+  }
 ): Promise<ControlTowerQueuesResult> {
   const projectId = options?.projectId;
   const queueFilter = options?.queue;
@@ -677,12 +687,18 @@ export async function getExecutionControlTowerQueues(
     }
   }
 
-  const lateIds = [...late.values()].filter((i) => i.entityType === 'INITIATIVE').map((i) => i.entityId);
+  const lateIds = [...late.values()]
+    .filter((i) => i.entityType === 'INITIATIVE')
+    .map((i) => i.entityId);
   const blockedInitIds = [...blocked.values()]
     .filter((i) => i.entityType === 'INITIATIVE')
     .map((i) => i.entityId);
-  const lateTaskIds = [...late.values()].filter((i) => i.entityType === 'TASK').map((i) => i.entityId);
-  const blockedTaskIds = [...blocked.values()].filter((i) => i.entityType === 'TASK').map((i) => i.entityId);
+  const lateTaskIds = [...late.values()]
+    .filter((i) => i.entityType === 'TASK')
+    .map((i) => i.entityId);
+  const blockedTaskIds = [...blocked.values()]
+    .filter((i) => i.entityType === 'TASK')
+    .map((i) => i.entityId);
 
   const downInit = await loadInitiativeDownstream(organizationId, [
     ...new Set([...lateIds, ...blockedInitIds]),
@@ -763,10 +779,15 @@ export async function getExecutionControlTowerItemDetail(
   item: ControlTowerItem;
   contract: typeof V8_EXECUTION_CONTROL_TOWER_CONTRACT;
 } | null> {
-  const snapshot = await getExecutionControlTowerQueues(organizationId, { projectId, queue: 'all' });
+  const snapshot = await getExecutionControlTowerQueues(organizationId, {
+    projectId,
+    queue: 'all',
+  });
   const hits: Partial<Record<ControlTowerQueue, ControlTowerItem>> = {};
   for (const q of QUEUE_ORDER) {
-    const row = snapshot.queues[q].find((i) => i.entityType === entityType && i.entityId === entityId);
+    const row = snapshot.queues[q].find(
+      (i) => i.entityType === entityType && i.entityId === entityId
+    );
     if (row) hits[q] = row;
   }
   const inQueues = QUEUE_ORDER.filter((q) => hits[q]);
@@ -777,9 +798,7 @@ export async function getExecutionControlTowerItemDetail(
   const base = { ...hits[inQueues[0]!]! };
   const whyKeys = new Set(base.why.map((w) => `${w.kind}:${w.detail}`));
   const whatKeys = new Set(base.whatNext.map((w) => `${w.action}:${w.detail}`));
-  const affectKeys = new Set(
-    base.affectsNext.map((a) => itemKey(a.entityType, a.entityId))
-  );
+  const affectKeys = new Set(base.affectsNext.map((a) => itemKey(a.entityType, a.entityId)));
 
   for (const q of inQueues.slice(1)) {
     const h = hits[q]!;

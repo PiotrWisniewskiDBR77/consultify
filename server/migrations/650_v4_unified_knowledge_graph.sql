@@ -7,6 +7,27 @@
 -- 1) Upgrade knowledge_graph_entities with provenance + governance
 -- ============================================================
 
+CREATE TABLE IF NOT EXISTS knowledge_graph_entities (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  name TEXT NOT NULL,
+  properties_json TEXT DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS knowledge_graph_relations (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  source_entity_id TEXT NOT NULL REFERENCES knowledge_graph_entities(id) ON DELETE CASCADE,
+  target_entity_id TEXT NOT NULL REFERENCES knowledge_graph_entities(id) ON DELETE CASCADE,
+  relation_type TEXT NOT NULL,
+  properties_json TEXT DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE knowledge_graph_entities ADD COLUMN IF NOT EXISTS source_artifact_type TEXT;
 ALTER TABLE knowledge_graph_entities ADD COLUMN IF NOT EXISTS source_artifact_id TEXT;
 ALTER TABLE knowledge_graph_entities ADD COLUMN IF NOT EXISTS actor_id TEXT;

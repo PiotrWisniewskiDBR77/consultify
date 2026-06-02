@@ -63,7 +63,7 @@ export const RolloutKPITab: React.FC<RolloutKPITabProps> = ({ data, onUpdate }) 
               <div className="flex justify-between items-start mb-4">
                 <h3 className="font-bold text-lg text-slate-700 dark:text-slate-200">{kpi.name}</h3>
                 <div
-                  className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                  className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded ${isPositive ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'}`}
                 >
                   {isPositive ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
                   {progress.toFixed(0)}%

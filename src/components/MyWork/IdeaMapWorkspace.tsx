@@ -6,14 +6,26 @@
  * - Tools / Context / AI Suggestions stay in the fixed right strip
  * - Selection contract drives Tools panel content
  */
-import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import {
+  AlertTriangle,
+  Download,
+  GitBranch,
+  Keyboard,
+  LayoutTemplate,
+  Loader2,
+  RefreshCw,
+  Search,
+  StickyNote,
+  Table2,
+  Workflow,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
-import { Api } from '@/services/api';
+import { Api, getMapVersionFromPayload } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
@@ -30,8 +42,8 @@ import { ArtifactAttachPopover } from '../shared/NModeBlocks/ArtifactAttachPopov
 import { applyAIProposalRuntime } from './aiProposalRuntime';
 import type { ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { mergeWorkspaceExtensions, useWorkspaceGraphRuntime } from './canvas/workspaceGraphRuntime';
-import { CommandPalette, useCommandPalette } from './CommandPalette';
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { type CommandItem, CommandPalette, useCommandPalette } from './CommandPalette';
+import { type ShortcutHelp, useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
@@ -102,8 +114,8 @@ class CanvasToolErrorBoundary extends React.Component<
       const isPl = typeof window !== 'undefined' && (navigator.language || '').startsWith('pl');
       return (
         <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-navy-950 p-8">
-          <div className="p-3 rounded-2xl bg-red-500/10">
-            <AlertTriangle size={32} className="text-red-500" />
+          <div className="p-3 rounded-2xl bg-rose-500/10">
+            <AlertTriangle size={32} className="text-rose-500" />
           </div>
           <div className="text-center">
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">
@@ -237,6 +249,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const deepLinkedTableId = searchParams.get('tpTable');
   const deepLinkedViewId = searchParams.get('tpView');
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
@@ -353,7 +366,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const activeTool = externalActiveTool ?? internalActiveTool;
   const activePanel = externalActivePanel ?? internalActivePanel;
-  const cmdPalette = useCommandPalette({ enabled: activeTool !== 'mindmap' });
+  // Command palette enabled in ALL tools (Cmd+K). Mind Map's keyboard layer
+  // does not bind Cmd+K, so there is no double-trigger.
+  const cmdPalette = useCommandPalette();
   // The canvas must stay editable even before formal acceptance.
   // Acceptance still gates downstream actions like AI/convert, but not node manipulation.
   const canvasLocked = false;
@@ -367,7 +382,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const url = new URL(window.location.href);
         url.searchParams.set('tool', tool);
         window.history.replaceState(null, '', url.toString());
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     },
     [onActiveToolChange]
   );
@@ -398,11 +415,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const selectionRef = useRef<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [mindMapInteractionMode, setMindMapInteractionMode] =
     useState<MindMapInteractionMode>('select');
-  const handleMindMapInteractionModeChange = useCallback((requestedMode: MindMapInteractionMode) => {
-    setMindMapInteractionMode((previousMode) =>
-      stabilizeMindmapInteractionMode(previousMode, requestedMode)
-    );
-  }, []);
+  const handleMindMapInteractionModeChange = useCallback(
+    (requestedMode: MindMapInteractionMode) => {
+      setMindMapInteractionMode((previousMode) =>
+        stabilizeMindmapInteractionMode(previousMode, requestedMode)
+      );
+    },
+    []
+  );
 
   useEffect(() => {
     selectionRef.current = selection;
@@ -525,19 +545,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     const nodeMap = new Map(graphNodes.map((n: any) => [n.id, n]));
     const rootNodes = graphNodes.filter((n: any) => !parentMap.has(n.id));
     const rootLabel = rootNodes[0]?.data?.label || rootNodes[0]?.data?.text || title || 'Root';
-    const topBranches = (childrenMap.get(rootNodes[0]?.id) || [])
-      .slice(0, 8)
-      .map((id) => {
-        const n = nodeMap.get(id);
-        return n?.data?.label || n?.data?.text || id;
-      });
+    const topBranches = (childrenMap.get(rootNodes[0]?.id) || []).slice(0, 8).map((id) => {
+      const n = nodeMap.get(id);
+      return n?.data?.label || n?.data?.text || id;
+    });
 
     const selectedNode = graphNodes.find((n: any) => n.selected);
     const parts = [
       `Total nodes: ${graphNodes.length}`,
       `Root: "${rootLabel}"`,
-      topBranches.length > 0 ? `Top branches: ${topBranches.map((b: string) => `"${b}"`).join(', ')}` : null,
-      selectedNode ? `Selected: "${selectedNode.data?.label || selectedNode.data?.text || selectedNode.id}"` : null,
+      topBranches.length > 0
+        ? `Top branches: ${topBranches.map((b: string) => `"${b}"`).join(', ')}`
+        : null,
+      selectedNode
+        ? `Selected: "${selectedNode.data?.label || selectedNode.data?.text || selectedNode.id}"`
+        : null,
     ].filter(Boolean);
     onGraphSummaryChange(parts.join('; '));
   }, [graphNodes, graphEdges, title, onGraphSummaryChange]);
@@ -787,13 +809,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 position: n.position,
                 data: n.data,
               }));
-              const insertEdges = (result.data as any).edges?.map((e: any) => ({
-                id: e.id,
-                source: e.source,
-                target: e.target,
-                label: e.data?.label || e.label,
-                data: e.data,
-              })) ?? [];
+              const insertEdges =
+                (result.data as any).edges?.map((e: any) => ({
+                  id: e.id,
+                  source: e.source,
+                  target: e.target,
+                  label: e.data?.label || e.label,
+                  data: e.data,
+                })) ?? [];
               window.dispatchEvent(
                 new CustomEvent('idea-workspace-insert', {
                   detail: { items, edges: insertEdges, ideaId: realId },
@@ -929,7 +952,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId: realId } })
       );
     },
-    [activeTool, externalOnQuickAction, handleMindMapInteractionModeChange, isPolish, realId, setActiveTool]
+    [
+      activeTool,
+      externalOnQuickAction,
+      handleMindMapInteractionModeChange,
+      isPolish,
+      realId,
+      setActiveTool,
+    ]
   );
 
   useEffect(() => {
@@ -1067,7 +1097,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           const parts: string[] = [];
           if (orgData?.summary) parts.push(orgData.summary);
           if (orgData?.claims?.length) {
-            parts.push(`Key claims: ${orgData.claims.slice(0, 5).map((c: any) => c.text || c.claim || c).join('; ')}`);
+            parts.push(
+              `Key claims: ${orgData.claims
+                .slice(0, 5)
+                .map((c: any) => c.text || c.claim || c)
+                .join('; ')}`
+            );
           }
           if (orgData?.strategy) parts.push(`Strategy: ${orgData.strategy}`);
           orgContextRef.current = parts.join('\n') || null;
@@ -1094,7 +1129,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ids: selection.ids,
               primaryId: selection.primaryId,
             },
-          },
+          } as any,
         });
         if (batch?.proposals?.length) {
           setProposalBatch(batch);
@@ -1454,39 +1489,158 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, [setActiveTool]);
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
-  const { showHelp: shortcutsHelpOpen, setShowHelp: setShortcutsHelpOpen, shortcuts } =
-    useKeyboardShortcuts({
-      enabled: !loading && activeTool === 'mindmap',
-      onCancel: () => {
-        if (nodeDetailOpen) setNodeDetailOpen(false);
-        else if (templateGalleryOpen) setTemplateGalleryOpen(false);
-        else if (searchOpen) setSearchOpen(false);
-        else if (votingActive) setVotingActive(false);
-        else if (focusMode !== 'full') handleExitFocus();
-      },
-      onSlashCommand: () => setSearchOpen(true),
-      onAddChild: () => handleQuickAction('mm_add_child'),
-      onAddSibling: () => handleQuickAction('mm_add_sibling'),
-      onGroup: () => handleQuickAction('group'),
-      onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
-      onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
-      onFocusSelection: () => handleQuickAction('mm_focus_selected'),
-      onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
-      onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
-      onSelectAll: () => handleQuickAction('selectAll'),
-      onClearSelection: () => handleQuickAction('clearSelection'),
-    });
+  const {
+    showHelp: shortcutsHelpOpen,
+    setShowHelp: setShortcutsHelpOpen,
+    shortcuts,
+  } = useKeyboardShortcuts({
+    enabled: !loading && activeTool === 'mindmap',
+    onCancel: () => {
+      if (nodeDetailOpen) setNodeDetailOpen(false);
+      else if (templateGalleryOpen) setTemplateGalleryOpen(false);
+      else if (searchOpen) setSearchOpen(false);
+      else if (votingActive) setVotingActive(false);
+      else if (focusMode !== 'full') handleExitFocus();
+    },
+    onSlashCommand: () => setSearchOpen(true),
+    onAddChild: () => handleQuickAction('mm_add_child'),
+    onAddSibling: () => handleQuickAction('mm_add_sibling'),
+    onGroup: () => handleQuickAction('group'),
+    onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
+    onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
+    onFocusSelection: () => handleQuickAction('mm_focus_selected'),
+    onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
+    onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
+    onSelectAll: () => handleQuickAction('selectAll'),
+    onClearSelection: () => handleQuickAction('clearSelection'),
+  });
 
+  // Workspace-global shortcuts (active in every tool) — prepended to the
+  // mindmap-only `shortcuts` so the help modal is accurate regardless of tool.
+  const helpShortcuts = useMemo<ShortcutHelp[]>(() => {
+    const isMacPlatform =
+      typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+    const globals: ShortcutHelp[] = [
+      {
+        key: 'Alt+1 / 2 / 3 / 4',
+        description: isPolish
+          ? 'Przełącz narzędzie (Mapa / Tablica / Przepływ / Tabela)'
+          : 'Switch tool (Mind Map / Whiteboard / Process Flow / Table)',
+        category: 'navigation',
+      },
+      {
+        key: isMacPlatform ? '⌘F' : 'Ctrl+F',
+        description: isPolish ? 'Szukaj w tej idei' : 'Search this idea',
+        category: 'navigation',
+      },
+      {
+        key: `Shift+1 / ${isMacPlatform ? '⌘0' : 'Ctrl+0'}`,
+        description: isPolish ? 'Dopasuj widok (zoom to fit)' : 'Zoom to fit',
+        category: 'navigation',
+      },
+    ];
+    // `shortcuts` already starts with the '?' help row injected by the hook.
+    return [...globals, ...shortcuts];
+  }, [shortcuts, isPolish]);
+
+  // Workspace-scoped commands injected into the command palette (⌘K).
+  const workspaceCommands = useMemo<CommandItem[]>(() => {
+    const closeAnd = (fn: () => void) => () => {
+      fn();
+      cmdPalette.close();
+    };
+    const toolCmd = (
+      id: CanvasToolType,
+      labelPl: string,
+      labelEn: string,
+      icon: React.ReactNode
+    ): CommandItem => ({
+      id: `ws-tool-${id}`,
+      title: isPolish ? `Przełącz: ${labelPl}` : `Switch to ${labelEn}`,
+      subtitle: isPolish ? 'Narzędzie workspace' : 'Workspace tool',
+      icon,
+      category: 'workspace',
+      action: closeAnd(() => setActiveTool(id)),
+      keywords: [labelPl, labelEn, 'tool', 'narzędzie', id],
+    });
+    return [
+      toolCmd('mindmap', 'Mapa rekomendacji', 'Mind Map', <GitBranch size={18} />),
+      toolCmd('whiteboard', 'Tablica', 'Whiteboard', <StickyNote size={18} />),
+      toolCmd('process_flow', 'Przepływ', 'Process Flow', <Workflow size={18} />),
+      toolCmd('table', 'Tabela', 'Table', <Table2 size={18} />),
+      {
+        id: 'ws-search',
+        title: isPolish ? 'Szukaj w tej idei' : 'Search this idea',
+        icon: <Search size={18} />,
+        category: 'workspace',
+        shortcut: '⌘F',
+        action: closeAnd(() => setSearchOpen(true)),
+        keywords: ['search', 'szukaj', 'find', 'znajdź'],
+      },
+      {
+        id: 'ws-templates',
+        title: isPolish ? 'Otwórz galerię szablonów' : 'Open template gallery',
+        icon: <LayoutTemplate size={18} />,
+        category: 'workspace',
+        action: closeAnd(() => setTemplateGalleryOpen(true)),
+        keywords: ['template', 'szablon', 'gallery', 'galeria'],
+      },
+      {
+        id: 'ws-export',
+        title: isPolish ? 'Eksportuj…' : 'Export…',
+        icon: <Download size={18} />,
+        category: 'workspace',
+        action: closeAnd(() => setExportMenuOpen(true)),
+        keywords: ['export', 'eksport', 'pdf', 'png', 'csv'],
+      },
+      {
+        id: 'ws-help',
+        title: isPolish ? 'Skróty klawiszowe' : 'Keyboard shortcuts',
+        icon: <Keyboard size={18} />,
+        category: 'workspace',
+        shortcut: '?',
+        action: closeAnd(() => setShortcutsHelpOpen(true)),
+        keywords: ['help', 'pomoc', 'shortcuts', 'skróty', 'keyboard'],
+      },
+    ];
+  }, [
+    isPolish,
+    cmdPalette,
+    setActiveTool,
+    setSearchOpen,
+    setTemplateGalleryOpen,
+    setExportMenuOpen,
+    setShortcutsHelpOpen,
+  ]);
+
+  // Workspace-global keyboard: search (⌘F) + tool switch (Alt+1..4).
+  // Active in EVERY tool (the useKeyboardShortcuts hook above is mindmap-only).
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
         e.preventDefault();
         setSearchOpen(true);
+        return;
+      }
+      // Alt+1..4 → switch tool. Use e.code (layout-independent: Option+1 on
+      // macOS yields a special char, not "1"). Skip while typing.
+      if (e.altKey && !e.metaKey && !e.ctrlKey) {
+        const target = e.target as HTMLElement | null;
+        const typing =
+          !!target &&
+          (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+            target.isContentEditable);
+        if (typing) return;
+        const idx = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
+        if (idx >= 0) {
+          e.preventDefault();
+          setActiveTool((['mindmap', 'whiteboard', 'process_flow', 'table'] as const)[idx]);
+        }
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [setActiveTool]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -1753,7 +1907,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 sourceTool: 'whiteboard' as const,
                 facilitationPhase: whiteboardSession?.phase,
                 outcomeCount: whiteboardOutcomes?.length || 0,
-                outcomeSummary: (whiteboardOutcomes || []).slice(0, 10).map((o) => `[${o.type}] ${o.label}`).join('; '),
+                outcomeSummary: (whiteboardOutcomes || [])
+                  .slice(0, 10)
+                  .map((o) => `[${o.type}] ${o.label}`)
+                  .join('; '),
               }
             : undefined;
         const result = await Api.convertMyIdea(realId, {
@@ -1839,7 +1996,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setSaving(false);
       }
     },
-    [activeTool, i18n.language, isDraft, isPolish, realId, selection.ids, whiteboardOutcomes, whiteboardSession]
+    [
+      activeTool,
+      i18n.language,
+      isDraft,
+      isPolish,
+      realId,
+      selection.ids,
+      whiteboardOutcomes,
+      whiteboardSession,
+    ]
   );
 
   handleConvertRef.current = handleConvert;
@@ -2031,6 +2197,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           artifactIndex: buildArtifactCode(ref.type, ref.id),
           label: ref.title,
           linkRole: role,
+          baseVersion: graphRuntime.graph.version,
         });
         await graphRuntime.refresh();
         toast.success(isPolish ? `Dołączono: ${ref.title}` : `Attached: ${ref.title}`);
@@ -2041,6 +2208,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           role,
         });
       } catch (err: any) {
+        const conflictVersion = getMapVersionFromPayload(err?.data);
+        if (conflictVersion) {
+          await graphRuntime.refresh().catch(() => {});
+        }
         toast.error(err?.message || (isPolish ? 'Nie udało się dołączyć' : 'Failed to attach'));
       }
     },
@@ -2165,10 +2336,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           for (const n of parsed.addNodes) {
             proposals.push({
               id: `chat-add-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              type: 'add_node',
-              description: `Add "${n.label}"`,
-              payload: {
-                addNodes: [{ id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, label: n.label, parentId: n.parentId }],
+              type: 'graph_patch',
+              rationale: `Add "${n.label}"`,
+              confidence: 0.7,
+              patch: {
+                addNodes: [
+                  {
+                    id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                    label: n.label,
+                    data: n.parentId ? { parentId: n.parentId } : undefined,
+                  },
+                ],
               },
               status: 'pending',
             });
@@ -2178,9 +2356,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           for (const r of parsed.renameNodes) {
             proposals.push({
               id: `chat-rename-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              type: 'update_node',
-              description: `Rename "${r.id}" to "${r.label}"`,
-              payload: { updateNodes: [{ id: r.id, data: { label: r.label } }] },
+              type: 'graph_patch',
+              rationale: `Rename "${r.id}" to "${r.label}"`,
+              confidence: 0.7,
+              patch: { updateNodes: [{ id: r.id, data: { label: r.label } }] },
               status: 'pending',
             });
           }
@@ -2194,7 +2373,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             createdAt: Date.now(),
           };
           setProposalBatch(batch);
-          toast(isPolish ? 'AI zaproponowało zmiany w mapie' : 'AI proposed changes to the map', { icon: '🤖' });
+          toast(isPolish ? 'AI zaproponowało zmiany w mapie' : 'AI proposed changes to the map', {
+            icon: '🤖',
+          });
         }
       } catch {
         // Invalid JSON — ignore
@@ -2242,7 +2423,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               id: result.id,
               code: buildArtifactCode('task', result.id),
               ref: buildArtifactRef('task', result.id),
-              label: getArtifactLabel('task', isPolish),
+              label: getArtifactLabel('task', isPolish ? 'pl' : 'en'),
               name: detail.taskTitle,
               role: 'output' as ArtifactLinkRole,
               createdAt: new Date().toISOString(),
@@ -2279,10 +2460,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           artifactIndex: `INT-${detail.id}`,
           label: detail.title || 'Interview insight',
           linkRole: 'evidence',
+          baseVersion: graphRuntime.graph.version,
         });
         await graphRuntime.refresh();
         toast.success(isPolish ? 'Dodano dowód z wywiadu' : 'Interview evidence attached');
-      } catch {
+      } catch (err: any) {
+        const conflictVersion = getMapVersionFromPayload(err?.data);
+        if (conflictVersion) {
+          await graphRuntime.refresh().catch(() => {});
+        }
         toast.error(isPolish ? 'Nie udało się dołączyć' : 'Failed to attach');
       }
     };
@@ -2468,15 +2654,35 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         <div
           className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
-              {isPolish ? 'Idea workspace' : 'Idea workspace'}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* A4: breadcrumb — Ideas › {idea title} › {tool} */}
+            <button
+              type="button"
+              onClick={() => navigate('/my-work')}
+              className="text-[11px] font-semibold text-primary-600 hover:underline dark:text-primary-400"
+            >
+              {isPolish ? 'Idee' : 'Ideas'}
+            </button>
+            <span className="text-[10px] text-slate-400" aria-hidden="true">
+              ›
+            </span>
+            <span
+              className="max-w-[14rem] truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200"
+              title={title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+            >
+              {title || safeTitleFromSeed(seedText, isPolish) || (isPolish ? 'Bez tytułu' : 'Untitled')}
+            </span>
+            <span className="text-[10px] text-slate-400" aria-hidden="true">
+              ›
             </span>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
               {activeToolLabel}
             </span>
             {(() => {
-              const rootNode = graphNodes.find((n: any) => n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id));
+              const rootNode = graphNodes.find(
+                (n: any) =>
+                  n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id)
+              );
               const ps = rootNode?.data?.pipelineStage;
               if (!ps || ps === 'draft') return null;
               return (
@@ -2485,7 +2691,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 </span>
               );
             })()}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">{draftSavedLabel}</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              {draftSavedLabel}
+            </span>
           </div>
           <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
             {title || safeTitleFromSeed(seedText, isPolish)}
@@ -2498,29 +2706,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
 
         {/* Ghost cards — AI gap suggestions */}
-        {isAccepted && (activeTool === 'whiteboard' || activeTool === 'mindmap' || activeTool === 'process_flow') && (
-          <IdeaGhostCards
-            ideaId={realId}
-            activeTool={activeTool}
-            title={title || safeTitleFromSeed(seedText, isPolish)}
-            seedText={seedText}
-            isAccepted={isAccepted}
-            graphNodes={graphNodes}
-            graphEdges={graphEdges}
-            onMaterialize={(card) => {
-              window.dispatchEvent(
-                new CustomEvent('idea-workspace-insert', {
-                  detail: {
-                    items: [
-                      { text: card.text, position: card.position, branchKey: card.branchKey },
-                    ],
-                    ideaId: realId,
-                  },
-                })
-              );
-            }}
-          />
-        )}
+        {isAccepted &&
+          (activeTool === 'whiteboard' ||
+            activeTool === 'mindmap' ||
+            activeTool === 'process_flow') && (
+            <IdeaGhostCards
+              ideaId={realId}
+              activeTool={activeTool}
+              title={title || safeTitleFromSeed(seedText, isPolish)}
+              seedText={seedText}
+              isAccepted={isAccepted}
+              graphNodes={graphNodes}
+              graphEdges={graphEdges}
+              onMaterialize={(card) => {
+                window.dispatchEvent(
+                  new CustomEvent('idea-workspace-insert', {
+                    detail: {
+                      items: [
+                        { text: card.text, position: card.position, branchKey: card.branchKey },
+                      ],
+                      ideaId: realId,
+                    },
+                  })
+                );
+              }}
+            />
+          )}
 
         {/* Voting mode overlay */}
         <IdeaVotingMode
@@ -2732,6 +2943,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           activeTool={activeTool}
           onToolChange={setActiveTool}
           familyCounts={familyCounts}
+          onSearch={() => setSearchOpen(true)}
+          onShowHelp={() => setShortcutsHelpOpen(true)}
         />
 
         {proposalBatch && (
@@ -2975,6 +3188,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         activeTool={activeTool}
         locked={canvasLocked}
         allNodes={graphNodes}
+        mapVersion={graphRuntime.graph.version}
+        onMapConflictRefresh={graphRuntime.refresh}
         onNodeDataChange={handleNodeDataChange}
         onGenerateProposal={(batch) => {
           setProposalBatch(batch);
@@ -2998,7 +3213,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         isPl={isPolish ?? false}
       />
 
-      <CommandPalette isOpen={cmdPalette.isOpen} onClose={cmdPalette.close} />
+      <CommandPalette
+        isOpen={cmdPalette.isOpen}
+        onClose={cmdPalette.close}
+        extraCommands={workspaceCommands}
+      />
 
       {/* V51-30: Artifact attach popover */}
       <ArtifactAttachPopover
@@ -3013,7 +3232,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       <KeyboardShortcutsHelp
         isOpen={shortcutsHelpOpen}
         onClose={() => setShortcutsHelpOpen(false)}
-        shortcuts={shortcuts}
+        shortcuts={helpShortcuts}
       />
     </div>
   );

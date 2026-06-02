@@ -35,12 +35,24 @@ describe('MetadataService', () => {
     };
     mockQuery
       .mockResolvedValueOnce({ rows: [] }) // INSERT
-      .mockResolvedValueOnce({ rows: [baseRow] }); // SELECT after insert
+      .mockResolvedValueOnce({ rows: [baseRow] }) // SELECT after insert
+      .mockResolvedValueOnce({ rows: [] }) // INSERT/UPSERT tp_base_members base_owner
+      .mockResolvedValueOnce({ rows: [] }) // OrgMemberSync: SELECT org members
+      .mockResolvedValueOnce({ rows: [] }); // OrgMemberSync: SELECT existing base members
 
     const result = await metadataService.createBase('ws-1', 'org-1', 'My Base', 'user-1');
     expect(result).toEqual(baseRow);
     expect(result.id).toBe('mock-uuid-001');
     expect(result.name).toBe('My Base');
+
+    const ownerRoleInsert = mockQuery.mock.calls.find(
+      (call) =>
+        typeof call[0] === 'string' &&
+        call[0].includes('INSERT INTO tp_base_members') &&
+        String(call[1]?.[0]) === 'mock-uuid-001' &&
+        String(call[1]?.[1]) === 'user-1'
+    );
+    expect(ownerRoleInsert).toBeDefined();
   });
 
   // 2. getBase → returns base
@@ -156,13 +168,22 @@ describe('MetadataService', () => {
   // 8. deleteField → deletes
   it('deleteField returns true when field exists', async () => {
     const before = { id: 'f-1', name: 'Field', table_id: 't-1' };
-    mockQuery
-      .mockResolvedValueOnce({ rows: [before] }) // SELECT before
-      .mockResolvedValueOnce({ rows: [{ governance_mode: 'operational' }] }) // assertNotGoverned
-      .mockResolvedValueOnce({ rows: [] }) // DELETE
-      .mockResolvedValueOnce({ rows: [{ base_id: 'b-1' }] }) // SELECT table
-      .mockResolvedValueOnce({ rows: [{ schema_version: 5 }] }) // bumpSchemaVersion
-      .mockResolvedValueOnce({ rows: [] }); // bumpSchemaVersion INSERT
+    mockQuery.mockImplementation((sql: string) => {
+      if (sql.includes('SELECT * FROM tp_fields WHERE id'))
+        return Promise.resolve({ rows: [before] });
+      if (sql.includes('SELECT governance_mode FROM tp_tables'))
+        return Promise.resolve({ rows: [{ governance_mode: 'operational' }] });
+      if (sql.includes('UPDATE tp_views') || sql.includes('DELETE FROM tp_fields WHERE id'))
+        return Promise.resolve({ rows: [] });
+      if (sql.includes('SELECT id, config FROM tp_forms WHERE table_id'))
+        return Promise.resolve({ rows: [] });
+      if (sql.includes('SELECT base_id FROM tp_tables WHERE id'))
+        return Promise.resolve({ rows: [{ base_id: 'b-1' }] });
+      if (sql.includes('schema_version = schema_version + 1'))
+        return Promise.resolve({ rows: [{ schema_version: 5 }] });
+      if (sql.includes('INSERT INTO tp_schema_versions')) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    });
 
     const result = await metadataService.deleteField('f-1', 'user-1');
     expect(result).toBe(true);
@@ -247,12 +268,10 @@ describe('changeFieldType', () => {
     ];
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [fieldRow] })  // SELECT field
-      .mockResolvedValueOnce({ rows: records });     // SELECT records
+      .mockResolvedValueOnce({ rows: [fieldRow] }) // SELECT field
+      .mockResolvedValueOnce({ rows: records }); // SELECT records
 
-    const result = await metadataService.changeFieldType(
-      'f-text', 'number', 'user-1', {}, true
-    );
+    const result = await metadataService.changeFieldType('f-text', 'number', 'user-1', {}, true);
 
     expect(result).toHaveProperty('compatible', 2);
     expect(result).toHaveProperty('incompatible', 1);
@@ -273,25 +292,21 @@ describe('changeFieldType', () => {
     ];
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [fieldRow] })  // SELECT field
-      .mockResolvedValueOnce({ rows: records })      // SELECT records
-      .mockResolvedValueOnce({ rows: [] })           // BEGIN
-      .mockResolvedValueOnce({ rows: [] })           // UPDATE field type
-      .mockResolvedValueOnce({ rows: [] })           // UPDATE record r-1
-      .mockResolvedValueOnce({ rows: [] })           // UPDATE record r-2
+      .mockResolvedValueOnce({ rows: [fieldRow] }) // SELECT field
+      .mockResolvedValueOnce({ rows: records }) // SELECT records
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE field type
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE record r-1
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE record r-2
       .mockResolvedValueOnce({ rows: [{ schema_version: 5 }] }) // bump schema version
-      .mockResolvedValueOnce({ rows: [] });          // COMMIT
+      .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
-    const result = await metadataService.changeFieldType(
-      'f-text', 'number', 'user-1'
-    );
+    const result = await metadataService.changeFieldType('f-text', 'number', 'user-1');
 
     expect(result).toEqual({ success: true });
 
     const recordUpdates = mockQuery.mock.calls.filter(
-      (call) =>
-        typeof call[0] === 'string' &&
-        call[0].includes('UPDATE tp_records SET data')
+      (call) => typeof call[0] === 'string' && call[0].includes('UPDATE tp_records SET data')
     );
     expect(recordUpdates.length).toBe(2);
 
@@ -309,25 +324,21 @@ describe('changeFieldType', () => {
       table_id: 't-1',
       options: '{}',
     };
-    const records = [
-      { id: 'r-1', data: { 'f-text': 'abc' } },
-    ];
+    const records = [{ id: 'r-1', data: { 'f-text': 'abc' } }];
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [fieldRow] })  // SELECT field
-      .mockResolvedValueOnce({ rows: records })      // SELECT records
-      .mockResolvedValueOnce({ rows: [] })           // BEGIN
-      .mockResolvedValueOnce({ rows: [] })           // UPDATE field type
-      .mockResolvedValueOnce({ rows: [] })           // UPDATE record (null)
+      .mockResolvedValueOnce({ rows: [fieldRow] }) // SELECT field
+      .mockResolvedValueOnce({ rows: records }) // SELECT records
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE field type
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE record (null)
       .mockResolvedValueOnce({ rows: [{ schema_version: 6 }] }) // bump schema version
-      .mockResolvedValueOnce({ rows: [] });          // COMMIT
+      .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
     await metadataService.changeFieldType('f-text', 'number', 'user-1');
 
     const recordUpdates = mockQuery.mock.calls.filter(
-      (call) =>
-        typeof call[0] === 'string' &&
-        call[0].includes('UPDATE tp_records SET data')
+      (call) => typeof call[0] === 'string' && call[0].includes('UPDATE tp_records SET data')
     );
     expect(recordUpdates.length).toBe(1);
 
@@ -344,19 +355,18 @@ describe('changeFieldType', () => {
     };
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [fieldRow] })  // SELECT field
-      .mockResolvedValueOnce({ rows: [] })           // SELECT records (empty)
-      .mockResolvedValueOnce({ rows: [] })           // BEGIN
-      .mockResolvedValueOnce({ rows: [] })           // UPDATE field type
+      .mockResolvedValueOnce({ rows: [fieldRow] }) // SELECT field
+      .mockResolvedValueOnce({ rows: [] }) // SELECT records (empty)
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE field type
       .mockResolvedValueOnce({ rows: [{ schema_version: 7 }] }) // bump schema version
-      .mockResolvedValueOnce({ rows: [] });          // COMMIT
+      .mockResolvedValueOnce({ rows: [] }); // COMMIT
 
     await metadataService.changeFieldType('f-text', 'number', 'user-1');
 
     const bumpCalls = mockQuery.mock.calls.filter(
       (call) =>
-        typeof call[0] === 'string' &&
-        call[0].includes('schema_version = schema_version + 1')
+        typeof call[0] === 'string' && call[0].includes('schema_version = schema_version + 1')
     );
     expect(bumpCalls.length).toBe(1);
   });
@@ -370,14 +380,14 @@ describe('changeFieldType', () => {
     };
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [fieldRow] })  // SELECT field
-      .mockResolvedValueOnce({ rows: [] })           // SELECT records
-      .mockResolvedValueOnce({ rows: [] })           // BEGIN
+      .mockResolvedValueOnce({ rows: [fieldRow] }) // SELECT field
+      .mockResolvedValueOnce({ rows: [] }) // SELECT records
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
       .mockRejectedValueOnce(new Error('DB write failure')); // UPDATE field type fails
 
-    await expect(
-      metadataService.changeFieldType('f-text', 'number', 'user-1')
-    ).rejects.toThrow('DB write failure');
+    await expect(metadataService.changeFieldType('f-text', 'number', 'user-1')).rejects.toThrow(
+      'DB write failure'
+    );
 
     const rollbackCalls = mockQuery.mock.calls.filter(
       (call) => typeof call[0] === 'string' && call[0] === 'ROLLBACK'

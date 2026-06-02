@@ -207,7 +207,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
               <h4 className="font-medium text-navy-900 dark:text-white">DRD Axis Mapping</h4>
               <button
                 onClick={() => setEditMode(!editMode)}
-                className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 px-2 py-1 rounded"
+                className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/30 px-2 py-1 rounded"
               >
                 <Edit2 size={12} />
                 {editMode ? 'Done' : 'Adjust Scores'}
@@ -255,7 +255,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                         <span
                           className={`text-sm font-medium ${
                             score > 0
-                              ? 'text-purple-600 dark:text-purple-400'
+                              ? 'text-primary-600 dark:text-primary-400'
                               : 'text-slate-400 dark:text-slate-500'
                           }`}
                         >
@@ -292,8 +292,8 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                         border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all
                         ${
                           file
-                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                            : 'border-slate-200 dark:border-navy-700 hover:border-purple-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                            : 'border-slate-200 dark:border-navy-700 hover:border-primary-400 hover:bg-slate-50 dark:hover:bg-white/5'
                         }
                     `}
         >
@@ -307,7 +307,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
 
           {file ? (
             <div className="flex flex-col items-center">
-              <FileText className="w-12 h-12 text-purple-500 mb-3" />
+              <FileText className="w-12 h-12 text-primary-500 mb-3" />
               <p className="font-medium text-navy-900 dark:text-white mb-1">{file.name}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {(file.size / 1024 / 1024).toFixed(2)} MB
@@ -360,8 +360,8 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
         <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <Upload className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <Upload className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">Import Report</h3>
@@ -387,7 +387,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
 
           {/* Error */}
           {error && (
-            <div className="mt-4 flex items-center gap-2 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm">
+            <div className="mt-4 flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
               <AlertCircle size={16} />
               {error}
             </div>
@@ -412,7 +412,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                                     ${
                                       (step === 'upload' && file && !uploading) ||
                                       step === 'mapping'
-                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                        ? 'bg-primary-600 hover:bg-primary-500 text-white'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}

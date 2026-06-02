@@ -853,11 +853,11 @@ export function SWOTInputExplorationPhase({
               {confirmedAreasCount}/4
             </div>
           </div>
-          <div className="rounded-[24px] border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+          <div className="rounded-[24px] border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
               {labels.activeDialogue}
             </div>
-            <div className="mt-2 text-2xl font-semibold text-violet-700 dark:text-violet-200">
+            <div className="mt-2 text-2xl font-semibold text-primary-700 dark:text-primary-200">
               4
             </div>
           </div>
@@ -1018,7 +1018,7 @@ export function SWOTInputExplorationPhase({
                                   setFeedbackInput('');
                                   setSelectedDeepen('');
                                 }}
-                                className="inline-flex items-center rounded-full border border-violet-300/50 bg-white px-3 py-1.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-50 dark:border-violet-900/40 dark:bg-white/[0.04] dark:text-violet-200"
+                                className="inline-flex items-center rounded-full border border-primary-300/50 bg-white px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
                               >
                                 {labels.deepen}
                               </button>
@@ -1061,7 +1061,7 @@ export function SWOTInputExplorationPhase({
                                           }
                                           className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                                             active
-                                              ? 'border-violet-300 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-100'
+                                              ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
                                               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
                                           }`}
                                         >
@@ -1160,7 +1160,7 @@ export function SWOTInputExplorationPhase({
                       <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                         {labels.aiProposal}
                       </div>
-                      <span className="inline-flex rounded-full border border-violet-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:border-violet-900/40 dark:bg-white/[0.05] dark:text-violet-200">
+                      <span className="inline-flex rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:border-primary-900/40 dark:bg-white/[0.05] dark:text-primary-200">
                         AI
                       </span>
                     </div>
@@ -1211,7 +1211,7 @@ export function SWOTInputExplorationPhase({
                             setFeedbackInput('');
                             setSelectedDeepen('');
                           }}
-                          className="inline-flex items-center rounded-full border border-violet-300/50 bg-white px-3 py-1.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-50 dark:border-violet-900/40 dark:bg-white/[0.04] dark:text-violet-200"
+                          className="inline-flex items-center rounded-full border border-primary-300/50 bg-white px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
                         >
                           {labels.deepen}
                         </button>
@@ -1249,7 +1249,7 @@ export function SWOTInputExplorationPhase({
                                   }
                                   className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                                     active
-                                      ? 'border-violet-300 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-100'
+                                      ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
                                       : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
                                   }`}
                                 >

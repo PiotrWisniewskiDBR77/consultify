@@ -21,6 +21,7 @@ export interface Invoice {
 
 export enum AppView {
   AI_CHAT = 'AI_CHAT', // Main welcome screen with AI Chat
+  AI_CHAT_V10_RUNTIME = 'AI_CHAT_V10_RUNTIME', // AI Chat v10 runtime route alias
   APP_INTRO = 'APP_INTRO', // In-app orientation screen
   INTERVIEW = 'INTERVIEW', // AI Interview - structured knowledge gathering (was Project Intelligence)
   DISCOVERY_CONSULTANT = 'DISCOVERY_CONSULTANT', // AI Discovery with Canvas (legacy alias for INTERVIEW)
@@ -94,8 +95,9 @@ export enum AppView {
   PRESENTATIONS = 'PRESENTATIONS', // Presentations library
   MEETING = 'MEETING', // Meeting workspace
   WORDY = 'WORDY', // KIMI-style document generation workspace (P22)
-  EXCELE = 'EXCELE', // KIMI-style spreadsheet generation workspace (P23)
+  EXCELE = 'EXCELE', // Legacy spreadsheet alias; canonical route/module is TABELE.
   PREZENTACJE_GEN = 'PREZENTACJE_GEN', // Gamma-style presentation generation workspace (P20)
+  TABELE = 'TABELE', // KIMI-style operational-table workspace (Table Studio Foundation block — sky accent)
   KPI_OKR_DASHBOARD = 'KPI_OKR_DASHBOARD', // Module: KPI/OKR post-implementation tracking
 
   MASTERCLASS = 'MASTERCLASS',
@@ -174,6 +176,15 @@ export enum AppView {
 
   // AI Action Proposals Review
   AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS',
+  AI_OS_HOME = 'AI_OS_HOME',
+  AI_OS_WORK_CANVAS = 'AI_OS_WORK_CANVAS',
+  AI_OS_ACTION_CENTER = 'AI_OS_ACTION_CENTER',
+  AI_OS_RESEARCH = 'AI_OS_RESEARCH',
+  AI_OS_ARTIFACTS = 'AI_OS_ARTIFACTS',
+  AI_OS_CONTEXT_MEMORY = 'AI_OS_CONTEXT_MEMORY',
+  AI_OS_CONNECTORS = 'AI_OS_CONNECTORS',
+  AI_OS_AGENTS = 'AI_OS_AGENTS',
+  AI_OS_OUTCOMES = 'AI_OS_OUTCOMES',
 
   // Consultify Studio - Visual AI Workspace
   STUDIO = 'STUDIO',
@@ -3759,6 +3770,7 @@ export interface User {
   displayName?: string;
   pronouns?: 'he/him' | 'she/her' | 'they/them' | 'other' | '';
   department?: string;
+  projectRole?: string;
   isOutOfOffice?: boolean;
   outOfOfficeUntil?: string;
   outOfOfficeMessage?: string;
@@ -3769,6 +3781,16 @@ export interface User {
   profileVisibility?: 'public' | 'team' | 'private';
   profileCompletionScore?: number; // 0-100
   activityStatus?: UserActivityStatus;
+  seniorityLevel?: string;
+  siteLocation?: string;
+  tenureYears?: string;
+  managesTeam?: boolean;
+  teamSize?: string;
+  expertiseTags?: string[];
+  engagementLevel?: string;
+  profileSurveyCompletedAt?: string;
+  profileSurveyDismissedCount?: number;
+  profileSurveyLastDismissedAt?: string;
   // UI Preferences
   uiDensity?: 'comfortable' | 'compact' | 'spacious';
   startPage?: 'dashboard' | 'myTasks' | 'inbox' | 'lastVisited';
@@ -5060,7 +5082,16 @@ export interface ContentAnalyticsDashboard {
 
 // Document Library
 export type DocumentScope = 'project' | 'user';
-export type DocumentStatus = 'active' | 'archived' | 'deleted';
+export type DocumentStatus =
+  | 'active'
+  | 'archived'
+  | 'deleted'
+  | 'uploaded'
+  | 'processing'
+  | 'ready'
+  | 'ocr_required'
+  | 'unreadable'
+  | 'failed';
 
 export interface Document {
   id: string;
@@ -5072,11 +5103,45 @@ export interface Document {
   originalName: string;
   fileType: string;
   fileSize: number;
+  fileSizeBytes?: number;
   mimeType: string;
   filepath: string;
   description?: string;
   tags?: string[];
   status: DocumentStatus;
+  processingError?: string | null;
+  processingState?: {
+    status:
+      | 'not_processing'
+      | 'queued'
+      | 'claimed'
+      | 'processing'
+      | 'retry_scheduled'
+      | 'stale_processing'
+      | 'attention_required';
+    attentionRequired: boolean;
+    reason: string | null;
+    jobId: string | null;
+    jobStatus: string | null;
+    jobUpdatedAt: string | null;
+    staleAfterMs: number;
+    attentionReadBack?: {
+      status: 'not_required' | 'visible_to_user';
+      observedAt: string | null;
+    };
+    recoveryAuditReadBack?: {
+      status: 'not_checked' | 'not_found' | 'found';
+      actionType: string | null;
+      recordedAt: string | null;
+    };
+    acknowledgement?: {
+      status: 'not_required' | 'unacknowledged' | 'acknowledged';
+      acknowledgedAt: string | null;
+      acknowledgedByCurrentUser: boolean;
+    };
+  };
+  chunkCount?: number;
+  sourceUpload?: string;
   createdAt: string;
   updatedAt: string;
 }

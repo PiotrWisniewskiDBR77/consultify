@@ -39,8 +39,8 @@ export interface DigitizationAxis {
 export const getLevelColor = (level: number): string => {
   const colors: Record<number, string> = {
     0: '#94a3b8', // slate-400 - Not evaluated
-    1: '#ef4444', // red-500 - Registration
-    2: '#f97316', // orange-500 - Workstation Control
+    1: '#f43f5e', // rose-500 - Registration
+    2: '#f59e0b', // amber-500 - Workstation Control
     3: '#f59e0b', // amber-500 - Process Control
     4: '#eab308', // yellow-500 - Automation
     5: '#84cc16', // lime-500 - MES
@@ -129,7 +129,7 @@ export const DIGITIZATION_AXES: DigitizationAxis[] = [
     namePl: 'Produkty cyfrowe',
     descriptionEn: 'Digitization of products and services',
     descriptionPl: 'Cyfryzacja produktów i usług',
-    color: '#8b5cf6', // violet-500
+    color: '#6366f1', // primary-500
     areas: [],
   },
   {
@@ -147,7 +147,7 @@ export const DIGITIZATION_AXES: DigitizationAxis[] = [
     namePl: 'Big Data i analityka',
     descriptionEn: 'Data collection, analysis, and utilization',
     descriptionPl: 'Zbieranie, analiza i wykorzystanie danych',
-    color: '#14b8a6', // teal-500
+    color: '#3b82f6', // blue-500
     areas: [],
   },
   {
@@ -165,7 +165,7 @@ export const DIGITIZATION_AXES: DigitizationAxis[] = [
     namePl: 'Cyberbezpieczeństwo',
     descriptionEn: 'IT security and data protection',
     descriptionPl: 'Bezpieczeństwo IT i ochrona danych',
-    color: '#ef4444', // red-500
+    color: '#f43f5e', // rose-500
     areas: [],
   },
 ];

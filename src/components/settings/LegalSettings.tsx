@@ -3,7 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { Api } from '../../services/api';
 import { LegalDocType, LegalDocument, User } from '../../types';
+import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
 
 interface LegalSettingsProps {
@@ -20,9 +22,9 @@ const DOC_TYPE_INFO: Record<string, { icon: React.ReactNode; color: string }> = 
   TOS: { icon: <FileText size={18} />, color: 'text-blue-500' },
   PRIVACY: { icon: <Shield size={18} />, color: 'text-green-500' },
   COOKIES: { icon: <FileText size={18} />, color: 'text-amber-500' },
-  AUP: { icon: <FileText size={18} />, color: 'text-purple-500' },
+  AUP: { icon: <FileText size={18} />, color: 'text-primary-500' },
   AI_POLICY: { icon: <FileText size={18} />, color: 'text-indigo-500' },
-  DPA: { icon: <Shield size={18} />, color: 'text-red-500' },
+  DPA: { icon: <Shield size={18} />, color: 'text-rose-500' },
   SUBSCRIPTION: { icon: <FileText size={18} />, color: 'text-emerald-500' },
   SLA: { icon: <FileText size={18} />, color: 'text-yellow-500' },
   REFUNDS: { icon: <FileText size={18} />, color: 'text-lime-500' },
@@ -35,6 +37,8 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
   const [loading, setLoading] = useState(true);
   const [selectedDoc, setSelectedDoc] = useState<LegalDocument | null>(null);
   const [docContent, setDocContent] = useState<string>('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [docContentError, setDocContentError] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
 
   useEffect(() => {
@@ -43,18 +47,14 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
 
   const fetchLegalData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const [docsRes, acceptRes] = await Promise.all([
-        fetch('/api/legal/active', { headers }),
-        fetch('/api/legal/my-acceptances', { headers }),
+      setLoadError(null);
+      const [docsData, acceptsData] = await Promise.allSettled([
+        Api.get('/legal/active'),
+        Api.get('/legal/my-acceptances'),
       ]);
 
-      if (docsRes.ok) {
-        const docsData = await docsRes.json();
-        const docsList = docsData.data || docsData || [];
+      if (docsData.status === 'fulfilled') {
+        const docsList = docsData.value.data || docsData.value || [];
         setDocuments(
           docsList.map((d: any) => ({
             id: d.id,
@@ -65,11 +65,13 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
             isActive: true,
           }))
         );
+      } else {
+        setDocuments([]);
+        setLoadError('Failed to load legal documents');
       }
 
-      if (acceptRes.ok) {
-        const acceptsData = await acceptRes.json();
-        const acceptsList = acceptsData.data || acceptsData || [];
+      if (acceptsData.status === 'fulfilled') {
+        const acceptsList = acceptsData.value.data || acceptsData.value || [];
         setAcceptances(
           acceptsList.map((a: any) => ({
             docType: a.docType || a.doc_type,
@@ -77,6 +79,8 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
             acceptedAt: a.acceptedAt || a.accepted_at,
           }))
         );
+      } else {
+        setAcceptances([]);
       }
     } catch (err) {
       console.error('Failed to fetch legal data:', err);
@@ -88,18 +92,18 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
   const viewDocument = async (doc: LegalDocument) => {
     setSelectedDoc(doc);
     setLoadingContent(true);
+    setDocContent('');
+    setDocContentError(null);
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const res = await fetch(`/api/legal/active/${doc.docType}`, { headers });
-      if (res.ok) {
-        const fullDoc = await res.json();
+      const fullDoc = await Api.get(`/legal/active/${doc.docType}`);
+      if (fullDoc) {
         setDocContent(fullDoc.contentMd || fullDoc.content_md || '');
+      } else {
+        throw new Error('Legal document content response was empty');
       }
     } catch (err) {
       console.error('Failed to fetch document content:', err);
+      setDocContentError('Failed to load legal document content');
     } finally {
       setLoadingContent(false);
     }
@@ -137,6 +141,8 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
       </p>
 
       <div className="space-y-3">
+        {loadError && <DegradedState title="Legal documents unavailable" description={loadError} />}
+
         {documents.map((doc) => {
           const acceptance = getAcceptanceStatus(doc.docType as LegalDocType, doc.version);
           const info = DOC_TYPE_INFO[doc.docType as LegalDocType] || DOC_TYPE_INFO.TOS;
@@ -182,7 +188,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
           );
         })}
 
-        {documents.length === 0 && (
+        {!loadError && documents.length === 0 && (
           <div className="text-center py-12 text-slate-500 dark:text-slate-400">
             {t('legal.noDocuments', 'No legal documents available.')}
           </div>
@@ -205,7 +211,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
           </div>
           <Link
             to="/legal"
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
           >
             {t('legal.viewAll', 'View All')}
             <ExternalLink className="w-4 h-4" />
@@ -238,6 +244,8 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
                 <div className="flex items-center justify-center h-32">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                 </div>
+              ) : docContentError ? (
+                <DegradedState title="Document content unavailable" description={docContentError} />
               ) : (
                 <div className="prose dark:prose-invert max-w-none">
                   <pre className="whitespace-pre-wrap text-sm font-sans">{docContent}</pre>

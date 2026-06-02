@@ -27,6 +27,7 @@ const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
   TRIAL_EXPIRED: { labelKey: 'access.cta.upgradeNow', href: '/settings?tab=billing' },
   AI_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
+  FEATURE_ACCESS_DENIED: { labelKey: 'access.cta.goToMyWork', href: ROUTES.MY_WORK },
   AI_TOKEN_BUDGET_EXCEEDED: {
     labelKey: 'access.cta.addPaymentMethod',
     href: '/settings?tab=billing',
@@ -38,6 +39,13 @@ const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   STORAGE_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
   SUBSCRIPTION_PAST_DUE: { labelKey: 'access.cta.fixPayment', href: '/settings?tab=billing' },
   SUBSCRIPTION_CANCELLED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
+  TRIAL_ENTRY_RESTRICTION: { labelKey: 'access.cta.completeSetup', href: '/trial/create-org' },
+  TRIAL_INVITES_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_UPLOAD_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_EXPORT_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  PUBLIC_SHARE_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_AI_MEMORY_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  AI_AUTOPILOT_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
 };
 
 export const AccessBlockedModal: React.FC = () => {
@@ -70,6 +78,13 @@ export const AccessBlockedModal: React.FC = () => {
     const isOrgError = code === 'ORG_NOT_FOUND' || code === 'ORG_INACTIVE';
     const isTrialBlock =
       code === 'TRIAL_EXPIRED' ||
+      code === 'TRIAL_ENTRY_RESTRICTION' ||
+      code === 'TRIAL_INVITES_DISABLED' ||
+      code === 'TRIAL_UPLOAD_DISABLED' ||
+      code === 'TRIAL_EXPORT_DISABLED' ||
+      code === 'PUBLIC_SHARE_DISABLED' ||
+      code === 'TRIAL_AI_MEMORY_DISABLED' ||
+      code === 'AI_AUTOPILOT_DISABLED' ||
       code === 'AI_LIMIT_REACHED' ||
       code === 'AI_TOKEN_BUDGET_EXCEEDED' ||
       code === 'INSUFFICIENT_TOKENS';
@@ -138,8 +153,8 @@ export const AccessBlockedModal: React.FC = () => {
         <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">{resolved.message}</div>
 
         {(resolved.isTrialBlock || resolved.isLimitBlock) && (
-          <div className="mt-4 p-3 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
-            <p className="text-xs text-purple-700 dark:text-purple-300">
+          <div className="mt-4 p-3 rounded-lg bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20">
+            <p className="text-xs text-primary-700 dark:text-primary-300">
               {t('access.upgrade.instantUnlock')}
             </p>
           </div>

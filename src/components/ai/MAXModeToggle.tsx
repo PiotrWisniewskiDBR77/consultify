@@ -43,7 +43,7 @@ export function MAXModeToggle({
         disabled={disabled}
         className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all ${
           enabled
-            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30'
+            ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white shadow-lg shadow-primary-500/30'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         title={enabled ? 'MAX Mode aktywny (o1 reasoning)' : 'Włącz MAX Mode'}
@@ -59,7 +59,7 @@ export function MAXModeToggle({
       <div
         className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
           enabled
-            ? 'bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/30 border-purple-300 dark:border-purple-700'
+            ? 'bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/30 dark:to-indigo-900/30 border-primary-300 dark:border-primary-700'
             : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
         }`}
       >
@@ -67,7 +67,7 @@ export function MAXModeToggle({
         <div
           className={`p-2 rounded-full ${
             enabled
-              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+              ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
           }`}
         >
@@ -78,12 +78,12 @@ export function MAXModeToggle({
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span
-              className={`font-semibold ${enabled ? 'text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-gray-300'}`}
+              className={`font-semibold ${enabled ? 'text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-300'}`}
             >
               MAX Mode
             </span>
             {enabled && (
-              <span className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs bg-primary-600 text-white px-2 py-0.5 rounded-full">
                 <Sparkles className="w-3 h-3" />
                 Aktywny
               </span>
@@ -104,7 +104,7 @@ export function MAXModeToggle({
           onMouseLeave={() => setShowTooltip(false)}
           className={`relative w-12 h-6 rounded-full transition-all ${
             enabled
-              ? 'bg-gradient-to-r from-purple-600 to-indigo-600'
+              ? 'bg-gradient-to-r from-primary-600 to-indigo-600'
               : 'bg-gray-300 dark:bg-gray-600'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         >
@@ -147,7 +147,7 @@ export function MAXModeIndicator({ enabled }: { enabled: boolean }) {
   if (!enabled) return null;
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-medium rounded-full">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-xs font-medium rounded-full">
       <Zap className="w-3 h-3" />
       MAX
     </span>
@@ -169,7 +169,7 @@ export function MAXModeCostBadge({
   return (
     <div className="flex items-center gap-2 text-xs">
       <span className="text-gray-500 dark:text-gray-400">Szacowany koszt:</span>
-      <span className="font-medium text-purple-600">~{totalTokens.toLocaleString()} tokenów</span>
+      <span className="font-medium text-primary-600">~{totalTokens.toLocaleString()} tokenów</span>
       <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
         ({multiplier}x MAX)
       </span>

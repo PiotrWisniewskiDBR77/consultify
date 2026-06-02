@@ -99,6 +99,11 @@ interface EarningsSectionProps {
   subsection?: 'earnings' | 'statements' | 'payouts' | 'payout-settings';
 }
 
+const unwrapApiData = (response: any) => {
+  const descriptor = response ? Object.getOwnPropertyDescriptor(response, 'data') : undefined;
+  return descriptor?.value ?? response?.data ?? response;
+};
+
 const normalizeEarningsSummary = (payload: any): EarningsSummary | null => {
   const data = payload?.data && payload?.data !== payload ? payload.data : payload;
   if (!data) return null;
@@ -217,8 +222,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.get('/api/partners/commission-transactions');
-      return response?.success && Array.isArray(response?.data)
-        ? response.data.map((tx: CommissionTransaction) => normalizeCommissionTransaction(tx))
+      const legacyTransactions = unwrapApiData(response);
+      return response?.success && Array.isArray(legacyTransactions)
+        ? legacyTransactions.map((tx: CommissionTransaction) => normalizeCommissionTransaction(tx))
         : [];
     }
   }, []);
@@ -234,8 +240,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.get('/api/partners/payouts');
-      return response?.success && Array.isArray(response?.data)
-        ? response.data.map((payout: Payout) => normalizePayout(payout))
+      const legacyPayouts = unwrapApiData(response);
+      return response?.success && Array.isArray(legacyPayouts)
+        ? legacyPayouts.map((payout: Payout) => normalizePayout(payout))
         : [];
     }
   }, []);
@@ -249,7 +256,22 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.get('/api/partners/payout-settings');
-      return normalizePayoutSettings(response?.data ?? response);
+      return normalizePayoutSettings(unwrapApiData(response) ?? response);
+    }
+  }, []);
+
+  const getEarningsSummaryWithFallback = useCallback(async (): Promise<{
+    earnings: V8PartnerEarningsSummary | EarningsSummary;
+  }> => {
+    try {
+      return await V8PartnerApi.getEarningsSummary();
+    } catch (error) {
+      if (!shouldFallbackToLegacyPartner(error)) {
+        throw error;
+      }
+      const response = await Api.get('/api/partners/earnings');
+      const legacy = unwrapApiData(response) ?? response?.earnings ?? response;
+      return { earnings: legacy };
     }
   }, []);
 
@@ -262,7 +284,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.put('/api/partners/payout-settings', settings);
-      return normalizePayoutSettings(response?.data ?? response);
+      return normalizePayoutSettings(unwrapApiData(response) ?? response);
     }
   }, []);
 
@@ -273,7 +295,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       setError(null);
       const [summaryResponse, txResponse, payoutsResponse, programResponse] =
         await Promise.allSettled([
-          V8PartnerApi.getEarningsSummary(),
+          getEarningsSummaryWithFallback(),
           getCommissionTransactionsWithFallback(),
           getPayoutsWithFallback(),
           V8PartnerApi.getProgramStatus(),
@@ -324,7 +346,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     } finally {
       setLoading(false);
     }
-  }, [getCommissionTransactionsWithFallback, getPayoutsWithFallback, t]);
+  }, [
+    getCommissionTransactionsWithFallback,
+    getEarningsSummaryWithFallback,
+    getPayoutsWithFallback,
+    t,
+  ]);
 
   useEffect(() => {
     fetchEarnings();
@@ -367,11 +394,11 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     if (!v8Summary) return null;
 
     return (
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-violet-200 dark:border-violet-900/40 p-6">
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-primary-200 dark:border-primary-900/40 p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-violet-500" />
+              <TrendingUp className="w-5 h-5 text-primary-500" />
               {t('partner.earnings.v8RuntimeTitle', 'V8 Earnings Summary')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -381,7 +408,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               )}
             </p>
             {programStatus && (
-              <p className="mt-2 text-xs font-medium uppercase tracking-wide text-violet-600 dark:text-violet-300">
+              <p className="mt-2 text-xs font-medium uppercase tracking-wide text-primary-600 dark:text-primary-300">
                 {`Lifecycle: ${programStatus.lifecyclePhase}`}
               </p>
             )}
@@ -419,7 +446,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-xl border border-violet-200/70 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/20 p-4"
+              className="rounded-xl border border-primary-200/70 dark:border-primary-900/30 bg-primary-50/50 dark:bg-primary-950/20 p-4"
             >
               <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {card.label}
@@ -489,8 +516,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   const handleSavePayoutSettings = async () => {
     try {
       setSavingPayoutSettings(true);
-      const saved = await savePayoutSettingsWithFallback(payoutSettings);
-      setPayoutSettings(saved);
+      await savePayoutSettingsWithFallback(payoutSettings);
+      const readBack = await getPayoutSettingsWithFallback();
+      setPayoutSettings(readBack);
       toast.success(t('partner.payoutSettings.saved', 'Payout settings updated'));
     } catch (err: any) {
       console.error('Error saving payout settings:', err);
@@ -503,7 +531,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -511,13 +539,13 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   if (error && !summary) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="p-4 rounded-full bg-red-500/10 mb-4">
-          <DollarSign className="w-8 h-8 text-red-400" />
+        <div className="p-4 rounded-full bg-rose-500/10 mb-4">
+          <DollarSign className="w-8 h-8 text-rose-400" />
         </div>
         <p className="text-slate-400 dark:text-slate-500 mb-4">{error}</p>
         <button
           onClick={fetchEarnings}
-          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
         >
           {t('common.retry', 'Try Again')}
         </button>
@@ -589,7 +617,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
                 activeTab === 'statements'
-                  ? 'text-slate-900 dark:text-white border-violet-500'
+                  ? 'text-slate-900 dark:text-white border-primary-500'
                   : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
               )}
             >
@@ -600,7 +628,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
                 activeTab === 'payments'
-                  ? 'text-slate-900 dark:text-white border-violet-500'
+                  ? 'text-slate-900 dark:text-white border-primary-500'
                   : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
               )}
             >
@@ -655,8 +683,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
           <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-violet-500/20">
-                <TrendingUp className="w-5 h-5 text-violet-400" />
+              <div className="p-2 rounded-lg bg-primary-500/20">
+                <TrendingUp className="w-5 h-5 text-primary-400" />
               </div>
               <span className="text-sm text-slate-400 dark:text-slate-500">This Month</span>
             </div>
@@ -697,7 +725,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               className={cn(
                 'mt-2 px-3 py-1 text-xs font-medium rounded-lg transition-colors',
                 (summary?.readyForPayout || 0) >= 100
-                  ? 'bg-violet-600 hover:bg-violet-500 text-white'
+                  ? 'bg-primary-600 hover:bg-primary-500 text-white'
                   : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
               )}
             >
@@ -714,7 +742,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('partner.earnings.recentTransactions', 'Recent Commission Statements')}
               </h3>
-              <button className="flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300">
+              <button className="flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300">
                 <Download className="w-4 h-4" />
                 {t('common.exportCSV', 'Export CSV')}
               </button>
@@ -912,64 +940,79 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         </div>
 
         {/* Payout List */}
-        <div className="space-y-4">
-          {payouts.map((payout) => (
-            <div
-              key={payout.id}
-              className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div
-                    className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center',
-                      payout.status === 'COMPLETED' && 'bg-emerald-500/20',
-                      payout.status === 'PROCESSING' && 'bg-blue-500/20',
-                      payout.status === 'PENDING' && 'bg-amber-500/20'
+        {payouts.length > 0 ? (
+          <div className="space-y-4">
+            {payouts.map((payout) => (
+              <div
+                key={payout.id}
+                className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={cn(
+                        'w-12 h-12 rounded-xl flex items-center justify-center',
+                        payout.status === 'COMPLETED' && 'bg-emerald-500/20',
+                        payout.status === 'PROCESSING' && 'bg-blue-500/20',
+                        payout.status === 'PENDING' && 'bg-amber-500/20'
+                      )}
+                    >
+                      {payout.status === 'COMPLETED' ? (
+                        <Check className="w-6 h-6 text-emerald-400" />
+                      ) : (
+                        <Clock className="w-6 h-6 text-amber-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        €{(payout.netAmount ?? 0).toLocaleString()}
+                      </p>
+                      <p className="text-sm text-slate-400 dark:text-slate-500">
+                        {payout.transactionCount} transactions • {payout.periodStart} to{' '}
+                        {payout.periodEnd}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span
+                      className={cn(
+                        'px-2 py-1 text-xs font-medium rounded-full',
+                        payout.status === 'COMPLETED' && 'bg-emerald-500/20 text-emerald-400',
+                        payout.status === 'PROCESSING' && 'bg-blue-500/20 text-blue-400',
+                        payout.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
+                      )}
+                    >
+                      {payout.status.toLowerCase()}
+                    </span>
+                    {payout.completedAt && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Completed {payout.completedAt}
+                      </p>
                     )}
-                  >
-                    {payout.status === 'COMPLETED' ? (
-                      <Check className="w-6 h-6 text-emerald-400" />
-                    ) : (
-                      <Clock className="w-6 h-6 text-amber-400" />
+                    {payout.payoutReference && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Ref: {payout.payoutReference}
+                      </p>
                     )}
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-900 dark:text-white">
-                      €{(payout.netAmount ?? 0).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
-                      {payout.transactionCount} transactions • {payout.periodStart} to{' '}
-                      {payout.periodEnd}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span
-                    className={cn(
-                      'px-2 py-1 text-xs font-medium rounded-full',
-                      payout.status === 'COMPLETED' && 'bg-emerald-500/20 text-emerald-400',
-                      payout.status === 'PROCESSING' && 'bg-blue-500/20 text-blue-400',
-                      payout.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
-                    )}
-                  >
-                    {payout.status.toLowerCase()}
-                  </span>
-                  {payout.completedAt && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Completed {payout.completedAt}
-                    </p>
-                  )}
-                  {payout.payoutReference && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Ref: {payout.payoutReference}
-                    </p>
-                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Banknote className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
+            <p className="text-slate-400 dark:text-slate-500">
+              {t('partner.payouts.empty', 'No payouts yet')}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {t(
+                'partner.payouts.emptyDesc',
+                'Your payout history will appear here after payout processing.'
+              )}
+            </p>
+          </div>
+        )}
       </div>
     );
   }
@@ -1003,11 +1046,11 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             className={cn(
               'p-4 rounded-xl border-2 text-left',
               payoutSettings.payoutMethod === 'BANK_TRANSFER'
-                ? 'border-violet-500 bg-violet-500/10'
+                ? 'border-primary-500 bg-primary-500/10'
                 : 'border-white/10 hover:border-white/20'
             )}
           >
-            <Wallet className="w-6 h-6 text-violet-400 mb-2" />
+            <Wallet className="w-6 h-6 text-primary-400 mb-2" />
             <p className="font-medium text-slate-900 dark:text-white">Bank Transfer</p>
             <p className="text-xs text-slate-400 dark:text-slate-500">
               Direct to your bank account
@@ -1018,7 +1061,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             className={cn(
               'p-4 rounded-xl border text-left',
               payoutSettings.payoutMethod === 'PAYPAL'
-                ? 'border-violet-500 bg-violet-500/10'
+                ? 'border-primary-500 bg-primary-500/10'
                 : 'border-white/10 hover:border-white/20'
             )}
           >
@@ -1031,7 +1074,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             className={cn(
               'p-4 rounded-xl border text-left',
               payoutSettings.payoutMethod === 'STRIPE'
-                ? 'border-violet-500 bg-violet-500/10'
+                ? 'border-primary-500 bg-primary-500/10'
                 : 'border-white/10 hover:border-white/20'
             )}
           >
@@ -1095,7 +1138,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           <button
             onClick={handleSavePayoutSettings}
             disabled={savingPayoutSettings}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
           >
             {savingPayoutSettings ? 'Saving...' : 'Save Changes'}
           </button>
@@ -1148,7 +1191,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               aria-label="Toggle auto-request payout"
               className={cn(
                 'relative inline-flex h-6 w-11 items-center rounded-full',
-                payoutSettings.autoPayoutEnabled ? 'bg-violet-600' : 'bg-slate-300 dark:bg-navy-600'
+                payoutSettings.autoPayoutEnabled
+                  ? 'bg-primary-600'
+                  : 'bg-slate-300 dark:bg-navy-600'
               )}
             >
               <span

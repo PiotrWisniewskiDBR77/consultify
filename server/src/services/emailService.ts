@@ -59,16 +59,19 @@ let config: any;
  * Initialize dependencies lazily
  */
 async function initDeps(): Promise<void> {
-  if (db && nodemailer) return;
+  if (nodemailer && config) return;
 
-  const [dbModule, nodemailerModule, configModule] = await Promise.all([
-    import('../database/index.js'),
+  // Always use the runtime database instance (sqlite/postgres) from Database.js.
+  // Importing ../database/index.js returns the module namespace (pool helpers),
+  // not an IDatabase instance, which breaks DbPromise(db, ...) calls.
+  db = getDatabase();
+
+  const [nodemailerModule, configModule] = await Promise.all([
     // @ts-ignore
     import('nodemailer') as any,
     import('../config/Config.js'),
   ]);
 
-  db = dbModule.default || dbModule;
   nodemailer = nodemailerModule.default || nodemailerModule;
   config = configModule.default || configModule;
 }

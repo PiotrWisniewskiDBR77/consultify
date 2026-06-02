@@ -67,19 +67,10 @@ describe('legacy alias connect continuity', () => {
       />
     );
 
-    await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: 'Connect' }).length).toBeGreaterThan(0);
-    });
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'Connect' })[0]!);
-
-    await waitFor(() => {
-      expect(apiMock.post).toHaveBeenCalledWith('/api/integrations/github/connect', {});
-    });
-
-    expect(toastSuccess).toHaveBeenCalledWith(
-      'Setup started. Complete the required configuration fields to continue.'
-    );
+    expect(
+      await screen.findByText('This view has been replaced by Connected Apps in Settings.')
+    ).toBeInTheDocument();
+    expect(apiMock.post).not.toHaveBeenCalled();
     expect(screen.queryByTitle('Disconnect')).not.toBeInTheDocument();
   });
 

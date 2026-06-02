@@ -266,7 +266,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
                   onClick={() => setFormData((prev) => ({ ...prev, type: key }))}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                     formData.type === key
-                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                       : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -294,7 +294,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
                   onClick={() => setFormData((prev) => ({ ...prev, category: key }))}
                   className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                     formData.category === key
-                      ? 'bg-cyan-500 text-white'
+                      ? 'bg-blue-500 text-white'
                       : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }`}
                 >
@@ -314,7 +314,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Describe the lesson learned..."
               rows={3}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-blue-500 resize-none"
             />
           </div>
 
@@ -328,7 +328,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
               onChange={(e) => setFormData((prev) => ({ ...prev, actionTaken: e.target.value }))}
               placeholder="What was done as a result of this learning?"
               rows={2}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-blue-500 resize-none"
             />
           </div>
 
@@ -342,7 +342,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
               value={formData.applicableTo}
               onChange={(e) => setFormData((prev) => ({ ...prev, applicableTo: e.target.value }))}
               placeholder="e.g., Digital Projects, IT Implementation (comma-separated)"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
@@ -357,7 +357,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-200 dark:disabled:bg-navy-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-navy-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
           >
             {isSubmitting && <Loader2 size={16} className="animate-spin" />}
             Add Lesson
@@ -440,7 +440,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
           {initiativeId && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
             >
               <Plus size={16} />
               Add Lesson
@@ -477,7 +477,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search lessons..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
             />
           </div>
           <div className="flex gap-1">
@@ -487,7 +487,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
                 onClick={() => setFilterType(type)}
                 className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                   filterType === type
-                    ? 'bg-cyan-500 text-white'
+                    ? 'bg-blue-500 text-white'
                     : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700'
                 }`}
               >
@@ -502,7 +502,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
       <div className="p-5 max-h-[500px] overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 text-cyan-500 animate-spin" />
+            <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
           </div>
         ) : filteredLessons.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
@@ -511,7 +511,7 @@ export const LessonsLearnedPanel: React.FC<LessonsLearnedPanelProps> = ({
             {initiativeId && (
               <button
                 onClick={() => setShowAddModal(true)}
-                className="text-cyan-400 hover:text-cyan-300 text-sm mt-2"
+                className="text-blue-400 hover:text-blue-300 text-sm mt-2"
               >
                 Add the first lesson
               </button>

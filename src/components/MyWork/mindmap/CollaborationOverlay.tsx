@@ -39,7 +39,7 @@ interface CollaborationOverlayProps {
   onRegisterSend?: (sendFn: (msg: any) => void) => void;
 }
 
-const CURSOR_COLORS = ['#f43f5e', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ec4899'];
+const CURSOR_COLORS = ['#f43f5e', '#6366f1', '#3b82f6', '#22c55e', '#f59e0b', '#ec4899'];
 const STALE_THRESHOLD_MS = 30_000;
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const CURSOR_THROTTLE_MS = 80;
@@ -329,12 +329,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
 }) => {
   const { t } = useTranslation();
   const { connected, connectionState, users, sessionState, sendCursor, sendMessage } =
-    useCollaboration(
-    ideaId,
-    currentUserId,
-    currentUserName,
-    selectedNodeIds
-  );
+    useCollaboration(ideaId, currentUserId, currentUserName, selectedNodeIds);
 
   useEffect(() => {
     if (connected && onRegisterSend) {

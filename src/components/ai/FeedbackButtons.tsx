@@ -153,7 +153,7 @@ export function FeedbackButtons({
       <button
         onClick={handleThumbsDown}
         disabled={submitting}
-        className={`p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors ${
+        className={`p-1.5 text-gray-500 dark:text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors ${
           compact ? '' : 'p-2'
         }`}
         title="Niepomocne"

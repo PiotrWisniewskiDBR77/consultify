@@ -10,16 +10,18 @@
 
 import {
   BookOpen,
+  Bot,
   Brain,
   Briefcase,
   Calculator,
   CheckCircle2,
   ClipboardList,
   CreditCard,
+  Database,
   Factory,
-  FileSpreadsheet,
   FileText,
   FolderOutput,
+  GitBranch,
   LayoutDashboard,
   Lightbulb,
   Map,
@@ -29,9 +31,11 @@ import {
   Rocket,
   Settings,
   Shield,
+  Table,
   TrendingUp,
   Users,
   Wrench,
+  Zap,
 } from 'lucide-react';
 import React from 'react';
 
@@ -119,26 +123,28 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(FolderOutput, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
     },
-    // 10. Wordy — KIMI-style document generation (P22)
+    // 10. Wordy — KIMI-style document generation (P22) — contact required
     {
       id: 'MODULE_WORDY',
       label: t('sidebar.wordy', 'Documents'),
       icon: React.createElement(FileText, { size: 20 }),
       viewId: AppView.WORDY,
+      badge: 'soon',
     },
-    // 11. Excele — KIMI-style spreadsheet generation (P23)
-    {
-      id: 'MODULE_EXCELE',
-      label: t('sidebar.excele', 'Tables'),
-      icon: React.createElement(FileSpreadsheet, { size: 20 }),
-      viewId: AppView.EXCELE,
-    },
-    // 12. Prezentacje — Gamma-style presentation generation (P20)
+    // 11. Prezentacje — Gamma-style presentation generation (P20) — contact required
     {
       id: 'MODULE_PREZENTACJE_GEN',
       label: t('sidebar.prezentacje', 'Presentations'),
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PREZENTACJE_GEN,
+      badge: 'soon',
+    },
+    // 12. Tabele Studio — operational tables (single canonical tables module)
+    {
+      id: 'MODULE_TABELE',
+      label: t('sidebar.tabele', 'Table Studio'),
+      icon: React.createElement(Table, { size: 20 }),
+      viewId: AppView.TABELE,
     },
     {
       id: 'MODULE_MEETING',
@@ -195,6 +201,66 @@ export function getOrganizationMenuItem(t: TranslationFn): MenuItem {
   };
 }
 
+export function getInternalToolsMenuItem(t: TranslationFn): MenuItem {
+  return {
+    id: 'INTERNAL_TOOLS',
+    label: t('sidebar.internalTools', 'Internal Tools'),
+    icon: React.createElement(Brain, { size: 20 }),
+    viewId: AppView.AI_OS_HOME,
+    badge: 'new',
+    subItems: [
+      {
+        id: 'AI_OS_HOME',
+        label: t('sidebar.aiOs', 'AI OS'),
+        icon: React.createElement(Brain, { size: 16 }),
+        viewId: AppView.AI_OS_HOME,
+      },
+      {
+        id: 'AI_OS_ACTIONS',
+        label: t('sidebar.aiActions', 'AI Actions'),
+        icon: React.createElement(Zap, { size: 16 }),
+        viewId: AppView.AI_OS_ACTION_CENTER,
+      },
+      {
+        id: 'AI_OS_RESEARCH',
+        label: t('sidebar.aiResearch', 'Research Sessions'),
+        icon: React.createElement(BookOpen, { size: 16 }),
+        viewId: AppView.AI_OS_RESEARCH,
+      },
+      {
+        id: 'AI_OS_ARTIFACTS',
+        label: t('sidebar.aiArtifacts', 'Artifacts'),
+        icon: React.createElement(FileText, { size: 16 }),
+        viewId: AppView.AI_OS_ARTIFACTS,
+      },
+      {
+        id: 'AI_OS_MEMORY',
+        label: t('sidebar.aiMemory', 'Memory & Scope'),
+        icon: React.createElement(Database, { size: 16 }),
+        viewId: AppView.AI_OS_CONTEXT_MEMORY,
+      },
+      {
+        id: 'AI_OS_CONNECTORS',
+        label: t('sidebar.aiConnectors', 'Connectors'),
+        icon: React.createElement(GitBranch, { size: 16 }),
+        viewId: AppView.AI_OS_CONNECTORS,
+      },
+      {
+        id: 'AI_OS_AGENTS',
+        label: t('sidebar.aiAgents', 'Agents'),
+        icon: React.createElement(Bot, { size: 16 }),
+        viewId: AppView.AI_OS_AGENTS,
+      },
+      {
+        id: 'AI_OS_OUTCOMES',
+        label: t('sidebar.aiOutcomes', 'KPI/ROI & AI Ops'),
+        icon: React.createElement(TrendingUp, { size: 16 }),
+        viewId: AppView.AI_OS_OUTCOMES,
+      },
+    ],
+  };
+}
+
 export function getSettingsMenuItem(t: TranslationFn): MenuItem {
   return {
     id: 'SETTINGS',
@@ -238,7 +304,8 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.PRESENTATIONS]: t('sidebar.outputsLibrary', 'Outputs'),
     [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentations'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
-    [AppView.EXCELE]: t('sidebar.excele', 'Tables'),
+    [AppView.EXCELE]: t('sidebar.tabele', 'Table Studio'),
+    [AppView.TABELE]: t('sidebar.tabele', 'Table Studio'),
   };
   return viewNames[view] || t('common.previousStep');
 }

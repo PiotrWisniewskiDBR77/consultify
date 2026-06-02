@@ -313,7 +313,7 @@ export function DocsSecurityView() {
         >
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8">
             <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
-              <Globe className="text-purple-400" />
+              <Globe className="text-primary-400" />
               GDPR Compliance
             </h2>
             <p className="text-zinc-400 mb-6">
@@ -355,7 +355,7 @@ export function DocsSecurityView() {
           className="mb-16"
         >
           <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-            <Server className="text-cyan-400" />
+            <Server className="text-blue-400" />
             Infrastructure & Data Residency
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
@@ -383,7 +383,7 @@ export function DocsSecurityView() {
           transition={{ delay: 0.5 }}
           className="mb-12"
         >
-          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-xl p-8">
+          <div className="bg-gradient-to-r from-blue-500/10 to-primary-500/10 border border-blue-500/30 rounded-xl p-8">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-blue-500/20 rounded-lg">
                 <Shield size={24} className="text-blue-400" />

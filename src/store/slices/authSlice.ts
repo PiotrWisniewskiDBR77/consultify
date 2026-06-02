@@ -3,6 +3,20 @@ import { StateCreator } from 'zustand';
 import { AppView, AuthStep, SessionMode, User } from '../../types';
 import type { AppState } from '../useAppStore';
 
+const USER_STORAGE_KEY = 'user';
+
+function syncStoredUser(user: User | null) {
+  try {
+    if (user) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    }
+  } catch {
+    // ignore storage failures
+  }
+}
+
 export interface AuthSlice {
   currentUser: User | null;
   sessionMode: SessionMode;
@@ -16,23 +30,27 @@ export interface AuthSlice {
   setAuthInitialStep: (step: AuthStep) => void;
   setCurrentOrganization: (org: { id: string; name: string } | null) => void;
   setAuthInitializing: (value: boolean) => void;
-  logout: () => void;
+  logout: (options?: { reload?: boolean }) => void;
 }
 
 export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) => ({
   currentUser: null,
   sessionMode: SessionMode.FREE,
-  authInitialStep: AuthStep.REGISTER,
+  authInitialStep: AuthStep.LOGIN,
   currentOrganization: null,
   isAuthInitializing: true, // Start as true, will be set to false after initial auth check
 
-  setCurrentUser: (user) => set({ currentUser: user }),
+  setCurrentUser: (user) => {
+    syncStoredUser(user);
+    set({ currentUser: user });
+  },
   setSessionMode: (mode) => set({ sessionMode: mode }),
   setAuthInitialStep: (step) => set({ authInitialStep: step }),
   setCurrentOrganization: (org) => set({ currentOrganization: org }),
   setAuthInitializing: (value) => set({ isAuthInitializing: value }),
 
-  logout: () => {
+  logout: (options) => {
+    const shouldReload = options?.reload ?? true;
     // Get token BEFORE removing it (for API logout call)
     const token = localStorage.getItem('token');
 
@@ -50,6 +68,8 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
       sessionStorage.removeItem('isDemo');
       sessionStorage.removeItem('demo_session_id');
       sessionStorage.removeItem('demo_events');
+      sessionStorage.removeItem('attribution_ref');
+      sessionStorage.removeItem('attribution_invite');
     } catch {
       // ignore
     }
@@ -62,14 +82,12 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
       }).catch(() => {}); // Ignore errors
     }
 
-    // Force page refresh to clear all state
-    window.location.href = '/';
-
     set({
       // Auth Reset
       currentUser: null,
       currentOrganization: null,
       sessionMode: SessionMode.FREE,
+      authInitialStep: AuthStep.LOGIN,
 
       // UI Reset
       currentView: AppView.WELCOME,
@@ -96,7 +114,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         knowledgeSources: {
           pmoDocuments: true,
           projectData: true,
-          organizationData: false,
+          organizationData: true,
         },
         responseStyle: 'normal' as const,
         textToSpeech: false,
@@ -139,5 +157,9 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         step5Completed: false,
       },
     });
+
+    if (shouldReload) {
+      window.location.href = '/';
+    }
   },
 });

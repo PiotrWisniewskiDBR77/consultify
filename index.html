@@ -36,32 +36,52 @@
     (function () {
       // Prevent stale shells after deploy across all release-verified hosts.
       // (If a service worker was ever registered, it can keep serving an older shell.)
-      var host = location.hostname;
-      var isReleaseVerifiedHost =
+      var cacheSelfHealMarker = '__consultify_hard_reset_done_v4';
+      var host = String(location.hostname || '').toLowerCase();
+      var isCacheSensitiveHost =
         host === 'consultify.ai' ||
         host === 'www.consultify.ai' ||
         host === 'demo.consultify.ai' ||
         host === 'stage.consultinity.ai' ||
         host === 'stage.consultify.ai' ||
         host === 'staging.consultify.ai';
-      if (!isReleaseVerifiedHost) return;
+      if (!isCacheSensitiveHost) return;
+
+      var cleanupTasks = [];
 
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        cleanupTasks.push(navigator.serviceWorker.getRegistrations().then(function (registrations) {
           registrations.forEach(function (registration) {
             registration.unregister().catch(function () {});
           });
-        });
+        }));
       }
 
       if ('caches' in window) {
-        caches.keys().then(function (keys) {
+        cleanupTasks.push(caches.keys().then(function (keys) {
           keys.forEach(function (key) {
-            if (key.indexOf('consultify-') === 0) {
+            var isKnownAppCache =
+              key.indexOf('consultify-') === 0 ||
+              key.indexOf('workbox-') === 0 ||
+              key.indexOf('vite-') === 0 ||
+              key.indexOf('sw-precache-') === 0;
+            if (isKnownAppCache) {
               caches.delete(key).catch(function () {});
             }
           });
-        });
+        }));
+      }
+
+      try {
+        if (sessionStorage.getItem(cacheSelfHealMarker) !== '1') {
+          sessionStorage.setItem(cacheSelfHealMarker, '1');
+          window.__consultifyBlockAppBoot = true;
+          Promise.allSettled(cleanupTasks).finally(function () {
+            location.replace(location.href);
+          });
+        }
+      } catch (error) {
+        window.__consultifyBlockAppBoot = false;
       }
     })();
   </script>

@@ -1,8 +1,8 @@
-# UI/UX Canon v3 (Consultinity MVP) — SSOT
+# UI/UX Canon v3 (Consultify MVP) — legacy consolidated canon
 
-> **Status:** Draft (v3)  
+> **Status:** Legacy / consolidated context, subordinate to `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`  
 > **Cel:** Spisać w jednym miejscu **wszystkie kanoniczne decyzje UI/UX v3**, wynikające z feedbacku i “Phase 3” MVP.  
-> Ten dokument nie zastępuje szczegółowych standardów — on je **konsoliduje** i wskazuje SSOT.
+> Ten dokument nie zastępuje Golden Standard ani szczegółowych standardów — on historycznie konsoliduje decyzje v3 i wskazuje kontekst.
 
 ---
 
@@ -26,7 +26,8 @@ Kanon v3:
 - Tekst główny w light mode: `text-slate-900` / `text-navy-900`
 - Zakaz: “jasne tło semantyczne + jasny tekst tego samego koloru” (badge/chips)
 
-SSOT: `docs/ui-standards/00-foundation/visual-language.md`
+SSOT: `docs/ui-standards/00-foundation/visual-language.md`  
+SSOT (readability rules): `docs/ui-standards/00-foundation/light-mode-readability.md`
 
 ---
 
@@ -82,11 +83,13 @@ SSOT: `docs/ui-standards/03-modules/module-hub-standard.md`
 
 SSOT: `docs/ui-standards/01-shell-layout/app-topbar-standard-v3.md`
 
-### 5.2 Module Topbar (kontekstowy)
+### 5.2 Module Topbar + Menu 3 (kontekstowe)
 
-Kolejność elementów (prawa strona):
+Kolejność elementów w Module Topbar (prawa strona):
 
-**AI context → +New → View modes → Filters**
+**Area → Add → Tool → View → Filters** (wizualnie od prawej; w DOM zwykle `Filters → View → Tool → Add → Area`).
+
+Kontekstowe akcje AI dla otwartego dokumentu / narzędzia / sekcji nie są osobnym paskiem w canvasie. Muszą trafiać do **prawej strony Menu 3 / Command Row** obok aktywnych dynamicznych kart.
 
 SSOT: `docs/ui-standards/03-modules/module-hub-standard.md`
 
@@ -216,6 +219,7 @@ Kanon v3:
 
 - AI context jest **jednym z kluczowych** elementów Module Topbar i musi być czytelny “na pierwszy rzut oka”.
 - Jednocześnie nie może konkurować z Primary CTA (na ekranie nadal max 1 “kolorowy” element jako CTA).
+- Kontekstowe AI actions dla aktywnego dokumentu/narzędzia są w **prawym slocie Menu 3**, nie jako dodatkowy toolbar pod metadanymi ani w canvasie.
 
 Kontrakt wizualny (v3):
 

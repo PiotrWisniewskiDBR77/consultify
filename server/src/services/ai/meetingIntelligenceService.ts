@@ -135,7 +135,9 @@ Respond ONLY with valid JSON:
 
       return note;
     } catch (err: any) {
-      logger.warn(`[MeetingIntel] LLM generation failed, falling back to heuristic: ${err?.message}`);
+      logger.warn(
+        `[MeetingIntel] LLM generation failed, falling back to heuristic: ${err?.message}`
+      );
       return this.generateHeuristic(transcript, context);
     }
   }
@@ -144,7 +146,8 @@ Respond ONLY with valid JSON:
     const sentences = transcript.split(/[.!?]\s+/).filter((s) => s.length > 20);
 
     const actionPatterns = /(?:action|task|todo|do|assign|deadline|termin|zadanie|zrobic|zrobić)/i;
-    const decisionPatterns = /(?:decided|agreed|approved|decision|decyzja|zdecydowano|zatwierdzono)/i;
+    const decisionPatterns =
+      /(?:decided|agreed|approved|decision|decyzja|zdecydowano|zatwierdzono)/i;
 
     const actionItems = sentences
       .filter((s) => actionPatterns.test(s))
@@ -214,14 +217,18 @@ Respond ONLY with valid JSON:
     if (note.decisions.length > 0) {
       parts.push('', '## Decisions');
       for (const d of note.decisions) {
-        parts.push(`- **${d.decision}** (by ${d.decidedBy}${d.rationale ? ` — ${d.rationale}` : ''})`);
+        parts.push(
+          `- **${d.decision}** (by ${d.decidedBy}${d.rationale ? ` — ${d.rationale}` : ''})`
+        );
       }
     }
 
     if (note.actionItems.length > 0) {
       parts.push('', '## Action Items');
       for (const a of note.actionItems) {
-        parts.push(`- [ ] ${a.task} → **${a.owner}**${a.deadline ? ` (by ${a.deadline})` : ''} [${a.priority}]`);
+        parts.push(
+          `- [ ] ${a.task} → **${a.owner}**${a.deadline ? ` (by ${a.deadline})` : ''} [${a.priority}]`
+        );
       }
     }
 

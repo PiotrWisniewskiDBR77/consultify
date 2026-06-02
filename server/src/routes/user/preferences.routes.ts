@@ -10,6 +10,22 @@ import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
 
+const upsertUserPreference = async (userId: string, key: string, value: unknown) => {
+  const result = await dbRun(
+    `INSERT INTO user_preferences (user_id, key, value, updated_at)
+     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+     ON CONFLICT (user_id, key) DO UPDATE SET
+       value = EXCLUDED.value,
+       updated_at = CURRENT_TIMESTAMP`,
+    [userId, key, JSON.stringify(value)],
+    { fallback: false }
+  );
+
+  if (!result.success) {
+    throw new Error(result.error || `Failed to save preference ${key}`);
+  }
+};
+
 // GET /api/preferences - Get user preferences
 router.get(
   '/',
@@ -63,12 +79,12 @@ router.put(
     const userId = req.user?.id;
     const updates = req.body;
 
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     for (const [key, value] of Object.entries(updates)) {
-      await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at) 
-             VALUES (?, ?, ?, datetime('now'))`,
-        [userId, key, JSON.stringify(value)]
-      );
+      await upsertUserPreference(userId, key, value);
     }
 
     res.json({ success: true, message: 'Preferences updated' });
@@ -85,11 +101,11 @@ router.put(
 
     const uiPrefs = { theme, sidebarCollapsed, compactMode };
 
-    await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at) 
-         VALUES (?, 'ui', ?, datetime('now'))`,
-      [userId, JSON.stringify(uiPrefs)]
-    );
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    await upsertUserPreference(userId, 'ui', uiPrefs);
 
     res.json({ success: true, message: 'UI preferences updated' });
   })

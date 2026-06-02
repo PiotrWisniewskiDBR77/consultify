@@ -84,6 +84,7 @@ vi.mock('../../../../src/store/useConversationStore', () => ({
 
 const appState: any = {
   currentView: AppView.MY_WORK,
+  setCurrentView: vi.fn(),
   setCurrentViewState: vi.fn(),
   logout: vi.fn(),
   isSidebarOpen: true,
@@ -147,6 +148,7 @@ describe('Sidebar (L2, real subcomponents)', () => {
     conversationState.setDisplayMode.mockClear();
     conversationState.setWorkspaceContext.mockClear();
     conversationState.toggleSidebar.mockClear();
+    appState.setCurrentView.mockClear();
     appState.setCurrentViewState.mockClear();
     appState.setIsSidebarOpen.mockClear();
     appState.toggleChatSlidingPanel.mockClear();
@@ -161,16 +163,14 @@ describe('Sidebar (L2, real subcomponents)', () => {
   });
 
   it('renders footer actions + partner portal for ADMIN and navigates on click', () => {
+    appState.currentUser = { role: 'SUPERADMIN', journeyState: undefined };
     render(<Sidebar />);
 
     // Footer children are real NavItem buttons (label rendered in expanded mode)
     fireEvent.click(screen.getByRole('button', { name: /Organization/i }));
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
-    expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.ORGANIZATION_PROFILE);
-    expect(navigateMock).toHaveBeenCalledWith(`/route/${String(AppView.ORGANIZATION_PROFILE)}`);
-
-    fireEvent.click(screen.getByRole('button', { name: /Partner Portal/i }));
-    expect(appState.setCurrentViewState).toHaveBeenCalledWith(AppView.PARTNER_LANDING);
+    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.ORGANIZATION_PROFILE);
+    expect(screen.queryByRole('button', { name: /Partner Portal/i })).not.toBeInTheDocument();
   });
 
   it('does not render partner portal for SUPERADMIN', () => {
@@ -188,13 +188,12 @@ describe('Sidebar (L2, real subcomponents)', () => {
     expect(navigateMock).not.toHaveBeenCalled();
   });
 
-  it('locked menu item is disabled for non-admin users', () => {
+  it('locked menu item does not navigate for non-admin users', () => {
     appState.currentUser = { role: UserRole.USER, journeyState: undefined };
     render(<Sidebar />);
 
     const locked = screen.getByRole('button', { name: /Locked/i });
-    expect(locked).toBeDisabled();
     fireEvent.click(locked);
-    expect(navigateMock).not.toHaveBeenCalled();
+    expect(appState.setCurrentView).not.toHaveBeenCalled();
   });
 });

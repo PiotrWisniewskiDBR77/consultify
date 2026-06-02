@@ -1,27 +1,9 @@
-import {
-  ArrowLeft,
-  Brain,
-  Building2,
-  LayoutDashboard,
-  FileText,
-  Shield,
-  Users,
-  Wallet,
-  Webhook,
-} from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '../../utils/cn';
 
-export type AdminSettingsSection =
-  | 'overview'
-  | 'people'
-  | 'security'
-  | 'billing'
-  | 'ai'
-  | 'integrations'
-  | 'audit'
-  | 'operations';
+export type AdminSettingsSection = 'people' | 'billing' | 'operations';
 
 interface AdminSettingsSidebarProps {
   activeSection: AdminSettingsSection;
@@ -37,52 +19,10 @@ const NAV_ITEMS: Array<{
   icon: React.ElementType;
 }> = [
   {
-    id: 'overview',
-    label: 'Overview',
-    description: 'Enterprise tenant posture and command center summary',
-    icon: LayoutDashboard,
-  },
-  {
     id: 'people',
-    label: 'People & Access',
-    description: 'Membership, roles, ownership, and access operations',
+    label: 'Team & Access',
+    description: 'Members, roles, ownership, and team invite codes',
     icon: Users,
-  },
-  {
-    id: 'security',
-    label: 'Security & Identity',
-    description: 'MFA, SSO, API access, collaboration, delegated IAM',
-    icon: Shield,
-  },
-  {
-    id: 'billing',
-    label: 'Billing & FinOps',
-    description: 'Subscriptions, limits, usage, cost posture',
-    icon: Wallet,
-  },
-  {
-    id: 'ai',
-    label: 'AI Governance',
-    description: 'AI policy, model posture, operations, token economy',
-    icon: Brain,
-  },
-  {
-    id: 'integrations',
-    label: 'Integrations & Sync',
-    description: 'Connector health, ownership, remediation',
-    icon: Webhook,
-  },
-  {
-    id: 'audit',
-    label: 'Audit Log',
-    description: 'Audit, risk visibility, and admin evidence trail',
-    icon: FileText,
-  },
-  {
-    id: 'operations',
-    label: 'Organization Ops',
-    description: 'Domains, branding, competencies, tenant operations',
-    icon: Building2,
   },
 ];
 
@@ -109,9 +49,9 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             Back
           </button>
         )}
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Enterprise Admin</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Team Admin</h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Unified tenant-admin shell for people, security, billing, AI, integrations, and risk.
+          Manage team access and commercial controls for your organization.
         </p>
       </div>
 
@@ -127,7 +67,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
               className={cn(
                 'w-full rounded-xl border px-3 py-3 text-left transition',
                 isActive
-                  ? 'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-100'
+                  ? 'border-primary-200 bg-primary-50 text-primary-900 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-100'
                   : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 dark:text-slate-300 dark:hover:border-white/10 dark:hover:bg-white/5'
               )}
             >
@@ -136,7 +76,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
                   className={cn(
                     'rounded-lg p-2',
                     isActive
-                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300'
+                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300'
                       : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400'
                   )}
                 >

@@ -202,7 +202,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <UserCircle size={28} className="text-purple-500" />
+            <UserCircle size={28} className="text-primary-500" />
             {t('settings.profile.professional.title', 'Professional Profile')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -215,7 +215,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
@@ -235,7 +235,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             'Tell us about yourself, your experience, and what you do...'
           )}
           rows={6}
-          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none resize-none"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none resize-none"
         />
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
           {bio.length} / 2000 {t('settings.profile.professional.characters', 'characters')}
@@ -252,12 +252,12 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
           {skills.map((skill, index) => (
             <span
               key={index}
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-lg text-sm font-medium"
             >
               {skill}
               <button
                 onClick={() => removeSkill(skill)}
-                className="hover:text-purple-900 dark:hover:text-purple-100"
+                className="hover:text-primary-900 dark:hover:text-primary-100"
               >
                 <X size={14} />
               </button>
@@ -271,11 +271,11 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
             onChange={(e) => setNewSkill(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addSkill()}
             placeholder={t('settings.profile.professional.addSkill', 'Add a skill...')}
-            className="flex-1 px-4 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+            className="flex-1 px-4 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
           />
           <button
             onClick={addSkill}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
           </button>
@@ -291,7 +291,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
           </h3>
           <button
             onClick={addCertification}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             {t('settings.profile.professional.addCert', 'Add Certification')}
@@ -330,7 +330,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
           </h3>
           <button
             onClick={addEducation}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             {t('settings.profile.professional.addEdu', 'Add Education')}
@@ -369,7 +369,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
           </h3>
           <button
             onClick={addWorkExperience}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors"
           >
             <Plus size={16} />
             {t('settings.profile.professional.addWork', 'Add Experience')}
@@ -462,7 +462,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
 }) => {
   if (isEditing) {
     return (
-      <div className="p-4 border border-purple-200 dark:border-purple-500/30 rounded-lg bg-purple-50 dark:bg-purple-500/5">
+      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
@@ -509,7 +509,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
           >
             Save
           </button>
@@ -521,7 +521,7 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -587,7 +587,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
 }) => {
   if (isEditing) {
     return (
-      <div className="p-4 border border-purple-200 dark:border-purple-500/30 rounded-lg bg-purple-50 dark:bg-purple-500/5">
+      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
@@ -644,7 +644,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
           >
             Save
           </button>
@@ -656,7 +656,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -712,7 +712,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
 }) => {
   if (isEditing) {
     return (
-      <div className="p-4 border border-purple-200 dark:border-purple-500/30 rounded-lg bg-purple-50 dark:bg-purple-500/5">
+      <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
@@ -769,7 +769,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
         <div className="flex gap-2 mt-4">
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"
           >
             Save
           </button>
@@ -781,7 +781,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
           </button>
           <button
             onClick={onDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm ml-auto"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm ml-auto"
           >
             <Trash2 size={16} />
           </button>
@@ -843,7 +843,7 @@ const SocialLinkInput: React.FC<SocialLinkInputProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         />
       </div>
     </div>

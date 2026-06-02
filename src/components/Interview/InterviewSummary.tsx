@@ -46,8 +46,8 @@ const SUMMARY_CATEGORY_CONFIG: Record<
   digital: {
     label: 'Digital',
     icon: Monitor,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-100 dark:bg-primary-900/30',
   },
   people: {
     label: 'People',
@@ -60,6 +60,12 @@ const SUMMARY_CATEGORY_CONFIG: Record<
     icon: DollarSign,
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+  },
+  general: {
+    label: 'General',
+    icon: CheckCircle,
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-100 dark:bg-slate-900/30',
   },
 };
 
@@ -101,7 +107,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
   return (
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+      <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20">
         <h3 className="font-bold text-navy-900 dark:text-white">Interview Summary</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           {completedCategories.length} of {CATEGORY_KEYS.length} categories completed
@@ -218,7 +224,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
           <div className="mt-3 flex items-center gap-2">
             <div className="flex-1 h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-purple-500 rounded-full"
+                className="h-full bg-primary-500 rounded-full"
                 style={{ width: `${context.completenessPercent}%` }}
               />
             </div>
@@ -244,7 +250,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
           </button>
           <button
             onClick={onExportToAssessment}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <ExternalLink size={14} />
             Export to Assessment

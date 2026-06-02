@@ -7,7 +7,6 @@ import {
   AlertCircle,
   AlertTriangle,
   CheckCircle,
-  Eye,
   Filter,
   Globe,
   Loader2,
@@ -19,13 +18,14 @@ import {
   Shield,
   Trash2,
   Unlock,
-  Upload,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface Threat {
   id: string;
@@ -56,6 +56,19 @@ interface ThreatStats {
   avgReputation: number;
 }
 
+interface ThreatDataSnapshot {
+  threats: Threat[];
+  stats: ThreatStats;
+}
+
+interface ThreatFilters {
+  threatType?: string;
+  threatLevel?: string;
+  isBlocked?: boolean;
+  ipAddress?: string;
+  domain?: string;
+}
+
 const THREAT_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 const THREAT_TYPES = [
   { value: 'malicious_ip', label: 'Malicious IP' },
@@ -71,10 +84,95 @@ const THREAT_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const normalizeStats = (value: unknown): ThreatStats => {
+  const payload = getObjectPayload(value);
+  const statsValue = isRecord(payload) ? (payload as Partial<ThreatStats>) : {};
+  return {
+    totalThreats: safeNumber(statsValue.totalThreats),
+    blockedCount: safeNumber(statsValue.blockedCount),
+    byThreatLevel: {
+      critical: safeNumber(statsValue.byThreatLevel?.critical),
+      high: safeNumber(statsValue.byThreatLevel?.high),
+      medium: safeNumber(statsValue.byThreatLevel?.medium),
+      low: safeNumber(statsValue.byThreatLevel?.low),
+    },
+    ipCount: safeNumber(statsValue.ipCount),
+    domainCount: safeNumber(statsValue.domainCount),
+    avgReputation: safeNumber(statsValue.avgReputation),
+  };
+};
+
+const getCreatedThreatId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const threat = isRecord(result.threat) ? result.threat : null;
+  return String(
+    result.id ||
+      threat?.id ||
+      data?.id ||
+      (isRecord(data?.threat) ? data.threat.id : '') ||
+      nestedData?.id ||
+      (isRecord(nestedData?.threat) ? nestedData.threat.id : '') ||
+      ''
+  );
+};
+
 const ThreatIntelligenceView: React.FC = () => {
   const [threats, setThreats] = useState<Threat[]>([]);
   const [stats, setStats] = useState<ThreatStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     threatType: '',
@@ -88,7 +186,13 @@ const ThreatIntelligenceView: React.FC = () => {
   const [showCheckModal, setShowCheckModal] = useState(false);
   const [checkType, setCheckType] = useState<'ip' | 'domain'>('ip');
   const [checkValue, setCheckValue] = useState('');
-  const [checkResult, setCheckResult] = useState<any>(null);
+  const [checkResult, setCheckResult] = useState<{
+    found?: boolean;
+    threatLevel: string;
+    reputationScore: number;
+    isBlocked?: boolean;
+    description?: string;
+  } | null>(null);
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -101,16 +205,13 @@ const ThreatIntelligenceView: React.FC = () => {
     description: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, [filters.threatType, filters.threatLevel, filters.isBlocked]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       setError(null);
 
-      const params: any = {};
+      const params: ThreatFilters = {};
       if (filters.threatType) params.threatType = filters.threatType;
       if (filters.threatLevel) params.threatLevel = filters.threatLevel;
       if (filters.isBlocked) params.isBlocked = filters.isBlocked === 'true';
@@ -122,30 +223,61 @@ const ThreatIntelligenceView: React.FC = () => {
         Api.getThreatStats(),
       ]);
 
-      setThreats(threatsData);
-      setStats(statsData as any);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load threats');
-      toast.error(err.message || 'Failed to load threats');
+      if (!hasListShape(threatsData, ['threats', 'items'])) {
+        throw new Error('Threat intelligence response was not a list');
+      }
+      const threatsSnapshot = getListPayload<Threat>(threatsData, ['threats', 'items']);
+      const statsSnapshot = normalizeStats(statsData);
+      setThreats(threatsSnapshot);
+      setStats(statsSnapshot);
+      return {
+        threats: threatsSnapshot,
+        stats: statsSnapshot,
+      } satisfies ThreatDataSnapshot;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load threats');
+      setLoadError(message);
+      setThreats([]);
+      setStats(null);
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    filters.domain,
+    filters.ipAddress,
+    filters.isBlocked,
+    filters.threatLevel,
+    filters.threatType,
+  ]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreate = async () => {
     try {
       setSaving(true);
-      await Api.addThreat({
+      setError(null);
+      const result = await Api.addThreat({
         threatType: formData.threatType,
-        source: formData.source,
         ipAddress: formData.ipAddress || undefined,
         domain: formData.domain || undefined,
-        reputationScore: formData.reputationScore,
         threatLevel: formData.threatLevel,
+        source: formData.source,
+        reputationScore: formData.reputationScore,
         description: formData.description,
       });
+      const createdId = getCreatedThreatId(result);
+      if (!createdId) {
+        throw new Error('Threat creation response was incomplete');
+      }
+      const refreshed = await loadData();
+      if (!refreshed?.threats.some((threat) => threat.id === createdId)) {
+        throw new Error('Threat creation was not confirmed by the server');
+      }
       toast.success('Threat added successfully');
-      await loadData();
       setShowCreateModal(false);
       setFormData({
         threatType: 'malicious_ip',
@@ -156,8 +288,10 @@ const ThreatIntelligenceView: React.FC = () => {
         threatLevel: 'MEDIUM',
         description: '',
       });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to add threat');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to add threat');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -165,35 +299,50 @@ const ThreatIntelligenceView: React.FC = () => {
 
   const handleBlock = async (threatId: string) => {
     try {
+      setError(null);
       await Api.blockThreat(threatId);
+      const refreshed = await loadData();
+      if (!refreshed?.threats.some((threat) => threat.id === threatId && threat.isBlocked)) {
+        throw new Error('Threat block was not confirmed by the server');
+      }
       toast.success('Threat blocked successfully');
-      setThreats((prev) => prev.map((t) => (t.id === threatId ? { ...t, isBlocked: true } : t)));
-      loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to block threat');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to block threat');
+      setError(message);
+      toast.error(message);
     }
   };
 
   const handleUnblock = async (threatId: string) => {
     try {
+      setError(null);
       await Api.unblockThreat(threatId);
+      const refreshed = await loadData();
+      if (!refreshed?.threats.some((threat) => threat.id === threatId && !threat.isBlocked)) {
+        throw new Error('Threat unblock was not confirmed by the server');
+      }
       toast.success('Threat unblocked successfully');
-      setThreats((prev) => prev.map((t) => (t.id === threatId ? { ...t, isBlocked: false } : t)));
-      loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to unblock threat');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to unblock threat');
+      setError(message);
+      toast.error(message);
     }
   };
 
   const handleDelete = async (threatId: string) => {
     if (!confirm('Are you sure you want to delete this threat?')) return;
     try {
+      setError(null);
       await Api.deleteThreat(threatId);
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.threats.some((threat) => threat.id === threatId)) {
+        throw new Error('Threat deletion was not confirmed by the server');
+      }
       toast.success('Threat deleted successfully');
-      setThreats((prev) => prev.filter((t) => t.id !== threatId));
-      loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete threat');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to delete threat');
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -207,8 +356,10 @@ const ThreatIntelligenceView: React.FC = () => {
           ? await Api.checkIPReputation(checkValue)
           : await Api.checkDomainReputation(checkValue);
       setCheckResult(result);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to check reputation');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to check reputation');
+      setError(message);
+      toast.error(message);
     } finally {
       setChecking(false);
     }
@@ -218,14 +369,14 @@ const ThreatIntelligenceView: React.FC = () => {
     switch (level) {
       case 'CRITICAL':
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-red-600/20 text-red-400 rounded text-xs font-medium">
+          <span className="flex items-center gap-1 px-2 py-1 bg-rose-600/20 text-rose-400 rounded text-xs font-medium">
             <AlertCircle className="w-3 h-3" />
             CRITICAL
           </span>
         );
       case 'HIGH':
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-orange-500/20 text-orange-400 rounded text-xs font-medium">
+          <span className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs font-medium">
             <AlertTriangle className="w-3 h-3" />
             HIGH
           </span>
@@ -246,19 +397,20 @@ const ThreatIntelligenceView: React.FC = () => {
         );
       default:
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded text-xs font-medium">
-            <CheckCircle className="w-3 h-3" />
-            LOW
+          <span className="flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs font-medium">
+            <AlertTriangle className="w-3 h-3" />
+            Unknown
           </span>
         );
     }
   };
 
   const getReputationColor = (score: number) => {
-    if (score >= 80) return 'text-emerald-400';
-    if (score >= 50) return 'text-amber-400';
-    if (score >= 20) return 'text-orange-400';
-    return 'text-red-400';
+    const safeScore = safeNumber(score);
+    if (safeScore >= 80) return 'text-emerald-400';
+    if (safeScore >= 50) return 'text-amber-400';
+    if (safeScore >= 20) return 'text-amber-400';
+    return 'text-rose-400';
   };
 
   const getThreatTypeLabel = (type: string) => {
@@ -276,89 +428,93 @@ const ThreatIntelligenceView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <Shield className="w-5 h-5 text-indigo-500" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Threats</p>
-              <p className="text-xl font-semibold">{stats?.totalThreats || 0}</p>
-            </div>
-          </div>
+      {loadError ? (
+        <Card variant="bordered" className="p-6">
+          <DegradedState title="Threat intelligence unavailable" description={loadError} />
         </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500/10 rounded-lg">
+                <Shield className="w-5 h-5 text-indigo-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Total Threats</p>
+                <p className="text-xl font-semibold">{stats?.totalThreats || 0}</p>
+              </div>
+            </div>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 rounded-lg">
-              <Lock className="w-5 h-5 text-red-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rose-500/10 rounded-lg">
+                <Lock className="w-5 h-5 text-rose-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Blocked</p>
+                <p className="text-xl font-semibold">{stats?.blockedCount || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Blocked</p>
-              <p className="text-xl font-semibold">{stats?.blockedCount || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-600/10 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rose-600/10 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
+                <p className="text-xl font-semibold">{stats?.byThreatLevel.critical || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
-              <p className="text-xl font-semibold">{stats?.byThreatLevel.critical || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-500/10 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-orange-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">High</p>
+                <p className="text-xl font-semibold">{stats?.byThreatLevel.high || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">High</p>
-              <p className="text-xl font-semibold">{stats?.byThreatLevel.high || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-violet-500/10 rounded-lg">
-              <Monitor className="w-5 h-5 text-violet-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary-500/10 rounded-lg">
+                <Monitor className="w-5 h-5 text-primary-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">IPs</p>
+                <p className="text-xl font-semibold">{stats?.ipCount || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">IPs</p>
-              <p className="text-xl font-semibold">{stats?.ipCount || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-cyan-500/10 rounded-lg">
-              <Globe className="w-5 h-5 text-cyan-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <Globe className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Domains</p>
+                <p className="text-xl font-semibold">{stats?.domainCount || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Domains</p>
-              <p className="text-xl font-semibold">{stats?.domainCount || 0}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
-        <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+        <Card variant="bordered" className="p-4 border-rose-500/30 bg-rose-500/5">
+          <div role="alert" className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
-            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-rose-300">
               Dismiss
             </button>
           </div>
@@ -371,6 +527,7 @@ const ThreatIntelligenceView: React.FC = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
+            disabled={!!loadError}
             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
               showFilters
                 ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300'
@@ -382,7 +539,7 @@ const ThreatIntelligenceView: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCheckModal(true)}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-500 hover:bg-violet-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
           >
             <Search className="w-4 h-4" />
             Check Reputation
@@ -397,7 +554,8 @@ const ThreatIntelligenceView: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+            disabled={!!loadError}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-rose-500 hover:bg-rose-600 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add Threat
@@ -416,6 +574,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <select
                 value={filters.threatType}
                 onChange={(e) => setFilters({ ...filters, threatType: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Types</option>
@@ -433,6 +592,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <select
                 value={filters.threatLevel}
                 onChange={(e) => setFilters({ ...filters, threatLevel: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Levels</option>
@@ -450,6 +610,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <select
                 value={filters.isBlocked}
                 onChange={(e) => setFilters({ ...filters, isBlocked: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All</option>
@@ -466,6 +627,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 value={filters.ipAddress}
                 onChange={(e) => setFilters({ ...filters, ipAddress: e.target.value })}
                 placeholder="Search IP..."
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               />
             </div>
@@ -478,6 +640,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 value={filters.domain}
                 onChange={(e) => setFilters({ ...filters, domain: e.target.value })}
                 placeholder="Search domain..."
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               />
             </div>
@@ -487,123 +650,132 @@ const ThreatIntelligenceView: React.FC = () => {
 
       {/* Threats Table */}
       <CardWithHeader title="Threats" subtitle={`${threats.length} threats`}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Type
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  IP / Domain
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Level
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Reputation
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Last Seen
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {threats.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                    No threats found
-                  </td>
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Threat list unavailable" description={loadError} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Type
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    IP / Domain
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Level
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Reputation
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Last Seen
+                  </th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                threats.map((threat) => (
-                  <tr
-                    key={threat.id}
-                    className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
-                        {getThreatTypeLabel(threat.threatType)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        {threat.ipAddress && (
-                          <span className="flex items-center gap-1 text-sm">
-                            <Monitor className="w-3 h-3 text-slate-500 dark:text-slate-500" />
-                            {threat.ipAddress}
-                          </span>
-                        )}
-                        {threat.domain && (
-                          <span className="flex items-center gap-1 text-sm">
-                            <Globe className="w-3 h-3 text-slate-500 dark:text-slate-500" />
-                            {threat.domain}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">{getThreatLevelBadge(threat.threatLevel)}</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`font-semibold ${getReputationColor(threat.reputationScore)}`}
-                      >
-                        {threat.reputationScore}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {threat.isBlocked ? (
-                        <span className="px-2 py-1 bg-red-500/10 text-red-400 rounded text-xs">
-                          Blocked
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
-                          Active
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-slate-300">
-                      {new Date(threat.lastSeen).toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {threat.isBlocked ? (
-                          <button
-                            onClick={() => handleUnblock(threat.id)}
-                            className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                            title="Unblock"
-                          >
-                            <Unlock className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleBlock(threat.id)}
-                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Block"
-                          >
-                            <Lock className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(threat.id)}
-                          className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {threats.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-slate-600 dark:text-slate-400">
+                      No threats found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  threats.map((threat) => (
+                    <tr
+                      key={threat.id}
+                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
+                          {getThreatTypeLabel(threat.threatType)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          {threat.ipAddress && (
+                            <span className="flex items-center gap-1 text-sm">
+                              <Monitor className="w-3 h-3 text-slate-500 dark:text-slate-500" />
+                              {threat.ipAddress}
+                            </span>
+                          )}
+                          {threat.domain && (
+                            <span className="flex items-center gap-1 text-sm">
+                              <Globe className="w-3 h-3 text-slate-500 dark:text-slate-500" />
+                              {threat.domain}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">{getThreatLevelBadge(threat.threatLevel)}</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`font-semibold ${getReputationColor(threat.reputationScore)}`}
+                        >
+                          {safeNumber(threat.reputationScore)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        {threat.isBlocked ? (
+                          <span className="px-2 py-1 bg-rose-500/10 text-rose-400 rounded text-xs">
+                            Blocked
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+                            Active
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-slate-300">
+                        {formatDateTime(threat.lastSeen)}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {threat.isBlocked ? (
+                            <button
+                              onClick={() => handleUnblock(threat.id)}
+                              aria-label={`Unblock threat ${threat.id}`}
+                              className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                              title="Unblock"
+                            >
+                              <Unlock className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleBlock(threat.id)}
+                              aria-label={`Block threat ${threat.id}`}
+                              className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                              title="Block"
+                            >
+                              <Lock className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(threat.id)}
+                            aria-label={`Delete threat ${threat.id}`}
+                            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardWithHeader>
 
       {/* Create Threat Modal */}
@@ -721,7 +893,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <button
                 onClick={handleCreate}
                 disabled={saving || (!formData.ipAddress && !formData.domain)}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-red-500 hover:bg-red-600 rounded-lg disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-rose-500 hover:bg-rose-600 rounded-lg disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -796,7 +968,7 @@ const ThreatIntelligenceView: React.FC = () => {
                       <span
                         className={`font-semibold ${getReputationColor(checkResult.reputationScore)}`}
                       >
-                        {checkResult.reputationScore}
+                        {safeNumber(checkResult.reputationScore)}
                       </span>
                     </div>
                     {checkResult.found && (
@@ -840,7 +1012,7 @@ const ThreatIntelligenceView: React.FC = () => {
               <button
                 onClick={handleCheck}
                 disabled={checking || !checkValue}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-500 hover:bg-violet-600 rounded-lg disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-primary-500 hover:bg-primary-600 rounded-lg disabled:opacity-50"
               >
                 {checking ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

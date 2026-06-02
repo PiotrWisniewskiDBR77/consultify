@@ -76,7 +76,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   children,
 }) => {
   const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const isPolish = i18n.language?.startsWith('pl');
   const [menuOpen, setMenuOpen] = useState(false);
   const resolvedText = text ?? detailsText?.join('\n') ?? '';
 
@@ -167,7 +167,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
                               size={12}
                               className={
                                 action.id === 'expand' || action.id === 'summarize'
-                                  ? 'text-purple-500'
+                                  ? 'text-primary-500'
                                   : ''
                               }
                             />

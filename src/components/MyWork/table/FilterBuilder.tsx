@@ -163,7 +163,7 @@ export interface FilterBuilderProps {
 // ── Value Input Components ───────────────────────────────────────────────────
 
 const inputCls =
-  'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30';
+  'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30';
 
 interface ValueInputProps {
   field: TablePlatformField;
@@ -325,7 +325,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 <span
                   className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
                     isSelected
-                      ? 'bg-violet-500 border-violet-500'
+                      ? 'bg-primary-500 border-primary-500'
                       : 'border-slate-300 dark:border-navy-600'
                   }`}
                 >
@@ -450,7 +450,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             <button
               type="button"
               onClick={toggleLogic}
-              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
             >
               {filters.logic.toUpperCase()}
             </button>
@@ -461,7 +461,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             <button
               type="button"
               onClick={clearAll}
-              className="text-[10px] text-slate-400 hover:text-red-500 transition-colors px-1"
+              className="text-[10px] text-slate-400 hover:text-rose-500 transition-colors px-1"
             >
               {isPl ? 'Wyczyść' : 'Clear all'}
             </button>
@@ -506,7 +506,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={rule.fieldId}
                   onChange={(e) => handleFieldChange(idx, e.target.value)}
-                  className="flex-1 min-w-[100px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                  className="flex-1 min-w-[100px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
                 >
                   {filterableFields.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -519,7 +519,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={rule.operator}
                   onChange={(e) => handleOperatorChange(idx, e.target.value, fieldType)}
-                  className="w-32 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                  className="w-32 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
                 >
                   {operators.map((op) => (
                     <option key={op.value} value={op.value}>
@@ -546,7 +546,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               <button
                 type="button"
                 onClick={() => removeRule(idx)}
-                className="p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex-shrink-0 mt-0.5"
+                className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex-shrink-0 mt-0.5"
               >
                 <Trash2 size={12} />
               </button>
@@ -560,7 +560,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
         <button
           type="button"
           onClick={addRule}
-          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 px-2 py-1.5 rounded-lg transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 px-2 py-1.5 rounded-lg transition-colors"
         >
           <Plus size={12} />
           {isPl ? 'Dodaj filtr' : 'Add filter'}

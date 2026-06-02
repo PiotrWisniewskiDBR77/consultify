@@ -169,11 +169,11 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
             icon={<Filter size={14} />}
-            className={cn(activeCount > 0 && 'border-violet-500 text-violet-600')}
+            className={cn(activeCount > 0 && 'border-primary-500 text-primary-600')}
           >
             {t('admin.filters.addFilter', 'Add filter')}
             {activeCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full">
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
                 {activeCount}
               </span>
             )}
@@ -204,7 +204,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                         className={cn(
                           'w-full flex items-center justify-between px-2 py-2 text-sm rounded hover:bg-slate-50 dark:hover:bg-navy-700',
                           hasValue
-                            ? 'text-violet-600 dark:text-violet-400'
+                            ? 'text-primary-600 dark:text-primary-400'
                             : 'text-navy-900 dark:text-white'
                         )}
                       >
@@ -230,13 +230,13 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg text-sm"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg text-sm"
             >
               <span className="font-medium">{field.label}:</span>
               <span className="max-w-[150px] truncate">{formatFilterValue(filter, field)}</span>
               <button
                 onClick={() => removeFilter(filter.fieldId)}
-                className="ml-1 p-0.5 hover:bg-violet-200 dark:hover:bg-violet-800 rounded"
+                className="ml-1 p-0.5 hover:bg-primary-200 dark:hover:bg-primary-800 rounded"
               >
                 <X size={12} />
               </button>
@@ -344,7 +344,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             value={presetName}
             onChange={(e) => setPresetName(e.target.value)}
             placeholder={t('admin.filters.presetNamePlaceholder', 'e.g., Active users this month')}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
           />
 
           <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
@@ -357,7 +357,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                 return (
                   <span
                     key={filter.fieldId}
-                    className="px-2 py-0.5 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded"
+                    className="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded"
                   >
                     {field?.label}
                   </span>
@@ -416,7 +416,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
           <select
             value={localValue as string}
             onChange={(e) => setLocalValue(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
           >
             <option value="">{field.placeholder || 'Select...'}</option>
             {field.options.map((opt) => (
@@ -447,7 +447,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
                         setLocalValue((localValue as string[]).filter((v) => v !== opt.value));
                       }
                     }}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
                   />
                   <span className="text-sm text-navy-900 dark:text-white">{opt.label}</span>
                 </label>
@@ -463,7 +463,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
             value={localValue as string}
             onChange={(e) => setLocalValue(e.target.value)}
             placeholder={field.placeholder}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
           />
         )}
 
@@ -473,7 +473,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
             type="date"
             value={localValue as string}
             onChange={(e) => setLocalValue(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
           />
         )}
 
@@ -491,7 +491,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
                   end: typeof localValue === 'object' && 'end' in localValue ? localValue.end : '',
                 })
               }
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
             />
             <span className="text-slate-400 dark:text-slate-500">-</span>
             <input
@@ -504,7 +504,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
                   end: e.target.value,
                 })
               }
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-violet-500"
+              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
             />
           </div>
         )}

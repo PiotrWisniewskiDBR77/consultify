@@ -119,7 +119,7 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 py-3 text-sm text-red-500">
+      <div className="flex items-center gap-2 py-3 text-sm text-rose-500">
         <AlertCircle className="w-4 h-4" />
         {error}
       </div>
@@ -171,15 +171,15 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
 
       {/* Branch Trace (for BRANCH/CHECK steps) */}
       {isBranchStep && evidence.branch_trace && (
-        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
+        <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-3 border border-primary-200 dark:border-primary-800">
           <div className="flex items-center justify-between mb-2">
-            <h5 className="text-xs font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-1.5 uppercase">
+            <h5 className="text-xs font-semibold text-primary-700 dark:text-primary-400 flex items-center gap-1.5 uppercase">
               <GitBranch className="w-3.5 h-3.5" />
               Branch Evaluation
             </h5>
             <button
               onClick={() => setShowRawTrace(!showRawTrace)}
-              className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+              className="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
             >
               {showRawTrace ? 'Hide' : 'Show'} trace
               {showRawTrace ? (
@@ -195,7 +195,7 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
               <CheckCircle2 className="w-4 h-4 text-green-500" />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Matched:{' '}
-                <code className="text-xs bg-purple-100 dark:bg-purple-800 px-1.5 py-0.5 rounded">
+                <code className="text-xs bg-primary-100 dark:bg-primary-800 px-1.5 py-0.5 rounded">
                   {evidence.branch_trace.matched_rule}
                 </code>
               </span>
@@ -209,7 +209,7 @@ const PlaybookStepEvidence: React.FC<PlaybookStepEvidenceProps> = ({
           )}
 
           {showRawTrace && evidence.branch_trace.evaluation_context && (
-            <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-700">
+            <div className="mt-2 pt-2 border-t border-primary-200 dark:border-primary-700">
               <pre className="text-xs text-gray-600 dark:text-gray-400 font-mono overflow-x-auto">
                 {JSON.stringify(evidence.branch_trace.evaluation_context, null, 2)}
               </pre>

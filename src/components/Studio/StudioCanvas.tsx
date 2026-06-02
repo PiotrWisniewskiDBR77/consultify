@@ -172,10 +172,10 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       processStep: '#3b82f6',
       decision: '#f59e0b',
       startEnd: '#10b981',
-      textNode: '#8b5cf6',
+      textNode: '#6366f1',
       mindmapNode: '#ec4899',
       raciCell: '#6366f1',
-      orgUnit: '#14b8a6',
+      orgUnit: '#3b82f6',
       swimlane: '#64748b',
     };
     return colors[node.type || 'processStep'] || '#64748b';

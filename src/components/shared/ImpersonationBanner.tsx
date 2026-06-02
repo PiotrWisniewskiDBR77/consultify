@@ -58,7 +58,10 @@ export const ImpersonationBanner: React.FC = () => {
           <Eye size={16} />
         </div>
         <span className="text-sm font-medium">
-          {t('impersonation.banner', 'You are in a read-only impersonation session (max 30 minutes)')}
+          {t(
+            'impersonation.banner',
+            'You are in a read-only impersonation session (max 30 minutes)'
+          )}
         </span>
         {payload.name && (
           <span className="text-xs bg-amber-600 px-2 py-0.5 rounded">

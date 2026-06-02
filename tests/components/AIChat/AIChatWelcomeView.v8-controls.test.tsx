@@ -91,6 +91,15 @@ vi.mock('../../../src/hooks/useUniversalVoice', () => ({
   }),
 }));
 
+vi.mock('../../../src/contexts/TeresaVoiceContext', () => ({
+  useTeresaVoiceContext: () => ({
+    isVoiceActive: false,
+    isMuted: false,
+    handleVoiceToggle: vi.fn(),
+    toggleMute: vi.fn(),
+  }),
+}));
+
 vi.mock('../../../src/hooks/useActionHandler', () => ({
   ACTION_TYPES: {},
   useActionHandler: () => ({

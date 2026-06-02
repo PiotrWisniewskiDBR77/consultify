@@ -106,7 +106,7 @@ const RecordChip = React.memo<{
       e.stopPropagation();
       onClick(record.id);
     }}
-    className="truncate text-[9px] font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:text-violet-600 dark:hover:text-violet-400 px-1.5 py-0.5 rounded bg-slate-50 dark:bg-navy-800/50 mb-0.5 transition-colors"
+    className="truncate text-[9px] font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 px-1.5 py-0.5 rounded bg-slate-50 dark:bg-navy-800/50 mb-0.5 transition-colors"
     style={color ? { borderLeft: `2px solid ${color}` } : undefined}
   >
     {record.data?.label || record.id}
@@ -270,7 +270,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </button>
           <button
             onClick={goToday}
-            className="px-2 py-1 rounded-lg text-[10px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+            className="px-2 py-1 rounded-lg text-[10px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
           >
             {isPl ? 'Dziś' : 'Today'}
           </button>
@@ -284,7 +284,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               onClick={() => setMode(m)}
               className={`px-2 py-1 text-[10px] font-medium rounded-md transition-colors ${
                 mode === m
-                  ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
+                  ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
             >
@@ -319,7 +319,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 className={`min-h-[60px] rounded-lg border p-1 transition-colors ${
                   cell.isCurrentMonth
                     ? isToday
-                      ? 'border-violet-400/60 bg-violet-50/50 dark:bg-violet-500/5'
+                      ? 'border-primary-400/60 bg-primary-50/50 dark:bg-primary-500/5'
                       : 'border-slate-200/60 dark:border-navy-700/40 bg-white dark:bg-navy-900/50'
                     : 'border-slate-100/40 dark:border-navy-800/30 bg-slate-50/30 dark:bg-navy-950/30'
                 }`}
@@ -330,7 +330,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   <span
                     className={`text-[10px] font-bold ${
                       isToday
-                        ? 'text-violet-600 dark:text-violet-400'
+                        ? 'text-primary-600 dark:text-primary-400'
                         : cell.isCurrentMonth
                           ? 'text-slate-500 dark:text-slate-400'
                           : 'text-slate-300 dark:text-slate-600'
@@ -359,7 +359,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 {cell.isCurrentMonth && dayRecords.length === 0 && (
                   <button
                     onClick={() => onAddRecord({ [dateFieldId]: cell.date })}
-                    className="mt-0.5 flex items-center gap-0.5 text-[8px] text-violet-500/60 hover:text-violet-600 dark:hover:text-violet-400 font-medium opacity-0 hover:opacity-100 transition-opacity"
+                    className="mt-0.5 flex items-center gap-0.5 text-[8px] text-primary-500/60 hover:text-primary-600 dark:hover:text-primary-400 font-medium opacity-0 hover:opacity-100 transition-opacity"
                   >
                     <Plus size={8} />
                   </button>
@@ -382,7 +382,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 key={dateStr}
                 className={`rounded-lg border p-2 transition-colors ${
                   isToday
-                    ? 'border-violet-400/60 bg-violet-50/50 dark:bg-violet-500/5'
+                    ? 'border-primary-400/60 bg-primary-50/50 dark:bg-primary-500/5'
                     : 'border-slate-200/60 dark:border-navy-700/40 bg-white dark:bg-navy-900/50'
                 }`}
                 onDragOver={(e) => e.preventDefault()}
@@ -406,7 +406,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   ))}
                   <button
                     onClick={() => onAddRecord({ [dateFieldId]: dateStr })}
-                    className="w-full flex items-center justify-center gap-0.5 py-1 rounded border border-dashed border-slate-200 dark:border-navy-700 text-[8px] text-slate-400 hover:text-violet-500 hover:border-violet-300 transition-colors"
+                    className="w-full flex items-center justify-center gap-0.5 py-1 rounded border border-dashed border-slate-200 dark:border-navy-700 text-[8px] text-slate-400 hover:text-primary-500 hover:border-primary-300 transition-colors"
                   >
                     <Plus size={8} />
                   </button>

@@ -49,17 +49,31 @@ describe('Artifact trust previews', () => {
 
     render(
       <>
-        <ReportPreviewBody report={report} />
+        <ReportPreviewBody
+          report={report}
+          trustProps={{
+            governance: {
+              ...report.governance,
+              sourceRefs: report.sourceRefs,
+              validationState: 'validated',
+              executionAuthority: report.governance.authority,
+              reviewAuthority: 'artifact_review',
+              originSummary: { type: 'report' },
+            } as any,
+            artifactId: report.artifactId,
+            exportFormats: report.exportFormats,
+          }}
+        />
         <ReportPreviewFooter report={report} />
       </>
     );
 
-    expect(screen.getByText(/Execution state: completed/i)).toBeInTheDocument();
-    expect(screen.getByText(/Publish state: in_review/i)).toBeInTheDocument();
-    expect(screen.getByText(/Execution: completed/i)).toBeInTheDocument();
-    expect(screen.getByText(/origin links/i)).toBeInTheDocument();
-    expect(screen.getByText(/Export authority: report_builder/i)).toBeInTheDocument();
-    expect(screen.getByText(/export traces/i)).toBeInTheDocument();
+    expect(screen.getByText('Trust state')).toBeInTheDocument();
+    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText('In Review')).toBeInTheDocument();
+    expect(screen.getByText('exec-1')).toBeInTheDocument();
+    expect(screen.getByText(/Execution: report_builder/i)).toBeInTheDocument();
+    expect(screen.getByText('1 · —')).toBeInTheDocument();
   });
 
   it('renders execution and review trust signals for presentations', () => {
@@ -91,16 +105,30 @@ describe('Artifact trust previews', () => {
 
     render(
       <>
-        <PresentationPreviewBody presentation={presentation} />
+        <PresentationPreviewBody
+          presentation={presentation}
+          trustProps={{
+            governance: {
+              ...presentation.governance,
+              sourceRefs: presentation.sourceRefs,
+              validationState: 'validated',
+              executionAuthority: presentation.governance.authority,
+              reviewAuthority: 'artifact_review',
+              originSummary: { type: 'presentation' },
+            } as any,
+            artifactId: presentation.artifactId,
+            exportFormats: presentation.exportFormats,
+          }}
+        />
         <PresentationPreviewFooter presentation={presentation} />
       </>
     );
 
-    expect(screen.getByText(/Execution state: completed/i)).toBeInTheDocument();
-    expect(screen.getByText(/Publish state: private_draft/i)).toBeInTheDocument();
-    expect(screen.getByText(/Execution: completed/i)).toBeInTheDocument();
-    expect(screen.getByText(/origin links/i)).toBeInTheDocument();
-    expect(screen.getByText(/Export authority: presentations_runtime/i)).toBeInTheDocument();
-    expect(screen.getByText(/export traces/i)).toBeInTheDocument();
+    expect(screen.getByText('Trust state')).toBeInTheDocument();
+    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText('Private Draft')).toBeInTheDocument();
+    expect(screen.getByText('exec-2')).toBeInTheDocument();
+    expect(screen.getByText(/Execution: presentations_runtime/i)).toBeInTheDocument();
+    expect(screen.getByText('1 · —')).toBeInTheDocument();
   });
 });

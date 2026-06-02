@@ -16,8 +16,12 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../../utils/Logger.js';
 import { AIPipeline } from '../ai/AIPipeline.js';
 import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
-import { buildWorkbookBuffer, classifyBuildError, validateWorkbookSchema } from './WorkbookBuilder.js';
-import { WorkbookSchemaValidator, type WorkbookSchema } from './WorkbookSchema.js';
+import {
+  buildWorkbookBuffer,
+  classifyBuildError,
+  validateWorkbookSchema,
+} from './WorkbookBuilder.js';
+import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Phase prompts
@@ -277,14 +281,18 @@ function extractJsonFromResponse(content: string): unknown | null {
   // Try direct parse
   try {
     return JSON.parse(content);
-  } catch { /* not direct JSON */ }
+  } catch {
+    /* not direct JSON */
+  }
 
   // Try extracting from markdown code block
   const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (codeBlockMatch) {
     try {
       return JSON.parse(codeBlockMatch[1].trim());
-    } catch { /* invalid JSON in code block */ }
+    } catch {
+      /* invalid JSON in code block */
+    }
   }
 
   // Try finding the outermost { ... }
@@ -292,7 +300,9 @@ function extractJsonFromResponse(content: string): unknown | null {
   if (braceMatch) {
     try {
       return JSON.parse(braceMatch[0]);
-    } catch { /* invalid JSON */ }
+    } catch {
+      /* invalid JSON */
+    }
   }
 
   return null;
@@ -344,7 +354,7 @@ class WorkbookGeneratorService {
     systemPrompt: string,
     userPrompt: string,
     params: { userId: string; organizationId: string; projectId?: string },
-    maxTokens: number = 12000,
+    maxTokens: number = 12000
   ): Promise<string> {
     const response = await this.aiPipeline.process({
       capability: 'chat',
@@ -380,7 +390,8 @@ class WorkbookGeneratorService {
       userPrompt = `${prompt}\n\nResearch context (use this data to populate the workbook):\n${researchContext}`;
     }
     if (language && language.startsWith('pl')) {
-      userPrompt += '\n\nUse Polish headers and labels where appropriate, but keep column keys in English.';
+      userPrompt +=
+        '\n\nUse Polish headers and labels where appropriate, but keep column keys in English.';
     }
 
     // =====================================================================
@@ -393,12 +404,24 @@ class WorkbookGeneratorService {
         PLANNING_SYSTEM_PROMPT,
         `User request: ${userPrompt}\n\nAnalyze this request and produce a workbook plan as JSON.`,
         llmParams,
-        4000,
+        4000
       );
-      pipelineLog.push({ phase: 'plan', status: 'ok', durationMs: Date.now() - p1Start, detail: `${plan.length} chars` });
-      logger.info(`[WorkbookGenerator] Phase 1 PLAN: OK (${plan.length} chars, ${Date.now() - p1Start}ms)`);
+      pipelineLog.push({
+        phase: 'plan',
+        status: 'ok',
+        durationMs: Date.now() - p1Start,
+        detail: `${plan.length} chars`,
+      });
+      logger.info(
+        `[WorkbookGenerator] Phase 1 PLAN: OK (${plan.length} chars, ${Date.now() - p1Start}ms)`
+      );
     } catch (err) {
-      pipelineLog.push({ phase: 'plan', status: 'failed', durationMs: Date.now() - p1Start, detail: String(err) });
+      pipelineLog.push({
+        phase: 'plan',
+        status: 'failed',
+        durationMs: Date.now() - p1Start,
+        detail: String(err),
+      });
       logger.warn(`[WorkbookGenerator] Phase 1 PLAN: FAILED, continuing without plan`, err);
     }
 
@@ -414,7 +437,7 @@ class WorkbookGeneratorService {
           CONFIRMATION_SYSTEM_PROMPT,
           `ORIGINAL USER REQUEST:\n${userPrompt}\n\nPLAN TO REVIEW:\n${plan}\n\nReview this plan and return your assessment as JSON.`,
           llmParams,
-          4000,
+          4000
         );
 
         const confirmResult = extractJsonFromResponse(confirmationResponse);
@@ -423,18 +446,25 @@ class WorkbookGeneratorService {
           const approved = cr.approved === true;
           const confidence = typeof cr.confidence === 'number' ? cr.confidence : 0;
           const issueCount = Array.isArray(cr.issues) ? cr.issues.length : 0;
-          const criticalIssues = Array.isArray(cr.issues) ? cr.issues.filter((i: any) => i.severity === 'critical').length : 0;
+          const criticalIssues = Array.isArray(cr.issues)
+            ? cr.issues.filter((i: any) => i.severity === 'critical').length
+            : 0;
           const missingCount = Array.isArray(cr.missing_elements) ? cr.missing_elements.length : 0;
 
           if (!approved && cr.revised_plan) {
-            confirmedPlan = typeof cr.revised_plan === 'string' ? cr.revised_plan : JSON.stringify(cr.revised_plan);
+            confirmedPlan =
+              typeof cr.revised_plan === 'string'
+                ? cr.revised_plan
+                : JSON.stringify(cr.revised_plan);
             pipelineLog.push({
               phase: 'confirm',
               status: 'warning',
               durationMs: Date.now() - p2Start,
               detail: `NOT approved (confidence=${confidence.toFixed(2)}, ${criticalIssues} critical, ${issueCount} total issues, ${missingCount} missing). Using revised plan.`,
             });
-            logger.info(`[WorkbookGenerator] Phase 2 CONFIRM: Plan revised (${issueCount} issues, ${missingCount} missing)`);
+            logger.info(
+              `[WorkbookGenerator] Phase 2 CONFIRM: Plan revised (${issueCount} issues, ${missingCount} missing)`
+            );
           } else if (!approved) {
             pipelineLog.push({
               phase: 'confirm',
@@ -442,7 +472,9 @@ class WorkbookGeneratorService {
               durationMs: Date.now() - p2Start,
               detail: `NOT approved but no revised plan provided (confidence=${confidence.toFixed(2)}). Proceeding with original.`,
             });
-            logger.warn(`[WorkbookGenerator] Phase 2 CONFIRM: Not approved but no revised plan, using original`);
+            logger.warn(
+              `[WorkbookGenerator] Phase 2 CONFIRM: Not approved but no revised plan, using original`
+            );
           } else {
             pipelineLog.push({
               phase: 'confirm',
@@ -450,17 +482,34 @@ class WorkbookGeneratorService {
               durationMs: Date.now() - p2Start,
               detail: `Approved (confidence=${confidence.toFixed(2)}, ${issueCount} minor issues)`,
             });
-            logger.info(`[WorkbookGenerator] Phase 2 CONFIRM: Approved (confidence=${confidence.toFixed(2)})`);
+            logger.info(
+              `[WorkbookGenerator] Phase 2 CONFIRM: Approved (confidence=${confidence.toFixed(2)})`
+            );
           }
         } else {
-          pipelineLog.push({ phase: 'confirm', status: 'warning', durationMs: Date.now() - p2Start, detail: 'Could not parse confirmation response' });
+          pipelineLog.push({
+            phase: 'confirm',
+            status: 'warning',
+            durationMs: Date.now() - p2Start,
+            detail: 'Could not parse confirmation response',
+          });
         }
       } catch (err) {
-        pipelineLog.push({ phase: 'confirm', status: 'failed', durationMs: Date.now() - p2Start, detail: String(err) });
+        pipelineLog.push({
+          phase: 'confirm',
+          status: 'failed',
+          durationMs: Date.now() - p2Start,
+          detail: String(err),
+        });
         logger.warn(`[WorkbookGenerator] Phase 2 CONFIRM: FAILED, using original plan`, err);
       }
     } else {
-      pipelineLog.push({ phase: 'confirm', status: 'skipped', durationMs: 0, detail: 'No plan to confirm' });
+      pipelineLog.push({
+        phase: 'confirm',
+        status: 'skipped',
+        durationMs: 0,
+        detail: 'No plan to confirm',
+      });
     }
 
     // =====================================================================
@@ -482,14 +531,17 @@ class WorkbookGeneratorService {
           GENERATION_SYSTEM_PROMPT,
           currentPrompt,
           llmParams,
-          16000,
+          16000
         );
 
         const parsed = extractJsonFromResponse(content);
 
         if (!parsed) {
-          logger.warn(`[WorkbookGenerator] Phase 3 attempt ${attempt}: No valid JSON (${content.length} chars)`);
-          if (attempt === maxAttempts) throw new Error('LLM did not return valid JSON after 3 attempts');
+          logger.warn(
+            `[WorkbookGenerator] Phase 3 attempt ${attempt}: No valid JSON (${content.length} chars)`
+          );
+          if (attempt === maxAttempts)
+            throw new Error('LLM did not return valid JSON after 3 attempts');
           currentPrompt = `${generationPrompt}\n\nIMPORTANT: Your previous response was not valid JSON. Return ONLY a JSON object starting with { and ending with }. No markdown, no backticks, no explanation.`;
           continue;
         }
@@ -499,7 +551,9 @@ class WorkbookGeneratorService {
           const errorSummary = validated.error.issues
             .map((e) => `${e.path.join('.')}: ${e.message}`)
             .join('; ');
-          logger.warn(`[WorkbookGenerator] Phase 3 attempt ${attempt}: Validation failed: ${errorSummary}`);
+          logger.warn(
+            `[WorkbookGenerator] Phase 3 attempt ${attempt}: Validation failed: ${errorSummary}`
+          );
           if (attempt === maxAttempts) {
             schema = this.repairSchema(parsed as any);
             break;
@@ -522,7 +576,9 @@ class WorkbookGeneratorService {
       durationMs: Date.now() - p3Start,
       detail: `"${schema!.title}" — ${schema!.sheets.length} sheets, ${schema!.sheets.reduce((sum, s) => sum + s.rows.length, 0)} total rows`,
     });
-    logger.info(`[WorkbookGenerator] Phase 3 GENERATE: OK — "${schema!.title}" with ${schema!.sheets.length} sheets`);
+    logger.info(
+      `[WorkbookGenerator] Phase 3 GENERATE: OK — "${schema!.title}" with ${schema!.sheets.length} sheets`
+    );
 
     // =====================================================================
     // PHASE 4: REVIEW — LLM self-reviews schema quality before build
@@ -536,7 +592,7 @@ class WorkbookGeneratorService {
         REVIEW_SYSTEM_PROMPT,
         `ORIGINAL USER REQUEST:\n${userPrompt}\n\nGENERATED WORKBOOK SCHEMA:\n${schemaJson}\n\nReview this schema for quality. Return your assessment as JSON.`,
         llmParams,
-        6000,
+        6000
       );
 
       const reviewResult = extractJsonFromResponse(reviewResponse);
@@ -545,7 +601,9 @@ class WorkbookGeneratorService {
         qualityScore = typeof rr.overall_score === 'number' ? rr.overall_score : null;
         const pass = rr.pass === true;
         const issueCount = Array.isArray(rr.issues) ? rr.issues.length : 0;
-        const criticalIssues = Array.isArray(rr.issues) ? rr.issues.filter((i: any) => i.severity === 'critical') : [];
+        const criticalIssues = Array.isArray(rr.issues)
+          ? rr.issues.filter((i: any) => i.severity === 'critical')
+          : [];
 
         if (!pass && rr.fixes_applied) {
           // LLM provided a corrected schema — validate and use it
@@ -558,7 +616,9 @@ class WorkbookGeneratorService {
               durationMs: Date.now() - p4Start,
               detail: `Score ${qualityScore?.toFixed(1)}/5 — FAILED review, applied ${issueCount} fixes (${criticalIssues.length} critical). Using corrected schema.`,
             });
-            logger.info(`[WorkbookGenerator] Phase 4 REVIEW: Applied fixes (score=${qualityScore}, ${issueCount} issues)`);
+            logger.info(
+              `[WorkbookGenerator] Phase 4 REVIEW: Applied fixes (score=${qualityScore}, ${issueCount} issues)`
+            );
           } else {
             pipelineLog.push({
               phase: 'review',
@@ -570,17 +630,22 @@ class WorkbookGeneratorService {
           }
         } else if (!pass && criticalIssues.length > 0) {
           // Critical issues but no fixes — try one more generation with the issues as feedback
-          logger.warn(`[WorkbookGenerator] Phase 4 REVIEW: ${criticalIssues.length} critical issues, attempting regeneration`);
-          const issuesFeedback = criticalIssues.map((i: any) =>
-            `- [${i.category}] ${i.sheet || 'global'}: ${i.description} → Fix: ${i.suggested_fix || 'unknown'}`
-          ).join('\n');
+          logger.warn(
+            `[WorkbookGenerator] Phase 4 REVIEW: ${criticalIssues.length} critical issues, attempting regeneration`
+          );
+          const issuesFeedback = criticalIssues
+            .map(
+              (i: any) =>
+                `- [${i.category}] ${i.sheet || 'global'}: ${i.description} → Fix: ${i.suggested_fix || 'unknown'}`
+            )
+            .join('\n');
 
           try {
             const fixContent = await this.callLLM(
               GENERATION_SYSTEM_PROMPT,
               `${generationPrompt}\n\nQUALITY REVIEW found these CRITICAL issues in your previous output:\n${issuesFeedback}\n\nFix ALL critical issues and return the corrected WorkbookSchema JSON. Return ONLY the JSON.`,
               llmParams,
-              16000,
+              16000
             );
             const fixParsed = extractJsonFromResponse(fixContent);
             if (fixParsed) {
@@ -610,14 +675,29 @@ class WorkbookGeneratorService {
             durationMs: Date.now() - p4Start,
             detail: `Score ${qualityScore?.toFixed(1)}/5 — ${pass ? 'PASSED' : 'marginal'} (${issueCount} issues, ${criticalIssues.length} critical)`,
           });
-          logger.info(`[WorkbookGenerator] Phase 4 REVIEW: ${pass ? 'PASSED' : 'marginal'} (score=${qualityScore})`);
+          logger.info(
+            `[WorkbookGenerator] Phase 4 REVIEW: ${pass ? 'PASSED' : 'marginal'} (score=${qualityScore})`
+          );
         }
       } else {
-        pipelineLog.push({ phase: 'review', status: 'warning', durationMs: Date.now() - p4Start, detail: 'Could not parse review response' });
+        pipelineLog.push({
+          phase: 'review',
+          status: 'warning',
+          durationMs: Date.now() - p4Start,
+          detail: 'Could not parse review response',
+        });
       }
     } catch (err) {
-      pipelineLog.push({ phase: 'review', status: 'failed', durationMs: Date.now() - p4Start, detail: String(err) });
-      logger.warn(`[WorkbookGenerator] Phase 4 REVIEW: FAILED, proceeding with unreviewed schema`, err);
+      pipelineLog.push({
+        phase: 'review',
+        status: 'failed',
+        durationMs: Date.now() - p4Start,
+        detail: String(err),
+      });
+      logger.warn(
+        `[WorkbookGenerator] Phase 4 REVIEW: FAILED, proceeding with unreviewed schema`,
+        err
+      );
     }
 
     // =====================================================================
@@ -659,7 +739,9 @@ class WorkbookGeneratorService {
     });
 
     const totalMs = pipelineLog.reduce((sum, p) => sum + p.durationMs, 0);
-    logger.info(`[WorkbookGenerator] Pipeline complete: "${schema!.title}" — ${schema!.sheets.length} sheets, ${buffer.length} bytes, quality=${qualityScore ?? 'N/A'}, ${totalMs}ms total`);
+    logger.info(
+      `[WorkbookGenerator] Pipeline complete: "${schema!.title}" — ${schema!.sheets.length} sheets, ${buffer.length} bytes, quality=${qualityScore ?? 'N/A'}, ${totalMs}ms total`
+    );
 
     return {
       id,
@@ -678,7 +760,9 @@ class WorkbookGeneratorService {
    * Attempts to repair a partially valid schema by filling in defaults.
    */
   private repairSchema(raw: any): WorkbookSchema {
-    const sheets = Array.isArray(raw?.sheets) ? raw.sheets : [{ name: 'Sheet1', columns: [], rows: [] }];
+    const sheets = Array.isArray(raw?.sheets)
+      ? raw.sheets
+      : [{ name: 'Sheet1', columns: [], rows: [] }];
 
     return {
       title: raw?.title || 'Generated Workbook',
@@ -686,18 +770,22 @@ class WorkbookGeneratorService {
       sheets: sheets.map((s: any, idx: number) => ({
         name: s?.name || `Sheet${idx + 1}`,
         purpose: s?.purpose,
-        columns: Array.isArray(s?.columns) ? s.columns.map((c: any) => ({
-          key: c?.key || `col_${Math.random().toString(36).slice(2, 6)}`,
-          header: c?.header || c?.key || 'Column',
-          width: c?.width,
-          type: c?.type,
-          numberFormat: c?.numberFormat,
-        })) : [],
-        rows: Array.isArray(s?.rows) ? s.rows.map((r: any) => ({
-          cells: r?.cells || {},
-          style: r?.style,
-          isSummary: r?.isSummary,
-        })) : [],
+        columns: Array.isArray(s?.columns)
+          ? s.columns.map((c: any) => ({
+              key: c?.key || `col_${Math.random().toString(36).slice(2, 6)}`,
+              header: c?.header || c?.key || 'Column',
+              width: c?.width,
+              type: c?.type,
+              numberFormat: c?.numberFormat,
+            }))
+          : [],
+        rows: Array.isArray(s?.rows)
+          ? s.rows.map((r: any) => ({
+              cells: r?.cells || {},
+              style: r?.style,
+              isSummary: r?.isSummary,
+            }))
+          : [],
         freezeRow: s?.freezeRow ?? 1,
         alternateRowColor: s?.alternateRowColor,
         headerStyle: s?.headerStyle,

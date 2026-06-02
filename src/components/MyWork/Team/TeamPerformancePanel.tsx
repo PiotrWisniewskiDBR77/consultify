@@ -198,7 +198,7 @@ export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-cyan-500 to-blue-600 text-white rounded-xl shadow-lg shadow-cyan-500/30">
+          <div className="p-2.5 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/30">
             <Users size={24} />
           </div>
           <div>

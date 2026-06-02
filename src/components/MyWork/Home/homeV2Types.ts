@@ -46,6 +46,41 @@ export interface HomeChatContextPacket {
   contextData?: Record<string, unknown>;
 }
 
+export type RadarRing = 'NOW' | 'PREPARE' | 'LEARN' | 'OBSERVE';
+export type RadarQuadrant = 'MY_DEVELOPMENT' | 'MY_PROJECTS' | 'MY_INDUSTRY' | 'MY_ROLE';
+export type RadarSignalStatus = 'new' | 'updated' | 'saved' | 'watching' | 'ignored';
+export type RadarSignalType =
+  | 'TECHNOLOGY'
+  | 'SKILL'
+  | 'BUSINESS'
+  | 'RISK'
+  | 'PROCESS'
+  | 'TOOL'
+  | 'TREND'
+  | 'IDEA';
+
+export interface RadarSignalPreview {
+  shortDescription: string;
+  whyItMatters: string;
+  whyItMattersForYou: string;
+  howToThinkAboutIt: string;
+  goodFirstQuestion: string;
+  suggestedNextStep: string;
+}
+
+export interface RadarMapSignal {
+  id: string;
+  name: string;
+  icon?: string;
+  ring: RadarRing;
+  quadrant: RadarQuadrant;
+  status: RadarSignalStatus;
+  signalType: RadarSignalType;
+  importanceLevel: 'small' | 'medium' | 'large';
+  fitLevel: 'low' | 'medium' | 'high';
+  preview: RadarSignalPreview;
+}
+
 export type HomeScreenAction =
   | { type: 'chat'; packet: HomeChatContextPacket }
   | {
@@ -67,7 +102,19 @@ export type HomeScreenAction =
       id: string;
     }
   | { type: 'create'; target: 'idea' | 'note' | 'task' | 'decision' }
-  | { type: 'handoff'; signalId: string; targetModule: TriageTargetModule; handoffIntent: TriageHandoffIntent };
+  | {
+      type: 'handoff';
+      signalId: string;
+      targetModule: TriageTargetModule;
+      handoffIntent: TriageHandoffIntent;
+    }
+  | {
+      type: 'radar_feedback';
+      signalId: string;
+      feedback: 'watch' | 'forget';
+      topic?: string;
+      source?: string;
+    };
 
 export interface HomePrimaryAction {
   title: string;
@@ -388,6 +435,9 @@ export interface RadarViewPayload {
   whatToDoNext: RadarRecommendation[];
   learnImprove: RadarSignalCard[];
   watchlist: RadarSignalCard[];
+  radarMap?: {
+    signals: RadarMapSignal[];
+  };
   metrics: {
     totalSignalsConsidered: number;
     duplicateRate: number;
@@ -414,11 +464,27 @@ export const TRIAGE_CATEGORIES = [
 export type TriageCategory = (typeof TRIAGE_CATEGORIES)[number];
 
 export type TriagePriorityLevel = 'P0' | 'P1' | 'P2';
-export type TriagePrimaryDriver = 'deadline' | 'blocker' | 'variance' | 'escalation' | 'opportunity';
+export type TriagePrimaryDriver =
+  | 'deadline'
+  | 'blocker'
+  | 'variance'
+  | 'escalation'
+  | 'opportunity';
 export type TriageTimeWindow = 'next_24h' | 'this_week' | 'this_month';
 export type TriageHandoffIntent = 'open' | 'create' | 'append';
-export type TriageTargetModule = 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
-export type TriageState = 'ready' | 'degraded_missing_data' | 'degraded_conflict' | 'degraded_stale' | 'blocked_permission';
+export type TriageTargetModule =
+  | 'initiatives'
+  | 'execution'
+  | 'notebook'
+  | 'Inicjatywy'
+  | 'Wdrożenia'
+  | 'Notatki';
+export type TriageState =
+  | 'ready'
+  | 'degraded_missing_data'
+  | 'degraded_conflict'
+  | 'degraded_stale'
+  | 'blocked_permission';
 
 export interface TriageBands {
   impact: 1 | 2 | 3;

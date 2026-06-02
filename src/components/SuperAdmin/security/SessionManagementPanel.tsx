@@ -194,14 +194,14 @@ export const SessionManagementPanel: React.FC = () => {
               placeholder="Search sessions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
             />
           </div>
 
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
           >
             <option value="all">All Organizations</option>
             {organizations.map((org) => (
@@ -233,7 +233,7 @@ export const SessionManagementPanel: React.FC = () => {
       {/* Sessions List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredSessions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
@@ -252,7 +252,7 @@ export const SessionManagementPanel: React.FC = () => {
                 {/* User Header */}
                 <div className="flex items-center justify-between p-4 bg-slate-900/30">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 flex items-center justify-center text-white font-semibold">
                       {firstSession.user_first_name?.[0] || firstSession.user_email?.[0] || 'U'}
                     </div>
                     <div>
@@ -282,7 +282,7 @@ export const SessionManagementPanel: React.FC = () => {
                         onClick={() =>
                           handleTerminateAllForUser(userId, firstSession.organization_id)
                         }
-                        className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-sm transition-colors"
                       >
                         <LogOut size={14} />
                         End All
@@ -340,7 +340,7 @@ export const SessionManagementPanel: React.FC = () => {
                         <button
                           onClick={() => handleTerminateSession(session.id)}
                           disabled={terminatingIds.has(session.id)}
-                          className="p-2 hover:bg-red-500/10 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-2 hover:bg-rose-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-50"
                           title="Terminate Session"
                         >
                           {terminatingIds.has(session.id) ? (

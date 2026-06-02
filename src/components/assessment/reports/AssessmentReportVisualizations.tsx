@@ -96,10 +96,10 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
       icon: 'text-emerald-400',
     },
     purple: {
-      bg: 'bg-purple-500/10',
-      border: 'border-purple-500/30',
-      text: 'text-purple-400',
-      icon: 'text-purple-400',
+      bg: 'bg-primary-500/10',
+      border: 'border-primary-500/30',
+      text: 'text-primary-400',
+      icon: 'text-primary-400',
     },
     amber: {
       bg: 'bg-amber-500/10',
@@ -108,10 +108,10 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
       icon: 'text-amber-400',
     },
     red: {
-      bg: 'bg-red-500/10',
-      border: 'border-red-500/30',
-      text: 'text-red-400',
-      icon: 'text-red-400',
+      bg: 'bg-rose-500/10',
+      border: 'border-rose-500/30',
+      text: 'text-rose-400',
+      icon: 'text-rose-400',
     },
   };
 
@@ -130,13 +130,13 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
       {trend && (
         <div className="flex items-center gap-1 mt-2">
           {trend === 'up' && <TrendingUp size={14} className="text-emerald-400" />}
-          {trend === 'down' && <TrendingUp size={14} className="text-red-400 rotate-180" />}
+          {trend === 'down' && <TrendingUp size={14} className="text-rose-400 rotate-180" />}
           <span
             className={`text-xs ${
               trend === 'up'
                 ? 'text-emerald-400'
                 : trend === 'down'
-                  ? 'text-red-400'
+                  ? 'text-rose-400'
                   : 'text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -302,8 +302,8 @@ export const GapHeatmap: React.FC<GapHeatmapProps> = ({ data, onDimensionClick }
   }, [data.dimensions]);
 
   const getGapColor = (gap: number): string => {
-    if (gap >= 3) return 'bg-red-500';
-    if (gap >= 2) return 'bg-orange-500';
+    if (gap >= 3) return 'bg-rose-500';
+    if (gap >= 2) return 'bg-amber-500';
     if (gap >= 1) return 'bg-amber-500';
     if (gap > 0) return 'bg-blue-500';
     return 'bg-emerald-500';
@@ -324,11 +324,11 @@ export const GapHeatmap: React.FC<GapHeatmapProps> = ({ data, onDimensionClick }
       {/* Legend */}
       <div className="flex items-center gap-4 mb-4 text-xs">
         <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-red-500"></span>
+          <span className="w-3 h-3 rounded bg-rose-500"></span>
           <span className="text-slate-500 dark:text-slate-400">Critical (≥3)</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-orange-500"></span>
+          <span className="w-3 h-3 rounded bg-amber-500"></span>
           <span className="text-slate-500 dark:text-slate-400">High (2)</span>
         </div>
         <div className="flex items-center gap-1">

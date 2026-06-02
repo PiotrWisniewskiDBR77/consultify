@@ -1,8 +1,9 @@
-import { Bot, Globe, Mic, Monitor, MoreVertical, Plus, RefreshCw } from 'lucide-react';
+import { Globe, Mic, Monitor, MoreVertical, Plus, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
 
+import TeresaMark from '../../../components/shared/TeresaMark';
 interface VirtualWorker {
   id: string;
   slug: string;
@@ -107,7 +108,7 @@ export const WorkersList: React.FC<WorkersListProps> = ({ onSelectWorker }) => {
 
         {workers.length === 0 && (
           <div className="col-span-full text-center py-16">
-            <Bot className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <TeresaMark className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400">
               No virtual workers yet
             </h3>
@@ -131,7 +132,7 @@ const WorkerCard: React.FC<{ worker: VirtualWorker; onClick: () => void }> = ({
   >
     <div className="flex items-start justify-between mb-3">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
           {worker.name.charAt(0)}
         </div>
         <div>

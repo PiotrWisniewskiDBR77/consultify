@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -197,6 +198,7 @@ const ensureTableExists = async () => {
 
 // Apply auth middleware
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 /**
  * GET /api/consultant-project-access
@@ -204,6 +206,7 @@ router.use(verifyToken);
  */
 router.get(
   '/',
+  verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureTableExists();
 
@@ -271,7 +274,6 @@ router.get(
         permissions: JSON.parse(record.permissions || '{}'),
         invited_at: record.invited_at,
         accepted_at: record.accepted_at,
-        access_code: record.access_code,
       });
     }
 
@@ -340,6 +342,14 @@ router.post(
 
     if (!email || !projectId) {
       return res.status(400).json({ error: 'Email and project ID are required' });
+    }
+
+    const project = await dbGet<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [projectId, orgId]
+    );
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found in this organization' });
     }
 
     // Check if access already exists

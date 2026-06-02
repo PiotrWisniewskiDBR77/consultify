@@ -79,17 +79,13 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
+import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import {
   getWorkflowStatusForInitiative,
   hasInitiativeStatusReadDrift,
 } from '@/utils/initiativeWorkflowStatus';
 
 import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types';
-import {
-  extractInitiativeKpiRows,
-  type InitiativeKpiEditorRow,
-  toInitiativeKpiEditorRow,
-} from './initiativeKpiContract';
 import {
   type Attachment,
   type Comment,
@@ -102,6 +98,7 @@ import {
 } from '../MyWork/shared';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
   type NModeAction,
   NModeCanvas,
@@ -129,6 +126,11 @@ import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
 import { InitiativeCompactPanel } from './InitiativeCompactPanel';
+import {
+  extractInitiativeKpiRows,
+  type InitiativeKpiEditorRow,
+  toInitiativeKpiEditorRow,
+} from './initiativeKpiContract';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   createInitiativesDemoDataset,
@@ -162,6 +164,19 @@ import type {
   UserInfo,
   Watcher,
 } from './sections/types';
+
+const unwrapApiList = (response: unknown, listKey?: string): any[] => {
+  if (Array.isArray(response)) return response;
+  const payload = (response as { data?: unknown } | null)?.data;
+  if (Array.isArray(payload)) return payload;
+  if (listKey) {
+    const directList = (response as Record<string, unknown> | null)?.[listKey];
+    if (Array.isArray(directList)) return directList;
+    const nestedList = (payload as Record<string, unknown> | null)?.[listKey];
+    if (Array.isArray(nestedList)) return nestedList;
+  }
+  return [];
+};
 
 interface InitiativeDocumentViewProps {
   initiativeId: string;
@@ -327,6 +342,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [titleDraft, setTitleDraft] = useState<string>('');
   const titleInputId = 'initiative-title-input';
 
@@ -1314,7 +1330,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         trackedInRealization:
           createKpiObservationPhase === 'realization' || createKpiObservationPhase === 'both',
         trackedPostImplementation:
-          createKpiObservationPhase === 'post-implementation' || createKpiObservationPhase === 'both',
+          createKpiObservationPhase === 'post-implementation' ||
+          createKpiObservationPhase === 'both',
         realizationExpectation: {
           baselineValue,
           targetValue: realizationTarget,
@@ -1338,8 +1355,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               definitionSource: payload.definitionSource as 'library' | 'initiative-custom',
               name:
                 createKpiMode === 'linked'
-                  ? createKpiLibraryOptions.find((option) => option.id === createKpiLibraryId)?.name ||
-                    createKpiName.trim()
+                  ? createKpiLibraryOptions.find((option) => option.id === createKpiLibraryId)
+                      ?.name || createKpiName.trim()
                   : createKpiName.trim(),
               category: payload.category,
               unit: createKpiUnit.trim(),
@@ -1366,8 +1383,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       resetCreateKpiDraft();
       setShowCreateKpi(false);
-    } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Nie udało się dodać KPI' : 'Failed to add KPI'));
+    } catch {
+      toast.error(isPolish ? 'Nie udało się dodać KPI' : 'Failed to add KPI');
     } finally {
       setIsMutating(false);
     }
@@ -1443,8 +1460,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       );
       toast.success(isPolish ? 'KPI zaktualizowane' : 'KPI updated');
       cancelEditKpi();
-    } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Nie udało się zapisać KPI' : 'Failed to save KPI'));
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zapisać KPI' : 'Failed to save KPI');
     } finally {
       setIsMutating(false);
     }
@@ -1504,10 +1521,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           ...prev,
         ]);
         toast.success(isPolish ? 'KPI zduplikowane' : 'KPI duplicated');
-      } catch (e: any) {
-        toast.error(
-          e?.message || (isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI')
-        );
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zduplikować KPI' : 'Failed to duplicate KPI');
       } finally {
         setIsMutating(false);
       }
@@ -1524,8 +1539,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setLocalKpis((prev) => prev.filter((k) => k.id !== kpiId));
         if (editingKpiId === kpiId) cancelEditKpi();
         toast.success(isPolish ? 'KPI usunięte' : 'KPI removed');
-      } catch (e: any) {
-        toast.error(e?.message || (isPolish ? 'Nie udało się usunąć KPI' : 'Failed to remove KPI'));
+      } catch {
+        toast.error(isPolish ? 'Nie udało się usunąć KPI' : 'Failed to remove KPI');
       } finally {
         setIsMutating(false);
       }
@@ -1696,14 +1711,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     if (!initiativeId) return;
     setIsLoading(true);
     setError(null);
+    setErrorCode(null);
     try {
       const showcaseDetail = isShowcaseInitiativeId(initiativeId)
         ? initiativesDemoData.initiativeDetailsById[initiativeId]
         : null;
       const data =
         showcaseDetail?.initiative ||
-        (await V8PlanningApi.getInitiative(initiativeId).catch(() =>
-          Api.getInitiativeById(initiativeId)
+        (await V8PlanningApi.getInitiative(initiativeId).catch(async () =>
+          Api.getInitiativeById(initiativeId).catch(async () => {
+            const interviewResponse = await Api.get('/initiatives?source=interview_insight');
+            const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
+            const interviewInitiative = interviewInitiatives.find(
+              (item: any) => String(item?.id) === String(initiativeId)
+            );
+            if (!interviewInitiative) {
+              throw new Error(isPolish ? 'Nie znaleziono inicjatywy' : 'Initiative not found');
+            }
+            return interviewInitiative;
+          })
         ));
       setInitiative(data);
       setInitiativeTemplate(null);
@@ -2262,7 +2288,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       await Promise.allSettled(fetches);
     } catch (e: any) {
-      setError(e?.message || 'Failed to load initiative');
+      const mapped = mapHubLoadFailureToPresentation(e, 'Failed to load initiative');
+      setError(mapped.message);
+      setErrorCode(mapped.code);
     } finally {
       setIsLoading(false);
     }
@@ -4656,7 +4684,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     // Status color mapping
     const statusAlertBorder = (() => {
-      if (status === 'BLOCKED') return 'border-red-400/60';
+      if (status === 'BLOCKED') return 'border-rose-400/60';
       if (status === 'EXECUTING') return 'border-emerald-400/60';
       if (status === 'DONE' || status === 'TRACKING') return 'border-blue-400/60';
       if (status === 'CANCELLED' || status === 'ARCHIVED') return 'border-slate-400/60';
@@ -4665,8 +4693,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     // Priority color mapping
     const priorityAlertBorder = (() => {
-      if (priority === 'critical') return 'border-red-400/60';
-      if (priority === 'high') return 'border-orange-400/60';
+      if (priority === 'critical') return 'border-rose-400/60';
+      if (priority === 'high') return 'border-amber-400/60';
       return undefined;
     })();
 
@@ -4690,16 +4718,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       { dot: string; bg: string; text: string; label: string; labelPl: string }
     > = {
       critical: {
-        dot: 'bg-red-500',
-        bg: 'bg-red-500/10',
-        text: 'text-red-600',
+        dot: 'bg-rose-500',
+        bg: 'bg-rose-500/10',
+        text: 'text-rose-600',
         label: 'Critical',
         labelPl: 'Krytyczny',
       },
       high: {
-        dot: 'bg-orange-500',
-        bg: 'bg-orange-500/10',
-        text: 'text-orange-600',
+        dot: 'bg-amber-500',
+        bg: 'bg-amber-500/10',
+        text: 'text-amber-600',
         label: 'High',
         labelPl: 'Wysoki',
       },
@@ -4919,34 +4947,68 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           />
         ),
       },
-      ...((() => {
+      ...(() => {
         const srcType = initiative?.source_type || initiative?.sourceType;
         const srcId = initiative?.source_id || initiative?.sourceId;
-        if (srcType !== 'interview' || !srcId) return [];
-        const insightTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
-        const insightPath = getArtifactPath('insight', srcId);
-        return [{
-          id: 'sourceInsight',
-          label: { en: 'Source', pl: 'Źródło' },
-          type: 'custom' as const,
-          value: srcId,
-          onChange: () => {},
-          readOnly: true,
-          render: () => (
-            <a
-              href={insightPath}
-              title={isPolish ? `Otwórz insight: ${insightTitle}` : `Open insight: ${insightTitle}`}
-              className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 transition-colors truncate"
-            >
-              <Sparkles size={12} className="shrink-0" />
-              <span className="truncate">
-                {isPolish ? 'Z Insightu: ' : 'From Insight: '}{insightTitle}
-              </span>
-              <ExternalLink size={10} className="shrink-0 ml-auto opacity-60" />
-            </a>
-          ),
-        }] as NModePropertyField[];
-      })()),
+        if (!srcType || !srcId) return [];
+        const normalizedSourceType = String(srcType).toLowerCase();
+        if (
+          ![
+            'interview',
+            'interview_insight',
+            'insight',
+            'conclusion',
+            'conclusion_readout',
+          ].includes(normalizedSourceType)
+        ) {
+          return [];
+        }
+        const sourceTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
+        const sourcePath =
+          normalizedSourceType === 'interview' ||
+          normalizedSourceType === 'interview_insight' ||
+          normalizedSourceType === 'insight' ||
+          normalizedSourceType === 'conclusion'
+            ? getArtifactPath('insight', srcId)
+            : normalizedSourceType === 'conclusion_readout'
+              ? '/presentations?tab=documents'
+              : getArtifactPath('insight', srcId);
+        const sourceLabel =
+          normalizedSourceType === 'interview' ||
+          normalizedSourceType === 'interview_insight' ||
+          normalizedSourceType === 'insight' ||
+          normalizedSourceType === 'conclusion'
+            ? isPolish
+              ? 'Z Insightu: '
+              : 'From Insight: '
+            : isPolish
+              ? 'Z readoutu: '
+              : 'From readout: ';
+        return [
+          {
+            id: 'sourceInsight',
+            label: { en: 'Source', pl: 'Źródło' },
+            type: 'custom' as const,
+            value: srcId,
+            onChange: () => {},
+            readOnly: true,
+            render: () => (
+              <a
+                href={sourcePath}
+                title={isPolish ? `Otwórz źródło: ${sourceTitle}` : `Open source: ${sourceTitle}`}
+                className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-primary-500/10 border border-primary-500/30 text-primary-400 hover:bg-primary-500/20 transition-colors truncate"
+              >
+                <Sparkles size={12} className="shrink-0" />
+                <span className="truncate">
+                  {sourceLabel}
+                  {sourceTitle}
+                </span>
+                <ExternalLink size={10} className="shrink-0 ml-auto opacity-60" />
+              </a>
+            ),
+          },
+        ] as NModePropertyField[];
+      })(),
     ];
   }, [
     initiative,
@@ -5007,12 +5069,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
 
   const getPriorityDotClass = (p: CommentPriority) =>
-    p === 'high' ? 'bg-red-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
+    p === 'high' ? 'bg-rose-500' : p === 'low' ? 'bg-slate-400' : 'bg-blue-500';
   const getCommentPriority = (_c: CommentItem): CommentPriority => 'normal';
   const getPriorityButtonClass = (p: CommentPriority, active: boolean) =>
     active
       ? p === 'high'
-        ? 'border-red-400/80 text-red-300 bg-red-500/20 shadow-[0_0_0_1px_rgba(239,68,68,0.3)]'
+        ? 'border-rose-400/80 text-rose-300 bg-rose-500/20 shadow-[0_0_0_1px_rgba(239,68,68,0.3)]'
         : p === 'low'
           ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20 shadow-[0_0_0_1px_rgba(16,185,129,0.3)]'
           : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15 shadow-[0_0_0_1px_rgba(129,140,248,0.2)]'
@@ -5416,7 +5478,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         update: {
           icon: <Edit3 size={12} />,
           label: isPolish ? 'Aktualizacja' : 'Update',
-          style: 'text-cyan-500 bg-cyan-500/10 border-cyan-400/30',
+          style: 'text-blue-500 bg-blue-500/10 border-blue-400/30',
         },
         field_change: {
           icon: <Edit3 size={12} />,
@@ -5436,7 +5498,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         assignment: {
           icon: <User size={12} />,
           label: isPolish ? 'Przypisanie' : 'Assignment',
-          style: 'text-purple-500 bg-purple-500/10 border-purple-400/30',
+          style: 'text-primary-500 bg-primary-500/10 border-primary-400/30',
         },
         task_added: {
           icon: <CheckSquare size={12} />,
@@ -5446,7 +5508,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         decision_added: {
           icon: <Scale size={12} />,
           label: isPolish ? 'Decyzja' : 'Decision added',
-          style: 'text-violet-500 bg-violet-500/10 border-violet-400/30',
+          style: 'text-primary-500 bg-primary-500/10 border-primary-400/30',
         },
         risk_added: {
           icon: <AlertTriangle size={12} />,
@@ -5466,12 +5528,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         deadline: {
           icon: <Calendar size={12} />,
           label: isPolish ? 'Termin' : 'Deadline',
-          style: 'text-red-500 bg-red-500/10 border-red-400/30',
+          style: 'text-rose-500 bg-rose-500/10 border-rose-400/30',
         },
         priority: {
           icon: <Flag size={12} />,
           label: isPolish ? 'Priorytet' : 'Priority',
-          style: 'text-orange-500 bg-orange-500/10 border-orange-400/30',
+          style: 'text-amber-500 bg-amber-500/10 border-amber-400/30',
         },
         escalated: {
           icon: <AlertTriangle size={12} />,
@@ -5748,7 +5810,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(item.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -5954,7 +6016,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(item.id)}
-                className="mt-0.5 opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                className="mt-0.5 opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6117,7 +6179,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div key={idx} className="group flex items-center gap-2 py-1">
               <span
                 className={`w-2 h-2 rounded-full shrink-0 ${
-                  dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-red-400'
+                  dotColor === 'emerald' ? 'bg-emerald-500' : 'bg-rose-400'
                 }`}
               />
               <input
@@ -6144,7 +6206,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(idx)}
-                className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6230,7 +6292,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <div className="flex-1 space-y-2 pl-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-red-400 shrink-0" />
+                      <span className="w-3 h-3 rounded-full bg-rose-400 shrink-0" />
                       <div>
                         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                           {isPolish ? 'Poza zakresem' : 'Out of Scope'}
@@ -6245,7 +6307,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={addOutScope}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                       >
                         <Plus size={14} />
                         {isPolish ? 'Dodaj' : 'Add item'}
@@ -6296,7 +6358,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+                    <span className="w-3 h-3 rounded-full bg-rose-500 shrink-0" />
                     <div>
                       <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         {isPolish ? 'Kryteria rezygnacji (Kill Criteria)' : 'Kill Criteria'}
@@ -6311,7 +6373,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={addKillCriteria}
-                      className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                     >
                       <Plus size={14} />
                       {isPolish ? 'Dodaj' : 'Add item'}
@@ -6334,10 +6396,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     />
                   </div>
                 </div>
-                <div className="border-b border-red-200/40 dark:border-red-500/20 pb-2 min-h-[40px]">
+                <div className="border-b border-rose-200/40 dark:border-rose-500/20 pb-2 min-h-[40px]">
                   {killCriteriaItems.map((item, i) => (
                     <div key={i} className="group flex items-center gap-2 py-1">
-                      <AlertTriangle size={12} className="text-red-500 shrink-0" />
+                      <AlertTriangle size={12} className="text-rose-500 shrink-0" />
                       <input
                         type="text"
                         value={item}
@@ -6366,7 +6428,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       />
                       <button
                         onClick={() => removeKill(i)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -6410,7 +6472,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         </p>
                         <div className="h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-purple-500"
+                            className="h-full rounded-full bg-primary-500"
                             style={{ width: `${val as number}%` }}
                           />
                         </div>
@@ -6578,7 +6640,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="flex flex-col items-center justify-center py-16 space-y-5">
               {/* Fun accountant illustration */}
               <div className="relative">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-violet-100 via-purple-50 to-fuchsia-100 dark:from-violet-500/15 dark:via-purple-500/10 dark:to-fuchsia-500/15 flex items-center justify-center shadow-lg shadow-violet-200/40 dark:shadow-violet-500/10">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-100 via-primary-50 to-fuchsia-100 dark:from-primary-500/15 dark:via-primary-500/10 dark:to-fuchsia-500/15 flex items-center justify-center shadow-lg shadow-primary-200/40 dark:shadow-primary-500/10">
                   <span className="text-5xl" role="img" aria-label="accountant">
                     🧮
                   </span>
@@ -6612,8 +6674,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     ? 'Nasz księgowy jeszcze liczy... 🤓'
                     : 'Our accountant is still crunching numbers... 🤓'}
                 </p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-50 dark:bg-violet-500/10 border border-violet-200/60 dark:border-violet-500/20">
-                  <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-500/10 border border-primary-200/60 dark:border-primary-500/20">
+                  <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
                     Coming soon
                   </span>
                 </div>
@@ -6628,7 +6690,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="flex flex-col items-center justify-center py-16 space-y-5">
               {/* Fun money impact illustration */}
               <div className="relative">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100 dark:from-emerald-500/15 dark:via-teal-500/10 dark:to-cyan-500/15 flex items-center justify-center shadow-lg shadow-emerald-200/40 dark:shadow-emerald-500/10">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-100 via-blue-50 to-blue-100 dark:from-emerald-500/15 dark:via-blue-500/10 dark:to-blue-500/15 flex items-center justify-center shadow-lg shadow-emerald-200/40 dark:shadow-emerald-500/10">
                   <span className="text-5xl" role="img" aria-label="money chart">
                     📈
                   </span>
@@ -7074,7 +7136,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <button
                         onClick={() => void applyCommentsAIProposal()}
                         disabled={isCommentsAIProposing}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                       >
                         {isCommentsAIProposing ? (
                           <Loader2 size={13} className="animate-spin" />
@@ -7330,7 +7392,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <th className="text-left py-2 pr-2">{isPolish ? 'Jednostka' : 'Unit'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Baza' : 'Baseline'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Obecnie' : 'Current'}</th>
-                      <th className="text-left py-2 pr-2">{isPolish ? 'Cel realizacja' : 'Realization target'}</th>
+                      <th className="text-left py-2 pr-2">
+                        {isPolish ? 'Cel realizacja' : 'Realization target'}
+                      </th>
                       <th className="text-left py-2 pr-2">
                         {isPolish ? 'Cel po wdrożeniu' : 'Post-implementation target'}
                       </th>
@@ -7442,7 +7506,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                     );
                                     if (ok) removeKpi(kpi.id);
                                   }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                                 >
                                   <Trash2 size={13} />
                                   {isPolish ? 'Usuń' : 'Delete'}
@@ -7835,22 +7899,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
       </div>
     );
   }
 
   if (error || !initiative) {
+    const message = error || t('initiatives.document.notFound', 'Initiative not found');
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-center">
-        <AlertTriangle className="w-12 h-12 text-red-400 mb-4" />
-        <p className="text-slate-500">{error || 'Initiative not found'}</p>
-        {onBack && (
-          <button onClick={onBack} className="mt-4 text-purple-500 hover:underline">
-            {isPolish ? 'Wróć' : 'Go back'}
-          </button>
-        )}
-      </div>
+      <HubWorkAreaLoadError
+        title={t('initiatives.document.failedToLoad', 'Failed to load initiative card.')}
+        message={message}
+        errorCode={errorCode}
+        retryLabel={t('initiatives.document.retry', 'Retry')}
+        dismissLabel={t('initiatives.document.goBack', 'Go back')}
+        onRetry={() => {
+          void fetchAll();
+        }}
+        onDismiss={onBack || (() => {})}
+      />
     );
   }
 
@@ -8110,7 +8177,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <button
                 onClick={() => void applyRaidAIProposal()}
                 disabled={isRaidAIProposing || !canEditCards}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                 title={
                   !canEditCards
                     ? isPolish
@@ -8155,7 +8222,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
 
                 {statusDriftUi ? (
-                  <Callout variant="warning" compact title={isPolish ? 'Drift statusu' : 'Status drift'}>
+                  <Callout
+                    variant="warning"
+                    compact
+                    title={isPolish ? 'Drift statusu' : 'Status drift'}
+                  >
                     {isPolish
                       ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
                       : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}
@@ -8176,7 +8247,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           action.variant === 'success'
                             ? 'border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
                             : action.variant === 'danger'
-                              ? 'border-red-400/50 text-red-600 dark:text-red-400 hover:bg-red-500/10'
+                              ? 'border-rose-400/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10'
                               : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60';
                         return (
                           <button
@@ -8237,7 +8308,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             : 'No permission to use AI in this context.'
                                           : undefined
                                       }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                     >
                                       {tasksAiRequest?.mode === 'analyze' ? (
                                         <Loader2 size={13} className="animate-spin" />
@@ -8275,7 +8346,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             : 'No permission to use AI in this context.'
                                           : undefined
                                       }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                     >
                                       {tasksAiRequest?.mode === 'addOne' ? (
                                         <Loader2 size={13} className="animate-spin" />
@@ -8318,7 +8389,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             : 'No permission to use AI in this context.'
                                           : undefined
                                       }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                     >
                                       {decisionsAiRequest?.mode === 'analyze' ? (
                                         <Loader2 size={13} className="animate-spin" />
@@ -8356,7 +8427,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             : 'No permission to use AI in this context.'
                                           : undefined
                                       }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                     >
                                       {decisionsAiRequest?.mode === 'addOne' ? (
                                         <Loader2 size={13} className="animate-spin" />
@@ -8398,7 +8469,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                   >
                                     {commentsAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8439,7 +8510,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                   >
                                     {resourcesAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8480,7 +8551,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                   >
                                     {timelineAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8521,7 +8592,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                   >
                                     {dependenciesAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8562,7 +8633,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                   >
                                     {kpisAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8603,7 +8674,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                   >
                                     {teamAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8644,7 +8715,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                   >
                                     {targetStateAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8685,7 +8756,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                   >
                                     {gatesAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8760,7 +8831,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         : 'No permission to use AI in this context.'
                                       : undefined
                                   }
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors disabled:opacity-50"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
                                 >
                                   {activeNSection === 'risk-raid' ? (
                                     isRaidAnalyzing ? (
@@ -8825,7 +8896,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               >
                 {statusDriftUi ? (
                   <div className="mb-3">
-                    <Callout variant="warning" compact title={isPolish ? 'Drift statusu' : 'Status drift'}>
+                    <Callout
+                      variant="warning"
+                      compact
+                      title={isPolish ? 'Drift statusu' : 'Status drift'}
+                    >
                       {isPolish
                         ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
                         : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}
@@ -8903,7 +8978,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleOpenChat}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-purple-500/40 dark:border-purple-400/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm font-semibold transition-all shadow-sm"
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-primary-500/40 dark:border-primary-400/30 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 dark:hover:bg-primary-500/10 text-sm font-semibold transition-all shadow-sm"
                     >
                       <MessageSquare size={16} />
                       <span>{isPolish ? 'Czat' : 'Chat'}</span>
@@ -8912,13 +8987,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700/60">
                       <button
                         onClick={() => setPresentationMode('n')}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${(presentationMode as any) === 'n' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${(presentationMode as any) === 'n' ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                       >
                         N
                       </button>
                       <button
                         onClick={() => setPresentationMode('c')}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${(presentationMode as any) === 'c' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${(presentationMode as any) === 'c' ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                       >
                         C
                       </button>
@@ -8930,7 +9005,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       onClick={() => setShowAssessmentPanel((p) => !p)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
                         showAssessmentPanel
-                          ? 'bg-violet-500/15 border-violet-500/40 text-violet-600 dark:text-violet-400'
+                          ? 'bg-primary-500/15 border-primary-500/40 text-primary-600 dark:text-primary-400'
                           : 'bg-white/70 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-600'
                       }`}
                       title={isPolish ? 'Panel oceny' : 'Assessment panel'}
@@ -9075,8 +9150,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 {/* 3. Team */}
                 <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <div className="p-1 rounded-lg bg-purple-500/10">
-                      <Users size={14} className="text-purple-500" />
+                    <div className="p-1 rounded-lg bg-primary-500/10">
+                      <Users size={14} className="text-primary-500" />
                     </div>
                     <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {isPolish ? 'Zespół' : 'Team'}
@@ -9106,8 +9181,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 {/* 4. Resources */}
                 <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <div className="p-1 rounded-lg bg-cyan-500/10">
-                      <Calendar size={14} className="text-cyan-500" />
+                    <div className="p-1 rounded-lg bg-blue-500/10">
+                      <Calendar size={14} className="text-blue-500" />
                     </div>
                     <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {isPolish ? 'Zasoby' : 'Resources'}
@@ -9136,7 +9211,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       </p>
                     )}
                     {milestones.length > 0 && (
-                      <p className="text-[10px] text-purple-500">
+                      <p className="text-[10px] text-primary-500">
                         {milestones.length} {isPolish ? 'kamieni milowych' : 'milestones'}
                       </p>
                     )}
@@ -9168,7 +9243,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     )}
                     {(riskCount > 0 || issueCount > 0) && (
                       <span
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${criticalRaids > 0 ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${criticalRaids > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}
                       >
                         {riskCount}R / {issueCount}I
                       </span>
@@ -9208,7 +9283,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 border border-amber-300/50 dark:border-amber-500/30"
+                        className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20 border border-amber-300/50 dark:border-amber-500/30"
                       >
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded-xl bg-amber-500/20">
@@ -9265,7 +9340,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     {/* Panel Header */}
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        <Sparkles size={16} className="text-violet-500" />
+                        <Sparkles size={16} className="text-primary-500" />
                         {isPolish ? 'Podsumowanie oceny' : 'Assessment Summary'}
                       </h3>
                       <button
@@ -9277,8 +9352,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     </div>
 
                     {/* Readiness Score */}
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/5 to-purple-500/5 dark:from-violet-500/10 dark:to-purple-500/10 border border-violet-200/50 dark:border-violet-500/20">
-                      <p className="text-[10px] font-semibold text-violet-500 uppercase tracking-wider mb-2">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-primary-500/5 to-primary-500/5 dark:from-primary-500/10 dark:to-primary-500/10 border border-primary-200/50 dark:border-primary-500/20">
+                      <p className="text-[10px] font-semibold text-primary-500 uppercase tracking-wider mb-2">
                         {isPolish ? 'Gotowość inicjatywy' : 'Initiative Readiness'}
                       </p>
                       <div className="flex items-end gap-2 mb-2">
@@ -9304,7 +9379,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       </div>
                       <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all"
+                          className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-500 transition-all"
                           style={{
                             width: `${(() => {
                               let score = 0;
@@ -9403,7 +9478,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         </div>
                         <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
                           <p
-                            className={`text-lg font-bold ${criticalRaids > 0 ? 'text-red-500' : 'text-slate-800 dark:text-white'}`}
+                            className={`text-lg font-bold ${criticalRaids > 0 ? 'text-rose-500' : 'text-slate-800 dark:text-white'}`}
                           >
                             {raidItems.length}
                           </p>

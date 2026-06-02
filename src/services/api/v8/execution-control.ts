@@ -413,7 +413,11 @@ export const V8ExecutionControlApi = {
     );
   },
 
-  applyManagerSuggestion: (laneId: string, payload: { suggestionId: string }, projectId?: string) => {
+  applyManagerSuggestion: (
+    laneId: string,
+    payload: { suggestionId: string },
+    projectId?: string
+  ) => {
     const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
     return v8Post<V8ManagerActionExecutionResult>(
       `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/suggestions/apply${qs}`,
@@ -421,7 +425,10 @@ export const V8ExecutionControlApi = {
     );
   },
 
-  submitLaneDecision: (laneId: string, payload: { suggestionId: string; state: string; notes?: string }) =>
+  submitLaneDecision: (
+    laneId: string,
+    payload: { suggestionId: string; state: string; notes?: string }
+  ) =>
     v8Post<{ success: boolean; decisionId: string }>(
       `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/decisions`,
       payload
@@ -439,8 +446,12 @@ export const V8ExecutionControlApi = {
       projectId ? { projectId } : undefined
     ),
 
-  interveneReassign: (payload: { entityType: string; entityId: string; newOwnerId: string; reason?: string }) =>
-    v8Post<{ success: boolean }>('/execution-control/interventions/reassign', payload),
+  interveneReassign: (payload: {
+    entityType: string;
+    entityId: string;
+    newOwnerId: string;
+    reason?: string;
+  }) => v8Post<{ success: boolean }>('/execution-control/interventions/reassign', payload),
 
   interveneSmooth: (payload: { entityId: string; strategy: string }) =>
     v8Post<{ success: boolean }>('/execution-control/interventions/smooth', payload),
@@ -456,7 +467,7 @@ export const V8ExecutionControlApi = {
     const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
     return v8Post<V8AiRecommendation>(
       `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/recommend${qs}`,
-      { problemId },
+      { problemId }
     );
   },
 
@@ -464,7 +475,7 @@ export const V8ExecutionControlApi = {
     const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
     return v8Post<V8AiTriageResult>(
       `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/triage${qs}`,
-      {},
+      {}
     );
   },
 
@@ -472,7 +483,7 @@ export const V8ExecutionControlApi = {
     const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
     return v8Post<V8AiManageAllResult>(
       `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/ai/manage-all${qs}`,
-      {},
+      {}
     );
   },
 };

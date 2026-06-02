@@ -18,8 +18,57 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '@/components/Admin/AdminState';
+
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const normalizeCandidateList = (value: unknown) => {
+  if (!hasListShape(value, ['candidates', 'ideas', 'items'])) {
+    throw new Error('Knowledge candidates response was not a list');
+  }
+  return getListPayload<any>(value, ['candidates', 'ideas', 'items']);
+};
 
 export const AdminKnowledgeView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -30,6 +79,8 @@ export const AdminKnowledgeView: React.FC = () => {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Filter State
   const [candidateFilter, setCandidateFilter] = useState<
@@ -95,15 +146,18 @@ export const AdminKnowledgeView: React.FC = () => {
     }
   };
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (options: { showLoading?: boolean } = {}) => {
+    if (options.showLoading !== false) setLoading(true);
+    setLoadError(null);
     try {
       if (activeTab === 'candidates') {
         if (showApprovedLibrary) {
           const filters: any = {};
           if (ideaCategoryFilter) filters.category = ideaCategoryFilter;
           const data = await Api.getApprovedIdeas(filters);
-          setCandidates(Array.isArray(data) ? data : []);
+          const nextCandidates = normalizeCandidateList(data);
+          setCandidates(nextCandidates);
+          return { candidates: nextCandidates };
         } else if (candidateFilter === 'all') {
           // Load all statuses
           const [pending, approved, rejected, implemented] = await Promise.all([
@@ -112,34 +166,56 @@ export const AdminKnowledgeView: React.FC = () => {
             Api.getKnowledgeCandidates('rejected'),
             Api.getKnowledgeCandidates('implemented'),
           ]);
-          setCandidates([...pending, ...approved, ...rejected, ...implemented]);
+          const nextCandidates = [
+            ...normalizeCandidateList(pending),
+            ...normalizeCandidateList(approved),
+            ...normalizeCandidateList(rejected),
+            ...normalizeCandidateList(implemented),
+          ];
+          setCandidates(nextCandidates);
+          return { candidates: nextCandidates };
         } else {
           const data = await Api.getKnowledgeCandidates(candidateFilter);
-          setCandidates(Array.isArray(data) ? data : []);
+          const nextCandidates = normalizeCandidateList(data);
+          setCandidates(nextCandidates);
+          return { candidates: nextCandidates };
         }
       } else if (activeTab === 'strategies') {
         const data = await Api.getAllGlobalStrategies();
         setStrategies(Array.isArray(data) ? data : []);
+        return { strategies: Array.isArray(data) ? data : [] };
       } else {
         const data = await Api.getKnowledgeDocuments();
         setDocuments(Array.isArray(data) ? data : []);
+        return { documents: Array.isArray(data) ? data : [] };
       }
-    } catch (err) {
-      toast.error('Failed to load data');
-      console.error(err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load data';
+      setLoadError(message);
+      setCandidates([]);
+      setStrategies([]);
+      setDocuments([]);
+      toast.error(message);
+      return null;
     } finally {
-      setLoading(false);
+      if (options.showLoading !== false) setLoading(false);
     }
   };
 
   // Candidates Actions
   const handleAction = async (id: string, action: 'approved' | 'rejected') => {
     try {
+      setActionError(null);
       await Api.updateCandidateStatus(id, action);
+      const refreshed = await loadData({ showLoading: false });
+      if (!refreshed || refreshed.candidates?.some((candidate) => candidate.id === id)) {
+        throw new Error('Idea status update was not confirmed by the server');
+      }
       toast.success(`Idea ${action}`);
-      setCandidates(candidates.filter((c) => c.id !== id));
-    } catch (err) {
-      toast.error('Action failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Action failed';
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -348,7 +424,7 @@ export const AdminKnowledgeView: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <BrainCircuit className="text-purple-600" size={20} />
+            <BrainCircuit className="text-primary-600" size={20} />
             Global Knowledge Brain
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">
@@ -359,7 +435,7 @@ export const AdminKnowledgeView: React.FC = () => {
         {activeTab === 'strategies' && (
           <button
             onClick={() => setShowStrategyModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium text-xs"
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors font-medium text-xs"
           >
             <Plus size={14} /> Add Strategic Direction
           </button>
@@ -372,7 +448,7 @@ export const AdminKnowledgeView: React.FC = () => {
           onClick={() => setActiveTab('candidates')}
           className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === 'candidates'
-              ? 'border-purple-500 text-purple-700 dark:text-purple-300'
+              ? 'border-primary-500 text-primary-700 dark:text-primary-300'
               : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
@@ -382,7 +458,7 @@ export const AdminKnowledgeView: React.FC = () => {
           onClick={() => setActiveTab('documents')}
           className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === 'documents'
-              ? 'border-purple-500 text-purple-700 dark:text-purple-300'
+              ? 'border-primary-500 text-primary-700 dark:text-primary-300'
               : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
@@ -392,7 +468,7 @@ export const AdminKnowledgeView: React.FC = () => {
           onClick={() => setActiveTab('strategies')}
           className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === 'strategies'
-              ? 'border-purple-500 text-purple-700 dark:text-purple-300'
+              ? 'border-primary-500 text-primary-700 dark:text-primary-300'
               : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
@@ -406,8 +482,21 @@ export const AdminKnowledgeView: React.FC = () => {
           <div className="flex justify-center py-20 text-slate-500 animate-pulse">
             Accessing Global Brain...
           </div>
+        ) : loadError ? (
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+            <DegradedState title="Knowledge base unavailable" description={loadError} />
+          </div>
         ) : (
           <>
+            {actionError ? (
+              <div
+                role="alert"
+                className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+              >
+                {actionError}
+              </div>
+            ) : null}
+
             {/* --- IDEA CANDIDATES --- */}
             {activeTab === 'candidates' && (
               <div className="space-y-4">
@@ -423,7 +512,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         }}
                         className={`px-3 py-1 rounded-full text-xs capitalize border ${
                           candidateFilter === f
-                            ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/20'
+                            ? 'bg-primary-100 text-primary-700 border-primary-200 dark:bg-primary-500/10 dark:text-primary-300 dark:border-primary-500/20'
                             : 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-navy-900/40 dark:text-slate-200 dark:border-navy-700'
                         }`}
                       >
@@ -448,7 +537,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     <select
                       value={ideaCategoryFilter}
                       onChange={(e) => setIdeaCategoryFilter(e.target.value)}
-                      className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-purple-500 outline-none"
+                      className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-primary-500 outline-none"
                     >
                       <option value="">All Categories</option>
                       {IDEA_CATEGORIES.map((cat) => (
@@ -484,7 +573,7 @@ export const AdminKnowledgeView: React.FC = () => {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleAction(c.id, 'rejected')}
-                                className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                                className="p-2 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition-colors"
                                 title="Reject"
                               >
                                 <X size={16} />
@@ -504,13 +593,13 @@ export const AdminKnowledgeView: React.FC = () => {
                           {c.content}
                         </h3>
                         <p className="text-slate-700 dark:text-slate-200 text-sm mb-3 bg-slate-50 dark:bg-navy-900/50 p-3 rounded-lg flex gap-3">
-                          <MessageSquare size={16} className="text-purple-500 shrink-0 mt-0.5" />
+                          <MessageSquare size={16} className="text-primary-500 shrink-0 mt-0.5" />
                           {c.reasoning || 'No reasoning provided.'}
                         </p>
 
                         <div className="flex flex-wrap gap-2 mb-2">
                           {c.category && (
-                            <span className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded">
+                            <span className="text-xs px-2 py-1 bg-primary-50 text-primary-700 rounded">
                               {c.category}
                             </span>
                           )}
@@ -624,7 +713,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         <select
                           value={uploadCategory}
                           onChange={(e) => setUploadCategory(e.target.value)}
-                          className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none"
+                          className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-primary-500 outline-none"
                         >
                           <option value="">Select category...</option>
                           {DOCUMENT_CATEGORIES.map((cat) => (
@@ -643,7 +732,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           value={uploadTags}
                           onChange={(e) => setUploadTags(e.target.value)}
                           placeholder="tag1, tag2, tag3"
-                          className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none"
+                          className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-2 text-slate-900 dark:text-white text-sm focus:border-primary-500 outline-none"
                         />
                       </div>
                     </div>
@@ -663,7 +752,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     <select
                       value={documentCategoryFilter}
                       onChange={(e) => setDocumentCategoryFilter(e.target.value)}
-                      className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-purple-500 outline-none"
+                      className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-3 py-1 text-slate-900 dark:text-white text-xs focus:border-primary-500 outline-none"
                     >
                       <option value="">All Categories</option>
                       {DOCUMENT_CATEGORIES.map((cat) => (
@@ -687,8 +776,8 @@ export const AdminKnowledgeView: React.FC = () => {
                         >
                           <div className="flex justify-between items-start mb-2">
                             <div className="flex items-center gap-3 overflow-hidden flex-1">
-                              <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg shrink-0">
-                                <FileText className="text-purple-600" size={20} />
+                              <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg shrink-0">
+                                <FileText className="text-primary-600" size={20} />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <h4 className="text-slate-900 dark:text-white text-sm font-medium truncate">
@@ -698,7 +787,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                   {new Date(doc.created_at).toLocaleDateString()}
                                 </p>
                                 {doc.category && (
-                                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-200 rounded">
+                                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-200 rounded">
                                     {doc.category}
                                   </span>
                                 )}
@@ -740,7 +829,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                 <Edit2 size={16} />
                               </button>
                               <button
-                                className="text-slate-400 hover:text-red-600 transition-colors"
+                                className="text-slate-400 hover:text-rose-600 transition-colors"
                                 title="Delete (Pending Implementation)"
                               >
                                 <Trash2 size={16} />
@@ -763,14 +852,14 @@ export const AdminKnowledgeView: React.FC = () => {
                     key={s.id}
                     className={`bg-white dark:bg-navy-800 border rounded-xl p-6 transition-colors ${
                       s.is_active
-                        ? 'border-purple-200 dark:border-purple-500/40 ring-1 ring-purple-200/60 dark:ring-purple-500/20'
+                        ? 'border-primary-200 dark:border-primary-500/40 ring-1 ring-primary-200/60 dark:ring-primary-500/20'
                         : 'border-slate-200 dark:border-navy-700'
                     }`}
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className="p-3 rounded-lg bg-slate-100 dark:bg-navy-900">
                         <Target
-                          className={s.is_active ? 'text-purple-600' : 'text-slate-400'}
+                          className={s.is_active ? 'text-primary-600' : 'text-slate-400'}
                           size={24}
                         />
                       </div>
@@ -796,7 +885,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           onClick={() => handleToggleStrategy(s.id, !!s.is_active)}
                           className={`p-2 rounded-lg transition-colors ${
                             s.is_active
-                              ? 'bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-700'
+                              ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-700'
                               : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'
                           }`}
                           title={s.is_active ? 'Click to Deactivate' : 'Click to Activate'}
@@ -815,7 +904,7 @@ export const AdminKnowledgeView: React.FC = () => {
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
                               s.priority === 'high'
-                                ? 'bg-red-100 text-red-700'
+                                ? 'bg-rose-100 text-rose-700'
                                 : s.priority === 'medium'
                                   ? 'bg-amber-100 text-amber-700'
                                   : 'bg-blue-100 text-blue-700'
@@ -843,7 +932,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       </div>
                       <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-purple-500 transition-all duration-500"
+                          className="h-full bg-primary-500 transition-all duration-500"
                           style={{ width: `${s.progress_percentage || 0}%` }}
                         />
                       </div>
@@ -892,7 +981,7 @@ export const AdminKnowledgeView: React.FC = () => {
                               setLinkType('idea');
                               setLinkItemId('');
                             }}
-                            className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded hover:bg-purple-100"
+                            className="text-xs px-2 py-1 bg-primary-50 text-primary-700 rounded hover:bg-primary-100"
                             title="Link Idea"
                           >
                             + Idea
@@ -919,7 +1008,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                       onClick={() =>
                                         handleUnlinkFromStrategy(s.id, 'document', doc.id)
                                       }
-                                      className="hover:text-red-400"
+                                      className="hover:text-rose-400"
                                     >
                                       <X size={10} />
                                     </button>
@@ -941,14 +1030,14 @@ export const AdminKnowledgeView: React.FC = () => {
                                 .map((idea: any) => (
                                   <span
                                     key={idea.id}
-                                    className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded flex items-center gap-1"
+                                    className="text-xs px-2 py-0.5 bg-primary-50 text-primary-700 rounded flex items-center gap-1"
                                   >
                                     <Lightbulb size={10} /> {idea.content.substring(0, 30)}...
                                     <button
                                       onClick={() =>
                                         handleUnlinkFromStrategy(s.id, 'idea', idea.id)
                                       }
-                                      className="hover:text-red-600"
+                                      className="hover:text-rose-600"
                                     >
                                       <X size={10} />
                                     </button>
@@ -961,7 +1050,7 @@ export const AdminKnowledgeView: React.FC = () => {
 
                     <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-full transition-all duration-500 ${s.is_active ? 'w-full bg-purple-500' : 'w-0'}`}
+                        className={`h-full transition-all duration-500 ${s.is_active ? 'w-full bg-primary-500' : 'w-0'}`}
                       />
                     </div>
                     <div className="mt-2 text-xs text-right text-slate-500 dark:text-slate-400">
@@ -983,8 +1072,8 @@ export const AdminKnowledgeView: React.FC = () => {
             {activeTab === 'observations' && (
               <div className="space-y-6">
                 <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-full mb-4">
-                    <BrainCircuit size={32} className="text-purple-600" />
+                  <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-full mb-4">
+                    <BrainCircuit size={32} className="text-primary-600" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                     Analyze Global Interactions
@@ -996,7 +1085,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   <button
                     onClick={generateObservations}
                     disabled={loading}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
+                    className="px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium flex items-center gap-2 transition-colors"
                   >
                     {loading ? (
                       <RefreshCw className="animate-spin" size={18} />
@@ -1027,7 +1116,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                 <span
                                   className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
                                     item.severity === 'high'
-                                      ? 'bg-red-100 text-red-700'
+                                      ? 'bg-rose-100 text-rose-700'
                                       : item.severity === 'medium'
                                         ? 'bg-amber-100 text-amber-700'
                                         : 'bg-blue-100 text-blue-700'
@@ -1059,7 +1148,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       {/* Content Gaps */}
                       <div className="space-y-4">
                         <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-                          <div className="w-2 h-8 bg-purple-500 rounded-full"></div>
+                          <div className="w-2 h-8 bg-primary-500 rounded-full"></div>
                           Knowledge Gaps
                         </h3>
                         <div className="space-y-3">
@@ -1072,10 +1161,10 @@ export const AdminKnowledgeView: React.FC = () => {
                                 <span
                                   className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${
                                     item.severity === 'high'
-                                      ? 'bg-red-100 text-red-700'
+                                      ? 'bg-rose-100 text-rose-700'
                                       : item.severity === 'medium'
                                         ? 'bg-amber-100 text-amber-700'
-                                        : 'bg-purple-100 text-purple-700'
+                                        : 'bg-primary-100 text-primary-700'
                                   }`}
                                 >
                                   {item.severity}
@@ -1085,7 +1174,7 @@ export const AdminKnowledgeView: React.FC = () => {
                                 {item.description}
                               </p>
                               <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-900 p-2 rounded border border-slate-200 dark:border-navy-700">
-                                <Lightbulb size={12} className="text-purple-600" />
+                                <Lightbulb size={12} className="text-primary-600" />
                                 Missing Topic:{' '}
                                 <span className="text-slate-900 dark:text-white">
                                   {item.action_item}
@@ -1141,7 +1230,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <select
                   value={approveIdeaCategory}
                   onChange={(e) => setApproveIdeaCategory(e.target.value)}
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-primary-500 outline-none transition-colors"
                 >
                   <option value="">Select category...</option>
                   {IDEA_CATEGORIES.map((cat) => (
@@ -1160,7 +1249,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   value={approveIdeaTags}
                   onChange={(e) => setApproveIdeaTags(e.target.value)}
                   placeholder="tag1, tag2, tag3"
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-primary-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1218,7 +1307,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <select
                   value={linkProjectId}
                   onChange={(e) => setLinkProjectId(e.target.value)}
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-primary-500 outline-none transition-colors"
                 >
                   <option value="">Select project...</option>
                   {projects.map((project) => (
@@ -1237,7 +1326,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   onChange={(e) => setLinkProjectNotes(e.target.value)}
                   placeholder="How was this idea applied?"
                   rows={3}
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-primary-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1291,7 +1380,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <select
                   value={editDocCategory}
                   onChange={(e) => setEditDocCategory(e.target.value)}
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-primary-500 outline-none transition-colors"
                 >
                   <option value="">No category</option>
                   {DOCUMENT_CATEGORIES.map((cat) => (
@@ -1310,7 +1399,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   value={editDocTags}
                   onChange={(e) => setEditDocTags(e.target.value)}
                   placeholder="tag1, tag2, tag3"
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-primary-500 outline-none transition-colors"
                 />
               </div>
               <div className="pt-4 flex gap-3">
@@ -1328,7 +1417,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleUpdateDocument(editingDoc.id)}
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded transition-colors"
+                  className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded transition-colors"
                 >
                   Save Changes
                 </button>
@@ -1369,7 +1458,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 <select
                   value={linkItemId}
                   onChange={(e) => setLinkItemId(e.target.value)}
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-primary-500 outline-none transition-colors"
                 >
                   <option value="">
                     Select {linkType === 'document' ? 'document' : 'idea'}...
@@ -1404,7 +1493,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   type="button"
                   onClick={handleLinkToStrategy}
                   disabled={!linkItemId}
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
+                  className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded transition-colors"
                 >
                   Link
                 </button>
@@ -1460,7 +1549,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   autoFocus
                   value={strategyForm.title}
                   onChange={(e) => setStrategyForm({ ...strategyForm, title: e.target.value })}
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-primary-500 outline-none transition-colors"
                   placeholder="Enter a concise title..."
                 />
               </div>
@@ -1475,7 +1564,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   onChange={(e) =>
                     setStrategyForm({ ...strategyForm, description: e.target.value })
                   }
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-primary-500 outline-none transition-colors"
                   placeholder="Explain how the AI should behave or what it should prioritize..."
                 />
               </div>
@@ -1492,7 +1581,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         priority: e.target.value as 'low' | 'medium' | 'high',
                       })
                     }
-                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-primary-500 outline-none transition-colors"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -1509,7 +1598,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     onChange={(e) =>
                       setStrategyForm({ ...strategyForm, target_date: e.target.value })
                     }
-                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-primary-500 outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -1526,7 +1615,7 @@ export const AdminKnowledgeView: React.FC = () => {
                       success_metrics: e.target.value.split('\n').filter((m) => m.trim()),
                     })
                   }
-                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-purple-500 outline-none transition-colors"
+                  className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white text-sm focus:border-primary-500 outline-none transition-colors"
                   placeholder="Metric 1&#10;Metric 2&#10;Metric 3"
                 />
               </div>
@@ -1546,7 +1635,7 @@ export const AdminKnowledgeView: React.FC = () => {
                         progress_percentage: parseInt(e.target.value) || 0,
                       })
                     }
-                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-colors"
+                    className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded p-3 text-slate-900 dark:text-white focus:border-primary-500 outline-none transition-colors"
                   />
                 </div>
               )}
@@ -1571,7 +1660,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded transition-colors"
+                  className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded transition-colors"
                 >
                   {editingStrategy ? 'Update Strategy' : 'Add Strategy'}
                 </button>

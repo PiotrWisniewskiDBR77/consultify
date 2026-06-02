@@ -8,6 +8,8 @@
   "common": {
     "optional": "opcjonalnie",
     "save": "Zapisz",
+    "saving": "Zapisywanie...",
+    "saveChanges": "Zapisz zmiany",
     "cancel": "Anuluj",
     "delete": "Usuń",
     "duplicate": "Duplikuj",
@@ -28,6 +30,10 @@
     "view": "Widok",
     "refresh": "Odśwież",
     "refreshFailed": "Nie udało się odświeżyć",
+    "all": "Wszystkie",
+    "skip": "Pomiń",
+    "connect": "Połącz",
+    "disconnect": "Odłącz",
     "download": "Pobierz",
     "upload": "Wyślij",
     "submit": "Wyślij",
@@ -110,6 +116,69 @@
       "bootstrapLabel": "Utwórz tenant testowy",
       "cleanupLabel": "Wyczyść dane testowe",
       "gatingNotice": "Dostępne tylko w środowisku testowym z odpowiednimi poświadczeniami."
+    },
+    "customers": {
+      "playbooks": {
+        "title": "Playbooki Customer Success",
+        "subtitle": "Automatyzuj workflow customer success i interwencje",
+        "newPlaybook": "Nowy playbook",
+        "execute": "Uruchom",
+        "confirmDelete": "Usunąć ten playbook?",
+        "status": {
+          "active": "Aktywny",
+          "inactive": "Nieaktywny"
+        },
+        "actionTypes": {
+          "sendEmail": "Wyślij email",
+          "createTask": "Utwórz zadanie",
+          "notifyCsm": "Powiadom CSM",
+          "scheduleCall": "Zaplanuj rozmowę",
+          "updateHealth": "Zaktualizuj health",
+          "custom": "Niestandardowa"
+        },
+        "triggerTypes": {
+          "onboardingComplete": "Onboarding zakończony",
+          "trialEnding": "Trial się kończy",
+          "lowEngagement": "Niskie zaangażowanie",
+          "healthScoreDrop": "Spadek health score",
+          "subscriptionChange": "Zmiana subskrypcji",
+          "milestoneReached": "Osiągnięto milestone"
+        },
+        "fields": {
+          "name": "Nazwa",
+          "description": "Opis",
+          "trigger": "Wyzwalacz",
+          "actions": "Akcje",
+          "organizationId": "ID organizacji"
+        },
+        "placeholders": {
+          "name": "Wpisz nazwę playbooka",
+          "organizationId": "Wpisz ID organizacji"
+        },
+        "modals": {
+          "createTitle": "Utwórz playbook",
+          "editTitle": "Edytuj playbook",
+          "createCta": "Utwórz playbook",
+          "editCta": "Zapisz playbook",
+          "executeTitle": "Uruchom playbook",
+          "executeSubtitle": "Uruchom {{name}} dla organizacji.",
+          "executeCta": "Uruchom"
+        },
+        "empty": {
+          "selectTitle": "Wybierz playbook",
+          "selectSubtitle": "Wybierz playbook z listy, aby zobaczyć szczegóły."
+        },
+        "validation": {
+          "nameRequired": "Nazwa playbooka jest wymagana",
+          "actionsRequired": "Dodaj co najmniej jedną akcję"
+        },
+        "toasts": {
+          "created": "Playbook utworzony",
+          "updated": "Playbook zaktualizowany",
+          "deleted": "Playbook usunięty",
+          "executed": "Playbook uruchomiony"
+        }
+      }
     },
     "playbookTemplates": {
       "title": "Szablony Playbooków",
@@ -680,12 +749,14 @@
     "reportsBuilder": "Kreator raportów",
     "reportsManagement": "Raporty zarządcze",
     "presentations": "Prezentacje",
+    "outputsLibrary": "Dokumenty",
     "partnerPortal": "Portal Partnerski",
     "tasks": "Zadania",
     "toolsLibrary": "Biblioteka",
     "wordy": "Dokumenty",
-    "excele": "Tabele",
-    "prezentacje": "Prezentacje"
+    "excele": "Tabele Studio",
+    "prezentacje": "Prezentacje",
+    "tabele": "Tabele Studio"
   },
   "widgets": {
     "help": {
@@ -1627,7 +1698,14 @@
     "hub": {
       "failedToLoad": "Nie udało się załadować inicjatyw.",
       "retry": "Spróbuj ponownie",
-      "dismiss": "Zamknij"
+      "dismiss": "Zamknij",
+      "noInitiativesFound": "Nie znaleziono inicjatyw"
+    },
+    "document": {
+      "failedToLoad": "Nie udało się załadować karty inicjatywy.",
+      "notFound": "Nie znaleziono inicjatywy",
+      "retry": "Spróbuj ponownie",
+      "goBack": "Wróć"
     },
     "empty": {
       "title": "Brak inicjatyw",
@@ -1784,6 +1862,11 @@
     "calendar": "Kalendarz",
     "decisions": "Decyzje",
     "heatmap": "Mapa obciążenia",
+    "hub": {
+      "failedToLoad": "Nie udało się załadować inicjatyw realizacyjnych.",
+      "retry": "Spróbuj ponownie",
+      "dismiss": "Zamknij"
+    },
     "demo": {
       "label": "Demo",
       "toggleHint": "Przełącz dane demo dla Centrum Realizacji (tylko lokalnie)",
@@ -2508,19 +2591,119 @@
       "helpful": "Czy to było pomocne?",
       "suggestions": "Sugerowane pytania",
       "poweredBy": "AI oparte na bazie wiedzy"
+    },
+    "feedback": {
+      "title": "Czy to było pomocne?",
+      "yes": "Tak",
+      "no": "Nie",
+      "addComment": "Napisz, czego brakowało",
+      "commentPlaceholder": "Co powinniśmy poprawić?",
+      "submit": "Wyślij opinię",
+      "skip": "Pomiń",
+      "thanks": "Dziękujemy za opinię",
+      "error": "Nie udało się wysłać opinii. Spróbuj ponownie."
     }
   },
   "settings": {
     "title": "Ustawienia",
+    "saved": "Ustawienia zapisane",
+    "saveError": "Nie udało się zapisać ustawień",
+    "sectionNotFound": "Nie znaleziono sekcji",
+    "taxonomy": {
+      "badge": "Taksonomia ustawień",
+      "title": "Jeden root ustawień z jasną odpowiedzialnością",
+      "subtitle": "Użytkownik powinien rozumieć, co zmienia tylko jego doświadczenie, co należy do tenanta, a co pozostaje ustawieniem konkretnego modułu.",
+      "scopeTitle": "Kanoniczne zakresy ustawień",
+      "impactTitle": "Kontrole wpływające na działanie systemu",
+      "scopes": {
+        "personal": {
+          "title": "Ustawienia osobiste",
+          "description": "Profil, preferencje, bezpieczeństwo i zachowanie AI dotyczące tylko bieżącego użytkownika."
+        },
+        "tenant": {
+          "title": "Przekazanie do tenanta",
+          "description": "Organizacja i administracja są źródłem prawdy dla brandingu, lokalizacji, granic zaufania i wspólnych zasad operacyjnych."
+        },
+        "module": {
+          "title": "Ustawienia modułów",
+          "description": "Powiadomienia, integracje i podobne kontrole powinny być łatwe do znalezienia, ale dziedziczyć wspólny model odpowiedzialności."
+        }
+      },
+      "impacts": {
+        "regional": "Język, strefa czasowa i ustawienia regionalne powinny widocznie zmieniać działanie systemu.",
+        "automation": "Powiadomienia, pamięć i kontrole AI powinny wyjaśniać, na jakie sygnały i automatyzacje wpływają.",
+        "tenantOwned": "Domyślne ustawienia tenantowe powinny przekazywać odpowiedzialność do Organizacji i Admina zamiast dublować je tutaj."
+      }
+    },
+    "ownership": {
+      "readOnly": "Tylko odczyt",
+      "source": "Źródło",
+      "unavailable": "Dane o odpowiedzialności za ustawienia są tymczasowo niedostępne.",
+      "loadError": "Nie udało się wczytać danych o odpowiedzialności za ustawienia.",
+      "openOrganization": "Otwórz Organizację",
+      "openBranding": "Otwórz Branding",
+      "openAdminSecurity": "Otwórz bezpieczeństwo Admin",
+      "minutes": "{{count}} min",
+      "value": {
+        "notConfigured": "Nie skonfigurowano",
+        "enabled": "Włączone",
+        "disabled": "Wyłączone"
+      },
+      "tenantDefaults": {
+        "title": "Domyślne ustawienia tenanta",
+        "subtitle": "Domyślne ustawienia organizacji są widoczne w Settings, ale ich źródłem prawdy pozostaje Organizacja albo polityka tenantowa."
+      },
+      "branding": {
+        "title": "Ponowne użycie brandingu z P30",
+        "subtitle": "Pola brandingu są pobierane tylko do odczytu z kontekstu organizacji. Settings nie zapisuje brandingu organizacji."
+      },
+      "security": {
+        "title": "Przekazanie bezpieczeństwa do Admin",
+        "subtitle": "Polityka bezpieczeństwa pozostaje tutaj widoczna wraz z wpływem, ale wszystkie zapisy są kierowane do Admin."
+      },
+      "modulePreferences": {
+        "title": "Preferencje modułów",
+        "subtitle": "Ustawienia modułów pozostają dostępne w jednym root Settings i dziedziczą ten sam model odpowiedzialności."
+      },
+      "modules": {
+        "interview": "Wywiady",
+        "tools": "Narzędzia",
+        "outputs": "Outputy",
+        "assessment": "Ocena",
+        "copilot": "AI / Copilot"
+      },
+      "defaultLanguage": "Domyślny język",
+      "defaultTimezone": "Domyślna strefa czasowa",
+      "defaultCurrency": "Domyślna waluta",
+      "defaultSharingMode": "Domyślny tryb udostępniania",
+      "brandColor": "Kolor marki",
+      "accentColor": "Kolor akcentu",
+      "customDomain": "Domena własna",
+      "mfaRequired": "MFA wymagane",
+      "ssoEnforced": "SSO wymuszone",
+      "sessionTimeout": "Limit czasu sesji",
+      "guestAccess": "Dostęp gości",
+      "externalLinkSharing": "Udostępnianie linków zewnętrznych",
+      "toolApprovalRequired": "Wymagana akceptacja narzędzi",
+      "recordingAutoStart": "Automatyczny start nagrywania",
+      "aiTranscription": "Transkrypcja AI",
+      "defaultToolVisibility": "Domyślna widoczność narzędzi",
+      "toolApproval": "Akceptacja narzędzi",
+      "defaultExportFormat": "Domyślny format eksportu",
+      "scoringScale": "Skala oceny",
+      "modelPreference": "Preferencja modelu",
+      "citationStyle": "Styl cytowań"
+    },
     "menu": {
       "preferences": "Preferencje",
       "theme": "Motyw",
       "language": "Język",
-      "demoMode": "Otwórz demo",
+      "demoMode": "Otwórz przykładowy workspace",
       "demoModeExit": "Wyjdź z demo",
-      "demoModeOn": "Tryb demo jest włączony - przeglądasz Atelier Toys",
-      "demoModeOff": "Otwórz demo workspace Atelier Toys",
-      "demoReadOnly": "Dane demo - tylko do odczytu",
+      "demoModeExitWorkspace": "Wyjdź z przykładowego workspace",
+      "demoModeOn": "Przykładowy workspace jest włączony - przeglądasz Atelier Toys",
+      "demoModeOff": "Otwórz przykładowy workspace Atelier Toys",
+      "demoReadOnly": "Przykładowe dane - tylko do odczytu",
       "myProfile": "Mój profil",
       "billing": "Billing i plany",
       "aiConfig": "Konfiguracja AI",
@@ -2550,6 +2733,7 @@
       "save": "Zapisz zmiany",
       "saved": "Zapisano!",
       "changePhoto": "Zmień zdjęcie",
+      "defaultDemoName": "Profesjonalny",
       "publicProfile": "PROFIL PUBLICZNY",
       "displayName": "Nazwa wyświetlana",
       "displayNameHint": "Tak Twoje imię będzie widoczne dla innych. Zostaw puste, aby użyć pełnego imienia i nazwiska.",
@@ -2586,6 +2770,63 @@
       "system": "Systemowy",
       "language": "Język",
       "languageHint": "Wybierz preferowany język.",
+      "jobTitleSuggestions": {
+        "ceo": "CEO",
+        "cto": "CTO",
+        "cfo": "CFO",
+        "coo": "COO",
+        "cmo": "CMO",
+        "vpEngineering": "VP inżynierii",
+        "vpProduct": "VP produktu",
+        "vpOperations": "VP operacji",
+        "director": "Dyrektor",
+        "seniorManager": "Starszy manager",
+        "manager": "Manager",
+        "projectManager": "Project Manager",
+        "productManager": "Product Manager",
+        "programManager": "Program Manager",
+        "teamLead": "Lider zespołu",
+        "techLead": "Tech Lead",
+        "engineeringLead": "Lider inżynierii",
+        "seniorDeveloper": "Starszy developer",
+        "developer": "Developer",
+        "softwareEngineer": "Software Engineer",
+        "businessAnalyst": "Analityk biznesowy",
+        "dataAnalyst": "Analityk danych",
+        "dataScientist": "Data Scientist",
+        "consultant": "Konsultant",
+        "seniorConsultant": "Starszy konsultant",
+        "principalConsultant": "Principal Consultant",
+        "designer": "Designer",
+        "uxDesigner": "UX Designer",
+        "productDesigner": "Product Designer",
+        "other": "Inne"
+      },
+      "timezones": {
+        "Europe/Warsaw": "Warszawa (CET/CEST)",
+        "Europe/London": "Londyn (GMT/BST)",
+        "Europe/Berlin": "Berlin (CET/CEST)",
+        "Europe/Paris": "Paryż (CET/CEST)",
+        "America/New_York": "Nowy Jork (EST/EDT)",
+        "America/Chicago": "Chicago (CST/CDT)",
+        "America/Denver": "Denver (MST/MDT)",
+        "America/Los_Angeles": "Los Angeles (PST/PDT)",
+        "Asia/Tokyo": "Tokio (JST)",
+        "Asia/Shanghai": "Szanghaj (CST)",
+        "Asia/Dubai": "Dubaj (GST)",
+        "Australia/Sydney": "Sydney (AEST/AEDT)",
+        "UTC": "UTC"
+      },
+      "dateFormats": {
+        "DD_slash_MM_slash_YYYY": "DD/MM/YYYY (31/12/2024)",
+        "MM_slash_DD_slash_YYYY": "MM/DD/YYYY (12/31/2024)",
+        "YYYY_dash_MM_dash_DD": "YYYY-MM-DD (2024-12-31)",
+        "DD_dot_MM_dot_YYYY": "DD.MM.YYYY (31.12.2024)"
+      },
+      "timeFormats": {
+        "24h": "24-godzinny (14:30)",
+        "12h": "12-godzinny (2:30 PM)"
+      },
       "pronounsOptions": {
         "preferNotToSay": "Wolę nie podawać",
         "heHim": "On/Jego",
@@ -2610,6 +2851,249 @@
         "other": "Inne"
       }
     },
+    "signatures": {
+      "title": "Podpisy email",
+      "description": "Twórz i zarządzaj swoimi podpisami email",
+      "defaultDemoName": "Profesjonalny",
+      "add": "Dodaj podpis",
+      "empty": "Brak podpisów",
+      "createFirst": "Utwórz pierwszy podpis",
+      "default": "Domyślny",
+      "setDefault": "Ustaw jako domyślny",
+      "copy": "Kopiuj",
+      "edit": "Edytuj",
+      "delete": "Usuń",
+      "editTitle": "Edytuj podpis",
+      "createTitle": "Utwórz podpis",
+      "dialogDesc": "Ten podpis będzie dostępny do użycia w wiadomościach email",
+      "name": "Nazwa podpisu",
+      "namePlaceholder": "np. Profesjonalny, Luźny",
+      "content": "Treść podpisu",
+      "contentPlaceholder": "Wpisz swój podpis...",
+      "preview": "Podgląd",
+      "error": "Błąd",
+      "loadFailed": "Nie udało się załadować podpisów. Spróbuj ponownie później.",
+      "fillFields": "Uzupełnij wszystkie pola",
+      "updated": "Podpis zaktualizowany",
+      "updatedDesc": "Twój podpis został zaktualizowany",
+      "created": "Podpis utworzony",
+      "createdDesc": "Nowy podpis został utworzony",
+      "saveFailed": "Nie udało się zapisać podpisu",
+      "deleted": "Podpis usunięty",
+      "deletedDesc": "Podpis został usunięty",
+      "defaultSet": "Domyślny podpis zaktualizowany",
+      "defaultSetDesc": "Domyślny podpis został zaktualizowany",
+      "copied": "Skopiowano",
+      "copiedDesc": "Podpis skopiowany do schowka"
+    },
+    "work": {
+      "title": "Preferencje pracy",
+      "description": "Dostosuj sposób wyświetlania i zarządzania zadaniami oraz projektami",
+      "saved": "Preferencje pracy zapisane",
+      "error": "Nie udało się zapisać preferencji",
+      "defaultView": "Domyślny widok projektu",
+      "defaultViewDescription": "Wybierz, jak projekty mają być domyślnie wyświetlane po otwarciu",
+      "taskDefaults": "Domyślne ustawienia zadań",
+      "taskDefaultsDescription": "Ustaw domyślne wartości dla nowych zadań",
+      "defaultPriority": "Domyślny priorytet zadania",
+      "defaultReminder": "Domyślne przypomnienie",
+      "defaultReminderDescription": "Kiedy przypomnieć przed terminem zadania",
+      "snoozeAndFocus": "Drzemka i skupienie",
+      "defaultSnooze": "Domyślny czas drzemki",
+      "defaultSnoozeDescription": "Na jak długo domyślnie wyciszać powiadomienia",
+      "autoSnoozeOverdue": "Automatycznie odkładaj zaległe zadania",
+      "autoSnoozeOverdueDescription": "Automatycznie odkładaj powiadomienia dla zaległych zadań",
+      "enableFocusMode": "Włącz tryb skupienia",
+      "enableFocusModeDescription": "Pozwalaj aktywować tryb pracy bez rozpraszaczy",
+      "focusBlocksNotifications": "Blokuj powiadomienia podczas skupienia",
+      "focusBlocksNotificationsDescription": "Wstrzymaj wszystkie powiadomienia, gdy tryb skupienia jest aktywny",
+      "defaultFocusDuration": "Domyślny czas skupienia",
+      "defaultFocusDurationDescription": "Domyślna długość timera sesji skupienia",
+      "taskDisplay": "Wyświetlanie i sortowanie zadań",
+      "defaultSort": "Domyślne sortowanie",
+      "defaultSortDescription": "Jak domyślnie sortować zadania na listach",
+      "weekStart": "Pierwszy dzień tygodnia",
+      "weekStartDescription": "Dla widoków kalendarza i raportów tygodniowych",
+      "monday": "Poniedziałek",
+      "sunday": "Niedziela",
+      "showCompleted": "Pokazuj ukończone zadania",
+      "showCompletedDescription": "Domyślnie wyświetlaj ukończone zadania w widokach projektów",
+      "showSubtasks": "Domyślnie pokazuj podzadania",
+      "showSubtasksDescription": "Automatycznie rozwijaj podzadania na listach zadań",
+      "automation": "Automatyzacja i domyślne wartości",
+      "autoArchive": "Automatycznie archiwizuj ukończone zadania",
+      "autoArchiveDescription": "Automatycznie archiwizuj zadania po ukończeniu",
+      "never": "Nigdy",
+      "days": "{{count}} dni",
+      "defaultDue": "Domyślny termin zadania",
+      "defaultDueDescription": "Liczba dni od utworzenia dla nowych zadań",
+      "noDueDate": "Brak domyślnego",
+      "tomorrow": "Jutro",
+      "timeTracking": "Tryb śledzenia czasu",
+      "timeTrackingDescription": "Domyślne zachowanie śledzenia czasu",
+      "timeNone": "Wyłączone",
+      "timeManual": "Ręczne wpisywanie",
+      "timeAuto": "Automatyczny timer",
+      "views": {
+        "kanban": "Tablica Kanban",
+        "kanbanDesc": "Karty przeciągane metodą drag and drop",
+        "list": "Widok listy",
+        "listDesc": "Tradycyjny format tabeli",
+        "timeline": "Oś czasu",
+        "timelineDesc": "Widok w stylu Gantta",
+        "calendar": "Kalendarz",
+        "calendarDesc": "Układ kalendarza"
+      },
+      "sort": {
+        "priority": "Priorytet",
+        "dueDate": "Termin",
+        "created": "Data utworzenia",
+        "alphabetical": "Alfabetycznie"
+      },
+      "priority": {
+        "none": "Brak priorytetu",
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "urgent": "Pilny"
+      },
+      "reminder": {
+        "none": "Bez przypomnienia",
+        "15min": "15 minut wcześniej",
+        "30min": "30 minut wcześniej",
+        "1hour": "1 godzinę wcześniej",
+        "3hours": "3 godziny wcześniej",
+        "1day": "1 dzień wcześniej",
+        "3days": "3 dni wcześniej"
+      },
+      "snooze": {
+        "15min": "15 minut",
+        "30min": "30 minut",
+        "1hour": "1 godzina",
+        "3hours": "3 godziny",
+        "tomorrow": "Jutro rano",
+        "nextWeek": "W przyszłym tygodniu"
+      },
+      "focus": {
+        "15min": "15 minut",
+        "25min": "25 minut (Pomodoro)",
+        "45min": "45 minut",
+        "60min": "1 godzina",
+        "90min": "90 minut"
+      }
+    },
+    "regional": {
+      "title": "Ustawienia regionalne",
+      "description": "Skonfiguruj lokalizację, strefę czasową i formaty",
+      "saved": "Preferencje regionalne zapisane",
+      "error": "Nie udało się zapisać preferencji",
+      "tenantDefaultsHint": "Domyślne ustawienia organizacji są tutaj tylko do odczytu. Twoje preferencje osobiste mogą je nadpisać wyłącznie dla Twojego doświadczenia.",
+      "tenantTimezone": "Strefa czasowa tenanta: {{timezone}}",
+      "tenantCurrency": "Waluta tenanta: {{currency}}",
+      "timezone": "Strefa czasowa",
+      "timezoneDescription": "Ustaw lokalną strefę czasową, aby daty i godziny były poprawne w całej platformie.",
+      "currentTime": "Aktualny czas:",
+      "dateTimeTitle": "Format daty i czasu",
+      "dateFormat": "Format daty",
+      "timeFormat": "Format czasu",
+      "firstDayOfWeek": "Pierwszy dzień tygodnia",
+      "monday": "Poniedziałek",
+      "sunday": "Niedziela",
+      "currencyTitle": "Waluta i liczby",
+      "currency": "Waluta",
+      "currencyExample": "Przykład:",
+      "numberFormat": "Format liczb",
+      "numberExample": "Przykład dużej liczby:",
+      "measurementTitle": "System miar",
+      "measurementDescription": "Wybierz preferowany system wag, odległości i temperatur.",
+      "metric": "Metryczny",
+      "imperial": "Imperialny",
+      "metricDetails": "metry, kilogramy, °C",
+      "imperialDetails": "stopy, funty, °F",
+      "preview": "Podgląd ustawień",
+      "dateLabel": "Data",
+      "timeLabel": "Czas",
+      "currencyLabel": "Waluta",
+      "numberLabel": "Liczba",
+      "currencies": {
+        "USD": "Dolar amerykański",
+        "EUR": "Euro",
+        "GBP": "Funt brytyjski",
+        "PLN": "Polski złoty",
+        "CHF": "Frank szwajcarski",
+        "JPY": "Jen japoński",
+        "CAD": "Dolar kanadyjski",
+        "AUD": "Dolar australijski",
+        "CNY": "Juan chiński",
+        "INR": "Rupia indyjska"
+      },
+      "numberFormats": {
+        "en-US": "Angielski (USA)",
+        "de-DE": "Niemiecki",
+        "pl-PL": "Polski",
+        "fr-FR": "Francuski"
+      },
+      "dateFormats": {
+        "DD/MM/YYYY": "Dzień/Miesiąc/Rok",
+        "MM/DD/YYYY": "Miesiąc/Dzień/Rok",
+        "YYYY-MM-DD": "ISO (Rok-Miesiąc-Dzień)",
+        "DD.MM.YYYY": "Dzień.Miesiąc.Rok"
+      },
+      "timeFormats": {
+        "24h": "24-godzinny",
+        "12h": "12-godzinny"
+      }
+    },
+    "workingHours": {
+      "title": "Godziny pracy",
+      "description": "Ustaw swoją dostępność dla spotkań i pracy",
+      "saved": "Godziny pracy zapisane",
+      "error": "Nie udało się zapisać godzin pracy",
+      "workingDays": "Dni pracy",
+      "weeklyHours": "Godziny tygodniowo",
+      "timezone": "Strefa czasowa",
+      "scheduleType": "Typ harmonogramu",
+      "scheduleTypeDescription": "Wybierz sposób ustawiania godzin pracy",
+      "sameEveryDay": "Tak samo każdego dnia",
+      "sameEveryDayDescription": "Używaj tych samych godzin dla wszystkich dni roboczych",
+      "customPerDay": "Indywidualnie dla dnia",
+      "customPerDayDescription": "Ustaw różne godziny dla każdego dnia",
+      "weeklySchedule": "Harmonogram tygodniowy",
+      "to": "do",
+      "notWorking": "Nie pracujesz",
+      "note": "Uwaga",
+      "noteText": "Godziny pracy są używane przez funkcje planowania, takie jak dostępność spotkań, powiadomienia o nieobecności i sugestie czasu skupienia.",
+      "days": {
+        "monday": { "full": "Poniedziałek", "short": "Pon." },
+        "tuesday": { "full": "Wtorek", "short": "Wt." },
+        "wednesday": { "full": "Środa", "short": "Śr." },
+        "thursday": { "full": "Czwartek", "short": "Czw." },
+        "friday": { "full": "Piątek", "short": "Pt." },
+        "saturday": { "full": "Sobota", "short": "Sob." },
+        "sunday": { "full": "Niedziela", "short": "Nd." }
+      }
+    },
+    "avatar": {
+      "invalidFormat": "Nieprawidłowy format pliku. Użyj JPG, PNG, GIF lub WebP.",
+      "fileTooLarge": "Plik jest za duży. Maksymalny rozmiar to 5 MB.",
+      "uploadSuccess": "Zdjęcie profilowe zostało zaktualizowane.",
+      "uploadError": "Nie udało się przesłać zdjęcia",
+      "removeSuccess": "Zdjęcie profilowe zostało usunięte",
+      "removeError": "Nie udało się usunąć zdjęcia",
+      "preview": "Podgląd awatara",
+      "changePhoto": "Zmień zdjęcie",
+      "uploading": "Przesyłanie...",
+      "savePhoto": "Zapisz zdjęcie",
+      "dropzone": "Upuść zdjęcie tutaj albo kliknij, aby wybrać plik",
+      "formats": "Obsługiwane formaty: JPG, PNG, GIF, WebP do 5 MB",
+      "guidelines": "Wytyczne dotyczące zdjęcia",
+      "guideline1": "Użyj wyraźnego, dobrze oświetlonego zdjęcia twarzy",
+      "guideline2": "Najlepiej działają obrazy kwadratowe (proporcja 1:1)",
+      "guideline3": "Minimalny zalecany rozmiar: 400x400 pikseli",
+      "removeTitle": "Usuń zdjęcie profilowe",
+      "removeDesc": "Zamiast zdjęcia będą wyświetlane Twoje inicjały",
+      "remove": "Usuń zdjęcie"
+    },
     "billing": "Rozliczenia",
     "financeDefaults": "Domyślne ustawienia finansowe",
     "financeDefaultsDesc": "Wartości domyślne dla nowych wycen, budżetów i modeli finansowych w całej organizacji.",
@@ -2618,11 +3102,1087 @@
     "defaultHorizon": "Domyślny horyzont (lata)",
     "financeSaved": "Ustawienia finansowe zapisane",
     "financeError": "Nie udało się zapisać ustawień finansowych",
-    "ai": "Ustawienia AI",
-    "notifications": "Powiadomienia",
-    "integrations": "Integracje",
+    "ai": {
+      "title": "Ustawienia AI",
+      "promptLibraryTitle": "Biblioteka promptów",
+      "promptLibraryDesc": "Zapisuj i organizuj prompty wielokrotnego użytku dla różnych kontekstów: wywiadów, analiz, raportów i innych.",
+      "newPrompt": "Nowy prompt",
+      "noPrompts": "Brak promptów w tej kategorii.",
+      "promptSaveError": "Nie udało się zapisać biblioteki promptów",
+      "loadError": "Nie udało się wczytać ustawień",
+      "configurationSaved": "Konfiguracja zapisana",
+      "configurationSaveError": "Nie udało się zapisać konfiguracji",
+      "providerSaveError": "Nie udało się zapisać providera",
+      "behaviorSaved": "Ustawienia zachowania AI zapisane",
+      "behaviorError": "Nie udało się zapisać ustawień zachowania AI",
+      "templateApplied": "Zastosowano szablon: {{name}}",
+      "behaviorTemplates": {
+        "professional": {
+          "name": "Profesjonalny",
+          "prompt": "Preferuję formalne, profesjonalne odpowiedzi. Skup się na dokładności i jasności. Używaj terminologii branżowej."
+        },
+        "creative": {
+          "name": "Kreatywny",
+          "prompt": "Bądź kreatywny i myśl nieszablonowo. Proponuj innowacyjne rozwiązania. Używaj analogii i przykładów."
+        },
+        "technical": {
+          "name": "Techniczny",
+          "prompt": "Podawaj szczegółowe wyjaśnienia techniczne. Gdy ma to sens, dołączaj przykłady kodu. Bądź precyzyjny w specyfikacjach."
+        },
+        "concise": {
+          "name": "Zwięzły",
+          "prompt": "Odpowiadaj krótko i konkretnie. Używaj punktów. Unikaj zbędnych wyjaśnień."
+        }
+      },
+      "style": {
+        "concise": "Zwięzły",
+        "balanced": "Zbalansowany",
+        "detailed": "Szczegółowy"
+      },
+      "tone": {
+        "professional": "Profesjonalny",
+        "friendly": "Przyjazny",
+        "casual": "Swobodny",
+        "academic": "Akademicki"
+      },
+      "formality": {
+        "formal": "Formalny",
+        "balanced": "Zbalansowany",
+        "informal": "Nieformalny"
+      },
+      "verbosity": {
+        "minimal": "Minimalny",
+        "concise": "Zwięzły",
+        "detailed": "Szczegółowy",
+        "comprehensive": "Kompleksowy"
+      },
+      "promptRequired": "Nazwa i treść promptu są wymagane",
+      "promptUpdated": "Prompt zaktualizowany",
+      "promptCreated": "Prompt utworzony",
+      "promptDeleted": "Prompt usunięty",
+      "promptCopied": "Prompt skopiowany do schowka",
+      "cantDeleteBuiltin": "Wbudowanych promptów nie można usuwać",
+      "editPrompt": "Edytuj prompt",
+      "createPrompt": "Utwórz prompt",
+      "promptName": "Nazwa",
+      "promptCategory": "Kategoria",
+      "promptText": "Treść promptu",
+      "promptNamePlaceholder": "np. Pogłębiony wywiad",
+      "promptTextPlaceholder": "Wpisz tutaj prompt wielokrotnego użytku...",
+      "builtIn": "Wbudowany",
+      "promptCategories": {
+        "interview": "Wywiad",
+        "analysis": "Analiza",
+        "report": "Raport",
+        "general": "Ogólne"
+      },
+      "builtins": {
+        "professional": {
+          "name": "Profesjonalny",
+          "prompt": "Preferuję formalne, profesjonalne odpowiedzi. Skup się na dokładności i jasności. Używaj terminologii branżowej."
+        },
+        "interviewPrep": {
+          "name": "Przygotowanie wywiadu",
+          "prompt": "Pomóż przygotować uporządkowane pytania do wywiadu. Skup się na pytaniach behawioralnych i kompetencyjnych. Zaproponuj pytania pogłębiające do każdego głównego pytania."
+        },
+        "dataAnalysis": {
+          "name": "Analiza danych",
+          "prompt": "Analizuj dane dokładnie. Prezentuj wnioski w jasnej strukturze: kluczowe metryki, trendy, anomalie i rekomendacje działań. Używaj tabel, gdy pomagają w zrozumieniu."
+        },
+        "executiveReport": {
+          "name": "Raport zarządczy",
+          "prompt": "Pisz w stylu executive summary. Zacznij od wniosków, potem pokaż dowody. Stosuj krótkie akapity i wypunktowania dla najważniejszych obserwacji."
+        }
+      }
+    },
+    "aiUsage": {
+      "title": "Przegląd użycia AI",
+      "subtitle": "Monitoruj użycie AI i zużycie tokenów",
+      "last7Days": "Ostatnie 7 dni",
+      "last30Days": "Ostatnie 30 dni",
+      "last90Days": "Ostatnie 90 dni",
+      "totalRequests": "Łączna liczba zapytań",
+      "tokensUsed": "Zużyte tokeny",
+      "estimatedCost": "Szac. koszt",
+      "avgResponseTime": "Śr. odpowiedź",
+      "usageLimit": "Limit użycia",
+      "nearLimit": "Zbliżasz się do limitu użycia",
+      "overLimit": "Przekroczono limit użycia",
+      "byFeature": "Użycie według funkcji",
+      "byFeatureDesc": "Podział użycia AI pomiędzy funkcje",
+      "usageTrend": "Trend użycia",
+      "usageTrendDesc": "Dzienne zużycie tokenów w czasie",
+      "successRate": "Skuteczność",
+      "successRateDesc": "Procent udanych zapytań AI bez błędów",
+      "performance": "Metryki wydajności",
+      "features": {
+        "chat": "Czat AI",
+        "ai_chat": "Czat AI",
+        "document": "Analiza dokumentów",
+        "document_analysis": "Analiza dokumentów",
+        "search": "Inteligentne wyszukiwanie",
+        "smart_search": "Inteligentne wyszukiwanie",
+        "autocomplete": "Autouzupełnianie",
+        "summary": "Podsumowania",
+        "general": "Ogólne"
+      }
+    },
+    "notifications": {
+      "label": "Powiadomienia",
+      "title": "Preferencje powiadomień",
+      "description": "Zarządzaj tym, jak i kiedy otrzymujesz powiadomienia we wszystkich kanałach",
+      "saved": "Preferencje powiadomień zapisane",
+      "error": "Nie udało się zapisać preferencji",
+      "activity": "Aktywność",
+      "inApp": "W aplikacji",
+      "email": "E-mail",
+      "taskAssignment": "Przypisania zadań",
+      "taskAssignmentDesc": "Gdy zostanie Ci przypisane nowe zadanie",
+      "taskUpdates": "Aktualizacje zadań",
+      "taskUpdatesDesc": "Gdy zmieni się status albo pojawi się komentarz",
+      "mentions": "Wzmianki",
+      "mentionsDesc": "Gdy ktoś wspomni Cię w komentarzu",
+      "milestones": "Kamienie milowe projektu",
+      "milestonesDesc": "Ważne aktualizacje i zakończenia w projekcie",
+      "enableAll": "Włącz wszystko",
+      "minimal": "Minimalne",
+      "integrationNote": "Masz {{count}} połączonych integracji. Powiadomienia mogą być wysyłane także do tych kanałów.",
+      "provider": {
+        "slack": "Slack",
+        "teams": "Teams",
+        "whatsapp": "WhatsApp",
+        "trello": "Trello",
+        "jira": "Jira",
+        "clickup": "ClickUp"
+      },
+      "channels": {
+        "title": "Kanały powiadomień",
+        "description": "Wybierz, gdzie chcesz otrzymywać powiadomienia",
+        "connected": "Połączono",
+        "verified": "Zweryfikowano",
+        "channelsSaved": "Kanały powiadomień zapisane",
+        "channelsError": "Nie udało się zapisać kanałów powiadomień",
+        "authStarted": "Autoryzacja rozpoczęta. Dokończ krok zewnętrzny, aby zakończyć konfigurację.",
+        "setupStarted": "Konfiguracja rozpoczęta. Uzupełnij wymagane pola, aby kontynuować.",
+        "validationPending": "Konfiguracja wysłana. Walidacja nadal oczekuje.",
+        "connectedToast": "{{channel}} połączono pomyślnie",
+        "connectError": "Nie udało się połączyć {{channel}}",
+        "disconnectedToast": "{{channel}} odłączono",
+        "disconnectError": "Nie udało się odłączyć {{channel}}",
+        "smsCodeSent": "Kod weryfikacyjny wysłany na telefon",
+        "smsCodeError": "Nie udało się wysłać kodu weryfikacyjnego",
+        "phoneVerified": "Numer telefonu zweryfikowany",
+        "invalidCode": "Nieprawidłowy kod weryfikacyjny",
+        "enableNotifications": "Włącz powiadomienia",
+        "slackDescription": "Otrzymuj powiadomienia w Slacku",
+        "teamsDescription": "Otrzymuj powiadomienia w Teams",
+        "smsTitle": "Powiadomienia SMS",
+        "smsDescription": "Otrzymuj krytyczne powiadomienia przez SMS",
+        "sendCode": "Wyślij kod weryfikacyjny",
+        "enterCode": "Wpisz kod weryfikacyjny wysłany na telefon",
+        "verify": "Zweryfikuj",
+        "enableSms": "Włącz powiadomienia SMS",
+        "criticalOnly": "Tylko krytyczne powiadomienia (pilne zadania, alerty bezpieczeństwa)",
+        "whatsappDescription": "Otrzymuj powiadomienia przez WhatsApp",
+        "inAppTitle": "Centrum powiadomień w aplikacji",
+        "inAppDescription": "Skonfiguruj doświadczenie powiadomień w aplikacji",
+        "showUnreadBadge": "Pokazuj licznik nieprzeczytanych",
+        "showUnreadBadgeDesc": "Wyświetlaj liczbę nieprzeczytanych powiadomień",
+        "autoMarkAsRead": "Automatycznie oznaczaj jako przeczytane",
+        "autoMarkAsReadDesc": "Oznaczaj powiadomienia jako przeczytane po wyświetleniu",
+        "groupByType": "Grupuj według typu",
+        "groupByTypeDesc": "Grupuj podobne powiadomienia razem",
+        "maxToKeep": "Maksymalna liczba powiadomień",
+        "notificationCount": "{{count}} powiadomień",
+        "emailTitle": "Powiadomienia e-mail",
+        "channel": {
+          "slack": "Slack",
+          "teams": "Microsoft Teams",
+          "sms": "SMS",
+          "whatsapp": "WhatsApp",
+          "email": "E-mail",
+          "inApp": "W aplikacji"
+        }
+      },
+      "digest": {
+        "title": "Podsumowanie e-mail",
+        "subtitle": "Skonfiguruj częstotliwość otrzymywania podsumowań e-mail",
+        "frequency": "Częstotliwość podsumowań",
+        "content": "Treść podsumowania",
+        "format": "Format e-maila",
+        "saved": "Preferencje podsumowań zapisane",
+        "error": "Nie udało się zapisać preferencji podsumowań",
+        "freq_instant": "Natychmiast",
+        "freq_instant_desc": "Otrzymuj powiadomienia od razu",
+        "freq_hourly": "Co godzinę",
+        "freq_hourly_desc": "Otrzymuj podsumowanie co godzinę",
+        "freq_daily": "Codziennie",
+        "freq_daily_desc": "Otrzymuj podsumowanie raz dziennie",
+        "freq_weekly": "Co tydzień",
+        "freq_weekly_desc": "Otrzymuj podsumowanie raz w tygodniu",
+        "content_summary": "Podsumowanie",
+        "content_summary_desc": "Tylko krótki przegląd",
+        "content_full": "Pełne szczegóły",
+        "content_full_desc": "Pełna treść powiadomień",
+        "format_html": "HTML",
+        "format_html_desc": "Bogate formatowanie",
+        "format_plain": "Zwykły tekst",
+        "format_plain_desc": "Prosty format tekstowy"
+      },
+      "sounds": {
+        "title": "Dźwięki i powiadomienia pulpitu",
+        "subtitle": "Skonfiguruj alerty dźwiękowe i powiadomienia pulpitu",
+        "saved": "Preferencje dźwięków zapisane",
+        "error": "Nie udało się zapisać preferencji dźwięków",
+        "enableSounds": "Włącz dźwięki",
+        "enableSoundsDesc": "Odtwarzaj alerty dźwiękowe przy powiadomieniach",
+        "soundPerType": "Dźwięk według typu powiadomienia",
+        "desktopPosition": "Pozycja powiadomień pulpitu",
+        "desktopDuration": "Czas wyświetlania powiadomienia pulpitu",
+        "type_task_assigned": "Przypisano zadanie",
+        "type_task_updated": "Zaktualizowano zadanie",
+        "type_mention": "Wzmianki",
+        "type_milestone": "Kamienie milowe",
+        "sound_default": "Domyślny",
+        "sound_chime": "Dzwonek",
+        "sound_bell": "Bell",
+        "sound_pop": "Pop",
+        "sound_none": "Brak",
+        "pos_top-right": "Prawy górny róg",
+        "pos_top-left": "Lewy górny róg",
+        "pos_bottom-right": "Prawy dolny róg",
+        "pos_bottom-left": "Lewy dolny róg"
+      }
+    },
+    "integrations": {
+      "title": "Integracje",
+      "description": "Połącz narzędzia zewnętrzne i skonfiguruj webhooki.",
+      "calendarTitle": "Synchronizacja kalendarza",
+      "calendarDesc": "Synchronizuj zadania i terminy z zewnętrznymi kalendarzami.",
+      "syncOptions": "Opcje synchronizacji",
+      "syncTasks": "Synchronizuj zadania",
+      "syncTasksDesc": "Dodawaj terminy zadań do kalendarza",
+      "syncMeetings": "Synchronizuj spotkania",
+      "syncMeetingsDesc": "Dodawaj spotkania projektowe do kalendarza",
+      "connected": "Połączono kalendarz",
+      "disconnected": "Kalendarz odłączony",
+      "connectError": "Nie udało się połączyć kalendarza",
+      "disconnectError": "Nie udało się odłączyć",
+      "disconnectConfirm": "Odłączyć ten kalendarz?",
+      "calendarProviders": {
+        "google": "Kalendarz Google",
+        "outlook": "Outlook",
+        "apple": "Kalendarz Apple"
+      },
+      "appsTitle": "Połączone aplikacje",
+      "appsDesc": "Połącz swoje narzędzia. Używamy bezpiecznego OAuth i nigdy nie przechowujemy haseł.",
+      "searchPlaceholder": "Szukaj aplikacji...",
+      "noResults": "Nie znaleziono aplikacji",
+      "testSuccess": "Połączenie działa",
+      "testFailed": "Test połączenia nie powiódł się",
+      "fieldRequired": "Uzupełnij pole {{field}}",
+      "note": "Uwaga:",
+      "notePersonal": "To są Twoje osobiste połączenia - tylko Ty możesz je widzieć i nimi zarządzać.",
+      "noteOAuth": "Używamy bezpiecznego OAuth 2.0 - nigdy nie przechowujemy haseł.",
+      "noteAdmin": "Administrator widzi, które aplikacje są połączone, ale nie ma dostępu do poświadczeń.",
+      "cat": {
+        "all": "Wszystkie",
+        "email": "E-mail i komunikacja",
+        "calendar": "Kalendarz",
+        "taskMgmt": "Zarządzanie zadaniami",
+        "cloud": "Chmura"
+      }
+    },
+    "availability": {
+      "title": "Dostępność i skupienie",
+      "description": "Kontroluj, kiedy powiadomienia mogą do Ciebie docierać - tymczasowe wyciszenie albo cykliczny harmonogram",
+      "saved": "Ustawienia dostępności zapisane",
+      "error": "Nie udało się zapisać ustawień dostępności",
+      "dnd": "Nie przeszkadzać",
+      "dndDesc": "Tymczasowo wstrzymaj wszystkie powiadomienia",
+      "dndActive": "Tryb Nie przeszkadzać jest aktywny",
+      "until": "Do",
+      "preset1h": "1 godzina",
+      "preset2h": "2 godziny",
+      "preset4h": "4 godziny",
+      "presetTomorrow": "Do jutra do 9:00",
+      "customEndTime": "Własny czas zakończenia",
+      "quietHours": "Zaplanowane godziny ciszy",
+      "quietActive": "Godziny ciszy są teraz aktywne",
+      "activeUntil": "Aktywne do",
+      "enableQuiet": "Włącz godziny ciszy",
+      "enableQuietDesc": "Wstrzymaj powiadomienia w zaplanowanych godzinach",
+      "schedule": "Harmonogram",
+      "startTime": "Godzina rozpoczęcia",
+      "endTime": "Godzina zakończenia",
+      "activeDays": "Aktywne w te dni",
+      "preset_nights": "Noce (22:00-8:00)",
+      "preset_weekends": "Tylko weekendy",
+      "preset_afterWork": "Po pracy (18:00-9:00, dni robocze)",
+      "exceptions": "Wyjątki",
+      "exceptionsDesc": "Pozwól na wybrane powiadomienia także w godzinach ciszy",
+      "allowUrgent": "Zezwalaj na pilne powiadomienia",
+      "allowUrgentDesc": "Alerty wysokiego priorytetu nadal będą docierać",
+      "allowMentions": "Zezwalaj na @wzmianki",
+      "allowMentionsDesc": "Otrzymuj powiadomienia, gdy ktoś Cię wspomni",
+      "allowDMs": "Zezwalaj na wiadomości bezpośrednie",
+      "allowDMsDesc": "Prywatne wiadomości nadal będą Cię powiadamiać",
+      "autoReply": "Automatyczna odpowiedź",
+      "enableAutoReply": "Włącz automatyczną odpowiedź",
+      "enableAutoReplyDesc": "Automatycznie odpowiadaj na wiadomości w godzinach ciszy",
+      "autoReplyMessage": "Treść automatycznej odpowiedzi",
+      "autoReplyPlaceholder": "Jestem teraz niedostępny. Odpowiem po powrocie.",
+      "days": {
+        "sun": { "short": "Nd", "full": "Niedziela" },
+        "mon": { "short": "Pn", "full": "Poniedziałek" },
+        "tue": { "short": "Wt", "full": "Wtorek" },
+        "wed": { "short": "Śr", "full": "Środa" },
+        "thu": { "short": "Cz", "full": "Czwartek" },
+        "fri": { "short": "Pt", "full": "Piątek" },
+        "sat": { "short": "Sb", "full": "Sobota" }
+      }
+    },
+    "data": {
+      "title": "Kontrola danych",
+      "description": "Zarządzaj tym, jak Twoje dane są zbierane, używane i przechowywane",
+      "saved": "Preferencje kontroli danych zapisane",
+      "saveError": "Nie udało się zapisać preferencji",
+      "gdprTitle": "Zgodność z GDPR",
+      "gdprDesc": "Działamy zgodnie z GDPR. Masz pełną kontrolę nad swoimi danymi osobowymi, w tym prawo dostępu, eksportu i usunięcia.",
+      "consentsTitle": "Zarządzanie zgodami",
+      "consentsDesc": "Wybierz, jak możemy używać Twoich danych",
+      "analytics": "Analityka użycia",
+      "analyticsDesc": "Pomóż ulepszać produkt, udostępniając anonimowe dane użycia",
+      "personalization": "Personalizacja",
+      "personalizationDesc": "Używaj danych do personalizacji doświadczenia i rekomendacji",
+      "marketing": "Komunikacja marketingowa",
+      "marketingDesc": "Otrzymuj aktualizacje produktu, wskazówki i oferty promocyjne",
+      "thirdParty": "Udostępnianie danych stronom trzecim",
+      "thirdPartyDesc": "Udostępniaj dane zaufanym partnerom na potrzeby rozszerzonych funkcji",
+      "aiTraining": "Trenowanie modeli AI",
+      "aiTrainingDesc": "Pozwól używać zanonimizowanych danych do ulepszania naszych modeli AI",
+      "retentionTitle": "Retencja danych",
+      "retentionDesc": "Wybierz, jak długo przechowujemy Twoje dane",
+      "retention30": "30 dni",
+      "retention90": "90 dni",
+      "retention180": "6 miesięcy",
+      "retention365": "1 rok",
+      "retentionForever": "Bezterminowo",
+      "retentionNote": "Po tym okresie nieaktywne dane zostaną automatycznie zanonimizowane lub usunięte.",
+      "portabilityTitle": "Przenoszenie danych",
+      "exportData": "Eksportuj swoje dane",
+      "exportDataDesc": "Pobierz kopię wszystkich danych osobowych, w tym profilu, ustawień, historii aktywności i dokumentów. Przetwarzanie zwykle zajmuje 24-48 godzin.",
+      "exporting": "Eksportowanie...",
+      "requestExport": "Poproś o eksport",
+      "exportRequested": "Poproszono o eksport danych. Otrzymasz powiadomienie, gdy będzie gotowy.",
+      "exportSuccess": "Dane wyeksportowane pomyślnie",
+      "exportError": "Nie udało się poprosić o eksport danych",
+      "dangerZone": "Strefa ryzyka",
+      "deleteAccount": "Usuń konto i dane",
+      "deleteAccountDesc": "Trwale usuń konto i wszystkie powiązane dane. Tej akcji nie można cofnąć. Przed ostatecznym usunięciem obowiązuje 30-dniowy okres karencji.",
+      "requestDeletion": "Usuń konto",
+      "deleteConfirmTitle": "Czy masz absolutną pewność?",
+      "deleteConfirmDesc": "Tej akcji nie można cofnąć. Wszystkie Twoje dane, w tym projekty, ustawienia i historia, zostaną trwale usunięte po 30-dniowym okresie karencji.",
+      "deleteConfirmPhrase": "usuń moje dane",
+      "deleteConfirmType": "Wpisz \"{{phrase}}\", aby potwierdzić:",
+      "deleteConfirmError": "Wpisz \"{{phrase}}\", aby potwierdzić",
+      "confirmDelete": "Usuń wszystko",
+      "deletionRequested": "Usunięcie konta zaplanowane. Otrzymasz e-mail z potwierdzeniem.",
+      "deletionError": "Nie udało się poprosić o usunięcie konta",
+      "relatedDocs": "Dokumenty prawne",
+      "privacyPolicy": "Polityka prywatności",
+      "privacyPolicyDesc": "Jak obsługujemy Twoje dane",
+      "terms": "Regulamin usługi",
+      "termsDesc": "Główne warunki produktu i konta",
+      "subscription": "Subskrypcja i ceny",
+      "subscriptionDesc": "Plany, rozliczenia, stanowiska i budżet AI",
+      "dpa": "Przetwarzanie danych",
+      "dpaDesc": "Warunki DPA zgodne z GDPR",
+      "sla": "Poziomy usług",
+      "slaDesc": "Czasy reakcji wsparcia i zobowiązania usługowe",
+      "security": "Przegląd bezpieczeństwa",
+      "securityDesc": "Kontrole bezpieczeństwa i informacje do przeglądu",
+      "subprocessors": "Podwykonawcy przetwarzania",
+      "subprocessorsDesc": "Usługi zewnętrzne i przepływ danych",
+      "legalCenter": "Centrum prawne",
+      "legalCenterDesc": "Wszystkie dokumenty prawne i zgodności"
+    },
+    "importExport": {
+      "title": "Eksport i import ustawień",
+      "subtitle": "Twórz kopie zapasowe i przywracaj konfigurację ustawień",
+      "exportTitle": "Eksport ustawień",
+      "exportDesc": "Pobierz ustawienia jako plik JSON",
+      "exportSelected": "Eksportuj wybrane",
+      "exportSuccess": "Ustawienia wyeksportowane pomyślnie",
+      "exportError": "Nie udało się wyeksportować ustawień",
+      "noData": "Nie otrzymano danych",
+      "selectAll": "Zaznacz wszystko",
+      "importTitle": "Import ustawień",
+      "importDesc": "Przywróć ustawienia z pliku JSON",
+      "dropFile": "Upuść plik ustawień tutaj albo kliknij, aby wybrać",
+      "acceptsJson": "Akceptowane są pliki .json wyeksportowane z Consultify",
+      "exportedAt": "Wyeksportowano",
+      "errorsFound": "Znaleziono błędy",
+      "warnings": "Ostrzeżenia",
+      "fileValid": "Plik zweryfikowany pomyślnie",
+      "settingsToImport": "Ustawienia do importu:",
+      "importButton": "Importuj ustawienia",
+      "importSuccess": "Ustawienia zaimportowane pomyślnie",
+      "importSuccessWithCount": "Ustawienia zaimportowane pomyślnie ({{count}} kategorii)",
+      "importError": "Nie udało się zaimportować ustawień",
+      "lastImportTitle": "Wynik ostatniego importu",
+      "lastImportSummary": "Zaimportowano: {{imported}}. Pominięto: {{skipped}}.",
+      "tipsTitle": "Wskazówki",
+      "tipBackup": "Eksportuj ustawienia przed większymi zmianami",
+      "tipPortable": "Pliki ustawień można przenosić między urządzeniami",
+      "tipSensitive": "Dane wrażliwe (hasła, tokeny) nie są eksportowane",
+      "tipIntegrations": "Po imporcie poświadczenia integracji trzeba uwierzytelnić ponownie",
+      "categories": {
+        "profile": "Profil i kontakt",
+        "security": "Ustawienia bezpieczeństwa",
+        "privacy": "Ustawienia prywatności",
+        "aiPreferences": "Preferencje AI",
+        "notifications": "Powiadomienia",
+        "integrations": "Integracje",
+        "appearance": "Wygląd",
+        "keyboard": "Skróty klawiszowe"
+      },
+      "validation": {
+        "missingVersion": "Brak informacji o wersji",
+        "missingSettings": "Brak danych ustawień",
+        "versionWarning": "Inna wersja ustawień - część opcji może nie mieć zastosowania",
+        "differentUser": "Ustawienia pochodzą z innego konta użytkownika",
+        "invalidJson": "Nieprawidłowy plik JSON"
+      }
+    },
+    "emailDigest": {
+      "title": "E-mail i podsumowania",
+      "description": "Wybierz, które e-maile chcesz otrzymywać i jak mają być podsumowywane",
+      "categories": "Kategorie e-maili",
+      "digestSettings": "Ustawienia podsumowań",
+      "frequency": "Częstotliwość podsumowań",
+      "content": "Treść podsumowania",
+      "format": "Format e-maila",
+      "saved": "Ustawienia e-maili i podsumowań zapisane",
+      "error": "Nie udało się zapisać ustawień e-maili",
+      "cat_taskUpdates": "Aktualizacje zadań",
+      "cat_taskUpdates_desc": "Aktualizacje dotyczące zadań przypisanych do Ciebie",
+      "cat_projectAlerts": "Alerty projektowe",
+      "cat_projectAlerts_desc": "Ważne powiadomienia projektowe",
+      "cat_weeklyDigest": "Tygodniowe podsumowanie",
+      "cat_weeklyDigest_desc": "Tygodniowe podsumowanie aktywności",
+      "cat_marketing": "Marketing",
+      "cat_marketing_desc": "Aktualizacje produktu i wskazówki",
+      "freq_instant": "Natychmiast",
+      "freq_instant_desc": "Otrzymuj powiadomienia od razu",
+      "freq_hourly": "Co godzinę",
+      "freq_hourly_desc": "Otrzymuj podsumowanie co godzinę",
+      "freq_daily": "Codziennie",
+      "freq_daily_desc": "Otrzymuj podsumowanie raz dziennie",
+      "freq_weekly": "Co tydzień",
+      "freq_weekly_desc": "Otrzymuj podsumowanie raz w tygodniu",
+      "content_summary": "Podsumowanie",
+      "content_summary_desc": "Tylko krótki przegląd",
+      "content_full": "Pełne szczegóły",
+      "content_full_desc": "Pełna treść powiadomień",
+      "format_html": "HTML",
+      "format_html_desc": "Bogate formatowanie",
+      "format_plain": "Zwykły tekst",
+      "format_plain_desc": "Prosty format tekstowy"
+    },
+    "desktopSounds": {
+      "title": "Pulpit i dźwięki",
+      "description": "Skonfiguruj sposób wyświetlania powiadomień i odtwarzane dźwięki",
+      "saved": "Ustawienia pulpitu i dźwięków zapisane",
+      "error": "Nie udało się zapisać ustawień",
+      "pushEnabled": "Powiadomienia push włączone",
+      "pushDenied": "Przeglądarka odmówiła uprawnień",
+      "desktopNotifications": "Powiadomienia na pulpicie",
+      "showDesktop": "Pokazuj powiadomienia na pulpicie",
+      "showDesktopDesc": "Wyświetlaj powiadomienia w przeglądarce",
+      "enablePush": "Włącz powiadomienia push",
+      "position": "Pozycja powiadomień",
+      "pos_top-right": "Prawy górny róg",
+      "pos_top-left": "Lewy górny róg",
+      "pos_bottom-right": "Prawy dolny róg",
+      "pos_bottom-left": "Lewy dolny róg",
+      "duration": "Czas wyświetlania powiadomienia",
+      "soundAlerts": "Alerty dźwiękowe",
+      "enableSounds": "Włącz dźwięki",
+      "enableSoundsDesc": "Odtwarzaj dźwięki przy powiadomieniach",
+      "soundPerType": "Dźwięk według typu powiadomienia",
+      "type_task_assigned": "Przypisano zadanie",
+      "type_task_updated": "Zaktualizowano zadanie",
+      "type_mention": "Wzmianki",
+      "type_milestone": "Kamienie milowe",
+      "sound_default": "Domyślny",
+      "sound_chime": "Dzwonek",
+      "sound_bell": "Bell",
+      "sound_pop": "Pop",
+      "sound_none": "Brak"
+    },
+    "privacy": {
+      "title": "Prywatność i widoczność",
+      "description": "Kontroluj, kto widzi Twoje informacje i aktywność",
+      "saved": "Ustawienia prywatności zapisane",
+      "error": "Nie udało się zapisać preferencji",
+      "statusTitle": "Status online",
+      "showOnlineStatus": "Pokazuj status online",
+      "showOnlineStatusDescription": "Pozwól innym widzieć, kiedy jesteś online",
+      "showInDirectory": "Pokazuj w katalogu zespołu",
+      "showInDirectoryDescription": "Wyświetlaj się w katalogu członków organizacji",
+      "activityTitle": "Widoczność aktywności",
+      "activityDescription": "Wybierz, kto widzi Twoją ostatnią aktywność i wkład",
+      "profileTitle": "Widoczność profilu",
+      "profileDescription": "Kontroluj, kto może zobaczyć informacje z Twojego profilu",
+      "communicationTitle": "Komunikacja i AI",
+      "allowMentions": "Zezwalaj na @wzmianki",
+      "allowMentionsDescription": "Pozwól innym oznaczać Cię w komentarzach i dyskusjach",
+      "shareWithAI": "Udostępniaj aktywność AI",
+      "shareWithAIDescription": "Pozwól asystentowi AI używać Twojej aktywności do spersonalizowanych rekomendacji",
+      "visibility": {
+        "all": "Wszyscy",
+        "allDesc": "Wszyscy użytkownicy widzą Twoją aktywność",
+        "team": "Tylko zespół",
+        "teamDesc": "Tylko członkowie Twojego zespołu",
+        "private": "Prywatne",
+        "privateDesc": "Tylko Ty widzisz"
+      },
+      "profile": {
+        "public": "Publiczny",
+        "publicDesc": "Każdy może zobaczyć Twój profil",
+        "organization": "Organizacja",
+        "organizationDesc": "Tylko członkowie organizacji",
+        "private": "Prywatny",
+        "privateDesc": "Profil ukryty przed innymi"
+      }
+    },
+    "shortcuts": {
+      "title": "Skróty klawiszowe",
+      "description": "Dostosuj skróty klawiszowe, aby pracować szybciej",
+      "saved": "Skróty klawiszowe zapisane",
+      "error": "Nie udało się zapisać skrótów",
+      "reset": "Resetuj",
+      "enable": "Włącz skróty klawiszowe",
+      "enableDesc": "Używaj skrótów klawiszowych w całej aplikacji",
+      "showHints": "Pokazuj podpowiedzi skrótów",
+      "showHintsDesc": "Wyświetlaj skróty klawiszowe obok akcji",
+      "preset": "Zestaw skrótów",
+      "search": "Szukaj skrótów...",
+      "pressKeysPlaceholder": "Naciśnij klawisze...",
+      "tip": "Wskazówka",
+      "tipText": "Naciśnij \"?\" w dowolnym miejscu aplikacji, aby zobaczyć dostępne skróty. Sekwencje typu \"g h\" oznaczają: naciśnij g, puść, potem naciśnij h.",
+      "presets": {
+        "default": { "label": "Domyślny", "description": "Domyślne skróty Consultify" },
+        "vscode": { "label": "VS Code", "description": "Styl Visual Studio Code" },
+        "sublime": { "label": "Sublime Text", "description": "Styl Sublime Text" },
+        "vim": { "label": "Vim", "description": "Nawigacja w stylu Vim" },
+        "custom": { "label": "Własny", "description": "Twoja własna konfiguracja" }
+      },
+      "categories": {
+        "navigation": "NAWIGACJA",
+        "editing": "EDYCJA",
+        "task_management": "ZARZĄDZANIE ZADANIAMI",
+        "search": "SZUKANIE",
+        "ai": "FUNKCJE AI",
+        "general": "OGÓLNE"
+      },
+      "editor": {
+        "subtitle": "Dostosuj skróty klawiszowe do szybkiej nawigacji",
+        "resetAll": "Resetuj wszystko",
+        "allCategories": "Wszystkie kategorie",
+        "actionHeader": "Akcja",
+        "shortcutHeader": "Skrót",
+        "actionsHeader": "Akcje",
+        "custom": "Własny",
+        "conflict": "Konflikt",
+        "tipsTitle": "Wskazówki do skrótów klawiszowych",
+        "tipEdit": "• Kliknij „Edytuj” i naciśnij wybraną kombinację klawiszy",
+        "tipSystem": "• Używaj Cmd/Ctrl z innymi klawiszami dla skrótów systemowych",
+        "tipSequences": "• Sekwencje dwuklawiszowe (np. G I) działają w nawigacji",
+        "tipConflicts": "• Konflikty są podświetlane na czerwono - rozwiąż je przed zapisem",
+        "conflictWith": "Konflikt z: {{shortcut}}",
+        "resetToDefault": "Przywrócono domyślny skrót",
+        "resetAllConfirm": "Zresetować wszystkie skróty do domyślnych?",
+        "allReset": "Wszystkie skróty zresetowane",
+        "categories": {
+          "navigation": "Nawigacja",
+          "editing": "Edycja",
+          "views": "Widoki",
+          "actions": "Akcje",
+          "ai": "AI",
+          "system": "System"
+        },
+        "actions": {
+          "go_home": "Przejdź do panelu",
+          "go_inbox": "Przejdź do skrzynki",
+          "go_projects": "Przejdź do projektów",
+          "new_task": "Utwórz nowe zadanie",
+          "new_project": "Utwórz nowy projekt",
+          "search": "Otwórz wyszukiwanie",
+          "command_palette": "Paleta komend",
+          "ai_assist": "Otwórz asystenta AI",
+          "save": "Zapisz bieżące",
+          "toggle_sidebar": "Przełącz sidebar"
+        }
+      },
+      "actions": {
+        "go_home": { "name": "Przejdź do strony głównej", "description": "Przejdź do panelu" },
+        "go_tasks": { "name": "Przejdź do zadań", "description": "Przejdź do moich zadań" },
+        "go_inbox": {
+          "name": "Przejdź do skrzynki",
+          "description": "Przejdź do skrzynki odbiorczej"
+        },
+        "go_settings": { "name": "Przejdź do ustawień", "description": "Przejdź do ustawień" },
+        "search_global": {
+          "name": "Wyszukiwanie globalne",
+          "description": "Otwórz wyszukiwanie globalne"
+        },
+        "search_tasks": { "name": "Szukaj zadań", "description": "Szukaj w zadaniach" },
+        "new_task": { "name": "Nowe zadanie", "description": "Utwórz nowe zadanie" },
+        "complete_task": {
+          "name": "Ukończ zadanie",
+          "description": "Oznacz wybrane zadanie jako wykonane"
+        },
+        "edit_task": { "name": "Edytuj zadanie", "description": "Edytuj wybrane zadanie" },
+        "delete_task": { "name": "Usuń zadanie", "description": "Usuń wybrane zadanie" },
+        "assign_task": { "name": "Przypisz zadanie", "description": "Przypisz wybrane zadanie" },
+        "save": { "name": "Zapisz", "description": "Zapisz bieżące zmiany" },
+        "undo": { "name": "Cofnij", "description": "Cofnij ostatnią akcję" },
+        "redo": { "name": "Ponów", "description": "Ponów ostatnią akcję" },
+        "ai_assist": { "name": "Asystent AI", "description": "Otwórz asystenta AI" },
+        "ai_summarize": { "name": "Podsumowanie AI", "description": "Podsumuj zaznaczony tekst" },
+        "toggle_sidebar": { "name": "Przełącz sidebar", "description": "Pokaż lub ukryj sidebar" },
+        "notifications": { "name": "Powiadomienia", "description": "Otwórz powiadomienia" },
+        "help": { "name": "Pomoc", "description": "Pokaż skróty klawiszowe" }
+      }
+    },
+    "developer": {
+      "tab": "Tryb deweloperski",
+      "warning": "Tryb deweloperski",
+      "warningDesc": "Te ustawienia są przeznaczone dla deweloperów i mogą wpływać na wydajność aplikacji.",
+      "options": "Opcje deweloperskie",
+      "optionsDesc": "Skonfiguruj ustawienia przeznaczone dla deweloperów",
+      "mode": "Tryb deweloperski",
+      "modeDesc": "Włącz narzędzia deweloperskie i funkcje debugowania",
+      "apiLogging": "Logowanie API",
+      "apiLoggingDesc": "Loguj wszystkie żądania API w konsoli przeglądarki",
+      "verboseErrors": "Szczegółowe błędy",
+      "verboseErrorsDesc": "Pokazuj szczegółowe komunikaty błędów i stack trace",
+      "showDebug": "Pokazuj informacje debug",
+      "showDebugDesc": "Wyświetlaj panel debugowania w stopce aplikacji",
+      "debugInfo": "Informacje debugowania",
+      "debugInfoDesc": "Szczegóły bieżącej sesji i środowiska",
+      "save": "Zapisz ustawienia deweloperskie",
+      "saved": "Ustawienia zapisane",
+      "savedDesc": "Ustawienia deweloperskie zostały zapisane na Twoim koncie",
+      "error": "Błąd",
+      "errorDesc": "Nie udało się zapisać ustawień deweloperskich",
+      "copied": "Skopiowano",
+      "copiedDesc": "Informacje debugowania skopiowane do schowka"
+    },
+    "beta": {
+      "tab": "Funkcje beta",
+      "title": "Funkcje beta",
+      "description": "Wypróbuj nowe funkcje przed ich oficjalnym wydaniem. Funkcje beta mogą być niestabilne lub zmieniać się bez uprzedzenia.",
+      "expectedRelease": "Planowane wydanie: {{date}}",
+      "updated": "Funkcja zaktualizowana",
+      "updatedDesc": "Ustawienie funkcji beta zostało zapisane",
+      "error": "Błąd",
+      "errorDesc": "Nie udało się zapisać ustawienia funkcji beta",
+      "features": {
+        "ai-v2": {
+          "name": "AI Chat V2",
+          "description": "Nowy interfejs rozmowy z AI z lepszą świadomością kontekstu"
+        },
+        "collaborative-editing": {
+          "name": "Wspólna edycja",
+          "description": "Wspólna edycja dokumentów w czasie rzeczywistym z informacją o obecności"
+        },
+        "smart-scheduling": {
+          "name": "Inteligentne planowanie",
+          "description": "Planowanie zadań wspierane przez AI na podstawie Twoich wzorców pracy"
+        },
+        "voice-commands": {
+          "name": "Komendy głosowe",
+          "description": "Steruj aplikacją za pomocą komend głosowych"
+        }
+      }
+    },
+    "flags": {
+      "tab": "Flagi funkcji",
+      "title": "Flagi funkcji",
+      "description": "Bieżąca konfiguracja flag funkcji. Są zarządzane przez administratorów i nie można ich tutaj zmieniać.",
+      "current": "Bieżąca konfiguracja",
+      "descriptions": {
+        "ENABLE_ANALYTICS": "Włącz śledzenie analityczne",
+        "MAX_UPLOAD_SIZE_MB": "Maksymalny rozmiar przesyłanego pliku",
+        "API_VERSION": "Bieżąca wersja API",
+        "ENABLE_WEBSOCKETS": "Włącz aktualizacje w czasie rzeczywistym",
+        "DEBUG_MODE": "Włącz tryb debugowania"
+      }
+    },
+    "advanced": {
+      "saved": "Ustawienia zaawansowane zapisane",
+      "error": "Nie udało się zapisać ustawień",
+      "shortcuts": {
+        "newTask": "Nowe zadanie",
+        "search": "Szukaj",
+        "quickSwitchProject": "Szybko przełącz projekt",
+        "toggleSidebar": "Przełącz sidebar",
+        "openSettings": "Otwórz ustawienia",
+        "toggleDarkMode": "Przełącz tryb ciemny",
+        "markTaskComplete": "Oznacz zadanie jako ukończone",
+        "openAiAssistant": "Otwórz asystenta AI",
+        "focusMode": "Tryb skupienia"
+      },
+      "shortcutCategories": {
+        "tasks": "Zadania",
+        "navigation": "Nawigacja",
+        "general": "Ogólne",
+        "ai": "AI",
+        "focus": "Skupienie"
+      }
+    },
+    "accessibility": {
+      "saved": "Preferencje dostępności zapisane",
+      "error": "Nie udało się zapisać preferencji",
+      "typographyTitle": "Typografia",
+      "typographyDesc": "Rozmiar i krój fontu oraz preferencje czytelności",
+      "fontSizeTitle": "Rozmiar fontu",
+      "fontSize": {
+        "small": "Mały",
+        "medium": "Średni",
+        "large": "Duży",
+        "extraLarge": "Bardzo duży"
+      },
+      "fontFamilyTitle": "Krój fontu",
+      "fontFamily": {
+        "system": "Systemowy",
+        "inter": "Inter",
+        "roboto": "Roboto",
+        "openSans": "Open Sans",
+        "lato": "Lato",
+        "dyslexic": "OpenDyslexic",
+        "mono": "Monospace"
+      },
+      "lineHeightTitle": "Wysokość linii",
+      "lineHeightDescription": "Odstęp między wierszami tekstu",
+      "letterSpacingTitle": "Odstępy między znakami",
+      "letterSpacingDescription": "Odstęp między znakami",
+      "caretWidthTitle": "Szerokość kursora tekstowego",
+      "caretWidthDescription": "Zwiększ widoczność migającego kursora tekstowego",
+      "visualTitle": "Ustawienia wizualne",
+      "visualDesc": "Kontrast, ruch, widzenie kolorów i wskaźniki fokusu",
+      "highContrast": "Tryb wysokiego kontrastu",
+      "highContrastDescription": "Zwiększ kontrast dla lepszej widoczności",
+      "reduceMotion": "Ogranicz ruch",
+      "reduceMotionDescription": "Wyłącz animacje i przejścia",
+      "underlineLinks": "Podkreślaj linki",
+      "underlineLinksDescription": "Zawsze pokazuj podkreślenia linków klikalnych",
+      "textSpacing": "Odstępy tekstu",
+      "textSpacingDescription": "Dostosuj odstępy między wierszami i literami",
+      "colorVisionTitle": "Widzenie kolorów",
+      "colorVisionDescription": "Dostosuj kolory do różnych typów zaburzeń widzenia barw",
+      "focusStyleTitle": "Styl wskaźnika fokusu",
+      "focusStyleDescription": "Wybierz sposób podświetlania elementów przy nawigacji klawiaturą",
+      "navigationTitle": "Nawigacja i wprowadzanie",
+      "navigationDesc": "Podpowiedzi klawiaturowe, obramowania fokusu i preferencje kursora",
+      "keyboardShortcuts": "Pokazuj skróty klawiszowe",
+      "keyboardShortcutsDescription": "Wyświetlaj podpowiedzi skrótów w tooltipach",
+      "focusHighlight": "Wzmocniony wskaźnik fokusu",
+      "focusHighlightDescription": "Pokazuj wyraźne obramowania fokusu podczas nawigacji klawiaturą",
+      "cursorSize": "Rozmiar kursora",
+      "cursorSizeDescription": "Zwiększ widoczność kursora",
+      "assistiveTitle": "Technologie wspomagające",
+      "assistiveDesc": "Czytnik ekranu, sterowanie głosem i funkcje mowy",
+      "screenReaderOptimized": "Optymalizacje dla czytników ekranu",
+      "screenReaderOptimizedDescription": "Popraw zgodność z czytnikami ekranu, takimi jak NVDA i VoiceOver",
+      "textToSpeech": "Tekst na mowę",
+      "textToSpeechDescription": "Odczytuj zaznaczony tekst na głos",
+      "speechToText": "Mowa na tekst",
+      "speechToTextDescription": "Używaj dyktowania głosowego przy wprowadzaniu tekstu",
+      "voiceCommands": "Polecenia głosowe",
+      "voiceCommandsDescription": "Steruj aplikacją za pomocą poleceń głosowych",
+      "spacing": {
+        "default": "Domyślnie",
+        "relaxed": "Luźniej",
+        "spacious": "Przestronnie"
+      },
+      "lineHeight": {
+        "default": "Domyślnie",
+        "relaxed": "Luźniej",
+        "loose": "Szeroko"
+      },
+      "letterSpacing": {
+        "default": "Domyślnie",
+        "wide": "Szeroko",
+        "wider": "Bardziej szeroko"
+      },
+      "caretWidth": {
+        "default": "Domyślnie",
+        "thick": "Gruby"
+      },
+      "focusStyle": {
+        "default": "Domyślny",
+        "highContrast": "Wysoki kontrast",
+        "animated": "Animowany"
+      },
+      "cursor": {
+        "default": "Domyślny",
+        "large": "Duży"
+      },
+      "colorVision": {
+        "none": "Brak",
+        "noneDesc": "Bez korekty kolorów",
+        "protanopia": "Protanopia",
+        "protanopiaDesc": "Trudność z czerwienią (ok. 1% mężczyzn)",
+        "deuteranopia": "Deuteranopia",
+        "deuteranopiaDesc": "Trudność z zielenią (ok. 6% mężczyzn)",
+        "tritanopia": "Tritanopia",
+        "tritanopiaDesc": "Trudność z błękitem (rzadko)"
+      }
+    },
+    "templates": {
+      "title": "Szablony ustawień",
+      "subtitle": "Stosuj gotowe konfiguracje albo zapisuj własne",
+      "saveCurrent": "Zapisz bieżące jako szablon",
+      "systemTemplates": "Szablony systemowe",
+      "recommended": "Rekomendowane",
+      "applying": "Stosowanie...",
+      "applyTemplate": "Zastosuj szablon",
+      "apply": "Zastosuj",
+      "myTemplates": "Moje szablony",
+      "noCustomTemplates": "Brak własnych szablonów",
+      "noCustomTemplatesHint": "Zapisz bieżące ustawienia jako szablon, aby użyć ich później",
+      "saveAsTemplate": "Zapisz jako szablon",
+      "templateName": "Nazwa szablonu",
+      "namePlaceholder": "Mój szablon ustawień",
+      "descriptionOptional": "Opis (opcjonalnie)",
+      "descriptionPlaceholder": "Opisz ten szablon...",
+      "saveTemplate": "Zapisz szablon",
+      "applyConfirm": "Zastosować szablon \"{{name}}\"? Spowoduje to nadpisanie bieżących ustawień.",
+      "applied": "Zastosowano szablon \"{{name}}\"",
+      "applyError": "Nie udało się zastosować szablonu",
+      "customDescriptionFallback": "Własny szablon ustawień",
+      "created": "Szablon utworzony z bieżących ustawień",
+      "createError": "Nie udało się utworzyć szablonu",
+      "deleteConfirm": "Usunąć ten szablon?",
+      "deleted": "Szablon usunięty",
+      "deleteError": "Nie udało się usunąć szablonu",
+      "categories": {
+        "all": "Wszystkie",
+        "security": "Bezpieczeństwo",
+        "productivity": "Produktywność",
+        "ai": "AI",
+        "privacy": "Prywatność"
+      },
+      "system": {
+        "security_focused": {
+          "name": "Nacisk na bezpieczeństwo",
+          "description": "Bardziej restrykcyjne domyślne ustawienia bezpieczeństwa, prywatności i dostępu."
+        },
+        "productivity": {
+          "name": "Produktywność",
+          "description": "Ustawienia zoptymalizowane pod szybszą codzienną pracę."
+        },
+        "ai_power_user": {
+          "name": "Zaawansowane użycie AI",
+          "description": "Konfiguracja nastawiona na intensywne użycie AI w zaawansowanych workflow."
+        }
+      }
+    },
+    "personalAutomation": {
+      "title": "Automatyzacje osobiste",
+      "subtitle": "Automatyzuj powtarzalne zadania i workflow",
+      "createAutomation": "Utwórz automatyzację",
+      "paused": "Automatyzacja wstrzymana",
+      "enabled": "Automatyzacja włączona",
+      "updateError": "Nie udało się zaktualizować automatyzacji",
+      "deleteConfirm": "Usunąć tę automatyzację?",
+      "deleted": "Automatyzacja usunięta",
+      "deleteError": "Nie udało się usunąć automatyzacji",
+      "empty": "Brak automatyzacji",
+      "createFirst": "Utwórz pierwszą automatyzację",
+      "useTemplate": "Użyj szablonu",
+      "lastRun": "Ostatnie uruchomienie: {{date}} • łącznie uruchomień: {{count}}",
+      "stats": {
+        "active": "Aktywne automatyzacje",
+        "totalRuns": "Łącznie uruchomień",
+        "successful24h": "Udane (24h)"
+      },
+      "tabs": {
+        "rules": "Moje automatyzacje",
+        "templates": "Szablony",
+        "logs": "Historia"
+      },
+      "categories": {
+        "tasks": "Zadania",
+        "reports": "Raporty",
+        "team": "Zespół"
+      },
+      "templates": {
+        "t1": {
+          "name": "Automatyczne przypisywanie zadań",
+          "description": "Przypisuj nowe zadania na podstawie słów kluczowych"
+        },
+        "t2": {
+          "name": "Przypomnienie o terminie",
+          "description": "Wyślij przypomnienie przed terminem"
+        },
+        "t3": {
+          "name": "Archiwizuj ukończone",
+          "description": "Automatycznie archiwizuj ukończone zadania"
+        },
+        "t4": {
+          "name": "Codzienny standup",
+          "description": "Generuj codzienny raport standup"
+        },
+        "t5": {
+          "name": "Powitaj nowych członków",
+          "description": "Wyślij wiadomość powitalną do nowych członków zespołu"
+        }
+      },
+      "triggers": {
+        "task_created": "Gdy zadanie zostanie utworzone",
+        "task_completed": "Gdy zadanie zostanie ukończone",
+        "task_assigned": "Gdy zadanie zostanie przypisane",
+        "due_date_approaching": "Gdy zbliża się termin",
+        "project_created": "Gdy projekt zostanie utworzony",
+        "comment_added": "Gdy dodano komentarz",
+        "schedule": "Według harmonogramu"
+      },
+      "actions": {
+        "send_notification": "Wyślij powiadomienie",
+        "assign_user": "Przypisz do użytkownika",
+        "change_status": "Zmień status",
+        "add_tag": "Dodaj tag",
+        "move_to_project": "Przenieś do projektu",
+        "archive_task": "Archiwizuj element",
+        "send_email": "Wyślij e-mail",
+        "create_task": "Utwórz zadanie"
+      }
+    },
     "security": "Bezpieczeństwo",
-    "appearance": "Wygląd",
+    "appearance": {
+      "label": "Wygląd",
+      "title": "Motyw i wygląd",
+      "description": "Dostosuj wygląd i odczucie pracy z aplikacją",
+      "saved": "Ustawienia wyglądu zapisane",
+      "error": "Nie udało się zapisać ustawień",
+      "theme": "Motyw",
+      "themeDescription": "Wybierz preferowany schemat kolorów",
+      "light": "Jasny",
+      "lightDesc": "Jasny motyw do pracy w dzień",
+      "dark": "Ciemny",
+      "darkDesc": "Łagodny dla oczu",
+      "system": "Systemowy",
+      "systemDesc": "Dopasuj do urządzenia",
+      "uiDensity": "Gęstość interfejsu",
+      "uiDensityDescription": "Kontroluj odstępy i padding w całym interfejsie",
+      "startPage": "Strona startowa",
+      "startPageDescription": "Wybierz stronę wyświetlaną po otwarciu Consultify",
+      "fontScale": "Skala fontu",
+      "fontScaleDescription": "Dostosuj ogólny rozmiar tekstu w aplikacji",
+      "preview": "Podgląd:",
+      "previewSentence": "Zażółć gęślą jaźń i sprawdź czytelność tekstu.",
+      "previewScale": "Tak będzie wyglądać tekst podstawowy przy skali {{scale}}%.",
+      "language": "Język",
+      "languageDescription": "Wybierz preferowany język interfejsu",
+      "themeLabel": "Motyw kolorystyczny",
+      "themeDesc": "Wybierz preferowany schemat kolorów",
+      "accentColor": "Kolor akcentu",
+      "accentColorDesc": "Wybierz kolor przycisków, linków i wyróżnień",
+      "customColor": "Kolor własny",
+      "currentAccent": "Aktualny kolor akcentu",
+      "densityLabel": "Gęstość interfejsu",
+      "densityDesc": "Kontroluj odstępy i kompaktowość interfejsu",
+      "previewNote": "Zmiany są podglądane od razu i zapisywane na Twoim koncie",
+      "accent": {
+        "violet": "Fioletowy",
+        "blue": "Niebieski",
+        "emerald": "Szmaragdowy",
+        "rose": "Różany",
+        "amber": "Bursztynowy",
+        "cyan": "Cyjan"
+      },
+      "density": {
+        "compact": "Kompaktowy",
+        "compactDesc": "Więcej treści, mniej odstępów",
+        "comfortable": "Wygodny",
+        "comfortableDesc": "Zrównoważony układ",
+        "spacious": "Przestronny",
+        "spaciousDesc": "Więcej oddechu"
+      },
+      "uiDensityOptions": {
+        "compact": "Kompaktowy",
+        "compactDesc": "Minimalne odstępy, więcej widocznej treści",
+        "comfortable": "Wygodny",
+        "comfortableDesc": "Zrównoważone odstępy (domyślne)",
+        "spacious": "Przestronny",
+        "spaciousDesc": "Więcej oddechu"
+      },
+      "startPageOptions": {
+        "chat": "Czat AI",
+        "chatDesc": "Zacznij od asystenta AI",
+        "myTasks": "Moje zadania",
+        "myTasksDesc": "Przejdź od razu do swoich zadań",
+        "inbox": "Skrzynka",
+        "inboxDesc": "Zacznij od powiadomień",
+        "lastVisited": "Ostatnio odwiedzone",
+        "lastVisitedDesc": "Kontynuuj od miejsca, w którym skończono"
+      },
+      "visual": {
+        "title": "Personalizacja wizualna",
+        "description": "Dostosuj wygląd Consultify",
+        "reset": "Resetuj",
+        "resetToast": "Ustawienia przywrócone do domyślnych",
+        "previewCharacters": "AĄBCĆDEĘFGHIJKLŁMNŃOÓPRSŚTUWYZŹŻ - 0123456789",
+        "displayDensity": "Gęstość wyświetlania",
+        "densityCompactDesc": "Więcej widocznej treści",
+        "densitySpaciousDesc": "Luźniejsze odstępy",
+        "additionalOptions": "Dodatkowe opcje",
+        "sidebarWidth": "Szerokość sidebara",
+        "borderRadius": "Zaokrąglenie rogów",
+        "enableAnimations": "Włącz animacje",
+        "enableAnimationsDesc": "Płynne przejścia i efekty",
+        "customCss": "Własny CSS",
+        "showCss": "Pokaż",
+        "hideCss": "Ukryj",
+        "customCssDesc": "Zaawansowane: dodaj własne reguły CSS (używaj ostrożnie)",
+        "customCssPlaceholder": "/* Twój własny CSS */\n.my-class {\n  color: red;\n}",
+        "accent": {
+          "violet": "Fioletowy",
+          "purple": "Purpurowy",
+          "indigo": "Indygo",
+          "blue": "Niebieski",
+          "cyan": "Cyjan",
+          "teal": "Morski",
+          "green": "Zielony",
+          "emerald": "Szmaragdowy",
+          "amber": "Bursztynowy",
+          "orange": "Pomarańczowy",
+          "red": "Czerwony",
+          "pink": "Różowy"
+        },
+        "font": {
+          "system": "Systemowy",
+          "inter": "Inter",
+          "roboto": "Roboto",
+          "opensans": "Open Sans",
+          "lato": "Lato",
+          "poppins": "Poppins",
+          "jetbrains": "JetBrains Mono",
+          "fira": "Fira Code"
+        },
+        "radius": {
+          "none": "Brak",
+          "small": "Małe",
+          "medium": "Średnie",
+          "large": "Duże"
+        }
+      }
+    },
     "sidebar": {
       "title": "USTAWIENIA",
       "subtitle": "Preferencje osobiste",
@@ -2647,12 +4207,16 @@
       "regional": "Regionalne",
       "language": "Język",
       "aiInstructions": "Instrukcje AI",
+      "aiBehavior": "Zachowanie i instrukcje",
       "aiModel": "Wybór modelu",
+      "aiModelParams": "Model i parametry",
       "aiParameters": "Parametry",
       "aiUsage": "Panel użycia",
       "aiPersonality": "Osobowość",
       "aiAutocomplete": "Autouzupełnianie",
       "aiMemory": "Pamięć",
+      "aiPrivacy": "Dane i prywatność",
+      "aiPromptLibrary": "Biblioteka promptów",
       "aiVoice": "Głos i TTS",
       "notificationsOverview": "Przegląd",
       "notificationsEmail": "E-mail",
@@ -2685,7 +4249,47 @@
       "betaFeatures": "Funkcje beta",
       "settingsHistory": "Historia"
     },
+    "voice": {
+      "saved": "Ustawienia głosu zapisane",
+      "error": "Nie udało się zapisać ustawień głosu",
+      "unsupported": "Synteza mowy nie jest obsługiwana w tej przeglądarce",
+      "testText": "Cześć! To jest test ustawień głosu.",
+      "title": "Głos i TTS",
+      "desc": "Skonfiguruj wejście głosowe i syntezę mowy dla interakcji z AI.",
+      "enableInput": "Wprowadzanie głosowe",
+      "enableInputDesc": "Używaj mikrofonu do poleceń głosowych i dyktowania.",
+      "enableTTS": "Synteza mowy",
+      "enableTTSDesc": "Włącz odczytywanie odpowiedzi AI na głos.",
+      "autoSpeak": "Automatycznie czytaj odpowiedzi",
+      "autoSpeakDesc": "AI będzie automatycznie czytać odpowiedzi, gdy TTS jest włączone.",
+      "selectVoice": "Głos",
+      "selectVoiceDesc": "Wybierz głos używany do syntezy mowy.",
+      "speed": "Szybkość",
+      "speedDesc": "Dostosuj szybkość odtwarzania syntezy mowy (0,5x-2x).",
+      "stop": "Zatrzymaj",
+      "test": "Testuj głos"
+    },
     "sections": {
+      "overview": {
+        "title": "Przegląd ustawień",
+        "subtitle": "Jedno miejsce dla ustawień osobistych, przekazań tenantowych i preferencji modułów"
+      },
+      "tenant-defaults": {
+        "title": "Domyślne ustawienia tenanta",
+        "subtitle": "Przeglądaj domyślne ustawienia organizacji i ich wpływ na działanie systemu"
+      },
+      "tenant-branding": {
+        "title": "Branding",
+        "subtitle": "Branding jest zarządzany w Organizacji i tutaj dostępny tylko informacyjnie"
+      },
+      "tenant-security": {
+        "title": "Bezpieczeństwo tenanta",
+        "subtitle": "Polityka bezpieczeństwa jest widoczna tutaj, ale zmiany wykonuje się w panelu Admin"
+      },
+      "module-preferences": {
+        "title": "Preferencje modułów",
+        "subtitle": "Sprawdź ustawienia domyślne modułów i ich źródło w modelu dziedziczenia"
+      },
       "profile": {
         "title": "Profil",
         "subtitle": "Zarządzaj swoimi danymi osobowymi i kontem"
@@ -2722,13 +4326,33 @@
         "title": "Instrukcje AI",
         "subtitle": "Dostosuj sposób odpowiadania AI"
       },
+      "ai-behavior": {
+        "title": "Zachowanie i instrukcje",
+        "subtitle": "Określ sposób komunikacji AI - prompt, ton, styl i kontekst"
+      },
       "ai-model": {
         "title": "Wybór modelu",
         "subtitle": "Wybierz preferowany model AI"
       },
+      "ai-model-params": {
+        "title": "Model i parametry",
+        "subtitle": "Wybierz modele AI i dostosuj parametry generowania"
+      },
       "ai-parameters": {
         "title": "Parametry AI",
         "subtitle": "Dostosuj parametry odpowiedzi AI"
+      },
+      "ai-privacy": {
+        "title": "Dane i prywatność AI",
+        "subtitle": "Kontroluj dostęp do danych, retencję i ustawienia zgodności"
+      },
+      "prompt-library": {
+        "title": "Biblioteka promptów",
+        "subtitle": "Zapisuj i organizuj prompty wielokrotnego użytku dla różnych kontekstów"
+      },
+      "ai-prompt-library": {
+        "title": "Biblioteka promptów",
+        "subtitle": "Zapisuj i organizuj prompty wielokrotnego użytku dla różnych kontekstów"
       },
       "ai-usage": {
         "title": "Panel użycia AI",
@@ -2774,6 +4398,30 @@
         "title": "Podsumowanie powiadomień",
         "subtitle": "Konfiguruj e-maile z podsumowaniem powiadomień"
       },
+      "notifications-email-digest": {
+        "title": "E-mail i podsumowania",
+        "subtitle": "Wybierz, które e-maile chcesz otrzymywać i jak mają być podsumowywane"
+      },
+      "notifications-desktop-sounds": {
+        "title": "Pulpit i dźwięki",
+        "subtitle": "Skonfiguruj sposób wyświetlania powiadomień i odtwarzane dźwięki"
+      },
+      "notifications-availability": {
+        "title": "Dostępność",
+        "subtitle": "Kontroluj, kiedy powiadomienia mogą do Ciebie docierać"
+      },
+      "email-digest": {
+        "title": "E-mail i podsumowania",
+        "subtitle": "Wybierz, które e-maile chcesz otrzymywać i jak mają być podsumowywane"
+      },
+      "desktop-sounds": {
+        "title": "Pulpit i dźwięki",
+        "subtitle": "Skonfiguruj sposób wyświetlania powiadomień i odtwarzane dźwięki"
+      },
+      "availability": {
+        "title": "Dostępność",
+        "subtitle": "Kontroluj, kiedy powiadomienia mogą do Ciebie docierać"
+      },
       "notifications-dnd": {
         "title": "Nie przeszkadzać",
         "subtitle": "Tymczasowo wstrzymaj wszystkie powiadomienia"
@@ -2797,6 +4445,14 @@
       "recovery": {
         "title": "Opcje odzyskiwania",
         "subtitle": "Skonfiguruj metody odzyskiwania konta"
+      },
+      "security-overview": {
+        "title": "Przegląd bezpieczeństwa",
+        "subtitle": "Hasło, uwierzytelnianie dwuskładnikowe i opcje odzyskiwania"
+      },
+      "sessions-activity": {
+        "title": "Sesje i aktywność",
+        "subtitle": "Monitoruj aktywne sesje i przeglądaj historię logowań"
       },
       "security-dashboard": {
         "title": "Przegląd bezpieczeństwa",
@@ -3334,31 +4990,17 @@
         {
           "title": "Inteligencja finansowa",
           "description": "Consultify rozszerza klasyczny consulting o modele finansowe, analizy, wycenę i forecasting.",
-          "bullets": [
-            "Modele finansowe",
-            "Analiza finansowa",
-            "Wycena spółki",
-            "Forecasting"
-          ]
+          "bullets": ["Modele finansowe", "Analiza finansowa", "Wycena spółki", "Forecasting"]
         },
         {
           "title": "Raporty i prezentacje",
           "description": "Consultify zamienia bieżącą pracę w raporty, prezentacje executive i consulting deliverables.",
-          "bullets": [
-            "Raporty",
-            "Prezentacje executive",
-            "Consulting deliverables"
-          ]
+          "bullets": ["Raporty", "Prezentacje executive", "Consulting deliverables"]
         },
         {
           "title": "Moja praca",
           "description": "Consultify daje zespołom osobisty i współdzielony workspace do dowożenia pracy po rozpoczęciu działań strategicznych.",
-          "bullets": [
-            "Taski",
-            "Decyzje",
-            "Pomysły",
-            "Notatki"
-          ]
+          "bullets": ["Taski", "Decyzje", "Pomysły", "Notatki"]
         }
       ]
     },
@@ -3517,61 +5159,37 @@
           "badge": "AI Core",
           "title": "Strategiczny doradca AI",
           "description": "AI analizuje organizację, identyfikuje luki i generuje priorytetyzowaną mapę strategiczną — w minuty, nie miesiące.",
-          "highlights": [
-            "Ocena diagnostyczna",
-            "Analiza luk",
-            "Benchmark vs. branża"
-          ]
+          "highlights": ["Ocena diagnostyczna", "Analiza luk", "Benchmark vs. branża"]
         },
         "economics": {
           "badge": "Ekonomia",
           "title": "Modelowanie finansowe i ROI",
           "description": "Buduj business case'y, modeluj scenariusze NPV / IRR i śledź rzeczywiste vs. zakładane zwroty dla każdej inicjatywy.",
-          "highlights": [
-            "Modelowanie NPV / IRR",
-            "Analiza wrażliwości",
-            "Śledzenie ROI na żywo"
-          ]
+          "highlights": ["Modelowanie NPV / IRR", "Analiza wrażliwości", "Śledzenie ROI na żywo"]
         },
         "execution": {
           "badge": "Egzekucja",
           "title": "Zarządzanie inicjatywami",
           "description": "Zamień strategię w egzekucję. Zarządzaj workstreamami, kamieniami milowymi i governance — z AI popychającym Cię ku wpływowi.",
-          "highlights": [
-            "Roadmapa inicjatyw",
-            "Ludzkie bramki zatwierdzenia",
-            "Flagowanie ryzyk"
-          ]
+          "highlights": ["Roadmapa inicjatyw", "Ludzkie bramki zatwierdzenia", "Flagowanie ryzyk"]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Generator raportów i prezentacji",
           "description": "Generuj raporty gotowe dla zarządu i decki dla inwestorów z żywych danych. Jedno kliknięcie od analizy do polerowanego outputu.",
-          "highlights": [
-            "Auto-generowane decki",
-            "Silnik narracji",
-            "Śledzenie źródeł"
-          ]
+          "highlights": ["Auto-generowane decki", "Silnik narracji", "Śledzenie źródeł"]
         },
         "chat": {
           "badge": "Czat",
           "title": "Wywiad z ekspertem AI",
           "description": "Zapytaj o cokolwiek w kontekście Twojego biznesu. AI korzysta z 10 000+ frameworków i Twoich danych wewnętrznych.",
-          "highlights": [
-            "Czat kontekstowy",
-            "Biblioteka frameworków",
-            "Odpowiedzi ze źródłami"
-          ]
+          "highlights": ["Czat kontekstowy", "Biblioteka frameworków", "Odpowiedzi ze źródłami"]
         },
         "results": {
           "badge": "Wyniki",
           "title": "Śledzenie wpływu",
           "description": "Połącz inicjatywy z realnymi KPI. Mierz faktycznie dostarczoną wartość i automatycznie flaguj odchylenia.",
-          "highlights": [
-            "Dashboard KPI",
-            "Alerty odchyleń",
-            "Atrybucja wartości"
-          ]
+          "highlights": ["Dashboard KPI", "Alerty odchyleń", "Atrybucja wartości"]
         }
       }
     },
@@ -4054,42 +5672,27 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": [
-          "Podstawowe narzędzia",
-          "Wpis w katalogu"
-        ]
+        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": [
-          "Priorytetowe wsparcie",
-          "Materiały szkoleniowe"
-        ]
+        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": [
-          "Dedykowany manager",
-          "Dostęp do beta funkcji"
-        ]
+        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": [
-          "Co-marketing",
-          "Wystąpienia na konferencjach"
-        ]
+        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": [
-          "Zwiększony udział w przychodach",
-          "Partnerstwo na poziomie zarządu"
-        ]
+        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
       }
     },
     "onboarding": {
@@ -4337,7 +5940,13 @@
     "sourceDisconnected": "Źródło chmurowe odłączone",
     "connectFailed": "Nie udało się połączyć źródła",
     "disconnectFailed": "Nie udało się odłączyć",
-    "openInProvider": "Otwórz u dostawcy"
+    "openInProvider": "Otwórz u dostawcy",
+    "providers": {
+      "google_drive": "Google Drive",
+      "onedrive": "OneDrive",
+      "dropbox": "Dropbox",
+      "sharepoint": "SharePoint"
+    }
   },
   "chat": {
     "business": "Akcje biznesowe",
@@ -5494,6 +7103,7 @@
       },
       "empty": {
         "library": "Brak narzędzi.",
+        "librarySearchNoResults": "Brak wyników dla frazy \"{{query}}\". Zmień frazę lub wyczyść filtry.",
         "sessions": "Brak aktywnych sesji. Zacznij z Biblioteki.",
         "outputs": "Brak outputów. Wygeneruj raporty lub prezentacje z sesji.",
         "initiatives": "Brak roboczych inicjatyw. Uruchom narzędzie lub assessment, aby je wygenerować."
@@ -6283,11 +7893,13 @@
       }
     },
     "tourComplete": {
-      "message": "Gotowy do eksploracji! Ta platforma zazwyczaj oszczędza zespołom 3+ tygodnie pracy konsultingowej."
+      "message": "Możesz już eksplorować przykładowy workspace. Potraktuj go jako bezpieczny wzorzec przed odtworzeniem tego samego flow we własnym środowisku."
     },
     "banner": {
       "mode": "Tryb demo",
       "exit": "Wyjdź z demo",
+      "sampleWorkspace": "Przykładowy workspace",
+      "exitWorkspace": "Wyjdź z przykładowego workspace",
       "exitShort": "Wyjdź",
       "startTrial": "Rozpocznij trial",
       "restartLocale": "Przeładuj demo w {{locale}}",
@@ -6295,13 +7907,16 @@
       "initiatives": "inicjatywy",
       "hints": "Podpowiedzi",
       "readOnlyTitle": "Tryb tylko do odczytu",
-      "readOnlyDesc": "Zmiany nie są zapisywane",
-      "exploreTitle": "Eksploruj funkcje",
-      "exploreDesc": "Przeglądaj wszystkie moduły",
-      "hintTitle": "Podpowiedź",
-      "defaultHint": "Kliknij w inicjatywy, aby zobaczyć szczegóły",
+      "readOnlyDesc": "Zmiany nie są zapisywane, więc możesz bezpiecznie eksplorować ten wzorzec pracy",
+      "exploreTitle": "Zrozum workflow",
+      "exploreDesc": "Zobacz, jak łączą się dashboardy, inicjatywy i AI",
+      "hintTitle": "Co sprawdzić dalej",
+      "defaultHint": "Otwórz jedną inicjatywę i prześledź powiązane zadania, decyzje i kontekst AI",
       "help": "Pomoc",
       "partnerProgram": "Program partnerski",
+      "backToWorkspace": "Wróć do mojego workspace",
+      "readyForMore": "Gotowy na własne dane?",
+      "readyForMoreWorkspace": "Chcesz przećwiczyć ten sam flow u siebie?",
       "showLimitations": "Ograniczenia",
       "hideLimitations": "Ukryj",
       "limitations": {
@@ -6314,6 +7929,10 @@
       "used": "użyto",
       "aiUsageTooltip": "Wywołania AI dzisiaj / limit dzienny",
       "tokenUsageTooltip": "Tokeny zużyte dzisiaj / limit dzienny"
+    },
+    "session": {
+      "returnWorkspace": "Wróć do mojego workspace",
+      "fullAccess": "Uzyskaj pełny dostęp"
     },
     "modal": {
       "title": "Poznaj demo Consultify",
@@ -6751,6 +8370,10 @@
     "backToList": "Wróć do listy",
     "context": "Kontekst i metadane",
     "contextTitle": "Kontekst i metadane",
+    "hasScreenshot": "Zgłoszenie zawiera screenshot",
+    "screenshot": "Screenshot",
+    "downloadScreenshot": "Pobierz",
+    "loadingScreenshot": "Ładowanie screenshota...",
     "statusHistory": "Historia statusów",
     "alertDelivery": "Alerty i eskalacja",
     "alertDeliveryEmpty": "Brak zapisanych danych o eskalacji dla tego zgłoszenia.",
@@ -6970,6 +8593,11 @@
   },
   "results": {
     "moduleName": "Rezultaty",
+    "hub": {
+      "failedToLoadKpis": "Nie udało się załadować katalogu KPI.",
+      "retry": "Spróbuj ponownie",
+      "dismiss": "Zamknij"
+    },
     "kpi": {
       "ai": {
         "summarizePrompt": "Podsumuj ten KPI: sens, bieżący status i sugerowane następne kroki.",
@@ -7534,38 +9162,19 @@
           "registered": {
             "title": "Registered",
             "description": "Dla rozpoczynających współpracę",
-            "requirements": [
-              "Rejestracja",
-              "Podstawowe szkolenie"
-            ],
-            "benefits": [
-              "10% rabat",
-              "Dostęp do materiałów",
-              "Wsparcie email"
-            ]
+            "requirements": ["Rejestracja", "Podstawowe szkolenie"],
+            "benefits": ["10% rabat", "Dostęp do materiałów", "Wsparcie email"]
           },
           "certified": {
             "title": "Certified",
             "description": "Dla doświadczonych konsultantów",
-            "requirements": [
-              "Egzamin certyfikacyjny",
-              "Min. 3 projekty"
-            ],
-            "benefits": [
-              "12% rabat",
-              "Logo partnera",
-              "Dedykowane wsparcie",
-              "Listing w katalogu"
-            ]
+            "requirements": ["Egzamin certyfikacyjny", "Min. 3 projekty"],
+            "benefits": ["12% rabat", "Logo partnera", "Dedykowane wsparcie", "Listing w katalogu"]
           },
           "premier": {
             "title": "Premier",
             "description": "Dla partnerów strategicznych",
-            "requirements": [
-              "10+ projektów",
-              "Case study",
-              "Referencje"
-            ],
+            "requirements": ["10+ projektów", "Case study", "Referencje"],
             "benefits": [
               "14% rabat",
               "Dedykowany opiekun",
@@ -7615,18 +9224,21 @@
     "generatingDoc": "Tworzenie dokumentu",
     "generatingSheet": "Tworzenie arkusza",
     "generatingDeck": "Tworzenie prezentacji",
+    "generatingTable": "Tworzenie tabeli operacyjnej",
     "emptyWordy": "Twój dokument pojawi się tutaj",
     "emptyExcele": "Twój arkusz pojawi się tutaj",
     "emptyDeck": "Twoja prezentacja pojawi się tutaj",
+    "emptyTabele": "Twoja tabela operacyjna pojawi się tutaj",
     "emptyHint": "Opisz czego potrzebujesz i kliknij Generuj",
     "generateDoc": "Generuj dokument",
     "generateSheet": "Generuj arkusz",
     "generateDeck": "Generuj prezentację",
+    "generateTable": "Generuj tabelę",
     "docReady": "Dokument gotowy — użyj Podglądu pliku lub Pobierz",
     "showingRows": "Pokazywanie 25 z {{total}} wierszy",
     "xlsxPreview": "Podgląd arkusza",
     "deckPreview": "Podgląd prezentacji",
-    "openInBuilder": "Otwórz w kreatorze prezentacji",
+    "openInBuilder": "Otwórz w kreatorze",
     "previewFile": "Podgląd pliku",
     "allFiles": "Wszystkie pliki",
     "viewOrDownload": "Przeglądaj lub pobierz pliki",
@@ -7636,6 +9248,7 @@
     "laneWordy": "Dokumenty",
     "laneExcele": "Tabele",
     "lanePrezentacje": "Prezentacje",
+    "laneTabele": "Tabele",
     "stepSnapshot": "Przechwytywanie kontekstu",
     "stepPlan": "Tworzenie planu artefaktu",
     "stepPreflight": "Walidacja kontroli wstępnej",
@@ -7644,7 +9257,110 @@
     "stepApprove": "Zatwierdzenie wykonania",
     "stepMaterialize": "Materializacja artefaktu",
     "stepGenerate": "Generowanie treści",
-    "sheetReady": "Arkusz gotowy — użyj Podglądu pliku lub Pobierz"
+    "sheetReady": "Arkusz gotowy — użyj Podglądu pliku lub Pobierz",
+    "tableReady": "Tabela gotowa — użyj Podglądu pliku lub Pobierz",
+    "tabele": {
+      "preview": {
+        "documentLabel": "Podgląd tabeli operacyjnej Tabele",
+        "subtitle": "Tabela operacyjna",
+        "untitled": "Tabela bez tytułu",
+        "coverDescription": "Dokumentowy canvas w stylu Word do przeglądu schematu, przykładowych rekordów, relacji i uzasadnienia governance przed otwarciem Buildera Tabel.",
+        "livePreview": "Podgląd na żywo",
+        "rowsKpi": "Wiersze",
+        "columnsKpi": "Kolumny",
+        "statusKpi": "Status",
+        "formatKpi": "Format",
+        "statusGoverned": "Zarządzane",
+        "statusPreview": "Podgląd",
+        "formatOperational": "Operacyjna",
+        "formatDraft": "Szkic",
+        "schemaTitle": "Schemat",
+        "schemaMeta": "{{count}} pól w schemacie podglądu",
+        "emptySchema": "Brak pól schematu w tym podglądzie.",
+        "schemaCollapsed": "Schemat zwinięty dla kompaktowego przeglądu.",
+        "recordsTitle": "Rekordy",
+        "recordsMeta": "Pokazywanie przykładowych rekordów z wygenerowanej tabeli",
+        "emptyRecords": "Brak przykładowych rekordów w tym podglądzie.",
+        "showingRows": "Pokazywanie 25 z {{total}} wierszy",
+        "relationsTitle": "Relacje",
+        "relationsMeta": "{{count}} chipów relacji dostępnych",
+        "emptyRelations": "Brak relacji tabel w tym podglądzie.",
+        "relationsCollapsed": "Relacje zwinięte dla kompaktowego przeglądu.",
+        "noRelationsCollapsed": "Relacje zwinięte, ponieważ nie są dostępne.",
+        "expandSection": "Rozwiń",
+        "collapseSection": "Zwiń",
+        "rationaleTitle": "Uzasadnienie AI",
+        "openGrid": "Otwórz edytor siatki",
+        "openGridEmpty": "Otwórz edytor siatki, aby dodać rekordy"
+      },
+      "schema": {
+        "committed": "Zatwierdzone",
+        "proposed": "Proponowane",
+        "rejected": "Odrzucone",
+        "caption": "Pole schematu wyrenderowane jako blok dokumentu tabeli operacyjnej",
+        "proposalCaption": "Powiązane z propozycją schematu {{proposalId}}",
+        "unnamedField": "pole_bez_nazwy",
+        "defaultType": "tekst"
+      },
+      "relations": {
+        "loadingRationale": "Ładowanie uzasadnienia relacji...",
+        "noRationale": "Uzasadnienie relacji nie jest dostępne w tym podglądzie.",
+        "tooltipTitle": "Wyjaśnialność relacji",
+        "tooltipSource": "Źródło: metadane relacji tabeli filtrowane ACL"
+      },
+      "rationale": {
+        "proposalPending": "Oczekujące",
+        "proposalApproved": "Zatwierdzone",
+        "proposalRejected": "Odrzucone",
+        "proposalNone": "Brak",
+        "proposalStatus": "Status propozycji: {{status}}",
+        "emptySummary": "Brak podsumowania uzasadnienia dla tego podglądu.",
+        "points": "Punkty uzasadnienia",
+        "showLess": "Pokaż mniej",
+        "showMore": "Pokaż jeszcze {{count}}",
+        "citedSources": "Cytowane źródła",
+        "noSources": "Brak cytowanych źródeł",
+        "reviewProposals": "Przejrzyj propozycje"
+      }
+    }
+  },
+  "tabele": {
+    "defaultTitle": "Tabela operacyjna",
+    "loadPreviewFailed": "Nie udało się załadować podglądu tabeli.",
+    "builderUnreachable": "Nie udało się ustalić workspace dla tej tabeli",
+    "openingBuilder": "Otwieram Builder Tabel...",
+    "intentRouted": {
+      "exportCsv": "Rozpoczęto eksport CSV",
+      "exportXlsx": "Rozpoczęto eksport XLSX",
+      "exportJson": "Rozpoczęto eksport JSON",
+      "schemaProposalCreated": "Utworzono propozycję schematu: {{proposalId}}",
+      "explainRelation": "Załadowano uzasadnienie relacji",
+      "relationRecordMissing": "Brak rekordu do wyjaśnienia",
+      "workspaceMissing": "Wymagany jest kontekst workspace",
+      "failed": "Nie udało się obsłużyć tej instrukcji"
+    },
+    "fieldTypes": {
+      "risk_score": {
+        "label": "Ocena ryzyka",
+        "description": "Prawdopodobieństwo × wpływ w skali 3, 5 lub 25. Ton wagi wynika z procentu skali."
+      },
+      "priority": {
+        "label": "Priorytet",
+        "description": "Poziom priorytetu (P0–P3 albo krytyczny/wysoki/średni/niski). Najwyższy poziom używa najmocniejszego tonu."
+      },
+      "ai_generated_summary": {
+        "label": "Podsumowanie AI",
+        "description": "Podsumowanie rekordu wygenerowane przez AI. Ręczne edycje są dozwolone i audytowane jako manual override."
+      },
+      "ai_classification": {
+        "label": "Klasyfikacja AI",
+        "description": "Klasa wygenerowana przez AI z konfigurowalnej listy. Ręczne edycje są dozwolone i audytowane."
+      },
+      "source_reference": {
+        "label": "Odwołanie do źródła",
+        "description": "Link provenance do źródła rekordu (UUID) lub URL zewnętrznego, gdy dozwolone."
+      }
+    }
   },
   "contact": {
     "badge": "Skontaktuj się",

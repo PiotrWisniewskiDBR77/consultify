@@ -275,6 +275,7 @@ interface ClickRow {
 let db: IDatabase = getDatabase();
 
 const BASE_URL = process.env.APP_URL || 'https://app.consultify.com';
+let referralSchemaEnsured = false;
 
 /**
  * Set database instance (for testing)
@@ -318,6 +319,204 @@ function generateCampaignSlug(name: string): string {
   return `${base}-${suffix}`;
 }
 
+function sanitizeSlug(value: string): string {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return normalized || `partner-${crypto.randomBytes(3).toString('hex')}`;
+}
+
+function buildReferralCodeSeed(partnerName?: string): string {
+  const fromName = String(partnerName || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '')
+    .slice(0, 6);
+  const prefix = fromName || 'PARTNER';
+  const suffix = crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `${prefix}-${suffix}`;
+}
+
+async function ensurePartnerReferralSchema(): Promise<void> {
+  if (referralSchemaEnsured) return;
+  await DbPromise.exec(`
+    ALTER TABLE partner_organizations ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100);
+    ALTER TABLE partner_organizations ADD COLUMN IF NOT EXISTS referral_link_slug VARCHAR(255);
+
+    CREATE TABLE IF NOT EXISTS partner_attributions (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      organization_id UUID NOT NULL,
+      attribution_type VARCHAR(30) NOT NULL,
+      referral_code_used VARCHAR(50),
+      referral_link_clicked_at TIMESTAMP WITH TIME ZONE,
+      signup_completed_at TIMESTAMP WITH TIME ZONE,
+      first_payment_at TIMESTAMP WITH TIME ZONE,
+      lifetime_value DECIMAL(12,2) DEFAULT 0.00,
+      total_commission_earned DECIMAL(12,2) DEFAULT 0.00,
+      commission_rate_percent DECIMAL(5,2) NOT NULL,
+      commission_duration_months INTEGER DEFAULT 12,
+      status VARCHAR(20) DEFAULT 'PENDING',
+      utm_source VARCHAR(100),
+      utm_medium VARCHAR(100),
+      utm_campaign VARCHAR(100),
+      landing_page VARCHAR(500),
+      ip_hash VARCHAR(64),
+      user_agent TEXT,
+      attributed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_commission_transactions (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      attribution_id UUID,
+      organization_id UUID NOT NULL,
+      transaction_type VARCHAR(30) NOT NULL,
+      transaction_date TIMESTAMP WITH TIME ZONE NOT NULL,
+      billing_period_start DATE,
+      billing_period_end DATE,
+      gross_amount DECIMAL(12,2) NOT NULL,
+      commission_rate DECIMAL(5,2) NOT NULL,
+      commission_amount DECIMAL(12,2) NOT NULL,
+      currency VARCHAR(3) DEFAULT 'EUR',
+      invoice_id VARCHAR(100),
+      stripe_payment_id VARCHAR(100),
+      stripe_invoice_id VARCHAR(100),
+      status VARCHAR(20) DEFAULT 'PENDING',
+      approved_at TIMESTAMP WITH TIME ZONE,
+      approved_by UUID,
+      payout_id UUID,
+      notes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_payouts (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      payout_account_id TEXT,
+      payout_period_start DATE NOT NULL,
+      payout_period_end DATE NOT NULL,
+      gross_amount DECIMAL(12,2) NOT NULL,
+      fees DECIMAL(10,2) DEFAULT 0.00,
+      tax_withheld DECIMAL(10,2) DEFAULT 0.00,
+      net_amount DECIMAL(12,2) NOT NULL,
+      currency VARCHAR(3) DEFAULT 'EUR',
+      transaction_count INTEGER DEFAULT 0,
+      status VARCHAR(20) DEFAULT 'PENDING',
+      payout_method VARCHAR(30),
+      payout_reference VARCHAR(100),
+      external_payout_id VARCHAR(100),
+      requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      requested_by UUID,
+      processed_at TIMESTAMP WITH TIME ZONE,
+      processed_by UUID,
+      completed_at TIMESTAMP WITH TIME ZONE,
+      failure_reason TEXT,
+      notes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_referral_clicks (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      referral_code VARCHAR(50) NOT NULL,
+      clicked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      ip_hash VARCHAR(64),
+      user_agent TEXT,
+      referer VARCHAR(500),
+      landing_page VARCHAR(500),
+      utm_source VARCHAR(100),
+      utm_medium VARCHAR(100),
+      utm_campaign VARCHAR(100),
+      utm_content VARCHAR(100),
+      utm_term VARCHAR(100),
+      converted BOOLEAN DEFAULT false,
+      converted_at TIMESTAMP WITH TIME ZONE,
+      converted_organization_id UUID,
+      conversion_type VARCHAR(30),
+      session_id VARCHAR(100),
+      cookie_id VARCHAR(100)
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_campaign_links (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      slug VARCHAR(100) NOT NULL,
+      destination_url VARCHAR(500) DEFAULT '/',
+      utm_source VARCHAR(100),
+      utm_medium VARCHAR(100),
+      utm_campaign VARCHAR(100),
+      utm_content VARCHAR(100),
+      click_count INTEGER DEFAULT 0,
+      signup_count INTEGER DEFAULT 0,
+      conversion_count INTEGER DEFAULT 0,
+      is_active BOOLEAN DEFAULT true,
+      expires_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT unique_partner_campaign_slug UNIQUE (partner_org_id, slug)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_partner_attributions_partner ON partner_attributions(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_attributions_status ON partner_attributions(status);
+    CREATE INDEX IF NOT EXISTS idx_partner_commissions_partner ON partner_commission_transactions(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_commissions_status ON partner_commission_transactions(status);
+    CREATE INDEX IF NOT EXISTS idx_partner_commissions_date ON partner_commission_transactions(transaction_date);
+    CREATE INDEX IF NOT EXISTS idx_partner_commissions_payout ON partner_commission_transactions(payout_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_payouts_partner ON partner_payouts(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_payouts_status ON partner_payouts(status);
+    CREATE INDEX IF NOT EXISTS idx_partner_clicks_partner ON partner_referral_clicks(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_clicks_date ON partner_referral_clicks(clicked_at);
+    CREATE INDEX IF NOT EXISTS idx_partner_campaigns_partner ON partner_campaign_links(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_campaigns_active ON partner_campaign_links(is_active) WHERE is_active = true;
+  `);
+  referralSchemaEnsured = true;
+}
+
+export async function ensurePartnerReferralIdentity(
+  partnerOrgId: string,
+  partnerName?: string
+): Promise<{ referralCode: string; referralLinkSlug: string }> {
+  await ensurePartnerReferralSchema();
+  const row = await DbPromise.get<{
+    referral_code?: string | null;
+    referral_link_slug?: string | null;
+  }>(
+    db,
+    `SELECT referral_code, referral_link_slug FROM partner_organizations WHERE id = ?`,
+    [partnerOrgId],
+    { fallback: false }
+  );
+  if (!row) {
+    throw new Error(`Partner organization not found: ${partnerOrgId}`);
+  }
+
+  const existingCode = String(row.referral_code || '').trim();
+  const existingSlug = String(row.referral_link_slug || '').trim();
+  if (existingCode && existingSlug) {
+    return { referralCode: existingCode, referralLinkSlug: existingSlug };
+  }
+
+  const generatedCode = existingCode || buildReferralCodeSeed(partnerName);
+  const generatedSlug =
+    existingSlug || sanitizeSlug(`${partnerName || 'partner'}-${partnerOrgId.slice(0, 6)}`);
+  await DbPromise.run(
+    db,
+    `UPDATE partner_organizations
+     SET referral_code = ?, referral_link_slug = ?, updated_at = NOW()
+     WHERE id = ?`,
+    [generatedCode, generatedSlug, partnerOrgId],
+    { fallback: false }
+  );
+  return { referralCode: generatedCode, referralLinkSlug: generatedSlug };
+}
+
 // ==========================================
 // REFERRAL CODE OPERATIONS
 // ==========================================
@@ -332,15 +531,16 @@ export async function validateReferralCode(code: string): Promise<ValidateReferr
   }
 
   const normalizedCode = code.trim().toUpperCase();
+  const normalizedSlug = code.trim().toLowerCase();
 
   try {
     const row = await DbPromise.get<PartnerOrgRow>(
       db,
       `SELECT id, name, referral_code, tier, commission_rate_percent, license_discount_percent, status
              FROM partner_organizations 
-             WHERE (upper(referral_code) = ? OR upper(referral_link_slug) = ?)
+             WHERE (upper(referral_code) = ? OR lower(referral_link_slug) = ?)
                AND status = 'active'`,
-      [normalizedCode, normalizedCode.toLowerCase()]
+      [normalizedCode, normalizedSlug]
     );
 
     if (!row) {
@@ -369,6 +569,7 @@ export async function validateReferralCode(code: string): Promise<ValidateReferr
  */
 export async function getReferralTools(partnerOrgId: string): Promise<PartnerReferralTools | null> {
   try {
+    const ensuredIdentity = await ensurePartnerReferralIdentity(partnerOrgId);
     // Get partner org details
     const partner = await DbPromise.get<PartnerOrgRow>(
       db,
@@ -381,6 +582,10 @@ export async function getReferralTools(partnerOrgId: string): Promise<PartnerRef
       return null;
     }
 
+    const referralCode = String(partner.referral_code || '').trim() || ensuredIdentity.referralCode;
+    const referralLinkSlug =
+      String(partner.referral_link_slug || '').trim() || ensuredIdentity.referralLinkSlug;
+
     // Get campaign links
     const campaigns = await DbPromise.all<CampaignLinkRow>(
       db,
@@ -391,18 +596,18 @@ export async function getReferralTools(partnerOrgId: string): Promise<PartnerRef
       { fallback: false }
     );
 
-    const referralLink = `${BASE_URL}/r/${partner.referral_link_slug}`;
+    const referralLink = `${BASE_URL}/r/${referralLinkSlug}`;
 
     return {
-      referralCode: partner.referral_code,
+      referralCode,
       referralLink,
-      referralLinkSlug: partner.referral_link_slug,
-      qrCodeUrl: `${BASE_URL}/api/partner/qr/${partner.referral_link_slug}`,
+      referralLinkSlug,
+      qrCodeUrl: `${BASE_URL}/api/partner/qr/${referralLinkSlug}`,
       campaignLinks: campaigns.map((c) => ({
         id: c.id,
         name: c.name,
         slug: c.slug,
-        fullUrl: buildCampaignUrl(partner.referral_link_slug, c),
+        fullUrl: buildCampaignUrl(referralLinkSlug, c),
         utmSource: c.utm_source || undefined,
         utmMedium: c.utm_medium || undefined,
         utmCampaign: c.utm_campaign || undefined,
@@ -455,6 +660,7 @@ export async function createCampaignLink(params: CreateCampaignLinkParams): Prom
   const slug = generateCampaignSlug(name);
 
   try {
+    const ensuredIdentity = await ensurePartnerReferralIdentity(partnerOrgId);
     await DbPromise.run(
       db,
       `INSERT INTO partner_campaign_links 
@@ -475,12 +681,6 @@ export async function createCampaignLink(params: CreateCampaignLinkParams): Prom
     );
 
     // Get the partner's referral slug
-    const partner = await DbPromise.get<{ referral_link_slug: string }>(
-      db,
-      `SELECT referral_link_slug FROM partner_organizations WHERE id = ?`,
-      [partnerOrgId]
-    );
-
     logger.info(
       `[PartnerReferralService] Created campaign link: ${name} for partner ${partnerOrgId}`
     );
@@ -489,9 +689,7 @@ export async function createCampaignLink(params: CreateCampaignLinkParams): Prom
       id,
       name,
       slug,
-      fullUrl: partner
-        ? `${BASE_URL}/r/${partner.referral_link_slug}?c=${slug}${utmSource ? `&utm_source=${utmSource}` : ''}${utmMedium ? `&utm_medium=${utmMedium}` : ''}${utmCampaign ? `&utm_campaign=${utmCampaign}` : ''}`
-        : `${BASE_URL}/r/unknown?c=${slug}`,
+      fullUrl: `${BASE_URL}/r/${ensuredIdentity.referralLinkSlug}?c=${slug}${utmSource ? `&utm_source=${utmSource}` : ''}${utmMedium ? `&utm_medium=${utmMedium}` : ''}${utmCampaign ? `&utm_campaign=${utmCampaign}` : ''}`,
       utmSource,
       utmMedium,
       utmCampaign,
@@ -835,7 +1033,7 @@ export async function getPartnerAttributions(
 
   let query = `SELECT pa.*, o.name as org_name 
                  FROM partner_attributions pa
-                 LEFT JOIN organizations o ON o.id = pa.organization_id
+                 LEFT JOIN organizations o ON o.id = pa.organization_id::text
                  WHERE pa.partner_org_id = ?`;
   const params: any[] = [partnerOrgId];
 
@@ -1455,6 +1653,7 @@ const PartnerReferralService = {
   ATTRIBUTION_TYPES,
   ATTRIBUTION_STATUS,
   setDependencies,
+  ensurePartnerReferralIdentity,
   validateReferralCode,
   getReferralTools,
   createCampaignLink,

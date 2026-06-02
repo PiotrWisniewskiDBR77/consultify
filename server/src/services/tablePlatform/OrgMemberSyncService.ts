@@ -7,7 +7,10 @@ class OrgMemberSyncServiceImpl {
    * New org members get 'viewer' role by default.
    * Does NOT remove existing base members who left the org (preserves explicit role assignments).
    */
-  async syncOrgMembersToBase(baseId: string, orgId: string): Promise<{ added: number; skipped: number }> {
+  async syncOrgMembersToBase(
+    baseId: string,
+    orgId: string
+  ): Promise<{ added: number; skipped: number }> {
     const db = getDatabase();
     let added = 0;
     let skipped = 0;
@@ -34,11 +37,12 @@ class OrgMemberSyncServiceImpl {
         }
       }
 
-      const existing = await db.query(
-        'SELECT user_id FROM tp_base_members WHERE base_id = $1',
-        [baseId]
+      const existing = await db.query('SELECT user_id FROM tp_base_members WHERE base_id = $1', [
+        baseId,
+      ]);
+      const existingUserIds = new Set(
+        (existing.rows as Array<{ user_id: string }>).map((r) => r.user_id)
       );
-      const existingUserIds = new Set((existing.rows as Array<{ user_id: string }>).map(r => r.user_id));
 
       for (const member of orgMembers) {
         if (existingUserIds.has(member.user_id)) {

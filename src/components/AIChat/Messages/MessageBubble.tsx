@@ -1,9 +1,10 @@
+import TeresaMark from '../../shared/TeresaMark';
 /**
  * MessageBubble - Enhanced chat message component with actions
  * Renders user and AI messages with hover actions, artifacts, and thinking blocks
  */
 
-import { Bot, Check, ChevronDown, ChevronUp, Copy, FileCode, Sparkles, User } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Copy, FileCode, Sparkles, User } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
@@ -151,7 +152,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         ${isUser ? 'bg-brand/10 text-brand' : 'bg-gradient-to-br from-brand to-brand-dark text-white'}
       `}
       >
-        {isUser ? <User size={16} /> : <Bot size={16} />}
+        {isUser ? <User size={16} /> : <TeresaMark size={16} />}
       </div>
 
       {/* Content */}

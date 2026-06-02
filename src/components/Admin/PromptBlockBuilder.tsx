@@ -103,7 +103,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
     try {
       const data = await PromptAssistantApi.getBlocks();
       setAvailableBlocks(data.data || []);
-      setCategories(data.categories || {});
+      setCategories((data.categories || {}) as Record<string, BlockCategory>);
     } catch (error) {
       console.error('Failed to load blocks:', error);
     } finally {
@@ -326,7 +326,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                           }}
                           className={`p-1.5 rounded-lg transition-colors ${
                             isSelected
-                              ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30'
+                              ? 'text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30'
                               : 'text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 opacity-0 group-hover:opacity-100'
                           }`}
                         >
@@ -403,7 +403,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                   </div>
                   <button
                     onClick={() => removeBlock(block.code)}
-                    className="p-1.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
+                    className="p-1.5 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg"
                   >
                     <Trash2 size={14} />
                   </button>

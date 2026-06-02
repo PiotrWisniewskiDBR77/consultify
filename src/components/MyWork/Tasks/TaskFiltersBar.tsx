@@ -186,7 +186,7 @@ const MultiSelectDropdown: React.FC<{
               <div className="border-t border-slate-100 dark:border-navy-700 p-2">
                 <button
                   onClick={() => onChange([])}
-                  className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 py-1"
+                  className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-rose-500 py-1"
                 >
                   Clear selection
                 </button>
@@ -238,15 +238,15 @@ const PMOCategoryFilter: React.FC<{
                     border transition-all
                     ${
                       hasSelection
-                        ? 'bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:border-purple-800/30 dark:text-purple-300'
-                        : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:border-purple-300'
+                        ? 'bg-primary-100 border-primary-200 text-primary-700 dark:bg-primary-900/30 dark:border-primary-800/30 dark:text-primary-300'
+                        : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:border-primary-300'
                     }
                 `}
       >
         <Layers size={14} />
         <span>PMO Category</span>
         {hasSelection && (
-          <span className="ml-1 px-1.5 py-0.5 bg-purple-500 text-white text-[10px] rounded-full">
+          <span className="ml-1 px-1.5 py-0.5 bg-primary-500 text-white text-[10px] rounded-full">
             {selected.length}
           </span>
         )}
@@ -420,7 +420,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
           >
             <X size={14} />
             {t('myWork.filters.clearAll', 'Clear')}
@@ -483,7 +483,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
               {onDeletePreset && (
                 <button
                   onClick={() => onDeletePreset(preset.id)}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-all"
                 >
                   <X size={10} />
                 </button>

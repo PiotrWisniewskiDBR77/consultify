@@ -246,7 +246,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
             {stats.avgActual > stats.avgIndustry ? (
               <TrendingUp className="w-4 h-4 text-green-500" />
             ) : stats.avgActual < stats.avgIndustry ? (
-              <TrendingDown className="w-4 h-4 text-red-500" />
+              <TrendingDown className="w-4 h-4 text-rose-500" />
             ) : (
               <Minus className="w-4 h-4" />
             )}
@@ -259,7 +259,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
               stats.avgActual > stats.avgIndustry
                 ? 'text-green-600'
                 : stats.avgActual < stats.avgIndustry
-                  ? 'text-red-600'
+                  ? 'text-rose-600'
                   : 'text-slate-600 dark:text-slate-400'
             }`}
           >
@@ -271,7 +271,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4 text-white">
+        <div className="bg-gradient-to-br from-primary-500 to-indigo-600 rounded-xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2 opacity-90">
             <Award className="w-4 h-4" />
             <span className="text-xs font-medium uppercase tracking-wider">

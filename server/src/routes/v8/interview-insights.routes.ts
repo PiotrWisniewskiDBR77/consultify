@@ -3,30 +3,41 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { getById as getInsightById } from '../../services/InterviewInsightService.js';
-import { fireAndForget } from '../../utils/fireAndForget.js';
 import type { InsightStatus } from '../../services/InterviewInsightService.js';
+import { getById as getInsightById } from '../../services/InterviewInsightService.js';
 import notificationService from '../../services/notificationService.js';
-import { canPublishFinding } from '../../services/v8/interviewInsightCanon.js';
-import {
-  validateLifecycleTransition,
-  listFindings,
-  getFinding,
-  addFinding,
-  updateFinding,
-  addEvidencePointer,
-  removeEvidencePointer,
-  buildHandoffPayload,
-  recordHandoff,
-  type InsightLifecycleAction,
-} from '../../services/v8/interviewInsightFindingsService.js';
-import { onInsightPublished } from '../../services/v8/insightSignalBridgeService.js';
 import {
   organizationContextService,
   rebuildOrganizationContextSnapshot,
 } from '../../services/organizationContext/OrganizationContextService.js';
+import { hasPermission } from '../../services/permissionService.js';
+import { onInsightPublished } from '../../services/v8/insightSignalBridgeService.js';
+import { buildInsightAnalysis } from '../../services/v8/interviewInsightAnalysisService.js';
+import {
+  type CandidateTriageAction,
+  listCandidates,
+  promoteCandidateToFinding,
+  triageCandidate,
+} from '../../services/v8/interviewInsightCandidateService.js';
+import { canPublishFinding } from '../../services/v8/interviewInsightCanon.js';
+import {
+  addEvidencePointer,
+  addFinding,
+  buildHandoffPayload,
+  buildSourcePack,
+  getFinding,
+  type InsightLifecycleAction,
+  listFindings,
+  recordHandoff,
+  removeEvidencePointer,
+  updateFinding,
+  updateFindingReadback,
+  validateLifecycleTransition,
+} from '../../services/v8/interviewInsightFindingsService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { fireAndForget } from '../../utils/fireAndForget.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
@@ -123,8 +134,9 @@ function emitInsightLifecycleNotifications(
 
 router.post(
   '/insights/:insightId/lifecycle',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const { insightId } = req.params as { insightId: string };
     const { action } = req.body as { action?: string };
 
@@ -143,21 +155,50 @@ router.post(
     const typedAction = action as InsightLifecycleAction;
 
     if (typedAction === 'publish' || typedAction === 'approve') {
-      const findings = listFindings(insightId);
-      if (findings.length > 0) {
-        for (const f of findings) {
-          const check = canPublishFinding({
-            confidenceLevel: f.confidence_level,
-            evidencePointers: f.evidence_pointers,
-            limits: f.limits,
+      const canPublish = await hasPermission(
+        userId,
+        organizationId,
+        'INTERVIEW_INSIGHTS_PUBLISH',
+        userRole as any
+      );
+      if (!canPublish) {
+        return res.status(403).json({
+          error: 'Permission denied',
+          required: 'INTERVIEW_INSIGHTS_PUBLISH',
+          code: 'PERMISSION_DENIED',
+        });
+      }
+    }
+
+    if (typedAction === 'publish' || typedAction === 'approve') {
+      const findings = await listFindings(insightId);
+      if (findings.length === 0) {
+        return res.status(422).json({
+          error: 'At least one finding is required before publish',
+          code: 'P10_FINDINGS_REQUIRED',
+        });
+      }
+      for (const f of findings) {
+        const check = canPublishFinding({
+          confidenceLevel: f.confidence_level,
+          evidencePointers: f.evidence_pointers,
+          limits: f.limits,
+          nextAction: f.next_action,
+        });
+        if (!check.allowed) {
+          return res.status(422).json({
+            error: `Finding "${f.id}" blocks publish: ${check.reason}`,
+            code: 'P10_FINDING_NOT_PUBLISHABLE',
+            findingId: f.id,
           });
-          if (!check.allowed) {
-            return res.status(422).json({
-              error: `Finding "${f.id}" blocks publish: ${check.reason}`,
-              code: 'P10_FINDING_NOT_PUBLISHABLE',
-              findingId: f.id,
-            });
-          }
+        }
+        if (f.readback_status !== 'confirmed_by_client') {
+          return res.status(422).json({
+            error: `Finding "${f.id}" blocks publish: client readback confirmation is required`,
+            code: 'P10_READBACK_REQUIRED',
+            findingId: f.id,
+            readbackStatus: f.readback_status,
+          });
         }
       }
     }
@@ -195,7 +236,10 @@ router.post(
     );
 
     if (transition.targetStatus === 'published') {
-      fireAndForget(rebuildOrganizationContextSnapshot(organizationId), 'rebuildOrgContextSnapshot');
+      fireAndForget(
+        rebuildOrganizationContextSnapshot(organizationId),
+        'rebuildOrgContextSnapshot'
+      );
 
       const freshInsight = await getInsightById(insightId);
       if (freshInsight) {
@@ -228,7 +272,8 @@ router.post(
 );
 
 router.get(
-  '/insights/:insightId/findings',
+  '/insights/:insightId/source-pack',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const { insightId } = req.params as { insightId: string };
@@ -238,7 +283,169 @@ router.get(
       return res.status(404).json({ error: 'Insight not found' });
     }
 
-    const findings = listFindings(insightId);
+    const sourcePack = await buildSourcePack(insightId);
+    if (!sourcePack) {
+      return res
+        .status(404)
+        .json({ error: 'Source pack not found', code: 'P10_SOURCE_PACK_NOT_FOUND' });
+    }
+
+    return res.json({
+      data: { sourcePack, insightId },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.get(
+  '/insights/:insightId/candidates',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const candidates = await listCandidates(insightId);
+    return res.json({
+      data: { candidates, insightId },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.post(
+  '/insights/:insightId/candidates/:candidateId/triage',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { insightId, candidateId } = req.params as { insightId: string; candidateId: string };
+    const {
+      action,
+      candidate_statement,
+      rationale,
+      followup_recommendation,
+      confidence_level,
+      limits,
+      next_action,
+    } = req.body as {
+      action?: CandidateTriageAction;
+      candidate_statement?: string;
+      rationale?: string;
+      followup_recommendation?: string;
+      confidence_level?: 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
+      limits?: string;
+      next_action?: string;
+    };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    if (!action) {
+      return res
+        .status(400)
+        .json({ error: 'action is required', code: 'P10_CANDIDATE_ACTION_REQUIRED' });
+    }
+
+    if (action === 'promote_to_finding') {
+      const result = await promoteCandidateToFinding(
+        insightId,
+        candidateId,
+        {
+          finding_statement: candidate_statement,
+          confidence_level,
+          limits,
+          next_action,
+        },
+        {
+          actorUserId: userId,
+          organizationId,
+        }
+      );
+      if (result.error) {
+        return res.status(400).json({ error: result.error, code: 'P10_CANDIDATE_PROMOTE_FAILED' });
+      }
+      return res.json({
+        data: {
+          candidate: result.candidate,
+          finding: result.finding,
+          insightId,
+          candidateId,
+        },
+        meta: insightsMeta(),
+      });
+    }
+
+    const result = await triageCandidate(
+      insightId,
+      candidateId,
+      {
+        action,
+        candidate_statement,
+        rationale,
+        followup_recommendation,
+      },
+      userId
+    );
+    if (result.error) {
+      return res.status(400).json({ error: result.error, code: 'P10_CANDIDATE_TRIAGE_FAILED' });
+    }
+
+    return res.json({
+      data: {
+        candidate: result.candidate,
+        insightId,
+        candidateId,
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.get(
+  '/insights/:insightId/analysis',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const analysis = await buildInsightAnalysis(insightId);
+    if (!analysis) {
+      return res
+        .status(404)
+        .json({ error: 'Insight analysis not found', code: 'P10_ANALYSIS_NOT_FOUND' });
+    }
+
+    return res.json({
+      data: { analysis, insightId },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.get(
+  '/insights/:insightId/findings',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const findings = await listFindings(insightId);
 
     return res.json({
       data: { findings, insightId },
@@ -249,8 +456,9 @@ router.get(
 
 router.post(
   '/insights/:insightId/findings',
+  requirePermission('INTERVIEW_INSIGHTS_CREATE'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const { insightId } = req.params as { insightId: string };
 
     const insight = await getInsightById(insightId);
@@ -279,13 +487,20 @@ router.post(
       });
     }
 
-    const result = addFinding(insightId, {
-      finding_statement,
-      confidence_level,
-      limits,
-      next_action,
-      evidence_pointers,
-    });
+    const result = await addFinding(
+      insightId,
+      {
+        finding_statement,
+        confidence_level,
+        limits,
+        next_action,
+        evidence_pointers,
+      },
+      {
+        organizationId,
+        actorUserId: userId,
+      }
+    );
 
     if (result.error) {
       return res.status(400).json({ error: result.error, code: 'P10_FINDING_VALIDATION_ERROR' });
@@ -300,8 +515,9 @@ router.post(
 
 router.patch(
   '/insights/:insightId/findings/:findingId',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const { insightId, findingId } = req.params as { insightId: string; findingId: string };
 
     const insight = await getInsightById(insightId);
@@ -326,20 +542,32 @@ router.patch(
       }>;
     };
 
-    const finding = getFinding(insightId, findingId);
+    const finding = await getFinding(insightId, findingId);
     if (!finding) {
       return res.status(404).json({ error: 'Finding not found', code: 'P10_FINDING_NOT_FOUND' });
     }
 
-    if (body.finding_statement !== undefined || body.confidence_level !== undefined || body.limits !== undefined || body.next_action !== undefined) {
-      const updateResult = updateFinding(insightId, findingId, {
-        finding_statement: body.finding_statement,
-        confidence_level: body.confidence_level,
-        limits: body.limits,
-        next_action: body.next_action,
-      });
+    if (
+      body.finding_statement !== undefined ||
+      body.confidence_level !== undefined ||
+      body.limits !== undefined ||
+      body.next_action !== undefined
+    ) {
+      const updateResult = await updateFinding(
+        insightId,
+        findingId,
+        {
+          finding_statement: body.finding_statement,
+          confidence_level: body.confidence_level,
+          limits: body.limits,
+          next_action: body.next_action,
+        },
+        userId
+      );
       if (updateResult.error) {
-        return res.status(400).json({ error: updateResult.error, code: 'P10_FINDING_VALIDATION_ERROR' });
+        return res
+          .status(400)
+          .json({ error: updateResult.error, code: 'P10_FINDING_VALIDATION_ERROR' });
       }
     }
 
@@ -347,19 +575,19 @@ router.patch(
 
     if (body.add_evidence_pointers) {
       for (const ptr of body.add_evidence_pointers) {
-        const result = addEvidencePointer(insightId, findingId, ptr);
+        const result = await addEvidencePointer(insightId, findingId, ptr, userId);
         if (result.error) pointerErrors.push(result.error);
       }
     }
 
     if (body.remove_evidence_pointers) {
       for (const ptr of body.remove_evidence_pointers) {
-        const result = removeEvidencePointer(insightId, findingId, ptr);
+        const result = await removeEvidencePointer(insightId, findingId, ptr, userId);
         if (result.error) pointerErrors.push(result.error);
       }
     }
 
-    const updated = getFinding(insightId, findingId);
+    const updated = await getFinding(insightId, findingId);
 
     return res.json({
       data: {
@@ -371,8 +599,48 @@ router.patch(
   })
 );
 
+router.patch(
+  '/insights/:insightId/findings/:findingId/readback',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { insightId, findingId } = req.params as { insightId: string; findingId: string };
+    const { readback_status, readback_summary } = req.body as {
+      readback_status?: string;
+      readback_summary?: string | null;
+    };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+    if (!readback_status) {
+      return res.status(400).json({
+        error: 'readback_status is required',
+        code: 'P10_READBACK_STATUS_REQUIRED',
+      });
+    }
+
+    const result = await updateFindingReadback(
+      insightId,
+      findingId,
+      { readback_status, readback_summary },
+      userId
+    );
+    if (result.error) {
+      return res.status(400).json({ error: result.error, code: 'P10_READBACK_UPDATE_FAILED' });
+    }
+
+    return res.json({
+      data: { finding: result.finding, insightId, findingId },
+      meta: insightsMeta(),
+    });
+  })
+);
+
 router.post(
   '/insights/:insightId/findings/:findingId/handoff',
+  requirePermission('INTERVIEW_INSIGHTS_HANDOFF'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { insightId, findingId } = req.params as { insightId: string; findingId: string };
@@ -383,16 +651,28 @@ router.post(
       return res.status(404).json({ error: 'Insight not found' });
     }
 
-    const finding = getFinding(insightId, findingId);
+    const finding = await getFinding(insightId, findingId);
     if (!finding) {
       return res.status(404).json({ error: 'Finding not found', code: 'P10_FINDING_NOT_FOUND' });
     }
+    if (finding.readback_status !== 'confirmed_by_client') {
+      return res.status(422).json({
+        error: 'Cannot handoff: client readback confirmation is required',
+        code: 'P10_READBACK_REQUIRED',
+        findingId,
+        readbackStatus: finding.readback_status,
+      });
+    }
 
-    const publishCheck = canPublishFinding({
-      confidenceLevel: finding.confidence_level,
-      evidencePointers: finding.evidence_pointers,
-      limits: finding.limits,
-    });
+    const publishCheck = canPublishFinding(
+      {
+        confidenceLevel: finding.confidence_level,
+        evidencePointers: finding.evidence_pointers,
+        limits: finding.limits,
+        nextAction: finding.next_action,
+      },
+      'handoff'
+    );
     if (!publishCheck.allowed) {
       return res.status(422).json({
         error: `Cannot handoff: ${publishCheck.reason}`,
@@ -400,7 +680,7 @@ router.post(
       });
     }
 
-    const handoffResult = buildHandoffPayload(insightId, findingId);
+    const handoffResult = await buildHandoffPayload(insightId, findingId);
     if (handoffResult.error || !handoffResult.payload) {
       return res.status(422).json({
         error: handoffResult.error ?? 'Failed to build handoff payload',
@@ -427,7 +707,12 @@ router.post(
       initiativeRef = { id: `handoff_req_${uuidv4()}`, type: 'handoff_request' };
     }
 
-    recordHandoff(insightId, findingId, payload, target_initiative_id);
+    await recordHandoff(insightId, findingId, payload, target_initiative_id, {
+      organizationId,
+      actorUserId: userId,
+      targetRefType: target_initiative_id ? 'linked' : 'handoff_request',
+      status: target_initiative_id ? 'linked' : 'pending',
+    });
 
     organizationContextService
       .recordContextSource({
@@ -460,7 +745,12 @@ router.post(
               insightId,
               handoffTarget: target_initiative_id || initiativeRef.id,
             },
-            confidence: finding.confidence_level === 'high' ? 0.95 : finding.confidence_level === 'medium' ? 0.75 : 0.55,
+            confidence:
+              finding.confidence_level === 'high'
+                ? 0.95
+                : finding.confidence_level === 'medium'
+                  ? 0.75
+                  : 0.55,
           },
         ],
       })

@@ -29,17 +29,17 @@ import {
 import { getTimelineWarningsSnapshot } from '../../services/executionControlReadService.js';
 import { detectRiskSignals } from '../../services/riskDetectionService.js';
 import {
+  applyManagerSuggestion,
+  executeManagerProblemAction,
+} from '../../services/v8/managerActionExecutionService.js';
+import {
   getExecutionControlTowerItemDetail,
   getExecutionControlTowerQueues,
   V8_EXECUTION_CONTROL_TOWER_CONTRACT,
 } from '../../services/v8ExecutionControlTowerService.js';
 import { getCapacityTimeline, getLevelingAlerts } from '../../services/workloadCapacityService.js';
-import {
-  applyManagerSuggestion,
-  executeManagerProblemAction,
-} from '../../services/v8/managerActionExecutionService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
 
@@ -60,14 +60,7 @@ function executionControlTowerMeta() {
   return { version: 'v8' as const, contract: V8_EXECUTION_CONTROL_TOWER_CONTRACT };
 }
 
-const CONTROL_TOWER_QUEUES = new Set([
-  'late',
-  'at_risk',
-  'blocked',
-  'overloaded',
-  'stale',
-  'all',
-]);
+const CONTROL_TOWER_QUEUES = new Set(['late', 'at_risk', 'blocked', 'overloaded', 'stale', 'all']);
 
 const firstQueryString = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
@@ -236,11 +229,15 @@ router.get(
         ? (queueRaw as 'late' | 'at_risk' | 'blocked' | 'overloaded' | 'stale' | 'all')
         : 'all';
     const windowRaw = firstQueryString(req.query.overloadWindow);
-    const overloadWindow = (windowRaw && ['day', 'week', 'month'].includes(windowRaw)
-      ? windowRaw
-      : 'week') as 'day' | 'week' | 'month';
+    const overloadWindow = (
+      windowRaw && ['day', 'week', 'month'].includes(windowRaw) ? windowRaw : 'week'
+    ) as 'day' | 'week' | 'month';
 
-    const payload = await getExecutionControlTowerQueues(organizationId, { projectId, queue, overloadWindow });
+    const payload = await getExecutionControlTowerQueues(organizationId, {
+      projectId,
+      queue,
+      overloadWindow,
+    });
     return res.json({
       data: payload,
       meta: executionControlTowerMeta(),
@@ -451,7 +448,21 @@ router.get(
   '/capacity/timeline',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const initiativeId = firstQueryString(req.query.initiativeId);
+    const initiativeRaw = firstQueryString(req.query.initiativeId);
+    const initiativeId = initiativeRaw && initiativeRaw.trim() ? initiativeRaw.trim() : undefined;
+    if (initiativeId) {
+      const initiative = await dbGet<{ id: string }>(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [initiativeId, organizationId],
+        { fallback: true }
+      );
+      if (!initiative?.id) {
+        return res.status(404).json({
+          error: `Initiative ${initiativeId} not found`,
+          code: 'INITIATIVE_NOT_FOUND',
+        });
+      }
+    }
     const weeks = await getCapacityTimeline(organizationId, initiativeId);
     return res.json({
       data: { weeks },
@@ -504,6 +515,21 @@ router.post(
   validateBody(CreateBudgetEntrySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
+    const initiativeId =
+      typeof req.body?.initiativeId === 'string' && req.body.initiativeId.trim()
+        ? req.body.initiativeId.trim()
+        : '';
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: `Initiative ${initiativeId} not found`,
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
     const id = await createBudgetEntry(organizationId, { ...req.body, createdBy: userId });
     return res.json({
       data: { success: true, id },
@@ -631,7 +657,10 @@ function checkInterventionPermission(req: AuthRequest): { allowed: boolean; reas
   }
   const role = String(req.userRole || req.user?.role || '').toUpperCase();
   if (role === 'VIEWER' || role === 'READONLY') {
-    return { allowed: false, reason: `Role "${role}" does not have write access to execution interventions` };
+    return {
+      allowed: false,
+      reason: `Role "${role}" does not have write access to execution interventions`,
+    };
   }
   return { allowed: true };
 }
@@ -664,7 +693,8 @@ async function refreshControlTower(
       drillDown: null,
       stale: true,
       refreshedAt,
-      degradedNote: 'Partial refresh failure: some views may be stale. Retry or check control tower directly.',
+      degradedNote:
+        'Partial refresh failure: some views may be stale. Retry or check control tower directly.',
       retryHint: 'GET /api/v8/execution-control/control-tower/queues',
     };
   }
@@ -685,7 +715,8 @@ router.post(
         error: 'Write denied',
         code: 'EXECUTION_WRITE_DENIED',
         reason: perm.reason,
-        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
       });
     }
     const { organizationId, userId } = getV8Context(req);
@@ -697,26 +728,46 @@ router.post(
         [entityId, organizationId]
       )) as { assignee_id: string | null }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       await dbRun(
         `UPDATE tasks SET assignee_id = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
         [newOwnerId, entityId, organizationId]
       );
-      await auditLog(organizationId, null, 'assignee_id', old[0].assignee_id, newOwnerId, reason || null, userId);
+      await auditLog(
+        organizationId,
+        null,
+        'assignee_id',
+        old[0].assignee_id,
+        newOwnerId,
+        reason || null,
+        userId
+      );
     } else {
       const old = (await dbAll(
         `SELECT owner_execution_id FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
       )) as { owner_execution_id: string | null }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       await dbRun(
         `UPDATE initiatives SET owner_execution_id = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
         [newOwnerId, entityId, organizationId]
       );
-      await auditLog(organizationId, entityId, 'owner_execution_id', old[0].owner_execution_id, newOwnerId, reason || null, userId);
+      await auditLog(
+        organizationId,
+        entityId,
+        'owner_execution_id',
+        old[0].owner_execution_id,
+        newOwnerId,
+        reason || null,
+        userId
+      );
     }
 
     const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
@@ -749,7 +800,8 @@ router.post(
         error: 'Write denied',
         code: 'EXECUTION_WRITE_DENIED',
         reason: perm.reason,
-        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
       });
     }
     const { organizationId, userId } = getV8Context(req);
@@ -762,7 +814,9 @@ router.post(
         [entityId, organizationId]
       )) as { due_date: string | null; estimated_hours: number | null }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
@@ -775,7 +829,9 @@ router.post(
         params.push(allocatedHours);
       }
       if (sets.length === 0) {
-        return res.status(400).json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
+        return res
+          .status(400)
+          .json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
       }
       sets.push('updated_at = NOW()');
       params.push(entityId, organizationId);
@@ -783,14 +839,29 @@ router.post(
         `UPDATE tasks SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
         params
       );
-      await auditLog(organizationId, null, 'smooth', JSON.stringify(old[0]), JSON.stringify({ forecastEndDate, allocatedHours }), reason || null, userId);
+      await auditLog(
+        organizationId,
+        null,
+        'smooth',
+        JSON.stringify(old[0]),
+        JSON.stringify({ forecastEndDate, allocatedHours }),
+        reason || null,
+        userId
+      );
     } else {
       const old = (await dbAll(
         `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
-      )) as { forecast_start_date: string | null; forecast_end_date: string | null; planned_start_date: string | null; planned_end_date: string | null }[];
+      )) as {
+        forecast_start_date: string | null;
+        forecast_end_date: string | null;
+        planned_start_date: string | null;
+        planned_end_date: string | null;
+      }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
@@ -803,7 +874,9 @@ router.post(
         params.push(forecastEndDate);
       }
       if (sets.length === 0) {
-        return res.status(400).json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
+        return res
+          .status(400)
+          .json({ error: 'No fields to smooth', code: 'EXECUTION_SMOOTH_EMPTY' });
       }
       sets.push('updated_at = NOW()');
       params.push(entityId, organizationId);
@@ -811,7 +884,15 @@ router.post(
         `UPDATE initiatives SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
         params
       );
-      await auditLog(organizationId, entityId, 'smooth', JSON.stringify(old[0]), JSON.stringify({ forecastStartDate, forecastEndDate }), reason || null, userId);
+      await auditLog(
+        organizationId,
+        entityId,
+        'smooth',
+        JSON.stringify(old[0]),
+        JSON.stringify({ forecastStartDate, forecastEndDate }),
+        reason || null,
+        userId
+      );
     }
 
     const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
@@ -836,12 +917,19 @@ router.post(
         error: 'Write denied',
         code: 'EXECUTION_WRITE_DENIED',
         reason: perm.reason,
-        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
       });
     }
     const { organizationId, userId } = getV8Context(req);
-    const { entityType, entityId, forecastStartDate, forecastEndDate, forecastEffortHours, reason } =
-      req.body;
+    const {
+      entityType,
+      entityId,
+      forecastStartDate,
+      forecastEndDate,
+      forecastEffortHours,
+      reason,
+    } = req.body;
 
     if (entityType === 'TASK') {
       const old = (await dbAll(
@@ -849,7 +937,9 @@ router.post(
         [entityId, organizationId]
       )) as { due_date: string | null; estimated_hours: number | null }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
@@ -862,7 +952,9 @@ router.post(
         params.push(forecastEffortHours);
       }
       if (sets.length === 0) {
-        return res.status(400).json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
+        return res
+          .status(400)
+          .json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
       }
       sets.push('updated_at = NOW()');
       params.push(entityId, organizationId);
@@ -870,14 +962,29 @@ router.post(
         `UPDATE tasks SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
         params
       );
-      await auditLog(organizationId, null, 'replan', JSON.stringify(old[0]), JSON.stringify({ forecastEndDate, forecastEffortHours }), reason, userId);
+      await auditLog(
+        organizationId,
+        null,
+        'replan',
+        JSON.stringify(old[0]),
+        JSON.stringify({ forecastEndDate, forecastEffortHours }),
+        reason,
+        userId
+      );
     } else {
       const old = (await dbAll(
         `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
-      )) as { forecast_start_date: string | null; forecast_end_date: string | null; planned_start_date: string | null; planned_end_date: string | null }[];
+      )) as {
+        forecast_start_date: string | null;
+        forecast_end_date: string | null;
+        planned_start_date: string | null;
+        planned_end_date: string | null;
+      }[];
       if (!old?.length) {
-        return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+        return res
+          .status(404)
+          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
@@ -890,7 +997,9 @@ router.post(
         params.push(forecastEndDate);
       }
       if (sets.length === 0) {
-        return res.status(400).json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
+        return res
+          .status(400)
+          .json({ error: 'No forecast fields to update', code: 'EXECUTION_REPLAN_EMPTY' });
       }
       sets.push('updated_at = NOW()');
       params.push(entityId, organizationId);
@@ -898,7 +1007,15 @@ router.post(
         `UPDATE initiatives SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
         params
       );
-      await auditLog(organizationId, entityId, 'replan', JSON.stringify(old[0]), JSON.stringify({ forecastStartDate, forecastEndDate }), reason, userId);
+      await auditLog(
+        organizationId,
+        entityId,
+        'replan',
+        JSON.stringify(old[0]),
+        JSON.stringify({ forecastStartDate, forecastEndDate }),
+        reason,
+        userId
+      );
     }
 
     const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
@@ -923,7 +1040,8 @@ router.post(
         error: 'Write denied',
         code: 'EXECUTION_WRITE_DENIED',
         reason: perm.reason,
-        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
       });
     }
     const { organizationId, userId } = getV8Context(req);
@@ -933,10 +1051,10 @@ router.post(
       entityType === 'INITIATIVE'
         ? entityId
         : ((
-            (await dbAll(
-              `SELECT initiative_id FROM tasks WHERE id = ? AND organization_id = ?`,
-              [entityId, organizationId]
-            )) as { initiative_id: string | null }[]
+            (await dbAll(`SELECT initiative_id FROM tasks WHERE id = ? AND organization_id = ?`, [
+              entityId,
+              organizationId,
+            ])) as { initiative_id: string | null }[]
           )?.[0]?.initiative_id ?? null);
 
     const raidId = `raid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -1005,7 +1123,8 @@ router.post(
         error: 'Write denied',
         code: 'EXECUTION_WRITE_DENIED',
         reason: perm.reason,
-        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+        whatNext:
+          'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
       });
     }
     const { organizationId, userId } = getV8Context(req);
@@ -1021,10 +1140,10 @@ router.post(
           [depId, fromEntityId, toEntityId, semantics]
         );
       } else {
-        await dbRun(
-          `DELETE FROM task_dependencies WHERE from_task_id = ? AND to_task_id = ?`,
-          [fromEntityId, toEntityId]
-        );
+        await dbRun(`DELETE FROM task_dependencies WHERE from_task_id = ? AND to_task_id = ?`, [
+          fromEntityId,
+          toEntityId,
+        ]);
       }
     } else if (fromEntityType === 'INITIATIVE' && toEntityType === 'INITIATIVE') {
       if (action === 'link') {
@@ -1042,7 +1161,8 @@ router.post(
       }
     } else {
       return res.status(400).json({
-        error: 'Cross-type dependencies (INITIATIVE↔TASK) are not supported in bounded dependency interventions',
+        error:
+          'Cross-type dependencies (INITIATIVE↔TASK) are not supported in bounded dependency interventions',
         code: 'EXECUTION_DEPENDENCY_CROSS_TYPE',
       });
     }
@@ -1105,7 +1225,9 @@ router.get(
     }[];
 
     if (!inits?.length) {
-      return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_INITIATIVE_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Initiative not found', code: 'EXECUTION_INITIATIVE_NOT_FOUND' });
     }
 
     const init = inits[0];
@@ -1154,9 +1276,7 @@ router.get(
           startDate: forecastStart,
           endDate: forecastEnd,
         },
-        variance: hasBaseline
-          ? { startDays: startVarianceDays, endDays: endVarianceDays }
-          : null,
+        variance: hasBaseline ? { startDays: startVarianceDays, endDays: endVarianceDays } : null,
         progress: init.progress,
         taskBaselineSnapshot: baselineSnapshot
           ? { snapshotAt: baselineSnapshot.snapshot_at, available: true }
@@ -1255,16 +1375,21 @@ router.get(
 // Manager 6-Lane Cockpit — analysis, decision, execution, verify
 // ────────────────────────────────────────────────────────────────
 
-import { analyzeLane } from '../../services/v8/managerLaneAnalysisService.js';
 import {
   getAiManageAll,
   getAiRecommendation,
   getAiTriage,
 } from '../../services/v8/managerAiService.js';
+import { analyzeLane } from '../../services/v8/managerLaneAnalysisService.js';
 import { getManagerProblems } from '../../services/v8/managerProblemsService.js';
 
 const VALID_LANES = new Set([
-  'action-queue', 'decisions', 'blockers', 'workload', 'risk', 'people-change',
+  'action-queue',
+  'decisions',
+  'blockers',
+  'workload',
+  'risk',
+  'people-change',
 ]);
 
 const LaneDecisionSchema = z.object({
@@ -1428,7 +1553,8 @@ router.post(
       );
     } catch {
       // table may not exist — create it on the fly
-      await dbRun(`
+      await dbRun(
+        `
         CREATE TABLE IF NOT EXISTS lane_decisions (
           id TEXT PRIMARY KEY,
           organization_id TEXT NOT NULL,
@@ -1441,7 +1567,9 @@ router.post(
           created_at TIMESTAMPTZ DEFAULT NOW(),
           updated_at TIMESTAMPTZ DEFAULT NOW()
         )
-      `, []);
+      `,
+        []
+      );
       try {
         await dbRun(
           `CREATE UNIQUE INDEX IF NOT EXISTS lane_decisions_org_lane_suggestion_idx
@@ -1484,7 +1612,8 @@ router.post(
     const planId = `lep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     try {
-      await dbRun(`
+      await dbRun(
+        `
         CREATE TABLE IF NOT EXISTS lane_execution_plans (
           id TEXT PRIMARY KEY,
           organization_id TEXT NOT NULL,
@@ -1497,7 +1626,9 @@ router.post(
           created_at TIMESTAMPTZ DEFAULT NOW(),
           updated_at TIMESTAMPTZ DEFAULT NOW()
         )
-      `, []);
+      `,
+        []
+      );
     } catch {
       // table exists
     }

@@ -258,9 +258,9 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <Wand2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
           <span className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Akcje AI' : 'AI Actions'}
           </span>
@@ -295,7 +295,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
                       w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg transition-all
                       ${
                         activeAction === action.id
-                          ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
+                          ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
                           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                       }
                       ${isProcessing && activeAction !== action.id ? 'opacity-50' : ''}
@@ -303,7 +303,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
                   >
                     <span className="flex-shrink-0 text-slate-400">
                       {activeAction === action.id && isProcessing ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
+                        <Loader2 className="w-4 h-4 animate-spin text-primary-500" />
                       ) : (
                         action.icon
                       )}
@@ -335,7 +335,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
               })
             }
             disabled={isProcessing}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-all"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 transition-all"
           >
             <RefreshCw className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-medium">
@@ -354,13 +354,13 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
             onChange={(e) => setCustomInstruction(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
             placeholder={isPl ? 'Własna instrukcja...' : 'Custom instruction...'}
-            className="flex-1 px-3 py-2 text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+            className="flex-1 px-3 py-2 text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
             disabled={isProcessing}
           />
           <button
             onClick={handleCustomSubmit}
             disabled={isProcessing || !customInstruction.trim()}
-            className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isProcessing && activeAction === 'custom' ? (
               <Loader2 className="w-4 h-4 animate-spin" />

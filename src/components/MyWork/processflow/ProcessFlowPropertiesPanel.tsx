@@ -1,6 +1,7 @@
+import { ChevronDown, Clock, DollarSign, Layers, Server, Tag, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { Edge, Node } from 'reactflow';
-import { ChevronDown, Tag, User, Clock, DollarSign, Layers, Server } from 'lucide-react';
+
 import { CONDITION_TYPES } from './FlowEdgeComponent';
 
 const inputClass =
@@ -30,7 +31,10 @@ interface ProcessFlowPropertiesPanelProps {
   /** Persist edge `data.conditionType` (yes / no / default / exception). */
   onEdgeConditionChange?: (edgeId: string, conditionType: EdgeCondition) => void;
   /** Persist description, assignee, and system fields on node `data`. */
-  onNodeMetadataChange?: (nodeId: string, metadata: { description?: string; assignee?: string; system?: string }) => void;
+  onNodeMetadataChange?: (
+    nodeId: string,
+    metadata: { description?: string; assignee?: string; system?: string }
+  ) => void;
 }
 
 export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProps> = ({
@@ -117,7 +121,15 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
       cost: costDraft.trim() || undefined,
       fteCount: fteDraft.trim() || undefined,
     });
-  }, [costDraft, durationDraft, durationUnitDraft, fteDraft, locked, onNodeMetricsChange, selectedNode]);
+  }, [
+    costDraft,
+    durationDraft,
+    durationUnitDraft,
+    fteDraft,
+    locked,
+    onNodeMetricsChange,
+    selectedNode,
+  ]);
 
   const commitEdgeLabel = useCallback(() => {
     if (!selectedEdge || locked) return;
@@ -127,13 +139,14 @@ export const ProcessFlowPropertiesPanel: React.FC<ProcessFlowPropertiesPanelProp
 
   const shape = selectedNode?.data?.shape != null ? String(selectedNode.data.shape) : '';
   const showGateway = selectedNode && GATEWAY_SHAPES.has(shape);
-  const gatewayKind: 'xor' | 'and' =
-    selectedNode?.data?.gatewayKind === 'and' ? 'and' : 'xor';
+  const gatewayKind: 'xor' | 'and' = selectedNode?.data?.gatewayKind === 'and' ? 'and' : 'xor';
 
   if (!selectedNode && !selectedEdge) {
     return (
       <div className="space-y-4 p-4 text-sm text-slate-500 dark:text-slate-400">
-        {isPl ? 'Zaznacz węzeł lub krawędź, aby zobaczyć właściwości' : 'Select a node or edge to view properties'}
+        {isPl
+          ? 'Zaznacz węzeł lub krawędź, aby zobaczyć właściwości'
+          : 'Select a node or edge to view properties'}
       </div>
     );
   }

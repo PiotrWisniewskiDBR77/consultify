@@ -459,7 +459,9 @@ const CompetitiveIntelligenceService = {
   }> => {
     let industry = 'Unknown';
     try {
-      const orgContextService = (await import('./organizationContext/OrganizationContextService.js')).default;
+      const orgContextService = (
+        await import('./organizationContext/OrganizationContextService.js')
+      ).default;
       const resolved = await orgContextService.buildResolvedContext(organizationId);
       industry = resolved?.profile?.industry || 'Unknown';
     } catch {

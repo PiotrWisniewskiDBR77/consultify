@@ -81,7 +81,7 @@ const REPORT_TYPE_META: Record<
     label: 'Steering Committee',
     shortLabel: 'SC',
     icon: <Building2 size={14} />,
-    color: 'text-violet-400',
+    color: 'text-primary-400',
   },
   PORTFOLIO_HEALTH: {
     label: 'Portfolio Health',
@@ -105,7 +105,7 @@ const SCOPE_META: Record<ManagementReportScope, { label: string; color: string }
 const STATUS_META: Record<ManagementReportStatus, { label: string; dotColor: string }> = {
   DRAFT: { label: 'Draft', dotColor: 'bg-amber-400' },
   FINAL: { label: 'Final', dotColor: 'bg-emerald-400' },
-  APPROVED: { label: 'Approved', dotColor: 'bg-purple-400' },
+  APPROVED: { label: 'Approved', dotColor: 'bg-primary-400' },
   ARCHIVED: { label: 'Archived', dotColor: 'bg-slate-400' },
 };
 
@@ -715,7 +715,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -740,7 +740,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
             </p>
             <button
               onClick={handleNewReport}
-              className="flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-medium transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-colors"
             >
               <Sparkles size={18} />
               Generate Report
@@ -777,7 +777,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                 {/* Panel Header */}
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <History size={14} className="text-violet-400" />
+                    <History size={14} className="text-primary-400" />
                     Quick Preview
                   </h4>
                   <button
@@ -842,9 +842,9 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                   </div>
 
                   {/* Immutable Version Badge */}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-lg">
-                    <Lock size={12} className="text-violet-400" />
-                    <span className="text-[11px] text-violet-300 font-medium">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+                    <Lock size={12} className="text-primary-400" />
+                    <span className="text-[11px] text-primary-300 font-medium">
                       Immutable Version
                     </span>
                   </div>
@@ -862,7 +862,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                 <div className="mt-4 space-y-2">
                   <button
                     onClick={() => handleViewReport(previewReport.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     <Eye size={14} />
                     Open Full Report
@@ -913,7 +913,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                         );
                       }
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     <MessageSquare size={14} />
                     Chat about this Report

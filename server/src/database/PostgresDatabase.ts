@@ -2040,6 +2040,9 @@ export async function initDb(): Promise<void> {
     await ensureColumn('updated_by', 'updated_by TEXT');
     await ensureColumn('baseline_version', 'baseline_version INTEGER DEFAULT 0');
     await ensureColumn('schedule_baseline_id', 'schedule_baseline_id TEXT');
+    await ensureColumn('action_contract_json', "action_contract_json TEXT DEFAULT '{}'");
+    await ensureColumn('source_pack_json', "source_pack_json TEXT DEFAULT '{}'");
+    await ensureColumn('evidence_refs_json', "evidence_refs_json TEXT DEFAULT '[]'");
 
     // Initiative timeline tables (baseline snapshots + milestones + dependencies)
     await query(`CREATE TABLE IF NOT EXISTS initiative_schedule_baselines (

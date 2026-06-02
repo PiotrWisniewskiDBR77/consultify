@@ -69,7 +69,8 @@ vi.mock('../../../services/notebookAttachmentService.js', () => ({
   addNotebookAttachmentsToPage: (...args: unknown[]) => mockAddNotebookAttachmentsToPage(...args),
   resolveNotebookAttachmentFile: (...args: unknown[]) => mockResolveNotebookAttachmentFile(...args),
   deleteNotebookAttachmentFile: (...args: unknown[]) => mockDeleteNotebookAttachmentFile(...args),
-  removeNotebookAttachmentFromPage: (...args: unknown[]) => mockRemoveNotebookAttachmentFromPage(...args),
+  removeNotebookAttachmentFromPage: (...args: unknown[]) =>
+    mockRemoveNotebookAttachmentFromPage(...args),
   NotebookAttachmentMutationError: class NotebookAttachmentMutationError extends Error {
     status: number;
     code: string;

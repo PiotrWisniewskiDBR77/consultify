@@ -417,7 +417,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         'Initial Investment',
         baseData.initialInvestment,
         (data, factor) => ({ ...data, initialInvestment: data.initialInvestment * factor }),
-        '#ef4444'
+        '#f43f5e'
       ),
       generateSensitivityData(
         'annualCostSavings',
@@ -454,7 +454,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-700/50 transition-colors"
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center text-white">
           {icon}
         </div>
         <div className="text-left">
@@ -487,7 +487,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
               <Calculator size={24} className="text-white" />
             </div>
             Analiza finansowa
@@ -500,11 +500,11 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         {calculatedMetrics && (
           <div className="flex items-center gap-4">
             <div
-              className={`px-4 py-2 rounded-xl ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-red-100 dark:bg-red-500/20'}`}
+              className={`px-4 py-2 rounded-xl ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-rose-100 dark:bg-rose-500/20'}`}
             >
               <p className="text-xs text-slate-500 dark:text-slate-400">NPV</p>
               <p
-                className={`font-bold ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                className={`font-bold ${calculatedMetrics.npv && calculatedMetrics.npv > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
               >
                 {calculatedMetrics.npv
                   ? new Intl.NumberFormat('pl-PL', {

@@ -157,23 +157,25 @@ export const useBreadcrumbs = (): string[] | null => {
     const rmode = params.get('rmode');
 
     if (tab === 'results_kpi') {
-      sub = mode === 'overview'
-        ? t('results.tabs.kpiOverview', 'KPI Overview')
-        : mode === 'queue'
-          ? t('results.tabs.kpiQueue', 'KPI Queue')
-          : mode === 'scorecards'
-            ? t('results.tabs.kpiScorecards', 'Scorecards')
-            : t('results.tabs.kpi', 'KPI');
+      sub =
+        mode === 'overview'
+          ? t('results.tabs.kpiOverview', 'KPI Overview')
+          : mode === 'queue'
+            ? t('results.tabs.kpiQueue', 'KPI Queue')
+            : mode === 'scorecards'
+              ? t('results.tabs.kpiScorecards', 'Scorecards')
+              : t('results.tabs.kpi', 'KPI');
     } else if (tab === 'results_reports') {
-      sub = rmode === 'reports'
-        ? t('results.tabs.kpiReports', 'Reports')
-        : rmode === 'schedules'
-          ? t('results.tabs.schedules', 'Schedules')
-          : rmode === 'wallboards'
-            ? t('results.tabs.wallboards', 'Wallboards')
-            : rmode === 'connectors'
-              ? t('results.tabs.connectors', 'Connectors')
-              : t('results.tabs.kpiReports', 'Reports');
+      sub =
+        rmode === 'reports'
+          ? t('results.tabs.kpiReports', 'Reports')
+          : rmode === 'schedules'
+            ? t('results.tabs.schedules', 'Schedules')
+            : rmode === 'wallboards'
+              ? t('results.tabs.wallboards', 'Wallboards')
+              : rmode === 'connectors'
+                ? t('results.tabs.connectors', 'Connectors')
+                : t('results.tabs.kpiReports', 'Reports');
     } else if (tab === 'roi') {
       sub = t('results.tabs.roi', 'ROI');
     } else if (tab === 'roi_analysis') {
@@ -296,24 +298,24 @@ export const useBreadcrumbs = (): string[] | null => {
     } else if (currentView === AppView.SETTINGS_BILLING) {
       sub = t('settings.billing', 'Billing');
     } else if (currentView === AppView.SETTINGS_AI || currentView === AppView.SETTINGS_AI_MODULE) {
-      sub = t('settings.ai', 'AI');
+      sub = t('settings.ai.title', 'AI');
     } else if (
       currentView === AppView.SETTINGS_NOTIFICATIONS ||
       currentView === AppView.SETTINGS_NOTIFICATIONS_MODULE
     ) {
-      sub = t('settings.notifications', 'Notifications');
+      sub = t('settings.notifications.label', 'Notifications');
     } else if (
       currentView === AppView.SETTINGS_INTEGRATIONS ||
       currentView === AppView.SETTINGS_INTEGRATIONS_MODULE
     ) {
-      sub = t('settings.integrations', 'Integrations');
+      sub = t('settings.integrations.title', 'Integrations');
     } else if (
       currentView === AppView.SETTINGS_SECURITY ||
       currentView === AppView.SETTINGS_SECURITY_MODULE
     ) {
       sub = t('settings.security', 'Security');
     } else if (currentView === AppView.SETTINGS_APPEARANCE_MODULE) {
-      sub = t('settings.appearance', 'Appearance');
+      sub = t('settings.appearance.label', 'Appearance');
     } else if (currentView === AppView.SETTINGS_ORGANIZATION) {
       sub = t('sidebar.organization', 'Organization');
     } else {

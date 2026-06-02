@@ -57,7 +57,10 @@ export function computeDynamicSwotSessionSignals(data: SWOTData | undefined, isP
   if (!signals.length)
     missingEvidence.push(isPolish ? 'Brak sygnałów wejściowych' : 'Missing input signals');
   if (!items.length) missingEvidence.push(isPolish ? 'Brak kart SWOT' : 'Missing SWOT cards');
-  if (!acceptedTensions.length && !(swot?.correlations || []).some((item) => isGovernedAccepted(item.proposalStatus)))
+  if (
+    !acceptedTensions.length &&
+    !(swot?.correlations || []).some((item) => isGovernedAccepted(item.proposalStatus))
+  )
     missingEvidence.push(
       isPolish ? 'Brak napięć lub korelacji' : 'Missing tensions or correlations'
     );
@@ -90,9 +93,12 @@ export function computeDynamicSwotPhaseSummaries(
 
   const acceptedCorrelations =
     swot?.correlations?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
-  const acceptedTensions = swot?.tensions?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
-  const acceptedMoves = swot?.recommendedMoves?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
-  const acceptedOutputs = swot?.outputCandidates?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedTensions =
+    swot?.tensions?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedMoves =
+    swot?.recommendedMoves?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedOutputs =
+    swot?.outputCandidates?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
   const acceptedSummary =
     !!swot?.summary?.executiveSummary && isGovernedAccepted(swot?.summary?.proposalStatus);
 
@@ -144,7 +150,9 @@ export function computeDynamicSwotPhaseSummaries(
     {
       id: 'insights',
       label: isPolish ? 'Synthesis & Insights' : 'Synthesis & Insights',
-      done: (acceptedTensions > 0 || acceptedCorrelations > 0) && (acceptedMoves > 0 || acceptedSummary),
+      done:
+        (acceptedTensions > 0 || acceptedCorrelations > 0) &&
+        (acceptedMoves > 0 || acceptedSummary),
       gapCount: [
         !(acceptedTensions > 0 || acceptedCorrelations > 0),
         !(acceptedMoves > 0 || acceptedSummary),
@@ -244,9 +252,11 @@ export function computeToolReviewGaps(
     const acceptedCorrelations =
       data.correlations?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
     const acceptedMoves =
-      data.recommendedMoves?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
+      data.recommendedMoves?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
     const acceptedOutputs =
-      data.outputCandidates?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
+      data.outputCandidates?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
     const acceptedSummary =
       !!data.summary?.executiveSummary && isGovernedAccepted(data.summary?.proposalStatus);
     if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal)
@@ -270,38 +280,150 @@ export function computeToolReviewGaps(
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
     if (!acceptedSummary)
       gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
-    if (!acceptedOutputs) gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 
   if (toolType === 'market-forces') {
+    const acceptedImplications =
+      data.implications?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
+    const acceptedMoves =
+      data.recommendedMoves?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
+    const acceptedOutputs =
+      data.outputCandidates?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
+    const acceptedSummary =
+      !!data.summary?.executiveSummary && isGovernedAccepted(data.summary?.proposalStatus);
+
     if (!data.context?.industry) gaps.push(isPolish ? 'Brak branży' : 'Missing industry');
     if (!data.context?.geographicScope)
       gaps.push(isPolish ? 'Brak zakresu geograficznego' : 'Missing geographic scope');
+    if (!(data.signals?.length || 0))
+      gaps.push(isPolish ? 'Brak sygnałów rynkowych' : 'Missing market signals');
     Object.entries(data.forces || {}).forEach(([key, force]: [string, any]) => {
       if (!force?.drivers?.length)
         gaps.push(`${isPolish ? 'Brak czynników' : 'Missing drivers'}: ${force?.name || key}`);
     });
+    if (!acceptedImplications)
+      gaps.push(isPolish ? 'Brak implikacji strategicznych' : 'Missing strategic implications');
+    if (!acceptedMoves)
+      gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
+    if (!acceptedSummary)
+      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 
   if (toolType === 'growth-paths') {
     const growth = data as GrowthPathsData;
-    if (!growth.quadrants) gaps.push(isPolish ? 'Brak kwadrantów' : 'Missing quadrants');
+    const acceptedOptions = Object.values(growth.quadrants || {}).reduce(
+      (sum: number, items: any) =>
+        sum + (items || []).filter((item: any) => isGovernedAccepted(item.proposalStatus)).length,
+      0
+    );
+    const acceptedComparisons =
+      growth.comparisons?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length ||
+      0;
+    const acceptedMoves =
+      growth.recommendedMoves?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
+    const acceptedOutputs =
+      growth.outputCandidates?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
+    const acceptedSummary =
+      !!growth.summary?.executiveSummary && isGovernedAccepted(growth.summary?.proposalStatus);
+
+    if (!growth.context?.goal || !growth.context?.scope || !growth.context?.successSignal)
+      gaps.push(isPolish ? 'Brak growth mission' : 'Missing growth mission');
+    if (!(growth.signals?.length || 0))
+      gaps.push(isPolish ? 'Brak sygnałów wzrostu' : 'Missing growth signals');
+    if (!acceptedOptions)
+      gaps.push(
+        isPolish ? 'Brak zaakceptowanych opcji wzrostu' : 'Missing accepted growth options'
+      );
+    if (!acceptedComparisons)
+      gaps.push(isPolish ? 'Brak porównania strategicznego' : 'Missing strategic comparison');
+    if (!acceptedMoves)
+      gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
+    if (!acceptedSummary)
+      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 
   if (toolType === 'portfolio-priority') {
     const portfolio = data as PortfolioPriorityData;
-    if (!portfolio.initiatives?.length)
-      gaps.push(isPolish ? 'Brak inicjatyw w portfolio' : 'Missing portfolio initiatives');
+    const acceptedItems = (portfolio.initiatives || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedTradeOffs = (portfolio.tradeOffs || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedMoves = (portfolio.recommendedMoves || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedOutputs = (portfolio.outputCandidates || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedSummary =
+      !!portfolio.summary?.executiveSummary && portfolio.summary?.proposalStatus !== 'rejected';
+    if (!portfolio.context?.goal || !portfolio.context?.scope || !portfolio.context?.successSignal)
+      gaps.push(isPolish ? 'Brak portfolio mission' : 'Missing portfolio mission');
+    if (!(portfolio.signals?.length || 0))
+      gaps.push(isPolish ? 'Brak sygnałów portfolio' : 'Missing portfolio signals');
+    if (!acceptedItems)
+      gaps.push(
+        isPolish ? 'Brak zaakceptowanych elementów portfolio' : 'Missing accepted portfolio items'
+      );
+    if (!acceptedTradeOffs)
+      gaps.push(isPolish ? 'Brak trade-offów portfolio' : 'Missing portfolio trade-offs');
+    if (!acceptedMoves)
+      gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
+    if (!acceptedSummary)
+      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 
   if (toolType === 'risk-uncertainty') {
     const risk = data as RiskUncertaintyData;
-    if (!risk.assumptions?.length) gaps.push(isPolish ? 'Brak założeń' : 'Missing assumptions');
-    if (!risk.risks?.length) gaps.push(isPolish ? 'Brak ryzyk' : 'Missing risks');
+    const acceptedAssumptions = (risk.assumptions || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedRisks = (risk.risks || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedScenarios = (risk.scenarios || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedMoves = (risk.recommendedMoves || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedOutputs = (risk.outputCandidates || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedSummary =
+      !!risk.summary?.executiveSummary && risk.summary?.proposalStatus !== 'rejected';
+    if (!risk.context?.goal || !risk.context?.scope || !risk.context?.successSignal)
+      gaps.push(isPolish ? 'Brak risk mission' : 'Missing risk mission');
+    if (!(risk.signals?.length || 0))
+      gaps.push(isPolish ? 'Brak sygnałów ryzyka' : 'Missing risk signals');
+    if (!acceptedAssumptions)
+      gaps.push(isPolish ? 'Brak zaakceptowanych założeń' : 'Missing accepted assumptions');
+    if (!acceptedRisks)
+      gaps.push(isPolish ? 'Brak zaakceptowanych ryzyk' : 'Missing accepted risks');
+    if (!acceptedScenarios) gaps.push(isPolish ? 'Brak scenariuszy' : 'Missing scenarios');
+    if (!acceptedMoves)
+      gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
+    if (!acceptedSummary)
+      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 
@@ -407,6 +529,11 @@ export function computeToolCompletionItems(
       anchorId: 'tool-content',
     });
     items.push({
+      label: isPolish ? 'Sygnały rynkowe zebrane' : 'Market signals collected',
+      done: (porter?.signals?.length || 0) > 0,
+      anchorId: 'tool-content',
+    });
+    items.push({
       label: isPolish ? 'Zakres geograficzny' : 'Geographic scope',
       done: !!porter?.context?.geographicScope,
       anchorId: 'tool-content',
@@ -418,11 +545,36 @@ export function computeToolCompletionItems(
         anchorId: 'tool-content',
       });
     });
+    items.push({
+      label: isPolish ? 'Implikacje strategiczne' : 'Strategic implications',
+      done: (porter?.implications?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Rekomendowane ruchy' : 'Recommended moves',
+      done: (porter?.recommendedMoves?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      done: !!porter?.summary?.executiveSummary,
+      anchorId: 'analysis',
+    });
     return items;
   }
 
   if (toolType === 'growth-paths') {
     const growth = data as GrowthPathsData;
+    items.push({
+      label: isPolish ? 'Growth mission zdefiniowana' : 'Growth mission defined',
+      done: !!growth?.context?.goal && !!growth?.context?.scope && !!growth?.context?.successSignal,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Sygnały wzrostu zebrane' : 'Growth signals collected',
+      done: (growth?.signals?.length || 0) > 0,
+      anchorId: 'tool-content',
+    });
     items.push({
       label: isPolish ? 'Penetracja rynku' : 'Market Penetration',
       done: (growth?.quadrants?.marketPenetration?.length || 0) > 0,
@@ -443,19 +595,57 @@ export function computeToolCompletionItems(
       done: (growth?.quadrants?.diversification?.length || 0) > 0,
       anchorId: 'tool-content',
     });
+    items.push({
+      label: isPolish ? 'Porównanie strategiczne' : 'Strategic comparison',
+      done: (growth?.comparisons?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Rekomendowane ruchy' : 'Recommended moves',
+      done: (growth?.recommendedMoves?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      done: !!growth?.summary?.executiveSummary,
+      anchorId: 'analysis',
+    });
     return items;
   }
 
   if (toolType === 'portfolio-priority') {
     const portfolio = data as PortfolioPriorityData;
     items.push({
-      label: isPolish ? 'Inicjatywy dodane' : 'Initiatives added',
+      label: isPolish ? 'Portfolio mission' : 'Portfolio mission',
+      done:
+        !!portfolio?.context?.goal &&
+        !!portfolio?.context?.scope &&
+        !!portfolio?.context?.successSignal,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Sygnały portfolio' : 'Portfolio signals',
+      done: (portfolio?.signals?.length || 0) > 0,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Elementy portfolio' : 'Portfolio items',
       done: (portfolio?.initiatives?.length || 0) > 0,
       anchorId: 'tool-content',
     });
     items.push({
-      label: isPolish ? 'Kategorie przypisane' : 'Categories assigned',
-      done: portfolio?.initiatives?.some((i) => i.category) || false,
+      label: isPolish ? 'Trade-offy alokacji' : 'Allocation trade-offs',
+      done: (portfolio?.tradeOffs?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Rekomendowane ruchy' : 'Recommended moves',
+      done: (portfolio?.recommendedMoves?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      done: !!portfolio?.summary?.executiveSummary,
       anchorId: 'tool-content',
     });
     return items;
@@ -463,6 +653,16 @@ export function computeToolCompletionItems(
 
   if (toolType === 'risk-uncertainty') {
     const risk = data as RiskUncertaintyData;
+    items.push({
+      label: isPolish ? 'Risk mission' : 'Risk mission',
+      done: !!risk?.context?.goal && !!risk?.context?.scope && !!risk?.context?.successSignal,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Sygnały ryzyka' : 'Risk signals',
+      done: (risk?.signals?.length || 0) > 0,
+      anchorId: 'tool-content',
+    });
     items.push({
       label: isPolish ? 'Założenia' : 'Assumptions',
       done: (risk?.assumptions?.length || 0) > 0,
@@ -477,6 +677,16 @@ export function computeToolCompletionItems(
       label: isPolish ? 'Scenariusze' : 'Scenarios',
       done: (risk?.scenarios?.length || 0) > 0,
       anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Rekomendowane ruchy' : 'Recommended moves',
+      done: (risk?.recommendedMoves?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      done: !!risk?.summary?.executiveSummary,
+      anchorId: 'analysis',
     });
     return items;
   }

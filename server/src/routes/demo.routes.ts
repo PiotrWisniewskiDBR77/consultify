@@ -18,20 +18,20 @@ import {
 } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
-  DEMO_TRIAL_EVENT_TYPES,
-  recordDemoTrialEvent,
-} from '../services/demoTrialTelemetryService.js';
-import {
   getAtelierToysDemoScenarios,
   getAtelierToysToolCoverage,
 } from '../services/demo/atelierToysDemoTemplate.js';
+import { normalizeDemoLocale } from '../services/demo/demoLocale.js';
 import {
   cleanupExpiredDemoSessions,
   endDemoSession,
   getActiveDemoSession,
   resolveOrCreateDemoSession,
 } from '../services/demo/demoSessionService.js';
-import { normalizeDemoLocale } from '../services/demo/demoLocale.js';
+import {
+  DEMO_TRIAL_EVENT_TYPES,
+  recordDemoTrialEvent,
+} from '../services/demoTrialTelemetryService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
@@ -50,6 +50,19 @@ function preferredLanguage(raw: string | undefined): string | null {
 
 function getRequestedDemoLocale(req: AuthRequest): 'en' | 'pl' {
   return normalizeDemoLocale(String(req.get('X-App-Language') || req.get('Accept-Language') || ''));
+}
+
+function getDemoExperienceType(source: string | undefined | null): 'sales_demo' | 'workspace_demo' {
+  const normalized = String(source || '')
+    .trim()
+    .toLowerCase();
+
+  if (!normalized) return 'sales_demo';
+  if (normalized.includes('profile_menu') || normalized.includes('workspace')) {
+    return 'workspace_demo';
+  }
+
+  return 'sales_demo';
 }
 
 // Apply rate limiting
@@ -98,6 +111,7 @@ router.post(
         let demoOrganization: any;
         let stats: any;
         let session: Awaited<ReturnType<typeof resolveOrCreateDemoSession>> | null = null;
+        const demoExperienceType = getDemoExperienceType(telemetrySource);
         try {
           session = await resolveOrCreateDemoSession(userId, telemetrySource, requestedLocale, {
             restartOnLocaleMismatch: true,
@@ -125,6 +139,7 @@ router.post(
           userId,
           source: telemetrySource,
           language,
+          metadata: { experienceType: demoExperienceType },
         });
         await recordDemoTrialEvent({
           eventType: DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED,
@@ -132,11 +147,13 @@ router.post(
           userId,
           source: telemetrySource,
           language,
+          metadata: { experienceType: demoExperienceType },
         });
 
         return res.json({
           success: true,
           isDemoMode: true,
+          demoExperienceType,
           demoSession: session
             ? {
                 id: session.id,
@@ -166,11 +183,13 @@ router.post(
           userId,
           source: telemetrySource,
           language: preferredLanguage(String(req.get('Accept-Language') || '')),
+          metadata: { experienceType: getDemoExperienceType(telemetrySource) },
         });
 
         return res.json({
           success: true,
           isDemoMode: false,
+          demoExperienceType: getDemoExperienceType(telemetrySource),
           demoSession: null,
           message: 'Demo mode disabled',
         });
@@ -236,6 +255,7 @@ router.get(
         return res.json({
           success: true,
           isDemoMode: true,
+          demoExperienceType: getDemoExperienceType(session?.source || 'status_refresh'),
           demoSession: session
             ? {
                 id: session.id,
@@ -259,6 +279,7 @@ router.get(
         return res.json({
           success: true,
           isDemoMode: false,
+          demoExperienceType: null,
           demoSession: null,
         });
       }
@@ -297,6 +318,7 @@ router.get(
       ]);
       return res.json({
         success: true,
+        demoExperienceType: getDemoExperienceType(session?.source || null),
         demoSession: session
           ? {
               id: session.id,

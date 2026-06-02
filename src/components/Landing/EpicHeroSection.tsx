@@ -307,7 +307,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-slate-900 dark:text-white
                   transition-all duration-300 active:scale-[0.98]
                   bg-slate-100 dark:bg-white/[0.10] border border-slate-300 dark:border-white/[0.22]
-                  hover:bg-slate-200 hover:border-violet-400/45 dark:hover:bg-white/[0.14] dark:hover:border-[rgba(168,85,247,0.50)]"
+                  hover:bg-slate-200 hover:border-primary-400/45 dark:hover:bg-white/[0.14] dark:hover:border-[rgba(168,85,247,0.50)]"
               >
                 <Play size={14} className="text-slate-600 dark:text-white/70" fill="currentColor" />
                 <span>{t('landing.profitHero.ctaSecondary', 'Try demo')}</span>
@@ -333,7 +333,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               <div className="mt-4">
                 <button
                   onClick={handleAnnaOpen}
-                  className="inline-flex items-center gap-2 rounded-full border border-violet-300/40 dark:border-violet-300/20 bg-violet-500/15 dark:bg-violet-500/12 px-3.5 py-2 text-xs font-semibold text-violet-900 dark:text-violet-100 transition-all duration-200 hover:bg-violet-500/25 dark:hover:bg-violet-500/20"
+                  className="inline-flex items-center gap-2 rounded-full border border-primary-300/40 dark:border-primary-300/20 bg-primary-500/15 dark:bg-primary-500/12 px-3.5 py-2 text-xs font-semibold text-primary-900 dark:text-primary-100 transition-all duration-200 hover:bg-primary-500/25 dark:hover:bg-primary-500/20"
                 >
                   <Sparkles size={12} />
                   <span>{t('landing.epicHero.annaPrimaryCta', 'Ask Anna first')}</span>
@@ -360,7 +360,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               className="flex items-center gap-3 text-xs text-slate-500 dark:text-white/35"
             >
               <div className="flex -space-x-2">
-                {['#7c3aed', '#a855f7', '#06b6d4', '#10b981'].map((color, i) => (
+                {['#7c3aed', '#a855f7', '#3b82f6', '#10b981'].map((color, i) => (
                   <div
                     key={i}
                     className="w-6 h-6 rounded-full border-2 border-white dark:border-[#0A0A1F] flex items-center justify-center text-[7px] font-black text-white"

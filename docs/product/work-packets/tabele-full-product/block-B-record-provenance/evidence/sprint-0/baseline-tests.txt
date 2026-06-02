@@ -1,0 +1,63 @@
+Block B Sprint 0 — Baseline test inventory (static; no live run executed in S0)
+Captured: 2026-05-08 by Cursor agent (Orchestrator).
+
+--- Test files relevant to Block B ---
+RecordsService.test.ts                    174 lines, 29 it/describe entries
+MetadataService.test.ts                   376 lines  (touches tp_tables/tp_fields/tp_bases)
+SchemaValidationService.test.ts           218 lines  (no Block B impact)
+smoke.test.ts                             508 lines  (full-stack)
+
+--- Existing test patterns relevant to Block B integration ---
+RecordsService.test.ts uses:
+  vi.mock('../../../database/Database.js', () => ({ getDatabase: () => ({ query: mockQuery }) }))
+  vi.mock('../AuditService.js', () => ({ default: { logEvent: vi.fn().mockResolvedValue(undefined) } }))
+  vi.mock('../SchemaValidationService.js', ...)
+  vi.mock('../RelationService.js', ...)
+  vi.mock('uuid', ...)
+
+Block B integration adds (in S3, not S0):
+  vi.mock('../ConfidenceScoringService.js', () => ({
+    default: { recompute: vi.fn().mockResolvedValue(undefined) },
+  }))
+This is a 1-line addition. Existing 29 test entries pass without assertion changes.
+
+--- Block B will add (S2, S3, S4) ---
+RecordSourcesService.test.ts              ~250 lines (new)
+ConfidenceScoringService.test.ts          ~150 lines (new)
+ValidationStatusService.test.ts           ~150 lines (new)
+routes/__tests__/record-sources-acl.test.ts ~200 lines (new, integration-style)
+Total new test code:                      ~750 lines
+
+Component tests (S4):
+SourcePopover.test.tsx                    ~80 lines
+ConfidenceBar.test.tsx                    ~60 lines
+ValidationBadge.test.tsx                  ~60 lines
+AddSourceDialog.test.tsx                  ~120 lines
+TabeleProvenanceColumn.test.tsx           ~80 lines (S5)
+
+--- Live execution requirement ---
+Live runs deferred to S6 (QA Gate) per matrix L1.x, L2.x, L3.x.
+Reason: S0 is read-only; live run requires DB + ~10 minutes.
+Pre-S1 baseline run captured to evidence/sprint-1/baseline-tests-pre-changes.txt
+Post-S5 run captured to evidence/sprint-6/post-changes-tests.txt
+Diff = Block B test impact.
+
+--- Hook integration baseline ---
+RecordsService.ts hook points (lines):
+  createRecord  line 341 (after auditService.logEvent('create', ...))
+  updateRecord  line 535 (after auditService.logEvent('update', ...))
+  deleteRecord  line 647 (after auditService.logEvent('delete', ...))
+After integration, these become:
+  await auditService.logEvent(...)
+  ★ confidenceScoringService.recompute(recordId).catch(err => logger.warn('[Block B] confidence recompute failed', err))
+  ... existing realtime/automation/webhook ...
+
+--- Permissions baseline ---
+PermissionsService.ts exists at:
+  DRD/consultify/server/src/services/tablePlatform/PermissionsService.ts
+S2 will read this file once to confirm canRead() signature.
+
+--- Tenant baseline ---
+tp_records.organization_id:           DOES NOT EXIST
+Tenant resolved via:                  tp_records.table_id → tp_tables.base_id → tp_bases.organization_id (TEXT)
+tp_record_sources.organization_id:    TEXT NOT NULL (denormalized at write time)

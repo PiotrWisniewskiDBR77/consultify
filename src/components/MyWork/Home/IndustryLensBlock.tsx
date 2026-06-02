@@ -1,10 +1,11 @@
-import { ArrowRight, Bot, Factory, Globe2, Scale } from 'lucide-react';
+import { ArrowRight, Factory, Globe2, Scale } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { HomeBlockShell } from './HomeBlockShell';
 import type { HomeBlock, HomeScreenAction, HomeSignalCard } from './homeV2Types';
 
+import TeresaMark from '../../shared/TeresaMark';
 interface IndustryLensBlockProps {
   block: Extract<HomeBlock, { id: 'industryLens' }>;
   onAction: (action: HomeScreenAction) => void;
@@ -31,11 +32,11 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
           <SignalCard
             icon={<Globe2 size={15} />}
             signal={payload.marketSignal}
-            toneClass="bg-cyan-500/15 text-cyan-200"
+            toneClass="bg-blue-500/15 text-blue-200"
             onAction={onAction}
           />
           <SignalCard
-            icon={<Bot size={15} />}
+            icon={<TeresaMark size={15} />}
             signal={payload.technologySignal}
             toneClass="bg-indigo-500/15 text-indigo-200"
             onAction={onAction}
@@ -48,7 +49,9 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
               <Scale size={12} className="text-emerald-200" />
               {t('myWork.radar.benchmark')}
             </div>
-            <div className="mt-1 text-lg font-semibold tabular-nums text-white">{payload.benchmark.value}</div>
+            <div className="mt-1 text-lg font-semibold tabular-nums text-white">
+              {payload.benchmark.value}
+            </div>
             <div className="text-xs text-slate-300/85">{payload.benchmark.label}</div>
             <div className="mt-0.5 text-[11px] text-emerald-100/80">{payload.benchmark.delta}</div>
             <p className="mt-2 text-xs leading-relaxed text-slate-300/80 md:text-sm">
@@ -63,7 +66,9 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
                   sourceBlock: 'industryLens',
                   intent: 'compare_peer_case',
                   title: payload.peerCase.title,
-                  starterPrompt: t('myWork.radar.peerCasePrompt', { title: payload.peerCase.title }),
+                  starterPrompt: t('myWork.radar.peerCasePrompt', {
+                    title: payload.peerCase.title,
+                  }),
                   entityType: 'industry_signal',
                   entityId: 'peer-case',
                   entityName: payload.peerCase.title,
@@ -83,7 +88,9 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
             <div className="mt-1.5 text-base font-semibold leading-snug text-white">
               {payload.peerCase.title}
             </div>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-300/80 md:text-sm">{payload.peerCase.summary}</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-300/80 md:text-sm">
+              {payload.peerCase.summary}
+            </p>
             <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-primary-200">
               {payload.peerCase.implication}
               <ArrowRight size={14} />
@@ -130,7 +137,9 @@ const SignalCard: React.FC<{
       <div className={`inline-flex rounded-lg p-1.5 ${toneClass}`}>{icon}</div>
       <div className="mt-2 text-sm font-semibold leading-snug text-white">{signal.title}</div>
       <div className="mt-1 text-xs leading-relaxed text-slate-300/80">{signal.summary}</div>
-      <div className="mt-2 font-mono text-[9px] uppercase tracking-wider text-white/45">{signal.tag}</div>
+      <div className="mt-2 font-mono text-[9px] uppercase tracking-wider text-white/45">
+        {signal.tag}
+      </div>
     </button>
   );
 };

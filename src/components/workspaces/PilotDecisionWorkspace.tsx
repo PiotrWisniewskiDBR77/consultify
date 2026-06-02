@@ -44,7 +44,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
       {/* Header */}
       <div className="h-16 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-6 flex items-center shrink-0">
         <h2 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-          <Scale className="text-purple-500" /> Pilot vs. Rollout Decision
+          <Scale className="text-primary-500" /> Pilot vs. Rollout Decision
         </h2>
       </div>
 
@@ -62,8 +62,8 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                   onClick={() => handleSelectPilot(init.id)}
                   className={`p - 3 rounded - lg border cursor - pointer transition - all ${
                     selectedPilotId === init.id
-                      ? 'bg-purple-500/10 border-purple-500 ring-1 ring-purple-500'
-                      : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                      ? 'bg-primary-500/10 border-primary-500 ring-1 ring-primary-500'
+                      : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-primary-300'
                   } `}
                 >
                   <div className="flex justify-between items-start">
@@ -71,7 +71,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                       {init.name}
                     </h4>
                     {selectedPilotId === init.id && (
-                      <CheckCircle size={16} className="text-purple-500" />
+                      <CheckCircle size={16} className="text-primary-500" />
                     )}
                   </div>
                   <div className="flex gap-2 mt-2">
@@ -112,7 +112,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                 <thead className="bg-slate-50 dark:bg-navy-900 text-xs uppercase font-bold text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="p-4">Criteria</th>
-                    <th className="p-4 text-purple-600 dark:text-purple-400">
+                    <th className="p-4 text-primary-600 dark:text-primary-400">
                       Pilot Approach (Recommended)
                     </th>
                     <th className="p-4 text-slate-500 dark:text-slate-400">Big Bang Rollout</th>
@@ -127,12 +127,12 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                   <tr>
                     <td className="p-4 font-medium text-navy-900 dark:text-white">Risk Exposure</td>
                     <td className="p-4 text-green-600">Contained / Low</td>
-                    <td className="p-4 text-red-500">High Systemic Risk</td>
+                    <td className="p-4 text-rose-500">High Systemic Risk</td>
                   </tr>
                   <tr>
                     <td className="p-4 font-medium text-navy-900 dark:text-white">Resource Load</td>
                     <td className="p-4 text-green-600">Focused Team</td>
-                    <td className="p-4 text-orange-500">Organization-wide</td>
+                    <td className="p-4 text-amber-500">Organization-wide</td>
                   </tr>
                 </tbody>
               </table>
@@ -142,7 +142,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
               <Button
                 onClick={handleConfirmPilot}
                 disabled={!selectedPilotId}
-                className="bg-purple-600 hover:bg-purple-500"
+                className="bg-primary-600 hover:bg-primary-500"
               >
                 Confirm Pilot & Proceed <ArrowRight size={16} className="ml-2" />
               </Button>

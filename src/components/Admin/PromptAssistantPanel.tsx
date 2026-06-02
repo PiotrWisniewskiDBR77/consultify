@@ -130,8 +130,16 @@ How can I help you today?`,
         role: 'assistant',
         content: data.data?.message || 'No response received.',
         timestamp: new Date(),
-        suggestions: data.data?.suggestions,
-        codeBlocks: data.data?.codeBlocks,
+        suggestions: Array.isArray(data.data?.suggestions)
+          ? data.data.suggestions.map((suggestion) =>
+              typeof suggestion === 'string' ? { title: suggestion, description: '' } : suggestion
+            )
+          : undefined,
+        codeBlocks: Array.isArray(data.data?.codeBlocks)
+          ? data.data.codeBlocks.map((block) =>
+              typeof block === 'string' ? { language: 'text', content: block } : block
+            )
+          : undefined,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -326,7 +334,7 @@ How can I help you today?`,
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
@@ -373,7 +381,7 @@ How can I help you today?`,
           </button>
           <button
             onClick={() => handleQuickAction('test')}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
           >
             <TestTube size={12} />
             Test

@@ -1,0 +1,32 @@
+---
+module_id: MODULE_INTERVIEW
+doc_kind: STATUS
+version: 1.0
+owner: user
+status: canonical
+last_updated: 2026-05-09
+---
+
+# Status — Wywiad / Interview
+
+## Status Tags (As-Is)
+
+- `real`: `/interview` and `/discovery` routes mount `InterviewHub`.
+- `real`: sidebar mapping to interview module exists via `AppView.DISCOVERY_CONSULTANT`.
+- `duplicate`: interview surface is reachable via multiple aliases (`/interview`, `/discovery`, `/project-intelligence`) pointing to same hub runtime.
+- `partial`: strong API contract coverage (`v8/interview.ts`) but no module-local frontend test suite in `src/components/Interview`.
+- `code_gap`: missing dedicated component tests for `InterviewHub`.
+- `doc_gap`: previous baseline did not enumerate route aliases and service evidence.
+
+## Function Coverage Status
+
+- `pass`: function contract coverage complete (`6/6` Interview functions documented).
+- `real`: all six documented functions are present in Interview hub tab/runtime model.
+- `partial`: test depth is still limited (no full function-journey e2e suite).
+
+## Implementation Readiness Gate (Docs + Plan)
+
+- `pass`: function execution card coverage complete (`6/6`).
+- `pass`: implementation task registry synchronized for all active function prefixes (`WY-MYA-*`, `WY-MGA-*`, `WY-SES-*`, `WY-TPL-*`, `WY-INS-*`, `WY-PRV-*`).
+- `pass_with_p2`: evidence model and backlog structure are complete for coding continuation; runtime validation depth remains a P2 follow-up track.
+- `go`: module is documentation-ready for continued coding under task-board sequencing rules (`P0` before `P1/P2` expansion).

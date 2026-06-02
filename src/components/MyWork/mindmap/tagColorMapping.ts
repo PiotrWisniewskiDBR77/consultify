@@ -8,10 +8,10 @@ export interface TagColorRule {
 
 const TAG_COLOR_MAP: Record<string, { color: string; bg: string; text: string; border: string }> = {
   risk: {
-    color: '#ef4444',
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    text: 'text-red-700 dark:text-red-300',
-    border: 'border-red-300 dark:border-red-700',
+    color: '#f43f5e',
+    bg: 'bg-rose-50 dark:bg-rose-900/20',
+    text: 'text-rose-700 dark:text-rose-300',
+    border: 'border-rose-300 dark:border-rose-700',
   },
   opportunity: {
     color: '#22c55e',
@@ -20,10 +20,10 @@ const TAG_COLOR_MAP: Record<string, { color: string; bg: string; text: string; b
     border: 'border-green-300 dark:border-green-700',
   },
   hypothesis: {
-    color: '#8b5cf6',
-    bg: 'bg-violet-50 dark:bg-violet-900/20',
-    text: 'text-violet-700 dark:text-violet-300',
-    border: 'border-violet-300 dark:border-violet-700',
+    color: '#6366f1',
+    bg: 'bg-primary-50 dark:bg-primary-900/20',
+    text: 'text-primary-700 dark:text-primary-300',
+    border: 'border-primary-300 dark:border-primary-700',
   },
   evidence: {
     color: '#3b82f6',
@@ -38,22 +38,22 @@ const TAG_COLOR_MAP: Record<string, { color: string; bg: string; text: string; b
     border: 'border-amber-300 dark:border-amber-700',
   },
   question: {
-    color: '#06b6d4',
-    bg: 'bg-cyan-50 dark:bg-cyan-900/20',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    border: 'border-cyan-300 dark:border-cyan-700',
+    color: '#3b82f6',
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    text: 'text-blue-700 dark:text-blue-300',
+    border: 'border-blue-300 dark:border-blue-700',
   },
   blocker: {
     color: '#dc2626',
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-800 dark:text-red-200',
-    border: 'border-red-400 dark:border-red-600',
+    bg: 'bg-rose-100 dark:bg-rose-900/30',
+    text: 'text-rose-800 dark:text-rose-200',
+    border: 'border-rose-400 dark:border-rose-600',
   },
   insight: {
     color: '#a855f7',
-    bg: 'bg-purple-50 dark:bg-purple-900/20',
-    text: 'text-purple-700 dark:text-purple-300',
-    border: 'border-purple-300 dark:border-purple-700',
+    bg: 'bg-primary-50 dark:bg-primary-900/20',
+    text: 'text-primary-700 dark:text-primary-300',
+    border: 'border-primary-300 dark:border-primary-700',
   },
   decision: {
     color: '#10b981',
@@ -62,10 +62,10 @@ const TAG_COLOR_MAP: Record<string, { color: string; bg: string; text: string; b
     border: 'border-emerald-300 dark:border-emerald-700',
   },
   goal: {
-    color: '#14b8a6',
-    bg: 'bg-teal-50 dark:bg-teal-900/20',
-    text: 'text-teal-700 dark:text-teal-300',
-    border: 'border-teal-300 dark:border-teal-700',
+    color: '#3b82f6',
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    text: 'text-blue-700 dark:text-blue-300',
+    border: 'border-blue-300 dark:border-blue-700',
   },
 };
 

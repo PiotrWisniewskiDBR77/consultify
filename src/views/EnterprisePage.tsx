@@ -7,7 +7,7 @@ import { MarketingLayout } from '../components/Landing/MarketingLayout';
 
 const CAPABILITY_VISUALS = [
   { icon: Zap, color: '#7c3aed' },
-  { icon: Globe, color: '#06b6d4' },
+  { icon: Globe, color: '#3b82f6' },
   { icon: Lock, color: '#10b981' },
   { icon: Shield, color: '#f59e0b' },
   { icon: Building2, color: '#c026d3' },
@@ -56,10 +56,10 @@ export const EnterprisePage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 mb-6"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 mb-6"
           >
-            <Building2 size={12} className="text-cyan-400" />
-            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
+            <Building2 size={12} className="text-blue-400" />
+            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
               {t('pages.enterprise.hero.badge', 'Enterprise')}
             </span>
           </motion.div>
@@ -73,7 +73,10 @@ export const EnterprisePage: React.FC = () => {
           >
             {t('pages.enterprise.hero.titleLine1', 'For serious players only.')}
             <span className="block text-white/60 font-black" style={{ fontSize: '70%' }}>
-              {t('pages.enterprise.hero.titleLine2', 'Consultify as the intelligence layer of your entire organization.')}
+              {t(
+                'pages.enterprise.hero.titleLine2',
+                'Consultify as the intelligence layer of your entire organization.'
+              )}
             </span>
           </motion.h1>
 
@@ -83,7 +86,10 @@ export const EnterprisePage: React.FC = () => {
             transition={{ delay: 0.14 }}
             className="text-lg text-white/50 max-w-2xl mx-auto mb-10"
           >
-            {t('pages.enterprise.hero.subtitle', 'Not another SaaS tool. A strategic operating system that sits at the center of your org — connecting every team, every decision, every outcome.')}
+            {t(
+              'pages.enterprise.hero.subtitle',
+              'Not another SaaS tool. A strategic operating system that sits at the center of your org — connecting every team, every decision, every outcome.'
+            )}
           </motion.p>
         </div>
       </section>
@@ -138,7 +144,10 @@ export const EnterprisePage: React.FC = () => {
                   {t('pages.enterprise.form.successTitle', "We'll be in touch.")}
                 </h2>
                 <p className="text-white/50">
-                  {t('pages.enterprise.form.successMessage', 'Our enterprise team will reach you within 24 hours.')}
+                  {t(
+                    'pages.enterprise.form.successMessage',
+                    'Our enterprise team will reach you within 24 hours.'
+                  )}
                 </p>
               </div>
             ) : (
@@ -147,13 +156,28 @@ export const EnterprisePage: React.FC = () => {
                   {t('pages.enterprise.form.title', 'Talk to our team.')}
                 </h2>
                 <p className="text-white/45 mb-8 text-sm">
-                  {t('pages.enterprise.form.subtitle', "Tell us about your organization and we'll show you exactly how Consultify fits.")}
+                  {t(
+                    'pages.enterprise.form.subtitle',
+                    "Tell us about your organization and we'll show you exactly how Consultify fits."
+                  )}
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {[
-                    { key: 'name', placeholder: t('pages.enterprise.form.placeholderName', 'Your name'), type: 'text' },
-                    { key: 'company', placeholder: t('pages.enterprise.form.placeholderCompany', 'Company name'), type: 'text' },
-                    { key: 'email', placeholder: t('pages.enterprise.form.placeholderEmail', 'Work email'), type: 'email' },
+                    {
+                      key: 'name',
+                      placeholder: t('pages.enterprise.form.placeholderName', 'Your name'),
+                      type: 'text',
+                    },
+                    {
+                      key: 'company',
+                      placeholder: t('pages.enterprise.form.placeholderCompany', 'Company name'),
+                      type: 'text',
+                    },
+                    {
+                      key: 'email',
+                      placeholder: t('pages.enterprise.form.placeholderEmail', 'Work email'),
+                      type: 'email',
+                    },
                   ].map((field) => (
                     <input
                       key={field.key}
@@ -176,7 +200,10 @@ export const EnterprisePage: React.FC = () => {
                     />
                   ))}
                   <textarea
-                    placeholder={t('pages.enterprise.form.placeholderMessage', 'Tell us about your challenge (optional)')}
+                    placeholder={t(
+                      'pages.enterprise.form.placeholderMessage',
+                      'Tell us about your challenge (optional)'
+                    )}
                     rows={3}
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}

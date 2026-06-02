@@ -113,9 +113,9 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     statuses: ['blocked'],
     apiStatus: 'BLOCKED',
     icon: <AlertCircle size={14} />,
-    headerColor: 'text-red-400',
-    dotColor: 'bg-red-500',
-    dropHighlight: 'ring-red-500/40 bg-red-500/5',
+    headerColor: 'text-rose-400',
+    dotColor: 'bg-rose-500',
+    dropHighlight: 'ring-rose-500/40 bg-rose-500/5',
   },
   {
     id: 'done',
@@ -147,19 +147,19 @@ const getPriorityCardStyle = (priority?: string) => {
     case 'urgent':
     case 'critical':
       return {
-        border: 'border-l-4 border-l-red-500',
-        bg: 'bg-red-500/5 dark:bg-red-500/10',
-        badge: 'bg-red-500/15 text-red-400 border border-red-500/20',
+        border: 'border-l-4 border-l-rose-500',
+        bg: 'bg-rose-500/5 dark:bg-rose-500/10',
+        badge: 'bg-rose-500/15 text-rose-400 border border-rose-500/20',
         label: 'Critical',
-        dot: 'bg-red-500',
+        dot: 'bg-rose-500',
       };
     case 'high':
       return {
-        border: 'border-l-4 border-l-orange-500',
-        bg: 'bg-orange-500/5 dark:bg-orange-500/10',
-        badge: 'bg-orange-500/15 text-orange-400 border border-orange-500/20',
+        border: 'border-l-4 border-l-amber-500',
+        bg: 'bg-amber-500/5 dark:bg-amber-500/10',
+        badge: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
         label: 'High',
-        dot: 'bg-orange-500',
+        dot: 'bg-amber-500',
       };
     case 'medium':
       return {
@@ -274,7 +274,7 @@ const KanbanCardContent: React.FC<{
         {dueLabel ? (
           <span
             className={`flex items-center gap-1 text-[11px] font-medium ${
-              overdue ? 'text-red-400' : 'text-slate-500 dark:text-slate-400'
+              overdue ? 'text-rose-400' : 'text-slate-500 dark:text-slate-400'
             }`}
           >
             <Calendar size={11} />

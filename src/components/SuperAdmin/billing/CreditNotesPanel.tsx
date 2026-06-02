@@ -125,15 +125,15 @@ export const CreditNotesPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Summary Card */}
-      <div className="bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 border border-violet-500/20 rounded-xl p-4">
+      <div className="bg-gradient-to-br from-primary-500/20 to-fuchsia-500/10 border border-primary-500/20 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-violet-300">Total Credits Issued</p>
+            <p className="text-sm text-primary-300">Total Credits Issued</p>
             <p className="text-3xl font-bold text-white mt-1">{formatCurrency(totalCredited)}</p>
-            <p className="text-sm text-violet-400 mt-1">{creditNotes.length} credit notes</p>
+            <p className="text-sm text-primary-400 mt-1">{creditNotes.length} credit notes</p>
           </div>
-          <div className="w-16 h-16 rounded-xl bg-violet-500/20 flex items-center justify-center">
-            <Receipt size={32} className="text-violet-400" />
+          <div className="w-16 h-16 rounded-xl bg-primary-500/20 flex items-center justify-center">
+            <Receipt size={32} className="text-primary-400" />
           </div>
         </div>
       </div>
@@ -150,7 +150,7 @@ export const CreditNotesPanel: React.FC = () => {
             placeholder="Search credit notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none w-64"
+            className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
           />
         </div>
 
@@ -166,7 +166,7 @@ export const CreditNotesPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 rounded-lg text-white font-medium transition-colors"
           >
             <Plus size={18} />
             Issue Credit Note
@@ -177,7 +177,7 @@ export const CreditNotesPanel: React.FC = () => {
       {/* Credit Notes List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={32} className="animate-spin text-violet-500" />
+          <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredCreditNotes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
@@ -214,8 +214,8 @@ export const CreditNotesPanel: React.FC = () => {
                 <tr key={cn.id} className="border-b border-white/[0.04] hover:bg-slate-800/50">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center">
-                        <FileText size={16} className="text-violet-400" />
+                      <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                        <FileText size={16} className="text-primary-400" />
                       </div>
                       <span className="font-medium text-white">{cn.note_number}</span>
                     </div>
@@ -271,7 +271,7 @@ export const CreditNotesPanel: React.FC = () => {
                   onChange={(e) =>
                     setCreateForm((prev) => ({ ...prev, organizationId: e.target.value }))
                   }
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
                 >
                   <option value="">Select organization</option>
                   {organizations.map((org) => (
@@ -298,7 +298,7 @@ export const CreditNotesPanel: React.FC = () => {
                     value={createForm.amount}
                     onChange={(e) => setCreateForm((prev) => ({ ...prev, amount: e.target.value }))}
                     placeholder="0.00"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                   />
                 </div>
               </div>
@@ -310,7 +310,7 @@ export const CreditNotesPanel: React.FC = () => {
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, reason: e.target.value }))}
                   placeholder="Enter reason for credit note..."
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-violet-500/50 outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none resize-none"
                 />
               </div>
             </div>
@@ -325,7 +325,7 @@ export const CreditNotesPanel: React.FC = () => {
               <button
                 onClick={handleCreateCreditNote}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
               >
                 {saving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                 Issue Credit Note

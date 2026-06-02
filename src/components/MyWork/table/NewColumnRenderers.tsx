@@ -32,15 +32,15 @@ const EMOJI_QUICK = [
   '🏆',
 ];
 const COLOR_QUICK = [
-  '#ef4444',
+  '#f43f5e',
   '#f59e0b',
   '#10b981',
   '#3b82f6',
-  '#8b5cf6',
+  '#6366f1',
   '#ec4899',
-  '#06b6d4',
+  '#3b82f6',
   '#84cc16',
-  '#f97316',
+  '#f59e0b',
   '#6366f1',
 ];
 
@@ -83,7 +83,7 @@ export const FileCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
             const url = prompt(isPl ? 'URL (opcjonalnie):' : 'URL (optional):');
             onChange([...files, { name, url: url || undefined }]);
           }}
-          className="text-[9px] text-violet-500 hover:text-violet-600 font-semibold"
+          className="text-[9px] text-primary-500 hover:text-primary-600 font-semibold"
         >
           + {isPl ? 'Plik' : 'File'}
         </button>

@@ -8,7 +8,8 @@
 export type { Tab } from './TabLayout';
 export { TabLayout } from './TabLayout';
 
-// Placeholder panels (to be expanded)
+// Legacy-compatible panels kept for routes that still import the central index.
+// New System module work should prefer `components/SuperAdmin/system/*`.
 export { EmailTemplatesPanel } from './EmailTemplatesPanel';
 export { FeatureFlagsPanel } from './FeatureFlagsPanel';
 export { IntegrationsPanel } from './IntegrationsPanel';

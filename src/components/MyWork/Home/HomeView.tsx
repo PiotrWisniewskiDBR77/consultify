@@ -1,28 +1,37 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, ArrowRight, ChevronDown, ChevronRight, ExternalLink, Info, Lightbulb, Sparkles } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  BookOpen,
+  Briefcase,
+  Cpu,
+  Eye,
+  Lightbulb,
+  MessageCircle,
+  Sparkles,
+  Target,
+  TrendingUp,
+  UserRound,
+  Wrench,
+  Workflow,
+  XCircle,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
-import { useV8 } from '@/providers/V8Provider';
-import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
 import { cn } from '@/lib/utils';
-import { V8ResultsApi } from '@/services/api/v8/results';
-import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
-import { getArtifactPath } from '@/utils/artifactLinks';
 
-import { AIPulseCore } from './AIPulseCore';
-import { DecisionTemperatureBlock } from './DecisionTemperatureBlock';
-import { ExecutionCurrentBlock } from './ExecutionCurrentBlock';
-import type { HomeBlock, HomeScreenAction, HomeTimeMode } from './homeV2Types';
-import { IndustryLensBlock } from './IndustryLensBlock';
-import { MomentumBlock } from './MomentumBlock';
-import { RadarTriageCard } from './RadarTriageCard';
-import { SparkField } from './SparkField';
-import { TeamSignalBlock } from './TeamSignalBlock';
+import type {
+  HomeScreenAction,
+  HomeTimeMode,
+  RadarMapSignal,
+  RadarSignalCard,
+  RadarSignalStatus,
+  RadarSignalType,
+} from './homeV2Types';
 import { useHomeData } from './useHomeData';
-import { useRadarTriageData } from './useRadarTriageData';
+import { useRadarData } from './useRadarData';
 
 interface HomeViewProps {
   userName?: string;
@@ -30,104 +39,268 @@ interface HomeViewProps {
   onAction: (action: HomeScreenAction) => void;
 }
 
-class HomeBlockErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
+type StatusFilter = 'all' | RadarSignalStatus;
 
-  static getDerivedStateFromError(): { hasError: boolean } {
-    return { hasError: true };
-  }
+type QuadrantSpec = {
+  key: RadarMapSignal['quadrant'];
+  title: string;
+  subtitle: string;
+  fill: string;
+  chip: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  x: number;
+  y: number;
+};
 
-  componentDidCatch(error: unknown): void {
-    console.error('[MyWorkHome] block render failed', error);
-  }
+const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'new', label: 'New' },
+  { id: 'updated', label: 'Updated' },
+  { id: 'saved', label: 'Saved' },
+  { id: 'watching', label: 'Watching' },
+];
 
-  render(): React.ReactNode {
-    if (this.state.hasError) {
-      return null;
-    }
-    return this.props.children;
+const QUADRANTS: QuadrantSpec[] = [
+  {
+    key: 'MY_DEVELOPMENT',
+    title: 'My Development',
+    subtitle: 'what I should learn',
+    fill: 'rgba(56,189,248,0.12)',
+    chip: 'text-cyan-200',
+    Icon: UserRound,
+    x: 6,
+    y: 6,
+  },
+  {
+    key: 'MY_PROJECTS',
+    title: 'My Projects',
+    subtitle: 'what helps current work',
+    fill: 'rgba(45,212,191,0.11)',
+    chip: 'text-teal-200',
+    Icon: Target,
+    x: 50,
+    y: 6,
+  },
+  {
+    key: 'MY_INDUSTRY',
+    title: 'My Industry',
+    subtitle: 'what matters around company',
+    fill: 'rgba(217,70,239,0.11)',
+    chip: 'text-fuchsia-200',
+    Icon: Briefcase,
+    x: 50,
+    y: 50,
+  },
+  {
+    key: 'MY_ROLE',
+    title: 'My Role',
+    subtitle: 'what affects responsibility',
+    fill: 'rgba(251,191,36,0.10)',
+    chip: 'text-amber-200',
+    Icon: Workflow,
+    x: 6,
+    y: 50,
+  },
+];
+
+const RING_INFO: Array<{ ring: RadarMapSignal['ring']; label: string; helper: string; y: number }> = [
+  { ring: 'OBSERVE', label: 'OBSERVE', helper: 'keep on radar', y: 10 },
+  { ring: 'LEARN', label: 'LEARN', helper: 'build understanding', y: 21.5 },
+  { ring: 'PREPARE', label: 'PREPARE', helper: 'get ready', y: 33 },
+  { ring: 'NOW', label: 'NOW', helper: 'act or discuss now', y: 44.5 },
+];
+
+const TYPE_META: Record<
+  RadarSignalType,
+  {
+    Icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    tone: string;
+    dot: string;
   }
+> = {
+  TECHNOLOGY: {
+    Icon: Cpu,
+    label: 'Technology',
+    tone: 'border-cyan-300/45 bg-cyan-50 text-cyan-700 hover:bg-cyan-100',
+    dot: 'bg-cyan-400',
+  },
+  SKILL: {
+    Icon: Sparkles,
+    label: 'Skill',
+    tone: 'border-sky-300/45 bg-sky-50 text-sky-700 hover:bg-sky-100',
+    dot: 'bg-sky-400',
+  },
+  BUSINESS: {
+    Icon: Briefcase,
+    label: 'Business',
+    tone: 'border-teal-300/45 bg-teal-50 text-teal-700 hover:bg-teal-100',
+    dot: 'bg-teal-400',
+  },
+  RISK: {
+    Icon: AlertTriangle,
+    label: 'Risk',
+    tone: 'border-fuchsia-300/45 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100',
+    dot: 'bg-fuchsia-400',
+  },
+  PROCESS: {
+    Icon: Workflow,
+    label: 'Process',
+    tone: 'border-amber-300/45 bg-amber-50 text-amber-700 hover:bg-amber-100',
+    dot: 'bg-amber-400',
+  },
+  TOOL: {
+    Icon: Wrench,
+    label: 'Tool',
+    tone: 'border-indigo-300/45 bg-indigo-50 text-indigo-700 hover:bg-indigo-100',
+    dot: 'bg-indigo-400',
+  },
+  TREND: {
+    Icon: TrendingUp,
+    label: 'Trend',
+    tone: 'border-violet-300/45 bg-violet-50 text-violet-700 hover:bg-violet-100',
+    dot: 'bg-violet-400',
+  },
+  IDEA: {
+    Icon: Lightbulb,
+    label: 'Idea',
+    tone: 'border-emerald-300/45 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+    dot: 'bg-emerald-400',
+  },
+};
+
+const STATUS_META: Record<RadarSignalStatus, { label: string; tone: string }> = {
+  new: { label: 'New', tone: 'border-emerald-400/35 bg-emerald-500/14 text-emerald-200' },
+  updated: { label: 'Updated', tone: 'border-sky-400/35 bg-sky-500/14 text-sky-200' },
+  saved: { label: 'Saved', tone: 'border-indigo-400/35 bg-indigo-500/14 text-indigo-200' },
+  watching: { label: 'Watching', tone: 'border-amber-400/35 bg-amber-500/14 text-amber-200' },
+  ignored: { label: 'Ignored', tone: 'border-slate-400/30 bg-slate-500/12 text-slate-300' },
+};
+
+const RING_WEIGHT: Record<RadarMapSignal['ring'], number> = {
+  NOW: 0.18,
+  PREPARE: 0.38,
+  LEARN: 0.62,
+  OBSERVE: 0.82,
+};
+
+const QUADRANT_START: Record<RadarMapSignal['quadrant'], number> = {
+  MY_DEVELOPMENT: -Math.PI,
+  MY_PROJECTS: -Math.PI / 2,
+  MY_INDUSTRY: 0,
+  MY_ROLE: Math.PI / 2,
+};
+
+const PROTOTYPE_RADAR_SIGNALS: RadarMapSignal[] = [
+  makeSignal('sig-ai-agents', 'AI Agents', 'NOW', 'MY_PROJECTS', 'new', 'TECHNOLOGY', 'large', 'high', 'AI agents can help automate repetitive knowledge work inside your current projects.'),
+  makeSignal('sig-digital-twin', 'Digital Twin', 'PREPARE', 'MY_INDUSTRY', 'updated', 'BUSINESS', 'medium', 'medium', 'Digital twin programs are becoming a key differentiator for industrial execution quality.'),
+  makeSignal('sig-prompt-skills', 'Prompt Skills', 'NOW', 'MY_DEVELOPMENT', 'new', 'SKILL', 'medium', 'high', 'Prompt literacy improves the quality and speed of AI-supported project work.'),
+  makeSignal('sig-ai-pmo', 'AI PMO', 'PREPARE', 'MY_ROLE', 'saved', 'PROCESS', 'medium', 'high', 'AI PMO patterns reduce reporting friction and keep delivery governance lightweight.'),
+  makeSignal('sig-robot-vision', 'Robot Vision', 'LEARN', 'MY_INDUSTRY', 'watching', 'TECHNOLOGY', 'small', 'medium', 'Vision systems are entering quality-control workflows beyond manufacturing pilots.'),
+  makeSignal('sig-data-quality', 'Data Quality', 'NOW', 'MY_PROJECTS', 'updated', 'RISK', 'large', 'high', 'Data quality remains the bottleneck for reliable AI recommendations in delivery ops.'),
+  makeSignal('sig-risk-radar', 'Risk Radar', 'PREPARE', 'MY_ROLE', 'watching', 'RISK', 'medium', 'high', 'Early risk sensing can reduce costly late-stage execution changes.'),
+  makeSignal('sig-sales-automation', 'Sales Automation', 'LEARN', 'MY_INDUSTRY', 'saved', 'TOOL', 'small', 'medium', 'AI-assisted sales workflows are reducing manual follow-up effort in B2B teams.'),
+  makeSignal('sig-private-llm', 'Private LLM', 'OBSERVE', 'MY_PROJECTS', 'saved', 'TECHNOLOGY', 'small', 'medium', 'Private model strategies are becoming practical for regulated enterprise contexts.'),
+  makeSignal('sig-meeting-notes', 'Meeting Notes', 'NOW', 'MY_PROJECTS', 'new', 'TOOL', 'medium', 'high', 'Structured AI notes can turn conversations into concrete next-step objects faster.'),
+  makeSignal('sig-process-mining', 'Process Mining', 'LEARN', 'MY_ROLE', 'updated', 'PROCESS', 'small', 'medium', 'Process mining can reveal hidden execution delays in transformation programs.'),
+  makeSignal('sig-ot-cyber', 'OT Cybersecurity', 'PREPARE', 'MY_INDUSTRY', 'watching', 'RISK', 'medium', 'high', 'OT security pressure is rising and now influences strategic roadmap decisions.'),
+  makeSignal('sig-workflow-auto', 'Workflow Automation', 'NOW', 'MY_PROJECTS', 'updated', 'PROCESS', 'large', 'high', 'Workflow automation helps remove repetitive coordination from project delivery.'),
+  makeSignal('sig-ai-leadership', 'AI Leadership', 'LEARN', 'MY_DEVELOPMENT', 'saved', 'SKILL', 'small', 'medium', 'Leadership teams need clearer AI framing to guide adoption without chaos.'),
+  makeSignal('sig-marketplace-model', 'Marketplace Model', 'OBSERVE', 'MY_INDUSTRY', 'new', 'BUSINESS', 'small', 'medium', 'Marketplace packaging can accelerate distribution of reusable transformation assets.'),
+  makeSignal('sig-smart-quality', 'Smart Quality', 'PREPARE', 'MY_ROLE', 'updated', 'TREND', 'medium', 'medium', 'Smart quality practices connect operational signals with continuous improvement loops.'),
+];
+
+function makeSignal(
+  id: string,
+  name: string,
+  ring: RadarMapSignal['ring'],
+  quadrant: RadarMapSignal['quadrant'],
+  status: RadarSignalStatus,
+  signalType: RadarSignalType,
+  importanceLevel: RadarMapSignal['importanceLevel'],
+  fitLevel: RadarMapSignal['fitLevel'],
+  shortDescription: string
+): RadarMapSignal {
+  return {
+    id,
+    name,
+    icon: name,
+    ring,
+    quadrant,
+    status,
+    signalType,
+    importanceLevel,
+    fitLevel,
+    preview: {
+      shortDescription,
+      whyItMatters:
+        'This signal can improve how teams prioritize, execute and communicate outcomes.',
+      whyItMattersForYou:
+        'It connects directly to your current Consultify and AI-supported execution context.',
+      howToThinkAboutIt:
+        'Treat it as a practical pattern to test, not a theoretical trend to collect.',
+      goodFirstQuestion: 'Which repeated project activity should be partially automated first?',
+      suggestedNextStep:
+        'Ask Teresa to map one workflow where this signal can support your current work.',
+    },
+  };
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, onAction }) => {
   const { t, i18n } = useTranslation();
-  const { isV8Enabled } = useV8();
-  const isPolish = i18n.language === 'pl';
-  const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
   const { screen, blocks, layout, loading, error, refresh } = useHomeData(refreshTrigger);
-  const triageData = useRadarTriageData(undefined, isV8Enabled);
-  const roofSummary = useV8MyWorkRoofSummary(isV8Enabled);
-  const [roofMetaOpen, setRoofMetaOpen] = useState(false);
+  const radarData = useRadarData(refreshTrigger);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const lastErrorToastRef = useRef<string | null>(null);
 
-  const navigate = useNavigate();
-  const [recentInsights, setRecentInsights] = useState<V8InterviewInsight[]>([]);
   useEffect(() => {
-    if (!isV8Enabled) {
-      setRecentInsights([]);
-      return;
-    }
-    V8InterviewApi.listInsights({ limit: 5 })
-      .then((res) => setRecentInsights(res?.insights ?? []))
-      .catch(() => setRecentInsights([]));
-  }, [isV8Enabled, refreshTrigger]);
+    if (!error || error === lastErrorToastRef.current) return;
+    lastErrorToastRef.current = error;
+    toast.error(t('myWork.radar.loadErrorToast', 'Radar could not load. Showing recovery state.'));
+  }, [error, t]);
 
-  const [kpiAlerts, setKpiAlerts] = useState<Array<{ signalId: string; kpiId: string; severity: string; description: string; createdAt: string; kpiName?: string }>>([]);
-  useEffect(() => {
-    if (!isV8Enabled) {
-      setKpiAlerts([]);
-      return;
-    }
-    V8ResultsApi.getWorkflowSignals()
-      .then((res) => setKpiAlerts((res?.data ?? []).slice(0, 5)))
-      .catch(() => setKpiAlerts([]));
-  }, [isV8Enabled, refreshTrigger]);
-
-  const alignedHomeBlocks = useMemo(() => {
-    const homeBlocks = roofSummary.data?.homeBlocks;
-    if (!homeBlocks) return [];
-    return homeBlocks.filter(
-      (block) =>
-        block.maturityLevel !== 'placeholder_non_canonical' && block.blockName !== 'commandDock'
-    );
-  }, [roofSummary.data?.homeBlocks]);
-
-  const alignedRealCount = useMemo(
-    () => alignedHomeBlocks.filter((b) => b.maturityLevel === 'backed_by_real_service').length,
-    [alignedHomeBlocks]
+  const radarSignalsAll = useMemo(
+    () => deriveRadarSignals(radarData.data?.radarMap?.signals, radarData.data?.whatChanged),
+    [radarData.data?.radarMap?.signals, radarData.data?.whatChanged]
   );
 
-  const roofTruthStrip = useMemo(() => {
-    if (roofSummary.isLoading) {
-      return t('myWork.radar.roofTruthChecking');
+  const statusCounts = useMemo(() => {
+    const map: Record<StatusFilter, number> = {
+      all: radarSignalsAll.length,
+      new: 0,
+      updated: 0,
+      saved: 0,
+      watching: 0,
+      ignored: 0,
+    };
+    for (const signal of radarSignalsAll) {
+      map[signal.status] = (map[signal.status] || 0) + 1;
     }
-    if (roofSummary.isError || !roofSummary.data) {
-      return null;
+    return map;
+  }, [radarSignalsAll]);
+
+  const radarSignals = useMemo(() => {
+    if (statusFilter === 'all') return radarSignalsAll;
+    return radarSignalsAll.filter((signal) => signal.status === statusFilter);
+  }, [radarSignalsAll, statusFilter]);
+
+  const [selectedSignalId, setSelectedSignalId] = useState<string | null>('sig-ai-agents');
+
+  useEffect(() => {
+    if (!radarSignals.length) {
+      setSelectedSignalId(null);
+      return;
     }
+    if (selectedSignalId && radarSignals.some((signal) => signal.id === selectedSignalId)) {
+      return;
+    }
+    const defaultSignal = radarSignals.find((signal) => signal.id === 'sig-ai-agents');
+    setSelectedSignalId(defaultSignal?.id ?? radarSignals[0].id);
+  }, [radarSignals, selectedSignalId]);
 
-    const counts = roofSummary.data.counts;
-    const surfaceMode = getSurfaceModeLabel(roofSummary.data.surfaceMode);
-    const realShown =
-      alignedHomeBlocks.length > 0 ? alignedRealCount : counts.backed_by_real_service;
-
-    return `Roof truth: ${surfaceMode} \u00b7 ${realShown} real \u00b7 ${counts.partial_stitched} partial \u00b7 ${counts.placeholder_non_canonical} non-canonical`;
-  }, [
-    alignedHomeBlocks.length,
-    alignedRealCount,
-    t,
-    roofSummary.data,
-    roofSummary.isError,
-    roofSummary.isLoading,
-  ]);
-
-  const roofTruthTone = roofSummary.data?.overallStatus ?? 'mixed_truth';
-
-  const pulseBlock = useMemo(
-    () =>
-      blocks.find((b): b is Extract<HomeBlock, { id: 'aiPulseCore' }> => b.id === 'aiPulseCore'),
-    [blocks]
+  const selectedSignal = useMemo(
+    () => radarSignals.find((signal) => signal.id === selectedSignalId) ?? null,
+    [radarSignals, selectedSignalId]
   );
 
   if (loading && !blocks.length) {
@@ -136,7 +309,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-          className="h-8 w-8 rounded-full border-2 border-violet-500 border-t-transparent dark:border-violet-400"
+          className="h-8 w-8 rounded-full border-2 border-primary-500 border-t-transparent dark:border-primary-400"
         />
       </div>
     );
@@ -165,256 +338,73 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
     );
   }
 
+  const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-[#060B18]">
       <BgCanvas timeMode={screen.timeMode} ambientMotion={layout.ambientMotion} />
 
       <div className="relative z-10 flex items-center justify-between gap-4 px-4 md:px-5 pt-2.5 pb-1.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-            {screen.pulseLabel || t('myWork.radar.pulseLabel')}
-            {userName ? ` \u00b7 ${userName}` : ''}
-          </span>
-          {alignedHomeBlocks.length ? (
-            <button
-              type="button"
-              onClick={() => setRoofMetaOpen((v) => !v)}
-              className="inline-flex items-center gap-1 rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-300"
-              title={t('myWork.radar.roofExpandHint')}
-            >
-              {roofMetaOpen ? (
-                <ChevronDown className="h-3 w-3" />
-              ) : (
-                <ChevronRight className="h-3 w-3" />
-              )}
-              {t('myWork.radar.roofModules', { count: alignedHomeBlocks.length })}
-            </button>
-          ) : null}
-        </div>
+        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+          {screen.pulseLabel || t('myWork.radar.pulseLabel')}
+          {userName ? ` · ${userName}` : ''}
+        </span>
         <span className="shrink-0 font-mono text-[10px] tabular-nums text-slate-500 dark:text-slate-500">
-          {new Date(screen.updatedAt).toLocaleTimeString(lang === 'ar' ? 'ar-SA' : `${lang}-${lang.toUpperCase()}`, {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+          {new Date(screen.updatedAt).toLocaleTimeString(
+            lang === 'ar' ? 'ar-SA' : `${lang}-${lang.toUpperCase()}`,
+            { hour: '2-digit', minute: '2-digit' }
+          )}
         </span>
       </div>
 
-      {roofMetaOpen && roofTruthStrip ? (
-        <div className="relative z-10 px-4 md:px-5 pb-1">
-          <div
-            className={cn(
-              'inline-flex max-w-full items-center gap-2 rounded border px-2 py-1 text-[9px] font-medium leading-snug',
-              roofTruthTone === 'coherent'
-                ? 'border-emerald-400/25 bg-emerald-500/10 text-emerald-200'
-                : roofTruthTone === 'partially_coherent'
-                  ? 'border-amber-400/25 bg-amber-500/10 text-amber-100'
-                  : 'border-white/10 bg-white/[0.04] text-slate-300'
-            )}
-          >
-            <Info className="h-3 w-3 shrink-0 text-slate-400" />
-            <span className="break-words">{roofTruthStrip}</span>
+      <div className="relative z-10 flex-1 overflow-hidden px-4 pb-4 md:px-5">
+        <div className="mb-2.5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Your Radar</h2>
+            <p className="mt-0.5 max-w-3xl text-[12px] text-slate-400">
+              A personal map of signals worth your attention — across your development, projects,
+              industry and role.
+            </p>
           </div>
-          {alignedHomeBlocks.length ? (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {alignedHomeBlocks.map((block) => (
-                <span
-                  key={block.blockName}
-                  title={t(`myWork.radar.blockHints.${block.blockName}`, { defaultValue: '' })}
-                  className="cursor-default rounded border border-white/[0.06] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[8px] font-medium uppercase tracking-wider text-slate-500"
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {STATUS_FILTERS.map((filter) => {
+              const active = filter.id === statusFilter;
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setStatusFilter(filter.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition',
+                    active
+                      ? 'border-primary-300/60 bg-primary-500/20 text-primary-100'
+                      : 'border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/20 hover:bg-white/[0.08]'
+                  )}
                 >
-                  {t(`myWork.radar.blocks.${block.blockName}`, { defaultValue: block.blockName })}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {pulseBlock ? (
-        <div className="relative z-10 px-4 md:px-5 pb-2">
-          <RadarExecutiveBrief block={pulseBlock} onAction={onAction} />
-        </div>
-      ) : null}
-
-      {triageData.signals.length > 0 && (
-        <div className="relative z-10 px-4 md:px-5 pb-3">
-          <div className="mb-2">
-            <h2 className="text-sm font-semibold text-white">{t('myWork.radar.triage.title')}</h2>
-            <p className="text-[11px] text-slate-400">{t('myWork.radar.triage.subtitle')}</p>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
-            {triageData.signals.map((signal) => (
-              <RadarTriageCard key={signal.signalId} signal={signal} onAction={onAction} />
-            ))}
+                  {filter.label}
+                  <span className={cn('rounded-full px-1.5 text-[10px] tabular-nums', active ? 'bg-primary-400/30 text-white' : 'bg-white/10 text-slate-400')}>
+                    {statusCounts[filter.id] ?? 0}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
-      )}
 
-      {kpiAlerts.length > 0 && (
-        <div className="relative z-10 px-4 md:px-5 pb-3">
-          <div className="mb-2 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
-                <AlertTriangle size={14} className="text-amber-400" />
-                {t('myWork.radar.kpiAlerts.title', 'KPI Alerts')}
-              </h2>
-              <p className="text-[11px] text-slate-400">{t('myWork.radar.kpiAlerts.subtitle', 'Open deviations requiring attention')}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate('/benefits?tab=results_kpi&mode=queue')}
-              className="text-[11px] text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-1"
-            >
-              {t('common.viewAll', 'View all')} <ArrowRight size={12} />
-            </button>
-          </div>
-          <div className="space-y-1.5">
-            {kpiAlerts.map((alert) => (
-              <button
-                key={alert.signalId}
-                type="button"
-                onClick={() => navigate('/benefits?tab=results_kpi&mode=queue')}
-                className="w-full text-left flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 transition hover:bg-white/[0.06]"
-              >
-                <span className={cn(
-                  'h-2 w-2 rounded-full shrink-0',
-                  alert.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'
-                )} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-slate-200 truncate">{alert.kpiName || alert.kpiId}</p>
-                  <p className="text-[11px] text-slate-400 truncate">{alert.description}</p>
-                </div>
-                <span className="text-[10px] text-slate-500 shrink-0 tabular-nums">
-                  {new Date(alert.createdAt).toLocaleDateString(lang)}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {recentInsights.length > 0 && (
-        <div className="relative z-10 px-4 md:px-5 pb-3">
-          <RecentInsightsCard insights={recentInsights} isPolish={isPolish} />
-        </div>
-      )}
-
-      <div className="relative z-10 flex-1 overflow-auto px-4 md:px-5 pb-4">
-        <div className="grid grid-cols-12 gap-2.5">
-          {blocks.map((block) => (
-            <HomeBlockErrorBoundary key={block.id}>
-              {renderHomeBlock(block, onAction)}
-            </HomeBlockErrorBoundary>
-          ))}
+        <div className="grid h-full grid-cols-1 gap-3 lg:grid-cols-[2.2fr_1fr]">
+          <RadarCanvas
+            signals={radarSignals}
+            selectedSignalId={selectedSignalId}
+            onSelectSignal={setSelectedSignalId}
+            ambientMotion={layout.ambientMotion}
+          />
+          <RadarPreviewPanel signal={selectedSignal} onAction={onAction} />
         </div>
       </div>
     </div>
   );
 };
-
-function renderHomeBlock(
-  block: HomeBlock,
-  onAction: (action: HomeScreenAction) => void
-): React.ReactNode {
-  switch (block.id) {
-    case 'aiPulseCore':
-      return <AIPulseCore block={block} onAction={onAction} />;
-    case 'momentum':
-      return <MomentumBlock block={block} onAction={onAction} />;
-    case 'sparkField':
-      return <SparkField block={block} onAction={onAction} />;
-    case 'decisionTemperature':
-      return <DecisionTemperatureBlock block={block} onAction={onAction} />;
-    case 'industryLens':
-      return <IndustryLensBlock block={block} onAction={onAction} />;
-    case 'executionCurrent':
-      return <ExecutionCurrentBlock block={block} onAction={onAction} />;
-    case 'teamSignal':
-      return <TeamSignalBlock block={block} onAction={onAction} />;
-    default:
-      return null;
-  }
-}
-
-function getSurfaceModeLabel(surfaceMode: string): string {
-  switch (surfaceMode) {
-    case 'home_v2_aggregated_with_outputs_bridge':
-      return 'Home V2 aggregated + outputs bridge';
-    case 'radar_overlay_with_outputs_bridge':
-      return 'Radar overlay + outputs bridge';
-    default:
-      return surfaceMode;
-  }
-}
-
-function RadarExecutiveBrief({
-  block,
-  onAction,
-}: {
-  block: Extract<HomeBlock, { id: 'aiPulseCore' }>;
-  onAction: (action: HomeScreenAction) => void;
-}) {
-  const { t } = useTranslation();
-  const payload = block.payload;
-  const top = payload.focusItems?.[0];
-  const headline = typeof payload.headline === 'string' ? payload.headline : '';
-  const lead = headline.trim() || top?.title || '';
-  if (!lead) {
-    return null;
-  }
-
-  return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-2">
-      <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-300/70" />
-      <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-200">{lead}</p>
-      <span className="shrink-0 font-mono text-[10px] tabular-nums text-slate-500">
-        {t('myWork.radar.pulse')}{' '}
-        {typeof payload.pulseScore === 'number' ? payload.pulseScore : '\u2014'}
-      </span>
-      <button
-        type="button"
-        onClick={() =>
-          onAction({
-            type: 'chat',
-            packet: {
-              sourceBlock: 'aiPulseCore',
-              intent: 'gentle_explain',
-              title: t('myWork.radar.gentleExplanation'),
-              starterPrompt: t('myWork.radar.explainBriefing'),
-              entityType: 'home',
-              entityId: 'pulse-core',
-              contextData: { headline: lead, insight: payload.insight },
-            },
-          })
-        }
-        className="shrink-0 rounded border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-300 transition hover:bg-white/[0.08]"
-      >
-        {t('myWork.radar.explain')}
-      </button>
-      <button
-        type="button"
-        onClick={() =>
-          onAction({
-            type: 'chat',
-            packet: {
-              sourceBlock: 'aiPulseCore',
-              intent: 'prioritize_transformation',
-              title: block.title,
-              starterPrompt: t('myWork.radar.calmPlan'),
-              entityType: 'home',
-              entityId: 'pulse-core',
-              contextData: { headline: lead, insight: payload.insight },
-            },
-          })
-        }
-        className="shrink-0 rounded bg-violet-500/80 px-2 py-1 text-[10px] font-semibold text-white transition hover:bg-violet-500"
-      >
-        AI
-        <ArrowRight className="ml-1 inline h-3 w-3" />
-      </button>
-    </div>
-  );
-}
 
 const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full' }> = ({
   timeMode,
@@ -425,101 +415,495 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
       className={cn(
         'pointer-events-none absolute inset-0',
         timeMode === 'morning' &&
-          'bg-[radial-gradient(ellipse_80%_50%_at_50%_-8%,rgba(250,204,21,0.08),transparent)]',
+          'bg-[radial-gradient(ellipse_80%_55%_at_50%_-8%,rgba(250,204,21,0.08),transparent)]',
         timeMode === 'liveDay' &&
-          'bg-[radial-gradient(ellipse_80%_50%_at_50%_-8%,rgba(139,92,246,0.07),transparent)]',
+          'bg-[radial-gradient(ellipse_80%_55%_at_50%_-8%,rgba(139,92,246,0.08),transparent)]',
         timeMode === 'eveningWrap' &&
-          'bg-[radial-gradient(ellipse_80%_50%_at_50%_-8%,rgba(168,85,247,0.10),transparent)]'
+          'bg-[radial-gradient(ellipse_80%_55%_at_50%_-8%,rgba(168,85,247,0.11),transparent)]'
       )}
     />
     <motion.div
-      className="pointer-events-none absolute -left-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-violet-400/15 to-cyan-300/12 blur-[160px]"
+      className="pointer-events-none absolute -left-44 -top-44 h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-primary-400/14 to-blue-300/10 blur-[160px]"
       animate={
         ambientMotion === 'soft'
           ? { x: [0, 12, 0], y: [0, 10, 0], scale: [1, 1.03, 1] }
           : { x: [0, 30, -18, 0], y: [0, 22, -28, 0], scale: [1, 1.08, 0.94, 1] }
       }
-      transition={{
-        duration: ambientMotion === 'soft' ? 34 : 28,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
-    />
-    <motion.div
-      className="pointer-events-none absolute -right-36 top-[20%] h-[28rem] w-[28rem] rounded-full bg-gradient-to-br from-amber-300/12 to-rose-300/10 blur-[160px]"
-      animate={
-        ambientMotion === 'soft'
-          ? { x: [0, -10, 0], y: [0, -8, 0], scale: [1, 0.98, 1] }
-          : { x: [0, -26, 18, 0], y: [0, -20, 22, 0], scale: [1, 0.95, 1.07, 1] }
-      }
-      transition={{
-        duration: ambientMotion === 'soft' ? 40 : 36,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
+      transition={{ duration: ambientMotion === 'soft' ? 34 : 28, repeat: Infinity, ease: 'easeInOut' }}
     />
   </>
 );
 
-const INSIGHT_STATUS_STYLES: Record<string, { bg: string; text: string; label: string; labelPl: string }> = {
-  draft: { bg: 'bg-slate-500/20', text: 'text-slate-300', label: 'Draft', labelPl: 'Szkic' },
-  in_review: { bg: 'bg-amber-500/20', text: 'text-amber-300', label: 'In Review', labelPl: 'W przeglądzie' },
-  published: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', label: 'Published', labelPl: 'Opublikowany' },
-};
+function deriveRadarSignals(
+  mapSignals: RadarMapSignal[] | undefined,
+  changedSignals: RadarSignalCard[] | undefined
+): RadarMapSignal[] {
+  if (Array.isArray(mapSignals) && mapSignals.length > 0) {
+    return mapSignals.slice(0, 24).map((signal) => ({
+      ...signal,
+      name: shortenSignalName(signal.name),
+      preview: {
+        ...signal.preview,
+        shortDescription: clampText(signal.preview.shortDescription, 120),
+      },
+    }));
+  }
 
-const PROMPT_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
-  themes: { en: 'Themes', pl: 'Tematy' },
-  issues: { en: 'Issues', pl: 'Problemy' },
-  opportunities: { en: 'Opportunities', pl: 'Szanse' },
-  synthesis: { en: 'Synthesis', pl: 'Synteza' },
-};
+  if (!changedSignals || changedSignals.length === 0) {
+    return PROTOTYPE_RADAR_SIGNALS;
+  }
 
-function RecentInsightsCard({ insights, isPolish }: { insights: V8InterviewInsight[]; isPolish: boolean }) {
+  const rings: RadarMapSignal['ring'][] = ['NOW', 'PREPARE', 'LEARN', 'OBSERVE'];
+  const quadrants: RadarMapSignal['quadrant'][] = [
+    'MY_DEVELOPMENT',
+    'MY_PROJECTS',
+    'MY_INDUSTRY',
+    'MY_ROLE',
+  ];
+
+  return changedSignals.slice(0, 20).map((signal, index) => ({
+    id: signal.signalId,
+    name: shortenSignalName(signal.title),
+    icon: signal.tags.domains[0] || 'signal',
+    ring: rings[index % rings.length],
+    quadrant: quadrants[index % quadrants.length],
+    status: index < 4 ? 'new' : signal.finalScore > 52 ? 'updated' : 'saved',
+    signalType: index % 2 === 0 ? 'TECHNOLOGY' : 'PROCESS',
+    importanceLevel: signal.businessImpact === 'high' ? 'large' : 'medium',
+    fitLevel: signal.actionability === 'high' ? 'high' : 'medium',
+    preview: {
+      shortDescription: clampText(signal.summary, 120),
+      whyItMatters: clampText(signal.whyItMatters, 180),
+      whyItMattersForYou: clampText(signal.whyYouSeeThis, 180),
+      howToThinkAboutIt: clampText(signal.insightSummary || signal.summary, 180),
+      goodFirstQuestion: `What changes first if ${shortenSignalName(signal.title)} matters now?`,
+      suggestedNextStep: clampText(signal.suggestedNextStep, 180),
+    },
+  }));
+}
+
+function shortenSignalName(name: string): string {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return 'Signal';
+  const words = trimmed.split(/\s+/).slice(0, 2);
+  const short = words.join(' ');
+  return short.length > 22 ? `${short.slice(0, 21)}…` : short;
+}
+
+function clampText(value: string, max: number): string {
+  const text = String(value || '').trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+function getSignalPosition(signal: RadarMapSignal, index: number, total: number) {
+  const baseRadius = RING_WEIGHT[signal.ring];
+  const quadAngle = QUADRANT_START[signal.quadrant];
+  const spread = Math.PI / 2;
+  const slot = (index % Math.max(1, total)) / Math.max(1, total);
+  const angle = quadAngle + spread * (0.1 + slot * 0.8);
+  const jitter = ((index % 3) - 1) * 0.015;
+  const radius = Math.max(0.12, Math.min(0.9, baseRadius + jitter));
+
+  return {
+    x: 50 + Math.cos(angle) * radius * 44,
+    y: 50 + Math.sin(angle) * radius * 44,
+  };
+}
+
+function RadarCanvas({
+  signals,
+  selectedSignalId,
+  onSelectSignal,
+  ambientMotion,
+}: {
+  signals: RadarMapSignal[];
+  selectedSignalId: string | null;
+  onSelectSignal: (id: string) => void;
+  ambientMotion: 'soft' | 'full';
+}) {
+  const selectedSignal =
+    signals.find((signal) => signal.id === selectedSignalId) ?? signals[0] ?? null;
+  const selectedIndex = selectedSignal ? signals.findIndex((signal) => signal.id === selectedSignal.id) : -1;
+  const selectedPosition =
+    selectedSignal && selectedIndex >= 0
+      ? getSignalPosition(selectedSignal, selectedIndex, signals.length)
+      : null;
+
+  const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!signals.length) return;
+    if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) return;
+    event.preventDefault();
+    const current = Math.max(0, signals.findIndex((signal) => signal.id === selectedSignalId));
+    const delta = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
+    const next = (current + delta + signals.length) % signals.length;
+    onSelectSignal(signals[next].id);
+  };
+
   return (
-    <div className="rounded-2xl border border-lime-400/20 bg-white/[0.025] backdrop-blur-xl overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06]">
-        <Lightbulb size={14} className="text-lime-400/80" />
-        <h3 className="text-sm font-semibold text-white">
-          {isPolish ? 'Ostatnie insighty' : 'Recent Insights'}
-        </h3>
-        <span className="ml-auto font-mono text-[9px] text-slate-500 uppercase tracking-wider">
-          INS
-        </span>
-      </div>
-      <div className="divide-y divide-white/[0.04]">
-        {insights.map((insight) => {
-          const statusMeta = INSIGHT_STATUS_STYLES[insight.status] ?? INSIGHT_STATUS_STYLES.draft;
-          const promptLabel = PROMPT_TYPE_LABELS[insight.promptType];
-          const insightPath = getArtifactPath('insight', insight.id);
-          return (
-            <a
-              key={insight.id}
-              href={insightPath}
-              className="flex items-center gap-3 px-3 py-2 hover:bg-white/[0.04] transition-colors group"
+    <div className="flex h-full min-h-[620px] flex-col gap-2 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/45 via-slate-900/25 to-slate-900/45 p-3 shadow-[inset_0_0_60px_rgba(15,23,42,0.5)]">
+      <div
+        className="relative flex-1 overflow-hidden rounded-xl border border-white/[0.06] bg-[radial-gradient(circle_at_50%_50%,rgba(96,165,250,0.08),transparent_58%)]"
+        tabIndex={0}
+        onKeyDown={handleCanvasKeyDown}
+        aria-label="Radar canvas"
+      >
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <defs>
+            <linearGradient id="radarSweep" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(96,165,250,0)" />
+              <stop offset="70%" stopColor="rgba(96,165,250,0.16)" />
+              <stop offset="100%" stopColor="rgba(96,165,250,0.38)" />
+            </linearGradient>
+          </defs>
+
+          {QUADRANTS.map((q) => (
+            <rect key={q.key} x={q.x} y={q.y} width="44" height="44" fill={q.fill} rx="1.8" />
+          ))}
+
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(148,163,184,0.28)" strokeWidth="0.45" />
+          <circle cx="50" cy="50" r="33" fill="none" stroke="rgba(148,163,184,0.22)" strokeWidth="0.35" strokeDasharray="0.5 0.8" />
+          <circle cx="50" cy="50" r="22" fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth="0.35" strokeDasharray="0.5 0.8" />
+          <circle cx="50" cy="50" r="11" fill="none" stroke="rgba(148,163,184,0.2)" strokeWidth="0.35" />
+
+          <line x1="50" y1="6" x2="50" y2="94" stroke="rgba(148,163,184,0.2)" strokeWidth="0.32" />
+          <line x1="6" y1="50" x2="94" y2="50" stroke="rgba(148,163,184,0.2)" strokeWidth="0.32" />
+
+          <g>
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur={`${ambientMotion === 'soft' ? 26 : 18}s`}
+              repeatCount="indefinite"
+            />
+            <path d="M50,50 L50,6 A44,44 0 0,1 87.8,27.8 Z" fill="url(#radarSweep)" opacity="0.55" />
+          </g>
+
+          {RING_INFO.map((ring) => (
+            <text
+              key={ring.ring}
+              x="50.6"
+              y={ring.y}
+              textAnchor="start"
+              className="fill-slate-300 text-[2.2px] tracking-wider"
             >
-              <div className="min-w-0 flex-1">
-                <div className="text-[12px] font-medium text-slate-200 truncate group-hover:text-white transition-colors">
-                  {insight.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-medium', statusMeta.bg, statusMeta.text)}>
-                    {isPolish ? statusMeta.labelPl : statusMeta.label}
-                  </span>
-                  {promptLabel && (
-                    <span className="text-[9px] text-slate-500">
-                      {isPolish ? promptLabel.pl : promptLabel.en}
-                    </span>
-                  )}
-                </div>
+              {ring.label}
+            </text>
+          ))}
+        </svg>
+
+        {QUADRANTS.map((q) => {
+          const Icon = q.Icon;
+          return (
+            <div
+              key={`${q.key}-label`}
+              className="group absolute rounded-md bg-black/20 px-1.5 py-1 text-[10px] leading-tight"
+              style={{ left: `${q.x + 1.2}%`, top: `${q.y + 1.2}%` }}
+            >
+              <div className={cn('inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide', q.chip)}>
+                <Icon className="h-3 w-3" />
+                {q.title}
               </div>
-              <span className="shrink-0 font-mono text-[9px] tabular-nums text-slate-600">
-                {new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' })}
-              </span>
-              <ExternalLink size={10} className="shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors" />
-            </a>
+              <div className="text-[9px] text-slate-300/85">{q.subtitle}</div>
+              <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden whitespace-nowrap rounded-md border border-white/10 bg-slate-950/90 px-2 py-1 text-[10px] text-slate-200 shadow-lg group-hover:block">
+                {q.subtitle}
+              </div>
+            </div>
           );
         })}
+
+        {signals.map((signal, index) => {
+          const position = getSignalPosition(signal, index, signals.length);
+          const selected = signal.id === selectedSignalId;
+          const typeMeta = TYPE_META[signal.signalType] ?? TYPE_META.TREND;
+          const Icon = typeMeta.Icon;
+          const showPinnedLabel = selected || signal.importanceLevel === 'large';
+
+          return (
+            <motion.button
+              key={signal.id}
+              type="button"
+              onClick={() => onSelectSignal(signal.id)}
+              initial={{ opacity: 0, scale: 0.72 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: Math.min(index * 0.02, 0.35) }}
+              whileHover={{ scale: 1.1 }}
+              className="group absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${position.x}%`, top: `${position.y}%` }}
+              data-testid={`radar-signal-${signal.id}`}
+            >
+              <span
+                className={cn(
+                  'relative flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition',
+                  typeMeta.tone,
+                  selected && 'h-10 w-10 border-white bg-white text-slate-900 ring-2 ring-primary-300/70'
+                )}
+                title={`${signal.name} · ${signal.ring} · ${signal.quadrant.replaceAll('_', ' ')}`}
+              >
+                <Icon className="h-4 w-4" />
+                {selected && (
+                  <motion.span
+                    className="absolute inset-0 rounded-full"
+                    animate={{
+                      boxShadow: ['0 0 0 0 rgba(96,165,250,0.45)', '0 0 0 12px rgba(96,165,250,0)'],
+                    }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }}
+                  />
+                )}
+              </span>
+
+              {showPinnedLabel ? (
+                <span className="pointer-events-none absolute left-[120%] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/12 bg-slate-900/85 px-2 py-0.5 text-[10px] font-medium text-slate-100">
+                  {signal.name}
+                </span>
+              ) : (
+                <span className="pointer-events-none absolute left-[120%] top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-white/12 bg-slate-900/85 px-2 py-0.5 text-[10px] font-medium text-slate-100 group-hover:inline-flex">
+                  {signal.name}
+                </span>
+              )}
+            </motion.button>
+          );
+        })}
+
+        {selectedSignal && (
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-white/12 bg-slate-900/80 px-2.5 py-1.5 text-[11px] text-slate-100 shadow">
+            <div className="font-semibold">{selectedSignal.name}</div>
+            <div className="text-[10px] text-slate-300">
+              {selectedSignal.ring} · {quadrantTitle(selectedSignal.quadrant)}
+            </div>
+          </div>
+        )}
+
+        {selectedPosition && (
+          <svg className="pointer-events-none absolute inset-0 h-full w-full">
+            <defs>
+              <linearGradient id="selectedBeam" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="rgba(96,165,250,0.0)" />
+                <stop offset="70%" stopColor="rgba(96,165,250,0.35)" />
+                <stop offset="100%" stopColor="rgba(96,165,250,0.0)" />
+              </linearGradient>
+            </defs>
+            <line
+              x1={selectedPosition.x}
+              y1={selectedPosition.y}
+              x2="98"
+              y2="50"
+              stroke="url(#selectedBeam)"
+              strokeWidth="0.45"
+              strokeDasharray="1.2 1"
+            />
+          </svg>
+        )}
+
+        {!signals.length && (
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-300">
+            No signals match the current filter.
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-[10px] text-slate-300">
+        <div className="truncate"><span className="text-slate-400">Areas:</span> My Development · My Projects · My Industry · My Role</div>
+        <div className="truncate"><span className="text-slate-400">Horizon:</span> Now · Prepare · Learn · Observe</div>
+        <div className="truncate"><span className="text-slate-400">Types:</span> Technology · Skill · Business · Risk · Tool</div>
       </div>
     </div>
+  );
+}
+
+function quadrantTitle(quadrant: RadarMapSignal['quadrant']): string {
+  const found = QUADRANTS.find((item) => item.key === quadrant);
+  return found?.title ?? quadrant.replaceAll('_', ' ');
+}
+
+function RadarPreviewPanel({
+  signal,
+  onAction,
+}: {
+  signal: RadarMapSignal | null;
+  onAction: (action: HomeScreenAction) => void;
+}) {
+  if (!signal) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center text-slate-300">
+        Pick a signal on the radar to see why it may matter to you right now.
+      </div>
+    );
+  }
+
+  const typeMeta = TYPE_META[signal.signalType] ?? TYPE_META.TREND;
+  const statusMeta = STATUS_META[signal.status] ?? STATUS_META.new;
+  const Icon = typeMeta.Icon;
+
+  return (
+    <motion.div
+      key={signal.id}
+      initial={{ opacity: 0, x: 14 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className="flex h-full flex-col rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.07] to-white/[0.03] p-4"
+    >
+      <div className="flex items-start gap-3">
+        <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl border', typeMeta.tone)}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-lg font-semibold leading-tight text-white">{signal.name}</h3>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <Badge>{signal.ring}</Badge>
+            <Badge>{quadrantTitle(signal.quadrant)}</Badge>
+            <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
+          </div>
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-300">{signal.preview.shortDescription}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-xl border border-primary-400/20 bg-primary-500/10 p-3">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-primary-200">Why this is on your radar</div>
+        <p className="mt-1 text-[12px] leading-relaxed text-primary-50/90">{signal.preview.whyItMattersForYou}</p>
+      </div>
+
+      <div className="mt-3 flex-1 space-y-2 overflow-auto rounded-xl border border-white/10 bg-white/[0.02] p-3">
+        <Section title="What it is" body={signal.preview.shortDescription} />
+        <Section title="Why it matters" body={signal.preview.whyItMatters} />
+        <Section title="Why it matters for you" body={signal.preview.whyItMattersForYou} />
+        <Section title="How to think about it" body={signal.preview.howToThinkAboutIt} />
+        <Section title="Good first question" body={signal.preview.goodFirstQuestion} />
+        <Section title="Suggested next step" body={signal.preview.suggestedNextStep} />
+      </div>
+
+      <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] p-2.5">
+        <button
+          type="button"
+          onClick={() =>
+            onAction({
+              type: 'chat',
+              packet: {
+                sourceBlock: 'aiPulseCore',
+                intent: 'radar_signal_consult',
+                title: signal.name,
+                starterPrompt: `Help me analyze ${signal.name} for my current work context.`,
+                entityType: 'transformation_signal',
+                entityId: signal.id,
+                contextData: { signal },
+              },
+            })
+          }
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary-300/50 bg-gradient-to-r from-primary-500/35 to-primary-400/25 px-3 py-2 text-[12px] font-medium text-primary-50 transition hover:from-primary-500/45 hover:to-primary-400/35"
+        >
+          <MessageCircle className="h-3.5 w-3.5" />
+          Talk to Teresa
+        </button>
+
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          <ActionChip icon={<BookOpen className="h-3.5 w-3.5" />} label="Save to Notebook" onClick={() => onAction({ type: 'create', target: 'note' })} />
+          <ActionChip icon={<Lightbulb className="h-3.5 w-3.5" />} label="Create Idea" onClick={() => onAction({ type: 'create', target: 'idea' })} />
+          <ActionChip
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            label="Explore Deeper"
+            onClick={() =>
+              onAction({
+                type: 'chat',
+                packet: {
+                  sourceBlock: 'aiPulseCore',
+                  intent: 'radar_develop_thought',
+                  title: signal.name,
+                  starterPrompt: `Explore deeper insights for ${signal.name}.`,
+                  entityType: 'transformation_signal',
+                  entityId: signal.id,
+                  contextData: { signal },
+                },
+              })
+            }
+          />
+        </div>
+
+        <div className="mt-2 flex items-center gap-1.5">
+          <ActionChip
+            icon={<Eye className="h-3.5 w-3.5" />}
+            label="Watch Topic"
+            tone="subtle"
+            onClick={() =>
+              onAction({
+                type: 'radar_feedback',
+                signalId: signal.id,
+                feedback: 'watch',
+                topic: signal.name,
+              })
+            }
+          />
+          <ActionChip
+            icon={<XCircle className="h-3.5 w-3.5" />}
+            label="Not Relevant"
+            tone="subtle"
+            onClick={() =>
+              onAction({
+                type: 'radar_feedback',
+                signalId: signal.id,
+                feedback: 'forget',
+                topic: signal.name,
+              })
+            }
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function Badge({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        'rounded-full border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-300',
+        tone
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Section({ title, body }: { title: string; body: string }) {
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{title}</div>
+      <p className="text-[12px] leading-relaxed text-slate-200">{clampText(body, 220)}</p>
+    </div>
+  );
+}
+
+function ActionChip({
+  icon,
+  label,
+  onClick,
+  tone = 'normal',
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  tone?: 'normal' | 'subtle';
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[11px] font-medium transition',
+        tone === 'normal' && 'border-white/12 bg-white/[0.04] text-slate-200 hover:bg-white/[0.1]',
+        tone === 'subtle' && 'border-white/10 bg-white/[0.02] text-slate-300 hover:bg-white/[0.08]'
+      )}
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+    </button>
   );
 }

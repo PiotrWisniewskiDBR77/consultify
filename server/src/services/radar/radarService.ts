@@ -131,7 +131,56 @@ function buildRecommendations(cards: RadarSignalCard[], isPolish: boolean): Rada
   return recommendations.slice(0, 7);
 }
 
+function toRadarMapSignal(card: RadarSignalCard, index: number) {
+  return {
+    id: card.signalId,
+    name: card.title,
+    icon: card.tags.domains[0] || 'signal',
+    ring: card.ring || (index < 4 ? 'NOW' : index < 8 ? 'PREPARE' : index < 12 ? 'LEARN' : 'OBSERVE'),
+    quadrant:
+      card.quadrant ||
+      (index % 4 === 0
+        ? 'MY_DEVELOPMENT'
+        : index % 4 === 1
+          ? 'MY_PROJECTS'
+          : index % 4 === 2
+            ? 'MY_INDUSTRY'
+            : 'MY_ROLE'),
+    status: card.status || (index < 3 ? 'new' : 'updated'),
+    signalType: card.signalType || 'TREND',
+    importanceLevel: card.businessImpact === 'high' ? 'large' : card.businessImpact === 'medium' ? 'medium' : 'small',
+    fitLevel: card.actionability === 'high' ? 'high' : card.actionability === 'medium' ? 'medium' : 'low',
+    preview: {
+      shortDescription: card.summary,
+      whyItMatters: card.whyItMatters,
+      whyItMattersForYou: card.whyYouSeeThis,
+      howToThinkAboutIt: card.insightSummary,
+      goodFirstQuestion: card.preview?.goodFirstQuestion || `What does ${card.title} change in your current workflow?`,
+      suggestedNextStep: card.suggestedNextStep,
+    },
+  } as const;
+}
+
 class RadarService {
+  private async ingestFallbackSources(nowIso: string, limit = 8): Promise<void> {
+    const fallbackSources = await radarSourceRegistryService.listAll();
+    const active = fallbackSources
+      .filter((source) => source.active)
+      .sort((a, b) => b.trustScore - a.trustScore)
+      .slice(0, limit);
+
+    await Promise.all(
+      active.map(async (source) => {
+        await radarProcessingService.ingestSource(source);
+        await radarSourceRegistryService.markRefreshed(
+          source.id,
+          nowIso,
+          source.refreshFrequencyMinutes
+        );
+      })
+    );
+  }
+
   async buildView(params: {
     userId: string;
     orgId: string;
@@ -157,11 +206,16 @@ class RadarService {
       })
     );
 
-    const [profile, dynamicContext, processedSignals, actions30d, duplicateStats, watchlistItems] =
+    let processedSignals = await radarProcessingService.listSignals(80);
+    if (!processedSignals.length) {
+      await this.ingestFallbackSources(nowIso);
+      processedSignals = await radarProcessingService.listSignals(80);
+    }
+
+    const [profile, dynamicContext, actions30d, duplicateStats, watchlistItems] =
       await Promise.all([
         radarRankingService.getOrCreateProfile({ userId, orgId, role, industry }),
         radarRankingService.buildDynamicContext(userId, orgId),
-        radarProcessingService.listSignals(80),
         queryHelpers
           .queryAll<{ action_type: string }>(
             `SELECT action_type
@@ -292,6 +346,9 @@ class RadarService {
       whatToDoNext: recommendations,
       learnImprove: learnCards,
       watchlist: watchlistCards.length ? watchlistCards : cards.slice(3, 7),
+      radarMap: {
+        signals: cards.slice(0, 20).map((card, index) => toRadarMapSignal(card, index)),
+      },
       metrics: {
         totalSignalsConsidered: processedSignals.length,
         duplicateRate: Number(((duplicateCount / totalCount) * 100).toFixed(1)),

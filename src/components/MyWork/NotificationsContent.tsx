@@ -192,9 +192,9 @@ const getSeverityConfig = (severity: string) => {
     case 'CRITICAL':
       return {
         label: 'Critical',
-        color: 'text-red-700 dark:text-red-400',
-        bg: 'bg-red-100 dark:bg-red-500/20',
-        dot: 'bg-red-500',
+        color: 'text-rose-700 dark:text-rose-400',
+        bg: 'bg-rose-100 dark:bg-rose-500/20',
+        dot: 'bg-rose-500',
         icon: Zap,
       };
     case 'WARNING':
@@ -490,7 +490,7 @@ const NotificationTableRow: React.FC<{
                   e.stopPropagation();
                   onOpenChat(notification);
                 }}
-                className="p-1.5 rounded hover:bg-purple-100 dark:hover:bg-purple-900/30 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                className="p-1.5 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 title={isPolish ? 'Czat' : 'Chat'}
               >
                 <MessageSquare size={14} />
@@ -604,7 +604,7 @@ const NotificationTableRow: React.FC<{
                         onOpenChat(notification);
                         setShowMenu(false);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-slate-50 dark:hover:bg-navy-700"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-primary-700 dark:text-primary-400 hover:bg-slate-50 dark:hover:bg-navy-700"
                     >
                       <MessageSquare size={14} />
                       {isPolish ? 'Otwórz czat' : 'Open Chat'}
@@ -643,7 +643,7 @@ const NotificationTableRow: React.FC<{
                       onDelete(notification.id);
                       setShowMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-slate-50 dark:hover:bg-navy-700"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-700 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-navy-700"
                   >
                     <Trash2 size={14} />
                     {isPolish ? 'Usuń' : 'Delete'}

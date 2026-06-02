@@ -1,9 +1,9 @@
 import { Api } from '@/services/api';
 import {
+  V8PlanningApi,
   type V8PlanningGateReadinessCheck,
   type V8PlanningHistoryEvent,
   type V8PlanningStatusHistoryEntry,
-  V8PlanningApi,
 } from '@/services/api/v8/planning';
 
 export interface InitiativeWriteTruthBundle {
@@ -88,11 +88,8 @@ export async function getInitiativeStatusPreflightTruth(
   targetStatus: string
 ): Promise<InitiativeStatusPreflightTruth> {
   const readiness = await getInitiativeGateReadinessTruth(initiativeId);
-  const transitions: NonNullable<V8PlanningGateReadinessCheck['availableTransitions']> = Array.isArray(
-    readiness?.availableTransitions
-  )
-    ? readiness.availableTransitions
-    : [];
+  const transitions: NonNullable<V8PlanningGateReadinessCheck['availableTransitions']> =
+    Array.isArray(readiness?.availableTransitions) ? readiness.availableTransitions : [];
   const transition =
     transitions.find(
       (item: NonNullable<V8PlanningGateReadinessCheck['availableTransitions']>[number]) =>
@@ -100,8 +97,13 @@ export async function getInitiativeStatusPreflightTruth(
     ) || null;
   const blockingItems = Array.isArray(readiness?.readiness)
     ? readiness.readiness
-        .filter((item: V8PlanningGateReadinessCheck['readiness'][number]) => item?.severity === 'blocking' && !item?.pass)
-        .map((item: V8PlanningGateReadinessCheck['readiness'][number]) => String(item?.label || item?.key || '').trim())
+        .filter(
+          (item: V8PlanningGateReadinessCheck['readiness'][number]) =>
+            item?.severity === 'blocking' && !item?.pass
+        )
+        .map((item: V8PlanningGateReadinessCheck['readiness'][number]) =>
+          String(item?.label || item?.key || '').trim()
+        )
         .filter(Boolean)
     : [];
 

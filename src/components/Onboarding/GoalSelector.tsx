@@ -140,9 +140,9 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
 
   const colorClasses: Record<string, { bg: string; border: string; text: string }> = {
     purple: {
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      border: 'border-purple-500',
-      text: 'text-purple-600 dark:text-purple-400',
+      bg: 'bg-primary-50 dark:bg-primary-900/20',
+      border: 'border-primary-500',
+      text: 'text-primary-600 dark:text-primary-400',
     },
     blue: {
       bg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -252,7 +252,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                         flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all
                         ${
                           selectedGoalId
-                            ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20'
+                            ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-900/20'
                             : 'bg-slate-100 dark:bg-navy-900 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                         }
                     `}

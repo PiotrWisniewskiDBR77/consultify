@@ -29,11 +29,11 @@ const SYSTEM_PROMPTS: Record<AICommandType, { en: string; pl: string }> = {
     pl: 'Jesteś asystentem pisania. Rozwiń podany akapit. Zachowaj ten sam styl, ton i język. Dodaj głębię, przykłady lub argumenty wspierające. NIE powtarzaj oryginalnego tekstu, podaj tylko rozszerzenie.',
   },
   challenge: {
-    en: 'You are a critical thinking advisor. Read the note and ask 3-5 pointed, critical questions that challenge the assumptions, identify blind spots, and provoke deeper thinking. Be constructive but tough. Format as a numbered list.',
+    en: 'You are a critical thinking advisor. Read the note and ask 3-5 pointed, critical questions that challenge the assumptions, identify blind spots, and provoke deeper thinking. Be constructive but tough. Format as a numberose list.',
     pl: 'Jesteś doradcą krytycznego myślenia. Przeczytaj notatkę i zadaj 3-5 celnych, krytycznych pytań, które podważają założenia, identyfikują martwe pola i prowokują głębsze myślenie. Bądź konstruktywny ale wymagający. Sformatuj jako listę numerowaną.',
   },
   action: {
-    en: 'You are a strategic action advisor. Based on the note content, propose 3-5 concrete, actionable next steps. Each should include: what to do, who should own it, and a suggested timeline. Format as a numbered list.',
+    en: 'You are a strategic action advisor. Based on the note content, propose 3-5 concrete, actionable next steps. Each should include: what to do, who should own it, and a suggested timeline. Format as a numberose list.',
     pl: 'Jesteś doradcą strategicznym. Na podstawie treści notatki zaproponuj 3-5 konkretnych, wykonalnych następnych kroków. Każdy powinien zawierać: co zrobić, kto powinien to prowadzić i sugerowany termin. Sformatuj jako listę numerowaną.',
   },
 };
@@ -135,12 +135,12 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
 
   return (
     <div className="mx-auto max-w-5xl px-6 pb-3">
-      <div className="rounded-xl border border-violet-200 dark:border-violet-800/40 bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/30 dark:to-blue-950/20 overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between px-4 py-2 border-b border-violet-200/60 dark:border-violet-800/30">
-          <div className="flex items-center gap-2 text-xs font-medium text-violet-700 dark:text-violet-300">
+      <div className="rounded-xl border border-primary-200 dark:border-primary-800/40 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-950/30 dark:to-blue-950/20 overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-primary-200/60 dark:border-primary-800/30">
+          <div className="flex items-center gap-2 text-xs font-medium text-primary-700 dark:text-primary-300">
             <Sparkles size={14} />
             <span>{label}</span>
-            {isStreaming && <Loader2 size={12} className="animate-spin text-violet-500" />}
+            {isStreaming && <Loader2 size={12} className="animate-spin text-primary-500" />}
           </div>
           <button
             onClick={() => {
@@ -155,7 +155,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
 
         <div className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed min-h-[48px] max-h-[300px] overflow-y-auto">
           {error ? (
-            <span className="text-red-600 dark:text-red-400">{error}</span>
+            <span className="text-rose-600 dark:text-rose-400">{error}</span>
           ) : response ? (
             response
           ) : (
@@ -166,10 +166,10 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
         </div>
 
         {!isStreaming && response && !error && (
-          <div className="flex items-center gap-2 px-4 py-2 border-t border-violet-200/60 dark:border-violet-800/30">
+          <div className="flex items-center gap-2 px-4 py-2 border-t border-primary-200/60 dark:border-primary-800/30">
             <button
               onClick={() => onInsert(response)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium transition-colors"
             >
               <Check size={12} />
               {pl ? 'Zaproponuj do notatki' : 'Propose for note'}

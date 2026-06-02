@@ -112,7 +112,8 @@ async function main() {
   }
 
   console.log('\nRecommendations:');
-  console.log('- Run `npm run dev:stable` for a no-reload, low-noise dev mode.');
+  console.log('- Run `npm run dev:staging` for the default local app against staging.');
+  console.log('- Run `npm run dev:staging:ro` for read-only investigation against staging.');
   console.log(
     '- Optional: run `npm run cleanup:quarantine-duplicates` to move iCloud duplicates into `_quarantine/` (safe/undoable).'
   );

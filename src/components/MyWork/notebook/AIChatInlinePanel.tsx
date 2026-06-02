@@ -1,6 +1,6 @@
 /**
  * AIChatInlinePanel — Notebook workspace tools panel.
- * Composes shared Workspace sections (AI, Transform, Share) with
+ * Composes sharose Workspace sections (AI, Transform, Share) with
  * notebook-specific sections (Insert blocks, Create from note, Page, Compose).
  */
 import type { Editor } from '@tiptap/react';
@@ -247,7 +247,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
           .focus()
           .insertContent({
             type: 'callout',
-            attrs: { variant: 'purple' },
+            attrs: { variant: 'primary' },
             content: [
               { type: 'paragraph', content: [{ type: 'text', text: `✨ ${aiLabel}` }] },
               ...text
@@ -294,10 +294,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
 
   /* ---- Convert actions (notebook-specific) ---- */
   const handleConvertAction = (target: ConvertTarget) => {
-    if (
-      ['assessment', 'report', 'presentation'].includes(target) &&
-      !canConvertDeliverable
-    ) {
+    if (['assessment', 'report', 'presentation'].includes(target) && !canConvertDeliverable) {
       toast.error(
         convertBlockedReason ||
           (isPl
@@ -385,7 +382,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
       icon: Lightbulb,
       labelPl: 'Idea',
       labelEn: 'Idea',
-      iconColor: 'text-violet-500 dark:text-violet-400',
+      iconColor: 'text-primary-500 dark:text-primary-400',
     },
     {
       id: 'assessment',
@@ -442,14 +439,14 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
         <button
           onClick={deleteContainingBlock}
           disabled={!editor}
-          className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-red-500/[0.06] text-red-500/70 hover:bg-red-500/[0.12] hover:text-red-600 dark:hover:text-red-400 text-[10px] font-medium disabled:opacity-40 transition-all"
+          className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-rose-500/[0.06] text-rose-500/70 hover:bg-rose-500/[0.12] hover:text-rose-600 dark:hover:text-rose-400 text-[10px] font-medium disabled:opacity-40 transition-all"
         >
           <Trash2 size={11} />
           {isPl ? 'Usuń blok' : 'Delete block'}
         </button>
       </div>
 
-      {/* ─── AI (shared) ─── */}
+      {/* ─── AI (sharose) ─── */}
       <AIQuickActions isPl={isPl} onFocusAICommand={onFocusAICommand} onOpenAIChat={onOpenAIChat} />
 
       {/* ─── Create from note (notebook-specific) ─── */}
@@ -465,37 +462,42 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
             const isDeliverable = ['assessment', 'report', 'presentation'].includes(id);
             const disabled = !page || (isDeliverable && !canConvertDeliverable);
             return (
-            <button
-              key={id}
-              onClick={() => handleConvertAction(id)}
-              disabled={disabled}
-              className="group flex items-center gap-2 px-2.5 py-2 rounded-xl bg-slate-50/40 dark:bg-white/[0.02] border border-slate-200/25 dark:border-white/[0.04] hover:bg-slate-100/60 dark:hover:bg-white/[0.05] hover:border-slate-300/30 dark:hover:border-white/[0.08] transition-all duration-200 hover:shadow-sm disabled:opacity-40"
-              title={disabled && isDeliverable && convertBlockedReason ? convertBlockedReason : undefined}
-            >
-              <div
-                className={`w-6 h-6 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center ${iconColor} shrink-0`}
+              <button
+                key={id}
+                onClick={() => handleConvertAction(id)}
+                disabled={disabled}
+                className="group flex items-center gap-2 px-2.5 py-2 rounded-xl bg-slate-50/40 dark:bg-white/[0.02] border border-slate-200/25 dark:border-white/[0.04] hover:bg-slate-100/60 dark:hover:bg-white/[0.05] hover:border-slate-300/30 dark:hover:border-white/[0.08] transition-all duration-200 hover:shadow-sm disabled:opacity-40"
+                title={
+                  disabled && isDeliverable && convertBlockedReason
+                    ? convertBlockedReason
+                    : undefined
+                }
               >
-                <Icon size={13} />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">
-                  {isPl ? labelPl : labelEn}
+                <div
+                  className={`w-6 h-6 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center ${iconColor} shrink-0`}
+                >
+                  <Icon size={13} />
                 </div>
-                {disabled && isDeliverable && convertBlockedReason ? (
-                  <div className="mt-0.5 text-[9px] text-slate-400 dark:text-slate-500 line-clamp-2">
-                    {convertBlockedReason}
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">
+                    {isPl ? labelPl : labelEn}
                   </div>
-                ) : null}
-              </div>
-            </button>
-          )})}
+                  {disabled && isDeliverable && convertBlockedReason ? (
+                    <div className="mt-0.5 text-[9px] text-slate-400 dark:text-slate-500 line-clamp-2">
+                      {convertBlockedReason}
+                    </div>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* ─── Transform (shared) ─── */}
+      {/* ─── Transform (sharose) ─── */}
       <TransformTextSection isPl={isPl} context={wsContext} />
 
-      {/* ─── Share (shared) ─── */}
+      {/* ─── Share (sharose) ─── */}
       <ShareSection isPl={isPl} context={wsContext} />
 
       {/* ─── Page metadata (notebook-specific) ─── */}
@@ -553,14 +555,14 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                     onClick={onAskAI}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-slate-50/80 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.07] border border-slate-200/30 dark:border-white/[0.06] hover:border-slate-300/40 dark:hover:border-white/[0.1] transition-all"
                   >
-                    <Sparkles size={11} className="text-violet-500 dark:text-violet-400" />
+                    <Sparkles size={11} className="text-primary-500 dark:text-primary-400" />
                     {isPl ? 'Zapytaj AI' : 'Ask AI'}
                   </button>
                 )}
                 {onDeletePage && (
                   <button
                     onClick={onDeletePage}
-                    className="inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[10px] font-medium bg-red-500/[0.06] text-red-400/70 hover:bg-red-500/[0.12] hover:text-red-500 border border-red-500/[0.06] hover:border-red-500/10 transition-all"
+                    className="inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[10px] font-medium bg-rose-500/[0.06] text-rose-400/70 hover:bg-rose-500/[0.12] hover:text-rose-500 border border-rose-500/[0.06] hover:border-rose-500/10 transition-all"
                     title={isPl ? 'Usuń stronę' : 'Delete page'}
                   >
                     <Trash2 size={11} />
@@ -609,11 +611,11 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                   <button
                     onClick={toggleMic}
-                    className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-red-500/15 text-red-500 shadow-sm shadow-red-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08]'}`}
+                    className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-rose-500/15 text-rose-500 shadow-sm shadow-rose-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08]'}`}
                     title={isPl ? 'Mikrofon' : 'Microphone'}
                   >
                     {isRecording && (
-                      <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/10" />
+                      <span className="absolute inset-0 rounded-xl animate-ping bg-rose-500/10" />
                     )}
                     <span className="relative">
                       {isRecording ? <MicOff size={16} /> : <Mic size={16} />}

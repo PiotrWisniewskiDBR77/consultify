@@ -9,8 +9,8 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
   didAutoReload: boolean;
+  telemetryDelivery: 'idle' | 'sent' | 'failed' | 'unavailable';
 }
 
 /**
@@ -25,8 +25,8 @@ export class RouteErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null,
       didAutoReload: false,
+      telemetryDelivery: 'idle',
     };
   }
 
@@ -34,20 +34,38 @@ export class RouteErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorInfo: null,
       didAutoReload: false,
+      telemetryDelivery: 'idle',
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console in development
     console.error('[RouteErrorBoundary] Caught error:', error, errorInfo);
 
-    // Update state with error details
-    this.setState({
-      error,
-      errorInfo,
-    });
+    this.setState({ error });
+
+    if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+      window
+        .fetch('/api/errors', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: error.message,
+            stack: error.stack,
+            componentStack: errorInfo.componentStack,
+            url: window.location.href,
+          }),
+          keepalive: true,
+        })
+        .then((response) => {
+          this.setState({ telemetryDelivery: response?.ok ? 'sent' : 'failed' });
+        })
+        .catch(() => {
+          this.setState({ telemetryDelivery: 'failed' });
+        });
+    } else {
+      this.setState({ telemetryDelivery: 'unavailable' });
+    }
 
     // System recovery: dynamic-import/module-script failures are typically fixed by a hard reload,
     // but users shouldn't have to click anything. Guard against infinite reload loops by allowing
@@ -96,7 +114,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null,
+      telemetryDelivery: 'idle',
     });
   };
 
@@ -127,18 +145,42 @@ export class RouteErrorBoundary extends Component<Props, State> {
               Wystąpił nieoczekiwany błąd podczas ładowania tej strony.
             </p>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <p className="text-sm font-mono text-red-600 dark:text-red-400 mb-2">
-                  {this.state.error.toString()}
-                </p>
-                {this.state.errorInfo && (
-                  <details className="text-xs text-gray-600 dark:text-gray-400">
-                    <summary className="cursor-pointer">Stack trace</summary>
-                    <pre className="mt-2 overflow-auto">{this.state.errorInfo.componentStack}</pre>
-                  </details>
-                )}
-              </div>
+            <div
+              className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg"
+              role="alert"
+              aria-live="assertive"
+            >
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                Strona napotkała problem i została bezpiecznie zatrzymana.
+              </p>
+              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                Szczegóły techniczne nie są wyświetlane. Spróbuj ponownie lub wróć do strony
+                głównej.
+              </p>
+            </div>
+            {this.state.telemetryDelivery === 'sent' && (
+              <p
+                data-testid="route-error-boundary-telemetry-sent"
+                className="mb-4 text-xs text-emerald-700 dark:text-emerald-300"
+              >
+                Crash diagnostics were sent successfully.
+              </p>
+            )}
+            {this.state.telemetryDelivery === 'failed' && (
+              <p
+                data-testid="route-error-boundary-telemetry-failed"
+                className="mb-4 text-xs text-amber-700 dark:text-amber-300"
+              >
+                Crash diagnostics could not be delivered. You can retry or report manually.
+              </p>
+            )}
+            {this.state.telemetryDelivery === 'unavailable' && (
+              <p
+                data-testid="route-error-boundary-telemetry-unavailable"
+                className="mb-4 text-xs text-amber-700 dark:text-amber-300"
+              >
+                Crash diagnostics were not sent in this environment.
+              </p>
             )}
 
             <div className="flex gap-3">

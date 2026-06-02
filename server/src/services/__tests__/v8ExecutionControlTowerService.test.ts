@@ -12,13 +12,13 @@ vi.mock('../../utils/DbPromise.js', () => ({
   all: vi.fn(),
 }));
 
-import { detectDelaySignals } from '../delayDetectionService.js';
-import { getOverloadAlerts } from '../workloadCapacityService.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
+import { detectDelaySignals } from '../delayDetectionService.js';
 import {
   getExecutionControlTowerQueues,
   V8_EXECUTION_CONTROL_TOWER_CONTRACT,
 } from '../v8ExecutionControlTowerService.js';
+import { getOverloadAlerts } from '../workloadCapacityService.js';
 
 describe('v8ExecutionControlTowerService', () => {
   beforeEach(() => {
@@ -26,7 +26,10 @@ describe('v8ExecutionControlTowerService', () => {
     vi.mocked(detectDelaySignals).mockResolvedValue([]);
     vi.mocked(getOverloadAlerts).mockResolvedValue([]);
     vi.mocked(dbAll).mockImplementation(async (sql: string) => {
-      if (sql.includes('FROM initiatives') && !sql.includes('JOIN initiatives i ON i.id = t.initiative_id')) {
+      if (
+        sql.includes('FROM initiatives') &&
+        !sql.includes('JOIN initiatives i ON i.id = t.initiative_id')
+      ) {
         return [
           {
             id: 'i1',

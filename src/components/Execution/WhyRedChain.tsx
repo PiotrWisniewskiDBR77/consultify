@@ -93,7 +93,7 @@ export const WhyRedChain: React.FC<WhyRedChainProps> = ({ data, compact }) => {
   }
 
   return (
-    <div className="space-y-3" data-testid="why-red-chain">
+    <div className="space-y-3" data-testid="why-rose-chain">
       {data.signals && data.signals.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
@@ -132,13 +132,13 @@ export const WhyRedChain: React.FC<WhyRedChainProps> = ({ data, compact }) => {
       {data.decisions && data.decisions.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-            <Scale size={12} className="text-cyan-500" />
+            <Scale size={12} className="text-blue-500" />
             {t('execution.whyRed.decisions', 'Decisions')}
           </div>
           <ul className="space-y-1 text-sm text-slate-700 dark:text-slate-300">
             {data.decisions.slice(0, 5).map((d) => (
               <li key={d.id} className="flex items-start gap-2 truncate">
-                <span className="text-cyan-500">•</span>
+                <span className="text-blue-500">•</span>
                 <span className="truncate">{d.title}</span>
                 {d.overdue && (
                   <span className="text-[10px] text-rose-500 shrink-0">
@@ -153,13 +153,13 @@ export const WhyRedChain: React.FC<WhyRedChainProps> = ({ data, compact }) => {
       {data.tasks && data.tasks.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-            <CheckSquare size={12} className="text-violet-500" />
+            <CheckSquare size={12} className="text-primary-500" />
             {t('execution.whyRed.tasks', 'Tasks')}
           </div>
           <ul className="space-y-1 text-sm text-slate-700 dark:text-slate-300">
             {data.tasks.slice(0, 5).map((t) => (
               <li key={t.id} className="flex items-start gap-2 truncate">
-                <span className="text-violet-500">•</span>
+                <span className="text-primary-500">•</span>
                 <span className="truncate">{t.title}</span>
                 <span className="text-[10px] text-slate-400 shrink-0 uppercase">{t.status}</span>
               </li>

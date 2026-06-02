@@ -510,9 +510,7 @@ router.get(
       const tableId = req.query.tableId as string | undefined;
 
       const tableContext = await TableContextService.getTableContextForOrg(orgId, workspaceId);
-      const tableDetail = tableId
-        ? await TableContextService.getTableDetailContext(tableId)
-        : '';
+      const tableDetail = tableId ? await TableContextService.getTableDetailContext(tableId) : '';
 
       return res.json({
         tableContext: tableContext || null,

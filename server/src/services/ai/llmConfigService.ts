@@ -241,6 +241,15 @@ const TIER_PRIORITY: Record<string, number> = {
   FREE: 1,
 };
 
+// NOTE: Some Postgres deployments may carry legacy SQLite-first schemas where boolean flags
+// were stored as INTEGER (0/1). Comparing INTEGER to TRUE/FALSE breaks Postgres with:
+// "operator does not exist: integer = boolean".
+// This helper makes filters tolerant to both representations.
+const SQL_TRUTHY_LITERALS = "('1','t','true','y','yes','on')";
+function sqlIsTruthy(column: string): string {
+  return `LOWER(CAST(${column} AS TEXT)) IN ${SQL_TRUTHY_LITERALS}`;
+}
+
 export const DEFAULT_FALLBACK_CHAIN = [
   'openrouter',
   'openai',
@@ -302,18 +311,69 @@ function getEnvSyncAllowlist(): Set<string> {
   return new Set(['openrouter']);
 }
 
+function getDisabledProviders(): Set<string> {
+  const raw = String(process.env.LLM_DISABLED_PROVIDERS || process.env.AI_DISABLED_PROVIDERS || '')
+    .trim()
+    .toLowerCase();
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
 export class LLMConfigService {
   private providerCache: Map<string, ProviderConfig>;
   private cacheExpiry: number;
   private cacheTTL: number;
   private healthStatus: Map<string, string>;
   private initialized: boolean;
+  private llmProvidersFlagTypeCache: Partial<
+    Record<'is_active' | 'is_default', 'boolean' | 'integer' | 'unknown'>
+  >;
   constructor() {
     this.providerCache = new Map();
     this.cacheExpiry = 0;
     this.cacheTTL = 5 * 60 * 1000;
     this.healthStatus = new Map();
     this.initialized = false;
+    this.llmProvidersFlagTypeCache = {};
+  }
+
+  private async getLlmProvidersFlagType(
+    column: 'is_active' | 'is_default'
+  ): Promise<'boolean' | 'integer' | 'unknown'> {
+    const cached = this.llmProvidersFlagTypeCache[column];
+    if (cached) return cached;
+
+    try {
+      const row = await this.getAsync<{ data_type?: string }>(
+        `SELECT data_type
+         FROM information_schema.columns
+         WHERE table_name = 'llm_providers' AND column_name = ?`,
+        [column]
+      );
+      const dt = String(row?.data_type || '').toLowerCase();
+      const resolved = dt === 'boolean' ? 'boolean' : dt.includes('int') ? 'integer' : 'unknown';
+      this.llmProvidersFlagTypeCache[column] = resolved;
+      return resolved;
+    } catch {
+      // SQLite / limited-permission DBs may not expose information_schema; fall back to safest default.
+      this.llmProvidersFlagTypeCache[column] = 'unknown';
+      return 'unknown';
+    }
+  }
+
+  private async coerceLlmProvidersFlagValue(
+    column: 'is_active' | 'is_default',
+    value: boolean
+  ): Promise<boolean | number> {
+    const t = await this.getLlmProvidersFlagType(column);
+    if (t === 'integer') return value ? 1 : 0;
+    // boolean or unknown → prefer boolean (Postgres boolean columns accept boolean; SQLite will store as 0/1 anyway)
+    return value;
   }
 
   private getProviderCacheKey(
@@ -498,8 +558,16 @@ export class LLMConfigService {
     try {
       await this.runAsync(
         `ALTER TABLE llm_providers
+         ALTER COLUMN is_active DROP DEFAULT`
+      );
+      await this.runAsync(
+        `ALTER TABLE llm_providers
          ALTER COLUMN is_active TYPE BOOLEAN
          USING (CASE WHEN (is_active::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+      await this.runAsync(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_active SET DEFAULT TRUE`
       );
     } catch {
       /* ignore */
@@ -507,8 +575,16 @@ export class LLMConfigService {
     try {
       await this.runAsync(
         `ALTER TABLE llm_providers
+         ALTER COLUMN is_default DROP DEFAULT`
+      );
+      await this.runAsync(
+        `ALTER TABLE llm_providers
          ALTER COLUMN is_default TYPE BOOLEAN
          USING (CASE WHEN (is_default::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+      await this.runAsync(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_default SET DEFAULT FALSE`
       );
     } catch {
       /* ignore */
@@ -587,6 +663,10 @@ export class LLMConfigService {
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0',
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_health_check TEXT',
       "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS health_status TEXT DEFAULT 'unknown'",
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_category TEXT',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_http_status INTEGER',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_message TEXT',
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_at TEXT',
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS updated_at TEXT',
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS description TEXT',
       "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'STANDARD'",
@@ -645,9 +725,9 @@ export class LLMConfigService {
     aiLogger.info('LLMConfigService', 'Syncing database with environment definitions...');
 
     const allowlist = getEnvSyncAllowlist();
+    const disabledProviders = getDisabledProviders();
 
     for (const [providerId, definition] of Object.entries(PROVIDER_DEFINITIONS)) {
-      if (!allowlist.has(providerId)) continue;
       const apiKey = this.getApiKeyFromEnv(providerId);
 
       const changes: Record<string, unknown> = {
@@ -671,32 +751,62 @@ export class LLMConfigService {
       const existingProvider = await this.getProviderFromDb(providerId);
 
       if (existingProvider) {
-        const isDev = process.env.NODE_ENV !== 'production';
-        const allowEnvSecretOverride =
-          isDev &&
-          (process.env.LLM_SECRETS_FROM_ENV === 'true' ||
-            process.env.LLM_SECRETS_FROM_ENV === '1' ||
-            process.env.LLM_SECRETS_FROM_ENV === 'yes');
+        if (disabledProviders.has(providerId)) {
+          changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', false);
+        }
 
-        // DB is the canonical source for secrets (prod). In dev, allow env to override to make
-        // local setup frictionless (paste key into `.env.local` and restart).
+        const runtimeEnv = String(
+          process.env.APP_ENV ||
+            process.env.RAILWAY_ENVIRONMENT_NAME ||
+            process.env.RAILWAY_ENVIRONMENT ||
+            process.env.ENVIRONMENT ||
+            process.env.NODE_ENV ||
+            ''
+        )
+          .trim()
+          .toLowerCase();
+        const isProdEnv = runtimeEnv === 'production' || runtimeEnv === 'prod';
+        const explicitEnvOverride = ['true', '1', 'yes', 'on'].includes(
+          String(process.env.LLM_SECRETS_FROM_ENV || '')
+            .trim()
+            .toLowerCase()
+        );
+        const allowEnvSecretOverride = !isProdEnv || explicitEnvOverride;
+
+        // In production, DB is the canonical source for secrets by default.
+        // In non-prod envs (staging/dev), prefer env keys so rotating `OPENAI_API_KEY` etc.
+        // immediately takes effect without manual DB edits.
         const existingKey = String(existingProvider.api_key || '').trim();
         const envKey = String(apiKey || '').trim();
-        if (envKey && (allowEnvSecretOverride || !existingKey || isPlaceholderKey(existingKey))) {
+        if (
+          allowlist.has(providerId) &&
+          envKey &&
+          (allowEnvSecretOverride || !existingKey || isPlaceholderKey(existingKey))
+        ) {
           changes.api_key = envKey;
         }
 
         const effectiveKey = String(
           (changes.api_key ?? existingProvider.api_key ?? '') || ''
         ).trim();
-        if (effectiveKey) {
-          changes.is_active = 1;
+        if (!disabledProviders.has(providerId) && allowlist.has(providerId) && effectiveKey) {
+          changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', true);
+        } else {
+          // If a provider has no usable key (env+db empty/placeholder), keep it inactive to avoid
+          // noisy health checks / circuit breaker churn.
+          if (allowlist.has(providerId)) {
+            const existingKeyLooksUsable = existingKey && !isPlaceholderKey(existingKey);
+            const envKeyLooksUsable = envKey && !isPlaceholderKey(envKey);
+            if (!existingKeyLooksUsable && !envKeyLooksUsable) {
+              changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', false);
+            }
+          }
         }
 
         // Only OpenRouter is auto-promoted to "default" by env sync.
         // Other providers should not silently become default (multi-default can break routing expectations).
-        if (providerId === 'openrouter') {
-          changes.is_default = 1;
+        if (allowlist.has(providerId) && providerId === 'openrouter') {
+          changes.is_default = await this.coerceLlmProvidersFlagValue('is_default', true);
         }
 
         await this.updateProviderInDb(providerId, changes);
@@ -705,9 +815,15 @@ export class LLMConfigService {
         await this.createProviderInDb({
           id: `${providerId}-01`,
           provider: providerId,
-          api_key: apiKey || null,
-          is_active: apiKey ? 1 : 0,
-          is_default: providerId === 'openrouter' ? 1 : 0,
+          api_key: allowlist.has(providerId) ? apiKey || null : null,
+          is_active: await this.coerceLlmProvidersFlagValue(
+            'is_active',
+            allowlist.has(providerId) && !!apiKey
+          ),
+          is_default: await this.coerceLlmProvidersFlagValue(
+            'is_default',
+            allowlist.has(providerId) && providerId === 'openrouter'
+          ),
           ...changes,
         });
         aiLogger.info('LLMConfigService', `Created provider ${providerId} (Active: ${!!apiKey})`);
@@ -723,12 +839,14 @@ export class LLMConfigService {
         !!String(openrouterRow?.api_key || '').trim() ||
         !!String(this.getApiKeyFromEnv('openrouter') || '').trim();
       if (hasOpenrouterKey) {
+        const notDefault = await this.coerceLlmProvidersFlagValue('is_default', false);
+        const isDefault = await this.coerceLlmProvidersFlagValue('is_default', true);
         await this.runAsync('UPDATE llm_providers SET is_default = ? WHERE provider != ?', [
-          false,
+          notDefault,
           'openrouter',
         ]);
         await this.runAsync('UPDATE llm_providers SET is_default = ? WHERE provider = ?', [
-          true,
+          isDefault,
           'openrouter',
         ]);
       }
@@ -743,7 +861,7 @@ export class LLMConfigService {
     aiLogger.info('LLMConfigService', 'Seeding tier assignments for active providers...');
 
     const activeProviders = await this.allAsync<{ id: string; provider: string; tier: string }>(
-      'SELECT id, provider, tier FROM llm_providers WHERE is_active = TRUE'
+      `SELECT id, provider, tier FROM llm_providers WHERE ${sqlIsTruthy('is_active')}`
     );
 
     for (const p of activeProviders || []) {
@@ -907,7 +1025,7 @@ export class LLMConfigService {
     }
 
     const rows = await this.allAsync<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_active = TRUE ORDER BY priority DESC, is_default DESC'
+      `SELECT * FROM llm_providers WHERE ${sqlIsTruthy('is_active')} ORDER BY priority DESC, is_default DESC`
     );
 
     this.providerCache.clear();
@@ -968,11 +1086,11 @@ export class LLMConfigService {
 
   async getDefaultProvider(): Promise<ProviderConfig | null> {
     let row = await this.getAsync<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_default = TRUE AND is_active = TRUE LIMIT 1'
+      `SELECT * FROM llm_providers WHERE ${sqlIsTruthy('is_default')} AND ${sqlIsTruthy('is_active')} LIMIT 1`
     );
     if (!row) {
       row = await this.getAsync<ProviderRow>(
-        'SELECT * FROM llm_providers WHERE is_active = TRUE ORDER BY priority DESC LIMIT 1'
+        `SELECT * FROM llm_providers WHERE ${sqlIsTruthy('is_active')} ORDER BY priority DESC LIMIT 1`
       );
     }
     return row ? this.enrichProviderConfig(row) : null;

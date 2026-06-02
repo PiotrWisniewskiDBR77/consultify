@@ -1,0 +1,42 @@
+---
+module_id: MODULE_PARTNER_PORTAL
+doc_kind: TESTS
+version: 1.0
+owner: user
+status: canonical
+last_updated: 2026-05-09
+---
+
+# Acceptance & Tests — Portal Partnerski
+
+## Scope Of Verification (As-Is)
+
+- Verify sidebar -> AppView -> route -> rendered component chain.
+- Verify ownership/alias statements against `menuConfig.ts`, `routeConfig.ts`, `AppRoutes.tsx`.
+- Verify role/guard behavior where module is protected.
+
+## Required Checks
+
+- [ ] Route opens documented runtime (`workspace` or `placeholder`) exactly as specified.
+- [ ] AppView enum and route mapping are consistent in `src/types/core.ts` and `routeConfig.ts`.
+- [ ] No contradiction with global ownership decisions in module docs and global docs.
+- [ ] If module is placeholder, UI communicates not-ready state explicitly.
+
+## Current Gate Expectation
+
+- Expected gate result today: `PASS_WITH_P2 (public/protected boundary requires ongoing consistency checks).`
+- This is As-Is readiness, not target-state implementation readiness.
+
+## Function-Level Acceptance Matrix
+
+| Function | Acceptance focus | Runtime/code evidence | Status |
+| --- | --- | --- | --- |
+| `PART_PORTAL_WORKSPACE` | Protected partner portal runtime is mounted | `AppRoutes.tsx` + `PartnerPortalViewNew` + `ProtectedRoute` | pass |
+| `PART_PUBLIC_ACQUISITION_BOUNDARY` | Public vs protected partner boundary is explicit | codemap route ownership notes | pass (`partial`) |
+
+## Evidence Pointers
+
+- `src/components/navigation/Sidebar/menuConfig.ts`
+- `src/routes/routeConfig.ts`
+- `src/routes/AppRoutes.tsx`
+- `src/types/core.ts`

@@ -70,14 +70,14 @@ const STATUS_CONFIG: Record<
     label: 'At Risk',
   },
   OFF_TARGET: {
-    color: 'text-red-600',
-    bgColor: 'bg-red-100 dark:bg-red-900/20',
+    color: 'text-rose-600',
+    bgColor: 'bg-rose-100 dark:bg-rose-900/20',
     icon: <TrendingDown size={14} />,
     label: 'Off Target',
   },
   ACHIEVED: {
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100 dark:bg-purple-900/20',
+    color: 'text-primary-600',
+    bgColor: 'bg-primary-100 dark:bg-primary-900/20',
     icon: <Target size={14} />,
     label: 'Achieved',
   },
@@ -85,10 +85,10 @@ const STATUS_CONFIG: Record<
 
 const CATEGORY_COLORS: Record<KPICategory, string> = {
   DELIVERY: 'bg-blue-500',
-  QUALITY: 'bg-purple-500',
+  QUALITY: 'bg-primary-500',
   FINANCIAL: 'bg-green-500',
   ADOPTION: 'bg-amber-500',
-  SATISFACTION: 'bg-cyan-500',
+  SATISFACTION: 'bg-blue-500',
 };
 
 export const KPIDashboard: React.FC<KPIDashboardProps> = ({
@@ -163,7 +163,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
       case 'UP':
         return <TrendingUp size={14} className="text-green-500" />;
       case 'DOWN':
-        return <TrendingDown size={14} className="text-red-500" />;
+        return <TrendingDown size={14} className="text-rose-500" />;
       default:
         return <span className="w-3 h-0.5 bg-slate-400 rounded" />;
     }
@@ -175,14 +175,14 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <BarChart3 className="text-purple-500" size={24} />
+              <BarChart3 className="text-primary-500" size={24} />
               KPI Dashboard
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Loading KPI data...</p>
           </div>
         </div>
         <div className="flex items-center justify-center h-48">
-          <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+          <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
         </div>
       </div>
     );
@@ -194,16 +194,16 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <BarChart3 className="text-purple-500" size={24} />
+              <BarChart3 className="text-primary-500" size={24} />
               KPI Dashboard
             </h3>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <p className="text-sm text-red-500 dark:text-red-400">{fetchError}</p>
+          <p className="text-sm text-rose-500 dark:text-rose-400">{fetchError}</p>
           <button
             onClick={fetchKPIs}
-            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors"
           >
             Retry
           </button>
@@ -218,7 +218,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <BarChart3 className="text-purple-500" size={24} />
+              <BarChart3 className="text-primary-500" size={24} />
               KPI Dashboard
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -227,7 +227,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
           </div>
           <button
             onClick={onAddKPI}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add KPI
@@ -250,7 +250,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <BarChart3 className="text-purple-500" size={24} />
+            <BarChart3 className="text-primary-500" size={24} />
             KPI Dashboard
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -266,7 +266,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
           />
           <button
             onClick={onAddKPI}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Add KPI
@@ -290,23 +290,23 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Off Target</div>
-          <div className="text-2xl font-bold text-red-400">{stats.offTarget}</div>
+          <div className="text-2xl font-bold text-rose-400">{stats.offTarget}</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Achieved</div>
-          <div className="text-2xl font-bold text-purple-400">{stats.achieved}</div>
+          <div className="text-2xl font-bold text-primary-400">{stats.achieved}</div>
         </div>
       </div>
 
       {/* Off Target Alert */}
       {stats.offTarget > 0 && (
-        <div className="flex items-start gap-3 p-4 bg-red-900/10 border border-red-500/20 rounded-xl">
-          <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-rose-900/10 border border-rose-500/20 rounded-xl">
+          <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-red-300">
+            <p className="text-sm font-medium text-rose-300">
               {stats.offTarget} KPI{stats.offTarget > 1 ? 's are' : ' is'} off target
             </p>
-            <p className="text-xs text-red-400/70 mt-1">
+            <p className="text-xs text-rose-400/70 mt-1">
               Review and create corrective actions to get back on track
             </p>
           </div>
@@ -322,7 +322,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                 selectedCategory === cat
-                  ? 'bg-purple-900/30 text-purple-400'
+                  ? 'bg-primary-900/30 text-primary-400'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-navy-800'
               }`}
             >
@@ -348,7 +348,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
               key={kpi.id}
               className={`bg-white dark:bg-navy-900 rounded-xl border-2 p-4 transition-all ${
                 kpi.status === 'OFF_TARGET'
-                  ? 'border-red-500/30'
+                  ? 'border-rose-500/30'
                   : 'border-slate-200 dark:border-navy-700'
               }`}
             >
@@ -392,7 +392,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                         ? 'text-green-600'
                         : progressPercent >= 80
                           ? 'text-amber-600'
-                          : 'text-red-600'
+                          : 'text-rose-600'
                     }`}
                   >
                     {Math.round(progressPercent)}%
@@ -409,7 +409,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                       ? 'bg-green-500'
                       : progressPercent >= 80
                         ? 'bg-amber-500'
-                        : 'bg-red-500'
+                        : 'bg-rose-500'
                   }`}
                   style={{ width: `${Math.min(progressPercent, 100)}%` }}
                 />
@@ -424,7 +424,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
                 {needsAction && (
                   <button
                     onClick={() => onCreateCorrectiveAction?.(kpi.id)}
-                    className="text-xs font-medium text-red-400 hover:underline flex items-center gap-1"
+                    className="text-xs font-medium text-rose-400 hover:underline flex items-center gap-1"
                   >
                     Create Action
                     <ChevronRight size={12} />
@@ -436,7 +436,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
               {kpi.linkedInitiativeName && (
                 <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    Linked: <span className="text-purple-500">{kpi.linkedInitiativeName}</span>
+                    Linked: <span className="text-primary-500">{kpi.linkedInitiativeName}</span>
                   </span>
                 </div>
               )}

@@ -133,7 +133,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
   if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
       </div>
     );
   }
@@ -149,7 +149,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
             setSelected(null);
             setStepIndex(0);
           }}
-          className="text-xs text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 flex items-center gap-1"
+          className="text-xs text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 flex items-center gap-1"
         >
           <ChevronLeft size={14} />
           {t('help.onboarding.back', 'Back to playbooks')}
@@ -164,7 +164,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
           )}
           {totalTime > 0 && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
-              <Clock size={14} className="text-purple-500" />
+              <Clock size={14} className="text-primary-500" />
               <span>
                 {t('help.onboarding.totalTime', 'Expected time')}: {formatMinutes(totalTime)}
               </span>
@@ -185,14 +185,14 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                   onClick={() => setStepIndex(idx)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
                     idx === stepIndex
-                      ? 'bg-purple-50 dark:bg-purple-900/20'
+                      ? 'bg-primary-50 dark:bg-primary-900/20'
                       : 'hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
                 >
                   {st === 'DONE' ? (
                     <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
                   ) : st === 'IN_PROGRESS' ? (
-                    <Circle size={16} className="text-purple-500 fill-current flex-shrink-0" />
+                    <Circle size={16} className="text-primary-500 fill-current flex-shrink-0" />
                   ) : (
                     <Circle
                       size={16}
@@ -217,12 +217,14 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
               </div>
               <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mt-1">
                 <div
-                  className="h-full bg-purple-500 rounded-full transition-all"
+                  className="h-full bg-primary-500 rounded-full transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>
             </div>
-            <div className="text-xs font-semibold text-purple-600 dark:text-purple-400">{pct}%</div>
+            <div className="text-xs font-semibold text-primary-600 dark:text-primary-400">
+              {pct}%
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -258,7 +260,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
             {currentStep.actionType === 'CTA' && (
               <button
                 onClick={() => handleStepAction(currentStep)}
-                className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
+                className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
               >
                 {t(getStepCtaLabelKey(currentStep), 'Try it now')}
                 <ArrowRight size={16} />
@@ -276,7 +278,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
             </button>
             <button
               onClick={handleNext}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
             >
               {stepIndex === total - 1
                 ? t('help.onboarding.finish', 'Finish')
@@ -307,11 +309,11 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
             };
 
     return (
-      <div className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
+      <div className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
         <button onClick={() => openPlaybook(p)} className="w-full text-left">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <Rocket size={18} className="text-purple-600 dark:text-purple-400" />
+            <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+              <Rocket size={18} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
@@ -330,7 +332,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                 </div>
               )}
               {p.recommendationReason && (
-                <div className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
+                <div className="text-xs text-primary-600 dark:text-primary-400 mt-1 font-medium">
                   {t(p.recommendationReason)}
                 </div>
               )}
@@ -345,7 +347,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
             title={t('help.onboarding.dismiss', 'Dismiss')}
             aria-label={t('help.onboarding.dismiss', 'Dismiss')}
           >
-            <XCircle size={16} className="text-slate-400 hover:text-red-500" />
+            <XCircle size={16} className="text-slate-400 hover:text-rose-500" />
           </button>
         )}
       </div>
@@ -369,7 +371,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
       {recommended.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-            <CheckCircle2 size={14} className="text-purple-500" />
+            <CheckCircle2 size={14} className="text-primary-500" />
             {t('help.onboarding.recommended', 'Recommended')}
           </div>
           <div className="space-y-3">

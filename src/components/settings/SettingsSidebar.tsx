@@ -76,6 +76,7 @@ export type SettingsSection =
   | 'ai-model-params'
   | 'ai-autocomplete'
   | 'ai-memory'
+  | 'ai-chat-history'
   | 'ai-privacy'
   | 'ai-prompt-library'
   | 'ai-voice'
@@ -156,335 +157,351 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   );
 
   // Navigation groups configuration - matching Admin structure (no icons on groups)
-  const navGroups: NavGroup[] = useMemo(
+  const navGroups: NavGroup[] = useMemo<NavGroup[]>(
     () =>
-      [
-        {
-          id: 'settings-root',
-          label: t('settings.sidebar.groups.settingsRoot', 'SETTINGS ROOT'),
-          defaultOpen: true,
-          items: [
-            {
-              id: 'overview',
-              label: t('settings.sidebar.overview', 'Overview'),
-              icon: Sparkles,
-              keywords: ['taxonomy', 'ownership', 'overview', 'scope'],
-            },
-            {
-              id: 'tenant-defaults',
-              label: t('settings.sidebar.tenantDefaults', 'Tenant Defaults'),
-              icon: Building2,
-              keywords: ['organization', 'defaults', 'locale', 'currency'],
-            },
-            {
-              id: 'tenant-branding',
-              label: t('settings.sidebar.tenantBranding', 'Branding Handoff'),
-              icon: Sparkles,
-              keywords: ['branding', 'logo', 'colors', 'domain'],
-            },
-            {
-              id: 'tenant-security',
-              label: t('settings.sidebar.tenantSecurity', 'Security Handoff'),
-              icon: Shield,
-              keywords: ['admin', 'security', 'mfa', 'sso', 'policy'],
-            },
-            {
-              id: 'module-preferences',
-              label: t('settings.sidebar.modulePreferences', 'Module Preferences'),
-              icon: PanelsTopLeft,
-              keywords: ['module', 'interview', 'tools', 'assessment', 'copilot'],
-            },
-          ],
-        },
-        {
-          id: 'my-settings',
-          label: t('settings.sidebar.groups.mySettings', 'PERSONAL'),
-          items: [
-            {
-              id: 'profile',
-              label: t('settings.sidebar.profile', 'Profile'),
-              icon: User,
-              keywords: ['name', 'email', 'bio', 'personal'],
-            },
-            {
-              id: 'avatar',
-              label: t('settings.sidebar.avatar', 'Avatar & Photo'),
-              icon: Image,
-              keywords: ['picture', 'photo', 'image'],
-            },
-            {
-              id: 'signatures',
-              label: t('settings.sidebar.signatures', 'Email Signatures'),
-              icon: FileSignature,
-              keywords: ['signature', 'email'],
-            },
-            {
-              id: 'working-hours',
-              label: t('settings.sidebar.workingHours', 'Working Hours'),
-              icon: Clock,
-              keywords: ['hours', 'schedule', 'availability'],
-            },
-          ],
-        },
-        {
-          id: 'work-preferences',
-          label: t('settings.sidebar.groups.workPreferences', 'WORKFLOW'),
-          items: [
-            {
-              id: 'dashboard',
-              label: t('settings.sidebar.dashboard', 'Dashboard'),
-              icon: LayoutDashboard,
-              keywords: ['home', 'widgets', 'start page'],
-            },
-            {
-              id: 'work-preferences',
-              label: t('settings.sidebar.workPrefs', 'Work Preferences'),
-              icon: Settings,
-              keywords: ['tasks', 'projects', 'default'],
-            },
-            {
-              id: 'regional',
-              label: t('settings.sidebar.regional', 'Regional'),
-              icon: Globe,
-              keywords: ['timezone', 'date', 'format', 'currency'],
-            },
-            {
-              id: 'language',
-              label: t('settings.sidebar.language', 'Language'),
-              icon: Globe,
-              keywords: ['locale', 'translation'],
-            },
-          ],
-        },
-        {
-          id: 'ai-automation-group',
-          label: t('settings.sidebar.groups.aiAutomation', 'MODULES: AI & AUTOMATION'),
-          items: [
-            {
-              id: 'ai-behavior',
-              label: t('settings.sidebar.aiBehavior', 'Behavior & Instructions'),
-              icon: Brain,
-              keywords: [
-                'prompt',
-                'system',
-                'behavior',
-                'personality',
-                'tone',
-                'style',
-                'instructions',
-              ],
-            },
-            {
-              id: 'ai-model-params',
-              label: t('settings.sidebar.aiModelParams', 'Model & Parameters'),
-              icon: Sparkles,
-              keywords: ['gpt', 'claude', 'gemini', 'llm', 'temperature', 'tokens'],
-            },
-            {
-              id: 'ai-autocomplete',
-              label: t('settings.sidebar.aiAutocomplete', 'Auto-Complete'),
-              icon: Zap,
-              keywords: ['suggestions', 'completion'],
-            },
-            {
-              id: 'ai-memory',
-              label: t('settings.sidebar.aiMemory', 'Memory & Context'),
-              icon: Database,
-              keywords: ['context', 'history', 'remember', 'retention'],
-            },
-            {
-              id: 'ai-privacy',
-              label: t('settings.sidebar.aiPrivacy', 'Data & Privacy'),
-              icon: Shield,
-              keywords: ['privacy', 'data', 'access', 'audit', 'compliance'],
-            },
-            {
-              id: 'ai-prompt-library',
-              label: t('settings.sidebar.aiPromptLibrary', 'Prompt Library'),
-              icon: BookOpen,
-              keywords: ['prompts', 'templates', 'saved', 'library'],
-            },
-            {
-              id: 'ai-voice',
-              label: t('settings.sidebar.aiVoice', 'Voice & TTS'),
-              icon: Mic,
-              keywords: ['speech', 'text to speech', 'audio'],
-            },
-            {
-              id: 'ai-usage',
-              label: t('settings.sidebar.aiUsage', 'Usage Dashboard'),
-              icon: Zap,
-              keywords: ['tokens', 'cost', 'usage', 'stats'],
-            },
-          ],
-        },
-        {
-          id: 'notifications',
-          label: t('settings.sidebar.groups.notifications', 'MODULES: NOTIFICATIONS'),
-          items: [
-            {
-              id: 'notifications-overview',
-              label: t('settings.sidebar.notificationsOverview', 'Channels & Categories'),
-              icon: Bell,
-              keywords: ['alerts', 'notifications', 'channels'],
-            },
-            {
-              id: 'notifications-email-digest',
-              label: t('settings.sidebar.notificationsEmailDigest', 'Email & Digest'),
-              icon: Mail,
-              keywords: ['email', 'digest', 'summary', 'daily', 'weekly'],
-            },
-            {
-              id: 'notifications-desktop-sounds',
-              label: t('settings.sidebar.notificationsDesktopSounds', 'Desktop & Sounds'),
-              icon: Monitor,
-              keywords: ['push', 'desktop', 'browser', 'audio', 'alert', 'tone', 'sound'],
-            },
-            {
-              id: 'notifications-availability',
-              label: t('settings.sidebar.notificationsAvailability', 'Availability'),
-              icon: Moon,
-              keywords: [
-                'quiet hours',
-                'dnd',
-                'do not disturb',
-                'focus',
-                'schedule',
-                'silent',
-                'pause',
-              ],
-            },
-          ],
-        },
-        {
-          id: 'security',
-          label: t('settings.sidebar.groups.security', 'SECURITY'),
-          items: [
-            {
-              id: 'security-dashboard',
-              label: t('settings.sidebar.securityOverview', 'Security Overview'),
-              icon: Shield,
-              keywords: ['score', 'status', 'protection', 'dashboard', 'mfa', '2fa'],
-            },
-            {
-              id: 'auth-access',
-              label: t('settings.sidebar.authAccess', 'Authentication & Access'),
-              icon: Lock,
-              keywords: ['password', 'sessions', 'recovery', 'login', 'devices', 'history'],
-            },
-          ],
-        },
-        {
-          id: 'integrations',
-          label: t('settings.sidebar.groups.integrations', 'MODULES: INTEGRATIONS'),
-          items: [
-            {
-              id: 'connected-apps',
-              label: t('settings.sidebar.connectedApps', 'Connected Apps'),
-              icon: Link2,
-              keywords: ['slack', 'teams', 'apps'],
-            },
-            {
-              id: 'calendar-sync',
-              label: t('settings.sidebar.calendarSync', 'Calendar Sync'),
-              icon: Calendar,
-              keywords: ['google', 'outlook', 'calendar'],
-            },
-            {
-              id: 'api-keys',
-              label: t('settings.sidebar.apiKeys', 'API Keys'),
-              icon: Key,
-              keywords: ['token', 'developer', 'api'],
-            },
-            {
-              id: 'webhooks',
-              label: t('settings.sidebar.webhooks', 'Webhooks'),
-              icon: Webhook,
-              keywords: ['automation', 'endpoint'],
-            },
-          ],
-        },
-        {
-          id: 'data-privacy',
-          label: t('settings.sidebar.groups.dataPrivacy', 'DATA & PRIVACY'),
-          items: [
-            {
-              id: 'data-controls',
-              label: t('settings.sidebar.dataControls', 'Data & Consent'),
-              icon: Database,
-              keywords: ['gdpr', 'retention', 'storage', 'consent', 'export', 'delete', 'account'],
-            },
-            {
-              id: 'privacy',
-              label: t('settings.sidebar.privacy', 'Privacy & Visibility'),
-              icon: Shield,
-              keywords: ['visibility', 'sharing', 'online', 'profile', 'activity', 'mentions'],
-            },
-          ],
-        },
-        {
-          id: 'appearance',
-          label: t('settings.sidebar.groups.appearance', 'APPEARANCE'),
-          items: [
-            {
-              id: 'theme',
-              label: t('settings.sidebar.theme', 'Theme'),
-              icon: Palette,
-              keywords: ['dark', 'light', 'color'],
-            },
-            {
-              id: 'accessibility',
-              label: t('settings.sidebar.accessibility', 'Accessibility'),
-              icon: Accessibility,
-              keywords: ['contrast', 'motion', 'font'],
-            },
-            {
-              id: 'shortcuts',
-              label: t('settings.sidebar.shortcuts', 'Keyboard Shortcuts'),
-              icon: Keyboard,
-              keywords: ['hotkeys', 'keys'],
-            },
-          ],
-        },
-        {
-          id: 'advanced',
-          label: t('settings.sidebar.groups.advanced', 'ADVANCED & HISTORY'),
-          items: [
-            {
-              id: 'import-export',
-              label: t('settings.sidebar.importExport', 'Import/Export'),
-              icon: Download,
-              keywords: ['backup', 'restore'],
-            },
-            {
-              id: 'templates',
-              label: t('settings.sidebar.templates', 'Templates'),
-              icon: BookOpen,
-              keywords: ['preset', 'save', 'load'],
-            },
-            {
-              id: 'developer',
-              label: t('settings.sidebar.developer', 'Developer'),
-              icon: Code2,
-              keywords: ['debug', 'api', 'logs'],
-            },
-            {
-              id: 'beta-features',
-              label: t('settings.sidebar.betaFeatures', 'Beta Features'),
-              icon: Sparkles,
-              badge: 'Beta',
-              badgeType: 'beta',
-              keywords: ['experimental', 'preview'],
-            },
-            {
-              id: 'settings-history',
-              label: t('settings.sidebar.settingsHistory', 'History'),
-              icon: History,
-              keywords: ['changes', 'rollback', 'audit'],
-            },
-          ],
-        },
-      ]
+      (
+        [
+          {
+            id: 'settings-root',
+            label: t('settings.sidebar.groups.settingsRoot', 'SETTINGS ROOT'),
+            defaultOpen: true,
+            items: [
+              {
+                id: 'overview',
+                label: t('settings.sidebar.overview', 'Overview'),
+                icon: Sparkles,
+                keywords: ['taxonomy', 'ownership', 'overview', 'scope'],
+              },
+              {
+                id: 'tenant-defaults',
+                label: t('settings.sidebar.tenantDefaults', 'Tenant Defaults'),
+                icon: Building2,
+                keywords: ['organization', 'defaults', 'locale', 'currency'],
+              },
+              {
+                id: 'tenant-branding',
+                label: t('settings.sidebar.tenantBranding', 'Branding Handoff'),
+                icon: Sparkles,
+                keywords: ['branding', 'logo', 'colors', 'domain'],
+              },
+              {
+                id: 'tenant-security',
+                label: t('settings.sidebar.tenantSecurity', 'Security Handoff'),
+                icon: Shield,
+                keywords: ['admin', 'security', 'mfa', 'sso', 'policy'],
+              },
+              {
+                id: 'module-preferences',
+                label: t('settings.sidebar.modulePreferences', 'Module Preferences'),
+                icon: PanelsTopLeft,
+                keywords: ['module', 'interview', 'tools', 'assessment', 'copilot'],
+              },
+            ],
+          },
+          {
+            id: 'my-settings',
+            label: t('settings.sidebar.groups.mySettings', 'PERSONAL'),
+            items: [
+              {
+                id: 'profile',
+                label: t('settings.sidebar.profile', 'Profile'),
+                icon: User,
+                keywords: ['name', 'email', 'bio', 'personal'],
+              },
+              {
+                id: 'avatar',
+                label: t('settings.sidebar.avatar', 'Avatar & Photo'),
+                icon: Image,
+                keywords: ['picture', 'photo', 'image'],
+              },
+              {
+                id: 'signatures',
+                label: t('settings.sidebar.signatures', 'Email Signatures'),
+                icon: FileSignature,
+                keywords: ['signature', 'email'],
+              },
+              {
+                id: 'working-hours',
+                label: t('settings.sidebar.workingHours', 'Working Hours'),
+                icon: Clock,
+                keywords: ['hours', 'schedule', 'availability'],
+              },
+            ],
+          },
+          {
+            id: 'work-preferences',
+            label: t('settings.sidebar.groups.workPreferences', 'WORKFLOW'),
+            items: [
+              {
+                id: 'dashboard',
+                label: t('settings.sidebar.dashboard', 'Dashboard'),
+                icon: LayoutDashboard,
+                keywords: ['home', 'widgets', 'start page'],
+              },
+              {
+                id: 'work-preferences',
+                label: t('settings.sidebar.workPrefs', 'Work Preferences'),
+                icon: Settings,
+                keywords: ['tasks', 'projects', 'default'],
+              },
+              {
+                id: 'regional',
+                label: t('settings.sidebar.regional', 'Regional'),
+                icon: Globe,
+                keywords: ['timezone', 'date', 'format', 'currency'],
+              },
+              {
+                id: 'language',
+                label: t('settings.sidebar.language', 'Language'),
+                icon: Globe,
+                keywords: ['locale', 'translation'],
+              },
+            ],
+          },
+          {
+            id: 'ai-automation-group',
+            label: t('settings.sidebar.groups.aiAutomation', 'MODULES: AI & AUTOMATION'),
+            items: [
+              {
+                id: 'ai-behavior',
+                label: t('settings.sidebar.aiBehavior', 'Behavior & Instructions'),
+                icon: Brain,
+                keywords: [
+                  'prompt',
+                  'system',
+                  'behavior',
+                  'personality',
+                  'tone',
+                  'style',
+                  'instructions',
+                ],
+              },
+              {
+                id: 'ai-model-params',
+                label: t('settings.sidebar.aiModelParams', 'Model & Parameters'),
+                icon: Sparkles,
+                keywords: ['gpt', 'claude', 'gemini', 'llm', 'temperature', 'tokens'],
+              },
+              {
+                id: 'ai-autocomplete',
+                label: t('settings.sidebar.aiAutocomplete', 'Auto-Complete'),
+                icon: Zap,
+                keywords: ['suggestions', 'completion'],
+              },
+              {
+                id: 'ai-memory',
+                label: t('settings.sidebar.aiMemory', 'Memory & Context'),
+                icon: Database,
+                keywords: ['context', 'remember', 'retention', 'memory'],
+              },
+              {
+                id: 'ai-chat-history',
+                label: t('settings.sidebar.aiChatHistory', 'Chat History'),
+                icon: History,
+                keywords: ['history', 'chat', 'conversations', 'transcript'],
+              },
+              {
+                id: 'ai-privacy',
+                label: t('settings.sidebar.aiPrivacy', 'Data & Privacy'),
+                icon: Shield,
+                keywords: ['privacy', 'data', 'access', 'audit', 'compliance'],
+              },
+              {
+                id: 'ai-prompt-library',
+                label: t('settings.sidebar.aiPromptLibrary', 'Prompt Library'),
+                icon: BookOpen,
+                keywords: ['prompts', 'templates', 'saved', 'library'],
+              },
+              {
+                id: 'ai-voice',
+                label: t('settings.sidebar.aiVoice', 'Voice & TTS'),
+                icon: Mic,
+                keywords: ['speech', 'text to speech', 'audio'],
+              },
+              {
+                id: 'ai-usage',
+                label: t('settings.sidebar.aiUsage', 'Usage Dashboard'),
+                icon: Zap,
+                keywords: ['tokens', 'cost', 'usage', 'stats'],
+              },
+            ],
+          },
+          {
+            id: 'notifications',
+            label: t('settings.sidebar.groups.notifications', 'MODULES: NOTIFICATIONS'),
+            items: [
+              {
+                id: 'notifications-overview',
+                label: t('settings.sidebar.notificationsOverview', 'Channels & Categories'),
+                icon: Bell,
+                keywords: ['alerts', 'notifications', 'channels'],
+              },
+              {
+                id: 'notifications-email-digest',
+                label: t('settings.sidebar.notificationsEmailDigest', 'Email & Digest'),
+                icon: Mail,
+                keywords: ['email', 'digest', 'summary', 'daily', 'weekly'],
+              },
+              {
+                id: 'notifications-desktop-sounds',
+                label: t('settings.sidebar.notificationsDesktopSounds', 'Desktop & Sounds'),
+                icon: Monitor,
+                keywords: ['push', 'desktop', 'browser', 'audio', 'alert', 'tone', 'sound'],
+              },
+              {
+                id: 'notifications-availability',
+                label: t('settings.sidebar.notificationsAvailability', 'Availability'),
+                icon: Moon,
+                keywords: [
+                  'quiet hours',
+                  'dnd',
+                  'do not disturb',
+                  'focus',
+                  'schedule',
+                  'silent',
+                  'pause',
+                ],
+              },
+            ],
+          },
+          {
+            id: 'security',
+            label: t('settings.sidebar.groups.security', 'SECURITY'),
+            items: [
+              {
+                id: 'security-dashboard',
+                label: t('settings.sidebar.securityOverview', 'Security Overview'),
+                icon: Shield,
+                keywords: ['score', 'status', 'protection', 'dashboard', 'mfa', '2fa'],
+              },
+              {
+                id: 'auth-access',
+                label: t('settings.sidebar.authAccess', 'Authentication & Access'),
+                icon: Lock,
+                keywords: ['password', 'sessions', 'recovery', 'login', 'devices', 'history'],
+              },
+            ],
+          },
+          {
+            id: 'integrations',
+            label: t('settings.sidebar.groups.integrations', 'MODULES: INTEGRATIONS'),
+            items: [
+              {
+                id: 'connected-apps',
+                label: t('settings.sidebar.connectedApps', 'Connected Apps'),
+                icon: Link2,
+                keywords: ['slack', 'teams', 'apps'],
+              },
+              {
+                id: 'calendar-sync',
+                label: t('settings.sidebar.calendarSync', 'Calendar Sync'),
+                icon: Calendar,
+                keywords: ['google', 'outlook', 'calendar'],
+              },
+              {
+                id: 'api-keys',
+                label: t('settings.sidebar.apiKeys', 'API Keys'),
+                icon: Key,
+                keywords: ['token', 'developer', 'api'],
+              },
+              {
+                id: 'webhooks',
+                label: t('settings.sidebar.webhooks', 'Webhooks'),
+                icon: Webhook,
+                keywords: ['automation', 'endpoint'],
+              },
+            ],
+          },
+          {
+            id: 'data-privacy',
+            label: t('settings.sidebar.groups.dataPrivacy', 'DATA & PRIVACY'),
+            items: [
+              {
+                id: 'data-controls',
+                label: t('settings.sidebar.dataControls', 'Data & Consent'),
+                icon: Database,
+                keywords: [
+                  'gdpr',
+                  'retention',
+                  'storage',
+                  'consent',
+                  'export',
+                  'delete',
+                  'account',
+                ],
+              },
+              {
+                id: 'privacy',
+                label: t('settings.sidebar.privacy', 'Privacy & Visibility'),
+                icon: Shield,
+                keywords: ['visibility', 'sharing', 'online', 'profile', 'activity', 'mentions'],
+              },
+            ],
+          },
+          {
+            id: 'appearance',
+            label: t('settings.sidebar.groups.appearance', 'APPEARANCE'),
+            items: [
+              {
+                id: 'theme',
+                label: t('settings.sidebar.theme', 'Theme'),
+                icon: Palette,
+                keywords: ['dark', 'light', 'color'],
+              },
+              {
+                id: 'accessibility',
+                label: t('settings.sidebar.accessibility', 'Accessibility'),
+                icon: Accessibility,
+                keywords: ['contrast', 'motion', 'font'],
+              },
+              {
+                id: 'shortcuts',
+                label: t('settings.sidebar.shortcuts', 'Keyboard Shortcuts'),
+                icon: Keyboard,
+                keywords: ['hotkeys', 'keys'],
+              },
+            ],
+          },
+          {
+            id: 'advanced',
+            label: t('settings.sidebar.groups.advanced', 'ADVANCED & HISTORY'),
+            items: [
+              {
+                id: 'import-export',
+                label: t('settings.sidebar.importExport', 'Import/Export'),
+                icon: Download,
+                keywords: ['backup', 'restore'],
+              },
+              {
+                id: 'templates',
+                label: t('settings.sidebar.templates', 'Templates'),
+                icon: BookOpen,
+                keywords: ['preset', 'save', 'load'],
+              },
+              {
+                id: 'developer',
+                label: t('settings.sidebar.developer', 'Developer'),
+                icon: Code2,
+                keywords: ['debug', 'api', 'logs'],
+              },
+              {
+                id: 'beta-features',
+                label: t('settings.sidebar.betaFeatures', 'Beta Features'),
+                icon: Sparkles,
+                badge: 'Beta',
+                badgeType: 'beta',
+                keywords: ['experimental', 'preview'],
+              },
+              {
+                id: 'settings-history',
+                label: t('settings.sidebar.settingsHistory', 'History'),
+                icon: History,
+                keywords: ['changes', 'rollback', 'audit'],
+              },
+            ],
+          },
+        ] as NavGroup[]
+      )
         .map((group) => ({
           ...group,
           items: allowedSectionSet
@@ -527,7 +544,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     if (!item.badge) return null;
 
     const badgeStyles = {
-      count: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+      count: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
       new: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
       beta: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
       warning: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
@@ -603,7 +620,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           className={cn(
                             'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                             isActive
-                              ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-600/20 dark:text-violet-300'
+                              ? 'bg-primary-50 text-primary-700 font-medium dark:bg-primary-600/20 dark:text-primary-300'
                               : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-navy-900 dark:hover:text-white'
                           )}
                         >
@@ -611,7 +628,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
                               isActive
-                                ? 'text-violet-600 dark:text-violet-400'
+                                ? 'text-primary-600 dark:text-primary-400'
                                 : 'text-slate-400 dark:text-slate-400'
                             )}
                           />

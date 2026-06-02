@@ -178,7 +178,18 @@ export function computeRAG(report: ReportDef): RagLevel {
    Enrichment — turns a "catalog" report into a full ReportDef
    ──────────────────────────────────────────────────────────────────────────── */
 
-function buildReadout(report: Omit<ReportDef, 'aiExecutiveReadout' | 'aiRecommendedActions' | 'dataQuality' | 'degradedFlags' | 'lastRefreshAt' | 'scenarioNotes'>, ctx: ReportDataContext): string[] {
+function buildReadout(
+  report: Omit<
+    ReportDef,
+    | 'aiExecutiveReadout'
+    | 'aiRecommendedActions'
+    | 'dataQuality'
+    | 'degradedFlags'
+    | 'lastRefreshAt'
+    | 'scenarioNotes'
+  >,
+  ctx: ReportDataContext
+): string[] {
   const lines: string[] = [];
   const total = ctx.totalInitiatives;
   const blocked = ctx.blocked.length;
@@ -197,7 +208,10 @@ function buildReadout(report: Omit<ReportDef, 'aiExecutiveReadout' | 'aiRecommen
   }
 
   if (blocked > 0) {
-    const names = ctx.blocked.slice(0, 3).map((b) => b.name).join(', ');
+    const names = ctx.blocked
+      .slice(0, 3)
+      .map((b) => b.name)
+      .join(', ');
     lines.push(
       `Blocked work is the main drag on delivery confidence; ${blocked} initiative(s) are already stalled (${names}) and need owner-level recovery decisions.`
     );
@@ -221,7 +235,8 @@ function buildReadout(report: Omit<ReportDef, 'aiExecutiveReadout' | 'aiRecommen
 
 function buildDegradedFlags(ctx: ReportDataContext): string[] {
   const flags: string[] = [];
-  if (ctx.missingDates.length > 0) flags.push(`${ctx.missingDates.length} initiative(s) missing dates`);
+  if (ctx.missingDates.length > 0)
+    flags.push(`${ctx.missingDates.length} initiative(s) missing dates`);
   const noDueTasks = ctx.tasks.filter((t) => !t.dueDate).length;
   if (noDueTasks > 0) flags.push(`${noDueTasks} task(s) without due date`);
   if (ctx.blocked.length > 0) flags.push(`${ctx.blocked.length} blocked initiative(s)`);
@@ -230,7 +245,9 @@ function buildDegradedFlags(ctx: ReportDataContext): string[] {
 
 function buildDataQuality(ctx: ReportDataContext): ReportDataQuality {
   const total = ctx.totalInitiatives || 1;
-  const withProgress = ctx.initiatives.filter((i) => i.progress != null && Number(i.progress) > 0).length;
+  const withProgress = ctx.initiatives.filter(
+    (i) => i.progress != null && Number(i.progress) > 0
+  ).length;
   const completeness = Math.round((withProgress / total) * 100);
   const missingBaselineCount = ctx.initiatives.filter((i) => i.progress == null).length;
   const missingEstimateCount = ctx.tasks.filter((t) => !t.dueDate).length;
@@ -248,8 +265,16 @@ function buildDataQuality(ctx: ReportDataContext): ReportDataQuality {
 }
 
 export function enrichExecutionReport(
-  report: Omit<ReportDef, 'aiExecutiveReadout' | 'aiRecommendedActions' | 'dataQuality' | 'degradedFlags' | 'lastRefreshAt' | 'scenarioNotes'>,
-  ctx: ReportDataContext,
+  report: Omit<
+    ReportDef,
+    | 'aiExecutiveReadout'
+    | 'aiRecommendedActions'
+    | 'dataQuality'
+    | 'degradedFlags'
+    | 'lastRefreshAt'
+    | 'scenarioNotes'
+  >,
+  ctx: ReportDataContext
 ): ReportDef {
   return {
     ...report,

@@ -224,7 +224,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   >
                     <Trash2
                       size={14}
-                      className="text-slate-500 dark:text-slate-400 hover:text-red-500"
+                      className="text-slate-500 dark:text-slate-400 hover:text-rose-500"
                     />
                   </button>
                 )}
@@ -369,8 +369,8 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-          <div className="p-2 rounded-xl bg-purple-500/10 dark:bg-purple-500/20">
-            <MessageCircle size={18} className="text-purple-500 dark:text-purple-400" />
+          <div className="p-2 rounded-xl bg-primary-500/10 dark:bg-primary-500/20">
+            <MessageCircle size={18} className="text-primary-500 dark:text-primary-400" />
           </div>
           <span className="text-sm font-semibold">{isPolish ? 'Komentarze' : 'Comments'}</span>
         </div>
@@ -394,7 +394,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   onGenerateAIComment();
                 }}
                 disabled={isGeneratingAI}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
                 title={isPolish ? 'Wygeneruj komentarz AI' : 'Generate AI comment'}
               >
                 {isGeneratingAI ? (
@@ -432,11 +432,11 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                    className="inline-block mb-3 p-4 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20"
+                    className="inline-block mb-3 p-4 rounded-2xl bg-gradient-to-br from-primary-500/10 to-pink-500/10 dark:from-primary-500/20 dark:to-pink-500/20"
                   >
                     <MessageCircle
                       size={40}
-                      className="text-purple-500 dark:text-purple-400 opacity-60"
+                      className="text-primary-500 dark:text-primary-400 opacity-60"
                     />
                   </motion.div>
                   <p className="text-sm font-medium">
@@ -483,7 +483,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       whileTap={{ scale: 0.95 }}
                       onClick={handleSubmit}
                       disabled={submitting || !newComment.trim()}
-                      className="px-5 py-2.5 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-600 disabled:opacity-50 transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
+                      className="px-5 py-2.5 rounded-xl bg-primary-500 text-white font-semibold hover:bg-primary-600 disabled:opacity-50 transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
                     >
                       {submitting ? (
                         <Loader2 size={18} className="animate-spin" />

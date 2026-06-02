@@ -18,8 +18,8 @@ const DEPLOYMENT_OPTIONS = [
   },
   {
     icon: Server,
-    accent: 'from-violet-400 to-purple-500',
-    shadow: 'shadow-violet-500/20',
+    accent: 'from-primary-400 to-primary-500',
+    shadow: 'shadow-primary-500/20',
     titleKey: 'landing.modelDeployment.options.dedicated.title',
     titleFallback: 'Dedicated API',
     bodyKey: 'landing.modelDeployment.options.dedicated.body',
@@ -30,7 +30,7 @@ const DEPLOYMENT_OPTIONS = [
   },
   {
     icon: Building2,
-    accent: 'from-amber-400 to-orange-500',
+    accent: 'from-amber-400 to-amber-500',
     shadow: 'shadow-amber-500/20',
     titleKey: 'landing.modelDeployment.options.onPrem.title',
     titleFallback: 'On-premise',
@@ -48,8 +48,8 @@ export const ModelDeploymentSection: React.FC = () => {
   return (
     <section className="relative overflow-hidden px-6 py-24 md:py-32">
       <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_42%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
-      <div className="absolute left-[8%] top-[10%] h-64 w-64 rounded-full bg-violet-500/10 blur-3xl dark:bg-violet-500/20" />
-      <div className="absolute bottom-[0%] right-[8%] h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl dark:bg-cyan-500/15" />
+      <div className="absolute left-[8%] top-[10%] h-64 w-64 rounded-full bg-primary-500/10 blur-3xl dark:bg-primary-500/20" />
+      <div className="absolute bottom-[0%] right-[8%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/15" />
 
       <div className="relative mx-auto max-w-7xl">
         {/* Header */}
@@ -60,16 +60,13 @@ export const ModelDeploymentSection: React.FC = () => {
           viewport={{ once: true }}
           className="text-center mb-16 md:mb-20"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300 mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary-500/25 bg-primary-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-300 mb-6">
             <LockKeyhole size={14} />
             {t('landing.modelDeployment.badge', 'Custom AI model & deployment')}
           </div>
 
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-[1.08]">
-            {t(
-              'landing.modelDeployment.title',
-              'Your governance reality. Your deployment model.'
-            )}
+            {t('landing.modelDeployment.title', 'Your governance reality. Your deployment model.')}
           </h2>
 
           <p className="mt-6 max-w-2xl mx-auto text-lg leading-relaxed text-slate-600 dark:text-white/55">
@@ -126,11 +123,13 @@ export const ModelDeploymentSection: React.FC = () => {
                 viewport={{ once: true }}
                 className="rounded-2xl border border-slate-200 bg-white/90 p-5 dark:border-white/[0.08] dark:bg-white/[0.03] backdrop-blur-sm"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/20 mb-4">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20 mb-4">
                   <Icon size={16} />
                 </div>
                 <p className="text-sm font-black text-slate-900 dark:text-white">{point.title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/55">{point.body}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/55">
+                  {point.body}
+                </p>
               </motion.div>
             );
           })}
@@ -149,7 +148,9 @@ export const ModelDeploymentSection: React.FC = () => {
                 viewport={{ once: true }}
                 className="group relative rounded-3xl border border-slate-200 bg-white/95 p-7 shadow-lg shadow-slate-900/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/[0.08] dark:bg-slate-950/70"
               >
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${option.accent} text-white shadow-lg ${option.shadow} mb-5`}>
+                <div
+                  className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${option.accent} text-white shadow-lg ${option.shadow} mb-5`}
+                >
                   <Icon size={24} />
                 </div>
 

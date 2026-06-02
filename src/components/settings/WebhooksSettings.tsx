@@ -31,6 +31,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 
 interface WebhookConfig {
   id: string;
@@ -53,6 +55,20 @@ interface WebhookConfig {
   version?: string;
 }
 
+type WebhookApiRow = {
+  id?: string;
+  name?: string;
+  url?: string;
+  events?: string[];
+  isActive?: boolean | number;
+  lastTriggeredAt?: string;
+  lastStatus?: number;
+  secret?: string;
+  failureCount?: number;
+  retryConfig?: string | WebhookConfig['retryConfig'];
+  filterRules?: string | WebhookConfig['filterRules'];
+};
+
 interface DeliveryLog {
   id: string;
   event_type: string;
@@ -67,6 +83,7 @@ interface DeliveryLog {
 
 interface WebhooksSettingsProps {
   className?: string;
+  currentUser?: unknown;
 }
 
 const AVAILABLE_EVENTS = [
@@ -86,9 +103,7 @@ const AVAILABLE_EVENTS = [
   'user.left',
 ];
 
-export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
-  className = '',
-}) => {
+export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [showNew, setShowNew] = useState(false);
@@ -96,6 +111,8 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
   const [showSettings, setShowSettings] = useState<string | null>(null);
   const [deliveries, setDeliveries] = useState<Record<string, DeliveryLog[]>>({});
   const [testingWebhook, setTestingWebhook] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Form state
   const [newWebhook, setNewWebhook] = useState({
@@ -134,32 +151,73 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     }
   }, [selectedWebhook]);
 
-  const fetchWebhooks = async () => {
+  const parseObjectField = <T,>(value: unknown, fallback: T): T => {
+    if (!value) return fallback;
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value) as T;
+      } catch {
+        return fallback;
+      }
+    }
+    return value as T;
+  };
+
+  const normalizeWebhookRows = (rows: unknown): WebhookConfig[] =>
+    Array.isArray(rows)
+      ? rows.map((s: WebhookApiRow) => ({
+          id: String(s.id || ''),
+          name: s.name,
+          url: String(s.url || ''),
+          events: Array.isArray(s.events) ? s.events : [],
+          active: Boolean(s.isActive),
+          lastTriggered: s.lastTriggeredAt,
+          lastStatus:
+            typeof s.lastStatus === 'number' && s.lastStatus >= 200 && s.lastStatus < 300
+              ? 'success'
+              : s.lastStatus
+                ? 'failed'
+                : undefined,
+          signatureSecret: s.secret,
+          failureCount: s.failureCount,
+          retryConfig: parseObjectField(s.retryConfig, undefined),
+          filterRules: parseObjectField(s.filterRules, undefined),
+          version: '1.0',
+        }))
+      : [];
+
+  const webhookMatchesCreate = (webhook: WebhookConfig, expected: typeof newWebhook) =>
+    webhook.url === expected.url.trim() &&
+    expected.events.every((event) => webhook.events.includes(event)) &&
+    (!expected.name.trim() || webhook.name === expected.name.trim());
+
+  const webhookSettingsMatch = (
+    webhook: WebhookConfig | undefined,
+    settings: {
+      signatureSecret: string;
+      retryConfig: WebhookConfig['retryConfig'];
+      filterRules: WebhookConfig['filterRules'];
+    }
+  ) => {
+    if (!webhook) return false;
+    return (
+      (webhook.signatureSecret || '') === (settings.signatureSecret || '') &&
+      JSON.stringify(webhook.retryConfig || {}) === JSON.stringify(settings.retryConfig || {}) &&
+      JSON.stringify(webhook.filterRules || {}) === JSON.stringify(settings.filterRules || {})
+    );
+  };
+
+  const fetchWebhooks = async (): Promise<WebhookConfig[] | null> => {
     try {
+      setLoadError(null);
       const response = await Api.get('/api/settings/webhooks');
       const webhookList = response?.data?.webhooks || [];
-      const formatted = webhookList.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        url: s.url,
-        events: s.events || [],
-        active: s.isActive,
-        lastTriggered: s.lastTriggeredAt,
-        lastStatus:
-          s.lastStatus >= 200 && s.lastStatus < 300
-            ? 'success'
-            : s.lastStatus
-              ? 'failed'
-              : undefined,
-        signatureSecret: s.secret,
-        failureCount: s.failureCount,
-        version: '1.0',
-      }));
-      setWebhooks(formatted as WebhookConfig[]);
+      const formatted = normalizeWebhookRows(webhookList);
+      setWebhooks(formatted);
 
       // Initialize settings
       const settings: Record<string, any> = {};
-      (formatted as WebhookConfig[]).forEach((w: WebhookConfig) => {
+      formatted.forEach((w: WebhookConfig) => {
         settings[w.id] = {
           signatureSecret: w.signatureSecret || '',
           retryConfig: w.retryConfig || {
@@ -172,9 +230,13 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
         };
       });
       setWebhookSettings(settings);
-    } catch (error) {
-      console.error('Failed to fetch webhooks:', error);
+      return formatted;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load webhooks');
+      setLoadError(message);
       setWebhooks([]);
+      setWebhookSettings({});
+      return null;
     }
   };
 
@@ -211,12 +273,23 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     }
 
     try {
+      setActionError(null);
+      const expected = {
+        ...newWebhook,
+        name: newWebhook.name.trim(),
+        url: newWebhook.url.trim(),
+      };
       await Api.post('/api/settings/webhooks', {
-        name: newWebhook.name || `Webhook ${Date.now()}`,
-        url: newWebhook.url,
-        events: newWebhook.events,
+        name: expected.name || `Webhook ${Date.now()}`,
+        url: expected.url,
+        events: expected.events,
         secret: newWebhook.signatureSecret || undefined,
       });
+
+      const refreshed = await fetchWebhooks();
+      if (!refreshed?.some((webhook) => webhookMatchesCreate(webhook, expected))) {
+        throw new Error('Webhook creation was not confirmed by the server');
+      }
 
       toast.success(t('settings.webhooks.created', 'Webhook created'));
       setShowNew(false);
@@ -232,9 +305,13 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
         },
         filterRules: {},
       });
-      fetchWebhooks();
-    } catch (error) {
-      toast.error(t('settings.webhooks.createError', 'Failed to create webhook'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.webhooks.createError', 'Failed to create webhook')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -242,11 +319,20 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     if (!confirm(t('settings.webhooks.deleteConfirm', 'Delete this webhook?'))) return;
 
     try {
+      setActionError(null);
       await Api.delete(`/api/settings/webhooks/${webhookId}`);
-      setWebhooks((prev) => prev.filter((w) => w.id !== webhookId));
+      const refreshed = await fetchWebhooks();
+      if (!refreshed || refreshed.some((webhook) => webhook.id === webhookId)) {
+        throw new Error('Webhook deletion was not confirmed by the server');
+      }
       toast.success(t('settings.webhooks.deleted', 'Webhook deleted'));
-    } catch (error) {
-      toast.error(t('settings.webhooks.deleteError', 'Failed to delete'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.webhooks.deleteError', 'Failed to delete')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -282,6 +368,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     if (!settings) return;
 
     try {
+      setActionError(null);
       const existing = webhooks.find((w) => w.id === webhookId);
       await Api.put(`/api/settings/webhooks/${webhookId}`, {
         name: existing?.name,
@@ -294,11 +381,20 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
         filterRules: settings.filterRules ? JSON.stringify(settings.filterRules) : undefined,
       });
 
+      const refreshed = await fetchWebhooks();
+      const persisted = refreshed?.find((webhook) => webhook.id === webhookId);
+      if (!webhookSettingsMatch(persisted, settings)) {
+        throw new Error('Webhook settings save was not confirmed by the server');
+      }
       toast.success(t('settings.webhooks.settingsSaved', 'Settings saved'));
       setShowSettings(null);
-      fetchWebhooks();
-    } catch (error) {
-      toast.error(t('settings.webhooks.saveError', 'Failed to save settings'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.webhooks.saveError', 'Failed to save settings')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -325,6 +421,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
         </div>
         <button
           onClick={() => setShowNew(true)}
+          disabled={!!loadError}
           className="flex items-center gap-2 px-3 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
         >
           <Plus size={16} />
@@ -332,8 +429,19 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
         </button>
       </div>
 
+      {loadError && <DegradedState title="Webhooks unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* New Webhook Form */}
-      {showNew && (
+      {showNew && !loadError && (
         <div className="p-6 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 space-y-4">
           <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('settings.webhooks.createNew', 'Create New Webhook')}
@@ -341,7 +449,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('settings.webhooks.name', 'Name')} <span className="text-red-500">*</span>
+              {t('settings.webhooks.name', 'Name')} <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -354,7 +462,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('settings.webhooks.url', 'Endpoint URL')} <span className="text-red-500">*</span>
+              {t('settings.webhooks.url', 'Endpoint URL')} <span className="text-rose-500">*</span>
             </label>
             <input
               type="url"
@@ -367,7 +475,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('settings.webhooks.events', 'Events')} <span className="text-red-500">*</span>
+              {t('settings.webhooks.events', 'Events')} <span className="text-rose-500">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
               {AVAILABLE_EVENTS.map((event) => (
@@ -529,7 +637,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                       </button>
                       <button
                         onClick={() => deleteWebhook(webhook.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                         title={t('common.delete', 'Delete')}
                       >
                         <Trash2 size={16} />
@@ -567,7 +675,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                       </div>
                     )}
                     {failedDeliveries.length > 0 && (
-                      <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                      <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
                         <AlertTriangle size={12} />
                         <span>
                           {failedDeliveries.length} {t('settings.webhooks.failed', 'failed')}
@@ -734,7 +842,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                               delivery.status === 'success'
                                 ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
                                 : delivery.status === 'failed'
-                                  ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'
+                                  ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-900/30'
                                   : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-700'
                             }`}
                           >
@@ -744,7 +852,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                                   {delivery.status === 'success' ? (
                                     <CheckCircle size={14} className="text-green-500" />
                                   ) : (
-                                    <XCircle size={14} className="text-red-500" />
+                                    <XCircle size={14} className="text-rose-500" />
                                   )}
                                   <span className="text-xs font-medium text-slate-900 dark:text-white">
                                     {delivery.event_type}
@@ -762,7 +870,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
                                   </p>
                                 )}
                                 {delivery.error_message && (
-                                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
                                     {delivery.error_message}
                                   </p>
                                 )}

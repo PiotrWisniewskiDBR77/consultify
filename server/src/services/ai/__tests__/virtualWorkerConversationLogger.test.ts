@@ -135,11 +135,7 @@ describe('virtualWorkerConversationLogger channel continuity', () => {
     expect(mockQuery).toHaveBeenNthCalledWith(
       2,
       expect.stringContaining('UPDATE virtual_worker_messages'),
-      [
-        'conv-1',
-        '[REDACTED BY ADMIN]',
-        JSON.stringify({ redacted: true, redacted_by: 'admin-1' }),
-      ]
+      ['conv-1', '[REDACTED BY ADMIN]', JSON.stringify({ redacted: true, redacted_by: 'admin-1' })]
     );
     expect(mockQuery).toHaveBeenNthCalledWith(
       3,

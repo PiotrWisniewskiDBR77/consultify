@@ -1,19 +1,5 @@
-import {
-  CheckCircle,
-  ChevronLeft,
-  Download,
-  FileText,
-  Loader2,
-  Maximize2,
-  MessageSquare,
-  Minimize2,
-  RefreshCw,
-  Save,
-  Settings,
-  Wand2,
-  X,
-} from 'lucide-react';
-import { Bot, Send, User } from 'lucide-react';
+import { CheckCircle, ChevronLeft, Download, FileText, Loader2, Maximize2, MessageSquare, Minimize2, RefreshCw, Save, Settings, Wand2, X } from 'lucide-react';
+import { Send, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +9,7 @@ import { ReportBuilder } from '../components/Reports/ReportBuilder';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
+import TeresaMark from '../components/shared/TeresaMark';
 // Types
 interface ReportSection {
   id: string;
@@ -157,7 +144,7 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({
       <div className="flex-1 overflow-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-slate-500 dark:text-slate-400 text-sm py-8">
-            <Bot className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <TeresaMark className="w-10 h-10 mx-auto mb-3 opacity-50" />
             <p>{t('reports.chatWelcome', 'Hi! I can help you edit and improve your report.')}</p>
             <p className="mt-2 text-xs">
               {t(
@@ -172,7 +159,7 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({
           <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'ai' && (
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-white" />
+                <TeresaMark className="w-4 h-4 text-white" />
               </div>
             )}
             <div
@@ -195,7 +182,7 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({
         {isTyping && (
           <div className="flex gap-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
-              <Bot className="w-4 h-4 text-white" />
+              <TeresaMark className="w-4 h-4 text-white" />
             </div>
             <div className="bg-slate-100 dark:bg-white/5 rounded-xl px-4 py-2">
               <div className="flex gap-1">
@@ -531,8 +518,8 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
   if (error) {
     return (
       <div className="flex items-center justify-center h-full bg-slate-50 dark:bg-navy-950">
-        <div className="text-center max-w-md p-8 bg-white dark:bg-navy-900 rounded-xl border border-red-200 dark:border-red-500/20">
-          <p className="text-red-500 mb-4">{error}</p>
+        <div className="text-center max-w-md p-8 bg-white dark:bg-navy-900 rounded-xl border border-rose-200 dark:border-rose-500/20">
+          <p className="text-rose-500 mb-4">{error}</p>
           <button
             onClick={fetchReport}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

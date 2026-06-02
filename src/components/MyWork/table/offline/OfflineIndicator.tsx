@@ -67,11 +67,11 @@ export const OfflineIndicator: React.FC = () => {
       className={`fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-sm font-medium z-50 max-w-[90vw] ${
         isOnline
           ? 'bg-yellow-50 text-yellow-800 border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700'
-          : 'bg-red-50 text-red-800 border border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700'
+          : 'bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700'
       }`}
     >
       <div
-        className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'}`}
+        className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-yellow-500' : 'bg-rose-500 animate-pulse'}`}
       />
       {!isOnline && <span>Offline</span>}
       {pendingCount > 0 && (

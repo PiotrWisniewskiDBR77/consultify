@@ -184,7 +184,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         </div>
         {change !== undefined && (
           <div
-            className={`flex items-center gap-1 text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            className={`flex items-center gap-1 text-sm ${change >= 0 ? 'text-green-500' : 'text-rose-500'}`}
           >
             {change >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
             {Math.abs(change)}%
@@ -200,7 +200,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-purple-500 mx-auto mb-4" />
+          <RefreshCw className="w-8 h-8 animate-spin text-primary-500 mx-auto mb-4" />
           <p className="text-slate-500 dark:text-slate-400">{t.loading[lang]}</p>
         </div>
       </div>
@@ -211,11 +211,11 @@ export const HelpAnalyticsDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
           <p className="text-slate-600 dark:text-slate-400">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            className="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
           >
             {t.refresh[lang]}
           </button>
@@ -238,7 +238,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <BarChart2 className="text-purple-500" />
+            <BarChart2 className="text-primary-500" />
             {t.title[lang]}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">{t.subtitle[lang]}</p>
@@ -256,7 +256,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           </select>
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
           >
             <RefreshCw size={16} />
             {t.refresh[lang]}
@@ -282,13 +282,13 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           title={t.helpfulnessRate[lang]}
           value={`${data.feedbackSummary?.overall?.helpfulness_rate || 0}%`}
           icon={<ThumbsUp className="text-white" size={24} />}
-          color="bg-purple-500"
+          color="bg-primary-500"
         />
         <StatCard
           title={t.avgRating[lang]}
           value={(data.feedbackSummary?.overall?.avg_rating || 0).toFixed(1)}
           icon={<TrendingUp className="text-white" size={24} />}
-          color="bg-orange-500"
+          color="bg-amber-500"
         />
       </div>
 
@@ -418,7 +418,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         {/* Needs Improvement */}
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <ThumbsDown size={20} className="text-red-500" />
+            <ThumbsDown size={20} className="text-rose-500" />
             {t.needsImprovement[lang]}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -430,7 +430,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             {data.feedbackSummary?.needsImprovement?.map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 px-3 bg-red-50 dark:bg-red-900/20 rounded-lg"
+                className="flex items-center justify-between py-2 px-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg"
               >
                 <div>
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -439,7 +439,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                   <p className="text-xs text-slate-500 dark:text-slate-400">{item.content_type}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-red-600">{item.helpfulness_rate}%</p>
+                  <p className="text-sm font-medium text-rose-600">{item.helpfulness_rate}%</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {item.feedback_count} feedback
                   </p>
@@ -462,7 +462,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       {/* Video Completion Rates */}
       <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Video size={20} className="text-purple-500" />
+          <Video size={20} className="text-primary-500" />
           {t.videoCompletion[lang]}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -473,7 +473,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               </p>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-purple-500">{video.completion_rate}%</p>
+                  <p className="text-2xl font-bold text-primary-500">{video.completion_rate}%</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {t.completionRate[lang]}
                   </p>
@@ -487,7 +487,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               {/* Progress bar */}
               <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-purple-500 rounded-full"
+                  className="h-full bg-primary-500 rounded-full"
                   style={{ width: `${video.completion_rate}%` }}
                 />
               </div>
@@ -516,7 +516,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  comment.is_helpful ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  comment.is_helpful ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'
                 }`}
               >
                 {comment.is_helpful ? <ThumbsUp size={16} /> : <ThumbsDown size={16} />}

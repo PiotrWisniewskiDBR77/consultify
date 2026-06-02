@@ -35,6 +35,7 @@ import {
   MessageSquare,
   Play,
   Plus,
+  RefreshCw,
   Settings,
   Shield,
   Sparkles,
@@ -107,6 +108,14 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 
@@ -149,8 +158,8 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
   {
     id: 'pending_review',
     label: 'Pending Review',
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500',
   },
   {
     id: 'executing',
@@ -164,18 +173,18 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
 const REPORTS_STATUSES: StatusFilterOption[] = [
   { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
   { id: 'approved', label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
-  { id: 'completed', label: 'Completed', color: 'text-blue-400', bgColor: 'bg-blue-500' },
+  { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
 ];
 
 // Initiatives tab: DRAFT, PROPOSED, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED
 const INITIATIVES_STATUSES: StatusFilterOption[] = [
   { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
   { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
-  { id: 'proposed', label: 'Proposed', color: 'text-purple-400', bgColor: 'bg-purple-500' },
+  { id: 'proposed', label: 'Proposed', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'planned', label: 'Planned', color: 'text-blue-400', bgColor: 'bg-blue-500' },
   { id: 'in_progress', label: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
-  { id: 'cancelled', label: 'Cancelled', color: 'text-red-400', bgColor: 'bg-red-500' },
+  { id: 'cancelled', label: 'Cancelled', color: 'text-rose-400', bgColor: 'bg-rose-500' },
 ];
 
 // Tool type codes
@@ -241,7 +250,7 @@ const CATEGORY_META: Record<
   digital: {
     name: 'Digital',
     icon: <Cpu size={16} />,
-    textClass: 'text-purple-400',
+    textClass: 'text-blue-400',
     count: 10,
   },
   automation: {
@@ -674,8 +683,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const { i18n, t } = useTranslation();
   const lang = i18n.language?.startsWith('pl') ? 'pl' : 'en';
   const isPolish = lang === 'pl';
-  const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
-    useHelpSidePanel();
+  const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
 
   const openContextualHelp = useCallback(() => {
     setKnowledgeModuleIdOverride('discovery-tools');
@@ -769,6 +781,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // IMPACT-UX-002: Degraded UX Error State
+  const [loadError, setLoadError] = useState<{ message: string; isTransportBlock: boolean } | null>(
+    null
+  );
+
   // Initiative detail state
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiativeData | null>(null);
   const [initiativeTasks, setInitiativeTasks] = useState<InitiativeTask[]>([]);
@@ -861,7 +878,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             window.setTimeout(() => reject(new Error(`${label} bootstrap timeout`)), timeoutMs)
           ),
         ]);
-      } catch (error) {
+      } catch (error: any) {
+        const status = Number(error?.status || error?.data?.status || 0);
+        const code = String(error?.code || error?.data?.code || '');
+        if (status >= 500 || code === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN') {
+          throw error;
+        }
         console.warn(`[DiscoveryToolsHub] ${label} bootstrap fallback:`, error);
         return fallback;
       }
@@ -877,6 +899,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       } else {
         setIsLoading(true);
       }
+      setLoadError(null);
 
       try {
         const [toolSessionsRes, assessmentRes, assessmentReports, reportBuilderList, decksList] =
@@ -902,16 +925,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               Api.getAssessmentReports(currentProjectId || undefined),
               [] as any[]
             ),
-            resolveBootstrapRequest(
-              'report builder list',
-              Api.get('/report-builder'),
-              { reports: [] as any[] }
-            ),
-            resolveBootstrapRequest(
-              'presentation decks',
-              Api.get('/presentations/decks'),
-              { success: true, data: [] as any[] }
-            ),
+            resolveBootstrapRequest('report builder list', Api.get('/report-builder'), {
+              reports: [] as any[],
+            }),
+            resolveBootstrapRequest('presentation decks', Api.get('/presentations/decks'), {
+              success: true,
+              data: [] as any[],
+            }),
           ]);
 
         const allSessions = (toolSessionsRes.items || []).map(transformToolSession);
@@ -1099,6 +1119,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         }
       } catch (error: any) {
         console.error('[DiscoveryToolsHub] Fetch error:', error);
+        const isTransportBlock =
+          error?.code === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN' ||
+          error?.message?.includes('transport safeguard');
+        setLoadError({
+          message: error?.message || 'Failed to load tools data',
+          isTransportBlock,
+        });
         toast.error('Failed to load tool sessions');
       } finally {
         setIsLoading(false);
@@ -1802,9 +1829,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         ],
         render: (row) => {
           const axisColors: Record<string, string> = {
-            strategic: 'text-emerald-400',
-            operational: 'text-blue-400',
-            digital: 'text-purple-400',
+            strategic: 'text-slate-600 dark:text-slate-300',
+            operational: 'text-slate-600 dark:text-slate-300',
+            digital: 'text-slate-600 dark:text-slate-300',
           };
           return (
             <span
@@ -1821,18 +1848,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         width: '100px',
         render: (row) => {
           const priority = row._fullData?.priority || 'MEDIUM';
-          const priorityColors: Record<string, string> = {
-            CRITICAL: 'bg-red-500/20 text-red-400',
-            HIGH: 'bg-orange-500/20 text-orange-400',
-            MEDIUM: 'bg-amber-500/20 text-amber-400',
-            LOW: 'bg-slate-500/20 text-slate-400',
+          const priorityDots: Record<string, string> = {
+            CRITICAL: 'bg-rose-500',
+            HIGH: 'bg-amber-500',
+            MEDIUM: 'bg-blue-500',
+            LOW: 'bg-slate-400',
           };
           return (
-            <span
-              className={`px-2 py-0.5 text-[11px] font-medium rounded-full ${
-                priorityColors[priority] || priorityColors.MEDIUM
-              }`}
-            >
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200">
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${priorityDots[priority] || priorityDots.MEDIUM}`}
+              />
               {priority}
             </span>
           );
@@ -1892,7 +1918,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             assessment_report: {
               icon: <Activity size={14} />,
               label: isPolish ? 'Raport assessment' : 'Assessment report',
-              color: 'text-purple-400',
+              color: 'text-blue-400',
             },
             report_builder: {
               icon: <FileText size={14} />,
@@ -2593,6 +2619,23 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     }
     return data;
   }, [libraryCatalogItems, searchQuery, libraryCategoryFilter]);
+  const libraryEmptyMessage = useMemo(() => {
+    const normalizedQuery = String(searchQuery || '').trim();
+    if (normalizedQuery.length > 0) {
+      return t(
+        'tools.hub.empty.librarySearchNoResults',
+        isPolish
+          ? `Brak wyników dla frazy "${normalizedQuery}". Zmień frazę lub wyczyść filtry.`
+          : `No results for "${normalizedQuery}". Try a different phrase or clear filters.`,
+        { query: normalizedQuery }
+      );
+    }
+
+    return t('tools.hub.empty.library', 'No tools available in this category yet.');
+  }, [isPolish, searchQuery, t]);
+  const librarySearchQuery = String(searchQuery || '').trim();
+  const hasLibrarySearchNoResults =
+    librarySearchQuery.length > 0 && filteredLibraryItems.length === 0;
 
   const libraryCategoryCounts = useMemo(() => {
     const counts: Record<ToolCategory | 'other', number> = {
@@ -2710,11 +2753,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const getTaskStatusColor = (status: string) => {
     switch (status) {
       case 'DONE':
-        return 'bg-green-500/20 text-green-400';
+        return 'bg-emerald-500/20 text-emerald-400';
       case 'IN_PROGRESS':
         return 'bg-blue-500/20 text-blue-400';
       case 'BLOCKED':
-        return 'bg-red-500/20 text-red-400';
+        return 'bg-rose-500/20 text-rose-400';
       default:
         return 'bg-slate-500/20 text-slate-400';
     }
@@ -2723,11 +2766,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return 'text-red-400';
+        return 'text-rose-400';
       case 'HIGH':
-        return 'text-orange-400';
-      case 'MEDIUM':
         return 'text-amber-400';
+      case 'MEDIUM':
+        return 'text-blue-400';
       default:
         return 'text-slate-400';
     }
@@ -2802,7 +2845,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   DRAFT
                 </span>
                 {selectedInitiative.axis && (
-                  <span className="px-2 py-0.5 text-xs font-medium rounded bg-purple-500/20 text-purple-400 capitalize">
+                  <span className="px-2 py-0.5 text-xs font-medium rounded bg-blue-500/20 text-blue-400 capitalize">
                     {selectedInitiative.axis}
                   </span>
                 )}
@@ -2836,7 +2879,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </button>
               <button
                 onClick={handleSubmitForReview}
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors flex items-center gap-2"
               >
                 <ArrowRight size={16} />
                 Submit for Review
@@ -2874,7 +2917,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     <span className="text-green-400">{taskStats.done} Done</span>
                     <span className="text-blue-400">{taskStats.inProgress} In Progress</span>
                     {taskStats.blocked > 0 && (
-                      <span className="text-red-400">{taskStats.blocked} Blocked</span>
+                      <span className="text-rose-400">{taskStats.blocked} Blocked</span>
                     )}
                   </div>
                 </div>
@@ -2888,7 +2931,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     </div>
                     <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all"
+                        className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all"
                         style={{ width: `${completionPercent}%` }}
                       />
                     </div>
@@ -2909,7 +2952,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     {initiativeTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-500/30 transition-colors"
+                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-500/30 transition-colors"
                       >
                         <div
                           className={`w-2 h-2 rounded-full ${
@@ -2918,7 +2961,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                               : task.status === 'IN_PROGRESS'
                                 ? 'bg-blue-400'
                                 : task.status === 'BLOCKED'
-                                  ? 'bg-red-400'
+                                  ? 'bg-rose-400'
                                   : 'bg-slate-400'
                           }`}
                         />
@@ -3078,11 +3121,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Next Steps */}
-              <div className="bg-purple-500/10 rounded-xl border border-purple-500/20 p-5">
-                <h3 className="text-xs font-semibold text-purple-400 uppercase mb-3">Next Steps</h3>
+              <div className="bg-primary-500/10 rounded-xl border border-primary-500/20 p-5">
+                <h3 className="text-xs font-semibold text-primary-400 uppercase mb-3">
+                  Next Steps
+                </h3>
                 <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={14} className="mt-0.5 text-purple-400" />
+                    <CheckCircle2 size={14} className="mt-0.5 text-primary-400" />
                     <span>Review initiative details</span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -3104,6 +3149,36 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
   // Render content
   const renderContent = () => {
+    // IMPACT-UX-002: Degraded UX Error State
+    if (loadError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
+          <AlertTriangle className="w-12 h-12 text-rose-500 mb-4" />
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+            {loadError.isTransportBlock
+              ? isPolish
+                ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
+                : 'Requests blocked by global transport safeguard'
+              : isPolish
+                ? 'Błąd pobierania danych'
+                : 'Data Loading Error'}
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">{loadError.message}</p>
+          <button
+            onClick={() => {
+              setLoadError(null);
+              setIsLoading(true);
+              fetchData();
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md font-medium"
+          >
+            <RefreshCw className="w-4 h-4" />
+            {isPolish ? 'Spróbuj ponownie' : 'Retry'}
+          </button>
+        </div>
+      );
+    }
+
     // Show loading state
     if (isLoading) {
       return (
@@ -3272,6 +3347,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         ? ({ ...selectedRow, title: selectedRow.name } as LibraryPreviewItem)
         : null;
       const itemIds = filteredLibraryItems.map((d) => d.id);
+      const renderLibrarySearchEmptyState = () => (
+        <div className="flex h-full items-center justify-center px-6 py-12">
+          <div
+            className="max-w-xl rounded-2xl border border-slate-200/70 bg-slate-50/80 px-6 py-7 text-center text-sm text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300"
+            data-testid="tools-library-search-empty-state"
+          >
+            <Library className="mx-auto mb-3 h-8 w-8 text-slate-400 dark:text-slate-500" />
+            <p className="font-medium text-slate-900 dark:text-white">{libraryEmptyMessage}</p>
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="mt-4 inline-flex h-9 items-center justify-center rounded-full border border-slate-200/70 bg-white px-4 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/[0.1]"
+            >
+              {isPolish ? 'Wyczyść wyszukiwanie' : 'Clear search'}
+            </button>
+          </div>
+        </div>
+      );
 
       const renderPreview = (item: LibraryPreviewItem) => {
         if ((item as any)?.kind === 'assessment') {
@@ -3344,19 +3437,20 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               renderPreview={renderPreview}
               renderPreviewFooter={renderFooter}
             >
-              <GridView
-                items={libraryGridItems}
-                selectedItemId={previewItemId}
-                onItemClick={(item) => setPreviewItemId(item.id)}
-                onItemAction={(action, item) => {
-                  if (action === 'open') return handleRowAction('library_open_full', item as any);
-                  return handleRowAction(action, item as any);
-                }}
-                emptyMessage={t(
-                  'tools.hub.empty.library',
-                  'No tools available in this category yet.'
-                )}
-              />
+              {hasLibrarySearchNoResults ? (
+                renderLibrarySearchEmptyState()
+              ) : (
+                <GridView
+                  items={libraryGridItems}
+                  selectedItemId={previewItemId}
+                  onItemClick={(item) => setPreviewItemId(item.id)}
+                  onItemAction={(action, item) => {
+                    if (action === 'open') return handleRowAction('library_open_full', item as any);
+                    return handleRowAction(action, item as any);
+                  }}
+                  emptyMessage={libraryEmptyMessage}
+                />
+              )}
             </TableWithPreviewLayout>
           </div>
         );
@@ -3380,58 +3474,59 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             renderPreview={renderPreview}
             renderPreviewFooter={renderFooter}
           >
-            <FilterableTable
-              columns={libraryColumns}
-              data={filteredLibraryItems}
-              selectedRowId={previewItemId}
-              onRowClick={(row) => setPreviewItemId(row.id)}
-              onRowDoubleClick={(row) => handleRowAction('library_open_full', row as any)}
-              onRowAction={handleRowAction}
-              getRowActions={(row) =>
-                [
-                  {
-                    id: 'open',
-                    label: t('common.open', 'Open'),
-                    icon: ExternalLink,
-                    variant: 'primary',
-                    disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
-                    onClick: () => handleRowAction('library_open_full', row),
-                  },
-                  {
-                    id: 'start',
-                    label:
-                      row?.kind === 'assessment'
-                        ? isPolish
-                          ? 'Start assessment'
-                          : 'Start assessment'
-                        : isPolish
-                          ? 'Rozpocznij sesję'
-                          : 'Start session',
-                    icon: Play,
-                    disabled:
-                      !!(row as any)?.isComingSoon ||
-                      ((row as any)?.kind === 'tool' && !(row as any)?.isActive),
-                    onClick: () => handleRowAction('library_start_session', row),
-                  },
-                  {
-                    id: 'chat',
-                    label: isPolish ? 'Czat' : 'Chat',
-                    icon: MessageSquare,
-                    divider: true,
-                    disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
-                    onClick: () => handleRowAction('library_chat', row),
-                  },
-                ] as RowAction[]
-              }
-              activeFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              emptyMessage={t(
-                'tools.hub.empty.library',
-                'No tools available in this category yet.'
-              )}
-              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-              density="compact"
-            />
+            {hasLibrarySearchNoResults ? (
+              renderLibrarySearchEmptyState()
+            ) : (
+              <FilterableTable
+                columns={libraryColumns}
+                data={filteredLibraryItems}
+                selectedRowId={previewItemId}
+                onRowClick={(row) => setPreviewItemId(row.id)}
+                onRowDoubleClick={(row) => handleRowAction('library_open_full', row as any)}
+                onRowAction={handleRowAction}
+                getRowActions={(row) =>
+                  [
+                    {
+                      id: 'open',
+                      label: t('common.open', 'Open'),
+                      icon: ExternalLink,
+                      variant: 'primary',
+                      disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
+                      onClick: () => handleRowAction('library_open_full', row),
+                    },
+                    {
+                      id: 'start',
+                      label:
+                        row?.kind === 'assessment'
+                          ? isPolish
+                            ? 'Start assessment'
+                            : 'Start assessment'
+                          : isPolish
+                            ? 'Rozpocznij sesję'
+                            : 'Start session',
+                      icon: Play,
+                      disabled:
+                        !!(row as any)?.isComingSoon ||
+                        ((row as any)?.kind === 'tool' && !(row as any)?.isActive),
+                      onClick: () => handleRowAction('library_start_session', row),
+                    },
+                    {
+                      id: 'chat',
+                      label: isPolish ? 'Czat' : 'Chat',
+                      icon: MessageSquare,
+                      divider: true,
+                      disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
+                      onClick: () => handleRowAction('library_chat', row),
+                    },
+                  ] as RowAction[]
+                }
+                activeFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                emptyMessage={libraryEmptyMessage}
+                canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+                density="compact"
+              />
+            )}
           </TableWithPreviewLayout>
         </div>
       );
@@ -4426,7 +4521,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   );
 
   const CommandRowContent = (
-    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+    <div className={MENU_3_LEFT_CLASS}>
       {activeTab === 'library' ? (
         <>
           {(
@@ -4453,7 +4548,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 id: 'digital' as const,
                 label: 'Digital',
                 count: libraryCategoryCounts.digital,
-                dot: 'bg-purple-500',
+                dot: 'bg-blue-500',
               },
               {
                 id: 'automation' as const,
@@ -4481,16 +4576,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => setLibraryCategoryFilter(isActive ? 'all' : opt.id)}
-                className={[
-                  'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
-                  isActive
-                    ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-                    : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
-                ].join(' ')}
+                className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
               >
-                <span className={`w-2 h-2 rounded-full ${opt.dot}`} />
+                <span
+                  className={
+                    opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.dot}`
+                  }
+                />
                 <span>{opt.label}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                   {opt.count}
                 </span>
               </button>
@@ -4508,16 +4602,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => setStatusFilter(isActive ? 'all' : opt.id)}
-                className={[
-                  'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
-                  isActive
-                    ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-                    : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
-                ].join(' ')}
+                className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
               >
-                <span className={`w-2 h-2 rounded-full ${opt.bgColor}`} />
+                <span
+                  className={
+                    opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.bgColor}`
+                  }
+                />
                 <span>{label}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                   {count}
                 </span>
               </button>
@@ -4537,6 +4630,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
+        searchValue={searchQuery}
         openDocuments={openDocuments}
         activeDocumentId={activeDocumentId}
         onSelectDocument={setActiveDocumentId}

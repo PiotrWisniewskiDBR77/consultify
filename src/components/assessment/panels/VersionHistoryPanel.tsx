@@ -197,8 +197,8 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
           <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <History className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                  <History className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-navy-900 dark:text-white">
@@ -234,11 +234,11 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
               </div>
             ) : loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <AlertCircle className="w-12 h-12 text-red-400 mb-3" />
+                <AlertCircle className="w-12 h-12 text-rose-400 mb-3" />
                 <p className="text-slate-500 dark:text-slate-400">{error}</p>
               </div>
             ) : versions.length === 0 ? (
@@ -266,7 +266,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                 shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10
                                                 ${
                                                   index === 0
-                                                    ? 'bg-purple-100 dark:bg-purple-900/30 ring-4 ring-white dark:ring-navy-900'
+                                                    ? 'bg-primary-100 dark:bg-primary-900/30 ring-4 ring-white dark:ring-navy-900'
                                                     : 'bg-slate-100 dark:bg-navy-800'
                                                 }
                                             `}
@@ -274,7 +274,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         <span
                           className={`text-sm font-bold ${
                             index === 0
-                              ? 'text-purple-600 dark:text-purple-400'
+                              ? 'text-primary-600 dark:text-primary-400'
                               : 'text-slate-500 dark:text-slate-400'
                           }`}
                         >
@@ -288,7 +288,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                 flex-1 p-4 rounded-xl border transition-all
                                                 ${
                                                   index === 0
-                                                    ? 'bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-500/30'
+                                                    ? 'bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-500/30'
                                                     : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
                                                 }
                                             `}
@@ -300,7 +300,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                 {getRelativeTime(version.createdAt)}
                               </span>
                               {index === 0 && (
-                                <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded">
+                                <span className="px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs font-medium rounded">
                                   Aktualna
                                 </span>
                               )}
@@ -336,7 +336,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                                                                   restoringVersion ===
                                                                   version.version
                                                                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:text-slate-500 cursor-wait'
-                                                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400'
+                                                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-primary-100 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400'
                                                                 }
                                                             `}
                             >

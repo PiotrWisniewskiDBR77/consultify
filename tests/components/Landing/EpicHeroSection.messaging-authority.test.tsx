@@ -35,18 +35,14 @@ describe('EpicHeroSection messaging authority', () => {
   it('uses the canonical category with a clearer who-its-for message and Anna-guided entry', () => {
     render(
       <I18nextProvider i18n={i18n}>
-        <EpicHeroSection
-          onOpenDemoNow={vi.fn()}
-          onLaunchTrial={vi.fn()}
-          variant="epicHeroV1"
-        />
+        <EpicHeroSection onOpenDemoNow={vi.fn()} onLaunchTrial={vi.fn()} variant="epicHeroV1" />
       </I18nextProvider>
     );
 
     expect(screen.getByText('Consulting Intelligence Platform')).toBeInTheDocument();
-    expect(screen.getByText('Consultify gives teams')).toBeInTheDocument();
-    expect(screen.getByText('consulting intelligence')).toBeInTheDocument();
-    expect(screen.getByText('they can actually execute.')).toBeInTheDocument();
+    expect(screen.getByText('Consultify AI.')).toBeInTheDocument();
+    expect(screen.getByText('All the world’s business knowledge.')).toBeInTheDocument();
+    expect(screen.getByText('Turned into your profits.')).toBeInTheDocument();
     expect(
       screen.getByText(
         'For consultants, transformation teams, and operators who need diagnosis, planning, execution, and measurable results in one workflow.'

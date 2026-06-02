@@ -201,7 +201,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-purple-500" />
+            <Shield className="w-5 h-5 text-primary-500" />
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Permission Manager
             </h2>
@@ -239,7 +239,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+        <div className="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400">
           {error}
         </div>
       )}
@@ -320,7 +320,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
                             className={`p-2 rounded-lg transition-colors ${
                               status === 'granted'
                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 hover:bg-green-200'
-                                : 'bg-red-100 dark:bg-red-900/30 text-red-600 hover:bg-red-200'
+                                : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 hover:bg-rose-200'
                             }`}
                             title={status === 'granted' ? 'Click to revoke' : 'Click to grant'}
                           >
@@ -350,8 +350,8 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
             <span>Granted</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-100 dark:bg-red-900/30 rounded flex items-center justify-center">
-              <X className="w-3 h-3 text-red-600" />
+            <div className="w-4 h-4 bg-rose-100 dark:bg-rose-900/30 rounded flex items-center justify-center">
+              <X className="w-3 h-3 text-rose-600" />
             </div>
             <span>Revoked</span>
           </div>

@@ -1,0 +1,473 @@
+/**
+ * IntakeJwtPanel — Admin-side panel for the Form Intake (JWT) workflow.
+ *
+ * Block D · EPIC-T14 · Sprint D-S4. Surfaces the four operator-facing
+ * actions delivered by `FormIntakeService` (D-S2):
+ *
+ *   1. Show current intake context (target table id, hard expiry, current
+ *      allow-list, published flag).
+ *   2. Issue a JWT link to a recipient (subject + TTL → token + URL).
+ *   3. Edit the field allow-list — multi-select against the form's
+ *      configured fields. Empty list falls back to the form's `config.fields`
+ *      (no filter).
+ *   4. Copy the public URL to the clipboard.
+ *
+ * Hosted as a modal inside `FormsIndex` when the form has the
+ * `tabele_form_intake` kill switch flipped on. The panel itself does not
+ * mutate the form record; all writes flow through `tablePlatform.api`.
+ *
+ * Compliance:
+ *   - DBR77 hex audit clean — Tailwind tokens only.
+ *   - All actions emit toasts so the user never has to refresh to see
+ *     what changed.
+ *   - The component is idempotent: closing & reopening the modal reloads
+ *     the intake context.
+ */
+
+import {
+  AlertTriangle,
+  Check,
+  ClipboardCopy,
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+  Trash2,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import {
+  type FormIntakeContext,
+  getFormIntakeContext,
+  type IssuedFormIntakeJwt,
+  issueFormIntakeJwt,
+  setFormIntakeAllowList,
+} from '@/services/api/tablePlatform.api';
+
+const SUBJECT_MAX_CHARS = 320;
+const DEFAULT_TTL_SECONDS = 30 * 24 * 60 * 60;
+const TTL_OPTIONS: Array<{ label: string; seconds: number }> = [
+  { label: '1 day', seconds: 24 * 60 * 60 },
+  { label: '7 days', seconds: 7 * 24 * 60 * 60 },
+  { label: '30 days', seconds: 30 * 24 * 60 * 60 },
+  { label: '90 days', seconds: 90 * 24 * 60 * 60 },
+];
+
+export interface IntakeJwtPanelFormFieldOption {
+  fieldId: string;
+  label: string;
+}
+
+export interface IntakeJwtPanelProps {
+  formId: string;
+  /** All fields configured on the form. Used to render the allow-list editor. */
+  configuredFields: IntakeJwtPanelFormFieldOption[];
+  /** Origin used to render the recipient URL (e.g. https://app.consultify.io). */
+  baseUrl: string;
+  onClose: () => void;
+  /** Test seam: skip the network call and seed initial context. */
+  testInitialContext?: FormIntakeContext | null;
+}
+
+export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
+  formId,
+  configuredFields,
+  baseUrl,
+  onClose,
+  testInitialContext,
+}) => {
+  const [context, setContext] = useState<FormIntakeContext | null>(testInitialContext ?? null);
+  const [loading, setLoading] = useState(testInitialContext === undefined);
+  const [error, setError] = useState<string | null>(null);
+
+  const [subject, setSubject] = useState('');
+  const [ttlSeconds, setTtlSeconds] = useState<number>(DEFAULT_TTL_SECONDS);
+  const [issuing, setIssuing] = useState(false);
+  const [issued, setIssued] = useState<IssuedFormIntakeJwt | null>(null);
+  const [copied, setCopied] = useState<'token' | 'url' | null>(null);
+
+  const [allowListDraft, setAllowListDraft] = useState<string[]>([]);
+  const [savingAllowList, setSavingAllowList] = useState(false);
+
+  const useNetwork = testInitialContext === undefined;
+
+  const refresh = useCallback(async () => {
+    if (!useNetwork) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const ctx = await getFormIntakeContext(formId);
+      setContext(ctx);
+      setAllowListDraft(ctx.fieldAllowList ?? []);
+    } catch (e) {
+      setError((e as Error)?.message ?? 'Failed to load intake context');
+    } finally {
+      setLoading(false);
+    }
+  }, [formId, useNetwork]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    if (testInitialContext) {
+      setAllowListDraft(testInitialContext.fieldAllowList ?? []);
+    }
+  }, [testInitialContext]);
+
+  const allowListDirty = useMemo(() => {
+    const current = context?.fieldAllowList ?? [];
+    if (current.length !== allowListDraft.length) return true;
+    const a = [...current].sort();
+    const b = [...allowListDraft].sort();
+    return a.some((entry, i) => entry !== b[i]);
+  }, [context, allowListDraft]);
+
+  const recipientUrl = useMemo(() => {
+    if (!issued) return null;
+    return `${baseUrl.replace(/\/$/, '')}/public/forms/jwt/${encodeURIComponent(issued.token)}`;
+  }, [issued, baseUrl]);
+
+  const handleIssue = useCallback(async () => {
+    if (!subject.trim()) {
+      toast.error('Recipient subject is required');
+      return;
+    }
+    if (subject.trim().length > SUBJECT_MAX_CHARS) {
+      toast.error(`Subject must be ${SUBJECT_MAX_CHARS} characters or fewer`);
+      return;
+    }
+    setIssuing(true);
+    setIssued(null);
+    try {
+      const result = await issueFormIntakeJwt(formId, {
+        subject: subject.trim(),
+        expiresInSeconds: ttlSeconds,
+      });
+      setIssued(result);
+      toast.success('Intake link issued');
+    } catch (e) {
+      toast.error(`Failed to issue link: ${(e as Error)?.message ?? 'unknown'}`);
+    } finally {
+      setIssuing(false);
+    }
+  }, [formId, subject, ttlSeconds]);
+
+  const handleCopy = useCallback(async (value: string, kind: 'token' | 'url') => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(value);
+      }
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 1800);
+    } catch {
+      toast.error('Failed to copy to clipboard');
+    }
+  }, []);
+
+  const handleToggleField = useCallback((fieldId: string) => {
+    setAllowListDraft((prev) =>
+      prev.includes(fieldId) ? prev.filter((id) => id !== fieldId) : [...prev, fieldId]
+    );
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setAllowListDraft(configuredFields.map((f) => f.fieldId));
+  }, [configuredFields]);
+
+  const handleClearAllowList = useCallback(() => {
+    setAllowListDraft([]);
+  }, []);
+
+  const handleSaveAllowList = useCallback(async () => {
+    setSavingAllowList(true);
+    try {
+      const next = allowListDraft.length > 0 ? Array.from(new Set(allowListDraft)) : null;
+      const updated = await setFormIntakeAllowList(formId, next);
+      setContext(updated);
+      setAllowListDraft(updated.fieldAllowList ?? []);
+      toast.success('Allow-list saved');
+    } catch (e) {
+      toast.error(`Failed to save allow-list: ${(e as Error)?.message ?? 'unknown'}`);
+    } finally {
+      setSavingAllowList(false);
+    }
+  }, [formId, allowListDraft]);
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4"
+      data-testid="intake-jwt-panel-overlay"
+    >
+      <section
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+        data-testid="intake-jwt-panel"
+        aria-label="Form intake settings"
+      >
+        <header className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-700">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Form intake (private link)
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            aria-label="Close intake panel"
+            data-testid="intake-jwt-close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 text-sm">
+          {loading ? (
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Loading intake context…
+            </div>
+          ) : error ? (
+            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                {error}
+              </div>
+            </div>
+          ) : !context ? null : (
+            <>
+              <section
+                className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+                aria-label="Intake summary"
+              >
+                <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Summary
+                </h3>
+                <dl className="grid grid-cols-3 gap-y-1 text-xs">
+                  <dt className="text-slate-500 dark:text-slate-400">Target table</dt>
+                  <dd
+                    className="col-span-2 truncate text-slate-700 dark:text-slate-200"
+                    data-testid="intake-target-table"
+                  >
+                    {context.targetTableId}
+                  </dd>
+                  <dt className="text-slate-500 dark:text-slate-400">Allow-list</dt>
+                  <dd
+                    className="col-span-2 text-slate-700 dark:text-slate-200"
+                    data-testid="intake-allow-list-summary"
+                  >
+                    {context.fieldAllowList && context.fieldAllowList.length > 0
+                      ? `${context.fieldAllowList.length} field${
+                          context.fieldAllowList.length === 1 ? '' : 's'
+                        }`
+                      : 'All configured fields'}
+                  </dd>
+                  <dt className="text-slate-500 dark:text-slate-400">Hard expiry</dt>
+                  <dd
+                    className="col-span-2 text-slate-700 dark:text-slate-200"
+                    data-testid="intake-hard-expiry"
+                  >
+                    {context.publicLinkExpiresAt
+                      ? new Date(context.publicLinkExpiresAt).toLocaleString()
+                      : 'None'}
+                  </dd>
+                  <dt className="text-slate-500 dark:text-slate-400">Status</dt>
+                  <dd className="col-span-2 text-slate-700 dark:text-slate-200">
+                    {context.isPublished ? 'Published' : 'Draft (links will not verify)'}
+                  </dd>
+                </dl>
+              </section>
+
+              <section
+                className="rounded-md border border-slate-200 p-3 dark:border-slate-700"
+                aria-label="Allow-list editor"
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Field allow-list
+                  </h3>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={handleSelectAll}
+                      className="rounded-md border border-slate-300 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                      data-testid="intake-allow-list-select-all"
+                    >
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearAllowList}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                      data-testid="intake-allow-list-clear"
+                      aria-label="Clear allow-list (use form fields)"
+                    >
+                      <Trash2 className="h-3 w-3" /> Clear
+                    </button>
+                  </div>
+                </div>
+                <p className="mb-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  Empty allow-list falls back to the form&apos;s configured fields. Selecting a
+                  subset narrows what recipients can submit.
+                </p>
+                <ul
+                  className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto"
+                  data-testid="intake-allow-list-options"
+                >
+                  {configuredFields.length === 0 ? (
+                    <li className="text-[11px] text-slate-500 dark:text-slate-400">
+                      The form has no configured fields yet.
+                    </li>
+                  ) : (
+                    configuredFields.map((f) => {
+                      const checked = allowListDraft.includes(f.fieldId);
+                      return (
+                        <li key={f.fieldId}>
+                          <label className="flex items-center gap-2 rounded-md px-1.5 py-1 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => handleToggleField(f.fieldId)}
+                              className="h-3.5 w-3.5"
+                              data-testid={`intake-allow-list-toggle-${f.fieldId}`}
+                            />
+                            <span className="truncate">{f.label}</span>
+                            <span className="ml-auto truncate text-[10px] text-slate-400">
+                              {f.fieldId.slice(0, 8)}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() => void handleSaveAllowList()}
+                  disabled={!allowListDirty || savingAllowList}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:bg-slate-300 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100 dark:disabled:bg-slate-600 dark:disabled:text-slate-400"
+                  data-testid="intake-allow-list-save"
+                >
+                  {savingAllowList ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                  Save allow-list
+                </button>
+              </section>
+
+              <section
+                className="rounded-md border border-slate-200 p-3 dark:border-slate-700"
+                aria-label="Issue intake link"
+              >
+                <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Issue private link
+                </h3>
+                <label className="block">
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300">
+                    Recipient subject (email or label)
+                  </span>
+                  <input
+                    type="text"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    maxLength={SUBJECT_MAX_CHARS}
+                    placeholder="recipient@partner.com"
+                    className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                    data-testid="intake-issue-subject"
+                    aria-label="Recipient subject"
+                  />
+                </label>
+                <label className="mt-2 block">
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300">Expires in</span>
+                  <select
+                    value={ttlSeconds}
+                    onChange={(e) => setTtlSeconds(Number(e.target.value))}
+                    className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                    data-testid="intake-issue-ttl"
+                    aria-label="Expires in"
+                  >
+                    {TTL_OPTIONS.map((o) => (
+                      <option key={o.seconds} value={o.seconds}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void handleIssue()}
+                  disabled={issuing || !context.isPublished}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700"
+                  data-testid="intake-issue-submit"
+                >
+                  {issuing ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <KeyRound className="h-3 w-3" />
+                  )}
+                  Issue link
+                </button>
+                {!context.isPublished ? (
+                  <p className="mt-1.5 text-[11px] text-rose-500">
+                    Publish the form first; private links won&apos;t verify on a draft form.
+                  </p>
+                ) : null}
+
+                {issued && recipientUrl ? (
+                  <div
+                    className="mt-3 space-y-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100"
+                    data-testid="intake-issued-result"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate font-mono text-[10px]">{recipientUrl}</span>
+                      <button
+                        type="button"
+                        onClick={() => void handleCopy(recipientUrl, 'url')}
+                        className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-white px-2 py-0.5 text-[10px] text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900 dark:text-emerald-200"
+                        data-testid="intake-issued-copy-url"
+                      >
+                        {copied === 'url' ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          <ClipboardCopy className="h-3 w-3" />
+                        )}
+                        {copied === 'url' ? 'Copied' : 'Copy URL'}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-emerald-700 dark:text-emerald-300">
+                        Expires {new Date(issued.expiresAt).toLocaleString()}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void handleCopy(issued.token, 'token')}
+                        className="inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-white px-2 py-0.5 text-[10px] text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900 dark:text-emerald-200"
+                        data-testid="intake-issued-copy-token"
+                      >
+                        {copied === 'token' ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          <ClipboardCopy className="h-3 w-3" />
+                        )}
+                        {copied === 'token' ? 'Copied' : 'Copy token'}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            </>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default IntakeJwtPanel;

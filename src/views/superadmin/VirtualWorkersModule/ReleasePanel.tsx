@@ -45,7 +45,11 @@ const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
 };
 
-export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId, profileVersion }) => {
+export const ReleasePanel: React.FC<ReleasePanelProps> = ({
+  workerId,
+  profileId,
+  profileVersion,
+}) => {
   const [items, setItems] = useState<Release[]>([]);
   const [evaluations, setEvaluations] = useState<EvaluationOption[]>([]);
   const [readiness, setReadiness] = useState<ReleaseReadiness | null>(null);
@@ -140,7 +144,8 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId,
                   Release readiness
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Active profile: {readiness.activeProfileVersion ? `v${readiness.activeProfileVersion}` : 'none'}
+                  Active profile:{' '}
+                  {readiness.activeProfileVersion ? `v${readiness.activeProfileVersion}` : 'none'}
                   {' · '}
                   Passed evaluations: {readiness.passedEvaluationCount}
                 </p>
@@ -211,7 +216,7 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId,
         </p>
 
         {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300">
             {error}
           </div>
         )}

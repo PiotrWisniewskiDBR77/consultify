@@ -32,10 +32,10 @@ export const MindmapNode: React.FC<NodeProps<MindmapNodeData>> = memo(
         'border-green-500 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-200',
       amber:
         'border-amber-500 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200',
-      red: 'border-red-500 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-200',
+      red: 'border-rose-500 bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-200',
       purple:
-        'border-purple-500 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-200',
-      cyan: 'border-cyan-500 bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-200',
+        'border-primary-500 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-200',
+      cyan: 'border-blue-500 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-200',
     };
 
     return (

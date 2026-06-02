@@ -375,15 +375,17 @@ export const sendMetrics = async (endpoint?: string): Promise<void> => {
   try {
     // Use sendBeacon for reliability on page unload
     if (navigator.sendBeacon) {
-      navigator.sendBeacon(url, JSON.stringify(report));
-    } else {
-      await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(report),
-        keepalive: true,
-      });
+      const queued = navigator.sendBeacon(url, JSON.stringify(report));
+      if (queued) {
+        return;
+      }
     }
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(report),
+      keepalive: true,
+    });
   } catch (e) {
     console.warn('[WebVitals] Failed to send metrics:', e);
   }
@@ -453,7 +455,7 @@ if (typeof window !== 'undefined') {
   }
 
   // Send metrics before page unload
-  window.addEventListener('visibilitychange', () => {
+  document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
       sendMetrics();
     }

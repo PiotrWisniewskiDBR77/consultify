@@ -161,8 +161,8 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-              <BarChart3 className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+              <BarChart3 className="w-8 h-8 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -188,7 +188,7 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
                 key={framework.id}
                 className={`bg-white dark:bg-navy-900 rounded-xl border transition-all ${
                   isAvailable
-                    ? 'border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50 hover:shadow-lg cursor-pointer'
+                    ? 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50 hover:shadow-lg cursor-pointer'
                     : 'border-slate-200 dark:border-navy-700 opacity-75'
                 }`}
                 onClick={() => isAvailable && handleSelectFramework(framework.id)}
@@ -261,7 +261,7 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
               </p>
               <button
                 onClick={() => handleSelectFramework('DRD')}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-colors"
               >
                 <Plus size={16} />
                 {isPolish ? 'Nowa ocena DRD' : 'New DRD Assessment'}

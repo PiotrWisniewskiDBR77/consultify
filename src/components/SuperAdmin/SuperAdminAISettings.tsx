@@ -10,21 +10,14 @@
  * - Circuit breaker configuration
  */
 
-import { AnimatePresence, motion, Reorder } from 'framer-motion';
+import { AnimatePresence, Reorder } from 'framer-motion';
 import {
   Activity,
-  AlertTriangle,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Database,
-  Eye,
   Gauge,
   Globe,
   GripVertical,
-  Info,
   Lock,
-  Plus,
   RefreshCw,
   Save,
   Server,
@@ -35,6 +28,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { DegradedState } from '@/components/Admin/AdminState';
 
 import { InfoButton } from '../shared/InfoButton';
 
@@ -91,9 +86,154 @@ const PII_SENSITIVITY_OPTIONS = [
     value: 'high',
     label: 'High',
     description: 'Aggressive detection (+ financial, health data)',
-    color: 'text-red-400',
+    color: 'text-rose-400',
   },
 ];
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const toBool = (value: unknown, fallback = false) =>
+  typeof value === 'boolean'
+    ? value
+    : value === undefined || value === null
+      ? fallback
+      : value === 1 || value === '1' || value === 'true';
+
+const toNumber = (value: unknown, fallback: number) =>
+  Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+const normalizeSettings = (value: unknown): SuperAdminSettings => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload) || !('id' in payload)) {
+    throw new Error('AI settings response was incomplete');
+  }
+
+  const globalRateLimit = isRecord(payload.globalRateLimit) ? payload.globalRateLimit : {};
+  const circuitBreakerConfig = isRecord(payload.circuitBreakerConfig)
+    ? payload.circuitBreakerConfig
+    : {};
+  const piiDetectionSensitivity =
+    payload.piiDetectionSensitivity === 'low' ||
+    payload.piiDetectionSensitivity === 'medium' ||
+    payload.piiDetectionSensitivity === 'high'
+      ? payload.piiDetectionSensitivity
+      : 'medium';
+
+  return {
+    id: asText(payload.id, ''),
+    defaultProvider:
+      payload.defaultProvider === null || payload.defaultProvider === undefined
+        ? null
+        : asText(payload.defaultProvider, ''),
+    fallbackChain: Array.isArray(payload.fallbackChain)
+      ? payload.fallbackChain.map((item) => asText(item, '')).filter(Boolean)
+      : [],
+    circuitBreakerConfig: {
+      failureThreshold: toNumber(circuitBreakerConfig.failureThreshold, 5),
+      cooldownSeconds: toNumber(circuitBreakerConfig.cooldownSeconds, 60),
+    },
+    globalTokenLimit: toNumber(payload.globalTokenLimit, 10000000),
+    globalRateLimit: {
+      requestsPerMinute: toNumber(globalRateLimit.requestsPerMinute, 60),
+      requestsPerHour: toNumber(globalRateLimit.requestsPerHour, 1000),
+    },
+    maxContextWindowSize: toNumber(payload.maxContextWindowSize, 128000),
+    maxTokensPerRequest: toNumber(payload.maxTokensPerRequest, 8192),
+    piiDetectionSensitivity,
+    requireEncryption: toBool(payload.requireEncryption, false),
+    dataResidency:
+      payload.dataResidency === null || payload.dataResidency === undefined
+        ? null
+        : asText(payload.dataResidency, ''),
+    updatedAt:
+      payload.updatedAt === null || payload.updatedAt === undefined
+        ? undefined
+        : asText(payload.updatedAt, ''),
+    updatedBy:
+      payload.updatedBy === null || payload.updatedBy === undefined
+        ? undefined
+        : asText(payload.updatedBy, ''),
+  };
+};
+
+const normalizeProviders = (value: unknown): LLMProvider[] => {
+  if (!hasListShape(value, ['providers', 'items'])) {
+    throw new Error('LLM providers response was not a list');
+  }
+  return getListPayload<Record<string, unknown>>(value, ['providers', 'items'])
+    .map((provider) => ({
+      id: asText(provider.id, ''),
+      name: asText(provider.name, ''),
+      provider: asText(provider.provider, ''),
+      is_active: toBool(provider.is_active, true),
+    }))
+    .filter((provider) => provider.id);
+};
+
+const settingsConfirmSaved = (expected: SuperAdminSettings, actual: SuperAdminSettings) =>
+  expected.defaultProvider === actual.defaultProvider &&
+  JSON.stringify(expected.fallbackChain) === JSON.stringify(actual.fallbackChain) &&
+  expected.globalTokenLimit === actual.globalTokenLimit &&
+  expected.globalRateLimit.requestsPerMinute === actual.globalRateLimit.requestsPerMinute &&
+  expected.globalRateLimit.requestsPerHour === actual.globalRateLimit.requestsPerHour &&
+  expected.maxContextWindowSize === actual.maxContextWindowSize &&
+  expected.maxTokensPerRequest === actual.maxTokensPerRequest &&
+  expected.piiDetectionSensitivity === actual.piiDetectionSensitivity &&
+  expected.requireEncryption === actual.requireEncryption &&
+  expected.dataResidency === actual.dataResidency &&
+  expected.circuitBreakerConfig.failureThreshold === actual.circuitBreakerConfig.failureThreshold &&
+  expected.circuitBreakerConfig.cooldownSeconds === actual.circuitBreakerConfig.cooldownSeconds;
 
 export const SuperAdminAISettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -101,6 +241,8 @@ export const SuperAdminAISettings: React.FC = () => {
   const [settings, setSettings] = useState<SuperAdminSettings | null>(null);
   const [providers, setProviders] = useState<LLMProvider[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Fallback chain management
   const [fallbackChain, setFallbackChain] = useState<string[]>([]);
@@ -109,8 +251,10 @@ export const SuperAdminAISettings: React.FC = () => {
     loadSettings();
   }, []);
 
-  const loadSettings = async () => {
-    setLoading(true);
+  const loadSettings = async (options: { showLoading?: boolean } = {}) => {
+    if (options.showLoading !== false) setLoading(true);
+    setLoadError(null);
+    setSaveError(null);
     try {
       const [settingsRes, providersRes] = await Promise.all([
         fetch('/api/ai-settings/superadmin', {
@@ -121,21 +265,32 @@ export const SuperAdminAISettings: React.FC = () => {
         }),
       ]);
 
-      if (settingsRes.ok) {
-        const data = await settingsRes.json();
-        setSettings(data);
-        setFallbackChain(data.fallbackChain || []);
+      if (!settingsRes.ok) {
+        throw new Error('AI settings endpoint returned an error');
+      }
+      if (!providersRes.ok) {
+        throw new Error('LLM providers endpoint returned an error');
       }
 
-      if (providersRes.ok) {
-        const provData = await providersRes.json();
-        setProviders(provData.filter((p: LLMProvider) => p.is_active));
-      }
-    } catch (err) {
-      console.error('Failed to load settings:', err);
-      toast.error('Failed to load AI settings');
+      const data = await settingsRes.json();
+      const provData = await providersRes.json();
+      const nextSettings = normalizeSettings(data);
+      const nextProviders = normalizeProviders(provData);
+
+      setSettings(nextSettings);
+      setFallbackChain(nextSettings.fallbackChain);
+      setProviders(nextProviders.filter((p) => p.is_active));
+      return { settings: nextSettings, providers: nextProviders };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load AI settings';
+      setLoadError(message);
+      setSettings(null);
+      setProviders([]);
+      setFallbackChain([]);
+      toast.error(message);
+      return null;
     } finally {
-      setLoading(false);
+      if (options.showLoading !== false) setLoading(false);
     }
   };
 
@@ -143,8 +298,9 @@ export const SuperAdminAISettings: React.FC = () => {
     if (!settings) return;
 
     setSaving(true);
+    setSaveError(null);
     try {
-      const payload = {
+      const payload: SuperAdminSettings = {
         ...settings,
         fallbackChain,
       };
@@ -158,16 +314,20 @@ export const SuperAdminAISettings: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setSettings(updated);
-        setHasChanges(false);
-        toast.success('Settings saved successfully');
-      } else {
-        throw new Error('Failed to save');
+      if (!res.ok) {
+        throw new Error('AI settings save endpoint returned an error');
       }
-    } catch (err) {
-      toast.error('Failed to save settings');
+
+      const refreshed = await loadSettings({ showLoading: false });
+      if (!refreshed || !settingsConfirmSaved(payload, refreshed.settings)) {
+        throw new Error('AI settings save was not confirmed by the server');
+      }
+      setHasChanges(false);
+      toast.success('Settings saved successfully');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save settings';
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -214,16 +374,20 @@ export const SuperAdminAISettings: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <RefreshCw size={32} className="animate-spin text-violet-400" />
+        <RefreshCw size={32} className="animate-spin text-primary-400" />
       </div>
     );
   }
 
   if (!settings) {
     return (
-      <div className="flex items-center justify-center h-96 text-slate-400 dark:text-slate-500">
-        <AlertTriangle size={24} className="mr-2" />
-        Failed to load settings
+      <div className="flex items-center justify-center h-96">
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 max-w-xl w-full">
+          <DegradedState
+            title="AI settings unavailable"
+            description={loadError || 'Failed to load settings'}
+          />
+        </div>
       </div>
     );
   }
@@ -236,8 +400,8 @@ export const SuperAdminAISettings: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-600/10">
-              <Settings size={24} className="text-violet-400" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/20 to-primary-600/10">
+              <Settings size={24} className="text-primary-400" />
             </div>
             Global AI Settings
           </h2>
@@ -247,7 +411,7 @@ export const SuperAdminAISettings: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={loadSettings}
+            onClick={() => void loadSettings()}
             className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
             <RefreshCw size={18} />
@@ -257,7 +421,7 @@ export const SuperAdminAISettings: React.FC = () => {
             disabled={!hasChanges || saving}
             className={`flex items-center gap-2 p-4 py-2.5 rounded-xl font-medium transition-all ${
               hasChanges
-                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:shadow-lg hover:shadow-violet-500/25'
+                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:shadow-lg hover:shadow-primary-500/25'
                 : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'
             }`}
           >
@@ -266,6 +430,15 @@ export const SuperAdminAISettings: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {saveError ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300"
+        >
+          {saveError}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Default Provider & Fallback Chain */}
@@ -292,7 +465,7 @@ export const SuperAdminAISettings: React.FC = () => {
             <select
               value={settings.defaultProvider || ''}
               onChange={(e) => updateSetting('defaultProvider', e.target.value || null)}
-              className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-colors"
+              className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
             >
               <option value="">Auto-select</option>
               {providers.map((p) => (
@@ -339,7 +512,7 @@ export const SuperAdminAISettings: React.FC = () => {
                       </span>
                       <button
                         onClick={() => removeFromFallbackChain(providerId)}
-                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -398,7 +571,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     parseInt(e.target.value)
                   )
                 }
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
             </div>
 
@@ -416,7 +589,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     parseInt(e.target.value)
                   )
                 }
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
             </div>
 
@@ -428,7 +601,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.globalTokenLimit || 10000000}
                 onChange={(e) => updateSetting('globalTokenLimit', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {((settings.globalTokenLimit || 10000000) / 1000000).toFixed(1)}M tokens
@@ -443,7 +616,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.maxTokensPerRequest || 8192}
                 onChange={(e) => updateSetting('maxTokensPerRequest', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
             </div>
 
@@ -455,7 +628,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.maxContextWindowSize || 128000}
                 onChange={(e) => updateSetting('maxContextWindowSize', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {((settings.maxContextWindowSize || 128000) / 1000).toFixed(0)}K context
@@ -467,8 +640,8 @@ export const SuperAdminAISettings: React.FC = () => {
         {/* Security & PII */}
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-red-500/20">
-              <Shield size={20} className="text-red-400" />
+            <div className="p-2 rounded-lg bg-rose-500/20">
+              <Shield size={20} className="text-rose-400" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">
@@ -492,7 +665,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     key={option.value}
                     className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
                       settings.piiDetectionSensitivity === option.value
-                        ? 'bg-violet-500/10 border-violet-500/50'
+                        ? 'bg-primary-500/10 border-primary-500/50'
                         : 'bg-navy-900/30 border-white/10 hover:border-white/20'
                     }`}
                   >
@@ -502,7 +675,10 @@ export const SuperAdminAISettings: React.FC = () => {
                       value={option.value}
                       checked={settings.piiDetectionSensitivity === option.value}
                       onChange={(e) =>
-                        updateSetting('piiDetectionSensitivity', e.target.value as any)
+                        updateSetting(
+                          'piiDetectionSensitivity',
+                          e.target.value as SuperAdminSettings['piiDetectionSensitivity']
+                        )
                       }
                       className="sr-only"
                     />
@@ -516,7 +692,7 @@ export const SuperAdminAISettings: React.FC = () => {
                       </div>
                     </div>
                     {settings.piiDetectionSensitivity === option.value && (
-                      <CheckCircle size={20} className="text-violet-400" />
+                      <CheckCircle size={20} className="text-primary-400" />
                     )}
                   </label>
                 ))}
@@ -550,8 +726,8 @@ export const SuperAdminAISettings: React.FC = () => {
         {/* Circuit Breaker & Data Residency */}
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-cyan-500/20">
-              <Activity size={20} className="text-cyan-400" />
+            <div className="p-2 rounded-lg bg-blue-500/20">
+              <Activity size={20} className="text-blue-400" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">
@@ -624,7 +800,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     key={option.value || 'none'}
                     className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${
                       settings.dataResidency === option.value
-                        ? 'bg-violet-500/10 border-violet-500/50'
+                        ? 'bg-primary-500/10 border-primary-500/50'
                         : 'bg-navy-900/30 border-white/10 hover:border-white/20'
                     }`}
                   >
@@ -641,7 +817,7 @@ export const SuperAdminAISettings: React.FC = () => {
                         size={16}
                         className={
                           settings.dataResidency === option.value
-                            ? 'text-violet-400'
+                            ? 'text-primary-400'
                             : 'text-slate-400 dark:text-slate-500'
                         }
                       />

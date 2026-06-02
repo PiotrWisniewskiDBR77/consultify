@@ -4,6 +4,7 @@ import type { Stripe as StripeTypes } from 'stripe';
 import logger from '../../utils/Logger.js';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
+import { assertSandboxAllowed } from './billingSandboxGuard.js';
 import type {
   BillingPlan,
   BillingServiceDependencies,
@@ -173,6 +174,7 @@ export class BillingCommandService {
     orgId: string,
     billingData: UpsertBillingData
   ): Promise<OrganizationBilling> {
+    assertSandboxAllowed(orgId, 'billing.upsertOrgBilling');
     const deps = this.deps();
     const id = `billing-${deps.uuidv4()}`;
     const normalizedCurrentPeriodStart = this.normalizeDateInput(billingData.current_period_start);
@@ -221,7 +223,9 @@ export class BillingCommandService {
         billingData.external_invoice_ref ?? null,
         billingData.notes ?? null,
         billingData.managed_by_user_id ?? null,
-        billingData.is_manual_override == null ? null : Number(Boolean(billingData.is_manual_override)),
+        billingData.is_manual_override == null
+          ? null
+          : Number(Boolean(billingData.is_manual_override)),
         billingData.stripe_customer_id ?? null,
         billingData.stripe_subscription_id ?? null,
         billingData.billing_email ?? null,
@@ -438,7 +442,7 @@ export class BillingCommandService {
         subscription_plan_id: planId,
         billing_rail: 'stripe_subscription',
         status: 'active',
-        contract_status: null,
+        contract_status: undefined,
         is_manual_override: false,
       });
       return { id: `mock_sub_${orgId}`, status: 'active', plan };
@@ -493,7 +497,7 @@ export class BillingCommandService {
       billing_rail: 'stripe_subscription',
       stripe_subscription_id: subscription.id,
       status: subscription.status,
-      contract_status: null,
+      contract_status: undefined,
       is_manual_override: false,
       current_period_start: (subscription as any).current_period_start
         ? new Date((subscription as any).current_period_start * 1000)
@@ -641,8 +645,11 @@ export class BillingCommandService {
     if (!deps.stripe || !billing.stripe_subscription_id) {
       await this.upsertOrgBilling(orgId, {
         status: 'active',
-        contract_status: billing.billing_rail === 'manual_invoice' ? 'active' : billing.contract_status,
-        access_expires_at: null,
+        contract_status:
+          billing.billing_rail === 'manual_invoice'
+            ? 'active'
+            : (billing.contract_status ?? undefined),
+        access_expires_at: undefined,
       });
       return { success: true };
     }
@@ -1044,7 +1051,11 @@ export class BillingCommandService {
         }),
       ]
     ) as Promise<any>);
-    this.eventService.emitEvent('billing.invoice.recorded', { invoiceId: id, orgId, source: 'manual' });
+    this.eventService.emitEvent('billing.invoice.recorded', {
+      invoiceId: id,
+      orgId,
+      source: 'manual',
+    });
     return { id };
   }
 

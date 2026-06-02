@@ -46,23 +46,23 @@ export const QuotaWarningBanner: React.FC<QuotaWarningBannerProps> = ({
     <div
       className={`relative px-4 py-3 rounded-lg flex items-center gap-3 ${
         isCritical
-          ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
-          : 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800'
+          ? 'bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800'
+          : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
       }`}
     >
       <AlertTriangle
-        className={`w-5 h-5 flex-shrink-0 ${isCritical ? 'text-red-500' : 'text-orange-500'}`}
+        className={`w-5 h-5 flex-shrink-0 ${isCritical ? 'text-rose-500' : 'text-amber-500'}`}
       />
       <div className="flex-1">
         <p
           className={`text-sm font-medium ${
-            isCritical ? 'text-red-800 dark:text-red-200' : 'text-orange-800 dark:text-orange-200'
+            isCritical ? 'text-rose-800 dark:text-rose-200' : 'text-amber-800 dark:text-amber-200'
           }`}
         >
           {getMessage()}
         </p>
         {isCritical && (
-          <p className="text-xs text-red-600 dark:text-red-300 mt-0.5">
+          <p className="text-xs text-rose-600 dark:text-rose-300 mt-0.5">
             Upgrade your plan to avoid service interruption.
           </p>
         )}
@@ -72,8 +72,8 @@ export const QuotaWarningBanner: React.FC<QuotaWarningBannerProps> = ({
           onClick={onUpgrade}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
             isCritical
-              ? 'bg-red-600 text-white hover:bg-red-700'
-              : 'bg-orange-600 text-white hover:bg-orange-700'
+              ? 'bg-rose-600 text-white hover:bg-rose-700'
+              : 'bg-amber-600 text-white hover:bg-amber-700'
           }`}
         >
           <TrendingUp className="w-4 h-4" />
@@ -84,7 +84,7 @@ export const QuotaWarningBanner: React.FC<QuotaWarningBannerProps> = ({
         <button
           onClick={onDismiss}
           className={`p-1 rounded hover:bg-black/10 transition-colors ${
-            isCritical ? 'text-red-500' : 'text-orange-500'
+            isCritical ? 'text-rose-500' : 'text-amber-500'
           }`}
         >
           <X className="w-4 h-4" />

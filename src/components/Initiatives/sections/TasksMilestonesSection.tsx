@@ -81,17 +81,17 @@ const TASK_STATUS_CONFIG: Record<
   },
   review: {
     label: { en: 'Review', pl: 'Przegląd' },
-    color: 'bg-purple-500',
-    dotColor: 'bg-purple-500',
-    bgColor: 'bg-purple-100 dark:bg-purple-500/20',
-    textColor: 'text-purple-600 dark:text-purple-400',
+    color: 'bg-primary-500',
+    dotColor: 'bg-primary-500',
+    bgColor: 'bg-primary-100 dark:bg-primary-500/20',
+    textColor: 'text-primary-600 dark:text-primary-400',
   },
   blocked: {
     label: { en: 'Blocked', pl: 'Zablokowane' },
-    color: 'bg-red-500',
-    dotColor: 'bg-red-500',
-    bgColor: 'bg-red-100 dark:bg-red-500/20',
-    textColor: 'text-red-600 dark:text-red-400',
+    color: 'bg-rose-500',
+    dotColor: 'bg-rose-500',
+    bgColor: 'bg-rose-100 dark:bg-rose-500/20',
+    textColor: 'text-rose-600 dark:text-rose-400',
   },
   done: {
     label: { en: 'Done', pl: 'Ukończone' },
@@ -105,9 +105,9 @@ const TASK_STATUS_CONFIG: Record<
 const PRIORITY_CONFIG: Record<string, { label: { en: string; pl: string }; color: string }> = {
   low: { label: { en: 'Low', pl: 'Niski' }, color: 'text-slate-500' },
   medium: { label: { en: 'Medium', pl: 'Średni' }, color: 'text-blue-500' },
-  high: { label: { en: 'High', pl: 'Wysoki' }, color: 'text-orange-500' },
-  urgent: { label: { en: 'Urgent', pl: 'Pilny' }, color: 'text-red-500' },
-  critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-red-600 font-bold' },
+  high: { label: { en: 'High', pl: 'Wysoki' }, color: 'text-amber-500' },
+  urgent: { label: { en: 'Urgent', pl: 'Pilny' }, color: 'text-rose-500' },
+  critical: { label: { en: 'Critical', pl: 'Krytyczny' }, color: 'text-rose-600 font-bold' },
 };
 
 // ==========================================
@@ -126,7 +126,7 @@ const SOURCE_CONFIG: Record<
   ai: {
     label: { en: 'AI', pl: 'AI' },
     icon: Sparkles,
-    color: 'text-violet-500 dark:text-violet-400',
+    color: 'text-primary-500 dark:text-primary-400',
   },
 };
 
@@ -1255,7 +1255,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               </button>
               <button
                 onClick={() => void applyAIProposal()}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors"
               >
                 {isPolish ? 'Zastosuj' : 'Apply'}
               </button>
@@ -1470,7 +1470,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                                   closeMenu();
                                   void handleRemoveTask(task.id);
                                 }}
-                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                               >
                                 <Trash2 size={13} />
                                 {isPolish ? 'Usuń' : 'Delete'}

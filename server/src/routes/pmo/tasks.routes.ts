@@ -14,6 +14,7 @@ const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import type { CriticalPathTask } from '../../services/criticalPathService.js';
@@ -52,6 +53,7 @@ router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
 router.use(demoContextMiddleware);

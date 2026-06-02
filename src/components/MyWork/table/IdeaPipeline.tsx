@@ -67,7 +67,7 @@ const DEFAULT_STAGES: PipelineStage[] = [
     id: 'initiative',
     label: 'Initiative',
     labelPl: 'Inicjatywa',
-    color: '#8b5cf6',
+    color: '#6366f1',
     icon: <Rocket size={12} />,
     criteria: ['Converted to initiative module', 'Team assigned'],
     criteriaPl: ['Skonwertowany do modułu inicjatyw', 'Zespół przydzielony'],
@@ -193,7 +193,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Rocket size={16} className="text-violet-500" />
+          <Rocket size={16} className="text-primary-500" />
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {isPl ? 'Pipeline: Pomysł → Inicjatywa' : 'Pipeline: Idea → Initiative'}
           </span>
@@ -224,7 +224,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                     onClick={() =>
                       setSelectedStage(selectedStage === item.stage.id ? null : item.stage.id)
                     }
-                    className={`flex-1 rounded-xl px-3 py-2.5 transition-all cursor-pointer ${selectedStage === item.stage.id ? 'ring-2 ring-violet-500/40' : 'hover:ring-1 hover:ring-slate-300'}`}
+                    className={`flex-1 rounded-xl px-3 py-2.5 transition-all cursor-pointer ${selectedStage === item.stage.id ? 'ring-2 ring-primary-500/40' : 'hover:ring-1 hover:ring-slate-300'}`}
                     style={{ backgroundColor: `${item.stage.color}15` }}
                   >
                     <div className="flex items-center gap-1.5 mb-1">

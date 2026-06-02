@@ -311,13 +311,14 @@ async function getClaimQueryShape(): Promise<{
   isExplicitSql: string;
   activeWhereSql: string;
 }> {
-  const [hasClaimType, hasReviewStatus, hasSourceLabel, hasIsExplicit, hasStatus] = await Promise.all([
-    hasColumn('organization_context_claims', 'claim_type').catch(() => false),
-    hasColumn('organization_context_claims', 'review_status').catch(() => false),
-    hasColumn('organization_context_items', 'source_label').catch(() => false),
-    hasColumn('organization_context_items', 'is_explicit').catch(() => false),
-    hasColumn('organization_context_claims', 'status').catch(() => false),
-  ]);
+  const [hasClaimType, hasReviewStatus, hasSourceLabel, hasIsExplicit, hasStatus] =
+    await Promise.all([
+      hasColumn('organization_context_claims', 'claim_type').catch(() => false),
+      hasColumn('organization_context_claims', 'review_status').catch(() => false),
+      hasColumn('organization_context_items', 'source_label').catch(() => false),
+      hasColumn('organization_context_items', 'is_explicit').catch(() => false),
+      hasColumn('organization_context_claims', 'status').catch(() => false),
+    ]);
 
   return {
     claimTypeSql: hasClaimType ? 'c.claim_type' : `'fact' as claim_type`,
@@ -1084,7 +1085,7 @@ export class OrganizationContextService {
     }> = [];
     for (const insightId of publishedInsightIds) {
       try {
-        const findings = listP10Findings(insightId);
+        const findings = await listP10Findings(insightId);
         for (const f of findings) {
           const activePointers = f.evidence_pointers.filter((p) => !p.isTombstone);
           p10Findings.push({
@@ -1207,7 +1208,10 @@ export class OrganizationContextService {
           asString(riskAppetiteClaim?.value) || asString(organizationProfile?.risk_appetite),
       },
       operations: {
-        keyMetrics: await this.enrichKeyMetricsWithKpiHealth(organizationId, mergeUniqueObjects(metricValues, legacyKeyMetrics)),
+        keyMetrics: await this.enrichKeyMetricsWithKpiHealth(
+          organizationId,
+          mergeUniqueObjects(metricValues, legacyKeyMetrics)
+        ),
         constraints: uniqStrings([
           ...constraintValues,
           asString(organizationProfile?.budget_constraints),
@@ -1272,19 +1276,19 @@ export class OrganizationContextService {
             asString(securitySettings.ssoProvider),
           enforced: Boolean(
             ssoConfigurationRow?.enforce_sso ??
-              ssoConfigurationRow?.sso_enforced ??
-              securitySettings.ssoEnforced ??
-              false
+            ssoConfigurationRow?.sso_enforced ??
+            securitySettings.ssoEnforced ??
+            false
           ),
           allowPasswordLogin: Boolean(
             ssoConfigurationRow?.allow_password_login ?? securitySettings.allowPasswordLogin ?? true
           ),
           active: Boolean(
             ssoConfigurationRow?.enabled ??
-              ssoConfigurationRow?.is_active ??
-              ssoConfigurationRow?.is_enabled ??
-              securitySettings.ssoEnabled ??
-              false
+            ssoConfigurationRow?.is_active ??
+            ssoConfigurationRow?.is_enabled ??
+            securitySettings.ssoEnabled ??
+            false
           ),
           managedBy: 'admin',
         },
@@ -1342,7 +1346,9 @@ export class OrganizationContextService {
         try {
           const arr = JSON.parse(String(activeRun.degraded_json));
           degradedCount = Array.isArray(arr) ? arr.length : 0;
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
 
       return {
@@ -1605,7 +1611,10 @@ export class OrganizationContextService {
         },
       ];
     } catch (err) {
-      logger.debug('[OrganizationContextService] KPI health enrichment skipped:', (err as Error)?.message);
+      logger.debug(
+        '[OrganizationContextService] KPI health enrichment skipped:',
+        (err as Error)?.message
+      );
       return existingMetrics;
     }
   }

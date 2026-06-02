@@ -1,12 +1,10 @@
 import { Brain, DollarSign, Inbox, Loader2, Sparkles } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
-
-const INBOX_AI_SETTINGS_STORAGE_KEY = 'consultify-inbox-ai-settings';
 
 interface InboxAIEvalRun {
   id: string;
@@ -23,35 +21,13 @@ interface InboxAICostSummary {
   days: number;
 }
 
-function loadInboxAITriageThreshold(): number {
-  try {
-    const raw = localStorage.getItem(INBOX_AI_SETTINGS_STORAGE_KEY);
-    if (!raw) return 0.85;
-    const parsed = JSON.parse(raw) as { threshold?: unknown };
-    const threshold = typeof parsed?.threshold === 'number' ? parsed.threshold : 0.85;
-    return Math.max(0.5, Math.min(0.99, threshold));
-  } catch {
-    return 0.85;
-  }
-}
-
-function saveInboxAITriageThreshold(threshold: number) {
-  try {
-    localStorage.setItem(
-      INBOX_AI_SETTINGS_STORAGE_KEY,
-      JSON.stringify({ threshold: Math.max(0.5, Math.min(0.99, threshold)) })
-    );
-  } catch {
-    // ignore local storage write failures
-  }
-}
-
 export const AIInboxAutomationSettings: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const { emitMyWorkEvent } = useAppStore();
 
-  const [threshold, setThreshold] = useState(loadInboxAITriageThreshold);
+  const didLoadThreshold = useRef(false);
+  const [threshold, setThreshold] = useState(0.85);
   const [manualReviewCount, setManualReviewCount] = useState(0);
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,8 +39,32 @@ export const AIInboxAutomationSettings: React.FC = () => {
   const [aiCostSummary, setAiCostSummary] = useState<InboxAICostSummary | null>(null);
 
   useEffect(() => {
-    saveInboxAITriageThreshold(threshold);
-  }, [threshold]);
+    const loadInboxAISettings = async () => {
+      const data = await Api.get('/settings/preferences/inbox-ai').catch(() => null);
+      const persistedThreshold = data?.preferences?.threshold;
+      if (typeof persistedThreshold === 'number') {
+        setThreshold(Math.max(0.5, Math.min(0.99, persistedThreshold)));
+      }
+      didLoadThreshold.current = true;
+    };
+
+    loadInboxAISettings();
+  }, []);
+
+  useEffect(() => {
+    if (!didLoadThreshold.current) return;
+    const timeout = window.setTimeout(() => {
+      Api.put('/settings/preferences/inbox-ai', { threshold }).catch(() => {
+        toast.error(
+          isPolish
+            ? 'Nie udało się zapisać progu auto-triage'
+            : 'Failed to save auto-triage threshold'
+        );
+      });
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [isPolish, threshold]);
 
   const fetchDiagnostics = useCallback(async () => {
     try {
@@ -158,7 +158,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                <Brain size={18} className="text-cyan-500" />
+                <Brain size={18} className="text-blue-500" />
                 {isPolish ? 'Próg auto-apply' : 'Auto-apply threshold'}
               </div>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -170,7 +170,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
             <button
               onClick={handleRunAutoTriage}
               disabled={running}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-cyan-300/40 bg-cyan-50 px-4 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-100/70 disabled:opacity-50 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/15"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-blue-300/40 bg-blue-50 px-4 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100/70 disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-blue-500/15"
             >
               {running ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               {isPolish ? 'Uruchom auto-triage' : 'Run auto-triage'}
@@ -192,7 +192,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
             step={0.01}
             value={threshold}
             onChange={(e) => setThreshold(Number(e.target.value))}
-            className="mt-3 w-full accent-cyan-600"
+            className="mt-3 w-full accent-blue-600"
           />
           <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
             {isPolish
@@ -204,7 +204,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-              <Sparkles size={16} className="text-violet-500" />
+              <Sparkles size={16} className="text-primary-500" />
               {isPolish ? 'Ewale i koszt' : 'Evals and cost'}
             </div>
             <div className="mt-4 flex items-center gap-6">

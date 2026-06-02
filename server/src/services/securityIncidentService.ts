@@ -26,7 +26,30 @@ class SecurityIncidentServiceClass {
     if (deps.logger) this.logger = deps.logger;
   }
 
+  private async ensureTable(): Promise<void> {
+    await this.db.run(`
+      CREATE TABLE IF NOT EXISTS security_incidents (
+        id TEXT PRIMARY KEY,
+        incident_type TEXT,
+        type TEXT,
+        title TEXT,
+        description TEXT NOT NULL,
+        severity TEXT DEFAULT 'MEDIUM',
+        status TEXT DEFAULT 'open',
+        affected_resources TEXT,
+        metadata_json TEXT,
+        detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP,
+        resolved_by TEXT,
+        resolution_notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  }
+
   async getIncidents(filters: any = {}): Promise<any[]> {
+    await this.ensureTable();
     const { status, severity, incidentType, limit = 10, offset = 0 } = filters;
 
     const safeJson = (raw: any, fallback: any) => {
@@ -137,6 +160,7 @@ class SecurityIncidentServiceClass {
   }
 
   async getStats(): Promise<any> {
+    await this.ensureTable();
     const row = (await this.db.get(`
       SELECT 
         COUNT(*) as total,
@@ -179,10 +203,12 @@ class SecurityIncidentServiceClass {
   }
 
   async getIncidentById(id: string): Promise<any> {
+    await this.ensureTable();
     return await this.db.get('SELECT * FROM security_incidents WHERE id = ?', [id]);
   }
 
   async createIncident(data: any): Promise<any> {
+    await this.ensureTable();
     const id = this.uuidv4();
     const {
       title,
@@ -239,6 +265,7 @@ class SecurityIncidentServiceClass {
   }
 
   async updateIncident(id: string, updates: any): Promise<boolean> {
+    await this.ensureTable();
     const fields: string[] = [];
     const params: any[] = [];
 
@@ -262,6 +289,7 @@ class SecurityIncidentServiceClass {
   }
 
   async resolveIncident(id: string, resolvedBy: string, notes: string): Promise<boolean> {
+    await this.ensureTable();
     const result = await this.db.run(
       'UPDATE security_incidents SET status = ?, resolved_by = ?, resolution_notes = ?, resolved_at = CURRENT_TIMESTAMP WHERE id = ?',
       ['resolved', resolvedBy, notes, id]
@@ -270,6 +298,7 @@ class SecurityIncidentServiceClass {
   }
 
   async deleteIncident(id: string): Promise<boolean> {
+    await this.ensureTable();
     const result = await this.db.run('DELETE FROM security_incidents WHERE id = ?', [id]);
     return (result as any).changes > 0;
   }

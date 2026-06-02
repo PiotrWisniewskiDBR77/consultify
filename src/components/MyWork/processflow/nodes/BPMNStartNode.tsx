@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 
 export const BPMNStartNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
   const [editing, setEditing] = useState(false);
@@ -67,11 +67,7 @@ export const BPMNStartNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         )}
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!w-2 !h-2 !bg-slate-400"
-      />
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
     </div>
   );
 };

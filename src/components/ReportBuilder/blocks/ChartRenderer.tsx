@@ -60,15 +60,15 @@ interface ChartRendererProps {
 
 const DEFAULT_COLORS = [
   '#3b82f6',
-  '#8b5cf6',
-  '#06b6d4',
+  '#6366f1',
+  '#3b82f6',
   '#10b981',
   '#f59e0b',
-  '#ef4444',
+  '#f43f5e',
   '#ec4899',
   '#6366f1',
-  '#14b8a6',
-  '#f97316',
+  '#3b82f6',
+  '#f59e0b',
 ];
 
 // ==========================================
@@ -139,7 +139,7 @@ function parseChartData(content: string): ChartConfig | null {
 export const ChartRenderer: React.FC<ChartRendererProps> = ({
   content,
   primaryColor = '#3b82f6',
-  accentColor = '#8b5cf6',
+  accentColor = '#6366f1',
 }) => {
   const config = useMemo(() => parseChartData(content), [content]);
 

@@ -1,3 +1,4 @@
+import TeresaMark from '../components/shared/TeresaMark';
 /**
  * AppPricingView
  *
@@ -8,23 +9,7 @@
 
 import { motion } from 'framer-motion';
 import {
-  ArrowRight,
-  Bot,
-  Building2,
-  Calendar,
-  Check,
-  Cpu,
-  HelpCircle,
-  Key,
-  MessageCircle,
-  Rocket,
-  Server,
-  Shield,
-  Sparkles,
-  Users,
-  X,
-  Zap,
-} from 'lucide-react';
+  ArrowRight, Building2, Calendar, Check, Cpu, HelpCircle, Key, MessageCircle, Rocket, Server, Shield, Sparkles, Users, X, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useAppStore } from '../store/useAppStore';
@@ -223,8 +208,8 @@ export const AppPricingView: React.FC = () => {
   return (
     <div className="min-h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-12 pt-10 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent dark:from-purple-900/20" />
+      <section className="relative overflow-hidden bg-gradient-to-b from-primary-50 via-white to-slate-50 px-6 pb-12 pt-10 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-100/40 via-transparent to-transparent dark:from-primary-900/20" />
 
         <div className="relative mx-auto max-w-4xl text-center">
           <motion.div
@@ -232,14 +217,14 @@ export const AppPricingView: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-4 py-2 text-sm font-semibold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
               <Sparkles size={16} />
               Cennik
             </span>
 
             <h1 className="mt-6 text-3xl font-black tracking-tight text-navy-950 dark:text-white md:text-4xl">
               AI Strategic Consulting,{' '}
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
                 skalowany dla Ciebie
               </span>
             </h1>
@@ -255,7 +240,7 @@ export const AppPricingView: React.FC = () => {
                 onClick={() => setBillingPeriod('annual')}
                 className={`rounded-xl p-4 py-2.5 text-sm font-bold transition-all ${
                   billingPeriod === 'annual'
-                    ? 'bg-purple-600 text-white shadow-md'
+                    ? 'bg-primary-600 text-white shadow-md'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
                 }`}
               >
@@ -268,7 +253,7 @@ export const AppPricingView: React.FC = () => {
                 onClick={() => setBillingPeriod('monthly')}
                 className={`rounded-xl p-4 py-2.5 text-sm font-bold transition-all ${
                   billingPeriod === 'monthly'
-                    ? 'bg-purple-600 text-white shadow-md'
+                    ? 'bg-primary-600 text-white shadow-md'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
                 }`}
               >
@@ -296,7 +281,7 @@ export const AppPricingView: React.FC = () => {
                   transition={{ duration: 0.5, delay: idx * 0.1 }}
                   className={`relative flex flex-col rounded-xl p-6 ${
                     tier.highlight
-                      ? 'bg-gradient-to-b from-purple-600 to-purple-700 text-white ring-4 ring-purple-500/50 shadow-2xl shadow-purple-500/20 scale-[1.02] z-10'
+                      ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white ring-4 ring-primary-500/50 shadow-2xl shadow-primary-500/20 scale-[1.02] z-10'
                       : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700'
                   }`}
                 >
@@ -312,13 +297,13 @@ export const AppPricingView: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-                        tier.highlight ? 'bg-white/20' : 'bg-purple-100 dark:bg-purple-900/30'
+                        tier.highlight ? 'bg-white/20' : 'bg-primary-100 dark:bg-primary-900/30'
                       }`}
                     >
                       <Icon
                         size={22}
                         className={
-                          tier.highlight ? 'text-white' : 'text-purple-600 dark:text-purple-400'
+                          tier.highlight ? 'text-white' : 'text-primary-600 dark:text-primary-400'
                         }
                       />
                     </div>
@@ -333,7 +318,7 @@ export const AppPricingView: React.FC = () => {
 
                   <p
                     className={`mt-3 text-sm ${
-                      tier.highlight ? 'text-purple-100' : 'text-slate-500 dark:text-slate-400'
+                      tier.highlight ? 'text-primary-100' : 'text-slate-500 dark:text-slate-400'
                     }`}
                   >
                     {tier.description}
@@ -350,7 +335,7 @@ export const AppPricingView: React.FC = () => {
                     </span>
                     <span
                       className={`ml-1 text-sm ${
-                        tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                        tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {tier.priceNote}
@@ -366,7 +351,7 @@ export const AppPricingView: React.FC = () => {
                     <div>
                       <div
                         className={`text-xs ${
-                          tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                          tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
                         }`}
                       >
                         Stanowiska
@@ -382,7 +367,7 @@ export const AppPricingView: React.FC = () => {
                     <div>
                       <div
                         className={`text-xs ${
-                          tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                          tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'
                         }`}
                       >
                         AI Credits
@@ -405,7 +390,7 @@ export const AppPricingView: React.FC = () => {
                           <Check
                             size={16}
                             className={`mt-0.5 flex-shrink-0 ${
-                              tier.highlight ? 'text-purple-200' : 'text-green-500'
+                              tier.highlight ? 'text-primary-200' : 'text-green-500'
                             }`}
                           />
                         ) : (
@@ -413,7 +398,7 @@ export const AppPricingView: React.FC = () => {
                             size={16}
                             className={`mt-0.5 flex-shrink-0 ${
                               tier.highlight
-                                ? 'text-purple-300/50'
+                                ? 'text-primary-300/50'
                                 : 'text-slate-300 dark:text-slate-600'
                             }`}
                           />
@@ -422,10 +407,10 @@ export const AppPricingView: React.FC = () => {
                           className={`text-xs ${
                             feature.included
                               ? tier.highlight
-                                ? 'text-purple-100'
+                                ? 'text-primary-100'
                                 : 'text-slate-700 dark:text-slate-300'
                               : tier.highlight
-                                ? 'text-purple-300/50'
+                                ? 'text-primary-300/50'
                                 : 'text-slate-400 dark:text-slate-500'
                           }`}
                         >
@@ -440,9 +425,9 @@ export const AppPricingView: React.FC = () => {
                     onClick={() => handleCtaClick(tier)}
                     className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
                       tier.ctaVariant === 'primary'
-                        ? 'bg-white text-purple-700 hover:bg-purple-50 shadow-lg'
+                        ? 'bg-white text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
-                          ? 'bg-purple-600 text-white hover:bg-purple-500'
+                          ? 'bg-primary-600 text-white hover:bg-primary-500'
                           : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >
@@ -465,7 +450,7 @@ export const AppPricingView: React.FC = () => {
               <span>Anuluj kiedy chcesz</span>
             </div>
             <div className="flex items-center gap-2">
-              <Cpu size={18} className="text-purple-500" />
+              <Cpu size={18} className="text-primary-500" />
               <span>EU Data Centers</span>
             </div>
           </div>
@@ -494,8 +479,8 @@ export const AppPricingView: React.FC = () => {
               className="rounded-xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30">
-                  <Bot size={22} className="text-purple-600 dark:text-purple-400" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
+                  <TeresaMark size={22} className="text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-navy-950 dark:text-white">Managed AI</h3>
@@ -540,7 +525,7 @@ export const AppPricingView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-navy-950 dark:text-white">BYOK Mode</h3>
-                  <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                  <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
                     Scale+ only
                   </span>
                 </div>
@@ -571,7 +556,7 @@ export const AppPricingView: React.FC = () => {
           {/* Credit Usage Examples */}
           <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900">
             <h3 className="flex items-center gap-2 text-base font-bold text-navy-950 dark:text-white mb-4">
-              <Server size={18} className="text-purple-500" />
+              <Server size={18} className="text-primary-500" />
               Co zużywa AI Credits?
             </h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -581,7 +566,7 @@ export const AppPricingView: React.FC = () => {
                   className="flex items-center justify-between rounded-xl bg-slate-50 p-3 dark:bg-navy-950"
                 >
                   <span className="text-xs text-slate-600 dark:text-slate-400">{item.action}</span>
-                  <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
+                  <span className="text-xs font-bold text-primary-600 dark:text-primary-400">
                     {item.credits}
                   </span>
                 </div>
@@ -615,7 +600,7 @@ export const AppPricingView: React.FC = () => {
                   className="flex w-full items-center justify-between p-4 text-left"
                 >
                   <div className="flex items-start gap-3">
-                    <HelpCircle size={18} className="mt-0.5 flex-shrink-0 text-purple-500" />
+                    <HelpCircle size={18} className="mt-0.5 flex-shrink-0 text-primary-500" />
                     <span className="text-sm font-bold text-navy-950 dark:text-white">
                       {faq.question}
                     </span>
@@ -646,17 +631,17 @@ export const AppPricingView: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-12">
+      <section className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-12">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-2xl font-black text-white">Gotowy na transformację?</h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-purple-100">
+          <p className="mx-auto mt-3 max-w-xl text-sm text-primary-100">
             Rozpocznij 14-dniowy trial już dziś. Pełne funkcje Scale, 2,000 AI Credits, 5 stanowisk.
             Bez karty kredytowej.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <button
               onClick={() => window.open('/trial/start', '_blank')}
-              className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-navy-900 px-6 py-3 text-sm font-bold text-purple-700 shadow-lg transition hover:bg-purple-50"
+              className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-navy-900 px-6 py-3 text-sm font-bold text-primary-700 shadow-lg transition hover:bg-primary-50"
             >
               Rozpocznij trial
               <ArrowRight size={16} />

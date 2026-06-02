@@ -12,7 +12,7 @@ import { expect, test } from '@playwright/test';
 import { readTestSupportState } from '../_helpers/testSupportState';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
-const isMockDb = process.env.MOCK_DB === 'true';
+const isMockDb = process.env.MOCK_DB === 'true' || process.env.E2E_MOCK_DB === 'true';
 
 async function jsonOrText(res: any): Promise<any> {
   const ct = String(res.headers()?.['content-type'] || '');

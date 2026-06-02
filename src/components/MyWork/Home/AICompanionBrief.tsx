@@ -14,7 +14,7 @@ interface AICompanionBriefProps {
 const FOCUS_ICON_COLORS: Record<string, string> = {
   task: 'text-emerald-400',
   decision: 'text-amber-400',
-  idea: 'text-violet-400',
+  idea: 'text-primary-400',
 };
 
 const FOCUS_LABELS: Record<string, { en: string; pl: string }> = {
@@ -50,7 +50,7 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
   });
 
   return (
-    <div className="relative p-8 md:p-10 rounded-2xl bg-gradient-to-br from-primary-500/[0.08] via-indigo-500/[0.04] to-cyan-500/[0.06] border border-primary-500/[0.12] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="relative p-8 md:p-10 rounded-2xl bg-gradient-to-br from-primary-500/[0.08] via-indigo-500/[0.04] to-blue-500/[0.06] border border-primary-500/[0.12] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="absolute -top-1/2 -right-1/5 w-[400px] h-[400px] bg-gradient-radial from-primary-500/10 to-transparent rounded-full pointer-events-none" />
 
       <h2 className="text-2xl md:text-3xl font-serif font-normal text-slate-900 dark:text-white leading-tight mb-2">
@@ -65,7 +65,7 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
 
       {data.insight && (
         <div className="flex gap-4 items-start p-5 bg-white/[0.03] dark:bg-white/[0.03] rounded-xl border border-white/[0.06] mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-violet-400 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center flex-shrink-0">
             <Sparkles size={18} className="text-white" />
           </div>
           <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
@@ -98,7 +98,7 @@ export const AICompanionBrief: React.FC<AICompanionBriefProps> = ({
       {onTalkToAI && (
         <button
           onClick={onTalkToAI}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-violet-400 text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/30 transition-all duration-150"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-400 text-white text-sm font-semibold hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/30 transition-all duration-150"
         >
           <MessageSquare size={16} />
           {isPolish ? 'Porozmawiajmy o tym' : "Let's talk about this"}

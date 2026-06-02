@@ -52,10 +52,10 @@ interface Props {
 const AXIS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   processes: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' },
   digitalProducts: { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-700' },
-  businessModels: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700' },
-  dataManagement: { bg: 'bg-cyan-50', border: 'border-cyan-200', text: 'text-cyan-700' },
+  businessModels: { bg: 'bg-primary-50', border: 'border-primary-200', text: 'text-primary-700' },
+  dataManagement: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' },
   culture: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' },
-  cybersecurity: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' },
+  cybersecurity: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700' },
   aiMaturity: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
 };
 
@@ -212,7 +212,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
       <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredComments.length === 0 ? (
           <div className="text-center py-8">
@@ -247,7 +247,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
       {!isReadOnly && (
         <div className="p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/50">
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-purple-500 flex-shrink-0 flex items-center justify-center text-white text-xs font-medium">
+            <div className="w-8 h-8 rounded-full bg-primary-500 flex-shrink-0 flex items-center justify-center text-white text-xs font-medium">
               {currentUser
                 ? getInitials(
                     `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() ||
@@ -263,7 +263,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder={`Add a comment about ${axisLabel}...`}
                 rows={2}
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                     handleSubmitComment();
@@ -277,7 +277,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
                 <button
                   onClick={() => handleSubmitComment()}
                   disabled={!newComment.trim() || submitting}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send size={14} />
                   Post
@@ -336,7 +336,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
         <div className="flex gap-3">
           <div
             className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-medium ${
-              comment.user_id === currentUserId ? 'bg-purple-500' : 'bg-slate-500'
+              comment.user_id === currentUserId ? 'bg-primary-500' : 'bg-slate-500'
             }`}
           >
             {getInitials(comment.author_name || 'User')}
@@ -368,7 +368,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
               {!isReadOnly && depth < maxDepth && (
                 <button
                   onClick={() => onReplyToChange(replyTo === comment.id ? null : comment.id)}
-                  className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400"
+                  className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
                 >
                   <Reply size={12} />
                   Reply
@@ -399,7 +399,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                   onChange={(e) => onReplyTextChange(e.target.value)}
                   placeholder="Write a reply..."
                   rows={2}
-                  className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                       onSubmitReply();
@@ -413,7 +413,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                   <button
                     onClick={onSubmitReply}
                     disabled={!replyText.trim() || submitting}
-                    className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                    className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
                   >
                     <Send size={14} />
                   </button>

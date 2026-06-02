@@ -29,16 +29,16 @@ export const MyProjects: React.FC = () => {
       <div className="flex-1 flex flex-col items-center justify-center p-8">
         <div className="relative mb-6">
           {/* Background decoration */}
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-200 to-orange-200 dark:from-amber-900/30 dark:to-orange-900/30 rounded-full blur-2xl opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-200 to-amber-200 dark:from-amber-900/30 dark:to-amber-900/30 rounded-full blur-2xl opacity-50" />
 
           {/* Icon */}
-          <div className="relative w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 rounded-xl flex items-center justify-center">
+          <div className="relative w-24 h-24 bg-gradient-to-br from-amber-100 to-amber-100 dark:from-amber-900/40 dark:to-amber-900/40 rounded-xl flex items-center justify-center">
             <Construction size={48} className="text-amber-500 dark:text-amber-400" />
           </div>
 
           {/* Hammer animation */}
           <div className="absolute -top-2 -right-2 w-10 h-10 bg-white dark:bg-navy-800 rounded-full shadow-lg flex items-center justify-center animate-bounce">
-            <Hammer size={20} className="text-orange-500" />
+            <Hammer size={20} className="text-amber-500" />
           </div>
         </div>
 

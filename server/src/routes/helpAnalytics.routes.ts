@@ -10,11 +10,14 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 router.get('/dashboard', (req, res) => {
-  logger.info('[helpAnalytics] Dashboard requested — returning empty contract (analytics not yet configured)');
+  logger.info(
+    '[helpAnalytics] Dashboard requested — returning empty contract (analytics not yet configured)'
+  );
   return res.json({
     success: true,
     degraded: true,
-    message: 'Help analytics are not yet configured. Data will appear here once analytics collection is enabled.',
+    message:
+      'Help analytics are not yet configured. Data will appear here once analytics collection is enabled.',
     data: {
       period: { start: new Date().toISOString(), end: new Date().toISOString() },
       totalViews: 0,

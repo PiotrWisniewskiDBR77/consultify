@@ -138,7 +138,7 @@ const FileIcon: React.FC<{ name: string; className?: string }> = ({ name, classN
     return <FileImage size={15} className={`text-blue-400 ${className}`} />;
   if (['xlsx', 'xls', 'csv', 'numbers'].includes(ext))
     return <FileSpreadsheet size={15} className={`text-emerald-400 ${className}`} />;
-  if (['pdf'].includes(ext)) return <FileText size={15} className={`text-red-400 ${className}`} />;
+  if (['pdf'].includes(ext)) return <FileText size={15} className={`text-rose-400 ${className}`} />;
   if (['doc', 'docx', 'odt', 'rtf', 'txt', 'md'].includes(ext))
     return <FileText size={15} className={`text-blue-500 ${className}`} />;
   return <File size={15} className={`text-slate-400 ${className}`} />;
@@ -147,12 +147,12 @@ const FileIcon: React.FC<{ name: string; className?: string }> = ({ name, classN
 /** Coloured chip config per linked item type */
 const TYPE_CHIP: Record<string, { bg: string; text: string; border: string }> = {
   task: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
-  decision: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20' },
+  decision: { bg: 'bg-primary-500/10', text: 'text-primary-400', border: 'border-primary-500/20' },
   risk: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
-  initiative: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/20' },
+  initiative: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
   project: { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/20' },
-  assessment: { bg: 'bg-teal-500/10', text: 'text-teal-400', border: 'border-teal-500/20' },
-  report: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20' },
+  assessment: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
+  report: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
   tool: { bg: 'bg-pink-500/10', text: 'text-pink-400', border: 'border-pink-500/20' },
   insight: { bg: 'bg-lime-500/10', text: 'text-lime-400', border: 'border-lime-500/20' },
   external: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/20' },
@@ -235,7 +235,7 @@ const getStatusBadge = (status?: string) => {
   if (['pending', 'review', 'deferred', 'draft'].includes(s))
     return 'border-amber-400/40 text-amber-400 bg-amber-500/10';
   if (['blocked', 'rejected', 'critical', 'overdue'].includes(s))
-    return 'border-red-400/40 text-red-400 bg-red-500/10';
+    return 'border-rose-400/40 text-rose-400 bg-rose-500/10';
   return 'border-slate-300/50 text-slate-400 bg-slate-100/60 dark:bg-slate-500/10';
 };
 
@@ -404,7 +404,7 @@ const ContextMenu: React.FC<{
               onClick={item.onClick}
               className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
                 item.danger
-                  ? 'text-red-500 hover:bg-red-500/10'
+                  ? 'text-rose-500 hover:bg-rose-500/10'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/50'
               }`}
             >
@@ -1274,7 +1274,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       )
                     )
                   }
-                  className="text-slate-400 hover:text-red-400 transition-colors flex-shrink-0"
+                  className="text-slate-400 hover:text-rose-400 transition-colors flex-shrink-0"
                 >
                   <X size={13} />
                 </button>
@@ -1347,10 +1347,10 @@ Write a clear, professional comment explaining why this link exists and its sign
               onClick={(e) => e.stopPropagation()}
             >
               {/* ── Header ─────────────────────────────── */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-navy-700/70 bg-gradient-to-r from-purple-50/40 via-white to-white dark:from-purple-500/5 dark:via-navy-900 dark:to-navy-900">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-navy-700/70 bg-gradient-to-r from-primary-50/40 via-white to-white dark:from-primary-500/5 dark:via-navy-900 dark:to-navy-900">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-purple-100 dark:bg-purple-500/15">
-                    <LinkIcon size={16} className="text-purple-600 dark:text-purple-400" />
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary-100 dark:bg-primary-500/15">
+                    <LinkIcon size={16} className="text-primary-600 dark:text-primary-400" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-secondary-900 dark:text-white">
@@ -1383,7 +1383,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       onClick={() => setSelectedLinkDirection('outgoing')}
                       className={`relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all text-center ${
                         selectedLinkDirection === 'outgoing'
-                          ? 'border-purple-400 dark:border-purple-500 bg-purple-50 dark:bg-purple-500/10 shadow-sm shadow-purple-500/10'
+                          ? 'border-primary-400 dark:border-primary-500 bg-primary-50 dark:bg-primary-500/10 shadow-sm shadow-primary-500/10'
                           : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 bg-white dark:bg-navy-800/50'
                       }`}
                     >
@@ -1391,17 +1391,17 @@ Write a clear, professional comment explaining why this link exists and its sign
                         size={16}
                         className={
                           selectedLinkDirection === 'outgoing'
-                            ? 'text-purple-500'
+                            ? 'text-primary-500'
                             : 'text-slate-400'
                         }
                       />
                       <span
-                        className={`text-xs font-semibold ${selectedLinkDirection === 'outgoing' ? 'text-purple-700 dark:text-purple-300' : 'text-secondary-700 dark:text-slate-400'}`}
+                        className={`text-xs font-semibold ${selectedLinkDirection === 'outgoing' ? 'text-primary-700 dark:text-primary-300' : 'text-secondary-700 dark:text-slate-400'}`}
                       >
                         {isPolish ? 'Wychodzące' : 'Outgoing'}
                       </span>
                       <span
-                        className={`text-[10px] leading-tight ${selectedLinkDirection === 'outgoing' ? 'text-purple-500/70 dark:text-purple-400/60' : 'text-secondary-500 dark:text-slate-500'}`}
+                        className={`text-[10px] leading-tight ${selectedLinkDirection === 'outgoing' ? 'text-primary-500/70 dark:text-primary-400/60' : 'text-secondary-500 dark:text-slate-500'}`}
                       >
                         {isPolish ? 'Ten element → Docelowy' : 'This item → Target'}
                       </span>
@@ -1410,23 +1410,23 @@ Write a clear, professional comment explaining why this link exists and its sign
                       onClick={() => setSelectedLinkDirection('incoming')}
                       className={`relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all text-center ${
                         selectedLinkDirection === 'incoming'
-                          ? 'border-cyan-400 dark:border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10 shadow-sm shadow-cyan-500/10'
+                          ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-500/10 shadow-sm shadow-blue-500/10'
                           : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 bg-white dark:bg-navy-800/50'
                       }`}
                     >
                       <ArrowLeft
                         size={16}
                         className={
-                          selectedLinkDirection === 'incoming' ? 'text-cyan-500' : 'text-slate-400'
+                          selectedLinkDirection === 'incoming' ? 'text-blue-500' : 'text-slate-400'
                         }
                       />
                       <span
-                        className={`text-xs font-semibold ${selectedLinkDirection === 'incoming' ? 'text-cyan-700 dark:text-cyan-300' : 'text-secondary-700 dark:text-slate-400'}`}
+                        className={`text-xs font-semibold ${selectedLinkDirection === 'incoming' ? 'text-blue-700 dark:text-blue-300' : 'text-secondary-700 dark:text-slate-400'}`}
                       >
                         {isPolish ? 'Przychodzące' : 'Incoming'}
                       </span>
                       <span
-                        className={`text-[10px] leading-tight ${selectedLinkDirection === 'incoming' ? 'text-cyan-500/70 dark:text-cyan-400/60' : 'text-secondary-500 dark:text-slate-500'}`}
+                        className={`text-[10px] leading-tight ${selectedLinkDirection === 'incoming' ? 'text-blue-500/70 dark:text-blue-400/60' : 'text-secondary-500 dark:text-slate-500'}`}
                       >
                         {isPolish ? 'Docelowy → Ten element' : 'Target → This item'}
                       </span>
@@ -1446,7 +1446,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         onClick={() => setSelectedLinkRelation(rel)}
                         className={`group relative px-2 py-2.5 rounded-xl text-center transition-all ${
                           selectedLinkRelation === rel
-                            ? 'bg-purple-500 text-white shadow-md shadow-purple-500/25 ring-1 ring-purple-400/50'
+                            ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25 ring-1 ring-primary-400/50'
                             : 'bg-slate-50 dark:bg-navy-800 text-secondary-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-200/50 dark:border-navy-700/50'
                         }`}
                       >
@@ -1486,7 +1486,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     <button
                       onClick={handleAIGenerateLinkComment}
                       disabled={isGeneratingLinkComment}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gradient-to-r from-purple-500/10 to-fuchsia-500/10 text-purple-600 dark:text-purple-400 border border-purple-300/40 dark:border-purple-500/30 hover:from-purple-500/20 hover:to-fuchsia-500/20 hover:border-purple-400/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gradient-to-r from-primary-500/10 to-fuchsia-500/10 text-primary-600 dark:text-primary-400 border border-primary-300/40 dark:border-primary-500/30 hover:from-primary-500/20 hover:to-fuchsia-500/20 hover:border-primary-400/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       title={
                         isPolish
                           ? 'AI wygeneruje komentarz na podstawie wybranej relacji'
@@ -1510,7 +1510,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         : 'Add context, reason, or notes about this link...'
                     }
                     rows={2}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-purple-400/20 focus:border-purple-400 transition-all resize-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all resize-none"
                   />
                 </div>
 
@@ -1520,7 +1520,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2 block">
                       {isPolish ? 'Wybrany element' : 'Selected Item'}
                     </label>
-                    <div className="flex items-center gap-3 rounded-xl border-2 border-purple-300 dark:border-purple-500/40 bg-purple-50/50 dark:bg-purple-500/5 px-3.5 py-2.5">
+                    <div className="flex items-center gap-3 rounded-xl border-2 border-primary-300 dark:border-primary-500/40 bg-primary-50/50 dark:bg-primary-500/5 px-3.5 py-2.5">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase border ${getChip(stagedInternalItem.type).bg} ${getChip(stagedInternalItem.type).text} ${getChip(stagedInternalItem.type).border} min-w-[56px] justify-center`}
                       >
@@ -1540,7 +1540,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       </div>
                       <button
                         onClick={() => setStagedInternalItem(null)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                         title={isPolish ? 'Usuń wybór' : 'Remove selection'}
                       >
                         <X size={14} />
@@ -1577,7 +1577,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                             ? 'Szukaj task, decision, initiative...'
                             : 'Search tasks, decisions, initiatives...'
                         }
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-purple-400/20 focus:border-purple-400 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400/60 focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all"
                         autoFocus
                       />
                     </div>
@@ -1585,7 +1585,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     {/* Search loading */}
                     {isLinkSearching && (
                       <div className="flex items-center justify-center py-6">
-                        <div className="w-5 h-5 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
                       </div>
                     )}
 
@@ -1613,8 +1613,8 @@ Write a clear, professional comment explaining why this link exists and its sign
                               <span className="text-[10px] text-slate-400 whitespace-nowrap">
                                 {item.status || '—'}
                               </span>
-                              <div className="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                <Check size={14} className="text-purple-500" />
+                              <div className="w-6 h-6 rounded-md bg-primary-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <Check size={14} className="text-primary-500" />
                               </div>
                             </button>
                           );
@@ -1673,7 +1673,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   <button
                     onClick={() => void handleConfirmInternalLink()}
                     disabled={!stagedInternalItem}
-                    className="px-5 py-2 rounded-lg text-xs font-semibold bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-purple-500/20 transition-all hover:shadow-md hover:shadow-purple-500/25"
+                    className="px-5 py-2 rounded-lg text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-primary-500/20 transition-all hover:shadow-md hover:shadow-primary-500/25"
                   >
                     {isPolish ? 'Dodaj połączenie' : 'Add Link'}
                   </button>

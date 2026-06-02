@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-05-17T16:59:48.447Z",
+  "baseUrl": "https://demo.consultify.ai/my-work/ideas/fb21e6a8-7d9f-4d44-b346-2a4ba33f7b0b/workspace/mindmap",
+  "user": "admin@dbr77.com",
+  "checklist": [
+    {
+      "id": "MM-01",
+      "label": "Utwórz nową mapę myśli",
+      "status": "PASS",
+      "details": "ideaId=fb21e6a8-7d9f-4d44-b346-2a4ba33f7b0b"
+    },
+    {
+      "id": "MM-02",
+      "label": "Dodaj min. 12 węzłów na 3 poziomach",
+      "status": "PASS",
+      "details": "nodes=16 (oczekiwano >=13 razem z root)"
+    },
+    {
+      "id": "MM-03",
+      "label": "Dodaj/edytuj połączenia + drag&drop gałęzi",
+      "status": "PASS",
+      "details": "nodes before op=16"
+    },
+    {
+      "id": "MM-04",
+      "label": "Skróty klawiaturowe enter/tab/delete",
+      "status": "PASS",
+      "details": "Wysłano Enter/Tab/Delete podczas sesji"
+    },
+    {
+      "id": "MM-05",
+      "label": "Zapis, refresh i ponowne otwarcie",
+      "status": "PASS",
+      "details": "before=16, after=16"
+    },
+    {
+      "id": "MM-06",
+      "label": "Import/Eksport (jeśli dostępny)",
+      "status": "FAIL",
+      "details": "Brak widocznych akcji import/export"
+    },
+    {
+      "id": "MM-07",
+      "label": "UI/UX: czytelność etykiet, kolizje, auto-layout",
+      "status": "PASS",
+      "details": "nodeElements=16, layoutHints=0"
+    },
+    {
+      "id": "MM-08",
+      "label": "Console/Network przy większej liczbie elementów",
+      "status": "PASS",
+      "details": "consoleErrors=0, network5xx=0"
+    }
+  ],
+  "defects": [],
+  "metrics": {
+    "beforeRefreshNodeCount": 16,
+    "afterRefreshNodeCount": 16,
+    "consoleErrorCount": 0,
+    "networkErrorCount": 0
+  }
+}

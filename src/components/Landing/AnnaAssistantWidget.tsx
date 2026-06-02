@@ -1,7 +1,7 @@
 import type { LiveServerMessage, Session } from '@google/genai';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, Loader2, MessageCircle, Mic, Send, Sparkles, Square, X } from 'lucide-react';
+import { Loader2, MessageCircle, Mic, Send, Sparkles, Square, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -9,15 +9,16 @@ import { useNavigate } from 'react-router-dom';
 import { KNOWLEDGE_BASE_SITE, type KnowledgeBaseSiteKey } from '../../config/knowledgeBaseSite';
 import { normalizeLanguageCode } from '../../i18n';
 import { ROUTES } from '../../routes/routeConfig';
+import { persistAnnaLpCtaContext } from '../../services/annaLpCtaContext';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
 import type {
   AnnaLpChannel,
   AnnaLpCtaType,
   AnnaLpSourceIntent,
 } from '../../services/publicAnnaAnalytics';
-import { persistAnnaLpCtaContext } from '../../services/annaLpCtaContext';
+import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
 
+import TeresaMark from '../shared/TeresaMark';
 type AnnaMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -68,8 +69,6 @@ type AnnaWindow = Window &
 
 const LIVE_VOICE_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025';
 const LIVE_VOICE_NAME = 'Kore';
-const FRONTEND_GEMINI_KEY =
-  process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
 
 const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
   en: {
@@ -108,9 +107,9 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     subtitle: 'Asystentka wejścia produktowego',
     intro:
       'Moge wyjasnic Consultify, program partnerski i pomóc wybrać właściwy kolejny krok: demo, trial, aplikacje partnerska albo kontakt. Nie mam dostepu do danych klienta ani projektow.',
-    placeholder: 'Zapytaj Anne o produkt...',
+    placeholder: 'Zapytaj Annę o produkt...',
     send: 'Wyslij',
-    open: 'Zapytaj Anne najpierw',
+    open: 'Zapytaj Annę najpierw',
     loading: 'Anna analizuje...',
     suggestionsLabel: 'Mozesz zapytac:',
     privacyBadge: 'Tylko wiedza publiczna',
@@ -156,7 +155,8 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     voiceReady: 'Toca el microfono para iniciar una conversacion de voz en vivo.',
     voiceConnecting: 'Conectando modo de voz...',
     voiceListening: 'Anna esta escuchando en vivo.',
-    voiceUnavailable: 'La voz en vivo no esta disponible temporalmente. Aun puedes chatear por texto.',
+    voiceUnavailable:
+      'La voz en vivo no esta disponible temporalmente. Aun puedes chatear por texto.',
     voiceError: 'La voz en vivo tuvo un problema. Puedes continuar por texto.',
     voiceStart: 'Iniciar conversacion de voz',
     voiceStop: 'Detener conversacion de voz',
@@ -187,7 +187,8 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     voiceReady: 'Tippe auf das Mikrofon, um ein Live-Sprachgesprach zu starten.',
     voiceConnecting: 'Sprachmodus wird verbunden...',
     voiceListening: 'Anna hort live zu.',
-    voiceUnavailable: 'Live-Sprachmodus ist vorubergehend nicht verfugbar. Du kannst weiter tippen.',
+    voiceUnavailable:
+      'Live-Sprachmodus ist vorubergehend nicht verfugbar. Du kannst weiter tippen.',
     voiceError: 'Live-Sprachmodus hatte ein Problem. Du kannst per Text fortfahren.',
     voiceStart: 'Sprachgesprach starten',
     voiceStop: 'Sprachgesprach stoppen',
@@ -462,7 +463,11 @@ function buildGenericSiteSuggestions(lang: AnnaUiLanguage, brandName: string): s
   ];
 }
 
-function buildAnnaCopy(lang: AnnaUiLanguage, siteKey: KnowledgeBaseSiteKey, brandName: string): AnnaCopy {
+function buildAnnaCopy(
+  lang: AnnaUiLanguage,
+  siteKey: KnowledgeBaseSiteKey,
+  brandName: string
+): AnnaCopy {
   const base = COPY[lang];
   const override = ANNA_SITE_OVERRIDES[siteKey];
   if (!override) return base;
@@ -647,10 +652,7 @@ type AnnaContextEventDetail = {
 function buildSurfaceContextInstruction(context?: AnnaSurfaceContext | null): string {
   if (!context || context.surface !== 'knowledge_article') return '';
 
-  const lines = [
-    'Current public article context:',
-    `- Article title: ${context.articleTitle}`,
-  ];
+  const lines = ['Current public article context:', `- Article title: ${context.articleTitle}`];
 
   if (context.categoryName) {
     lines.push(`- Category: ${context.categoryName}`);
@@ -706,7 +708,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle');
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceAvailable, setVoiceAvailable] = useState(false);
-  const [voiceApiKey, setVoiceApiKey] = useState<string | null>(FRONTEND_GEMINI_KEY || null);
+  const [voiceApiKey, setVoiceApiKey] = useState<string | null>(null);
   const [voiceName, setVoiceName] = useState(LIVE_VOICE_NAME);
   const [surfaceContext, setSurfaceContext] = useState<AnnaSurfaceContext | null>(null);
   const [messages, setMessages] = useState<AnnaMessage[]>(() => [
@@ -823,39 +825,32 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       setVoiceAvailable(Boolean(nextApiKey && nextEnabled && hasAudioContext && hasMicrophone));
     };
 
-    if (FRONTEND_GEMINI_KEY) {
-      applyVoiceConfig({
-        apiKey: FRONTEND_GEMINI_KEY,
-        voiceName: LIVE_VOICE_NAME,
-        enabled: true,
-      });
-    }
-
     fetch('/api/public/anna/voice-config')
       .then(async (response) => {
         if (!response.ok) {
           return {
-            apiKey: FRONTEND_GEMINI_KEY || null,
+            apiKey: null,
             voiceName: LIVE_VOICE_NAME,
-            enabled: true,
+            enabled: false,
           };
         }
         const data = await response.json();
+        const clientToken =
+          typeof data?.session?.clientToken === 'string' && data.session.clientToken.trim()
+            ? data.session.clientToken.trim()
+            : null;
         return {
-          apiKey:
-            typeof data?.apiKey === 'string' && data.apiKey.trim()
-              ? data.apiKey.trim()
-              : FRONTEND_GEMINI_KEY || null,
+          apiKey: clientToken,
           voiceName: typeof data?.voiceName === 'string' ? data.voiceName.trim() : LIVE_VOICE_NAME,
-          enabled: data?.enabled !== false,
+          enabled: data?.enabled === true && Boolean(clientToken),
         };
       })
       .then((config) => applyVoiceConfig(config))
       .catch(() =>
         applyVoiceConfig({
-          apiKey: FRONTEND_GEMINI_KEY || null,
+          apiKey: null,
           voiceName: LIVE_VOICE_NAME,
-          enabled: true,
+          enabled: false,
         })
       );
 
@@ -1012,7 +1007,10 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         throw new Error('AudioContext unavailable');
       }
 
-      const ai = new GoogleGenAI({ apiKey: voiceApiKey });
+      const ai = new GoogleGenAI({
+        apiKey: voiceApiKey,
+        httpOptions: { apiVersion: 'v1alpha' },
+      });
       const audioContext = new AudioContextCtor({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
       nextPlayTimeRef.current = audioContext.currentTime;
@@ -1332,7 +1330,8 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       }
 
       const sources =
-        Array.isArray(data?.knowledgeSources) && data.knowledgeSources.every((s: unknown) => typeof s === 'string')
+        Array.isArray(data?.knowledgeSources) &&
+        data.knowledgeSources.every((s: unknown) => typeof s === 'string')
           ? (data.knowledgeSources as string[]).map((s) => s.trim()).filter(Boolean)
           : [];
 
@@ -1500,8 +1499,8 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
           >
             <div className="flex items-start justify-between gap-3 border-b border-white/8 bg-white/[0.03] px-4 py-3">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white">
-                  <Bot size={18} />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 text-white">
+                  <TeresaMark size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -1536,7 +1535,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                     <div
                       className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                         message.role === 'user'
-                          ? 'bg-violet-600 text-white'
+                          ? 'bg-primary-600 text-white'
                           : 'bg-white/[0.06] text-white/85'
                       }`}
                     >
@@ -1555,7 +1554,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                 )}
 
                 {error && (
-                  <div className="rounded-2xl border border-red-400/15 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  <div className="rounded-2xl border border-rose-400/15 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
                     {error}
                   </div>
                 )}
@@ -1565,7 +1564,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                     className={`rounded-2xl border px-4 py-3 text-sm ${
                       voiceStatus === 'error' || !voiceAvailable
                         ? 'border-amber-300/15 bg-amber-500/10 text-amber-100'
-                        : 'border-cyan-300/15 bg-cyan-500/10 text-cyan-100'
+                        : 'border-blue-300/15 bg-blue-500/10 text-blue-100'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -1607,14 +1606,14 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                     <button
                       type="button"
                       onClick={() => triggerHandoff('trial')}
-                      className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-100 transition-colors hover:bg-violet-500/20"
+                      className="rounded-full border border-primary-300/20 bg-primary-500/10 px-3 py-1.5 text-xs font-medium text-primary-100 transition-colors hover:bg-primary-500/20"
                     >
                       {copy.trialCta}
                     </button>
                     <button
                       type="button"
                       onClick={() => triggerHandoff('demo')}
-                      className="rounded-full border border-cyan-300/20 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition-colors hover:bg-cyan-500/20"
+                      className="rounded-full border border-blue-300/20 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-100 transition-colors hover:bg-blue-500/20"
                     >
                       {copy.demoCta}
                     </button>
@@ -1651,7 +1650,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                   }}
                   rows={1}
                   placeholder={copy.placeholder}
-                  className="min-h-[44px] flex-1 resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-violet-400/40"
+                  className="min-h-[44px] flex-1 resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-primary-400/40"
                 />
                 <button
                   type="button"
@@ -1670,16 +1669,13 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                       void startVoiceConversation();
                     }
                   }}
-                  disabled={
-                    isLoading ||
-                    actionMode === 'connecting'
-                  }
+                  disabled={isLoading || actionMode === 'connecting'}
                   className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white transition-all disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 ${
                     actionMode === 'stop'
                       ? 'bg-rose-500 shadow-[0_0_28px_rgba(244,63,94,0.45)] hover:bg-rose-400'
                       : actionMode === 'mic'
-                        ? 'bg-cyan-500 shadow-[0_0_28px_rgba(6,182,212,0.45)] hover:bg-cyan-400'
-                        : 'bg-violet-600 hover:bg-violet-500'
+                        ? 'bg-blue-500 shadow-[0_0_28px_rgba(6,182,212,0.45)] hover:bg-blue-400'
+                        : 'bg-primary-600 hover:bg-primary-500'
                   }`}
                   aria-label={
                     actionMode === 'send'
@@ -1721,13 +1717,13 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         aria-label={copy.open}
         className="group inline-flex items-center gap-3 rounded-full border border-white/10 bg-[#140D31]/95 px-4 py-3 text-white shadow-[0_16px_32px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all hover:bg-[#19123A]"
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.35)]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.35)]">
           {isOpen ? <X size={18} /> : <MessageCircle size={18} />}
         </div>
         <div className="hidden text-left sm:block">
           <p className="flex items-center gap-1 text-sm font-semibold text-white">
             <span>{copy.open}</span>
-            <Sparkles size={13} className="text-violet-300" />
+            <Sparkles size={13} className="text-primary-300" />
           </p>
           <p className="text-[11px] text-white/45">{copy.privacyBadge}</p>
         </div>

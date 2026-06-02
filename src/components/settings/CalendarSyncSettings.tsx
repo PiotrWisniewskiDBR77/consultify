@@ -8,6 +8,8 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 
 interface CalendarSyncSettingsProps {
   className?: string;
@@ -34,24 +36,26 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
   const [syncTasks, setSyncTasks] = useState(true);
   const [syncMeetings, setSyncMeetings] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCalendars();
     fetchSettings();
   }, []);
 
-  const fetchCalendars = async () => {
+  const fetchCalendars = async (): Promise<CalendarProvider[] | null> => {
     try {
+      setLoadError(null);
       const calendars = await Api.getCalendars();
-      setCalendars(calendars);
-    } catch (error) {
-      console.error('Failed to fetch calendars:', error);
-      // Fallback to defaults
-      setCalendars([
-        { id: 'google', name: 'Google Calendar', icon: '📅', connected: false },
-        { id: 'outlook', name: 'Outlook', icon: '📆', connected: false },
-        { id: 'apple', name: 'Apple Calendar', icon: '🍎', connected: false },
-      ]);
+      const nextCalendars = Array.isArray(calendars) ? calendars : [];
+      setCalendars(nextCalendars);
+      return nextCalendars;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load calendars');
+      setLoadError(message);
+      setCalendars([]);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -64,19 +68,31 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
         setSyncTasks(settings.syncTasks);
         setSyncMeetings(settings.syncMeetings);
       }
-    } catch (error) {
+    } catch {
       // Use defaults
     }
   };
 
   const connectCalendar = async (calendarId: string) => {
     try {
+      setActionError(null);
       const data = await Api.connectCalendar(calendarId);
       if (data?.authUrl) {
         window.location.href = data.authUrl;
+        return;
       }
-    } catch (error) {
-      toast.error(t('settings.integrations.connectError', 'Failed to connect calendar'));
+      const refreshed = await fetchCalendars();
+      if (!refreshed?.some((calendar) => calendar.id === calendarId && calendar.connected)) {
+        throw new Error('Calendar connection was not confirmed by the server');
+      }
+      toast.success(t('settings.integrations.connected', 'Calendar connected'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.integrations.connectError', 'Failed to connect calendar')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -84,28 +100,48 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
     if (!confirm(t('settings.integrations.disconnectConfirm', 'Disconnect this calendar?'))) return;
 
     try {
+      setActionError(null);
       await Api.disconnectCalendar(calendarId);
-      setCalendars((prev) =>
-        prev.map((c) => (c.id === calendarId ? { ...c, connected: false, connection: null } : c))
-      );
+      const refreshed = await fetchCalendars();
+      if (
+        !refreshed ||
+        refreshed.some((calendar) => calendar.id === calendarId && calendar.connected)
+      ) {
+        throw new Error('Calendar disconnection was not confirmed by the server');
+      }
       toast.success(t('settings.integrations.disconnected', 'Calendar disconnected'));
-    } catch (error) {
-      toast.error(t('settings.integrations.disconnectError', 'Failed to disconnect'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.integrations.disconnectError', 'Failed to disconnect')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleSaveSettings = async (tasks: boolean, meetings: boolean) => {
     setSavingSettings(true);
     try {
+      setActionError(null);
       await Api.updateCalendarSettings({
         syncTasks: tasks,
         syncMeetings: meetings,
       });
-      setSyncTasks(tasks);
-      setSyncMeetings(meetings);
+      const persisted = await Api.getCalendarSettings();
+      if (!persisted || persisted.syncTasks !== tasks || persisted.syncMeetings !== meetings) {
+        throw new Error('Calendar sync settings save was not confirmed by the server');
+      }
+      setSyncTasks(persisted.syncTasks);
+      setSyncMeetings(persisted.syncMeetings);
       toast.success(t('settings.saved', 'Settings saved'));
-    } catch (error) {
-      toast.error(t('settings.saveError', 'Failed to save settings'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.saveError', 'Failed to save settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSavingSettings(false);
     }
@@ -143,54 +179,67 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
         </button>
       </div>
 
+      {loadError && <DegradedState title="Calendar sync unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* Calendar Services */}
-      <div className="space-y-3">
-        {calendars.map((cal) => (
-          <div
-            key={cal.id}
-            className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-              cal.connected
-                ? 'bg-green-50/50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30'
-                : 'bg-slate-50 dark:bg-navy-800/50'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{cal.icon}</span>
-              <div>
-                <span className="font-medium text-slate-900 dark:text-white">{cal.name}</span>
-                {cal.connected && cal.connection && (
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {cal.connection.externalEmail} • {cal.connection.calendarName}
-                  </div>
-                )}
+      {!loadError && (
+        <div className="space-y-3">
+          {calendars.map((cal) => (
+            <div
+              key={cal.id}
+              className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
+                cal.connected
+                  ? 'bg-green-50/50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30'
+                  : 'bg-slate-50 dark:bg-navy-800/50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{cal.icon}</span>
+                <div>
+                  <span className="font-medium text-slate-900 dark:text-white">{cal.name}</span>
+                  {cal.connected && cal.connection && (
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                      {cal.connection.externalEmail} • {cal.connection.calendarName}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            {cal.connected ? (
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm">
-                  <Check size={16} />
-                  {t('common.connected', 'Connected')}
-                </span>
+              {cal.connected ? (
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm">
+                    <Check size={16} />
+                    {t('common.connected', 'Connected')}
+                  </span>
+                  <button
+                    onClick={() => disconnectCalendar(cal.id)}
+                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded transition-colors"
+                    title={t('common.disconnect', 'Disconnect')}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
                 <button
-                  onClick={() => disconnectCalendar(cal.id)}
-                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 rounded transition-colors"
-                  title={t('common.disconnect', 'Disconnect')}
+                  onClick={() => connectCalendar(cal.id)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-brand text-white rounded-lg text-sm hover:bg-brand-dark transition-colors"
                 >
-                  <X size={16} />
+                  <ExternalLink size={14} />
+                  {t('common.connect', 'Connect')}
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => connectCalendar(cal.id)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-brand text-white rounded-lg text-sm hover:bg-brand-dark transition-colors"
-              >
-                <ExternalLink size={14} />
-                {t('common.connect', 'Connect')}
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Sync Options */}
       <div className="space-y-3">

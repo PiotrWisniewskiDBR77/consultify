@@ -100,7 +100,7 @@ const FieldValueDisplay: React.FC<{
         {items.map((item, i) => (
           <span
             key={i}
-            className="inline-flex items-center rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
+            className="inline-flex items-center rounded-md bg-primary-100 px-1.5 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
           >
             {String(item)}
           </span>
@@ -187,7 +187,7 @@ const FieldValueDisplay: React.FC<{
       <input
         value={String(value)}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none focus:ring-2 focus:ring-violet-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
       />
     );
   }
@@ -360,7 +360,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
           onClick={(e) => e.stopPropagation()}
         >
           {/* Accent bar */}
-          <div className="h-1 flex-shrink-0 bg-gradient-to-r from-blue-500 to-violet-500" />
+          <div className="h-1 flex-shrink-0 bg-gradient-to-r from-blue-500 to-primary-500" />
 
           {/* Header */}
           <div className="flex items-start justify-between border-b border-slate-200 px-6 py-4 dark:border-zinc-800">
@@ -389,7 +389,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                   }}
                   className={`rounded-lg p-2 transition-colors ${
                     editMode
-                      ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400'
+                      ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
                       : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'
                   }`}
                   title={

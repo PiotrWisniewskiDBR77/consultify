@@ -29,11 +29,7 @@ describe('feedbackShape.compactObject', () => {
 
 describe('feedbackShape.normalizeStringArray', () => {
   it('coerces + trims and drops empty entries', () => {
-    expect(normalizeStringArray(['a', '  b  ', '', null, undefined, 42])).toEqual([
-      'a',
-      'b',
-      '42',
-    ]);
+    expect(normalizeStringArray(['a', '  b  ', '', null, undefined, 42])).toEqual(['a', 'b', '42']);
   });
 
   it('returns [] for non-array', () => {

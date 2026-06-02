@@ -22,6 +22,7 @@ const mockCreateBudgetEntry = vi.fn();
 const mockGetExecutionControlTowerQueues = vi.fn();
 const mockGetExecutionControlTowerItemDetail = vi.fn();
 const mockDbAll = vi.fn();
+const mockDbGet = vi.fn();
 const mockDbRun = vi.fn();
 
 vi.mock('../../../services/riskDetectionService.js', () => ({
@@ -51,7 +52,8 @@ vi.mock('../../../services/executionBudgetService.js', () => ({
 }));
 
 vi.mock('../../../services/v8ExecutionControlTowerService.js', () => ({
-  getExecutionControlTowerQueues: (...args: unknown[]) => mockGetExecutionControlTowerQueues(...args),
+  getExecutionControlTowerQueues: (...args: unknown[]) =>
+    mockGetExecutionControlTowerQueues(...args),
   getExecutionControlTowerItemDetail: (...args: unknown[]) =>
     mockGetExecutionControlTowerItemDetail(...args),
   V8_EXECUTION_CONTROL_TOWER_CONTRACT: 'execution_control_tower_v1',
@@ -59,6 +61,7 @@ vi.mock('../../../services/v8ExecutionControlTowerService.js', () => ({
 
 vi.mock('../../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
+  get: (...args: unknown[]) => mockDbGet(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
 }));
 
@@ -164,6 +167,7 @@ describe('V8 execution-control read-only routes', () => {
     });
     mockGetExecutionControlTowerItemDetail.mockResolvedValue(null);
     mockDbAll.mockResolvedValue([]);
+    mockDbGet.mockResolvedValue({ id: 'init-1' });
     mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
@@ -228,6 +232,7 @@ describe('V8 execution-control read-only routes', () => {
     expect(mockGetExecutionControlTowerQueues).toHaveBeenCalledWith(ORG, {
       projectId: 'p1',
       queue: 'late',
+      overloadWindow: 'week',
     });
   });
 
@@ -255,7 +260,12 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_TOWER_CONTRACT);
     expect(res.body.data?.inQueues).toEqual(['late', 'blocked']);
-    expect(mockGetExecutionControlTowerItemDetail).toHaveBeenCalledWith(ORG, 'INITIATIVE', 'i1', 'p1');
+    expect(mockGetExecutionControlTowerItemDetail).toHaveBeenCalledWith(
+      ORG,
+      'INITIATIVE',
+      'i1',
+      'p1'
+    );
   });
 
   it('GET /api/v8/execution-control/timeline-warnings uses shared snapshot service', async () => {
@@ -375,7 +385,24 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_READ_CONTRACT);
     expect(res.body.data?.weeks).toHaveLength(1);
+    expect(mockDbGet).toHaveBeenCalledWith(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      ['init-1', ORG],
+      { fallback: true }
+    );
     expect(mockGetCapacityTimeline).toHaveBeenCalledWith(ORG, 'init-1');
+  });
+
+  it('GET /api/v8/execution-control/capacity/timeline returns 404 for invalid initiative scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app).get(
+      '/api/v8/execution-control/capacity/timeline?initiativeId=missing-init'
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockGetCapacityTimeline).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/execution-control/risk-signals/dismiss persists org-scoped dismiss rows', async () => {
@@ -483,5 +510,20 @@ describe('V8 execution-control read-only routes', () => {
         createdBy: UID,
       })
     );
+  });
+
+  it('POST /api/v8/execution-control/budget/entries returns 404 when initiative is outside org scope', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/budget/entries').send({
+      initiativeId: 'missing-init',
+      entryType: 'ACTUAL',
+      costType: 'CAPEX',
+      amount: 500,
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+    expect(mockCreateBudgetEntry).not.toHaveBeenCalled();
   });
 });

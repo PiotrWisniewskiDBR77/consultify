@@ -30,15 +30,15 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(
       },
       department: {
         icon: Building2,
-        borderColor: 'border-purple-500',
-        iconBg: 'bg-purple-500/20',
-        iconColor: 'text-purple-400',
+        borderColor: 'border-primary-500',
+        iconBg: 'bg-primary-500/20',
+        iconColor: 'text-primary-400',
       },
       team: {
         icon: Users,
-        borderColor: 'border-cyan-500',
-        iconBg: 'bg-cyan-500/20',
-        iconColor: 'text-cyan-400',
+        borderColor: 'border-blue-500',
+        iconBg: 'bg-blue-500/20',
+        iconColor: 'text-blue-400',
       },
     };
 

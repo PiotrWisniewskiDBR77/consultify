@@ -23,6 +23,7 @@ import {
   Presentation,
   RefreshCw,
   Sparkles,
+  Table,
   X,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -30,11 +31,18 @@ import { useTranslation } from 'react-i18next';
 
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
+import type {
+  TabelePreviewRationale,
+  TabelePreviewRelation,
+  TabelePreviewSchemaField,
+} from '@/types/tabeleArtifact';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
-import { UnifiedChatPanel } from '../UnifiedChatPanel';
 
-export type KimiLane = 'wordy' | 'excele' | 'prezentacje';
+import { UnifiedChatPanel } from '../UnifiedChatPanel';
+import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
+
+export type KimiLane = 'wordy' | 'excele' | 'prezentacje' | 'tabele';
 
 export type TaskStepStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -45,7 +53,7 @@ export interface TaskStep {
   detail?: string;
 }
 
-export type ArtifactPreviewType = 'pdf' | 'xlsx' | 'deck' | 'none';
+export type ArtifactPreviewType = 'pdf' | 'xlsx' | 'deck' | 'tabele' | 'none';
 
 export interface ArtifactPreview {
   type: ArtifactPreviewType;
@@ -77,6 +85,12 @@ export interface ArtifactPreview {
   downloadUrl?: string;
   qualityScore?: number | null;
   pipelineLog?: unknown;
+  // Tabele (Table Studio Foundation block) extras — populated by Sprint 3 / EPIC-2.
+  // All optional; Sprint 2 only registers the shape so consumers can compile.
+  tableId?: string;
+  tabeleSchemaFields?: TabelePreviewSchemaField[];
+  tabeleRelations?: TabelePreviewRelation[];
+  tabeleRationale?: TabelePreviewRationale;
 }
 
 interface KimiWorkspaceShellProps {
@@ -123,6 +137,14 @@ const LANE_CONFIG = {
     accentColor: 'fuchsia',
     inputPlaceholder: 'Describe the presentation you want to create...',
     inputPlaceholderPl: 'Opisz prezentację, którą chcesz stworzyć...',
+  },
+  tabele: {
+    icon: Table,
+    label: 'Table Studio',
+    labelPl: 'Tabele Studio',
+    accentColor: 'sky',
+    inputPlaceholder: 'Describe the operational table you want to build...',
+    inputPlaceholderPl: 'Opisz tabelę operacyjną, którą chcesz zbudować...',
   },
 } as const;
 
@@ -220,7 +242,7 @@ function TaskProgressBar({
               ) : step.status === 'completed' ? (
                 <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" />
               ) : step.status === 'failed' ? (
-                <X size={12} className="text-red-500 flex-shrink-0" />
+                <X size={12} className="text-rose-500 flex-shrink-0" />
               ) : (
                 <div className="w-3 h-3 rounded-hig-full border border-slate-300 dark:border-navy-600 flex-shrink-0" />
               )}
@@ -266,6 +288,7 @@ function ArtifactPreviewPane({
   const config = LANE_CONFIG[lane];
   const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const Icon = config.icon;
+  const usesChatOnlyStart = lane === 'tabele';
   const [activeSheet, setActiveSheet] = useState(0);
   const [goalInput, setGoalInput] = React.useState('');
   const [isStarting, setIsStarting] = React.useState(false);
@@ -296,7 +319,9 @@ function ArtifactPreviewPane({
                 ? t('kimi.generatingDoc', 'Building your document')
                 : lane === 'excele'
                   ? t('kimi.generatingSheet', 'Building your spreadsheet')
-                  : t('kimi.generatingDeck', 'Building your presentation')}
+                  : lane === 'tabele'
+                    ? t('kimi.generatingTabele', 'Building your operational table')
+                    : t('kimi.generatingDeck', 'Building your presentation')}
             </p>
           </div>
         </div>
@@ -350,13 +375,20 @@ function ArtifactPreviewPane({
                 ? t('kimi.emptyWordy', 'Your document will appear here')
                 : lane === 'excele'
                   ? t('kimi.emptyExcele', 'Your spreadsheet will appear here')
-                  : t('kimi.emptyDeck', 'Your presentation will appear here')}
+                  : lane === 'tabele'
+                    ? t('kimi.emptyTabele', 'Your operational table will appear here')
+                    : t('kimi.emptyDeck', 'Your presentation will appear here')}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {t('kimi.emptyHint', 'Describe what you need and click Generate')}
+              {usesChatOnlyStart
+                ? t(
+                    'kimi.emptyTabeleChatHint',
+                    'Describe the table in Teresa on the left. Your operational table will appear here.'
+                  )
+                : t('kimi.emptyHint', 'Describe what you need and click Generate')}
             </p>
           </div>
-          {onStartGeneration && (
+          {onStartGeneration && !usesChatOnlyStart && (
             <div className="space-y-3">
               <textarea
                 value={goalInput}
@@ -519,7 +551,8 @@ function ArtifactPreviewPane({
                 })() && (
                   <div className="px-3 py-2 text-xs text-slate-400 dark:text-slate-500 text-center border-t border-slate-200/60 dark:border-white/5">
                     {t('kimi.showingRows', 'Showing 25 of {{total}} rows', {
-                      total: (preview.perSheetData?.[activeSheet] ?? preview.tableData)!.rows.length,
+                      total: (preview.perSheetData?.[activeSheet] ?? preview.tableData)!.rows
+                        .length,
                     })}
                   </div>
                 )}
@@ -531,13 +564,17 @@ function ArtifactPreviewPane({
                   <p className="text-sm font-medium">
                     {t('kimi.xlsxPreview', 'Spreadsheet preview')}
                   </p>
-                  <p className="text-xs mt-1">
-                    {preview.fileName || 'spreadsheet.xlsx'}
-                  </p>
+                  <p className="text-xs mt-1">{preview.fileName || 'spreadsheet.xlsx'}</p>
                 </div>
               </div>
             )}
           </div>
+        )}
+        {preview.type === 'tabele' && (
+          <TabelePreviewLayout
+            preview={preview as ArtifactPreview & { type: 'tabele' }}
+            isPolish={isPolish}
+          />
         )}
         {preview.type === 'deck' && (
           <div className="space-y-4">
@@ -545,22 +582,23 @@ function ArtifactPreviewPane({
               <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-hig-md border border-slate-200 dark:border-navy-700">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-slate-700 dark:text-slate-300">{preview.summary}</p>
-                  {preview.deckStatus && (() => {
-                    const badge = deriveDeckBadgeFromNativeStatus(preview.deckStatus);
-                    return (
-                      <span
-                        className={`ml-3 px-2.5 py-0.5 rounded-hig-full text-xs font-medium whitespace-nowrap ${
-                          badge === 'Exported'
-                            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                            : badge === 'Reviewed'
-                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                              : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
-                        }`}
-                      >
-                        {badge}
-                      </span>
-                    );
-                  })()}
+                  {preview.deckStatus &&
+                    (() => {
+                      const badge = deriveDeckBadgeFromNativeStatus(preview.deckStatus);
+                      return (
+                        <span
+                          className={`ml-3 px-2.5 py-0.5 rounded-hig-full text-xs font-medium whitespace-nowrap ${
+                            badge === 'Exported'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                              : badge === 'Reviewed'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {badge}
+                        </span>
+                      );
+                    })()}
                 </div>
               </div>
             )}
@@ -622,36 +660,46 @@ function ArtifactPreviewPane({
                   <p className="text-sm font-medium">
                     {t('kimi.deckPreview', 'Presentation preview')}
                   </p>
-                  {preview.deckId && (
+                  {preview.deckId && onPreviewFile && (
                     <button
-                      onClick={() => window.open(`/presentations/builder/${preview.deckId}`, '_blank')}
+                      type="button"
+                      onClick={onPreviewFile}
+                      data-testid="kimi-open-in-builder-empty"
                       className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
                     >
                       <LayoutGrid size={14} />
-                      {t('kimi.openInBuilder', 'Open in Deck Builder')}
+                      {t('kimi.openInBuilder', 'Open in Builder')}
                     </button>
                   )}
                 </div>
               </div>
             )}
-            {preview.deckId && preview.deckSlides && preview.deckSlides.length > 0 && (
-              <div className="flex justify-center">
-                <button
-                  onClick={() => window.open(`/presentations/builder/${preview.deckId}`, '_blank')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
-                >
-                  <LayoutGrid size={14} />
-                  {t('kimi.openInBuilder', 'Open in Deck Builder')}
-                </button>
-              </div>
-            )}
+            {preview.deckId &&
+              preview.deckSlides &&
+              preview.deckSlides.length > 0 &&
+              onPreviewFile && (
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={onPreviewFile}
+                    data-testid="kimi-open-in-builder-populated"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
+                  >
+                    <LayoutGrid size={14} />
+                    {t('kimi.openInBuilder', 'Open in Builder')}
+                  </button>
+                </div>
+              )}
           </div>
         )}
       </div>
 
       {/* Sheet tabs (for xlsx) */}
       {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
-        <div role="tablist" className="flex items-center gap-0.5 px-2 py-1.5 border-t border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-navy-900 overflow-x-auto shrink-0">
+        <div
+          role="tablist"
+          className="flex items-center gap-0.5 px-2 py-1.5 border-t border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-navy-900 overflow-x-auto shrink-0"
+        >
           {preview.sheetNames.map((name, i) => (
             <button
               key={i}
@@ -679,8 +727,19 @@ function ArtifactPreviewPane({
               className="flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
             >
               <Eye size={16} />
-              <span>{preview.fileName || (lane === 'wordy' ? 'document.pdf' : lane === 'excele' ? 'spreadsheet.xlsx' : 'presentation.pptx')}</span>
-              <span className="text-xs text-slate-400">{t('kimi.previewFile', 'Preview File')}</span>
+              <span>
+                {preview.fileName ||
+                  (lane === 'wordy'
+                    ? 'document.pdf'
+                    : lane === 'excele'
+                      ? 'spreadsheet.xlsx'
+                      : lane === 'tabele'
+                        ? 'table.csv'
+                        : 'presentation.pptx')}
+              </span>
+              <span className="text-xs text-slate-400">
+                {t('kimi.previewFile', 'Preview File')}
+              </span>
             </button>
           )}
           {onAllFiles && (
@@ -730,6 +789,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
       wordy: AppView.WORDY,
       excele: AppView.EXCELE,
       prezentacje: AppView.PREZENTACJE_GEN,
+      tabele: AppView.TABELE,
     };
     const view = laneViewMap[lane];
     const type = getDefaultWorkspaceType(view);

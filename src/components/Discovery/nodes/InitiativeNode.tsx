@@ -20,7 +20,7 @@ const ImpactEffortBadge: React.FC<{ impact: string; effort: string }> = ({ impac
   const effortColors = {
     low: 'text-green-500',
     medium: 'text-amber-500',
-    high: 'text-red-500',
+    high: 'text-rose-500',
   };
 
   return (

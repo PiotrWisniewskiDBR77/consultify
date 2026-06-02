@@ -17,6 +17,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import {
   SettingsButtonGroup,
   SettingsDivider,
@@ -85,6 +87,8 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
     useState<AIBehaviorPreferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
@@ -92,10 +96,14 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
     const load = async () => {
       try {
         setLoading(true);
+        setLoadError(null);
         const [instrRes, persRes] = await Promise.all([
           Api.getAIInstructions(),
           Api.getAIPersonality(),
         ]);
+        if (!instrRes?.preferences || !persRes?.preferences) {
+          throw new Error('AI behavior response was missing instructions or personality');
+        }
         const merged: AIBehaviorPreferences = {
           ...defaultPreferences,
           ...(instrRes?.preferences || {}),
@@ -105,8 +113,8 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
         };
         setPreferences(merged);
         setOriginalPreferences(merged);
-      } catch (err) {
-        console.error('Failed to load AI behavior settings:', err);
+      } catch (err: unknown) {
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load AI behavior settings'));
       } finally {
         setLoading(false);
       }
@@ -117,6 +125,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Promise.all([
         Api.saveAIInstructions({
           systemPrompt: preferences.systemPrompt,
@@ -131,18 +140,50 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
           customInstructions: preferences.systemPrompt,
         }),
       ]);
-      setOriginalPreferences(preferences);
+      const [instrRes, persRes] = await Promise.all([
+        Api.getAIInstructions(),
+        Api.getAIPersonality(),
+      ]);
+      if (!instrRes?.preferences || !persRes?.preferences) {
+        throw new Error('AI behavior settings save was not confirmed by the server');
+      }
+      const persisted: AIBehaviorPreferences = {
+        ...defaultPreferences,
+        ...instrRes.preferences,
+        tone: persRes.preferences.tone || defaultPreferences.tone,
+        formality: persRes.preferences.formality || defaultPreferences.formality,
+        verbosity: persRes.preferences.verbosity || defaultPreferences.verbosity,
+      };
+      if (JSON.stringify(persisted) !== JSON.stringify(preferences)) {
+        throw new Error('AI behavior settings save was not confirmed by the server');
+      }
+      setPreferences(persisted);
+      setOriginalPreferences(persisted);
       toast.success(t('settings.ai.behaviorSaved', 'AI behavior settings saved'));
-    } catch {
-      toast.error(t('settings.ai.behaviorError', 'Failed to save AI behavior settings'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.ai.behaviorError', 'Failed to save AI behavior settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   }, [preferences, t]);
 
   const applyTemplate = (template: (typeof PROMPT_TEMPLATES)[0]) => {
-    setPreferences((prev) => ({ ...prev, systemPrompt: template.prompt }));
-    toast.success(t('settings.ai.templateApplied', `${template.name} template applied`));
+    const templateName = t(`settings.ai.behaviorTemplates.${template.id}.name`, template.name);
+    const templatePrompt = t(
+      `settings.ai.behaviorTemplates.${template.id}.prompt`,
+      template.prompt
+    );
+    setPreferences((prev) => ({ ...prev, systemPrompt: templatePrompt }));
+    toast.success(
+      t('settings.ai.templateApplied', '{{name}} template applied', {
+        name: templateName,
+      })
+    );
   };
 
   const update = <K extends keyof AIBehaviorPreferences>(
@@ -185,8 +226,25 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
     { value: '16000', label: '16K tokens' },
   ];
 
+  if (loadError) {
+    return (
+      <div className={className}>
+        <DegradedState title="AI behavior settings unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       <SettingsSection
         icon={MessageSquare}
         title={t('settings.ai.behaviorTitle', 'AI Behavior & Instructions')}
@@ -216,7 +274,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                     hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />
-                  {tpl.name}
+                  {t(`settings.ai.behaviorTemplates.${tpl.id}.name`, tpl.name)}
                 </button>
               ))}
             </div>
@@ -274,7 +332,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
           {/* Tone & Communication */}
           <div>
             <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <Sparkles size={14} className="text-violet-400" />
+              <Sparkles size={14} className="text-primary-400" />
               {t('settings.ai.toneSection', 'Tone & Communication')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -282,9 +340,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 <SettingsSelect
                   options={toneOptions}
                   value={preferences.tone}
-                  onChange={(e) =>
-                    update('tone', e.target.value as AIBehaviorPreferences['tone'])
-                  }
+                  onChange={(e) => update('tone', e.target.value as AIBehaviorPreferences['tone'])}
                 />
               </SettingsFormRow>
 
@@ -292,9 +348,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 <SettingsButtonGroup
                   options={formalityOptions}
                   value={preferences.formality}
-                  onChange={(v) =>
-                    update('formality', v as AIBehaviorPreferences['formality'])
-                  }
+                  onChange={(v) => update('formality', v as AIBehaviorPreferences['formality'])}
                   size="sm"
                 />
               </SettingsFormRow>
@@ -343,11 +397,11 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
           </div>
 
           {/* Tips */}
-          <div className="p-4 bg-violet-600/5 border border-violet-500/20 rounded-lg">
+          <div className="p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg">
             <div className="flex items-start gap-3">
-              <Sparkles size={18} className="text-violet-400 flex-shrink-0 mt-0.5" />
+              <Sparkles size={18} className="text-primary-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-violet-300 mb-1">
+                <h4 className="text-sm font-medium text-primary-300 mb-1">
                   {t('settings.ai.tips', 'Pro Tips')}
                 </h4>
                 <ul className="text-xs text-slate-500 space-y-1">

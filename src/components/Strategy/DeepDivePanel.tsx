@@ -29,7 +29,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-xl font-bold text-navy-900 dark:text-white">{t.deepDive.title}</h3>
           {isRecommended && (
-            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-[10px] font-bold uppercase rounded-full tracking-wide border border-purple-200 dark:border-purple-500/30">
+            <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-[10px] font-bold uppercase rounded-full tracking-wide border border-primary-200 dark:border-primary-500/30">
               {t.recommended}
             </span>
           )}
@@ -55,26 +55,26 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
         {/* 2. AI Explainability (If recommended) */}
         {isRecommended && (
           <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h4 className="text-sm font-bold text-purple-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h4 className="text-sm font-bold text-primary-500 uppercase tracking-wider mb-3 flex items-center gap-2">
               <Zap size={16} /> {t.deepDive.aiReasoning}
             </h4>
-            <div className="bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-900/20 space-y-3">
+            <div className="bg-primary-50 dark:bg-primary-900/10 p-4 rounded-xl border border-primary-100 dark:border-primary-900/20 space-y-3">
               <div className="flex gap-3">
-                <ShieldAlert size={18} className="text-purple-400 shrink-0 mt-0.5" />
+                <ShieldAlert size={18} className="text-primary-400 shrink-0 mt-0.5" />
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   Addresses key hidden risks related to{' '}
-                  <strong className="text-purple-700 dark:text-purple-300">
+                  <strong className="text-primary-700 dark:text-primary-300">
                     process fragmentation
                   </strong>{' '}
-                  and <strong className="text-purple-700 dark:text-purple-300">compliance</strong>{' '}
+                  and <strong className="text-primary-700 dark:text-primary-300">compliance</strong>{' '}
                   found in your profile.
                 </p>
               </div>
               <div className="flex gap-3">
-                <TrendingUp size={18} className="text-purple-400 shrink-0 mt-0.5" />
+                <TrendingUp size={18} className="text-primary-400 shrink-0 mt-0.5" />
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   Leverages your organizational strength in{' '}
-                  <strong className="text-purple-700 dark:text-purple-300">
+                  <strong className="text-primary-700 dark:text-primary-300">
                     engineering culture
                   </strong>{' '}
                   to drive the change via the core team.
@@ -103,14 +103,14 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
                 ))}
               </ul>
             </div>
-            <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/20">
-              <div className="text-xs font-bold text-red-700 dark:text-red-400 mb-2 uppercase">
+            <div className="bg-rose-50 dark:bg-rose-900/10 p-4 rounded-xl border border-rose-100 dark:border-rose-900/20">
+              <div className="text-xs font-bold text-rose-700 dark:text-rose-400 mb-2 uppercase">
                 {t.deepDive.sacrifices}
               </div>
               <ul className="space-y-2">
                 {getSacrifices().map((sac, i) => (
                   <li key={i} className="flex gap-2 text-xs text-navy-900 dark:text-white">
-                    <span className="text-red-500 font-bold">-</span>
+                    <span className="text-rose-500 font-bold">-</span>
                     {sac}
                   </li>
                 ))}

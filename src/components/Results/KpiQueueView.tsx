@@ -1,4 +1,4 @@
-import { Bot, ClipboardList, ExternalLink, Plus, Sparkles, X } from 'lucide-react';
+import { ClipboardList, ExternalLink, Plus, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +25,7 @@ import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWit
 import { type KpiDrawerSection, type ResultsKPI } from './kpiDomain';
 import type { SignalSheetKpiItem, SignalSheetRecord } from './kpiSignalSheetTypes';
 
+import TeresaMark from '../shared/TeresaMark';
 interface KpiQueueViewProps {
   kpis: ResultsKPI[];
   activeFilters: FilterChip[];
@@ -71,7 +72,7 @@ type PreviewSheet = SignalSheetRecord & PreviewableItem;
 
 const toneClassName = (tone: SignalSheetRecord['statusTone']) => {
   if (tone === 'amber') return 'bg-amber-500/10 text-amber-600 dark:text-amber-300';
-  if (tone === 'red') return 'bg-red-500/10 text-red-500';
+  if (tone === 'red') return 'bg-rose-500/10 text-rose-500';
   if (tone === 'emerald') return 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-300';
   if (tone === 'primary') return 'bg-primary-500/10 text-primary-600 dark:text-primary-300';
   return 'bg-slate-500/10 text-slate-500 dark:text-slate-300';
@@ -602,7 +603,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-navy-700 px-6 py-4">
               <div className="flex items-center gap-2">
                 <div className="rounded-lg bg-primary-500/10 p-2">
-                  <Bot size={16} className="text-primary-400" />
+                  <TeresaMark size={16} className="text-primary-400" />
                 </div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                   {t('results.kpi.signals.createTitle', 'Create data-entry sheet')}

@@ -32,39 +32,391 @@ export interface SettingsKeyMetadata {
 }
 
 const SETTINGS_REGISTRY: SettingsKeyMetadata[] = [
-  { key: 'theme', scope: 'personal', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Changes the visual appearance of all app surfaces for you.', impactedSurface: 'All UI surfaces', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'] },
-  { key: 'language', scope: 'personal', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Changes the UI language; content language is separate.', impactedSurface: 'All UI surfaces', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'] },
-  { key: 'timezone', scope: 'personal', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Changes how dates and times are displayed for you.', impactedSurface: 'All date/time displays', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'] },
-  { key: 'email_digest', scope: 'personal', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Controls how often you receive email summaries.', impactedSurface: 'Email delivery', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'], aliases: ['notifications_email'] },
-  { key: 'ai_suggestions_enabled', scope: 'personal', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Enables or disables AI-powered suggestions in your workflow.', impactedSurface: 'Copilot, inline suggestions', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'], aliases: ['copilot_suggestions_enabled'] },
-  { key: 'working_hours', scope: 'personal', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Sets your availability schedule for notifications and planning.', impactedSurface: 'Calendar, quiet hours', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'] },
+  {
+    key: 'theme',
+    scope: 'personal',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Changes the visual appearance of all app surfaces for you.',
+    impactedSurface: 'All UI surfaces',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+  },
+  {
+    key: 'language',
+    scope: 'personal',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Changes the UI language; content language is separate.',
+    impactedSurface: 'All UI surfaces',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+  },
+  {
+    key: 'timezone',
+    scope: 'personal',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Changes how dates and times are displayed for you.',
+    impactedSurface: 'All date/time displays',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+  },
+  {
+    key: 'email_digest',
+    scope: 'personal',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Controls how often you receive email summaries.',
+    impactedSurface: 'Email delivery',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    aliases: ['notifications_email'],
+  },
+  {
+    key: 'ai_suggestions_enabled',
+    scope: 'personal',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Enables or disables AI-powered suggestions in your workflow.',
+    impactedSurface: 'Copilot, inline suggestions',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    aliases: ['copilot_suggestions_enabled'],
+  },
+  {
+    key: 'working_hours',
+    scope: 'personal',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Sets your availability schedule for notifications and planning.',
+    impactedSurface: 'Calendar, quiet hours',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+  },
 
-  { key: 'default_language', scope: 'tenant', ownerContract: 'P30', managedIn: 'organization', routeTo: '/organization/profile', impactLanguage: 'Sets the default UI language for new members; existing members keep their personal choice.', impactedSurface: 'New member onboarding', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true },
-  { key: 'default_timezone', scope: 'tenant', ownerContract: 'P30', managedIn: 'organization', routeTo: '/organization/profile', impactLanguage: 'Sets the default timezone for new members and shared views.', impactedSurface: 'Shared calendars, reports', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true },
-  { key: 'default_currency', scope: 'tenant', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Changes the currency symbol in all financial displays for the organization.', impactedSurface: 'Finance, KPI, Reports', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'] },
-  { key: 'default_sharing_mode', scope: 'tenant', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Changes the default visibility of new items created by all members.', impactedSurface: 'All new artifacts', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'] },
-  { key: 'mfa_required', scope: 'tenant', ownerContract: 'P32', managedIn: 'admin', routeTo: '/admin/security', impactLanguage: 'Enforces multi-factor authentication for all members on next login.', impactedSurface: 'Authentication flow', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true, aliases: ['mfa_enforcement'] },
-  { key: 'sso_enforced', scope: 'tenant', ownerContract: 'P32', managedIn: 'admin', routeTo: '/admin/security', impactLanguage: 'Requires SSO login and disables password login when enforced.', impactedSurface: 'Authentication flow', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true, aliases: ['sso_configuration'] },
-  { key: 'guest_access_enabled', scope: 'tenant', ownerContract: 'P32', managedIn: 'admin', routeTo: '/admin/security?tab=collaboration', impactLanguage: 'Enables or disables guest access to the workspace.', impactedSurface: 'Access control', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true, tenantEnforced: true },
-  { key: 'external_link_sharing', scope: 'tenant', ownerContract: 'P32', managedIn: 'admin', routeTo: '/admin/security?tab=collaboration', impactLanguage: 'Controls external link sharing permissions across the workspace.', impactedSurface: 'Sharing, links', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true, tenantEnforced: true },
+  {
+    key: 'default_language',
+    scope: 'tenant',
+    ownerContract: 'P30',
+    managedIn: 'organization',
+    routeTo: '/organization/profile',
+    impactLanguage:
+      'Sets the default UI language for new members; existing members keep their personal choice.',
+    impactedSurface: 'New member onboarding',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+  },
+  {
+    key: 'default_timezone',
+    scope: 'tenant',
+    ownerContract: 'P30',
+    managedIn: 'organization',
+    routeTo: '/organization/profile',
+    impactLanguage: 'Sets the default timezone for new members and shared views.',
+    impactedSurface: 'Shared calendars, reports',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+  },
+  {
+    key: 'default_currency',
+    scope: 'tenant',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Changes the currency symbol in all financial displays for the organization.',
+    impactedSurface: 'Finance, KPI, Reports',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+  },
+  {
+    key: 'default_sharing_mode',
+    scope: 'tenant',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Changes the default visibility of new items created by all members.',
+    impactedSurface: 'All new artifacts',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+  },
+  {
+    key: 'mfa_required',
+    scope: 'tenant',
+    ownerContract: 'P32',
+    managedIn: 'admin',
+    routeTo: '/admin/security',
+    impactLanguage: 'Enforces multi-factor authentication for all members on next login.',
+    impactedSurface: 'Authentication flow',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+    aliases: ['mfa_enforcement'],
+  },
+  {
+    key: 'sso_enforced',
+    scope: 'tenant',
+    ownerContract: 'P32',
+    managedIn: 'admin',
+    routeTo: '/admin/security',
+    impactLanguage: 'Requires SSO login and disables password login when enforced.',
+    impactedSurface: 'Authentication flow',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+    aliases: ['sso_configuration'],
+  },
+  {
+    key: 'guest_access_enabled',
+    scope: 'tenant',
+    ownerContract: 'P32',
+    managedIn: 'admin',
+    routeTo: '/admin/security?tab=collaboration',
+    impactLanguage: 'Enables or disables guest access to the workspace.',
+    impactedSurface: 'Access control',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+    tenantEnforced: true,
+  },
+  {
+    key: 'external_link_sharing',
+    scope: 'tenant',
+    ownerContract: 'P32',
+    managedIn: 'admin',
+    routeTo: '/admin/security?tab=collaboration',
+    impactLanguage: 'Controls external link sharing permissions across the workspace.',
+    impactedSurface: 'Sharing, links',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+    tenantEnforced: true,
+  },
 
-  { key: 'default_tool_visibility', scope: 'module', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Controls which tools are visible to users by default.', impactedSurface: 'Tools module', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'], moduleId: 'tools' },
-  { key: 'tool_approval_required', scope: 'module', ownerContract: 'P32', managedIn: 'admin', routeTo: '/admin/security?tab=collaboration', impactLanguage: 'Requires admin approval before a tool can be used.', impactedSurface: 'Tools module', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true, tenantEnforced: true, moduleId: 'tools' },
-  { key: 'recording_auto_start', scope: 'module', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Automatically starts recording when an interview session begins.', impactedSurface: 'Interview sessions', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['*'], moduleId: 'interview', aliases: ['interview_recording_auto_start'] },
-  { key: 'ai_transcription_enabled', scope: 'module', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Enables AI-powered transcription of interview recordings.', impactedSurface: 'Interview sessions', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'], moduleId: 'interview' },
-  { key: 'default_export_format', scope: 'module', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Sets the default file format when exporting artifacts.', impactedSurface: 'Export dialogs', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'], moduleId: 'outputs', aliases: ['tools_default_export_format'] },
-  { key: 'scoring_scale', scope: 'module', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Changes the scoring scale for all new assessments.', impactedSurface: 'Assessment creation', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['*'], moduleId: 'assessment', aliases: ['interview_default_scoring_scale'] },
-  { key: 'model_preference', scope: 'module', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Switches the AI model used for suggestions and generation.', impactedSurface: 'All AI-powered features', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'], moduleId: 'copilot' },
-  { key: 'citation_style', scope: 'module', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Changes how AI-generated content references sources.', impactedSurface: 'AI outputs', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['*'], moduleId: 'copilot' },
+  {
+    key: 'default_tool_visibility',
+    scope: 'module',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Controls which tools are visible to users by default.',
+    impactedSurface: 'Tools module',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    moduleId: 'tools',
+  },
+  {
+    key: 'tool_approval_required',
+    scope: 'module',
+    ownerContract: 'P32',
+    managedIn: 'admin',
+    routeTo: '/admin/security?tab=collaboration',
+    impactLanguage: 'Requires admin approval before a tool can be used.',
+    impactedSurface: 'Tools module',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+    tenantEnforced: true,
+    moduleId: 'tools',
+  },
+  {
+    key: 'recording_auto_start',
+    scope: 'module',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Automatically starts recording when an interview session begins.',
+    impactedSurface: 'Interview sessions',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    moduleId: 'interview',
+    aliases: ['interview_recording_auto_start'],
+  },
+  {
+    key: 'ai_transcription_enabled',
+    scope: 'module',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Enables AI-powered transcription of interview recordings.',
+    impactedSurface: 'Interview sessions',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    moduleId: 'interview',
+  },
+  {
+    key: 'default_export_format',
+    scope: 'module',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Sets the default file format when exporting artifacts.',
+    impactedSurface: 'Export dialogs',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    moduleId: 'outputs',
+    aliases: ['tools_default_export_format'],
+  },
+  {
+    key: 'scoring_scale',
+    scope: 'module',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Changes the scoring scale for all new assessments.',
+    impactedSurface: 'Assessment creation',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    moduleId: 'assessment',
+    aliases: ['interview_default_scoring_scale'],
+  },
+  {
+    key: 'model_preference',
+    scope: 'module',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Switches the AI model used for suggestions and generation.',
+    impactedSurface: 'All AI-powered features',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    moduleId: 'copilot',
+  },
+  {
+    key: 'citation_style',
+    scope: 'module',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Changes how AI-generated content references sources.',
+    impactedSurface: 'AI outputs',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['*'],
+    moduleId: 'copilot',
+  },
 ];
 
 const SUPPLEMENTAL_METADATA: SettingsKeyMetadata[] = [
-  { key: 'default_date_format', scope: 'tenant', ownerContract: 'P31', managedIn: 'settings', impactLanguage: 'Changes the default date format across shared organization views.', impactedSurface: 'Dates in shared views', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['admin', 'owner'] },
-  { key: 'session_timeout_minutes', scope: 'tenant', ownerContract: 'P32', managedIn: 'admin', routeTo: '/admin/security', impactLanguage: 'Sets the session timeout for all members.', impactedSurface: 'Session management', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true, aliases: ['session_timeout'] },
-  { key: 'password_policy', scope: 'tenant', ownerContract: 'P32', managedIn: 'admin', routeTo: '/admin/security', impactLanguage: 'Changes password requirements for the organization.', impactedSurface: 'Authentication flow', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true },
-  { key: 'brand_color', scope: 'tenant', ownerContract: 'P30', managedIn: 'organization', routeTo: '/organization/branding', impactLanguage: 'Changes the default brand color inherited by organization surfaces.', impactedSurface: 'Branding, shared UI', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true },
-  { key: 'accent_color', scope: 'tenant', ownerContract: 'P30', managedIn: 'organization', routeTo: '/organization/branding', impactLanguage: 'Changes the accent color inherited by organization surfaces.', impactedSurface: 'Branding, shared UI', requiresRestart: false, confirmationGate: false, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true },
-  { key: 'custom_domain', scope: 'tenant', ownerContract: 'P30', managedIn: 'organization', routeTo: '/organization/domains', impactLanguage: 'Changes the organization custom domain used for workspace access.', impactedSurface: 'Workspace access', requiresRestart: false, confirmationGate: true, readRoles: ['*'], writeRoles: ['admin', 'owner'], readOnlyInSettings: true },
+  {
+    key: 'default_date_format',
+    scope: 'tenant',
+    ownerContract: 'P31',
+    managedIn: 'settings',
+    impactLanguage: 'Changes the default date format across shared organization views.',
+    impactedSurface: 'Dates in shared views',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+  },
+  {
+    key: 'session_timeout_minutes',
+    scope: 'tenant',
+    ownerContract: 'P32',
+    managedIn: 'admin',
+    routeTo: '/admin/security',
+    impactLanguage: 'Sets the session timeout for all members.',
+    impactedSurface: 'Session management',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+    aliases: ['session_timeout'],
+  },
+  {
+    key: 'password_policy',
+    scope: 'tenant',
+    ownerContract: 'P32',
+    managedIn: 'admin',
+    routeTo: '/admin/security',
+    impactLanguage: 'Changes password requirements for the organization.',
+    impactedSurface: 'Authentication flow',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+  },
+  {
+    key: 'brand_color',
+    scope: 'tenant',
+    ownerContract: 'P30',
+    managedIn: 'organization',
+    routeTo: '/organization/branding',
+    impactLanguage: 'Changes the default brand color inherited by organization surfaces.',
+    impactedSurface: 'Branding, shared UI',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+  },
+  {
+    key: 'accent_color',
+    scope: 'tenant',
+    ownerContract: 'P30',
+    managedIn: 'organization',
+    routeTo: '/organization/branding',
+    impactLanguage: 'Changes the accent color inherited by organization surfaces.',
+    impactedSurface: 'Branding, shared UI',
+    requiresRestart: false,
+    confirmationGate: false,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+  },
+  {
+    key: 'custom_domain',
+    scope: 'tenant',
+    ownerContract: 'P30',
+    managedIn: 'organization',
+    routeTo: '/organization/domains',
+    impactLanguage: 'Changes the organization custom domain used for workspace access.',
+    impactedSurface: 'Workspace access',
+    requiresRestart: false,
+    confirmationGate: true,
+    readRoles: ['*'],
+    writeRoles: ['admin', 'owner'],
+    readOnlyInSettings: true,
+  },
 ];
 
 const REGISTRY_INDEX = new Map<string, SettingsKeyMetadata>();
@@ -75,10 +427,19 @@ for (const meta of [...SETTINGS_REGISTRY, ...SUPPLEMENTAL_METADATA]) {
   }
 }
 
-const USER_PREFERENCE_KEYS = new Set(['theme', 'language', 'timezone', 'email_digest', 'ai_suggestions_enabled', 'working_hours']);
+const USER_PREFERENCE_KEYS = new Set([
+  'theme',
+  'language',
+  'timezone',
+  'email_digest',
+  'ai_suggestions_enabled',
+  'working_hours',
+]);
 
 function normalizeRole(role?: string): 'admin' | 'owner' | 'member' | 'guest' {
-  const normalized = String(role || '').trim().toLowerCase();
+  const normalized = String(role || '')
+    .trim()
+    .toLowerCase();
   switch (normalized) {
     case 'owner':
     case 'superadmin':
@@ -196,19 +557,29 @@ class SettingsRegistryServiceClass {
     return SETTINGS_REGISTRY.filter((entry) => entry.ownerContract === owner);
   }
 
-  getWriteTarget(key: string, userRole: string, targetScope?: string): 'personal' | 'tenant' | 'module' | 'blocked' {
+  getWriteTarget(
+    key: string,
+    userRole: string,
+    targetScope?: string
+  ): 'personal' | 'tenant' | 'module' | 'blocked' {
     const meta = this.getKeyMetadata(key);
     if (!meta) return 'blocked';
     if (meta.readOnlyInSettings || meta.managedIn !== 'settings') return 'blocked';
     if (meta.scope === 'personal') return 'personal';
     if (meta.scope === 'tenant') return canWrite(meta, userRole) ? 'tenant' : 'blocked';
-    if (targetScope === 'module' && canWrite({ ...meta, writeRoles: ['admin', 'owner'] }, userRole)) {
+    if (
+      targetScope === 'module' &&
+      canWrite({ ...meta, writeRoles: ['admin', 'owner'] }, userRole)
+    ) {
       return 'module';
     }
     return 'personal';
   }
 
-  checkWriteRouting(key: string, userRole: string): { allowed: boolean; routeTo?: string; guidance?: string } {
+  checkWriteRouting(
+    key: string,
+    userRole: string
+  ): { allowed: boolean; routeTo?: string; guidance?: string } {
     const meta = this.getKeyMetadata(key);
     if (!meta) {
       return {
@@ -263,7 +634,10 @@ class SettingsRegistryServiceClass {
       personalIgnored = true;
     }
 
-    if (orgId && ['default_language', 'default_timezone', 'mfa_required', 'sso_enforced'].includes(meta.key)) {
+    if (
+      orgId &&
+      ['default_language', 'default_timezone', 'mfa_required', 'sso_enforced'].includes(meta.key)
+    ) {
       const context = await organizationContextService.buildResolvedContext(orgId);
       const tenantValueMap: Record<string, unknown> = {
         default_language: context.profile.defaultLanguage,
@@ -403,4 +777,4 @@ class SettingsRegistryServiceClass {
 
 const settingsRegistryService = new SettingsRegistryServiceClass();
 export default settingsRegistryService;
-export { SettingsRegistryServiceClass, SETTINGS_REGISTRY, SUPPLEMENTAL_METADATA };
+export { SETTINGS_REGISTRY, SettingsRegistryServiceClass, SUPPLEMENTAL_METADATA };

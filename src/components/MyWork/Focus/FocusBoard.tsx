@@ -66,19 +66,19 @@ const DailyStatCard: React.FC<{
       'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800/30',
     blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/30',
     orange:
-      'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800/30',
+      'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/30',
     slate:
       'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/30',
     purple:
-      'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800/30',
+      'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800/30',
   };
 
   const iconBgClasses = {
     green: 'bg-green-100 dark:bg-green-900/30',
     blue: 'bg-blue-100 dark:bg-blue-900/30',
-    orange: 'bg-orange-100 dark:bg-orange-900/30',
+    orange: 'bg-amber-100 dark:bg-amber-900/30',
     slate: 'bg-slate-100 dark:bg-slate-700/30',
-    purple: 'bg-purple-100 dark:bg-purple-900/30',
+    purple: 'bg-primary-100 dark:bg-primary-900/30',
   };
 
   return (
@@ -112,10 +112,10 @@ const focusTips = [
   {
     icon: Brain,
     tip: 'Start with your hardest task when your energy is highest',
-    color: 'text-purple-500',
+    color: 'text-primary-500',
   },
   { icon: Target, tip: 'Limit yourself to 3-5 important tasks per day', color: 'text-blue-500' },
-  { icon: Coffee, tip: 'Take breaks every 90 minutes to maintain focus', color: 'text-orange-500' },
+  { icon: Coffee, tip: 'Take breaks every 90 minutes to maintain focus', color: 'text-amber-500' },
   {
     icon: Zap,
     tip: 'Group similar tasks together to minimize context switching',
@@ -217,7 +217,7 @@ const FocusTaskCard: React.FC<{
             <div className="flex-1 min-w-0">
               {/* Initiative */}
               {task.initiativeName && (
-                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                <span className="text-[10px] text-primary-600 dark:text-primary-400 font-medium">
                   {task.initiativeName}
                 </span>
               )}
@@ -238,7 +238,7 @@ const FocusTaskCard: React.FC<{
                 e.stopPropagation();
                 onRemove(task.taskId);
               }}
-              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-all"
+              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-all"
             >
               <X size={14} />
             </button>
@@ -546,7 +546,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-brand to-purple-600 text-white rounded-xl shadow-lg shadow-brand/25">
+          <div className="p-2.5 bg-gradient-to-br from-brand to-primary-600 text-white rounded-xl shadow-lg shadow-brand/25">
             <Target size={22} />
           </div>
           <div>
@@ -582,7 +582,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <button
             onClick={handleAISuggestion}
             disabled={aiSuggesting || tasks.length >= MAX_FOCUS_TASKS}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm font-medium shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white text-sm font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {aiSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             <span className="hidden sm:inline">{t('myWork.focus.aiSuggest', 'AI Suggest')}</span>
@@ -650,9 +650,9 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200/50 dark:border-purple-800/30 p-8 text-center"
+            className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200/50 dark:border-primary-800/30 p-8 text-center"
           >
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
               <Target size={32} className="text-white" />
             </div>
             <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
@@ -670,7 +670,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               <button
                 onClick={handleAISuggestion}
                 disabled={aiSuggesting}
-                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50"
               >
                 {aiSuggesting ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -697,7 +697,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
           >
             <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-              <Sparkles size={16} className="text-purple-500" />
+              <Sparkles size={16} className="text-primary-500" />
               {t('myWork.focus.tips.title', 'Tips for productive focus')}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -727,22 +727,22 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30 rounded-xl p-4"
+            className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/30 rounded-xl p-4"
           >
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-              <h3 className="font-semibold text-purple-900 dark:text-purple-200">
+              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+              <h3 className="font-semibold text-primary-900 dark:text-primary-200">
                 {t('myWork.focus.aiSuggestions', 'AI Suggestions')}
               </h3>
             </div>
-            <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
+            <p className="text-sm text-primary-700 dark:text-primary-300 mb-3">
               {suggestions.reasoning}
             </p>
             <div className="space-y-2">
               {suggestions.suggestedTasks.slice(0, 3).map((suggestion) => (
                 <div
                   key={suggestion.taskId}
-                  className="flex items-center justify-between p-3 bg-white dark:bg-navy-900 rounded-lg border border-purple-200 dark:border-purple-800/30"
+                  className="flex items-center justify-between p-3 bg-white dark:bg-navy-900 rounded-lg border border-primary-200 dark:border-primary-800/30"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
@@ -755,7 +755,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                   <button
                     onClick={() => onAddToFocus?.(suggestion.taskId, suggestion.suggestedTimeBlock)}
                     disabled={tasks.length >= MAX_FOCUS_TASKS}
-                    className="shrink-0 ml-3 p-2 rounded-lg bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400 transition-colors disabled:opacity-50"
+                    className="shrink-0 ml-3 p-2 rounded-lg bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 text-primary-600 dark:text-primary-400 transition-colors disabled:opacity-50"
                   >
                     <Plus size={16} />
                   </button>

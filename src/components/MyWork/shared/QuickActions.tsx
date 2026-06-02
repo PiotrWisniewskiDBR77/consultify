@@ -40,14 +40,14 @@ const PRIORITIES = [
   {
     value: 'high',
     label: { en: 'High', pl: 'Wysoki' },
-    color: 'bg-orange-400',
-    textColor: 'text-orange-500',
+    color: 'bg-amber-400',
+    textColor: 'text-amber-500',
   },
   {
     value: 'critical',
     label: { en: 'Critical', pl: 'Krytyczny' },
-    color: 'bg-red-500',
-    textColor: 'text-red-500',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-500',
   },
 ];
 
@@ -55,9 +55,9 @@ const PRIORITIES = [
 const STATUSES = [
   { value: 'todo', label: { en: 'To Do', pl: 'Do zrobienia' }, color: 'bg-slate-400' },
   { value: 'in_progress', label: { en: 'In Progress', pl: 'W trakcie' }, color: 'bg-blue-500' },
-  { value: 'review', label: { en: 'Review', pl: 'Przegląd' }, color: 'bg-purple-500' },
+  { value: 'review', label: { en: 'Review', pl: 'Przegląd' }, color: 'bg-primary-500' },
   { value: 'done', label: { en: 'Done', pl: 'Ukończone' }, color: 'bg-emerald-500' },
-  { value: 'blocked', label: { en: 'Blocked', pl: 'Zablokowane' }, color: 'bg-red-500' },
+  { value: 'blocked', label: { en: 'Blocked', pl: 'Zablokowane' }, color: 'bg-rose-500' },
 ];
 
 interface QuickActionsProps {
@@ -421,7 +421,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
                       onDelete();
                       setShowMoreMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                   >
                     <Trash2 size={14} />
                     <span>{isPolish ? 'Usuń' : 'Delete'}</span>

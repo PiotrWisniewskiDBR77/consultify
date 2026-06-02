@@ -9,6 +9,13 @@ import logger from '../utils/Logger.js';
 interface ExportCard {
   card_id: string;
   title: string;
+  header_footer?: {
+    confidentiality?: string;
+    pageNumber?: number;
+    totalPages?: number;
+    footerText?: string;
+    showPageNumbers?: boolean;
+  };
   blocks: {
     block_id: string;
     type: string;
@@ -74,11 +81,15 @@ ${getEmbeddedJS(deck.cards.length)}
 function renderCardHtml(card: ExportCard, index: number, theme: ExportDeck['theme']): string {
   const bgStyle = getCardBgCSS(card.background, theme);
   const blocksHtml = card.blocks.map((block) => renderBlockHtml(block, theme)).join('\n');
+  const footer = card.header_footer
+    ? `<footer class="slide-footer"><span>${escapeHtml(String(card.header_footer.confidentiality || 'internal')).toUpperCase()}</span><span>${escapeHtml(String(card.header_footer.footerText || 'Consultify'))}</span>${card.header_footer.showPageNumbers !== false ? `<span>${card.header_footer.pageNumber || index + 1} / ${card.header_footer.totalPages || ''}</span>` : ''}</footer>`
+    : '';
 
   return `<section class="slide" data-index="${index}" data-entrance="${card.animations.entrance}" data-stagger="${card.animations.block_stagger}" style="${bgStyle}">
   <div class="slide-content">
     ${blocksHtml}
   </div>
+  ${footer}
 </section>`;
 }
 
@@ -140,6 +151,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:${theme.b
 #progress-fill{height:100%;background:${theme.primary};transition:width .3s ease;width:0}
 #slides-wrapper{width:100%;height:100%;scroll-snap-type:y mandatory;overflow-y:auto;scroll-behavior:smooth}
 .slide{min-height:100vh;scroll-snap-align:start;display:flex;align-items:center;justify-content:center;padding:60px 80px;position:relative}
+.slide-footer{position:absolute;left:80px;right:80px;bottom:28px;display:flex;justify-content:space-between;gap:16px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:${theme.textSecondary};opacity:.72}
 .slide-content{max-width:960px;width:100%;display:flex;flex-direction:column;gap:16px}
 .block-heading{font-size:2.5rem;font-weight:700;line-height:1.2}
 .block-paragraph{font-size:1.1rem;line-height:1.7;opacity:.85}

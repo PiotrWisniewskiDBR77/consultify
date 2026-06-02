@@ -52,13 +52,27 @@ describe('Premium reports routes (no silent fallbacks)', () => {
   it('GET /api/reports/premium returns 503 when schema missing (no fake empty list)', async () => {
     const res = await request(makeApp()).get(basePath);
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: expect.any(String),
+      })
+    );
   });
 
   it('GET /api/reports/premium/:id returns 503 when schema missing (not 404)', async () => {
     const res = await request(makeApp()).get(`${basePath}/r1`);
     expect(res.status).toBe(503);
-    expect(res.body).toEqual(expect.objectContaining({ error: expect.any(String) }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        statusCode: 503,
+        status: false,
+        type: 'not_configured',
+        message: expect.any(String),
+      })
+    );
   });
 });
 

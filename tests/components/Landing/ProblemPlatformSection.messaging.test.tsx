@@ -36,18 +36,20 @@ describe('ProblemPlatformSection messaging', () => {
       )
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Business knowledge is valuable, but access is still limited.')
+      screen.getByText('Business intelligence is still inaccessible, generic, and unsafe.')
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Great platforms win by transforming access, not only by adding software.'
+        'What Spotify did for music: access, quality, and trust at scale.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('Spotify simplified access to music.')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Consultify is the Consulting Intelligence Platform: Spotify for consulting knowledge, delivered as a structured consulting workflow.'
+        'Spotify did not create more music. It made great music instantly accessible, reliable, and easy to use. Consultify applies the same shift to business intelligence.'
       )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Access. Quality. Trust. That is the shift.')
     ).toBeInTheDocument();
   });
 });

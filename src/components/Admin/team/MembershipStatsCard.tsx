@@ -88,7 +88,7 @@ const Sparkline: React.FC<{
     .join(' ');
 
   const colorClasses: Record<string, string> = {
-    violet: 'stroke-violet-500',
+    violet: 'stroke-primary-500',
     emerald: 'stroke-emerald-500',
     blue: 'stroke-blue-500',
     rose: 'stroke-rose-500',
@@ -184,14 +184,14 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Users */}
         <div
-          className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 cursor-pointer hover:border-violet-300 dark:hover:border-violet-700"
+          className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 cursor-pointer hover:border-primary-300 dark:hover:border-primary-700"
           onClick={() => onViewDetails?.('total')}
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.team.stats.totalUsers', 'Total Users')}
             </span>
-            <Users size={18} className="text-violet-500" />
+            <Users size={18} className="text-primary-500" />
           </div>
           <p className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {stats.totalUsers.toLocaleString()}

@@ -1,6 +1,6 @@
+import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import KnowledgeBaseService from '../KnowledgeBaseService.js';
-import { all as dbAll } from '../../utils/DbPromise.js';
 
 type SupportedKbLang = 'en' | 'pl';
 
@@ -57,7 +57,12 @@ interface CacheEntry {
 
 const cache = new Map<string, CacheEntry>();
 
-function cacheKey(query: string, lang: string, moduleId: string | null, surface: string | null): string {
+function cacheKey(
+  query: string,
+  lang: string,
+  moduleId: string | null,
+  surface: string | null
+): string {
   const q = query.toLowerCase().trim().slice(0, 120);
   return `${lang}::${moduleId || ''}::${surface || ''}::${q}`;
 }
@@ -202,7 +207,7 @@ export async function buildHelpDocsContext(opts: {
     mod: string | null = null,
     intent: string | null = null,
     language = 'en',
-    fallbacks: string[] = [],
+    fallbacks: string[] = []
   ): GroundingPayload => ({
     context: { surface: srf, toolContext: mod, userIntent: intent, language },
     candidates: { articleIds: [], collectionIds: [] },
@@ -241,11 +246,13 @@ export async function buildHelpDocsContext(opts: {
     const [contextual, searched, surfaceBound] = await Promise.all([
       moduleId ? KnowledgeBaseService.getContextualArticles(moduleId, lang, maxArticles) : [],
       KnowledgeBaseService.searchArticles(query, lang, Math.max(8, maxArticles * 3)),
-      surface ? KnowledgeBaseService.getArticlesForSurface(
-        surface === 'chat' ? 'ai_recommendations' : surface,
-        lang,
-        { toolContext: moduleId || undefined, limit: maxArticles }
-      ).catch(() => []) : [],
+      surface
+        ? KnowledgeBaseService.getArticlesForSurface(
+            surface === 'chat' ? 'ai_recommendations' : surface,
+            lang,
+            { toolContext: moduleId || undefined, limit: maxArticles }
+          ).catch(() => [])
+        : [],
     ]);
 
     // P26-B: Surface-bound articles get priority, then contextual, then search
@@ -263,23 +270,33 @@ export async function buildHelpDocsContext(opts: {
           []
         );
         fallbackCollectionSlugs = fallbackRows.map((r) => String(r.slug));
-      } catch { /* collections table may not exist */ }
+      } catch {
+        /* collections table may not exist */
+      }
 
-      const collectionHint = fallbackCollectionSlugs.length > 0
-        ? ` Suggest browsing these collections: ${fallbackCollectionSlugs.join(', ')}.`
-        : '';
+      const collectionHint =
+        fallbackCollectionSlugs.length > 0
+          ? ` Suggest browsing these collections: ${fallbackCollectionSlugs.join(', ')}.`
+          : '';
 
       const noDocsResult: HelpDocsContextResult = {
         systemInstructionAddon: isProduct
           ? '\n## HELP / KNOWLEDGE BASE\nNo matching documentation found for this query. ' +
             'If the user is asking about a product workflow or UI feature, respond: ' +
             '"Our documentation does not cover this topic yet. I\'ll do my best to help based on general platform knowledge."' +
-            collectionHint + '\n'
+            collectionHint +
+            '\n'
           : '',
         citations: [],
         articles: [],
         isProductQuestion: isProduct,
-        groundingPayload: mkEmptyGrounding(surface, moduleId, isProduct ? 'product_help' : 'general', lang, fallbackCollectionSlugs),
+        groundingPayload: mkEmptyGrounding(
+          surface,
+          moduleId,
+          isProduct ? 'product_help' : 'general',
+          lang,
+          fallbackCollectionSlugs
+        ),
       };
       setCache(ck, noDocsResult);
       return noDocsResult;
@@ -301,7 +318,12 @@ export async function buildHelpDocsContext(opts: {
       const emptyWithContext: HelpDocsContextResult = {
         ...emptyResult,
         isProductQuestion: isProduct,
-        groundingPayload: mkEmptyGrounding(surface, moduleId, isProduct ? 'product_help' : 'general', lang),
+        groundingPayload: mkEmptyGrounding(
+          surface,
+          moduleId,
+          isProduct ? 'product_help' : 'general',
+          lang
+        ),
       };
       setCache(ck, emptyWithContext);
       return emptyWithContext;
@@ -407,7 +429,8 @@ export async function buildHelpDocsContext(opts: {
       if (surfaceBoundIds.has(id)) bullets.push(`Surface-bound to ${surface || 'default'}`);
       if (contextualIds.has(id)) bullets.push(`Contextual for module ${moduleId || 'general'}`);
       if (searchedIds.has(id)) bullets.push(`Search match for "${safeSlice(query, 60)}"`);
-      if (String(a.title || '').toLowerCase() === query.toLowerCase()) bullets.push('Exact title match');
+      if (String(a.title || '').toLowerCase() === query.toLowerCase())
+        bullets.push('Exact title match');
       if (bullets.length === 0) bullets.push('Relevant KB content');
       rationale[id] = bullets;
     }
@@ -424,7 +447,9 @@ export async function buildHelpDocsContext(opts: {
           artIds
         );
         collectionIds = collRows.map((r) => String(r.slug));
-      } catch { /* collections table may not exist */ }
+      } catch {
+        /* collections table may not exist */
+      }
     }
 
     const groundingPayload: GroundingPayload = {
@@ -452,7 +477,12 @@ export async function buildHelpDocsContext(opts: {
     return {
       ...emptyResult,
       isProductQuestion: isProduct,
-      groundingPayload: mkEmptyGrounding(surface, moduleId, isProduct ? 'product_help' : 'general', lang),
+      groundingPayload: mkEmptyGrounding(
+        surface,
+        moduleId,
+        isProduct ? 'product_help' : 'general',
+        lang
+      ),
     };
   }
 }

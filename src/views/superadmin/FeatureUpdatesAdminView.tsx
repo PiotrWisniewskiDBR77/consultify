@@ -387,7 +387,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
 
             <button
               onClick={handleNew}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
             >
               <Plus size={16} />
               New update
@@ -668,7 +668,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={saving || selectedIsReadOnly}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <PenSquare size={16} />}
               {selectedUpdate ? 'Save changes' : 'Create draft'}
@@ -685,7 +685,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
         <div className="space-y-4">
           {loading ? (
             <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-10 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
             </div>
           ) : updates.length === 0 ? (
             <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-10 text-center">
@@ -706,7 +706,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
                   key={item.id}
                   className={`rounded-xl border p-4 transition-colors ${
                     active
-                      ? 'border-purple-400 bg-purple-50/60 dark:border-purple-700 dark:bg-purple-900/10'
+                      ? 'border-primary-400 bg-primary-50/60 dark:border-primary-700 dark:bg-primary-900/10'
                       : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
                   }`}
                 >
@@ -773,7 +773,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
                         <button
                           onClick={() => handlePublish(item)}
                           disabled={publishingId === item.id}
-                          className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+                          className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-medium transition-colors"
                         >
                           {publishingId === item.id ? (
                             <Loader2 size={14} className="animate-spin" />

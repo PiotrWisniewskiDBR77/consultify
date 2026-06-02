@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 
 export const BPMNEndNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
   const [editing, setEditing] = useState(false);
@@ -37,7 +37,7 @@ export const BPMNEndNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
           cy={18}
           r={15}
           fill="transparent"
-          stroke="#ef4444"
+          stroke="#f43f5e"
           strokeWidth={3}
           className={selected ? 'stroke-[4]' : ''}
         />
@@ -67,11 +67,7 @@ export const BPMNEndNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         )}
       </div>
 
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!w-2 !h-2 !bg-slate-400"
-      />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
     </div>
   );
 };

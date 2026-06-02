@@ -42,7 +42,7 @@ export const ReportFooter: React.FC<ReportFooterProps> = ({
     >
       {/* Standards Compliance Header */}
       <div className="flex items-center gap-2 mb-3">
-        <Shield size={16} className="text-violet-500" />
+        <Shield size={16} className="text-primary-500" />
         <span className="text-sm font-semibold text-navy-900 dark:text-white">
           PMO Standards Compliance
         </span>

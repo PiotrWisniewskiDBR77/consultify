@@ -260,7 +260,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
     statusInfo === 'above_plan'
       ? 'bg-emerald-500/10 text-emerald-400'
       : statusInfo === 'below_plan'
-        ? 'bg-red-500/10 text-red-400'
+        ? 'bg-rose-500/10 text-rose-400'
         : 'bg-slate-500/10 text-slate-400';
 
   const inputCls =
@@ -333,7 +333,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                           />
                           <div
                             className={`w-full rounded-t ${
-                              d.isAbove ? 'bg-emerald-500' : 'bg-red-500'
+                              d.isAbove ? 'bg-emerald-500' : 'bg-rose-500'
                             }`}
                             style={{ height: `${Math.max(realPct, 2)}%` }}
                           />
@@ -467,7 +467,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                               varAmt > 0
                                 ? 'text-emerald-400'
                                 : varAmt < 0
-                                  ? 'text-red-400'
+                                  ? 'text-rose-400'
                                   : 'text-slate-400';
                             return (
                               <tr key={r.id} className="hover:bg-navy-800/30">

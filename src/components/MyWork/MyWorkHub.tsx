@@ -39,7 +39,6 @@ import {
   List,
   Loader2,
   Lock,
-  Plus,
   Rocket,
   Scale,
   Search,
@@ -61,6 +60,23 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
+import {
+  MENU_2_TAB_ACTIVE,
+  MENU_2_TAB_INACTIVE,
+  MENU_3_ACTION_DANGER,
+  MENU_3_ACTION_NEUTRAL,
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_BASE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_BASE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_INNER_CLASS,
+  MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+  MENU_3_ROW_CLASS,
+} from '@/components/shared/ModuleMenu3';
 import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
@@ -105,10 +121,12 @@ import {
 } from './ideaWorkspaceState';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
-import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyIdeasListContent } from './MyIdeasListContent';
+import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
+import { CalendarView } from './Calendar/CalendarView';
+import { NotebookContent } from './NotebookContent';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
@@ -130,14 +148,8 @@ const ExecutiveDashboard = lazyWithRetry(() =>
 const HomeView = lazyWithRetry(() =>
   import('./Home/HomeView').then((m) => ({ default: m.HomeView }))
 );
-const CalendarView = lazyWithRetry(() =>
-  import('./Calendar/CalendarView').then((m) => ({ default: m.CalendarView }))
-);
 const FocusView = lazyWithRetry(() =>
   import('./Focus/FocusView').then((m) => ({ default: m.FocusView }))
-);
-const NotebookContent = lazyWithRetry(() =>
-  import('./NotebookContent').then((m) => ({ default: m.NotebookContent }))
 );
 const TasksKanbanBoard = lazyWithRetry(() =>
   import('./TasksKanbanBoard').then((m) => ({ default: m.TasksKanbanBoard }))
@@ -169,6 +181,24 @@ type DecisionsViewMode = 'table' | 'kanban' | 'timeline';
 type InboxViewMode = 'flat' | 'sections';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+
+interface MyWorkMainContentClassNameInput {
+  activeDocumentId: string | null;
+  activeTab: ModuleTab;
+  ideasViewMode: IdeasViewMode;
+}
+
+export function getMyWorkMainContentClassName({
+  activeDocumentId,
+  activeTab,
+  ideasViewMode,
+}: MyWorkMainContentClassNameInput): string {
+  const workspaceOwnsScroll =
+    !!activeDocumentId ||
+    activeTab === 'calendar' ||
+    (activeTab === 'ideas' && ideasViewMode === 'table');
+  return `flex-1 min-h-0 ${workspaceOwnsScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`;
+}
 
 // Q1: Per-tab system prompts for contextual chat
 const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
@@ -458,74 +488,51 @@ function parseMyWorkPathIntent(
   return null;
 }
 
-// Shared button styles (KANON v3): pill buttons, h-9, hover = bg-only.
-// SSOT: docs/ui-standards/00-foundation/visual-language.md (8.3) + UI_UX_CANON_V3.md (buttons).
-const BUTTON_BASE = `
-  inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium
-  border transition-colors duration-150
-  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1
-  ring-offset-white dark:ring-offset-navy-900
-  active:scale-[0.98]
-`;
-
-const BUTTON_INACTIVE = `
-  ${BUTTON_BASE}
-  bg-white/70 dark:bg-white/[0.04]
-  border-slate-200/70 dark:border-white/[0.06]
-  text-slate-700 dark:text-slate-300
-  hover:bg-slate-100 dark:hover:bg-white/[0.06]
-`;
-
-const BUTTON_ACTIVE = `
-  ${BUTTON_BASE}
-  bg-primary-50 dark:bg-primary-500/10
-  border-primary-200 dark:border-primary-500/30
-  text-primary-700 dark:text-primary-200
-`;
+// Main tabs use the shared Menu 2 canon. Menu 3 chip styles below are shared
+// with `Decyzje`, the accepted reference card for dynamic command menus.
+const BUTTON_INACTIVE = MENU_2_TAB_INACTIVE;
+const BUTTON_ACTIVE = MENU_2_TAB_ACTIVE;
 
 // Topbar pills (filters / view tool) — keep consistent with BUTTON_* but smaller text.
 const TOPBAR_PILL_BASE =
   'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
+const CTA_BASE =
+  'inline-flex items-center justify-center h-9 rounded-full border px-4 text-sm font-semibold text-white transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo', string> = {
+  violet:
+    'border-primary-500/30 bg-primary-600 hover:bg-primary-700 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500',
+  emerald:
+    'border-emerald-500/30 bg-emerald-600 hover:bg-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/80 dark:hover:bg-emerald-500',
+  amber:
+    'border-amber-500/30 bg-amber-600 hover:bg-amber-700 dark:border-amber-400/20 dark:bg-amber-500/85 dark:hover:bg-amber-500',
+  indigo:
+    'border-indigo-500/30 bg-indigo-600 hover:bg-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-500/80 dark:hover:bg-indigo-500',
+};
+
 // Tab styles for dynamic tabs
-const TAB_BASE = `
-  flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] font-medium
-  border border-l-2 transition-all duration-200 cursor-pointer
-`;
-
-const TAB_INACTIVE = `
-  ${TAB_BASE}
-  bg-slate-50 dark:bg-navy-800
-  border-slate-200 dark:border-navy-600
-  text-slate-600 dark:text-slate-400
-  hover:bg-slate-100 dark:hover:bg-navy-700
-`;
-
-const TAB_ACTIVE = `
-  ${TAB_BASE}
-  bg-primary-500/15 border-primary-500 text-primary-400
-  shadow-sm shadow-primary-500/10
-`;
+const TAB_INACTIVE = MENU_3_CHIP_INACTIVE;
+const TAB_ACTIVE = MENU_3_CHIP_ACTIVE;
 
 // Type colors for dynamic tabs
 const TYPE_COLORS = {
   // v3 identity map (docs/ui-standards/00-foundation/artifact-identity-map.md)
   task: 'border-l-emerald-500',
-  idea: 'border-l-violet-500',
+  idea: 'border-l-blue-500',
   decision: 'border-l-amber-500',
-  notification: 'border-l-red-500',
+  notification: 'border-l-rose-500',
 };
 
 const STATUS_COLORS: Record<ItemStatus, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-blue-400',
   completed: 'bg-emerald-400',
-  blocked: 'bg-red-400',
+  blocked: 'bg-rose-400',
   idea: 'bg-amber-400',
   pending: 'bg-amber-400',
   approved: 'bg-emerald-400',
-  rejected: 'bg-red-400',
+  rejected: 'bg-rose-400',
   read: 'bg-slate-500',
   unread: 'bg-amber-400',
 };
@@ -1043,7 +1050,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Update breadcrumbs for the app topbar
   useEffect(() => {
     const TAB_LABELS: Record<ModuleTab, string> = {
-      home: isPolish ? 'Start' : 'Home',
+      home: 'Radar',
       ideas: isPolish ? 'Pomysły' : 'Ideas',
       notebook: isPolish ? 'Notatnik' : 'Notebook',
       inbox: isPolish ? 'Skrzynka' : 'Inbox',
@@ -1052,7 +1059,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       decisions: isPolish ? 'Decyzje' : 'Decisions',
       manager: isPolish ? 'Menedżer' : 'Manager',
     };
-    const base = isPolish ? 'Moja praca' : 'My Work';
+    const base = isPolish ? 'Moja Praca' : 'My Work';
     const tabLabel = TAB_LABELS[activeTab] || activeTab;
     const crumbs = [base, tabLabel];
 
@@ -1332,7 +1339,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: 'Inbox',
         icon: <Inbox size={16} />,
         count: tabCounts.inbox,
-        color: 'bg-red-500',
+        color: 'bg-blue-500',
         requiresManagerAccess: false,
       },
       {
@@ -1356,7 +1363,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: isPolish ? 'Decyzje' : 'Decisions',
         icon: <Scale size={16} />,
         count: tabCounts.decisions,
-        color: 'bg-purple-500',
+        color: 'bg-blue-500',
         requiresManagerAccess: false,
       },
       {
@@ -1364,7 +1371,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: 'Manager',
         icon: <Users size={16} />,
         count: tabCounts.manager,
-        color: 'bg-violet-500',
+        color: 'bg-primary-500',
         requiresManagerAccess: true,
       },
     ];
@@ -1381,41 +1388,41 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       {
         id: 'all' as TaskFilter,
         label: isPolish ? 'Wszystkie' : 'All',
-        icon: <LayoutGrid size={12} />,
+        icon: <LayoutGrid size={14} />,
         color: 'bg-slate-400',
       },
       {
         id: 'overdue' as TaskFilter,
         label: isPolish ? 'Zaległe' : 'Overdue',
-        icon: <AlertCircle size={12} />,
-        color: 'bg-red-500',
+        icon: <AlertCircle size={14} />,
+        color: 'bg-rose-500',
         count: taskFilterCounts.overdue,
       },
       {
         id: 'today' as TaskFilter,
         label: isPolish ? 'Dzisiaj' : 'Today',
-        icon: <Calendar size={12} />,
+        icon: <Calendar size={14} />,
         color: 'bg-blue-500',
         count: taskFilterCounts.today,
       },
       {
         id: 'week' as TaskFilter,
         label: isPolish ? 'Ten tydzień' : 'This Week',
-        icon: <CalendarDays size={12} />,
+        icon: <CalendarDays size={14} />,
         color: 'bg-slate-500',
         count: taskFilterCounts.week,
       },
       {
         id: 'urgent' as TaskFilter,
         label: isPolish ? 'Pilne' : 'Urgent',
-        icon: <Flame size={12} />,
-        color: 'bg-orange-500',
+        icon: <Flame size={14} />,
+        color: 'bg-amber-500',
         count: taskFilterCounts.urgent,
       },
       {
         id: 'new' as TaskFilter,
         label: isPolish ? 'Nowe' : 'New',
-        icon: <Inbox size={12} />,
+        icon: <Inbox size={14} />,
         color: 'bg-emerald-500',
         count: taskFilterCounts.newUntriaged,
       },
@@ -1437,7 +1444,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         id: 'my' as DecisionFilter,
         label: isPolish ? 'Moje do decyzji' : 'My decisions to make',
         icon: <User size={12} />,
-        color: 'bg-purple-500',
+        color: 'bg-blue-500',
         count: decisionFilterCounts.my,
       },
       {
@@ -1811,6 +1818,67 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setInboxActionRequiredOnly(next === 'action_required');
   }, []);
 
+  const handleInboxStatusTabSelect = useCallback(
+    (next: 'open' | 'done' | 'saved' | 'all') => {
+      setInboxStatusTab(next);
+      if (next === 'saved') {
+        setInboxPreset('saved');
+        setInboxSection('all');
+        setInboxActionRequiredOnly(false);
+        return;
+      }
+      if (inboxPreset === 'saved') {
+        setInboxPreset('all');
+      }
+      if (next === 'done' || next === 'all') {
+        setInboxSection('all');
+        setInboxActionRequiredOnly(false);
+      }
+    },
+    [inboxPreset]
+  );
+
+  const openTabAiContext = useCallback(
+    async (tab: 'inbox' | 'tasks') => {
+      const isInbox = tab === 'inbox';
+      await openChatWithContext({
+        entityType: isInbox ? 'notification' : 'task',
+        entityId: isInbox ? 'my-work-inbox' : 'my-work-tasks',
+        entityName: isInbox ? (isPolish ? 'Skrzynka' : 'Inbox') : isPolish ? 'Zadania' : 'Tasks',
+        contextData: {
+          module: 'my_work',
+          tab,
+          inboxStatusTab: isInbox ? inboxStatusTab : undefined,
+          taskFilter: !isInbox ? taskFilter : undefined,
+          tasksViewMode: !isInbox ? tasksViewMode : undefined,
+          source: 'menu3',
+        },
+      });
+      setChatKickoffMessage(
+        isInbox
+          ? isPolish
+            ? 'Przeanalizuj moją skrzynkę i zaproponuj kolejną najlepszą akcję.'
+            : 'Analyze my inbox and propose the next best action.'
+          : isPolish
+            ? 'Przeanalizuj moje zadania i zaproponuj priorytety na dziś.'
+            : 'Analyze my tasks and propose priorities for today.'
+      );
+      if (isChatCollapsed) {
+        toggleChatCollapse();
+      }
+    },
+    [
+      inboxStatusTab,
+      isChatCollapsed,
+      isPolish,
+      openChatWithContext,
+      setChatKickoffMessage,
+      taskFilter,
+      tasksViewMode,
+      toggleChatCollapse,
+    ]
+  );
+
   const handleInboxBulkBarChange = useCallback((payload: InboxBulkBarPayload | null) => {
     if (!payload) {
       setInboxBulkUi(null);
@@ -1962,15 +2030,30 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           const result = await executeTriageHandoff(action.signalId);
           if (result) {
             const mod = action.targetModule;
-            if (mod === 'Inicjatywy') {
+            if (mod === 'initiatives' || mod === 'Inicjatywy') {
               setActiveTab('ideas');
-            } else if (mod === 'Wdrożenia') {
+            } else if (mod === 'execution' || mod === 'Wdrożenia') {
               setActiveTab('tasks');
-            } else if (mod === 'Notatki') {
+            } else if (mod === 'notebook' || mod === 'Notatki') {
               setActiveTab('notebook');
               setNotebookCreateReqId((value) => value + 1);
             }
           }
+          return;
+        }
+        case 'radar_feedback': {
+          const actionType =
+            action.feedback === 'watch' ? 'add_to_watchlist' : 'less_like_this';
+          const payload = {
+            ...(action.topic ? { topic: action.topic } : {}),
+            ...(action.source ? { source: action.source } : {}),
+          };
+          const Api = (await import('@/services/api')).default;
+          await Api.post('/my-work/radar/actions', {
+            signalId: action.signalId,
+            actionType,
+            payload,
+          }).catch(() => null);
           return;
         }
         default:
@@ -2005,45 +2088,36 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'calendar':
         return {
           label: isPolish ? 'Dodaj wydarzenie' : 'Add event',
-          icon: <Plus size={16} />,
           onClick: () => setCalendarCreateReqId((v) => v + 1),
-          color: 'from-violet-500 to-purple-600',
+          tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'tasks':
         return {
           label: isPolish ? 'Nowe zadanie' : 'New Task',
-          icon: <Plus size={16} />,
           onClick: handleCreateTask,
-          // v3 identity map: Task = emerald
-          color: 'from-emerald-500 to-emerald-600',
+          tone: 'emerald' as const,
           variant: 'primary' as const,
         };
       case 'ideas':
         return {
           label: isPolish ? 'Nowy pomysł' : 'New Idea',
-          icon: <Plus size={16} />,
           onClick: handleCreateIdea,
-          // v3 identity map: Idea = violet
-          color: 'from-violet-500 to-violet-600',
+          tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'decisions':
         return {
           label: isPolish ? 'Nowa decyzja' : 'New Decision',
-          icon: <Plus size={16} />,
           onClick: handleCreateDecision,
-          // v3 identity map: Decision = amber
-          color: 'from-amber-500 to-amber-600',
+          tone: 'amber' as const,
           variant: 'primary' as const,
         };
       case 'notebook':
         return {
           label: isPolish ? 'Nowa notatka' : 'New note',
-          icon: <Plus size={16} />,
           onClick: () => setNotebookCreateReqId((v) => v + 1),
-          // v3 identity map: Notebook page = indigo
-          color: 'from-indigo-500 to-indigo-600',
+          tone: 'indigo' as const,
           variant: 'primary' as const,
         };
       default:
@@ -2113,63 +2187,83 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (openDocuments.length === 0) return null;
 
     const isListActive = activeDocumentId === null;
+    const showIdeasDetailAiAction = activeTab === 'ideas' && !!activeDocumentId;
 
     return (
-      <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto min-w-0 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-        {/* List button */}
-        <button
-          onClick={handleShowList}
-          className={
-            isListActive
-              ? TAB_ACTIVE.replace('border-l-2', '')
-              : TAB_INACTIVE.replace('border-l-2', '')
-          }
-          style={{ flexShrink: 0 }}
-        >
-          <List size={14} />
-          <span>{isPolish ? 'Lista' : 'List'}</span>
-        </button>
-
-        {/* Separator */}
-        <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
-
-        {/* Document Tabs */}
-        {openDocuments.map((doc) => {
-          const isActive = doc.id === activeDocumentId;
-          const leftBorderColor = TYPE_COLORS[doc.type];
-          const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
-
-          return (
-            <div
-              key={doc.id}
-              className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor}`}
-              onClick={() => setActiveDocumentId(doc.id)}
+      <div className={MENU_3_ROW_CLASS}>
+        <div className={MENU_3_INNER_CLASS}>
+          <div className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar`}>
+            {/* List button */}
+            <button
+              onClick={handleShowList}
+              className={
+                isListActive
+                  ? TAB_ACTIVE.replace('border-l-2', '')
+                  : TAB_INACTIVE.replace('border-l-2', '')
+              }
+              style={{ flexShrink: 0 }}
             >
-              {/* Type Icon */}
-              {doc.type === 'task' && <CheckSquare size={14} />}
-              {doc.type === 'idea' && <Lightbulb size={14} />}
-              {doc.type === 'decision' && <Scale size={14} />}
-              {doc.type === 'notification' && <Bell size={14} />}
+              <List size={14} />
+              <span>{isPolish ? 'Lista' : 'List'}</span>
+            </button>
 
-              {/* Name (truncated) */}
-              <span className="max-w-[150px] truncate">{doc.name}</span>
+            {/* Separator */}
+            <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
 
-              {/* Status Dot */}
-              <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
+            {/* Document Tabs */}
+            {openDocuments.map((doc) => {
+              const isActive = doc.id === activeDocumentId;
+              const leftBorderColor = TYPE_COLORS[doc.type];
+              const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
 
-              {/* Close Button */}
+              return (
+                <div
+                  key={doc.id}
+                  className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
+                  onClick={() => setActiveDocumentId(doc.id)}
+                >
+                  {/* Type Icon */}
+                  {doc.type === 'task' && <CheckSquare size={14} />}
+                  {doc.type === 'idea' && <Lightbulb size={14} />}
+                  {doc.type === 'decision' && <Scale size={14} />}
+                  {doc.type === 'notification' && <Bell size={14} />}
+
+                  {/* Name (truncated) */}
+                  <span className="max-w-[150px] truncate">{doc.name}</span>
+
+                  {/* Status Dot */}
+                  <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
+
+                  {/* Close Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloseDocument(doc.id);
+                    }}
+                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {showIdeasDetailAiAction ? (
+            <div className={MENU_3_RIGHT_CLASS}>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCloseDocument(doc.id);
-                }}
-                className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                onClick={() => toggleChatCollapse()}
+                className={MENU_3_ACTION_NEUTRAL}
+                type="button"
+                aria-label={isPolish ? 'AI Kontekst' : 'AI Context'}
+                data-testid="mywork-area-ai-button"
               >
-                <X size={14} />
+                <Sparkles size={14} />
+                {isPolish ? 'AI Kontekst' : 'AI Context'}
               </button>
             </div>
-          );
-        })}
+          ) : null}
+        </div>
       </div>
     );
   };
@@ -2244,24 +2338,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // Tasks: filters as a single Command Row (no extra toolbars/strips).
     if (activeTab === 'tasks') {
-      const chipBase =
-        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-      const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
-      const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+      const chipBase = MENU_3_CHIP_BASE;
+      const chipInactive = MENU_3_CHIP_INACTIVE;
+      const chipActive = MENU_3_CHIP_ACTIVE;
+      const badgeBase = MENU_3_BADGE_BASE;
+      const badgeInactive = MENU_3_BADGE_INACTIVE;
+      const badgeActive = MENU_3_BADGE_ACTIVE;
 
       // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
       if (tasksBulkUi?.selectedCount) {
         const bulk = tasksBulkActionsRef.current;
         const bulkGhostPill =
-          'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-        const bulkPillBase =
-          'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
         return (
-          <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-            <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+          <div className={MENU_3_ROW_CLASS}>
+            <div className={MENU_3_INNER_CLASS}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {tasksBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
@@ -2274,32 +2366,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => bulk?.changePriority()}
-                  className={`${bulkPillBase} ${chipInactive}`}
-                >
+              <div className={MENU_3_RIGHT_CLASS}>
+                <button onClick={() => bulk?.changePriority()} className={MENU_3_ACTION_NEUTRAL}>
                   <Flag size={14} />
                   {isPolish ? 'Priorytet' : 'Priority'}
                 </button>
-                <button
-                  onClick={() => bulk?.changeDueDate()}
-                  className={`${bulkPillBase} ${chipInactive}`}
-                >
+                <button onClick={() => bulk?.changeDueDate()} className={MENU_3_ACTION_NEUTRAL}>
                   <Calendar size={14} />
                   {isPolish ? 'Termin' : 'Due date'}
                 </button>
-                <button
-                  onClick={() => bulk?.complete()}
-                  className={`${bulkPillBase} border-green-300/40 dark:border-green-500/20 bg-white/70 dark:bg-white/[0.04] text-green-700 dark:text-green-300 hover:bg-green-50/60 dark:hover:bg-green-500/10`}
-                >
+                <button onClick={() => bulk?.complete()} className={MENU_3_ACTION_NEUTRAL}>
                   <CheckSquare size={14} />
                   {isPolish ? 'Gotowe' : 'Done'}
                 </button>
-                <button
-                  onClick={() => bulk?.deleteSelected()}
-                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
-                >
+                <button onClick={() => bulk?.deleteSelected()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
                   {isPolish ? 'Usuń' : 'Delete'}
                 </button>
@@ -2310,9 +2390,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }
 
       return (
-        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            <div className="inline-flex items-center gap-1">
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
+            <div className={MENU_3_LEFT_CLASS}>
               {taskFilters.map((f) => {
                 const isActive = taskFilter === f.id;
                 const count =
@@ -2324,14 +2404,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
                     title={f.label}
                   >
-                    {f.icon}
+                    {f.id === 'all' ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
+                    ) : (
+                      f.icon
+                    )}
                     <span>{f.label}</span>
-                    <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[11px] text-slate-700 dark:text-slate-200">
+                    <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
                       {count}
                     </span>
                   </button>
                 );
               })}
+            </div>
+            <div className={MENU_3_RIGHT_CLASS}>
+              <button
+                onClick={() => void openTabAiContext('tasks')}
+                className={MENU_3_ACTION_NEUTRAL}
+                type="button"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'AI Priorytety' : 'AI Priorities'}
+              </button>
             </div>
           </div>
         </div>
@@ -2368,24 +2462,24 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         },
       ];
 
-      const chipBase =
-        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-      const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
-      const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+      const menu3RowClass = MENU_3_ROW_CLASS;
+      const menu3InnerClass = MENU_3_INNER_CLASS;
+      const chipBase = MENU_3_CHIP_BASE;
+      const chipInactive = MENU_3_CHIP_INACTIVE;
+      const chipActive = MENU_3_CHIP_ACTIVE;
+      const badgeBase = MENU_3_BADGE_BASE;
+      const badgeInactive = MENU_3_BADGE_INACTIVE;
+      const badgeActive = MENU_3_BADGE_ACTIVE;
 
       // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
       if (inboxBulkUi?.selectedCount) {
         const bulkActions = inboxBulkActionsRef.current;
         const bulkGhostPill =
-          'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-        const bulkPillBase =
-          'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
         return (
-          <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-            <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+          <div className={MENU_3_ROW_CLASS}>
+            <div className={MENU_3_INNER_CLASS}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {inboxBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
@@ -2398,38 +2492,38 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className={MENU_3_RIGHT_CLASS}>
                 <button
                   onClick={() => bulkActions?.triage('accept_today')}
-                  className={`${bulkPillBase} border-emerald-300/40 dark:border-emerald-500/20 bg-white/70 dark:bg-white/[0.04] text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50/60 dark:hover:bg-emerald-500/10`}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Zap size={14} />
                   {isPolish ? 'Focus: Dziś' : 'Focus: Today'}
                 </button>
                 <button
                   onClick={() => bulkActions?.triage('accept_week')}
-                  className={`${bulkPillBase} border-blue-300/40 dark:border-blue-500/20 bg-white/70 dark:bg-white/[0.04] text-blue-700 dark:text-blue-300 hover:bg-blue-50/60 dark:hover:bg-blue-500/10`}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
                   <CalendarClock size={14} />
                   {isPolish ? 'Ten tydz.' : 'This week'}
                 </button>
                 <button
                   onClick={() => bulkActions?.triage('done')}
-                  className={`${bulkPillBase} border-green-300/40 dark:border-green-500/20 bg-white/70 dark:bg-white/[0.04] text-green-700 dark:text-green-300 hover:bg-green-50/60 dark:hover:bg-green-500/10`}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
                   <CheckSquare size={14} />
                   {isPolish ? 'Gotowe' : 'Done'}
                 </button>
                 <button
                   onClick={() => bulkActions?.triage('save')}
-                  className={`${bulkPillBase} border-amber-300/40 dark:border-amber-500/20 bg-white/70 dark:bg-white/[0.04] text-amber-800 dark:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-500/10`}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
                   <FileText size={14} />
                   {isPolish ? 'Zapisz' : 'Save'}
                 </button>
                 <button
                   onClick={() => bulkActions?.triage('dismiss')}
-                  className={`${bulkPillBase} ${chipInactive}`}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
                   <X size={14} />
                   {isPolish ? 'Odłóż' : 'Dismiss'}
@@ -2441,28 +2535,77 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }
 
       return (
-        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            {presets.map((p) => {
-              const isActive = inboxPreset === p.id;
-              const disabled = p.id !== 'all' && p.count === 0;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => applyInboxPreset(isActive ? 'all' : p.id)}
-                  className={`${chipBase} ${isActive ? chipActive : chipInactive} ${
-                    disabled ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <span>{p.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                    {p.count}
-                  </span>
-                </button>
-              );
-            })}
+        <div className={menu3RowClass}>
+          <div className={menu3InnerClass}>
+            <div className={MENU_3_LEFT_CLASS}>
+              {presets.map((p) => {
+                const isActive = inboxPreset === p.id;
+                const disabled = p.id !== 'all' && p.count === 0;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => applyInboxPreset(isActive ? 'all' : p.id)}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive} ${
+                      disabled ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {p.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
+                    <span>{p.label}</span>
+                    <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
+                      {p.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className={MENU_3_RIGHT_CLASS}>
+              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-white/[0.08] dark:bg-navy-900/70">
+                {(
+                  [
+                    {
+                      id: 'open',
+                      label: isPolish ? 'Otwarte' : 'Open',
+                      count: c?.counts.open ?? 0,
+                    },
+                    {
+                      id: 'done',
+                      label: isPolish ? 'Gotowe' : 'Done',
+                      count: c?.counts.done ?? 0,
+                    },
+                    {
+                      id: 'saved',
+                      label: isPolish ? 'Zapisane' : 'Saved',
+                      count: c?.counts.saved ?? 0,
+                    },
+                  ] as const
+                ).map((statusChip) => {
+                  const isActive = inboxStatusTab === statusChip.id;
+                  return (
+                    <button
+                      key={statusChip.id}
+                      type="button"
+                      onClick={() => handleInboxStatusTabSelect(statusChip.id)}
+                      className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                    >
+                      <span>{statusChip.label}</span>
+                      <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
+                        {statusChip.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => void openTabAiContext('inbox')}
+                className={MENU_3_ACTION_NEUTRAL}
+                type="button"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'AI Triage' : 'AI Triage'}
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -2470,17 +2613,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // Decisions: filters live in Command Row (chips). Topbar keeps only ONE select (priority).
     if (activeTab === 'decisions' && !activeDocumentId && !decisionsBulkUi?.selectedCount) {
-      const chipBase =
-        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-      const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
-      const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+      const chipBase = MENU_3_CHIP_BASE;
+      const chipInactive = MENU_3_CHIP_INACTIVE;
+      const chipActive = MENU_3_CHIP_ACTIVE;
+      const badgeBase = MENU_3_BADGE_BASE;
+      const badgeInactive = MENU_3_BADGE_INACTIVE;
+      const badgeActive = MENU_3_BADGE_ACTIVE;
 
       return (
-        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            <div className="inline-flex items-center gap-1">
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
+            <div className={MENU_3_LEFT_CLASS}>
               {decisionFilters.map((f) => {
                 const isActive = decisionFilter === f.id;
                 const count =
@@ -2493,9 +2636,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     title={f.label}
                     data-testid={`mywork-decisions-filter-${f.id}`}
                   >
-                    {f.icon}
+                    {f.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : f.icon}
                     <span>{f.label}</span>
-                    <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                    <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
                       {count}
                     </span>
                   </button>
@@ -2511,15 +2654,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (activeTab === 'decisions' && decisionsBulkUi?.selectedCount) {
       const bulk = decisionsBulkActionsRef.current;
       const bulkGhostPill =
-        'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-      const bulkPillBase =
-        'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-      const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       return (
-        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-          <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                 {decisionsBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
@@ -2532,66 +2671,45 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className={MENU_3_RIGHT_CLASS}>
               {bulk?.approve ? (
-                <button
-                  onClick={() => bulk?.approve?.()}
-                  className={`${bulkPillBase} border-emerald-300/40 dark:border-emerald-500/20 bg-white/70 dark:bg-white/[0.04] text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50/60 dark:hover:bg-emerald-500/10`}
-                >
+                <button onClick={() => bulk?.approve?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Check size={14} />
                   {isPolish ? 'Przyjęta' : 'Approve'}
                 </button>
               ) : null}
               {bulk?.reject ? (
-                <button
-                  onClick={() => bulk?.reject?.()}
-                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
-                >
+                <button onClick={() => bulk?.reject?.()} className={MENU_3_ACTION_DANGER}>
                   <X size={14} />
                   {isPolish ? 'Odrzuć' : 'Reject'}
                 </button>
               ) : null}
               {bulk?.remind ? (
-                <button
-                  onClick={() => bulk?.remind?.()}
-                  className={`${bulkPillBase} ${chipInactive}`}
-                >
+                <button onClick={() => bulk?.remind?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Bell size={14} />
                   {isPolish ? 'Przypomnij' : 'Remind'}
                 </button>
               ) : null}
               {bulk?.escalate ? (
-                <button
-                  onClick={() => bulk?.escalate?.()}
-                  className={`${bulkPillBase} border-amber-300/40 dark:border-amber-500/20 bg-white/70 dark:bg-white/[0.04] text-amber-800 dark:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-500/10`}
-                >
+                <button onClick={() => bulk?.escalate?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <TrendingUp size={14} />
                   {isPolish ? 'Eskaluj' : 'Escalate'}
                 </button>
               ) : null}
               {bulk?.snoozeTomorrow ? (
-                <button
-                  onClick={() => bulk?.snoozeTomorrow?.()}
-                  className={`${bulkPillBase} ${chipInactive}`}
-                >
+                <button onClick={() => bulk?.snoozeTomorrow?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Clock size={14} />
                   {isPolish ? 'Odłóż (jutro)' : 'Snooze (tomorrow)'}
                 </button>
               ) : null}
               {bulk?.changePriority ? (
-                <button
-                  onClick={() => bulk?.changePriority?.()}
-                  className={`${bulkPillBase} ${chipInactive}`}
-                >
+                <button onClick={() => bulk?.changePriority?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Flag size={14} />
                   {isPolish ? 'Priorytet' : 'Priority'}
                 </button>
               ) : null}
               {bulk?.deleteSelected ? (
-                <button
-                  onClick={() => bulk?.deleteSelected?.()}
-                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
-                >
+                <button onClick={() => bulk?.deleteSelected?.()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
                   {isPolish ? 'Usuń' : 'Delete'}
                 </button>
@@ -2609,23 +2727,23 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // Ideas: stage presets in Command Row (same pattern as Inbox/Tasks)
     if (activeTab === 'ideas' && !activeDocumentId) {
-      const chipBase =
-        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-      const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
-      const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+      const menu3RowClass = MENU_3_ROW_CLASS;
+      const menu3InnerClass = MENU_3_INNER_CLASS;
+      const chipBase = MENU_3_CHIP_BASE;
+      const chipInactive = MENU_3_CHIP_INACTIVE;
+      const chipActive = MENU_3_CHIP_ACTIVE;
+      const badgeBase = MENU_3_BADGE_BASE;
+      const badgeInactive = MENU_3_BADGE_INACTIVE;
+      const badgeActive = MENU_3_BADGE_ACTIVE;
 
       if (ideasBulkUi?.selectedCount) {
         const bulk = ideasBulkActionsRef.current;
         const bulkGhostPill =
-          'inline-flex items-center h-8 px-2.5 rounded-full text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-        const bulkPillBase =
-          'inline-flex items-center gap-2 h-8 px-2.5 rounded-full border text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-navy-800 dark:ring-offset-navy-900';
 
         return (
-          <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-            <div className="flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap">
+          <div className={menu3RowClass}>
+            <div className={menu3InnerClass}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {ideasBulkUi.selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
@@ -2637,22 +2755,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => bulk?.convert()}
-                  className={`${bulkPillBase} ${chipInactive}`}
-                >
+              <div className={MENU_3_RIGHT_CLASS}>
+                <button onClick={() => bulk?.convert()} className={MENU_3_ACTION_NEUTRAL}>
                   <Sparkles size={14} />
                   {isPolish ? 'Konwertuj' : 'Convert'}
                 </button>
-                <button onClick={() => bulk?.tag()} className={`${bulkPillBase} ${chipInactive}`}>
+                <button onClick={() => bulk?.tag()} className={MENU_3_ACTION_NEUTRAL}>
                   <Tag size={14} />
                   {isPolish ? 'Taguj' : 'Tag'}
                 </button>
-                <button
-                  onClick={() => bulk?.deleteSelected()}
-                  className={`${bulkPillBase} border-red-300/40 dark:border-red-500/20 bg-white/70 dark:bg-white/[0.04] text-red-700 dark:text-red-300 hover:bg-red-50/60 dark:hover:bg-red-500/10`}
-                >
+                <button onClick={() => bulk?.deleteSelected()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
                   {isPolish ? 'Usuń' : 'Delete'}
                 </button>
@@ -2677,39 +2789,39 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {
           id: 'spark',
           label: isPolish ? 'Iskra' : 'Spark',
-          icon: <Lightbulb size={14} />,
+          icon: <Lightbulb size={14} className="text-amber-400" />,
           count: ideasStageCounts.spark,
         },
         {
           id: 'incubating',
           label: isPolish ? 'Rośnie' : 'Growing',
-          icon: <Sprout size={14} />,
+          icon: <Sprout size={14} className="text-emerald-400" />,
           count: ideasStageCounts.incubating,
         },
         {
           id: 'shaping',
           label: isPolish ? 'Kształtuje' : 'Shaping',
-          icon: <TreePine size={14} />,
+          icon: <TreePine size={14} className="text-blue-400" />,
           count: ideasStageCounts.shaping,
         },
         {
           id: 'ready',
           label: isPolish ? 'Gotowy' : 'Ready',
-          icon: <CheckCircle2 size={14} />,
+          icon: <CheckCircle2 size={14} className="text-blue-400" />,
           count: ideasStageCounts.ready,
         },
         {
           id: 'promoted',
           label: isPolish ? 'Promowany' : 'Promoted',
-          icon: <Rocket size={14} />,
+          icon: <Rocket size={14} className="text-fuchsia-400" />,
           count: ideasStageCounts.promoted,
         },
       ];
 
       return (
-        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            <div className="inline-flex items-center gap-1">
+        <div className={menu3RowClass}>
+          <div className={menu3InnerClass}>
+            <div className={MENU_3_LEFT_CLASS}>
               {stagePresets.map((p) => {
                 const isActive = ideaStageFilter === p.id;
                 return (
@@ -2718,9 +2830,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     onClick={() => setIdeaStageFilter(isActive && p.id !== 'all' ? 'all' : p.id)}
                     className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
                   >
-                    {p.icon}
+                    {p.icon || <span className={MENU_3_ALL_DOT_CLASS} />}
                     <span>{p.label}</span>
-                    <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                    <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
                       {p.count}
                     </span>
                   </button>
@@ -2777,25 +2889,24 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     const visible = chips.filter((c2) => c2.count > 0).slice(0, 4);
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-        {visible.length > 0 ? (
-          visible.map((c2) => (
-            <button
-              key={c2.key}
-              onClick={c2.onClick}
-              className="inline-flex items-center gap-1.5 h-8 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] px-2.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            >
-              <span>{c2.label}</span>
-              <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                {c2.count}
-              </span>
-            </button>
-          ))
-        ) : (
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Brak alertów' : 'No alerts'}
+      <div className={MENU_3_ROW_CLASS}>
+        <div className={MENU_3_INNER_CLASS}>
+          <div className={MENU_3_LEFT_CLASS}>
+            {visible.length > 0 ? (
+              visible.map((c2) => (
+                <button key={c2.key} onClick={c2.onClick} className={MENU_3_CHIP_INACTIVE}>
+                  <span>{c2.label}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>{c2.count}</span>
+                </button>
+              ))
+            ) : (
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Brak alertów' : 'No alerts'}
+              </div>
+            )}
           </div>
-        )}
+          <div className="shrink-0" />
+        </div>
       </div>
     );
   };
@@ -3160,7 +3271,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     }}
                     className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
                     data-testid={`mywork-tab-${tab.id}`}
-                    title={tab.isLocked ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message : undefined}
+                    title={
+                      tab.isLocked
+                        ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                        : undefined
+                    }
                   >
                     {tab.icon}
                     <span>{tab.label}</span>
@@ -3456,30 +3571,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {actionButton && (
               <button
                 onClick={actionButton.onClick}
-                className={`flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r ${actionButton.color} text-white border border-white/20 hover:brightness-110 shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-200`}
+                className={`${CTA_BASE} ${CTA_TONE[actionButton.tone]}`}
                 data-testid="mywork-action-button"
               >
-                {actionButton.icon}
                 <span>{actionButton.label}</span>
               </button>
             )}
 
-            {/* Area AI Context Button — opens/closes the side chat panel with module context */}
-            {activeTab === 'ideas' && activeDocumentId && (
-              <button
-                onClick={() => toggleChatCollapse()}
-                className={`inline-flex items-center justify-center h-9 w-9 rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
-                  !isChatCollapsed
-                    ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
-                    : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                }`}
-                title={isPolish ? 'AI Kontekst' : 'AI Context'}
-                aria-label={isPolish ? 'AI Kontekst' : 'AI Context'}
-                data-testid="mywork-area-ai-button"
-              >
-                <Sparkles size={16} />
-              </button>
-            )}
+            {/* Ideas detail AI action lives in Menu 3 right slot. */}
           </div>
         </div>
       </div>
@@ -3488,11 +3587,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
       {/* Main Content Area — calendar needs overflow-hidden + flex-col so FC owns the scroll (sticky headers) */}
       <div
-        className={`flex-1 min-h-0 ${
-          activeTab === 'calendar' || (activeTab === 'ideas' && ideasViewMode === 'table')
-            ? 'overflow-hidden flex flex-col'
-            : 'overflow-y-auto'
-        }`}
+        className={getMyWorkMainContentClassName({
+          activeDocumentId,
+          activeTab,
+          ideasViewMode,
+        })}
       >
         {renderContent()}
       </div>

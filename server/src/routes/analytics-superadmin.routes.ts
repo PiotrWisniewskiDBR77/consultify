@@ -9,7 +9,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import { requireSuperAdminCapability, verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import {
+  requireSuperAdminCapability,
+  verifySuperAdmin,
+} from '../middleware/superAdmin.middleware.js';
 import { getPublicAnnaFunnelSummary } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -452,6 +455,33 @@ router.get(
 );
 
 /**
+ * Get recent report executions across all reports.
+ */
+router.get(
+  '/executions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const limit = Math.min(Math.max(Number(req.query.limit || 50), 1), 200);
+      const executions = await dbAll(
+        `
+                SELECT are.*, ar.name as report_name, ar.report_type
+                FROM analytics_report_executions are
+                LEFT JOIN analytics_reports ar ON ar.id = are.report_id
+                ORDER BY are.executed_at DESC
+                LIMIT ?
+            `,
+        [limit]
+      );
+
+      return res.json({ executions: executions || [] });
+    } catch (error: any) {
+      logger.error('[Analytics] Get all report executions error:', error);
+      return analyticsFailure(res, 500, 'Failed to fetch report executions', { executions: [] });
+    }
+  })
+);
+
+/**
  * Create a new report
  */
 router.post(
@@ -522,9 +552,11 @@ router.post(
         }
       } else if (report.query_sql) {
         return res.status(422).json({
-          error: 'Only single-statement read-only SELECT reports can be executed from Superadmin analytics.',
+          error:
+            'Only single-statement read-only SELECT reports can be executed from Superadmin analytics.',
           code: 'ANALYTICS_QUERY_NOT_ALLOWED',
-          guidance: 'Move complex or mutating SQL to reviewed backend jobs instead of operator-executed reports.',
+          guidance:
+            'Move complex or mutating SQL to reviewed backend jobs instead of operator-executed reports.',
         });
       }
 
@@ -1057,10 +1089,17 @@ router.post(
         factors = { estimatedChurns: nextMonthChurn, currentBase: params.totalSubscriptions || 0 };
       } else if (modelType === 'revenue') {
         const mrr = params.currentMRR || 0;
-        const growthFactor = 1 + (Math.random() * 0.08 - 0.02);
+        const activeSubs = params.activeSubscriptions || 0;
+        const avgRevenue = params.avgRevenuePerSubscription || 0;
+        const growthFactor = mrr > 0 && activeSubs > 0 ? 1 + Math.min(activeSubs, 100) / 10000 : 1;
         const projectedMRR = Math.round(mrr * growthFactor * 100) / 100;
         predictedValue = `$${projectedMRR.toLocaleString()} projected MRR`;
-        factors = { currentMRR: mrr, projectedMRR, activeSubs: params.activeSubscriptions || 0 };
+        factors = {
+          currentMRR: mrr,
+          projectedMRR,
+          activeSubs,
+          avgRevenuePerSubscription: avgRevenue,
+        };
       } else if (modelType === 'growth') {
         const rate = params.monthlyGrowthRate || 0;
         const currentUsers = params.totalActiveUsers || 0;

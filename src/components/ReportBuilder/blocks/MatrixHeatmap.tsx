@@ -49,8 +49,8 @@ function getScoreColor(score: number, max: number): string {
   if (pct >= 0.8) return 'bg-emerald-500';
   if (pct >= 0.6) return 'bg-blue-500';
   if (pct >= 0.4) return 'bg-amber-500';
-  if (pct >= 0.2) return 'bg-orange-500';
-  return 'bg-red-500';
+  if (pct >= 0.2) return 'bg-amber-500';
+  return 'bg-rose-500';
 }
 
 function getScoreTextColor(score: number, max: number): string {
@@ -58,8 +58,8 @@ function getScoreTextColor(score: number, max: number): string {
   if (pct >= 0.8) return 'text-emerald-600 dark:text-emerald-400';
   if (pct >= 0.6) return 'text-blue-600 dark:text-blue-400';
   if (pct >= 0.4) return 'text-amber-600 dark:text-amber-400';
-  if (pct >= 0.2) return 'text-orange-600 dark:text-orange-400';
-  return 'text-red-600 dark:text-red-400';
+  if (pct >= 0.2) return 'text-amber-600 dark:text-amber-400';
+  return 'text-rose-600 dark:text-rose-400';
 }
 
 function getGapSeverity(gap: number): { label: string; color: string } {
@@ -68,8 +68,8 @@ function getGapSeverity(gap: number): { label: string; color: string } {
   if (gap <= 1.5)
     return { label: 'Moderate', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' };
   if (gap <= 2.5)
-    return { label: 'Significant', color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/30' };
-  return { label: 'Critical', color: 'text-red-600 bg-red-50 dark:bg-red-900/30' };
+    return { label: 'Significant', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' };
+  return { label: 'Critical', color: 'text-rose-600 bg-rose-50 dark:bg-rose-900/30' };
 }
 
 // ==========================================

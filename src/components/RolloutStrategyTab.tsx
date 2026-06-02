@@ -56,7 +56,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Layout className="text-purple-500" />
+            <Layout className="text-primary-500" />
             Program Strategy & Scope
           </h2>
           <p className="text-slate-500 dark:text-slate-400">
@@ -86,7 +86,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
       >
         {/* 1. Program Definition */}
         <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
-          <h3 className="font-bold text-lg mb-4 text-purple-400">Program Definition</h3>
+          <h3 className="font-bold text-lg mb-4 text-primary-400">Program Definition</h3>
 
           <div className="mb-6">
             <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
@@ -119,7 +119,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
                   />
                   <button
                     onClick={() => removeListItem('businessGoals', i)}
-                    className="text-red-500 hover:text-red-400"
+                    className="text-rose-500 hover:text-rose-400"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -127,7 +127,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
               ))}
               <button
                 onClick={() => addListItem('businessGoals')}
-                className="text-xs font-bold text-purple-500 flex items-center gap-1 mt-2"
+                className="text-xs font-bold text-primary-500 flex items-center gap-1 mt-2"
               >
                 <Plus size={14} /> Add Goal
               </button>
@@ -155,7 +155,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
                     />
                     <button
                       onClick={() => removeListItem('inScope', i)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-red-400"
+                      className="text-slate-400 dark:text-slate-500 hover:text-rose-400"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -171,7 +171,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-red-500 mb-2 flex items-center gap-2">
+              <label className="block text-sm font-bold text-rose-500 mb-2 flex items-center gap-2">
                 <Trash2 size={16} /> Out of Scope
               </label>
               <div className="space-y-2">
@@ -185,7 +185,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
                     />
                     <button
                       onClick={() => removeListItem('outScope', i)}
-                      className="text-slate-400 dark:text-slate-500 hover:text-red-400"
+                      className="text-slate-400 dark:text-slate-500 hover:text-rose-400"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -193,7 +193,7 @@ export const RolloutStrategyTab: React.FC<RolloutStrategyTabProps> = ({
                 ))}
                 <button
                   onClick={() => addListItem('outScope')}
-                  className="text-red-500 text-xs font-bold flex items-center gap-1"
+                  className="text-rose-500 text-xs font-bold flex items-center gap-1"
                 >
                   + Add Excl.
                 </button>

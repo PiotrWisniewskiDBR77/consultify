@@ -148,7 +148,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
               isRefreshable={block.is_refreshable ?? false}
             />
           )}
-          <div className="absolute inset-0 rounded border-2 border-transparent group-hover:border-purple-400/50 transition-colors pointer-events-none" />
+          <div className="absolute inset-0 rounded border-2 border-transparent group-hover:border-primary-400/50 transition-colors pointer-events-none" />
         </div>
       </AnimatedBlock>
     );
@@ -157,7 +157,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   const cardContent = (
     <div
       className={`relative rounded-xl overflow-hidden shadow-lg transition-shadow ${
-        isActive ? 'ring-2 ring-purple-500 shadow-xl' : 'shadow-md'
+        isActive ? 'ring-2 ring-primary-500 shadow-xl' : 'shadow-md'
       }`}
       style={{
         aspectRatio: '16/9',

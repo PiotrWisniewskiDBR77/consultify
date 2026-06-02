@@ -1,6 +1,6 @@
 /**
  * AICommandPrompt — pole do wpisania dowolnego polecenia AI (np. "dopisz plan w 5 krokach...").
- * Wynik wstawiany jako callout purple z oznaczeniem AI.
+ * Wynik wstawiany jako callout primary z oznaczeniem AI.
  */
 import type { Editor } from '@tiptap/react';
 import { Loader2, Send, Sparkles } from 'lucide-react';
@@ -75,7 +75,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
             const paragraphs = text.split(/\n\n+/).filter(Boolean);
             const blockContent = {
               type: 'callout',
-              attrs: { variant: 'purple' },
+              attrs: { variant: 'primary' },
               content: [
                 {
                   type: 'paragraph',
@@ -133,9 +133,9 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg border border-violet-200/60 dark:border-violet-800/40 bg-violet-50/50 dark:bg-violet-950/20 px-3 py-1.5 ${className}`}
+      className={`flex items-center gap-2 rounded-lg border border-primary-200/60 dark:border-primary-800/40 bg-primary-50/50 dark:bg-primary-950/20 px-3 py-1.5 ${className}`}
     >
-      <Sparkles size={14} className="shrink-0 text-violet-500 dark:text-violet-400" />
+      <Sparkles size={14} className="shrink-0 text-primary-500 dark:text-primary-400" />
       <input
         ref={inputRef}
         type="text"
@@ -151,7 +151,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
       <button
         onClick={execute}
         disabled={!command.trim() || isGenerating}
-        className="p-1.5 rounded-md bg-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+        className="p-1.5 rounded-md bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
         title={isPl ? 'Wykonaj polecenie' : 'Execute command'}
       >
         {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}

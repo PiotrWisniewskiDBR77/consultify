@@ -189,14 +189,14 @@ export const ExportMembersDialog: React.FC<ExportMembersDialogProps> = ({
                   className={cn(
                     'flex items-center gap-3 p-3 rounded-lg border transition-all',
                     format === fmt
-                      ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 ring-2 ring-violet-500/20'
-                      : 'border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-700'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500/20'
+                      : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-700'
                   )}
                 >
                   <Icon
                     size={24}
                     className={cn(
-                      format === fmt ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400'
+                      format === fmt ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400'
                     )}
                   />
                   <div className="text-left">
@@ -204,7 +204,7 @@ export const ExportMembersDialog: React.FC<ExportMembersDialogProps> = ({
                       className={cn(
                         'font-medium',
                         format === fmt
-                          ? 'text-violet-700 dark:text-violet-300'
+                          ? 'text-primary-700 dark:text-primary-300'
                           : 'text-navy-900 dark:text-white'
                       )}
                     >
@@ -235,8 +235,8 @@ export const ExportMembersDialog: React.FC<ExportMembersDialogProps> = ({
                 className={cn(
                   'px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors',
                   filter === f
-                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
-                    : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-violet-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
                 )}
               >
                 {f === 'all' && t('admin.team.export.filterAll', 'All Members')}
@@ -260,7 +260,7 @@ export const ExportMembersDialog: React.FC<ExportMembersDialogProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={selectAllFields}
-                className="text-xs text-violet-600 hover:text-violet-700 dark:text-violet-400"
+                className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400"
               >
                 {t('admin.team.export.selectAll', 'Select All')}
               </button>

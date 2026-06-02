@@ -23,11 +23,16 @@ import { useTranslation } from 'react-i18next';
 import { CloudFile, CloudProviderId, useCloudIntegrations } from '../../hooks/useCloudIntegrations';
 import { useAppStore } from '../../store/useAppStore';
 import { useConversationStore } from '../../store/useConversationStore';
+import { CHAT_V9_PII_CHECK_EVENT } from '../../utils/piiHeuristicToastFlag';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
 import { CoThinkerMenu } from './CoThinkerMenu';
+import { InputCharCounter } from './InputCharCounter';
+import { InputSoftLimitToast } from './InputSoftLimitToast';
 import { MoveToProjectModal } from './MoveToProjectModal';
+import { NextModelChip } from './NextModelChip';
 import { ToolsMenu } from './ToolsMenu';
+import { VoiceModeLegend } from './VoiceModeLegend';
 
 // ============================================================================
 // Types
@@ -69,6 +74,12 @@ interface EnhancedChatInputProps {
 
   /** Teresa real-time voice status: 'idle' | 'connecting' | 'live' | 'error' */
   teresaVoiceStatus?: string;
+  /** Human-readable runtime error when Teresa live voice fails */
+  teresaVoiceError?: string | null;
+  /** Whether Teresa live voice can start from the current server/browser posture */
+  teresaVoiceAvailable?: boolean;
+  /** Human-readable reason when Teresa live voice cannot start */
+  teresaVoiceUnavailableReason?: string | null;
   /** Toggle Teresa real-time voice on/off */
   onTeresaVoiceToggle?: () => void;
   /** Whether Teresa mic is currently muted */
@@ -76,6 +87,14 @@ interface EnhancedChatInputProps {
   /** Toggle Teresa mic mute */
   onTeresaVoiceMuteToggle?: () => void;
 }
+
+type ComposerAttachment =
+  | File
+  | {
+      kind?: 'url';
+      url: string;
+      name?: string;
+    };
 
 // ============================================================================
 // Component
@@ -99,6 +118,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   stopVoiceListening,
   onToolSelect,
   teresaVoiceStatus,
+  teresaVoiceError,
+  teresaVoiceAvailable = true,
+  teresaVoiceUnavailableReason,
   onTeresaVoiceToggle,
   teresaVoiceMuted,
   onTeresaVoiceMuteToggle,
@@ -125,7 +147,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   // Input state
   const [value, setValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [attachments, setAttachments] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
 
   // Voice state
   const [isDictating, setIsDictating] = useState(false);
@@ -149,6 +171,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vadIntervalRef = useRef<number | null>(null);
   const isDictatingRef = useRef(false);
+  const lastTeresaVoiceToastRef = useRef<string | null>(null);
 
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isInputDisabled = isDisabled || isStreaming;
@@ -202,6 +225,17 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       stopAllRecording();
     };
   }, []);
+
+  useEffect(() => {
+    if (teresaVoiceStatus !== 'error') {
+      lastTeresaVoiceToastRef.current = null;
+      return;
+    }
+    const message = (teresaVoiceError || '').trim() || t('aiChat.voiceError', 'Voice error');
+    if (lastTeresaVoiceToastRef.current === message) return;
+    lastTeresaVoiceToastRef.current = message;
+    toast.error(message);
+  }, [t, teresaVoiceError, teresaVoiceStatus]);
 
   // ========================================================================
   // Auto-resize textarea
@@ -580,7 +614,23 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     if (!canSend) return;
     if (isStreaming) return;
     stopDictation();
-    onSend(value.trim(), attachments.length > 0 ? attachments : undefined);
+    const outgoing = value.trim();
+    onSend(outgoing, attachments.length > 0 ? attachments : undefined);
+    // T-PM2-lite — advisory post-send nudge. Dispatched on `window`
+    // so the headless `PiiHeuristicToast` can run the detector
+    // without this component knowing anything about toasts. The
+    // event is a no-op when the kill-switch is off (listener
+    // detached) or when no category hits.
+    if (typeof window !== 'undefined' && outgoing.length > 0) {
+      try {
+        window.dispatchEvent(
+          new CustomEvent(CHAT_V9_PII_CHECK_EVENT, { detail: { text: outgoing } })
+        );
+      } catch {
+        // CustomEvent is supported everywhere we target; the guard
+        // exists only for server-rendered / degraded environments.
+      }
+    }
     setValue('');
     setAttachments([]);
     if (textareaRef.current) {
@@ -667,6 +717,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const activeConversation = activeConversationId
     ? conversations.find((c) => c.id === activeConversationId) || null
     : null;
+  const hasProjectAssignableConversation = Boolean(activeConversation);
 
   const handleToolSelect = useCallback(
     (tool: string) => {
@@ -706,12 +757,24 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       {/* Attachments Preview */}
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2 px-1">
-          {attachments.map((att, idx) => (
+          {attachments.map((att, idx) => {
+            const isUrlAttachment =
+              typeof att === 'object' &&
+              !(att instanceof File) &&
+              (att as { kind?: string }).kind === 'url';
+            const label =
+              typeof att === 'object' && !(att instanceof File)
+                ? att.name || att.url
+                : att.name || att.type;
+            return (
             <div
               key={idx}
               className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
             >
-              <span>{att.name || att.type}</span>
+              <span className="inline-flex items-center gap-1">
+                <span>{isUrlAttachment ? 'Link' : 'File'}:</span>
+                <span className="max-w-[220px] truncate">{label}</span>
+              </span>
               <button
                 onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
                 className="ml-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
@@ -719,13 +782,14 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 ×
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {/* Live Transcript Indicator */}
       {(isDictating || isVoiceConversationVal) && (
-        <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-primary-50 dark:from-blue-900/20 dark:to-primary-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
           {/* Audio Level Bars */}
           <div className="flex items-center gap-0.5 h-4">
             {[...Array(5)].map((_, i) => (
@@ -791,10 +855,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
         {/* Action Bar */}
         <div
-          className={`flex items-center justify-between px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
+          className={`flex items-center justify-between gap-2 min-w-0 px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
         >
           {/* Left Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="flex items-center gap-1 shrink-0">
             <AddFilesMenu
               onFileSelect={handleFileSelect}
               onUrlAdd={handleUrlAdd}
@@ -804,14 +869,57 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               isCloudImplemented={isCloudImplemented}
               disabled={isInputDisabled}
             />
-            <ToolsMenu onToolSelect={handleToolSelect} disabled={isInputDisabled} icon={Pen} />
+            <ToolsMenu
+              onToolSelect={handleToolSelect}
+              disabled={isInputDisabled}
+              icon={Pen}
+              hasActiveConversation={hasProjectAssignableConversation}
+            />
             <CoThinkerMenu disabled={isInputDisabled} />
+            </div>
+            <div className="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto pr-1 scrollbar-none">
+            {/* C-IN1 — Next-message model hint. Read-only pill showing
+                which model will handle the next send. Self-gates on
+                `isNextModelChipEnabled()` and renders null when the
+                user has no resolvable model id, so the action bar
+                collapses cleanly when the signal is unavailable. */}
+            <NextModelChip />
+            {/* C-IN2 — Input character counter. Invisible until the
+                message crosses the default 400-char threshold, then
+                colour-escalates through amber at 80% of the 8k soft
+                max and rose once over. Purely advisory; never blocks
+                Send. Self-gates on `isInputCharCounterEnabled()`. */}
+            <InputCharCounter value={value} />
+            {/* C-IN6-lite — one-shot soft-limit inline toast. Headless
+                sibling of the counter that fires a single
+                `toast.custom` the first time `value.length` crosses
+                the counter's rose threshold in this tab, with a
+                "Don't show again this session" escape. Self-gates on
+                `isInputSoftLimitToastEnabled()` and the sessionStorage
+                fired / dismiss sentinels. */}
+            <InputSoftLimitToast value={value} />
+            </div>
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            {/* VM3 — voice modes legend. Sits immediately before the mic so
+                the "?" reads as "what does this mic button do?". Component
+                self-gates on `isVoiceModeLegendEnabled()`; when the flag is
+                off it renders null and the mic cluster collapses normally.
+                VM1-lite: when `speechSupported === false` and the Teresa
+                live-voice affordance is also absent, the mic button is
+                hidden entirely — the legend then becomes the user's only
+                way to learn *why* voice does not work in this browser. */}
+            <VoiceModeLegend
+              unavailable={
+                !speechSupported &&
+                teresaVoiceStatus !== 'live' &&
+                teresaVoiceStatus !== 'connecting'
+              }
+            />
             {/* Mic button: mute/unmute when Teresa voice is live, dictation otherwise */}
-            {(teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting') ? (
+            {teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting' ? (
               <button
                 onClick={() => onTeresaVoiceMuteToggle?.()}
                 disabled={teresaVoiceStatus !== 'live'}
@@ -820,7 +928,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   flex items-center gap-1.5 p-2 rounded-lg transition-all
                   ${
                     teresaVoiceMuted
-                      ? 'bg-red-500/80 text-white shadow-lg shadow-red-500/30'
+                      ? 'bg-rose-500/80 text-white shadow-lg shadow-rose-500/30'
                       : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                   }
                   ${teresaVoiceStatus !== 'live' ? 'cursor-not-allowed opacity-50' : ''}
@@ -842,7 +950,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   flex items-center gap-1.5 p-2 rounded-lg transition-all
                   ${
                     isDictating
-                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                      ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
                       : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                   }
                   ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
@@ -862,7 +970,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               <button
                 onClick={() => onStopGenerating?.()}
                 disabled={isDisabled}
-                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/25"
+                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-500/25"
                 title={t('aiChat.stopGenerating', 'Stop generating')}
               >
                 <Square size={18} className="fill-current" />
@@ -882,7 +990,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 disabled={isDisabled}
                 className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
                   teresaVoiceStatus === 'live'
-                    ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
+                    ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/25'
                     : 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/25'
                 }`}
                 title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
@@ -891,7 +999,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
                   <>
-                    <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/20 pointer-events-none" />
+                    <span className="absolute inset-0 rounded-xl animate-ping bg-rose-500/20 pointer-events-none" />
                     <AudioLines size={18} />
                   </>
                 )}
@@ -899,9 +1007,21 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             ) : (
               <button
                 onClick={() => onTeresaVoiceToggle?.()}
-                disabled={isDisabled}
-                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25 group"
-                title={t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')}
+                disabled={isDisabled || !teresaVoiceAvailable}
+                className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg group ${
+                  teresaVoiceAvailable
+                    ? 'bg-primary-600 hover:bg-primary-500 shadow-primary-500/25'
+                    : 'bg-amber-600/80 cursor-not-allowed shadow-amber-500/20'
+                }`}
+                title={
+                  teresaVoiceAvailable
+                    ? t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')
+                    : teresaVoiceUnavailableReason ||
+                      t(
+                        'aiChat.voiceUnavailable',
+                        'Voice is unavailable. You can continue by text or dictation.'
+                      )
+                }
               >
                 <AudioLines size={18} className="group-hover:scale-110 transition-transform" />
               </button>

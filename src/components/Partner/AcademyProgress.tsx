@@ -30,8 +30,8 @@ interface AcademyProgressProps {
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
   METHODOLOGY: {
-    bg: 'bg-purple-100 dark:bg-purple-500/20',
-    text: 'text-purple-700 dark:text-purple-400',
+    bg: 'bg-primary-100 dark:bg-primary-500/20',
+    text: 'text-primary-700 dark:text-primary-400',
     icon: <BookOpen size={14} />,
   },
   SALES: {
@@ -55,17 +55,17 @@ const CERTIFICATION_INFO: Record<string, { label: string; description: string; c
   CONSULTIFY_CERTIFIED: {
     label: 'Consultify Certified Partner',
     description: 'Completed all required methodology modules',
-    color: 'from-purple-500 to-indigo-600',
+    color: 'from-primary-500 to-indigo-600',
   },
   CO_SELL_EXPERT: {
     label: 'Co-Sell Expert',
     description: 'Mastered co-selling best practices and deal registration',
-    color: 'from-emerald-500 to-teal-600',
+    color: 'from-emerald-500 to-blue-600',
   },
   ENTERPRISE_PARTNER: {
     label: 'Enterprise Partner',
     description: 'Advanced integration patterns and compliance certification',
-    color: 'from-amber-500 to-orange-600',
+    color: 'from-amber-500 to-amber-600',
   },
 };
 
@@ -118,11 +118,11 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress Overview */}
-      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-purple-50 to-indigo-50 p-6 dark:border-navy-700 dark:from-purple-500/10 dark:to-indigo-500/10">
+      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-primary-50 to-indigo-50 p-6 dark:border-navy-700 dark:from-primary-500/10 dark:to-indigo-500/10">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-navy-900">
-              <GraduationCap size={24} className="text-purple-600" />
+              <GraduationCap size={24} className="text-primary-600" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
@@ -169,13 +169,13 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
         <div>
           <div className="mb-2 flex items-center justify-between text-xs">
             <span className="text-slate-600 dark:text-slate-300">Overall Progress</span>
-            <span className="font-semibold text-purple-600 dark:text-purple-400">
+            <span className="font-semibold text-primary-600 dark:text-primary-400">
               {stats.progressPercent}%
             </span>
           </div>
           <div className="h-3 overflow-hidden rounded-full bg-white/80 dark:bg-navy-900/60">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 transition-all duration-500"
               style={{ width: `${stats.progressPercent}%` }}
             />
           </div>
@@ -263,8 +263,8 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
 
       {/* CTA for Certification */}
       {!stats.certificationReady && (
-        <div className="rounded-xl border border-dashed border-purple-300 bg-purple-50/50 p-6 text-center dark:border-purple-500/30 dark:bg-purple-500/5">
-          <Lock size={32} className="mx-auto mb-3 text-purple-400" />
+        <div className="rounded-xl border border-dashed border-primary-300 bg-primary-50/50 p-6 text-center dark:border-primary-500/30 dark:bg-primary-500/5">
+          <Lock size={32} className="mx-auto mb-3 text-primary-400" />
           <h4 className="font-semibold text-navy-900 dark:text-white">
             Unlock Consultify Certification
           </h4>
@@ -273,7 +273,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
             {stats.requiredModules - stats.completedRequired !== 1 ? 's' : ''} to earn your
             certification
           </p>
-          <button className="mt-4 rounded-xl bg-purple-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-purple-700">
+          <button className="mt-4 rounded-xl bg-primary-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-primary-700">
             Continue Learning
           </button>
         </div>
@@ -334,7 +334,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
               {module.title}
             </span>
             {module.requiredForCertification && (
-              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-500/20 dark:text-purple-400">
+              <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/20 dark:text-primary-400">
                 Required
               </span>
             )}

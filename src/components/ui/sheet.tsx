@@ -130,12 +130,18 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
 SheetContent.displayName = 'SheetContent';
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={`flex flex-col space-y-1.5 px-6 pb-2 pt-6 pr-14 text-left ${className || ''}`} {...props} />
+  <div
+    className={`flex flex-col space-y-1.5 px-6 pb-2 pt-6 pr-14 text-left ${className || ''}`}
+    {...props}
+  />
 );
 SheetHeader.displayName = 'SheetHeader';
 
 const SheetFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={`flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 ${className || ''}`} {...props} />
+  <div
+    className={`flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 ${className || ''}`}
+    {...props}
+  />
 );
 SheetFooter.displayName = 'SheetFooter';
 
@@ -162,4 +168,15 @@ const SheetDescription = React.forwardRef<
 ));
 SheetDescription.displayName = 'SheetDescription';
 
-export { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger };
+export {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPortal,
+  SheetTitle,
+  SheetTrigger,
+};

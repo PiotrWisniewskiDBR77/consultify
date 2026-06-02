@@ -92,14 +92,14 @@ const getColorClasses = (color: string) => {
       border: 'border-amber-200 dark:border-amber-800',
     },
     purple: {
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      text: 'text-purple-600 dark:text-purple-400',
-      border: 'border-purple-200 dark:border-purple-800',
+      bg: 'bg-primary-50 dark:bg-primary-900/20',
+      text: 'text-primary-600 dark:text-primary-400',
+      border: 'border-primary-200 dark:border-primary-800',
     },
     cyan: {
-      bg: 'bg-cyan-50 dark:bg-cyan-900/20',
-      text: 'text-cyan-600 dark:text-cyan-400',
-      border: 'border-cyan-200 dark:border-cyan-800',
+      bg: 'bg-blue-50 dark:bg-blue-900/20',
+      text: 'text-blue-600 dark:text-blue-400',
+      border: 'border-blue-200 dark:border-blue-800',
     },
     indigo: {
       bg: 'bg-indigo-50 dark:bg-indigo-900/20',
@@ -107,14 +107,14 @@ const getColorClasses = (color: string) => {
       border: 'border-indigo-200 dark:border-indigo-800',
     },
     orange: {
-      bg: 'bg-orange-50 dark:bg-orange-900/20',
-      text: 'text-orange-600 dark:text-orange-400',
-      border: 'border-orange-200 dark:border-orange-800',
+      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      text: 'text-amber-600 dark:text-amber-400',
+      border: 'border-amber-200 dark:border-amber-800',
     },
     red: {
-      bg: 'bg-red-50 dark:bg-red-900/20',
-      text: 'text-red-600 dark:text-red-400',
-      border: 'border-red-200 dark:border-red-800',
+      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      text: 'text-rose-600 dark:text-rose-400',
+      border: 'border-rose-200 dark:border-rose-800',
     },
     emerald: {
       bg: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -127,9 +127,9 @@ const getColorClasses = (color: string) => {
       border: 'border-slate-200 dark:border-slate-700',
     },
     violet: {
-      bg: 'bg-violet-50 dark:bg-violet-900/20',
-      text: 'text-violet-600 dark:text-violet-400',
-      border: 'border-violet-200 dark:border-violet-800',
+      bg: 'bg-primary-50 dark:bg-primary-900/20',
+      text: 'text-primary-600 dark:text-primary-400',
+      border: 'border-primary-200 dark:border-primary-800',
     },
   };
 
@@ -213,7 +213,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
             <button
               onClick={() => onDismiss(action.id)}
               disabled={disabled}
-              className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400"
+              className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400"
               title={t('aiActions.dismiss', 'Odrzuć')}
             >
               <X size={12} />
@@ -253,7 +253,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                 className={`
                   text-[10px] px-1.5 py-0.5 rounded-full font-medium
                   ${riskColor === 'amber' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : ''}
-                  ${riskColor === 'red' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : ''}
+                  ${riskColor === 'red' ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : ''}
                 `}
               >
                 {action.risk === 'medium'
@@ -371,8 +371,8 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               disabled={disabled}
               className={`
                 flex items-center justify-center gap-1.5 px-3 py-2
-                hover:bg-red-50 dark:hover:bg-red-900/20
-                text-red-600 dark:text-red-400
+                hover:bg-rose-50 dark:hover:bg-rose-900/20
+                text-rose-600 dark:text-rose-400
                 rounded-lg text-xs font-medium transition-colors
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
@@ -432,7 +432,7 @@ export const AIActionList: React.FC<AIActionListProps> = ({
         {onDismissAll && actions.length > 1 && (
           <button
             onClick={onDismissAll}
-            className="text-xs text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+            className="text-xs text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400"
           >
             {t('aiActions.dismissAll', 'Odrzuć wszystkie')}
           </button>

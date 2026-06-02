@@ -1037,7 +1037,7 @@ const viewQueryEngine = {
         paramIdx = limitParamIdx;
       } else {
         selectClause = 'r.*';
-        limitParamIdx = paramIdx + 1;
+        limitParamIdx = paramIdx;
       }
       finalParams.push(pageSize + 1);
 

@@ -153,7 +153,7 @@ export const ROITrackingPanel: React.FC = () => {
     summary.totalVariance > 0
       ? 'text-green-500'
       : summary.totalVariance < 0
-        ? 'text-red-500'
+        ? 'text-rose-500'
         : 'text-slate-400';
 
   return (
@@ -173,15 +173,15 @@ export const ROITrackingPanel: React.FC = () => {
           bg="bg-green-500/10"
         />
         <SummaryCard
-          icon={<DollarSign className="w-5 h-5 text-orange-400" />}
+          icon={<DollarSign className="w-5 h-5 text-amber-400" />}
           label={t('benefits.roi.totalCapex', 'Total CAPEX')}
           value={fmtCurrency(summary.totalCapex)}
-          bg="bg-orange-500/10"
+          bg="bg-amber-500/10"
         />
         <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/10 rounded-lg">
-              <BarChart3 className="w-5 h-5 text-purple-400" />
+            <div className="p-2 bg-primary-500/10 rounded-lg">
+              <BarChart3 className="w-5 h-5 text-primary-400" />
             </div>
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -201,13 +201,13 @@ export const ROITrackingPanel: React.FC = () => {
       {/* Variance Signal */}
       {summary.totalRealized !== 0 && (
         <div
-          className={`rounded-xl p-4 border ${summary.totalVariance >= 0 ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}
+          className={`rounded-xl p-4 border ${summary.totalVariance >= 0 ? 'bg-green-500/5 border-green-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}
         >
           <div className="flex items-center gap-3">
             {summary.totalVariance >= 0 ? (
               <ArrowUp className="w-5 h-5 text-green-500" />
             ) : (
-              <ArrowDown className="w-5 h-5 text-red-500" />
+              <ArrowDown className="w-5 h-5 text-rose-500" />
             )}
             <div>
               <p className={`font-semibold ${varianceColor}`}>
@@ -283,7 +283,7 @@ export const ROITrackingPanel: React.FC = () => {
                   </td>
                   <td className="px-4 py-3 text-right">
                     {item.hasRealized ? (
-                      <span className={item.variance >= 0 ? 'text-green-500' : 'text-red-500'}>
+                      <span className={item.variance >= 0 ? 'text-green-500' : 'text-rose-500'}>
                         {item.variance >= 0 ? '+' : ''}
                         {fmtCurrency(item.variance)}
                       </span>
@@ -333,7 +333,7 @@ const ConfidenceBadge: React.FC<{ level: string }> = ({ level }) => {
   const colors: Record<string, string> = {
     high: 'bg-green-500/20 text-green-500',
     medium: 'bg-yellow-500/20 text-yellow-500',
-    low: 'bg-red-500/20 text-red-500',
+    low: 'bg-rose-500/20 text-rose-500',
   };
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors[level] || colors.low}`}>

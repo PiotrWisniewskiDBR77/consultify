@@ -57,7 +57,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 
   // Type badge config
   const typeBadge = {
-    major: { color: 'bg-purple-500', label: { en: 'Major', pl: 'Główna' } },
+    major: { color: 'bg-primary-500', label: { en: 'Major', pl: 'Główna' } },
     minor: { color: 'bg-blue-500', label: { en: 'Minor', pl: 'Mniejsza' } },
     patch: { color: 'bg-green-500', label: { en: 'Patch', pl: 'Poprawka' } },
   };
@@ -97,7 +97,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
               )}
               <div>
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                  <Tag size={32} className="text-purple-500" />
+                  <Tag size={32} className="text-primary-500" />
                   {t.title[lang]}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400 mt-1">{t.subtitle[lang]}</p>
@@ -124,7 +124,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
               onClick={() => setFilter(type)}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 filter === type
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
@@ -217,18 +217,18 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                         {release.features.length > 0 && (
                           <div>
                             <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                              <Sparkles size={16} className="text-purple-500" />
+                              <Sparkles size={16} className="text-primary-500" />
                               {t.features[lang]}
                             </h4>
                             <div className="space-y-3">
                               {release.features.map((feature: any, i: number) => (
                                 <div key={i} className="flex items-start gap-3">
                                   {feature.icon && (
-                                    <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                                    <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
                                       <DynamicIcon
                                         name={feature.icon}
                                         size={16}
-                                        className="text-purple-600 dark:text-purple-400"
+                                        className="text-primary-600 dark:text-primary-400"
                                       />
                                     </div>
                                   )}
@@ -293,8 +293,8 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 
                         {/* Breaking Changes */}
                         {release.breaking && release.breaking.length > 0 && (
-                          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
-                            <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <div className="bg-rose-50 dark:bg-rose-900/20 rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                               <AlertTriangle size={16} />
                               {t.breaking[lang]}
                             </h4>
@@ -302,7 +302,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                               {release.breaking.map((item: any, i: number) => (
                                 <li
                                   key={i}
-                                  className="flex items-start gap-2 text-red-700 dark:text-red-300"
+                                  className="flex items-start gap-2 text-rose-700 dark:text-rose-300"
                                 >
                                   <span>•</span>
                                   {item[lang]}

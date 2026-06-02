@@ -1,3 +1,4 @@
+import TeresaMark from '../shared/TeresaMark';
 /**
  * Help Chatbot Component
  *
@@ -7,7 +8,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bot,
   ExternalLink,
   HelpCircle,
   Maximize2,
@@ -84,12 +84,42 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
   };
 
   const suggestionsByLang: Record<string, string[]> = {
-    en: ['How do I create a new initiative?', 'How do I manage project team?', 'How to use AI for analysis?', 'How to generate reports?'],
-    pl: ['Jak stworzyć nową inicjatywę?', 'Jak zarządzać zespołem projektu?', 'Jak używać AI do analizy?', 'Jak generować raporty?'],
-    de: ['Wie erstelle ich eine neue Initiative?', 'Wie verwalte ich das Projektteam?', 'Wie nutze ich KI für Analysen?', 'Wie erstelle ich Berichte?'],
-    ar: ['كيف أنشئ مبادرة جديدة؟', 'كيف أدير فريق المشروع؟', 'كيف أستخدم الذكاء الاصطناعي للتحليل؟', 'كيف أنشئ التقارير؟'],
-    jp: ['新しいイニシアチブの作成方法は？', 'プロジェクトチームの管理方法は？', 'AI分析の使い方は？', 'レポートの生成方法は？'],
-    es: ['¿Cómo creo una nueva iniciativa?', '¿Cómo gestiono el equipo del proyecto?', '¿Cómo uso la IA para análisis?', '¿Cómo genero informes?'],
+    en: [
+      'How do I create a new initiative?',
+      'How do I manage project team?',
+      'How to use AI for analysis?',
+      'How to generate reports?',
+    ],
+    pl: [
+      'Jak stworzyć nową inicjatywę?',
+      'Jak zarządzać zespołem projektu?',
+      'Jak używać AI do analizy?',
+      'Jak generować raporty?',
+    ],
+    de: [
+      'Wie erstelle ich eine neue Initiative?',
+      'Wie verwalte ich das Projektteam?',
+      'Wie nutze ich KI für Analysen?',
+      'Wie erstelle ich Berichte?',
+    ],
+    ar: [
+      'كيف أنشئ مبادرة جديدة؟',
+      'كيف أدير فريق المشروع؟',
+      'كيف أستخدم الذكاء الاصطناعي للتحليل؟',
+      'كيف أنشئ التقارير؟',
+    ],
+    jp: [
+      '新しいイニシアチブの作成方法は？',
+      'プロジェクトチームの管理方法は？',
+      'AI分析の使い方は？',
+      'レポートの生成方法は？',
+    ],
+    es: [
+      '¿Cómo creo una nueva iniciativa?',
+      '¿Cómo gestiono el equipo del proyecto?',
+      '¿Cómo uso la IA para análisis?',
+      '¿Cómo genero informes?',
+    ],
   };
 
   useEffect(() => {
@@ -146,14 +176,14 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
           id: `error-${Date.now()}`,
           role: 'assistant',
           content:
-            ({
+            {
               en: 'Sorry, an error occurred. Please try again later.',
               pl: 'Przepraszam, wystąpił błąd. Spróbuj ponownie później.',
               de: 'Entschuldigung, ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
               ar: 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى لاحقاً.',
               jp: '申し訳ございません。エラーが発生しました。後でもう一度お試しください。',
               es: 'Lo sentimos, ocurrió un error. Inténtalo de nuevo más tarde.',
-            }[lang] || 'Sorry, an error occurred. Please try again later.'),
+            }[lang] || 'Sorry, an error occurred. Please try again later.',
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -215,15 +245,71 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
   type L6 = Record<string, string>;
   const l = (dict: L6) => dict[lang] || dict.en;
   const t: Record<string, L6> = {
-    title:       { en: 'Teresa — Help', pl: 'Teresa — Pomoc', de: 'Teresa — Hilfe', ar: 'تيريزا — مساعدة', jp: 'テレサ — ヘルプ', es: 'Teresa — Ayuda' },
-    placeholder: { en: 'Ask Teresa a question...', pl: 'Zapytaj Teresę...', de: 'Fragen Sie Teresa...', ar: 'اسأل تيريزا...', jp: 'テレサに質問...', es: 'Pregunta a Teresa...' },
-    send:        { en: 'Send', pl: 'Wyślij', de: 'Senden', ar: 'إرسال', jp: '送信', es: 'Enviar' },
-    typing:      { en: 'Typing...', pl: 'Pisze...', de: 'Schreibt...', ar: 'يكتب...', jp: '入力中...', es: 'Escribiendo...' },
-    clear:       { en: 'Clear chat', pl: 'Wyczyść czat', de: 'Chat löschen', ar: 'مسح المحادثة', jp: 'チャットをクリア', es: 'Borrar chat' },
-    sources:     { en: 'Sources', pl: 'Źródła', de: 'Quellen', ar: 'المصادر', jp: '出典', es: 'Fuentes' },
-    helpful:     { en: 'Was this helpful?', pl: 'Czy to było pomocne?', de: 'War das hilfreich?', ar: 'هل كان هذا مفيداً؟', jp: '役に立ちましたか？', es: '¿Fue útil?' },
-    suggestions: { en: 'Suggested questions', pl: 'Sugerowane pytania', de: 'Vorgeschlagene Fragen', ar: 'أسئلة مقترحة', jp: 'おすすめの質問', es: 'Preguntas sugeridas' },
-    poweredBy:   { en: 'Knowledge-grounded AI', pl: 'AI oparte na bazie wiedzy', de: 'Wissensbasierte KI', ar: 'ذكاء اصطناعي مبني على المعرفة', jp: 'ナレッジベースAI', es: 'IA basada en conocimiento' },
+    title: {
+      en: 'Teresa — Help',
+      pl: 'Teresa — Pomoc',
+      de: 'Teresa — Hilfe',
+      ar: 'تيريزا — مساعدة',
+      jp: 'テレサ — ヘルプ',
+      es: 'Teresa — Ayuda',
+    },
+    placeholder: {
+      en: 'Ask Teresa a question...',
+      pl: 'Zapytaj Teresę...',
+      de: 'Fragen Sie Teresa...',
+      ar: 'اسأل تيريزا...',
+      jp: 'テレサに質問...',
+      es: 'Pregunta a Teresa...',
+    },
+    send: { en: 'Send', pl: 'Wyślij', de: 'Senden', ar: 'إرسال', jp: '送信', es: 'Enviar' },
+    typing: {
+      en: 'Typing...',
+      pl: 'Pisze...',
+      de: 'Schreibt...',
+      ar: 'يكتب...',
+      jp: '入力中...',
+      es: 'Escribiendo...',
+    },
+    clear: {
+      en: 'Clear chat',
+      pl: 'Wyczyść czat',
+      de: 'Chat löschen',
+      ar: 'مسح المحادثة',
+      jp: 'チャットをクリア',
+      es: 'Borrar chat',
+    },
+    sources: {
+      en: 'Sources',
+      pl: 'Źródła',
+      de: 'Quellen',
+      ar: 'المصادر',
+      jp: '出典',
+      es: 'Fuentes',
+    },
+    helpful: {
+      en: 'Was this helpful?',
+      pl: 'Czy to było pomocne?',
+      de: 'War das hilfreich?',
+      ar: 'هل كان هذا مفيداً؟',
+      jp: '役に立ちましたか？',
+      es: '¿Fue útil?',
+    },
+    suggestions: {
+      en: 'Suggested questions',
+      pl: 'Sugerowane pytania',
+      de: 'Vorgeschlagene Fragen',
+      ar: 'أسئلة مقترحة',
+      jp: 'おすすめの質問',
+      es: 'Preguntas sugeridas',
+    },
+    poweredBy: {
+      en: 'Knowledge-grounded AI',
+      pl: 'AI oparte na bazie wiedzy',
+      de: 'Wissensbasierte KI',
+      ar: 'ذكاء اصطناعي مبني على المعرفة',
+      jp: 'ナレッジベースAI',
+      es: 'IA basada en conocimiento',
+    },
   };
 
   return (
@@ -236,14 +322,14 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 text-white">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <Bot size={18} />
+            <TeresaMark size={18} />
           </div>
           <div>
             <h3 className="font-semibold">{t.title[lang]}</h3>
-            <p className="text-xs text-purple-200 flex items-center gap-1">
+            <p className="text-xs text-primary-200 flex items-center gap-1">
               <Sparkles size={12} />
               {t.poweredBy[lang]}
             </p>
@@ -293,11 +379,11 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                       message.role === 'user'
-                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600'
+                        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600'
                         : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
                     }`}
                   >
-                    {message.role === 'user' ? <User size={14} /> : <Bot size={14} />}
+                    {message.role === 'user' ? <User size={14} /> : <TeresaMark size={14} />}
                   </div>
 
                   <div
@@ -307,7 +393,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                     <div
                       className={`px-4 py-2.5 rounded-xl ${
                         message.role === 'user'
-                          ? 'bg-purple-600 text-white rounded-tr-md'
+                          ? 'bg-primary-600 text-white rounded-tr-md'
                           : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-md'
                       }`}
                     >
@@ -363,7 +449,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                           </button>
                           <button
                             onClick={() => handleFeedback(message.id, false)}
-                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
+                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
                           >
                             <ThumbsDown size={14} />
                           </button>
@@ -372,12 +458,26 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                     {message.feedback && (
                       <div
                         className={`text-xs mt-1 ${
-                          message.feedback === 'helpful' ? 'text-green-500' : 'text-red-500'
+                          message.feedback === 'helpful' ? 'text-green-500' : 'text-rose-500'
                         }`}
                       >
                         {message.feedback === 'helpful'
-                          ? (({ en: '✓ Thanks for your feedback!', pl: '✓ Dziękujemy za opinię!', de: '✓ Danke für Ihr Feedback!', ar: '✓ شكراً على ملاحظاتك!', jp: '✓ フィードバックありがとうございます！', es: '✓ ¡Gracias por tu opinión!' })[lang] || '✓ Thanks for your feedback!')
-                          : (({ en: "✓ Sorry, we'll try to improve!", pl: '✓ Przepraszamy, postaramy się poprawić!', de: '✓ Entschuldigung, wir werden versuchen uns zu verbessern!', ar: '✓ عذراً، سنحاول التحسين!', jp: '✓ 申し訳ございません、改善に努めます！', es: '✓ Lo sentimos, intentaremos mejorar!' })[lang] || "✓ Sorry, we'll try to improve!")}
+                          ? {
+                              en: '✓ Thanks for your feedback!',
+                              pl: '✓ Dziękujemy za opinię!',
+                              de: '✓ Danke für Ihr Feedback!',
+                              ar: '✓ شكراً على ملاحظاتك!',
+                              jp: '✓ フィードバックありがとうございます！',
+                              es: '✓ ¡Gracias por tu opinión!',
+                            }[lang] || '✓ Thanks for your feedback!'
+                          : {
+                              en: "✓ Sorry, we'll try to improve!",
+                              pl: '✓ Przepraszamy, postaramy się poprawić!',
+                              de: '✓ Entschuldigung, wir werden versuchen uns zu verbessern!',
+                              ar: '✓ عذراً، سنحاول التحسين!',
+                              jp: '✓ 申し訳ございません、改善に努めます！',
+                              es: '✓ Lo sentimos, intentaremos mejorar!',
+                            }[lang] || "✓ Sorry, we'll try to improve!"}
                       </div>
                     )}
 
@@ -403,7 +503,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             className="flex items-start gap-2"
           >
             <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
-              <Bot size={14} />
+              <TeresaMark size={14} />
             </div>
             <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl rounded-tl-md">
               <div className="flex items-center gap-1">
@@ -436,7 +536,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
               <button
                 key={i}
                 onClick={() => handleSend(suggestion)}
-                className="px-3 py-1.5 text-xs bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                className="px-3 py-1.5 text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-full hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
               >
                 {suggestion}
               </button>
@@ -455,7 +555,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             onKeyDown={handleKeyPress}
             placeholder={t.placeholder[lang]}
             rows={1}
-            className="flex-grow px-4 py-2.5 bg-slate-100 dark:bg-slate-700 border-0 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            className="flex-grow px-4 py-2.5 bg-slate-100 dark:bg-slate-700 border-0 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 resize-none focus:ring-2 focus:ring-primary-500 focus:outline-none"
             style={{ minHeight: '44px', maxHeight: '120px' }}
           />
           <button
@@ -463,7 +563,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             disabled={!input.trim() || isLoading}
             className={`p-3 rounded-xl transition-all ${
               input.trim() && !isLoading
-                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                ? 'bg-primary-600 text-white hover:bg-primary-700'
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
             }`}
           >

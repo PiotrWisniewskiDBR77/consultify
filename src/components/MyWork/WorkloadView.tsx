@@ -41,8 +41,8 @@ interface TeamMember {
  */
 const CapacityBar: React.FC<{ capacity: number }> = ({ capacity }) => {
   const getCapacityColor = (value: number) => {
-    if (value > 100) return 'bg-red-500';
-    if (value > 80) return 'bg-orange-500';
+    if (value > 100) return 'bg-rose-500';
+    if (value > 80) return 'bg-amber-500';
     if (value > 50) return 'bg-blue-500';
     return 'bg-green-500';
   };
@@ -60,7 +60,7 @@ const CapacityBar: React.FC<{ capacity: number }> = ({ capacity }) => {
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(capacity - 100, 50)}%` }}
           transition={{ duration: 0.5, delay: 0.3, ease: 'easeOut' }}
-          className="absolute top-0 right-0 h-full bg-red-300 dark:bg-red-700 opacity-50"
+          className="absolute top-0 right-0 h-full bg-rose-300 dark:bg-rose-700 opacity-50"
           style={{ width: `${Math.min(capacity - 100, 50)}%` }}
         />
       )}
@@ -76,7 +76,7 @@ const StatusBadge: React.FC<{ capacity: number }> = ({ capacity }) => {
 
   if (capacity > 100) {
     return (
-      <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-medium flex items-center gap-1">
+      <span className="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 font-medium flex items-center gap-1">
         <AlertTriangle size={10} />
         {t('workload.overloaded', 'Overloaded')}
       </span>
@@ -108,7 +108,7 @@ const TeamMemberRow: React.FC<{ member: TeamMember }> = ({ member }) => {
       className="flex items-center gap-4 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 hover:shadow-sm transition-shadow"
     >
       {/* Avatar */}
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
         {member.avatarUrl ? (
           <img
             src={member.avatarUrl}
@@ -133,9 +133,9 @@ const TeamMemberRow: React.FC<{ member: TeamMember }> = ({ member }) => {
       <span
         className={`w-14 text-sm font-bold text-right shrink-0 ${
           member.capacity > 100
-            ? 'text-red-500'
+            ? 'text-rose-500'
             : member.capacity > 80
-              ? 'text-orange-500'
+              ? 'text-amber-500'
               : 'text-navy-900 dark:text-white'
         }`}
       >
@@ -208,7 +208,7 @@ export const WorkloadView: React.FC = () => {
   if (loading) {
     return (
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-purple-500" size={24} />
+        <Loader2 className="animate-spin text-primary-500" size={24} />
       </div>
     );
   }
@@ -250,17 +250,17 @@ export const WorkloadView: React.FC = () => {
             </p>
             <p
               className={`text-2xl font-bold ${
-                avgCapacity > 80 ? 'text-orange-500' : 'text-navy-900 dark:text-white'
+                avgCapacity > 80 ? 'text-amber-500' : 'text-navy-900 dark:text-white'
               }`}
             >
               {avgCapacity}%
             </p>
           </div>
-          <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wider mb-1">
+          <div className="text-center p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+            <p className="text-xs text-rose-600 dark:text-rose-400 uppercase tracking-wider mb-1">
               {t('workload.overloaded', 'Overloaded')}
             </p>
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{overloadedCount}</p>
+            <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{overloadedCount}</p>
           </div>
           <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <p className="text-xs text-green-600 dark:text-green-400 uppercase tracking-wider mb-1">
@@ -318,9 +318,9 @@ export const WorkloadView: React.FC = () => {
               <div
                 className={`h-full rounded-full ${
                   avgCapacity > 100
-                    ? 'bg-red-500'
+                    ? 'bg-rose-500'
                     : avgCapacity > 80
-                      ? 'bg-orange-500'
+                      ? 'bg-amber-500'
                       : 'bg-green-500'
                 }`}
                 style={{ width: `${Math.min(avgCapacity, 100)}%` }}

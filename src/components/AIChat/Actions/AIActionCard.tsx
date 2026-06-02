@@ -100,28 +100,28 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
     green: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20',
     blue: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20',
     amber: 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20',
-    purple: 'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20',
-    cyan: 'border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/20',
+    purple: 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20',
+    cyan: 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20',
     indigo: 'border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20',
-    orange: 'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20',
-    red: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20',
+    orange: 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20',
+    red: 'border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20',
     emerald: 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20',
     slate: 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50',
-    violet: 'border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20',
+    violet: 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20',
   };
 
   const iconColorClasses: Record<string, string> = {
     green: 'text-green-600 dark:text-green-400',
     blue: 'text-blue-600 dark:text-blue-400',
     amber: 'text-amber-600 dark:text-amber-400',
-    purple: 'text-purple-600 dark:text-purple-400',
-    cyan: 'text-cyan-600 dark:text-cyan-400',
+    purple: 'text-primary-600 dark:text-primary-400',
+    cyan: 'text-blue-600 dark:text-blue-400',
     indigo: 'text-indigo-600 dark:text-indigo-400',
-    orange: 'text-orange-600 dark:text-orange-400',
-    red: 'text-red-600 dark:text-red-400',
+    orange: 'text-amber-600 dark:text-amber-400',
+    red: 'text-rose-600 dark:text-rose-400',
     emerald: 'text-emerald-600 dark:text-emerald-400',
     slate: 'text-slate-600 dark:text-slate-400',
-    violet: 'text-violet-600 dark:text-violet-400',
+    violet: 'text-primary-600 dark:text-primary-400',
   };
 
   // Render payload summary based on action type
@@ -204,7 +204,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
             </button>
             <button
               onClick={() => onDismiss(action.id)}
-              className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 transition-colors"
+              className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-500 dark:text-rose-400 transition-colors"
               title={t('aiActions.dismiss', 'Odrzuć')}
             >
               <X size={12} />
@@ -219,7 +219,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
         )}
 
         {isFailed && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
             !
           </span>
         )}
@@ -258,7 +258,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
                                 ${
                                   action.risk === 'high'
-                                    ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                    ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
                                     : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                                 }`}
               >
@@ -319,7 +319,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
 
           <button
             onClick={() => onDismiss(action.id)}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 text-xs font-medium rounded-lg transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-xs font-medium rounded-lg transition-colors"
           >
             <X size={12} />
             {t('aiActions.dismiss', 'Odrzuć')}
@@ -334,7 +334,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
                     ${
                       isCompleted
                         ? 'bg-green-100/50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                        : 'bg-red-100/50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                        : 'bg-rose-100/50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400'
                     }`}
         >
           {isCompleted ? (

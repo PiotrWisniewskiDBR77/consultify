@@ -12,17 +12,17 @@ interface ContentTagsManagerProps {
 }
 
 const PRESET_COLORS = [
-  '#EF4444',
+  '#F43F5E',
   '#F59E0B',
   '#10B981',
   '#3B82F6',
   '#6366F1',
-  '#8B5CF6',
+  '#6366F1',
   '#EC4899',
-  '#06B6D4',
-  '#14B8A6',
+  '#3B82F6',
+  '#3B82F6',
   '#84CC16',
-  '#F97316',
+  '#F59E0B',
   '#A855F7',
 ];
 
@@ -259,7 +259,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
             <button
               onClick={handleCreate}
               disabled={saving || !formData.name.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-blue-700 disabled:opacity-50"
             >
               {saving ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
               Create
@@ -379,7 +379,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
                         e.stopPropagation();
                         handleDelete(tag.id);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10"
                     >
                       <Trash2 size={12} />
                       Delete

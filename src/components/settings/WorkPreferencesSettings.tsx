@@ -36,6 +36,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
 
 interface WorkPreferencesSettingsProps {
@@ -92,6 +94,9 @@ const DEFAULT_PREFERENCES: WorkPreferences = {
   defaultFocusDuration: 25,
 };
 
+const preferencesMatch = (left: WorkPreferences, right: WorkPreferences) =>
+  JSON.stringify(left) === JSON.stringify(right);
+
 // Priority options with colors
 const PRIORITY_OPTIONS = [
   { value: 'none', label: 'No Priority', color: 'slate' },
@@ -133,12 +138,12 @@ const FOCUS_DURATION_OPTIONS = [
 
 export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = ({
   currentUser,
-  onUpdateUser,
 }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<WorkPreferences>(DEFAULT_PREFERENCES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPreferences();
@@ -146,12 +151,14 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
 
   const loadPreferences = async () => {
     try {
+      setLoadError(null);
       const data = (await Api.get('/settings/preferences/work')) as WorkPreferencesResponse;
-      if (data?.preferences) {
-        setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+      if (!data?.preferences) {
+        throw new Error('Work preferences were not returned by the server');
       }
-    } catch (error) {
-      console.error('Failed to load work preferences:', error);
+      setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load work preferences'));
     } finally {
       setLoading(false);
     }
@@ -161,9 +168,20 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
     setSaving(true);
     try {
       await Api.put('/settings/preferences/work', { preferences });
+      const data = (await Api.get('/settings/preferences/work')) as WorkPreferencesResponse;
+      if (!data?.preferences) {
+        throw new Error('Work preferences save was not confirmed by the server');
+      }
+      const persisted = { ...DEFAULT_PREFERENCES, ...data.preferences };
+      if (!preferencesMatch(persisted, preferences)) {
+        throw new Error('Work preferences were not confirmed by the server');
+      }
+      setPreferences(persisted);
       toast.success(t('settings.work.saved', 'Work preferences saved successfully'));
-    } catch (error) {
-      toast.error(t('settings.work.error', 'Failed to save preferences'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(error, t('settings.work.error', 'Failed to save preferences'))
+      );
     } finally {
       setSaving(false);
     }
@@ -176,7 +194,28 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
+        <Loader2 size={32} className="animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <InfoButton cardId="settings-work" position="top-right" />
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+            <Target size={28} className="text-primary-500" />
+            {t('settings.work.title', 'Work Preferences')}
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            {t(
+              'settings.work.description',
+              'Customize how you view and manage your tasks and projects'
+            )}
+          </p>
+        </div>
+        <DegradedState title="Work preferences unavailable" description={loadError} />
       </div>
     );
   }
@@ -186,25 +225,25 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       value: 'kanban',
       label: t('settings.work.views.kanban', 'Kanban Board'),
       icon: LayoutGrid,
-      description: 'Drag and drop cards',
+      description: t('settings.work.views.kanbanDesc', 'Drag and drop cards'),
     },
     {
       value: 'list',
       label: t('settings.work.views.list', 'List View'),
       icon: List,
-      description: 'Traditional table format',
+      description: t('settings.work.views.listDesc', 'Traditional table format'),
     },
     {
       value: 'timeline',
       label: t('settings.work.views.timeline', 'Timeline'),
       icon: GanttChart,
-      description: 'Gantt-style view',
+      description: t('settings.work.views.timelineDesc', 'Gantt-style view'),
     },
     {
       value: 'calendar',
       label: t('settings.work.views.calendar', 'Calendar'),
       icon: Calendar,
-      description: 'Calendar layout',
+      description: t('settings.work.views.calendarDesc', 'Calendar layout'),
     },
   ];
 
@@ -222,9 +261,9 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       case 'medium':
         return 'bg-yellow-500';
       case 'high':
-        return 'bg-orange-500';
+        return 'bg-amber-500';
       case 'urgent':
-        return 'bg-red-500';
+        return 'bg-rose-500';
       default:
         return 'bg-slate-400';
     }
@@ -238,7 +277,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Target size={28} className="text-purple-500" />
+            <Target size={28} className="text-primary-500" />
             {t('settings.work.title', 'Work Preferences')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -251,7 +290,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
@@ -261,7 +300,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       {/* Default Project View */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <LayoutGrid size={20} className="text-purple-500" />
+          <LayoutGrid size={20} className="text-primary-500" />
           {t('settings.work.defaultView', 'Default Project View')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -286,16 +325,16 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 }
                 className={`p-4 rounded-xl border-2 transition-all text-left ${
                   isSelected
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50'
                 }`}
               >
                 <Icon
                   size={24}
-                  className={isSelected ? 'text-purple-600' : 'text-slate-400 dark:text-slate-500'}
+                  className={isSelected ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'}
                 />
                 <div
-                  className={`mt-2 font-medium ${isSelected ? 'text-purple-700 dark:text-purple-400' : 'text-slate-700 dark:text-slate-300'}`}
+                  className={`mt-2 font-medium ${isSelected ? 'text-primary-700 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'}`}
                 >
                   {option.label}
                 </div>
@@ -311,7 +350,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       {/* Task Defaults - NEW SECTION */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Flag size={20} className="text-orange-500" />
+          <Flag size={20} className="text-amber-500" />
           {t('settings.work.taskDefaults', 'Task Defaults')}
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
@@ -338,13 +377,13 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                     }
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                       isSelected
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
                     }`}
                   >
                     <div className={`w-3 h-3 rounded-full ${getPriorityColor(option.value)}`} />
                     <span
-                      className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
+                      className={`text-sm font-medium ${isSelected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
                     >
                       {t(`settings.work.priority.${option.value}`, option.label)}
                     </span>
@@ -641,7 +680,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
                 updatePreference('showCompletedTasks', !preferences.showCompletedTasks)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showCompletedTasks ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showCompletedTasks ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span
@@ -666,7 +705,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             <button
               onClick={() => updatePreference('showSubtasks', !preferences.showSubtasks)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showSubtasks ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showSubtasks ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
               }`}
             >
               <span

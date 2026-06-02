@@ -55,15 +55,27 @@ Przed każdą zmianą UI w tych obszarach — przeczytaj `FROZEN_LAYOUTS.md`.
 
 ## UI/UX Standards & Documentation
 
+**NAJWYŻSZE ŹRÓDŁO UI/UX:** `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`
+
+**OPERACYJNE ŹRÓDŁO DLA CURSOR:** `docs/ui-standards/CONSULTIFY_UI_UX_OPERATING_STANDARD.md`
+
 **KANONICZNE ŹRÓDŁO:** `docs/ui-standards/README.md`
 
 **⚠️ NIE WYMYŚLAJ NOWYCH STANDARDÓW ANI KOMPONENTÓW.** Wszystkie komponenty UI MUSZĄ być zgodne z dokumentacją w `docs/ui-standards/`. Jeśli standard nie opisuje przypadku — ZAPYTAJ, nie wymyślaj.
 
+Core rule: feature screens do not own visual design. Feature screens compose approved Consultify layout and UI components. For all UI/UX work, first read `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`, then `CONSULTIFY_UI_UX_OPERATING_STANDARD.md`, then the detailed canonical standard they reference.
+
 Before modifying any UI components:
 
 1. **Read the documentation** — standards are in `docs/ui-standards/`:
+   - `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` — highest UI/UX SSOT, DBR77 Tech Sexy 2027, Menu 2/3, N-mode, tables, timeline
+   - `CONSULTIFY_UI_UX_OPERATING_STANDARD.md` — operating standard for Cursor/refactors
+   - `UI_UX_MIGRATION_AUDIT.md` — current migration debt and target patterns
+   - `UI_UX_MIGRATION_PLAN.md` — migration waves and component approval gates
+   - `UI_UX_REFERENCE_SCREENS.md` — approved/candidate reference screens
    - `README.md` — index wszystkiego
    - `01-shell-layout/presentation-modes.md` — architecture D/N/C, N blocks kit
+   - `01-shell-layout/n-mode-card-standard.md` — SSOT kart roboczych N-mode, AI affordance, visibility, katalog kart
    - `02-components/shared-sections.md` — NModeSections (Comments, Activity, Risk, Governance, Attachments)
    - `02-components/building-blocks.md` — NModeBlocks (Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView)
 
@@ -71,10 +83,57 @@ Before modifying any UI components:
    - `src/components/shared/NModeSections/` — CommentsCanvas, ActivityLogCanvas, AttachmentsLinksCanvas, RiskCanvas, GovernanceCanvas
    - `src/components/shared/NModeBlocks/` — Callout, ToggleBlock, EmptyStateInline, ChecklistBlock, InlineTable, EmbeddedView
    - `src/components/shared/NModeLayout/` — NModeShell, NModeHeader, NModeLeftNav, NModeCanvas, NModePropertiesStrip
+   - `src/components/shared/RowActionsMenu.tsx` — canonical table row `⋮` action menu with sections: Open → Tool Shortcut → Context → AI → Convert To → Create Output → Manage → Danger
 
 3. **Follow naming conventions**: `{Section}Canvas.tsx` for shared sections
 4. **Always support i18n**: PL + EN via `useTranslation`
 5. **Always support locked state**: `locked?: boolean` prop for read-only artifacts
+
+Table row actions:
+
+- New App Table / ModuleHub row menus MUST use `RowActionsMenu`.
+- Do not create custom row dropdowns in feature screens when `RowActionsMenu` can represent the menu.
+- Keep vertical kebab `⋮` in the Actions column.
+- Use the canonical section order from `docs/ui-standards/03-modules/app-table-standard.md`.
+- `Delete` / `Usuń` is always last, red, and separated.
+
+Table chips and badges:
+
+- New App Table chips MUST follow `docs/ui-standards/03-modules/app-table-standard.md` (`StatusChip`, `PriorityChip`, `MetaChip`, `ToolChip`, `SlaChip` / `DueChip`).
+- Metadata chips (tags/types/sources/tools) must stay neutral and readable in light/dark mode.
+- Do not use primary/violet backgrounds as decorative metadata pills.
+- Do not create multiple local color maps for the same chip semantics inside one module.
+
+App Table color grid:
+
+- New and migrated App Tables MUST use the enforced `Accepted App Table Color Grid` from `docs/ui-standards/00-foundation/color-system.md`.
+- Do not create local table surface, separator, selected/focused/checked row, text, or chip color grids.
+- Selected/focused rows must be immediately visible: brand `primary/violet-blue` tint, `4px` left accent, and visible inset ring.
+- Do not use random cyan/amber/gray row-state colors for App Table selected/focused/checked states.
+
+App Table column mechanics:
+
+- New and migrated App Tables MUST follow the approved `My Work > Pomysły` golden reference in `docs/ui-standards/03-modules/app-table-standard.md`.
+- Any work on tables, operational record lists, ModuleHub cards, or table-like screens MUST run the professional UI/UX test procedure in `docs/ui-standards/03-modules/module-hub-standard.md` section `2.3 Profesjonalna Procedura Testowania UI/UX Karty I Tabeli`.
+- New operational record lists in `My Work`, `Wywiad`, queues, sessions, templates, insights and initiatives MUST start from the App Table canon; do not create local card-list/table hybrids unless a compliant App Table view already exists.
+- Column resize MUST behave like Excel boundaries: dragging a separator moves that separator; one adjacent column grows by the same amount the other adjacent column shrinks.
+- Do not implement table resize as changing only one column and letting the browser recalculate the rest.
+- App Tables must keep stable full-width layout (`table-fixed` or equivalent fixed column contract).
+- `Title` / primary object must have a real width contract and a boundary resizer before the first metadata column.
+- Metadata headers/cells are centered; `Title` remains left-aligned.
+- Simple table column settings open as a compact anchored popover under the settings icon, not a modal.
+- Do not show redundant `Actions/Akcje` text in the actions header when the table settings icon owns that corner.
+- Row description/justification is visible by default under the primary title, uses the same neutral text family with lighter opacity/weight, and must not appear only on hover.
+- Table settings popovers include a persisted `Pokaż opis / uzasadnienie` / `Show row description` checkbox at the bottom instead of a simple reset button in lightweight tables.
+- If row descriptions are hidden, keep calm row padding; do not collapse rows into cramped spreadsheet density.
+
+Mandatory table migration/testing gate:
+
+- Before editing a table/card: audit and report Menu 2, Menu 3, table surface, column contracts, resize, header, settings popover, row anatomy, checkbox/selection, row actions, chips, empty/loading/error states, visual comparison, and technical verification.
+- During implementation: fix every critical `FAIL`; do not stop after only removing topbar issues.
+- Use the required report format from `module-hub-standard.md` section `2.3 S. Wymagany Format Raportu Audytu I Migracji` for table/card migrations.
+- Before final response: state which critical checklist blocks passed and explicitly call out any remaining `FAIL` or `N/A`.
+- A table screen is not accepted if any critical block from the procedure has `FAIL`.
 
 Detailed rules are in `.cursor/rules/nmode-shared-components.mdc` and `.cursor/rules/ui-standards-documentation.mdc`.
 

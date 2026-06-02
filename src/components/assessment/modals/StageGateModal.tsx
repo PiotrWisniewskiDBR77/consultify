@@ -186,7 +186,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
         <div className="px-6 py-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
             </div>
           ) : (
             <>
@@ -197,11 +197,11 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
 
               {/* Error state */}
               {error && (
-                <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div className="mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-red-700 dark:text-red-300">{error}</p>
-                    <p className="text-xs text-red-500 dark:text-red-400 mt-1">
+                    <p className="text-sm font-medium text-rose-700 dark:text-rose-300">{error}</p>
+                    <p className="text-xs text-rose-500 dark:text-rose-400 mt-1">
                       Nie można ocenić bramki. Sprawdź konfigurację projektu lub skontaktuj się z
                       administratorem.
                     </p>

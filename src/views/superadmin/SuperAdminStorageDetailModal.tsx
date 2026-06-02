@@ -1,8 +1,10 @@
 import { File, Folder, Search, Trash2, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface StorageModalProps {
   orgId: string;
@@ -11,55 +13,145 @@ interface StorageModalProps {
   onUpdate: () => void;
 }
 
+interface StorageFile {
+  name?: string;
+  path: string;
+  size?: unknown;
+  created_at?: string | null;
+}
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const normalizeFile = (file: StorageFile, index: number): StorageFile => ({
+  ...file,
+  name: file.name === undefined ? file.name : asText(file.name, `File ${index + 1}`),
+  path: asText(file.path, file.name ? asText(file.name, `file-${index + 1}`) : `file-${index + 1}`),
+});
+
 export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
   orgId,
   orgName,
   onClose,
   onUpdate,
 }) => {
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<StorageFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadFiles();
-  }, [orgId]);
-
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await Api.adminGetOrgFiles(orgId);
-      setFiles(data);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to load files');
+      if (!hasListShape(data, ['files', 'items'])) {
+        throw new Error('Files response was not a list');
+      }
+      const normalized = getListPayload<StorageFile>(data, ['files', 'items']).map(normalizeFile);
+      setFiles(normalized);
+      return normalized;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load files');
+      setFiles([]);
+      setLoadError(message);
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [orgId]);
+
+  useEffect(() => {
+    void loadFiles();
+  }, [loadFiles]);
 
   const handleDelete = async (path: string) => {
     if (!confirm(`Are you sure you want to delete "${path}"? \nThis cannot be undone.`)) return;
 
     try {
+      setActionError(null);
       await Api.adminDeleteFile(orgId, path);
+      const refreshedFiles = await loadFiles();
+      if (!refreshedFiles) {
+        throw new Error('File deletion could not be confirmed by read-back');
+      }
+      if (refreshedFiles.some((file) => file.path === path)) {
+        throw new Error('File deletion was not confirmed by the server');
+      }
       toast.success('File deleted');
-      loadFiles();
       onUpdate(); // Trigger parent refresh to update totals
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete file');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to delete file');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+  const formatBytes = (value?: unknown) => {
+    const bytes = Number(value);
+    if (!Number.isFinite(bytes) || !bytes || bytes < 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const formatDate = (value?: string | null) => {
+    if (!value) return 'Unknown date';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  };
+
+  const getFileName = (file: StorageFile) => file.name || file.path.split('/').pop() || file.path;
+
   const filteredFiles = files.filter((f) =>
-    (f.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    `${getFileName(f)} ${f.path}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -94,15 +186,29 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
               placeholder="Search files..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={Boolean(loadError)}
               className="w-full pl-10 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-white focus:outline-none focus:border-pink-500"
             />
           </div>
         </div>
 
+        {actionError && (
+          <div
+            role="alert"
+            className="mx-4 mt-4 rounded-lg bg-rose-500/10 p-3 text-sm text-rose-300"
+          >
+            {actionError}
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto p-0">
           {loading ? (
             <div className="p-10 text-center text-slate-500 dark:text-slate-400">
               Scanning directory...
+            </div>
+          ) : loadError ? (
+            <div className="p-6">
+              <DegradedState title="Organization files unavailable" description={loadError} />
             </div>
           ) : filteredFiles.length === 0 ? (
             <div className="p-10 text-center text-slate-500 dark:text-slate-400">
@@ -124,7 +230,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
                   <tr key={file.path} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
                     <td className="p-4 font-medium text-white flex items-center gap-2">
                       <File size={16} className="text-blue-400" />
-                      {file.name}
+                      {getFileName(file)}
                     </td>
                     <td className="p-4 text-slate-400 dark:text-slate-500 font-mono text-xs">
                       {file.path}
@@ -133,12 +239,13 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
                       {formatBytes(file.size)}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      {new Date(file.created_at).toLocaleDateString()}
+                      {formatDate(file.created_at)}
                     </td>
                     <td className="p-4 text-right">
                       <button
                         onClick={() => handleDelete(file.path)}
-                        className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors"
+                        aria-label={`Delete file ${file.path}`}
+                        className="p-1.5 hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
                         title="Permanently Delete"
                       >
                         <Trash2 size={16} />

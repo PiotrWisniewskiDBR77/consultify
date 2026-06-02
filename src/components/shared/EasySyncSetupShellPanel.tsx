@@ -1,4 +1,12 @@
-import { ArrowRight, CheckCircle2, Link2, Radar, Settings2, ShieldCheck, TestTube2 } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Link2,
+  Radar,
+  Settings2,
+  ShieldCheck,
+  TestTube2,
+} from 'lucide-react';
 import React from 'react';
 
 interface EasySyncSetupShellPanelProps {
@@ -10,7 +18,8 @@ const STEPS = [
   {
     id: 'choose',
     title: 'Choose provider',
-    description: 'Start from one catalog of supported providers and pick the governed connector lane.',
+    description:
+      'Start from one catalog of supported providers and pick the governed connector lane.',
     icon: Link2,
   },
   {
@@ -28,7 +37,8 @@ const STEPS = [
   {
     id: 'test',
     title: 'Test and enable',
-    description: 'Validation and trial runs should happen before opening the connector for real use.',
+    description:
+      'Validation and trial runs should happen before opening the connector for real use.',
     icon: TestTube2,
   },
   {
@@ -62,18 +72,24 @@ export const EasySyncSetupShellPanel: React.FC<EasySyncSetupShellPanelProps> = (
           >
             One canonical provider connect journey
           </h2>
-          <p className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
+          >
             Users should be able to choose, connect, authorize, configure, test, and monitor a
             provider without guessing which sync surface owns the next step.
           </p>
         </div>
 
-        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}>
+        <div
+          className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}
+        >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
               Canonical setup path
             </div>
-            <div className={`grid gap-3 ${compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
+            <div
+              className={`grid gap-3 ${compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}
+            >
               {STEPS.map((step, index) => {
                 const Icon = step.icon;
                 return (

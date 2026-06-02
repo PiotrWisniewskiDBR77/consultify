@@ -9,6 +9,10 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import {
+  hasEffectiveCapability,
+  resolveEffectiveAccess,
+} from '../../services/effectiveAccessService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -31,10 +35,38 @@ async function ensureRolesSchema() {
   );
 }
 
+async function requireProjectRolesManage(req: AuthRequest, res: any): Promise<boolean> {
+  const userId = String(req.user?.id || req.userId || '').trim();
+  const orgId = String(req.organizationId || req.user?.organizationId || '').trim();
+  if (!userId || !orgId) {
+    res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    return false;
+  }
+
+  const access = await resolveEffectiveAccess({
+    userId,
+    organizationId: orgId,
+    applicationRole: req.userRole || req.user?.role,
+    isImpersonating: Boolean(req.user?.impersonatorId),
+  });
+
+  if (!hasEffectiveCapability(access, 'admin.project_roles.manage')) {
+    res.status(403).json({
+      error: 'Project role management permission required',
+      code: 'PROJECT_ROLES_MANAGE_REQUIRED',
+      required: 'admin.project_roles.manage',
+    });
+    return false;
+  }
+
+  return true;
+}
+
 router.get(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
+    if (!(await requireProjectRolesManage(req, res))) return;
     const orgId = req.user!.organizationId;
     await ensureRolesSchema();
 
@@ -68,13 +100,35 @@ router.post(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
+    if (!(await requireProjectRolesManage(req, res))) return;
     const orgId = req.user!.organizationId;
     await ensureRolesSchema();
 
+    const rawName = req.body?.name;
+    if (typeof rawName !== 'string' || rawName.trim().length === 0) {
+      return res.status(400).json({ error: 'Role name is required' });
+    }
+    if (
+      req.body?.roleKey !== undefined &&
+      (typeof req.body.roleKey !== 'string' || req.body.roleKey.trim().length === 0)
+    ) {
+      return res.status(400).json({ error: 'roleKey must be a non-empty string when provided' });
+    }
+    if (req.body?.permissions !== undefined && !Array.isArray(req.body.permissions)) {
+      return res.status(400).json({ error: 'permissions must be an array when provided' });
+    }
+    if (req.body?.capabilities !== undefined && !Array.isArray(req.body.capabilities)) {
+      return res.status(400).json({ error: 'capabilities must be an array when provided' });
+    }
+
     const id = uuidv4();
     const now = new Date().toISOString();
-    const name = String(req.body?.name || 'Custom Role');
-    const permissions = Array.isArray(req.body?.permissions) ? req.body.permissions : [];
+    const name = rawName.trim();
+    const permissions = Array.isArray(req.body?.permissions)
+      ? req.body.permissions
+      : Array.isArray(req.body?.capabilities)
+        ? req.body.capabilities
+        : [];
 
     await dbRun(
       `INSERT INTO security_roles (id, organization_id, name, permissions_json, created_at, updated_at, created_by, updated_by)
@@ -90,6 +144,7 @@ router.put(
   '/:id',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
+    if (!(await requireProjectRolesManage(req, res))) return;
     const orgId = req.user!.organizationId;
     const { id } = req.params;
     await ensureRolesSchema();
@@ -100,12 +155,36 @@ router.put(
     );
     if (!existing) return res.status(404).json({ error: 'Role not found' });
 
-    const name = req.body?.name !== undefined ? String(req.body.name) : undefined;
-    const permissions =
-      req.body?.permissions !== undefined
-        ? Array.isArray(req.body.permissions)
-          ? req.body.permissions
-          : []
+    const hasName = Object.prototype.hasOwnProperty.call(req.body || {}, 'name');
+    const hasPermissions = Object.prototype.hasOwnProperty.call(req.body || {}, 'permissions');
+    const hasCapabilities = Object.prototype.hasOwnProperty.call(req.body || {}, 'capabilities');
+
+    if (!hasName && !hasPermissions && !hasCapabilities) {
+      return res.status(400).json({ error: 'No updatable fields provided' });
+    }
+
+    let name: string | undefined;
+    if (hasName) {
+      if (typeof req.body?.name !== 'string') {
+        return res.status(400).json({ error: 'name must be a string' });
+      }
+      name = req.body.name.trim();
+      if (!name) {
+        return res.status(400).json({ error: 'name must be a non-empty string' });
+      }
+    }
+
+    if (hasPermissions && !Array.isArray(req.body?.permissions)) {
+      return res.status(400).json({ error: 'permissions must be an array when provided' });
+    }
+    if (hasCapabilities && !Array.isArray(req.body?.capabilities)) {
+      return res.status(400).json({ error: 'capabilities must be an array when provided' });
+    }
+
+    const permissions = hasPermissions
+      ? req.body.permissions
+      : hasCapabilities
+        ? req.body.capabilities
         : undefined;
 
     await dbRun(
@@ -136,6 +215,7 @@ router.delete(
   '/:id',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
+    if (!(await requireProjectRolesManage(req, res))) return;
     const orgId = req.user!.organizationId;
     const { id } = req.params;
     await ensureRolesSchema();

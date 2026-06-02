@@ -175,7 +175,8 @@ export const P14_AI_PROPOSAL_RULES = {
   previewBeforeApply: 'AI-generated objects shown as preview overlay; user reviews before applying',
   explicitApplyReject: 'User must explicitly apply or reject; no silent changes to the canvas',
   undoableAsOneStep: 'Applied AI proposal is a single undo step (atomic batch)',
-  proposalAsPersonalDraft: 'AI proposal starts as personal_draft (W4-7); shared only on explicit share',
+  proposalAsPersonalDraft:
+    'AI proposal starts as personal_draft (W4-7); shared only on explicit share',
   noSilentChanges: 'AI cannot modify existing objects without going through preview→apply flow',
   validationOnApply: 'Semantic validation runs automatically when AI proposal is applied',
 } as const;
@@ -185,9 +186,12 @@ export const P14_AI_PROPOSAL_RULES = {
 // ────────────────────────────────────────────────────────────────
 
 export const P14_ANTI_DUPLICATE_RULES = {
-  noParallelProcessModel: 'Process flow uses CanonicalNode from ideaWorkspaceGraph.validators; no shadow model',
-  noParallelCollaboration: 'Collaboration uses platform toolCollaborationAdapter; no process-flow-specific collab layer',
-  noParallelValidation: 'Validation rules are defined here in canon; no duplicate validation in UI layer',
+  noParallelProcessModel:
+    'Process flow uses CanonicalNode from ideaWorkspaceGraph.validators; no shadow model',
+  noParallelCollaboration:
+    'Collaboration uses platform toolCollaborationAdapter; no process-flow-specific collab layer',
+  noParallelValidation:
+    'Validation rules are defined here in canon; no duplicate validation in UI layer',
   noBpmnRuntime: 'Process flow is a visual modeling tool; not a BPMN execution engine',
   singleSemanticTruth: 'P14_SEMANTIC_OBJECTS is the single source of truth for object types',
 } as const;
@@ -268,14 +272,46 @@ export const P14_ACCEPTANCE_CHECKLIST: ReadonlyArray<{
   testable: boolean;
 }> = [
   { id: 'P14-AC-01', requirement: 'Contract approved(scope)', testable: true },
-  { id: 'P14-AC-02', requirement: 'Semantic object types frozen: 11 BPMN-adjacent types with rules', testable: true },
-  { id: 'P14-AC-03', requirement: 'BPMN interoperability posture explicit: supported vs non-goal', testable: true },
-  { id: 'P14-AC-04', requirement: 'Validation layering frozen: semantic_first + structural_bounded', testable: true },
-  { id: 'P14-AC-05', requirement: 'Minimal toolbelt frozen: 10 tools including validate', testable: true },
-  { id: 'P14-AC-06', requirement: 'AI proposal: text/DSL→preview→apply/reject; no silent changes', testable: true },
-  { id: 'P14-AC-07', requirement: 'Anti-duplicate gate: no parallel model/collaboration/validation', testable: true },
-  { id: 'P14-AC-08', requirement: 'Degraded posture covers 10+ scenarios with explicit recovery', testable: true },
-  { id: 'P14-AC-09', requirement: 'Evidence ledger filled with commit refs and test counts', testable: true },
+  {
+    id: 'P14-AC-02',
+    requirement: 'Semantic object types frozen: 11 BPMN-adjacent types with rules',
+    testable: true,
+  },
+  {
+    id: 'P14-AC-03',
+    requirement: 'BPMN interoperability posture explicit: supported vs non-goal',
+    testable: true,
+  },
+  {
+    id: 'P14-AC-04',
+    requirement: 'Validation layering frozen: semantic_first + structural_bounded',
+    testable: true,
+  },
+  {
+    id: 'P14-AC-05',
+    requirement: 'Minimal toolbelt frozen: 10 tools including validate',
+    testable: true,
+  },
+  {
+    id: 'P14-AC-06',
+    requirement: 'AI proposal: text/DSL→preview→apply/reject; no silent changes',
+    testable: true,
+  },
+  {
+    id: 'P14-AC-07',
+    requirement: 'Anti-duplicate gate: no parallel model/collaboration/validation',
+    testable: true,
+  },
+  {
+    id: 'P14-AC-08',
+    requirement: 'Degraded posture covers 10+ scenarios with explicit recovery',
+    testable: true,
+  },
+  {
+    id: 'P14-AC-09',
+    requirement: 'Evidence ledger filled with commit refs and test counts',
+    testable: true,
+  },
   { id: 'P14-AC-10', requirement: 'EXECUTION_INDEX updated to reflect P14 status', testable: true },
 ] as const;
 
@@ -285,7 +321,12 @@ export const P14_ACCEPTANCE_CHECKLIST: ReadonlyArray<{
 
 export const P14_OWNERSHIP = {
   owner: 'Process Flow Surface (IdeaWorkspace process_flow system)',
-  consumers: ['IdeaWorkspace SuperCanvas', 'AI Co-building Pipeline', 'Export Service', 'Validation Engine'],
+  consumers: [
+    'IdeaWorkspace SuperCanvas',
+    'AI Co-building Pipeline',
+    'Export Service',
+    'Validation Engine',
+  ],
   infrastructure: [
     'toolCollaborationAdapter.ts (process_flow)',
     'multiplayerHardening.ts (process_flow surface)',

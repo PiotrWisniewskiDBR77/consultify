@@ -326,10 +326,10 @@ const TimelineBar: React.FC<{
   }
 
   const phaseColors = [
-    'bg-cyan-500/30 dark:bg-cyan-500/20',
     'bg-blue-500/30 dark:bg-blue-500/20',
-    'bg-purple-500/30 dark:bg-purple-500/20',
-    'bg-violet-500/30 dark:bg-violet-500/20',
+    'bg-blue-500/30 dark:bg-blue-500/20',
+    'bg-primary-500/30 dark:bg-primary-500/20',
+    'bg-primary-500/30 dark:bg-primary-500/20',
   ];
 
   return (
@@ -352,7 +352,7 @@ const TimelineBar: React.FC<{
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progressPercent}%` }}
-            className="absolute top-0 h-full bg-gradient-to-r from-cyan-500/50 to-blue-500/50 rounded-full"
+            className="absolute top-0 h-full bg-gradient-to-r from-blue-500/50 to-blue-500/50 rounded-full"
           />
         )}
       </div>
@@ -360,10 +360,10 @@ const TimelineBar: React.FC<{
       {/* Today marker */}
       {showProgress && progressPercent > 0 && progressPercent < 100 && (
         <div
-          className="absolute top-0 w-0.5 h-5 bg-cyan-500 dark:bg-cyan-400"
+          className="absolute top-0 w-0.5 h-5 bg-blue-500 dark:bg-blue-400"
           style={{ left: `${progressPercent}%` }}
         >
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-medium text-cyan-500 whitespace-nowrap">
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-medium text-blue-500 whitespace-nowrap">
             {isPolish ? 'Dziś' : 'Today'}
           </div>
         </div>
@@ -386,8 +386,8 @@ const TimelineBar: React.FC<{
                 isCompleted
                   ? 'bg-emerald-500 border-emerald-500'
                   : isMissed
-                    ? 'bg-red-500 border-red-500'
-                    : 'bg-white dark:bg-navy-800 border-purple-500'
+                    ? 'bg-rose-500 border-rose-500'
+                    : 'bg-white dark:bg-navy-800 border-primary-500'
               }`}
             />
             <div className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
@@ -447,7 +447,7 @@ const HealthIndicators: React.FC<{
         ? 'text-emerald-500'
         : startVariance <= 7
           ? 'text-amber-500'
-          : 'text-red-500';
+          : 'text-rose-500';
 
   const cards = [
     { label: isPolish ? 'Odchylenie' : 'Variance', value: spiLabel, color: spiColor },
@@ -462,7 +462,8 @@ const HealthIndicators: React.FC<{
     {
       label: isPolish ? 'Otwarte ryzyka' : 'Open risks',
       value: String(openRisks),
-      color: openRisks > 2 ? 'text-red-500' : openRisks > 0 ? 'text-amber-500' : 'text-emerald-500',
+      color:
+        openRisks > 2 ? 'text-rose-500' : openRisks > 0 ? 'text-amber-500' : 'text-emerald-500',
     },
   ];
 
@@ -1338,7 +1339,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 const n = normalizeProposal();
                 if (!n) {
                   return (
-                    <div className="text-sm text-red-500">
+                    <div className="text-sm text-rose-500">
                       {isPolish
                         ? 'Nieprawidłowy format propozycji AI.'
                         : 'Invalid AI proposal format.'}
@@ -1347,7 +1348,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 }
 
                 const checkboxCls =
-                  'w-4 h-4 rounded border border-slate-300 dark:border-navy-600 text-cyan-600 focus:ring-cyan-500';
+                  'w-4 h-4 rounded border border-slate-300 dark:border-navy-600 text-blue-600 focus:ring-blue-500';
 
                 return (
                   <>
@@ -1608,7 +1609,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                                               }))
                                             }
                                           />
-                                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 font-bold">
+                                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-300 font-bold">
                                             {c.type}
                                           </span>
                                           <span className="truncate">{fromRow.name}</span>
@@ -1705,11 +1706,11 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                                 : r.type === 'notification'
                                   ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300'
                                   : r.type === 'meeting'
-                                    ? 'bg-teal-500/10 text-teal-600 dark:text-teal-300'
+                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300'
                                     : r.type === 'info_event'
-                                      ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-300'
+                                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300'
                                       : r.type === 'escalation'
-                                        ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
+                                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
                                         : r.type === 'pause'
                                           ? 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
                                           : 'bg-blue-500/10 text-blue-600 dark:text-blue-300';
@@ -1773,7 +1774,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       </button>
                       <button
                         onClick={applyTimelineAiProposal}
-                        className="px-3 py-2 rounded-xl text-xs font-medium bg-cyan-500 hover:bg-cyan-600 text-white"
+                        className="px-3 py-2 rounded-xl text-xs font-medium bg-blue-500 hover:bg-blue-600 text-white"
                       >
                         {isPolish ? 'Zastosuj' : 'Apply'}
                       </button>
@@ -1807,10 +1808,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${
                   isOverdue
-                    ? 'bg-red-500/10 text-red-500'
+                    ? 'bg-rose-500/10 text-rose-500'
                     : daysRemaining <= 14
                       ? 'bg-amber-500/10 text-amber-500'
-                      : 'bg-cyan-500/10 text-cyan-500'
+                      : 'bg-blue-500/10 text-blue-500'
                 }`}
               >
                 {isOverdue
@@ -1975,7 +1976,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                     className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/50 dark:bg-navy-800/40 border border-slate-200/40 dark:border-navy-700/40"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-2 h-2 rounded-full bg-purple-500/60" />
+                      <div className="w-2 h-2 rounded-full bg-primary-500/60" />
                       <span className="text-xs text-slate-700 dark:text-slate-300">{ms.name}</span>
                     </div>
                     <span className="text-[10px] text-slate-400">
@@ -2090,7 +2091,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <span
                         className={
                           startVariance > 0
-                            ? 'text-red-500'
+                            ? 'text-rose-500'
                             : startVariance < 0
                               ? 'text-emerald-500'
                               : 'text-slate-400'
@@ -2119,7 +2120,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <span
                         className={
                           endVariance > 0
-                            ? 'text-red-500'
+                            ? 'text-rose-500'
                             : endVariance < 0
                               ? 'text-emerald-500'
                               : 'text-slate-400'
@@ -2164,7 +2165,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                   {isPolish ? 'Postęp czasu' : 'Time Progress'}
                 </span>
                 <span
-                  className={`text-xs font-medium ${isOverdue ? 'text-red-500' : 'text-cyan-500'}`}
+                  className={`text-xs font-medium ${isOverdue ? 'text-rose-500' : 'text-blue-500'}`}
                 >
                   {timelineProgress}%
                 </span>
@@ -2175,10 +2176,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                   animate={{ width: `${Math.min(timelineProgress, 100)}%` }}
                   className={`h-full rounded-full ${
                     isOverdue
-                      ? 'bg-gradient-to-r from-red-500 to-red-400'
+                      ? 'bg-gradient-to-r from-rose-500 to-rose-400'
                       : timelineProgress > 80
-                        ? 'bg-gradient-to-r from-amber-500 to-orange-500'
-                        : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-500'
+                        : 'bg-gradient-to-r from-blue-500 to-blue-500'
                   }`}
                 />
               </div>
@@ -2236,7 +2237,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         )}
                         {msVariance !== null && (
                           <span
-                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-red-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-400'}`}
+                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-rose-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-400'}`}
                           >
                             {msVariance > 0 ? '+' : ''}
                             {msVariance}d
@@ -2300,7 +2301,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <span
                         className={
                           startVariance > 0
-                            ? 'text-red-500'
+                            ? 'text-rose-500'
                             : startVariance < 0
                               ? 'text-emerald-500'
                               : 'text-slate-400'
@@ -2325,7 +2326,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <span
                         className={
                           endVariance > 0
-                            ? 'text-red-500'
+                            ? 'text-rose-500'
                             : endVariance < 0
                               ? 'text-emerald-500'
                               : 'text-slate-400'
@@ -2364,7 +2365,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                             ms.status === 'completed'
                               ? 'bg-emerald-500'
                               : ms.status === 'missed'
-                                ? 'bg-red-500'
+                                ? 'bg-rose-500'
                                 : 'bg-slate-300 dark:bg-navy-600'
                           }`}
                         >
@@ -2394,7 +2395,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         )}
                         {msVariance !== null && (
                           <span
-                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-red-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-400'}`}
+                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-rose-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-400'}`}
                           >
                             {msVariance > 0 ? '+' : ''}
                             {msVariance}d

@@ -1,4 +1,4 @@
-import { CalendarClock, Cable, LayoutDashboard, RadioTower, Send, ShieldCheck } from 'lucide-react';
+import { Cable, CalendarClock, LayoutDashboard, RadioTower, Send, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -20,17 +20,17 @@ import {
   type TableColumn,
   type TableRow,
 } from '../shared/ModuleHub/FilterableTable';
-import { TableWithPreviewLayout, type PreviewableItem } from '../shared/TableWithPreviewLayout';
+import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import type { ResultsKPI } from './kpiDomain';
 import { loadResultsKpis } from './kpiRuntime';
 import {
   createResultsShowcaseConnectors,
   createResultsShowcaseSchedules,
   createResultsShowcaseWallboards,
-  shouldUseResultsShowcaseData,
   type ResultsShowcaseConnectorRow,
   type ResultsShowcaseScheduleRow,
   type ResultsShowcaseWallboardRow,
+  shouldUseResultsShowcaseData,
 } from './resultsShowcaseData';
 
 interface WorkspaceViewProps {
@@ -73,7 +73,10 @@ const WorkspaceStatCard: React.FC<{
   </div>
 );
 
-const FieldShell: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+const FieldShell: React.FC<{ label: string; children: React.ReactNode }> = ({
+  label,
+  children,
+}) => (
   <label className="space-y-1.5">
     <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
       {label}
@@ -136,14 +139,18 @@ const KpiMultiSelect: React.FC<{
   onChange: (ids: string[]) => void;
 }> = ({ options, selectedIds, onChange }) => {
   const toggle = (id: string) => {
-    onChange(selectedIds.includes(id) ? selectedIds.filter((item) => item !== id) : [...selectedIds, id]);
+    onChange(
+      selectedIds.includes(id) ? selectedIds.filter((item) => item !== id) : [...selectedIds, id]
+    );
   };
 
   return (
     <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] p-3">
       <div className="max-h-44 overflow-y-auto space-y-2">
         {options.length === 0 ? (
-          <div className="text-sm text-slate-500 dark:text-slate-400">No KPI available in current scope.</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            No KPI available in current scope.
+          </div>
         ) : (
           options.map((option) => (
             <label
@@ -157,7 +164,9 @@ const KpiMultiSelect: React.FC<{
                 className="mt-0.5 rounded border-slate-300 dark:border-white/[0.1]"
               />
               <span className="min-w-0">
-                <span className="block text-sm text-slate-700 dark:text-slate-200">{option.name}</span>
+                <span className="block text-sm text-slate-700 dark:text-slate-200">
+                  {option.name}
+                </span>
                 <span className="block text-xs text-slate-500 dark:text-slate-400">
                   {option.initiativeName || 'Standalone KPI'}
                 </span>
@@ -205,7 +214,9 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
       const response: any = await Api.resultsGetReportSchedules();
       const schedules = (response?.schedules || []) as ResultsShowcaseScheduleRow[];
       const source =
-        schedules.length === 0 && shouldUseResultsShowcaseData() ? createResultsShowcaseSchedules() : schedules;
+        schedules.length === 0 && shouldUseResultsShowcaseData()
+          ? createResultsShowcaseSchedules()
+          : schedules;
       setItems(
         source.map((item) => ({
           ...item,
@@ -246,7 +257,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
   }, [createOpen, selectedKpis]);
 
   const selectedItem = useMemo(
-    () => (selectedId ? items.find((item) => item.id === selectedId) ?? null : null),
+    () => (selectedId ? (items.find((item) => item.id === selectedId) ?? null) : null),
     [items, selectedId]
   );
 
@@ -276,7 +287,9 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
           const item = row._raw as ScheduleItem;
           return (
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">{item.reportName}</div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                {item.reportName}
+              </div>
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {item.kpiIds.length} KPI · {item.sendAt || 'No send time'}
               </div>
@@ -301,7 +314,8 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
     () => ({
       total: items.length,
       gated: items.filter((item) => item.approvalRequired).length,
-      awaiting: items.filter((item) => item.approvalRequired && item.approvalStatus !== 'approved').length,
+      awaiting: items.filter((item) => item.approvalRequired && item.approvalStatus !== 'approved')
+        .length,
     }),
     [items]
   );
@@ -418,19 +432,28 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
         <WorkspaceStatCard
           label={t('results.reportingSchedules.total', 'Schedules')}
           value={stats.total}
-          helper={t('results.reportingSchedules.totalHint', 'Recurring reporting artifacts in Results.')}
+          helper={t(
+            'results.reportingSchedules.totalHint',
+            'Recurring reporting artifacts in Results.'
+          )}
           icon={<CalendarClock size={18} />}
         />
         <WorkspaceStatCard
           label={t('results.reportingSchedules.gated', 'Approval gates')}
           value={stats.gated}
-          helper={t('results.reportingSchedules.gatedHint', 'Schedules that require explicit review approval.')}
+          helper={t(
+            'results.reportingSchedules.gatedHint',
+            'Schedules that require explicit review approval.'
+          )}
           icon={<ShieldCheck size={18} />}
         />
         <WorkspaceStatCard
           label={t('results.reportingSchedules.awaiting', 'Awaiting approval')}
           value={stats.awaiting}
-          helper={t('results.reportingSchedules.awaitingHint', 'Schedules blocked until approval is granted.')}
+          helper={t(
+            'results.reportingSchedules.awaitingHint',
+            'Schedules blocked until approval is granted.'
+          )}
           icon={<Send size={18} />}
         />
       </div>
@@ -476,7 +499,11 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
               />
             </FieldShell>
             <FieldShell label={t('results.kpiReports.sendAt', 'Send at')}>
-              <input value={sendAt} onChange={(event) => setSendAt(event.target.value)} className={INPUT_CLASS} />
+              <input
+                value={sendAt}
+                onChange={(event) => setSendAt(event.target.value)}
+                className={INPUT_CLASS}
+              />
             </FieldShell>
             <FieldShell label={t('results.kpiReports.channel', 'Channel')}>
               <select
@@ -512,7 +539,9 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
                 onChange={(event) => setApprovalRequired(event.target.checked)}
                 className="rounded border-slate-300 dark:border-white/[0.1]"
               />
-              <span>{t('results.kpiReports.approvalRequired', 'Approval required before send')}</span>
+              <span>
+                {t('results.kpiReports.approvalRequired', 'Approval required before send')}
+              </span>
             </label>
           </div>
 
@@ -658,7 +687,7 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
   }, [createOpen, selectedKpis]);
 
   const selectedItem = useMemo(
-    () => (selectedId ? items.find((item) => item.id === selectedId) ?? null : null),
+    () => (selectedId ? (items.find((item) => item.id === selectedId) ?? null) : null),
     [items, selectedId]
   );
 
@@ -688,7 +717,8 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
             <div>
               <div className="text-sm font-medium text-slate-900 dark:text-white">{item.name}</div>
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {item.kpiIds.length} KPI · {Object.keys(item.alertThresholds || {}).length} alert cues
+                {item.kpiIds.length} KPI · {Object.keys(item.alertThresholds || {}).length} alert
+                cues
               </div>
             </div>
           );
@@ -774,7 +804,10 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
         <WorkspaceStatCard
           label={t('results.wallboards.total', 'Wallboards')}
           value={stats.total}
-          helper={t('results.wallboards.totalHint', 'TV and executive surfaces backed by KPI truth.')}
+          helper={t(
+            'results.wallboards.totalHint',
+            'TV and executive surfaces backed by KPI truth.'
+          )}
           icon={<LayoutDashboard size={18} />}
         />
         <WorkspaceStatCard
@@ -786,7 +819,10 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
         <WorkspaceStatCard
           label={t('results.wallboards.scope', 'KPI in broadcast')}
           value={stats.scope}
-          helper={t('results.wallboards.scopeHint', 'Total KPI tiles distributed across wallboards.')}
+          helper={t(
+            'results.wallboards.scopeHint',
+            'Total KPI tiles distributed across wallboards.'
+          )}
           icon={<Cable size={18} />}
         />
       </div>
@@ -887,7 +923,10 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
           <div className="space-y-4">
             <PreviewMetaCard
               title={item.name}
-              subtitle={t('results.wallboards.previewSubtitle', 'Broadcast KPI surface for executive or TV mode.')}
+              subtitle={t(
+                'results.wallboards.previewSubtitle',
+                'Broadcast KPI surface for executive or TV mode.'
+              )}
               metaPills={meta(item)}
             />
             <PreviewDetailsSection
@@ -911,7 +950,9 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}
           emptyMessage={
-            loading ? t('common.loading', 'Loading...') : t('results.wallboards.empty', 'No wallboards yet.')
+            loading
+              ? t('common.loading', 'Loading...')
+              : t('results.wallboards.empty', 'No wallboards yet.')
           }
           hideRowActions
         />
@@ -955,7 +996,10 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
     } catch {
       setItems(
         shouldUseResultsShowcaseData()
-          ? createResultsShowcaseConnectors().map((item) => ({ ...item, title: item.connectorName }))
+          ? createResultsShowcaseConnectors().map((item) => ({
+              ...item,
+              title: item.connectorName,
+            }))
           : []
       );
     } finally {
@@ -983,7 +1027,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
   }, [createOpen, selectedKpis]);
 
   const selectedItem = useMemo(
-    () => (selectedId ? items.find((item) => item.id === selectedId) ?? null : null),
+    () => (selectedId ? (items.find((item) => item.id === selectedId) ?? null) : null),
     [items, selectedId]
   );
 
@@ -1012,7 +1056,9 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
           const item = row._raw as ConnectorItem;
           return (
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">{item.connectorName}</div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                {item.connectorName}
+              </div>
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {item.targetKpiIds.length} KPI · {item.connectorType}
               </div>
@@ -1032,7 +1078,8 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
     () => ({
       total: items.length,
       active: items.filter((item) => item.isActive).length,
-      healthy: items.filter((item) => (item.lastRunStatus || '').toLowerCase() === 'success').length,
+      healthy: items.filter((item) => (item.lastRunStatus || '').toLowerCase() === 'success')
+        .length,
     }),
     [items]
   );
@@ -1195,7 +1242,10 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
               <textarea
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
-                placeholder={t('results.connectors.notePlaceholder', 'Source system, auth posture, mapping note...')}
+                placeholder={t(
+                  'results.connectors.notePlaceholder',
+                  'Source system, auth posture, mapping note...'
+                )}
                 className={TEXTAREA_CLASS}
               />
             </FieldShell>
@@ -1251,7 +1301,10 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
           <div className="space-y-4">
             <PreviewMetaCard
               title={item.connectorName}
-              subtitle={t('results.connectors.previewSubtitle', 'Governed ingest surface for KPI measurements.')}
+              subtitle={t(
+                'results.connectors.previewSubtitle',
+                'Governed ingest surface for KPI measurements.'
+              )}
               metaPills={meta(item)}
             />
             <PreviewDetailsSection

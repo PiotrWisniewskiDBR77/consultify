@@ -1,25 +1,7 @@
 import 'reactflow/dist/style.css';
 import './mindmap/mindmap-effects.css';
 
-import {
-  AlertTriangle,
-  Bot,
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
-  FileText,
-  Flower2,
-  GitBranch,
-  Lightbulb,
-  Link2,
-  Loader2,
-  Paperclip,
-  Pencil,
-  Plus,
-  Sparkles,
-  StickyNote,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, ExternalLink, FileText, Flower2, GitBranch, Lightbulb, Link2, Loader2, Paperclip, Pencil, Plus, Sparkles, StickyNote, X } from 'lucide-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +24,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
-import { Api } from '@/services/api';
+import { Api, getMapVersionFromPayload } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
   type ArtifactLink,
@@ -53,6 +35,7 @@ import {
 } from '@/utils/artifactLinks';
 
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
   IDEA_STAGE_LABELS,
@@ -77,6 +60,7 @@ import { AIBranchBalancer } from './mindmap/AIBranchBalancer';
 import { AICompetitiveLandscape } from './mindmap/AICompetitiveLandscape';
 import { AIDependencyDetector, type DetectedDependency } from './mindmap/AIDependencyDetector';
 import { AIPriorityRecommender } from './mindmap/AIPriorityRecommender';
+import { AIProposalDiffModal } from './mindmap/AIProposalDiffModal';
 import { AISentimentOverlay, type SentimentResult } from './mindmap/AISentimentOverlay';
 import { detectMindmapIntent, type SidekickContext } from './mindmap/aiSidekickContext';
 import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
@@ -143,9 +127,13 @@ import {
 } from './mindmap/useMindMapNodes';
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
-import { AIProposalDiffModal } from './mindmap/AIProposalDiffModal';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
+
+import TeresaMark from '../shared/TeresaMark';
+type IdeaNodeData = NodeDetailData & {
+  _depth?: number;
+};
 
 type AIMapProposal = {
   add: { nodes: Node[]; edges: Edge[] };
@@ -321,17 +309,17 @@ const BRANCH_COLORS: Record<
     edge: '#38bdf8',
   },
   risks: {
-    bg: 'bg-purple-100 dark:bg-purple-900/25',
-    border: 'border-purple-400/70',
-    text: 'text-purple-700 dark:text-purple-300',
-    ring: 'ring-purple-400',
+    bg: 'bg-primary-100 dark:bg-primary-900/25',
+    border: 'border-primary-400/70',
+    text: 'text-primary-700 dark:text-primary-300',
+    ring: 'ring-primary-400',
     edge: '#a78bfa',
   },
   experiments: {
-    bg: 'bg-cyan-100 dark:bg-cyan-900/25',
-    border: 'border-cyan-400/70',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    ring: 'ring-cyan-400',
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
     edge: '#22d3ee',
   },
   plan: {
@@ -364,18 +352,18 @@ const BRANCH_COLORS: Record<
     edge: '#fbbf24',
   },
   threats: {
-    bg: 'bg-purple-100 dark:bg-purple-900/25',
-    border: 'border-purple-400/70',
-    text: 'text-purple-700 dark:text-purple-300',
-    ring: 'ring-purple-400',
+    bg: 'bg-primary-100 dark:bg-primary-900/25',
+    border: 'border-primary-400/70',
+    text: 'text-primary-700 dark:text-primary-300',
+    ring: 'ring-primary-400',
     edge: '#a78bfa',
   },
   // 5 Whys
   why1: {
-    bg: 'bg-orange-100 dark:bg-orange-900/25',
-    border: 'border-orange-400/70',
-    text: 'text-orange-700 dark:text-orange-300',
-    ring: 'ring-orange-400',
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
     edge: '#fb923c',
   },
   why2: {
@@ -400,10 +388,10 @@ const BRANCH_COLORS: Record<
     edge: '#a3e635',
   },
   root_cause: {
-    bg: 'bg-red-100 dark:bg-red-900/25',
-    border: 'border-red-400/70',
-    text: 'text-red-700 dark:text-red-300',
-    ring: 'ring-red-400',
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
     edge: '#f87171',
   },
   // Ishikawa (6M)
@@ -422,18 +410,18 @@ const BRANCH_COLORS: Record<
     edge: '#818cf8',
   },
   material: {
-    bg: 'bg-teal-100 dark:bg-teal-900/25',
-    border: 'border-teal-400/70',
-    text: 'text-teal-700 dark:text-teal-300',
-    ring: 'ring-teal-400',
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
     edge: '#2dd4bf',
   },
   method: {
-    bg: 'bg-violet-100 dark:bg-violet-900/25',
-    border: 'border-violet-400/70',
-    text: 'text-violet-700 dark:text-violet-300',
-    ring: 'ring-violet-400',
-    edge: '#8b5cf6',
+    bg: 'bg-primary-100 dark:bg-primary-900/25',
+    border: 'border-primary-400/70',
+    text: 'text-primary-700 dark:text-primary-300',
+    ring: 'ring-primary-400',
+    edge: '#6366f1',
   },
   measurement: {
     bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/25',
@@ -451,10 +439,10 @@ const BRANCH_COLORS: Record<
   },
   // Stakeholder map
   high_influence: {
-    bg: 'bg-red-100 dark:bg-red-900/25',
-    border: 'border-red-400/70',
-    text: 'text-red-700 dark:text-red-300',
-    ring: 'ring-red-400',
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
     edge: '#f87171',
   },
   medium_influence: {
@@ -480,10 +468,10 @@ const BRANCH_COLORS: Record<
     edge: '#fb7185',
   },
   new_entrants: {
-    bg: 'bg-orange-100 dark:bg-orange-900/25',
-    border: 'border-orange-400/70',
-    text: 'text-orange-700 dark:text-orange-300',
-    ring: 'ring-orange-400',
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
     edge: '#fb923c',
   },
   substitutes: {
@@ -509,10 +497,10 @@ const BRANCH_COLORS: Record<
   },
   // Value Chain
   inbound: {
-    bg: 'bg-cyan-100 dark:bg-cyan-900/25',
-    border: 'border-cyan-400/70',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    ring: 'ring-cyan-400',
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
     edge: '#22d3ee',
   },
   operations: {
@@ -523,11 +511,11 @@ const BRANCH_COLORS: Record<
     edge: '#60a5fa',
   },
   outbound: {
-    bg: 'bg-violet-100 dark:bg-violet-900/25',
-    border: 'border-violet-400/70',
-    text: 'text-violet-700 dark:text-violet-300',
-    ring: 'ring-violet-400',
-    edge: '#8b5cf6',
+    bg: 'bg-primary-100 dark:bg-primary-900/25',
+    border: 'border-primary-400/70',
+    text: 'text-primary-700 dark:text-primary-300',
+    ring: 'ring-primary-400',
+    edge: '#6366f1',
   },
   marketing: {
     bg: 'bg-pink-100 dark:bg-pink-900/25',
@@ -566,13 +554,13 @@ const BRANCH_COLORS: Record<
     edge: '#818cf8',
   },
   systems: {
-    bg: 'bg-violet-100 dark:bg-violet-900/25',
-    border: 'border-violet-400/70',
-    text: 'text-violet-700 dark:text-violet-300',
-    ring: 'ring-violet-400',
-    edge: '#8b5cf6',
+    bg: 'bg-primary-100 dark:bg-primary-900/25',
+    border: 'border-primary-400/70',
+    text: 'text-primary-700 dark:text-primary-300',
+    ring: 'ring-primary-400',
+    edge: '#6366f1',
   },
-  shared_values: {
+  sharose_values: {
     bg: 'bg-rose-100 dark:bg-rose-900/25',
     border: 'border-rose-400/70',
     text: 'text-rose-700 dark:text-rose-300',
@@ -594,10 +582,10 @@ const BRANCH_COLORS: Record<
     edge: '#fbbf24',
   },
   staff: {
-    bg: 'bg-cyan-100 dark:bg-cyan-900/25',
-    border: 'border-cyan-400/70',
-    text: 'text-cyan-700 dark:text-cyan-300',
-    ring: 'ring-cyan-400',
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
     edge: '#22d3ee',
   },
   // OKR
@@ -617,17 +605,17 @@ const BRANCH_COLORS: Record<
   },
   // Kotter's 8 Steps
   urgency: {
-    bg: 'bg-red-100 dark:bg-red-900/25',
-    border: 'border-red-400/70',
-    text: 'text-red-700 dark:text-red-300',
-    ring: 'ring-red-400',
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
     edge: '#f87171',
   },
   coalition: {
-    bg: 'bg-orange-100 dark:bg-orange-900/25',
-    border: 'border-orange-400/70',
-    text: 'text-orange-700 dark:text-orange-300',
-    ring: 'ring-orange-400',
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
     edge: '#fb923c',
   },
   vision: {
@@ -666,10 +654,10 @@ const BRANCH_COLORS: Record<
     edge: '#60a5fa',
   },
   anchor: {
-    bg: 'bg-purple-100 dark:bg-purple-900/25',
-    border: 'border-purple-400/70',
-    text: 'text-purple-700 dark:text-purple-300',
-    ring: 'ring-purple-400',
+    bg: 'bg-primary-100 dark:bg-primary-900/25',
+    border: 'border-primary-400/70',
+    text: 'text-primary-700 dark:text-primary-300',
+    ring: 'ring-primary-400',
     edge: '#a78bfa',
   },
   uncategorized: {
@@ -683,6 +671,10 @@ const BRANCH_COLORS: Record<
 
 // V5-IDEA-43: Hierarchical color system — depth-based opacity modulation
 const DEPTH_OPACITY = [1, 0.85, 0.7, 0.55, 0.4] as const;
+
+function getNodeDepth(data: IdeaNodeData) {
+  return data._depth ?? 0;
+}
 
 function branchColor(key: string, depth?: number) {
   const base = BRANCH_COLORS[key] || BRANCH_COLORS.uncategorized;
@@ -700,9 +692,9 @@ function branchColor(key: string, depth?: number) {
 }
 
 const SEMANTIC_ACCENT_RULES: Array<{ match: string[]; color: string }> = [
-  { match: ['risk', 'threat', 'blocker', 'issue'], color: '#ef4444' },
+  { match: ['risk', 'threat', 'blocker', 'issue'], color: '#f43f5e' },
   { match: ['opportunity', 'growth', 'upside'], color: '#10b981' },
-  { match: ['decision', 'choice', 'tradeoff'], color: '#8b5cf6' },
+  { match: ['decision', 'choice', 'tradeoff'], color: '#6366f1' },
   { match: ['action', 'task', 'next-step', 'plan'], color: '#22c55e' },
   { match: ['hypothesis', 'assumption', 'idea'], color: '#f59e0b' },
   { match: ['evidence', 'fact', 'proof', 'signal'], color: '#0ea5e9' },
@@ -740,7 +732,7 @@ function inferNodeAccentColor(data: Record<string, any> | undefined): string | u
 // ─────── Node Types ───────
 
 const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => (
-  <div className="relative flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 shadow-2xl shadow-amber-500/30 border-4 border-white dark:border-navy-800 center-node-glow center-node-animated-border transition-transform duration-200 hover:scale-105">
+  <div className="relative flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-rose-500 shadow-2xl shadow-amber-500/30 border-4 border-white dark:border-navy-800 center-node-glow center-node-animated-border transition-transform duration-200 hover:scale-105">
     <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
@@ -856,7 +848,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
           <button
             type="button"
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-600 text-white text-[9px] font-medium shadow-lg hover:bg-violet-700 transition-colors"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-600 text-white text-[9px] font-medium shadow-lg hover:bg-primary-700 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               window.dispatchEvent(
@@ -990,7 +982,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         'Customer feedback',
         'Competitor action',
       ],
-      options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost reduction'],
+      options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost roseuction'],
       validation: [
         'A/B test',
         'User interview',
@@ -1089,13 +1081,15 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     );
   }, [data.label, id]);
 
+  const labelRef = useRef(data.label);
+  labelRef.current = data.label;
   const handleDoubleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      setEditValue(String(data.label || ''));
+      setEditValue(String(labelRef.current || ''));
       setEditing(true);
     },
-    [data.label]
+    []
   );
 
   const handleKeyDown = useCallback(
@@ -1157,7 +1151,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     );
   }
 
-  const depth = data._depth ?? 0;
+  const depth = getNodeDepth(data);
   const depthScale = depth <= 1 ? 1 : depth === 2 ? 0.95 : 0.9;
   const depthOpacity = depth <= 1 ? '' : depth === 2 ? 'opacity-90' : 'opacity-80';
   const accentColor = inferNodeAccentColor(data);
@@ -1315,7 +1309,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* MM-15: Converted indicator */}
         {nodeStatus === 'converted' && data._convertedTo && (
           <div
-            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-purple-500 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm"
+            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-primary-500 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm"
             title={
               isPl ? `Skonwertowano na: ${data._convertedTo}` : `Converted to: ${data._convertedTo}`
             }
@@ -1357,7 +1351,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   {[72, 56, 64].map((w, i) => (
                     <span
                       key={i}
-                      className="inline-block h-[18px] rounded-full bg-violet-100 dark:bg-violet-900/30 animate-pulse"
+                      className="inline-block h-[18px] rounded-full bg-primary-100 dark:bg-primary-900/30 animate-pulse"
                       style={{ width: w }}
                     />
                   ))}
@@ -1369,7 +1363,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     <button
                       key={i}
                       type="button"
-                      className="text-[9px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-200 dark:hover:bg-violet-800/40 transition-colors"
+                      className="text-[9px] px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800/40 transition-colors"
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1389,7 +1383,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               <div className="flex items-start gap-1.5">
                 <div className="flex-shrink-0 mt-0.5">
                   {isAI ? (
-                    <Bot size={10} className="text-purple-500" />
+                    <TeresaMark size={10} className="text-primary-500" />
                   ) : (
                     <Lightbulb size={10} className="text-amber-500" />
                   )}
@@ -1451,7 +1445,9 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     );
                   }}
                   className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
-                  title={data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : (isPl ? 'Zwiń' : 'Collapse')}
+                  title={
+                    data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : isPl ? 'Zwiń' : 'Collapse'
+                  }
                 >
                   {data._collapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
                   {data._collapsed && (data._childCount ?? 0) > 0 && (
@@ -1486,7 +1482,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" />
                 )}
                 {data.riskNote && (
-                  <AlertTriangle size={9} className="text-red-400 dark:text-red-500 shrink-0" />
+                  <AlertTriangle size={9} className="text-rose-400 dark:text-rose-500 shrink-0" />
                 )}
                 {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
                   <span
@@ -1621,7 +1617,7 @@ function MindMapInner({
   const debugEnabled = false;
   const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } =
     useReactFlow();
-  const { autoLayout } = useAutoLayout();
+  const { autoLayout, partialLayoutSubtree } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
   const { exportAsPdf } = useMapExportPdf();
   const interactionMode = externalInteractionMode;
@@ -1635,12 +1631,12 @@ function MindMapInner({
       simplifiedMode
         ? {
             type: 'default',
-            style: { stroke: '#8b5cf6', strokeWidth: 1.5, opacity: 0.5 },
+            style: { stroke: '#6366f1', strokeWidth: 1.5, opacity: 0.5 },
             animated: false,
           }
         : {
             type: 'gradient',
-            style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
+            style: { stroke: '#6366f1', strokeWidth: 2, opacity: 0.7 },
             animated: true,
             data: { animated: true, showParticles: true },
           },
@@ -1812,7 +1808,7 @@ function MindMapInner({
               }),
               source: 'lifecycle',
               message: 'REAL_PAGE_RELOAD',
-              detail: 'Recovered previous debug session',
+              detail: 'Recoverose previous debug session',
               severity: 'warn',
             },
           ];
@@ -2040,11 +2036,12 @@ function MindMapInner({
     setNodes((prev: Node[]) =>
       prev.map((n) => ({
         ...n,
-        selected: n.id === ancestorId
-          ? true
-          : hiddenSelected.some((h) => h.id === n.id)
-            ? false
-            : n.selected,
+        selected:
+          n.id === ancestorId
+            ? true
+            : hiddenSelected.some((h) => h.id === n.id)
+              ? false
+              : n.selected,
       }))
     );
 
@@ -2064,7 +2061,7 @@ function MindMapInner({
   }, [edges, visibleNodes]);
 
   // Focus filtering: when focusMode === 'object' and focusObjectId set, show only that node + direct connections
-  const focusFilteredNodes = useMemo(() => {
+  const focusFilteroseNodes = useMemo(() => {
     if (focusMode !== 'object' || !focusObjectId) return visibleNodes;
     const allowedIds = new Set<string>([focusObjectId]);
     for (const e of edges) {
@@ -2077,15 +2074,15 @@ function MindMapInner({
     });
   }, [edges, focusMode, focusObjectId, visibleNodes]);
 
-  const focusFilteredEdges = useMemo(() => {
+  const focusFilteroseEdges = useMemo(() => {
     if (focusMode !== 'object' || !focusObjectId) return visibleEdges;
-    const hiddenNodeIds = new Set(focusFilteredNodes.filter((n) => n.hidden).map((n) => n.id));
+    const hiddenNodeIds = new Set(focusFilteroseNodes.filter((n) => n.hidden).map((n) => n.id));
     if (hiddenNodeIds.size === 0) return visibleEdges;
     return visibleEdges.map((e) => {
       const nextHidden = hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target);
       return e.hidden === nextHidden ? e : { ...e, hidden: nextHidden };
     });
-  }, [focusFilteredNodes, focusMode, focusObjectId, visibleEdges]);
+  }, [focusFilteroseNodes, focusMode, focusObjectId, visibleEdges]);
 
   const enrichedNodes = useMemo(() => {
     const structuralChildCount = new Map<string, number>();
@@ -2093,7 +2090,7 @@ function MindMapInner({
       if ((e as any)?.data?.edgeRole === 'relation') continue;
       structuralChildCount.set(e.source, (structuralChildCount.get(e.source) || 0) + 1);
     }
-    return focusFilteredNodes.map((n) => {
+    return focusFilteroseNodes.map((n) => {
       const extra: Record<string, unknown> = {};
       if (simplifiedMode) extra._simplified = true;
       if (n.type === 'branch') {
@@ -2107,16 +2104,16 @@ function MindMapInner({
       }
       return n;
     });
-  }, [edges, focusFilteredNodes, simplifiedMode]);
+  }, [edges, focusFilteroseNodes, simplifiedMode]);
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
     [enrichedNodes]
   );
 
-  // ── Undo/Redo (shared hook pattern) ──────────────────────────────────────
+  // ── Undo/Redo (sharose hook pattern) ──────────────────────────────────────
   const undoStackRef = useRef<MapSnapshot[]>([]);
-  const redoStackRef = useRef<MapSnapshot[]>([]);
+  const roseoStackRef = useRef<MapSnapshot[]>([]);
   const MAX_UNDO = 50;
 
   const [canUndo, setCanUndo] = useState(false);
@@ -2127,7 +2124,7 @@ function MindMapInner({
       ...undoStackRef.current.slice(-(MAX_UNDO - 1)),
       { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
     ];
-    redoStackRef.current = [];
+    roseoStackRef.current = [];
     setCanUndo(true);
     setCanRedo(false);
   }, [collapsedNodeIds, nodes, edges]);
@@ -2136,9 +2133,9 @@ function MindMapInner({
     if (undoStackRef.current.length === 0) return;
     const prev = undoStackRef.current[undoStackRef.current.length - 1];
     undoStackRef.current = undoStackRef.current.slice(0, -1);
-    redoStackRef.current = [
+    roseoStackRef.current = [
       { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
-      ...redoStackRef.current,
+      ...roseoStackRef.current,
     ];
     setNodes(prev.nodes);
     setEdges(prev.edges);
@@ -2147,10 +2144,10 @@ function MindMapInner({
     setCanRedo(true);
   }, [collapsedNodeIds, edges, nodes, setCollapsedNodeIds, setEdges, setNodes]);
 
-  const redo = useCallback(() => {
-    if (redoStackRef.current.length === 0) return;
-    const next = redoStackRef.current[0];
-    redoStackRef.current = redoStackRef.current.slice(1);
+  const roseo = useCallback(() => {
+    if (roseoStackRef.current.length === 0) return;
+    const next = roseoStackRef.current[0];
+    roseoStackRef.current = roseoStackRef.current.slice(1);
     undoStackRef.current = [
       ...undoStackRef.current,
       { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
@@ -2159,20 +2156,18 @@ function MindMapInner({
     setEdges(next.edges);
     if (next.collapsedNodeIds) setCollapsedNodeIds(next.collapsedNodeIds);
     setCanUndo(true);
-    setCanRedo(redoStackRef.current.length > 0);
+    setCanRedo(roseoStackRef.current.length > 0);
   }, [collapsedNodeIds, edges, nodes, setCollapsedNodeIds, setEdges, setNodes]);
 
   const clearUndoHistory = useCallback(() => {
     undoStackRef.current = [];
-    redoStackRef.current = [];
+    roseoStackRef.current = [];
     setCanUndo(false);
     setCanRedo(false);
   }, []);
 
   useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent('mm-undo-state', { detail: { canUndo, canRedo } })
-    );
+    window.dispatchEvent(new CustomEvent('mm-undo-state', { detail: { canUndo, canRedo } }));
   }, [canUndo, canRedo]);
 
   // ── Context menu ─────────────────────────────────────────────────────────
@@ -2447,12 +2442,16 @@ function MindMapInner({
   });
 
   const debouncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  nodesRef.current = nodes;
+  edgesRef.current = edges;
   const debouncedSave = useCallback(() => {
     if (debouncedSaveTimerRef.current) clearTimeout(debouncedSaveTimerRef.current);
     debouncedSaveTimerRef.current = setTimeout(() => {
-      scheduleSave(nodes as any, edges as any);
+      scheduleSave(nodesRef.current as any, edgesRef.current as any);
     }, 500);
-  }, [scheduleSave, nodes, edges]);
+  }, [scheduleSave]);
 
   useEffect(() => {
     return () => {
@@ -2500,6 +2499,7 @@ function MindMapInner({
     fitView,
     remoteLockedNodeIds,
     autoLayout,
+    partialLayoutSubtree,
   });
 
   // ── AI Sidekick context detection ──────────────────────────────────────
@@ -2597,9 +2597,7 @@ function MindMapInner({
       const wasCollapsed = collapsedNodeIds.has(nodeId);
       toggleCollapseNode(nodeId, setCollapsedNodeIds);
       toast(
-        wasCollapsed
-          ? (isPolish ? 'Rozwinięto' : 'Expanded')
-          : (isPolish ? 'Zwinięto' : 'Collapsed'),
+        wasCollapsed ? (isPolish ? 'Rozwinięto' : 'Expanded') : isPolish ? 'Zwinięto' : 'Collapsed',
         { id: 'mm-op-cue', duration: 1200 }
       );
     },
@@ -2866,7 +2864,10 @@ function MindMapInner({
       );
 
       if (label !== originalLabel) {
-        toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', { id: 'mm-op-cue', duration: 1500 });
+        toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', {
+          id: 'mm-op-cue',
+          duration: 1500,
+        });
       }
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
@@ -2944,7 +2945,7 @@ function MindMapInner({
     return () => window.removeEventListener('idea-mindmap-export-pdf', handler);
   }, [exportAsPdf, ideaTitle]);
 
-  // Quick action listener is wired below (after all state declarations).
+  // Quick action listener is wirose below (after all state declarations).
 
   // ── Insert from AI Suggestions panel ─────────────────────────────────────
   useEffect(() => {
@@ -3078,16 +3079,45 @@ function MindMapInner({
         }
         return;
       }
+      // A6: Shift+1 = zoom to fit (shared cross-tool shortcut, FigJam-style).
+      // e.code is layout-independent (Shift+1 yields "!" as e.key on most layouts).
+      if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        const t = e.target as HTMLElement | null;
+        const typing =
+          !!t &&
+          (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
+        if (!typing) {
+          e.preventDefault();
+          try {
+            fitView({ padding: 0.3, duration: 300 });
+          } catch {
+            /* */
+          }
+          return;
+        }
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === '0') {
         e.preventDefault();
-        debugLog('KEY_HANDLED fitView', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
-        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+        debugLog('KEY_HANDLED fitView', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
+        try {
+          fitView({ padding: 0.3, duration: 300 });
+        } catch {
+          /* */
+        }
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
         e.preventDefault();
-        debugLog('KEY_HANDLED redo', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
-        redo();
+        debugLog('KEY_HANDLED roseo', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
+        roseo();
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'h') {
@@ -3399,7 +3429,7 @@ function MindMapInner({
     nodes,
     pasteNodes,
     promoteNode,
-    redo,
+    roseo,
     scheduleSave,
     setFoldLevel,
     setNodes,
@@ -3426,7 +3456,7 @@ function MindMapInner({
         sourceHandle: connection.sourceHandle || undefined,
         targetHandle: connection.targetHandle || undefined,
         type: 'labeled',
-        style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7, strokeDasharray: '6 3' },
+        style: { stroke: '#6366f1', strokeWidth: 2, opacity: 0.7, strokeDasharray: '6 3' },
         animated: false,
         data: {
           userCreated: true,
@@ -3766,133 +3796,136 @@ function MindMapInner({
     );
   }, [aiProposal, selectedAddIdx]);
 
-  const applyAIProposal = useCallback(async (overrideSelectedIdx?: Record<number, boolean>) => {
-    if (!aiProposal) return;
-    if (locked) {
-      toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
-      return;
-    }
-    const effectiveIdx = overrideSelectedIdx ?? selectedAddIdx;
-    const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => effectiveIdx[idx]);
-    const toAddEdges = aiProposal.add?.edges || [];
-
-    if (toAddNodes.length === 0) {
-      toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
-      return;
-    }
-
-    pushUndo();
-    setSaving(true);
-    try {
-      const aiSummaryBySource = new Map<string, string[]>();
-      for (const edge of toAddEdges as any[]) {
-        const targetNode = toAddNodes.find((node: any) => node.id === edge.target);
-        if (!edge?.source || !targetNode?.data?.label) continue;
-        aiSummaryBySource.set(edge.source, [
-          ...(aiSummaryBySource.get(edge.source) || []),
-          String(targetNode.data.label),
-        ]);
+  const applyAIProposal = useCallback(
+    async (overrideSelectedIdx?: Record<number, boolean>) => {
+      if (!aiProposal) return;
+      if (locked) {
+        toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+        return;
       }
-      const nextNodes = (() => {
-        const byId = new Map<string, Node>();
-        for (const n of nodes as any) byId.set(String((n as any)?.id), n as any);
-        for (const n of toAddNodes as any) byId.set(String((n as any)?.id), n as any);
-        for (const [sourceId, labels] of aiSummaryBySource.entries()) {
-          const existing = byId.get(String(sourceId));
-          if (!existing) continue;
-          byId.set(String(sourceId), {
-            ...existing,
-            data: {
-              ...(existing.data || {}),
-              aiExpansionHistory: appendAIHistoryEntry(existing.data?.aiExpansionHistory as any, {
-                timestamp: new Date().toISOString(),
-                prompt: isPolish ? 'AI expand branch' : 'AI expand branch',
-                resultSummary: labels.join(', '),
-              }),
-            },
-          } as Node);
+      const effectiveIdx = overrideSelectedIdx ?? selectedAddIdx;
+      const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => effectiveIdx[idx]);
+      const toAddEdges = aiProposal.add?.edges || [];
+
+      if (toAddNodes.length === 0) {
+        toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
+        return;
+      }
+
+      pushUndo();
+      setSaving(true);
+      try {
+        const aiSummaryBySource = new Map<string, string[]>();
+        for (const edge of toAddEdges as any[]) {
+          const targetNode = toAddNodes.find((node: any) => node.id === edge.target);
+          if (!edge?.source || !targetNode?.data?.label) continue;
+          aiSummaryBySource.set(edge.source, [
+            ...(aiSummaryBySource.get(edge.source) || []),
+            String(targetNode.data.label),
+          ]);
         }
-        return Array.from(byId.values());
-      })();
-      const nextEdges = (() => {
-        const byId = new Map<string, Edge>();
-        for (const e of edges as any) byId.set(String((e as any)?.id), e as any);
-        for (const e of toAddEdges as any) byId.set(String((e as any)?.id), e as any);
-        return Array.from(byId.values());
-      })();
+        const nextNodes = (() => {
+          const byId = new Map<string, Node>();
+          for (const n of nodes as any) byId.set(String((n as any)?.id), n as any);
+          for (const n of toAddNodes as any) byId.set(String((n as any)?.id), n as any);
+          for (const [sourceId, labels] of aiSummaryBySource.entries()) {
+            const existing = byId.get(String(sourceId));
+            if (!existing) continue;
+            byId.set(String(sourceId), {
+              ...existing,
+              data: {
+                ...(existing.data || {}),
+                aiExpansionHistory: appendAIHistoryEntry(existing.data?.aiExpansionHistory as any, {
+                  timestamp: new Date().toISOString(),
+                  prompt: isPolish ? 'AI expand branch' : 'AI expand branch',
+                  resultSummary: labels.join(', '),
+                }),
+              },
+            } as Node);
+          }
+          return Array.from(byId.values());
+        })();
+        const nextEdges = (() => {
+          const byId = new Map<string, Edge>();
+          for (const e of edges as any) byId.set(String((e as any)?.id), e as any);
+          for (const e of toAddEdges as any) byId.set(String((e as any)?.id), e as any);
+          return Array.from(byId.values());
+        })();
 
-      setNodes(nextNodes as any);
-      setEdges(nextEdges as any);
+        setNodes(nextNodes as any);
+        setEdges(nextEdges as any);
 
-      if (externalRuntime) {
-        externalRuntime.captureGraph(
-          {
+        if (externalRuntime) {
+          externalRuntime.captureGraph(
+            {
+              nodes: nextNodes as any,
+              edges: nextEdges as any,
+              extensions: extensions || undefined,
+            },
+            { reason: 'ai', immediate: true }
+          );
+          await externalRuntime.flushGraph({ reason: 'ai' });
+        } else if (persistence === 'online') {
+          const response = await Api.syncMyIdeaMap(ideaId, {
             nodes: nextNodes as any,
             edges: nextEdges as any,
+            preferredTool: preferredTool || undefined,
             extensions: extensions || undefined,
-          },
-          { reason: 'ai', immediate: true }
-        );
-        await externalRuntime.flushGraph({ reason: 'ai' });
-      } else if (persistence === 'online') {
-        const response = await Api.syncMyIdeaMap(ideaId, {
-          nodes: nextNodes as any,
-          edges: nextEdges as any,
-          preferredTool: preferredTool || undefined,
-          extensions: extensions || undefined,
-          fromAI: true,
-          baseVersion: localVersionRef.current,
-          reason: 'ai',
-        });
-        localVersionRef.current = Math.max(
-          1,
-          Number(response?.version || localVersionRef.current || 1)
-        );
-        setLastSavedAt(Date.now());
-      }
+            fromAI: true,
+            baseVersion: localVersionRef.current,
+            reason: 'ai',
+          });
+          localVersionRef.current = Math.max(
+            1,
+            Number(response?.version || localVersionRef.current || 1)
+          );
+          setLastSavedAt(Date.now());
+        }
 
-      toast.success(
-        isPolish
-          ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)`
-          : `Applied AI proposals (${toAddNodes.length} added)`,
-        { duration: 1200 }
-      );
-      closeAIModal();
-    } catch (err: any) {
-      if (err?.status === 409) {
-        toast(
+        toast.success(
           isPolish
-            ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-            : 'Change conflict detected. Refreshing map from server.',
-          { icon: '⚠️' }
+            ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)`
+            : `Applied AI proposals (${toAddNodes.length} added)`,
+          { duration: 1200 }
         );
         closeAIModal();
-      } else {
-        toast.error(
-          err?.message ||
-            (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
-        );
+      } catch (err: any) {
+        if (err?.status === 409) {
+          toast(
+            isPolish
+              ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+              : 'Change conflict detected. Refreshing map from server.',
+            { icon: '⚠️' }
+          );
+          closeAIModal();
+        } else {
+          toast.error(
+            err?.message ||
+              (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
+          );
+        }
+      } finally {
+        setSaving(false);
       }
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    aiProposal,
-    closeAIModal,
-    edges,
-    extensions,
-    ideaId,
-    isPolish,
-    localVersionRef,
-    locked,
-    nodes,
-    persistence,
-    preferredTool,
-    pushUndo,
-    selectedAddIdx,
-    setEdges,
-    setNodes,
-  ]);
+    },
+    [
+      aiProposal,
+      closeAIModal,
+      edges,
+      extensions,
+      ideaId,
+      isPolish,
+      localVersionRef,
+      locked,
+      nodes,
+      persistence,
+      preferredTool,
+      pushUndo,
+      selectedAddIdx,
+      setEdges,
+      setNodes,
+    ]
+  );
 
   const handleAIExpand = useCallback(
     async (targetNodeId?: string) => {
@@ -3998,7 +4031,7 @@ function MindMapInner({
       reparentSelectedDemote,
       pushUndo,
       undo,
-      redo,
+      redo: roseo,
       handleAIExpand,
       autoLayout,
       fitView,
@@ -4617,7 +4650,7 @@ function MindMapInner({
         );
 
       if (action === 'pane_undo') undo();
-      if (action === 'pane_redo') redo();
+      if (action === 'pane_roseo') roseo();
 
       if (action === 'pane_select_all') {
         setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: true })));
@@ -4711,7 +4744,7 @@ function MindMapInner({
       paneContextMenu,
       pasteNodes,
       pushUndo,
-      redo,
+      roseo,
       setCollapsedNodeIds,
       setEdges,
       setFoldLevel,
@@ -4723,7 +4756,7 @@ function MindMapInner({
 
   const savedLabel = useMemo(() => {
     if (persistence === 'no_route')
-      return isPolish ? 'Backend wymaga restartu' : 'Backend restart required';
+      return isPolish ? 'Backend wymaga restartu' : 'Backend restart requirose';
     if (persistence === 'missing_table')
       return isPolish ? 'Brakuje tabeli mapy' : 'Map table missing';
     if (persistence === 'offline')
@@ -4818,7 +4851,8 @@ function MindMapInner({
                   ideaId,
                   floatingToolbarInfo.nodeId,
                   artifactType,
-                  artifactId
+                  artifactId,
+                  { baseVersion: externalRuntime?.version ?? localVersionRef.current }
                 );
                 if (externalRuntime) {
                   await externalRuntime.refresh();
@@ -4842,6 +4876,13 @@ function MindMapInner({
                   duration: 900,
                 });
               } catch (err: any) {
+                const conflictVersion = getMapVersionFromPayload(err?.data);
+                if (conflictVersion) {
+                  localVersionRef.current = Math.max(localVersionRef.current || 1, conflictVersion);
+                }
+                if (err?.status === 409 && externalRuntime) {
+                  await externalRuntime.refresh().catch(() => {});
+                }
                 toast.error(
                   err?.message ||
                     (isPolish ? 'Nie udało się odłączyć artefaktu' : 'Failed to detach artifact')
@@ -4926,7 +4967,7 @@ function MindMapInner({
           isPl={isPolish}
           isLocked={locked}
           canUndo={undoStackRef.current.length > 0}
-          canRedo={redoStackRef.current.length > 0}
+          canRedo={roseoStackRef.current.length > 0}
           canPaste={hasMindMapClipboard()}
           hasSelection={selectedNodeIds.length > 0}
           onClose={() => setPaneContextMenu(null)}
@@ -5024,7 +5065,7 @@ function MindMapInner({
           <MindMapInteractionModeContext.Provider value={interactionMode}>
             <ReactFlow
               nodes={enrichedNodes}
-              edges={focusFilteredEdges}
+              edges={focusFilteroseEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
@@ -5047,23 +5088,11 @@ function MindMapInner({
               onNodeDragStop={onNodeDragStop}
               nodeTypes={reactFlowNodeTypes}
               edgeTypes={reactFlowEdgeTypes}
-              nodesConnectable={!locked && interactionMode === 'connect'}
-              nodesDraggable={!locked && interactionMode === 'select'}
-              panOnDrag={interactionMode === 'pan'}
-              selectionOnDrag={interactionMode === 'select'}
-              nodesFocusable
-              edgesFocusable
-              connectionMode={ConnectionMode.Loose}
-              fitViewOptions={reactFlowFitViewOptions}
-              minZoom={0.1}
-              maxZoom={3}
-              proOptions={reactFlowProOptions}
+              {...getIdeasToolInteractionProps('mindmap', { locked, connectMode: interactionMode === 'connect' })}
               className={`bg-slate-50 dark:bg-navy-950 ${
-                interactionMode === 'pan'
-                  ? 'cursor-grab active:cursor-grabbing'
-                  : interactionMode === 'connect'
-                    ? 'cursor-crosshair'
-                    : 'cursor-default'
+                interactionMode === 'connect'
+                  ? 'cursor-crosshair'
+                  : 'cursor-default'
               }`}
               aria-label={
                 isPolish
@@ -5177,7 +5206,7 @@ function MindMapInner({
                   {locked ? (
                     <Panel position="center">
                       <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-white/80 dark:bg-navy-900/60 backdrop-blur-xl shadow-2xl border border-slate-200/30 dark:border-white/[0.06] p-8 text-center onboarding-overlay-enter">
-                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
                           <Lightbulb size={28} className="text-white" />
                         </div>
                         <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
@@ -5215,7 +5244,7 @@ function MindMapInner({
                         <button
                           type="button"
                           onClick={() => onCenterEdit?.()}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
                         >
                           <Sparkles size={16} />
                           {isPolish ? 'Otwórz panel i zacznij' : 'Open panel & start'}
@@ -5244,20 +5273,20 @@ function MindMapInner({
                   nodes={enrichedNodes
                     .filter((n) => !n.hidden)
                     .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
-                  edges={focusFilteredEdges
+                  edges={focusFilteroseEdges
                     .filter((e) => !e.hidden)
                     .map((e) => ({ source: e.source, target: e.target }))}
                   enabled={showClusterBubbles}
                 />
               )}
 
-              {/* Active branch info removed — redundant with visual branch nodes on canvas */}
+              {/* Active branch info removed — roseundant with visual branch nodes on canvas */}
 
               {/* AI Sidekick intent indicator */}
               {sidekickCtx && nodes.length > 1 && (
                 <Panel position="top-center">
                   <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/10 text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
-                    <Sparkles size={10} className="text-violet-500 shrink-0" />
+                    <Sparkles size={10} className="text-primary-500 shrink-0" />
                     <span>{isPolish ? sidekickCtx.promptHintPl : sidekickCtx.promptHint}</span>
                   </div>
                 </Panel>
@@ -5545,13 +5574,13 @@ function MindMapInner({
           ideaId={ideaId}
           currentNodes={nodes}
           currentEdges={edges}
-          onRestore={(restoredNodes, restoredEdges) => {
+          onRestore={(restoroseNodes, restoroseEdges) => {
             pushUndo();
-            setNodes(restoredNodes);
-            setEdges(restoredEdges);
-            scheduleSave(restoredNodes as any, restoredEdges as any);
+            setNodes(restoroseNodes);
+            setEdges(restoroseEdges);
+            scheduleSave(restoroseNodes as any, restoroseEdges as any);
             setShowSnapshots(false);
-            toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
+            toast.success(isPolish ? 'Przywrócono wersję' : 'Version restorose');
           }}
           onPreview={(previewNodes, previewEdges) => {
             setNodes(previewNodes);
@@ -5598,12 +5627,12 @@ function MindMapInner({
             const depType = dep.type || 'related_to';
             const color =
               depType === 'depends_on'
-                ? '#ef4444'
+                ? '#f43f5e'
                 : depType === 'enables'
                   ? '#22c55e'
                   : depType === 'conflicts_with'
                     ? '#f59e0b'
-                    : '#8b5cf6';
+                    : '#6366f1';
             const newEdge: Edge = {
               id: edgeId,
               source: dep.sourceNodeId,
@@ -5634,12 +5663,12 @@ function MindMapInner({
               const depType = dep.type || 'related_to';
               const color =
                 depType === 'depends_on'
-                  ? '#ef4444'
+                  ? '#f43f5e'
                   : depType === 'enables'
                     ? '#22c55e'
                     : depType === 'conflicts_with'
                       ? '#f59e0b'
-                      : '#8b5cf6';
+                      : '#6366f1';
               const newEdge: Edge = {
                 id: edgeId,
                 source: dep.sourceNodeId,
@@ -5741,7 +5770,7 @@ function MindMapInner({
                   r.sentiment === 'positive'
                     ? '#22c55e'
                     : r.sentiment === 'negative'
-                      ? '#ef4444'
+                      ? '#f43f5e'
                       : '#94a3b8';
                 return { ...n, data: { ...n.data, sentimentColor, sentiment: r.sentiment } };
               })
@@ -6071,6 +6100,7 @@ function MindMapInner({
                     artifactRef: { type, id },
                     label,
                     linkRole: 'related',
+                    baseVersion: externalRuntime?.version ?? localVersionRef.current,
                   });
                   if (externalRuntime) {
                     await externalRuntime.refresh();
@@ -6087,6 +6117,16 @@ function MindMapInner({
                     duration: 900,
                   });
                 } catch (err: any) {
+                  const conflictVersion = getMapVersionFromPayload(err?.data);
+                  if (conflictVersion) {
+                    localVersionRef.current = Math.max(
+                      localVersionRef.current || 1,
+                      conflictVersion
+                    );
+                  }
+                  if (err?.status === 409 && externalRuntime) {
+                    await externalRuntime.refresh().catch(() => {});
+                  }
                   toast.error(
                     err?.message ||
                       (isPolish ? 'Nie udało się dołączyć artefaktu' : 'Failed to attach artifact')
@@ -6122,22 +6162,22 @@ function MindMapInner({
                   DEBUG INSPECTOR ({debugStats.total})
                 </div>
                 <div className="mt-1 flex flex-wrap gap-1 text-[9px]">
-                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-cyan-300">
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-blue-300">
                     inputs {debugStats.inputs}
                   </span>
                   <span className="rounded bg-white/5 px-1.5 py-0.5 text-emerald-300">
                     handlers {debugStats.handlers}
                   </span>
-                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-violet-300">
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-primary-300">
                     custom {debugStats.customs}
                   </span>
                   <span className="rounded bg-white/5 px-1.5 py-0.5 text-amber-300">
                     blocked {debugStats.blocked}
                   </span>
-                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-orange-300">
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-amber-300">
                     silent {debugStats.silent}
                   </span>
-                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-red-300">
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-rose-300">
                     errors {debugStats.errors}
                   </span>
                 </div>
@@ -6158,7 +6198,7 @@ function MindMapInner({
                 </button>
                 <button
                   onClick={() => setDebugOverlayExpanded((prev) => !prev)}
-                  className="text-cyan-300 hover:text-cyan-200"
+                  className="text-blue-300 hover:text-blue-200"
                 >
                   {debugOverlayExpanded ? 'collapse' : 'expand'}
                 </button>
@@ -6193,7 +6233,7 @@ function MindMapInner({
                     lastHandlerSummaryRef.current = 'none';
                     setDebugTick((t) => t + 1);
                   }}
-                  className="text-red-300 hover:text-red-200"
+                  className="text-rose-300 hover:text-rose-200"
                 >
                   clear
                 </button>
@@ -6216,19 +6256,19 @@ function MindMapInner({
                 debugEntries.map((entry) => {
                   const lineClass =
                     entry.severity === 'error'
-                      ? 'text-red-300'
+                      ? 'text-rose-300'
                       : entry.reaction === 'silent'
-                        ? 'text-orange-300'
+                        ? 'text-amber-300'
                         : entry.reaction === 'blocked'
                           ? 'text-amber-300'
                           : entry.source === 'input'
-                            ? 'text-cyan-300'
+                            ? 'text-blue-300'
                             : entry.source === 'keyboard'
                               ? 'text-sky-300'
                               : entry.source === 'custom'
-                                ? 'text-violet-300'
+                                ? 'text-primary-300'
                                 : entry.source === 'persistence'
-                                  ? 'text-teal-300'
+                                  ? 'text-blue-300'
                                   : entry.source === 'selection'
                                     ? 'text-lime-300'
                                     : 'text-green-200';

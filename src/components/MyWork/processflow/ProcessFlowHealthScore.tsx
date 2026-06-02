@@ -18,13 +18,13 @@ interface HealthMetric {
 function scoreColor(score: number): string {
   if (score >= 80) return 'text-emerald-600 dark:text-emerald-400';
   if (score >= 50) return 'text-amber-600 dark:text-amber-400';
-  return 'text-red-500 dark:text-red-400';
+  return 'text-rose-500 dark:text-rose-400';
 }
 
 function scoreBg(score: number): string {
   if (score >= 80) return 'bg-emerald-500';
   if (score >= 50) return 'bg-amber-500';
-  return 'bg-red-500';
+  return 'bg-rose-500';
 }
 
 export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
@@ -36,17 +36,24 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
 
   const metrics: HealthMetric[] = useMemo(() => {
     const flowNodes = nodes.filter(
-      (n) => n.type === 'flowNode' || n.type === 'start_event' || n.type === 'end_event' || n.type === 'task' || n.type === 'decision_gateway' || n.type === 'parallel_gateway' || n.type === 'subprocess'
+      (n) =>
+        n.type === 'flowNode' ||
+        n.type === 'start_event' ||
+        n.type === 'end_event' ||
+        n.type === 'task' ||
+        n.type === 'decision_gateway' ||
+        n.type === 'parallel_gateway' ||
+        n.type === 'subprocess'
     );
     const result: HealthMetric[] = [];
 
     const hasStart = flowNodes.some(
-      (n) => ['start', 'bpmn_event', 'auto_trigger'].includes(String(n.data?.shape || '')) ||
+      (n) =>
+        ['start', 'bpmn_event', 'auto_trigger'].includes(String(n.data?.shape || '')) ||
         n.type === 'start_event'
     );
     const hasEnd = flowNodes.some(
-      (n) => ['end', 'bpmn_event'].includes(String(n.data?.shape || '')) ||
-        n.type === 'end_event'
+      (n) => ['end', 'bpmn_event'].includes(String(n.data?.shape || '')) || n.type === 'end_event'
     );
     const completenessScore = hasStart && hasEnd ? 100 : hasStart || hasEnd ? 50 : 0;
     result.push({
@@ -54,9 +61,14 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
       labelPl: 'Kompletność (Start/End)',
       labelEn: 'Completeness (Start/End)',
       score: completenessScore,
-      detail: hasStart && hasEnd
-        ? (isPl ? 'Start i End obecne' : 'Start and End present')
-        : (isPl ? 'Brak Start lub End' : 'Missing Start or End'),
+      detail:
+        hasStart && hasEnd
+          ? isPl
+            ? 'Start i End obecne'
+            : 'Start and End present'
+          : isPl
+            ? 'Brak Start lub End'
+            : 'Missing Start or End',
     });
 
     const totalFlowNodes = flowNodes.length;
@@ -66,15 +78,23 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
       connectedNodes.add(e.target);
     }
     const danglingCount = flowNodes.filter((n) => !connectedNodes.has(n.id)).length;
-    const connectivityScore = totalFlowNodes === 0 ? 0 : Math.round(((totalFlowNodes - danglingCount) / totalFlowNodes) * 100);
+    const connectivityScore =
+      totalFlowNodes === 0
+        ? 0
+        : Math.round(((totalFlowNodes - danglingCount) / totalFlowNodes) * 100);
     result.push({
       key: 'connectivity',
       labelPl: 'Połączenia',
       labelEn: 'Connectivity',
       score: connectivityScore,
-      detail: danglingCount === 0
-        ? (isPl ? 'Wszystkie elementy połączone' : 'All elements connected')
-        : (isPl ? `${danglingCount} niepołączonych` : `${danglingCount} disconnected`),
+      detail:
+        danglingCount === 0
+          ? isPl
+            ? 'Wszystkie elementy połączone'
+            : 'All elements connected'
+          : isPl
+            ? `${danglingCount} niepołączonych`
+            : `${danglingCount} disconnected`,
     });
 
     const labeledCount = flowNodes.filter(
@@ -86,14 +106,23 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
       labelPl: 'Etykiety',
       labelEn: 'Labels',
       score: labelScore,
-      detail: labeledCount === totalFlowNodes
-        ? (isPl ? 'Wszystkie etykiety uzupełnione' : 'All labels filled')
-        : (isPl ? `${totalFlowNodes - labeledCount} bez etykiety` : `${totalFlowNodes - labeledCount} unlabeled`),
+      detail:
+        labeledCount === totalFlowNodes
+          ? isPl
+            ? 'Wszystkie etykiety uzupełnione'
+            : 'All labels filled'
+          : isPl
+            ? `${totalFlowNodes - labeledCount} bez etykiety`
+            : `${totalFlowNodes - labeledCount} unlabeled`,
     });
 
     const decisions = flowNodes.filter(
-      (n) => ['decision', 'bpmn_gateway', 'org_handoff', 'auto_condition'].includes(String(n.data?.shape || '')) ||
-        n.type === 'decision_gateway' || n.type === 'parallel_gateway'
+      (n) =>
+        ['decision', 'bpmn_gateway', 'org_handoff', 'auto_condition'].includes(
+          String(n.data?.shape || '')
+        ) ||
+        n.type === 'decision_gateway' ||
+        n.type === 'parallel_gateway'
     );
     let gatewayScore = 100;
     if (decisions.length > 0) {
@@ -108,11 +137,18 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
       labelPl: 'Bramki decyzyjne',
       labelEn: 'Decision gateways',
       score: gatewayScore,
-      detail: decisions.length === 0
-        ? (isPl ? 'Brak bramek' : 'No gateways')
-        : gatewayScore === 100
-          ? (isPl ? 'Wszystkie bramki poprawne' : 'All gateways valid')
-          : (isPl ? 'Niektóre bramki niepoprawne' : 'Some gateways invalid'),
+      detail:
+        decisions.length === 0
+          ? isPl
+            ? 'Brak bramek'
+            : 'No gateways'
+          : gatewayScore === 100
+            ? isPl
+              ? 'Wszystkie bramki poprawne'
+              : 'All gateways valid'
+            : isPl
+              ? 'Niektóre bramki niepoprawne'
+              : 'Some gateways invalid',
     });
 
     return result;
@@ -141,7 +177,11 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
             />
           </div>
         </div>
-        {expanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+        {expanded ? (
+          <ChevronUp size={14} className="text-slate-400" />
+        ) : (
+          <ChevronDown size={14} className="text-slate-400" />
+        )}
       </button>
 
       {expanded && (
@@ -153,7 +193,7 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
               ) : m.score >= 50 ? (
                 <Activity size={12} className="text-amber-500 flex-shrink-0" />
               ) : (
-                <AlertTriangle size={12} className="text-red-500 flex-shrink-0" />
+                <AlertTriangle size={12} className="text-rose-500 flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
                 <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">

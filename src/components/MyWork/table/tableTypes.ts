@@ -171,18 +171,18 @@ export const COLUMN_TYPE_LABELS: Record<ColumnType, { en: string; pl: string }> 
 };
 
 export const ROW_ACCENT_COLORS = [
-  '#8b5cf6',
+  '#6366f1',
   '#6366f1',
   '#3b82f6',
-  '#06b6d4',
+  '#3b82f6',
   '#10b981',
   '#84cc16',
   '#eab308',
-  '#f97316',
-  '#ef4444',
+  '#f59e0b',
+  '#f43f5e',
   '#ec4899',
   '#a855f7',
-  '#14b8a6',
+  '#3b82f6',
   '#f59e0b',
   '#64748b',
 ];
@@ -204,13 +204,13 @@ export const COLOR_PALETTES: Record<string, { name: string; colors: string[] }> 
   vibrant: {
     name: 'Vibrant',
     colors: [
-      '#8b5cf6',
+      '#6366f1',
       '#3b82f6',
       '#10b981',
       '#f59e0b',
-      '#ef4444',
+      '#f43f5e',
       '#ec4899',
-      '#06b6d4',
+      '#3b82f6',
       '#84cc16',
     ],
   },
@@ -231,8 +231,8 @@ export const COLOR_PALETTES: Record<string, { name: string; colors: string[] }> 
     name: 'Ocean',
     colors: [
       '#0ea5e9',
-      '#06b6d4',
-      '#14b8a6',
+      '#3b82f6',
+      '#3b82f6',
       '#2dd4bf',
       '#67e8f9',
       '#a5f3fc',
@@ -243,10 +243,10 @@ export const COLOR_PALETTES: Record<string, { name: string; colors: string[] }> 
   sunset: {
     name: 'Sunset',
     colors: [
-      '#f97316',
+      '#f59e0b',
       '#fb923c',
       '#fbbf24',
-      '#ef4444',
+      '#f43f5e',
       '#f43f5e',
       '#ec4899',
       '#f472b6',
@@ -258,25 +258,25 @@ export const COLOR_PALETTES: Record<string, { name: string; colors: string[] }> 
 export const COLUMN_TYPE_COLORS: Partial<Record<ColumnType, string>> = {
   text: '#3b82f6',
   number: '#10b981',
-  select: '#8b5cf6',
+  select: '#6366f1',
   multiselect: '#6366f1',
   status: '#f59e0b',
   date: '#f59e0b',
-  checkbox: '#14b8a6',
+  checkbox: '#3b82f6',
   rating: '#eab308',
   person: '#ec4899',
-  url: '#06b6d4',
+  url: '#3b82f6',
   progress: '#84cc16',
   formula: '#a855f7',
-  ai_generated: '#8b5cf6',
+  ai_generated: '#6366f1',
   file: '#64748b',
-  relation: '#f97316',
+  relation: '#f59e0b',
   rollup: '#0ea5e9',
   emoji: '#fbbf24',
-  color: '#ef4444',
+  color: '#f43f5e',
   currency: '#10b981',
   phone: '#3b82f6',
-  email: '#06b6d4',
+  email: '#3b82f6',
   created_time: '#94a3b8',
   created_by: '#94a3b8',
   last_edited_time: '#94a3b8',
@@ -302,7 +302,7 @@ export function evaluateFormula(formula: string, row: Record<string, any>): stri
       const val = row[key];
       return typeof val === 'number' ? String(val) : (Number(val) || 0).toString();
     });
-    // eslint-disable-next-line no-new-func
+
     const result = new Function(`return (${expr})`)();
     return typeof result === 'number' ? Math.round(result * 100) / 100 : String(result);
   } catch {

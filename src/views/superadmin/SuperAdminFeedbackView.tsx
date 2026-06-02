@@ -26,6 +26,7 @@ import {
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -179,14 +180,14 @@ const STATUS_CONFIG: Record<FeedbackStatus, { color: string; bg: string; border:
     border: 'border-yellow-600/20',
   },
   IN_PROGRESS: {
-    color: 'text-orange-700 dark:text-orange-400',
-    bg: 'bg-orange-600/10',
-    border: 'border-orange-600/20',
+    color: 'text-amber-700 dark:text-amber-400',
+    bg: 'bg-amber-600/10',
+    border: 'border-amber-600/20',
   },
   REVIEWED: {
-    color: 'text-purple-700 dark:text-purple-400',
-    bg: 'bg-purple-600/10',
-    border: 'border-purple-600/20',
+    color: 'text-primary-700 dark:text-primary-400',
+    bg: 'bg-primary-600/10',
+    border: 'border-primary-600/20',
   },
   RESOLVED: {
     color: 'text-green-700 dark:text-green-400',
@@ -201,8 +202,8 @@ const STATUS_CONFIG: Record<FeedbackStatus, { color: string; bg: string; border:
 };
 
 const SEVERITY_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
-  CRITICAL: { color: 'text-red-700 dark:text-red-400', icon: <AlertTriangle size={12} /> },
-  HIGH: { color: 'text-orange-700 dark:text-orange-400', icon: <AlertTriangle size={12} /> },
+  CRITICAL: { color: 'text-rose-700 dark:text-rose-400', icon: <AlertTriangle size={12} /> },
+  HIGH: { color: 'text-amber-700 dark:text-amber-400', icon: <AlertTriangle size={12} /> },
   MEDIUM: { color: 'text-amber-700 dark:text-amber-400', icon: <AlertTriangle size={12} /> },
   LOW: { color: 'text-slate-600 dark:text-slate-500', icon: null },
 };
@@ -219,8 +220,8 @@ const ALERT_STATUS_CONFIG: Record<
   },
   failed: {
     badge:
-      'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
-    text: 'text-red-700 dark:text-red-300',
+      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800',
+    text: 'text-rose-700 dark:text-rose-300',
   },
   skipped: {
     badge:
@@ -233,6 +234,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<FeedbackViewMode>('board');
   const [statusFilter, setStatusFilter] = useState<FeedbackStatus | 'ALL'>('ALL');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
@@ -241,8 +243,11 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const [ownershipFilter, setOwnershipFilter] = useState<'ALL' | 'ASSIGNED' | 'UNASSIGNED'>('ALL');
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState<FeedbackItem | null>(null);
+  const [screenshotObjectUrl, setScreenshotObjectUrl] = useState<string | null>(null);
+  const [screenshotError, setScreenshotError] = useState<string | null>(null);
   const [responseText, setResponseText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [deepLinkStatus, setDeepLinkStatus] = useState<string | null>(null);
   const [workflowDraft, setWorkflowDraft] = useState<WorkflowDraft>({
     owner: '',
     cluster: '',
@@ -280,30 +285,35 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const [pageLimit, setPageLimit] = useState<number>(1000);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Deep-link support: when the Superadmin signal popover (or any other
-  // caller) navigates here with `?feedbackId=<id>`, auto-open that item's
+  // Deep-link support: when another superadmin surface navigates here with
+  // `?feedbackId=<id>` (canonical) or `?ticket=<id>` (legacy alias), auto-open that item's
   // detail drawer as soon as it's loaded, then strip the query param so
   // the URL stays clean on back/forward.
   const location = useLocation();
   const navigate = useNavigate();
   const requestedFeedbackId = useMemo(() => {
     try {
-      return new URLSearchParams(location.search).get('feedbackId');
+      const params = new URLSearchParams(location.search);
+      return params.get('feedbackId') || params.get('ticket');
     } catch {
       return null;
     }
-  }, [location.search]);
+  }, [location.pathname, location.search, navigate]);
   const [deepLinkConsumed, setDeepLinkConsumed] = useState(false);
 
   const fetchFeedback = useCallback(
     async (limit?: number) => {
+      setDeepLinkStatus(null);
       try {
+        setLoadError(null);
         const page = await Api.getFeedbackPage({ limit: limit ?? pageLimit });
         setFeedback((page.items || []).map((item: any) => normalizeItem(item)));
         setTotalCount(page.total);
         if (limit) setPageLimit(limit);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching feedback:', error);
+        setLoadError(error?.message || 'Failed to fetch feedback');
+        toast.error(error?.message || 'Failed to fetch feedback');
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
@@ -330,8 +340,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
       );
       if (selectedItem?.id === id)
         setSelectedItem((prev) => (prev ? { ...prev, status: newStatus } : null));
-    } catch (error) {
+      toast.success('Feedback status updated');
+    } catch (error: any) {
       console.error('Error updating status:', error);
+      toast.error(error?.message || 'Failed to update feedback status');
     }
   };
 
@@ -339,13 +351,14 @@ export const SuperAdminFeedbackView: React.FC = () => {
     if (!responseText.trim()) return;
     setIsSending(true);
     try {
-      await Api.post(`/feedback/${id}/respond`, { response: responseText.trim() });
+      const response = responseText.trim();
+      await Api.post(`/feedback/${id}/respond`, { response });
       setFeedback((prev) =>
         prev.map((item) =>
           item.id === id
             ? {
                 ...item,
-                admin_response: responseText.trim(),
+                admin_response: response,
                 responded_at: new Date().toISOString(),
                 status: 'REVIEWED' as FeedbackStatus,
               }
@@ -357,7 +370,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
           prev
             ? {
                 ...prev,
-                admin_response: responseText.trim(),
+                admin_response: response,
                 responded_at: new Date().toISOString(),
                 status: 'REVIEWED' as FeedbackStatus,
               }
@@ -365,8 +378,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
         );
       }
       setResponseText('');
-    } catch (error) {
+      toast.success('Response sent');
+    } catch (error: any) {
       console.error('Error sending response:', error);
+      toast.error(error?.message || 'Failed to send response');
     } finally {
       setIsSending(false);
     }
@@ -386,8 +401,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
       try {
         const detail = await Api.get(`/feedback/${id}`);
         setSelectedItem(normalizeItem(detail));
+        setDeepLinkStatus(null);
       } catch (error) {
         console.error('[Feedback] Deep-link failed to load detail:', error);
+        setDeepLinkStatus('Unable to open requested feedback ticket.');
       }
     },
     [normalizeItem]
@@ -404,6 +421,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
     // without re-triggering the effect or leaving a stale URL.
     const params = new URLSearchParams(location.search);
     params.delete('feedbackId');
+    params.delete('ticket');
     const nextSearch = params.toString();
     navigate(
       { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
@@ -445,6 +463,36 @@ export const SuperAdminFeedbackView: React.FC = () => {
     });
     setResponseText('');
   }, [selectedItem]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const hasFilter =
+      params.has('status') || params.has('type') || params.has('severity') || params.has('env');
+    const status = params.get('status')?.toUpperCase();
+    const type = params.get('type')?.toUpperCase();
+    const severity = params.get('severity')?.toUpperCase();
+    const env = params.get('env');
+
+    if (status && STATUS_ORDER.includes(status as FeedbackStatus)) {
+      setStatusFilter(status as FeedbackStatus);
+      setViewMode('list');
+    }
+    if (type) {
+      setTypeFilter(type);
+      setViewMode('list');
+    }
+    if (severity) {
+      setSeverityFilter(severity);
+      setViewMode('list');
+    }
+    if (env) {
+      setEnvFilter(env);
+      setViewMode('list');
+    }
+    if (hasFilter) {
+      navigate({ pathname: location.pathname, search: '' }, { replace: true });
+    }
+  }, [location.search]);
 
   const saveWorkflow = async () => {
     if (!selectedItem) return;
@@ -498,8 +546,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
       setFeedback((prev) => prev.map((item) => (item.id === nextItem.id ? nextItem : item)));
       setSelectedItem(nextItem);
       setWorkflowDraft((prev) => ({ ...prev, note: '' }));
-    } catch (error) {
+      toast.success('Feedback workflow updated');
+    } catch (error: any) {
       console.error('Error updating workflow:', error);
+      toast.error(error?.message || 'Failed to update feedback workflow');
     } finally {
       setIsSavingWorkflow(false);
     }
@@ -552,6 +602,44 @@ export const SuperAdminFeedbackView: React.FC = () => {
       return {};
     }
   };
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    let cancelled = false;
+    setScreenshotObjectUrl(null);
+    setScreenshotError(null);
+
+    if (!selectedItem?.id) return;
+    const meta = parseMetadata(selectedItem.metadata);
+    const artifacts = Array.isArray((meta as any).artifacts)
+      ? ((meta as any).artifacts as any[])
+      : [];
+    const dossier = meta.dossier && typeof meta.dossier === 'object' ? (meta.dossier as any) : {};
+    const hasScreenshotArtifact =
+      artifacts.some((a) => a && a.kind === 'screenshot') ||
+      (typeof dossier.screenshot === 'object' && dossier.screenshot !== null);
+    if (!hasScreenshotArtifact) return;
+
+    Api.getFeedbackScreenshotBlob(selectedItem.id)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        if (cancelled) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        setScreenshotObjectUrl(objectUrl);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setScreenshotError(error instanceof Error ? error.message : 'Failed to load screenshot');
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedItem?.id, selectedItem?.metadata]);
+
   const parseAlertDispatch = (meta: Record<string, unknown>): AlertDispatchSummary | null => {
     const raw = meta.alertDispatch;
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -596,9 +684,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
               <span
                 className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
                   item.type === 'BUG'
-                    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-900'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:border-rose-900'
                     : item.type === 'FEATURE'
-                      ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-900'
+                      ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/40 dark:text-primary-400 dark:border-primary-900'
                       : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
                 }`}
               >
@@ -629,7 +717,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
               )}
               {typeof item.duplicate_count === 'number' && item.duplicate_count > 0 && (
                 <span
-                  className="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-900 inline-flex items-center gap-1"
+                  className="px-2 py-0.5 rounded text-[11px] font-semibold bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-900/40 dark:text-primary-300 dark:border-primary-900 inline-flex items-center gap-1"
                   title={t(
                     'feedback.duplicateBadge.title',
                     'Triage wykrył podobne zgłoszenia — otwórz szczegóły żeby je zobaczyć'
@@ -747,7 +835,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
       | { message?: string; stack?: string; at?: string; source?: string }
       | undefined;
     const artifacts = Array.isArray(meta.artifacts) ? (meta.artifacts as any[]) : [];
-    const hasScreenshot = artifacts.some((a) => a && a.kind === 'screenshot');
+    const hasScreenshot =
+      artifacts.some((a) => a && a.kind === 'screenshot') ||
+      (typeof dossier.screenshot === 'object' && dossier.screenshot !== null);
     const signatureHash =
       typeof meta.signatureHash === 'string' ? (meta.signatureHash as string) : null;
     const duplicateCandidates = Array.isArray(meta.duplicateCandidates)
@@ -827,9 +917,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <span
                   className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
                     selectedItem.type === 'BUG'
-                      ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-900'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:border-rose-900'
                       : selectedItem.type === 'FEATURE'
-                        ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-900'
+                        ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/40 dark:text-primary-400 dark:border-primary-900'
                         : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
                   }`}
                 >
@@ -1321,7 +1411,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                       key={d.id}
                       type="button"
                       onClick={() => loadDetail({ id: d.id } as FeedbackItem)}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
                       title={`${d.id} — ${d.title || ''}`}
                     >
                       <ChevronRight size={10} />
@@ -1335,27 +1425,51 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
             {hasScreenshot && (
               <div className="space-y-1">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <ImageIcon size={12} /> {t('feedback.screenshot', 'Screenshot')}
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1">
+                    <ImageIcon size={12} /> {t('feedback.screenshot', 'Screenshot')}
+                  </span>
+                  {screenshotObjectUrl && (
+                    <a
+                      href={screenshotObjectUrl}
+                      download={`feedback-${selectedItem.id.slice(0, 8)}-screenshot.png`}
+                      className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-300 hover:underline"
+                    >
+                      <ExternalLink size={11} />
+                      {t('feedback.downloadScreenshot', 'Download')}
+                    </a>
+                  )}
                 </div>
-                <img
-                  src={Api.getFeedbackScreenshotUrl(selectedItem.id)}
-                  alt="feedback screenshot"
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 max-h-[420px] w-auto"
-                />
+                {screenshotObjectUrl ? (
+                  <a href={screenshotObjectUrl} target="_blank" rel="noreferrer">
+                    <img
+                      src={screenshotObjectUrl}
+                      alt="feedback screenshot"
+                      className="rounded-lg border border-slate-200 dark:border-slate-700 max-h-[420px] w-auto"
+                    />
+                  </a>
+                ) : screenshotError ? (
+                  <div className="rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-900/10 p-3 text-xs text-rose-700 dark:text-rose-300">
+                    {screenshotError}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs text-slate-500">
+                    {t('feedback.loadingScreenshot', 'Loading screenshot...')}
+                  </div>
+                )}
               </div>
             )}
 
             {lastUncaught?.message && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/40 p-3 text-xs">
-                <div className="font-semibold text-red-700 dark:text-red-300">
+              <div className="rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/40 p-3 text-xs">
+                <div className="font-semibold text-rose-700 dark:text-rose-300">
                   {t('feedback.lastError', 'Last uncaught error')}
                 </div>
-                <div className="text-red-800 dark:text-red-200 mt-1 font-mono break-all">
+                <div className="text-rose-800 dark:text-rose-200 mt-1 font-mono break-all">
                   {lastUncaught.message}
                 </div>
                 {lastUncaught.stack && (
-                  <pre className="mt-2 max-h-40 overflow-auto text-[10px] text-red-700/80 dark:text-red-300/80 whitespace-pre-wrap">
+                  <pre className="mt-2 max-h-40 overflow-auto text-[10px] text-rose-700/80 dark:text-rose-300/80 whitespace-pre-wrap">
                     {lastUncaught.stack}
                   </pre>
                 )}
@@ -1394,7 +1508,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                       <span className="text-slate-400">
                         {n.at ? format(new Date(n.at), 'HH:mm:ss') : ''}
                       </span>{' '}
-                      <span className="text-red-600 dark:text-red-400">{n.status ?? 'ERR'}</span>{' '}
+                      <span className="text-rose-600 dark:text-rose-400">{n.status ?? 'ERR'}</span>{' '}
                       {n.method} {n.url} ({n.durationMs ?? '?'}ms)
                       {n.error ? ` — ${n.error}` : ''}
                     </li>
@@ -1496,6 +1610,14 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {deepLinkStatus ? (
+        <div
+          role="status"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
+        >
+          {deepLinkStatus}
+        </div>
+      ) : null}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
           <div>
@@ -1604,12 +1726,18 @@ export const SuperAdminFeedbackView: React.FC = () => {
         </div>
       </div>
 
+      {loadError && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+          {loadError}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           {
             label: 'Critical prod',
             value: pipelineStats.criticalProd,
-            tone: 'text-red-600 dark:text-red-400',
+            tone: 'text-rose-600 dark:text-rose-400',
           },
           {
             label: 'Unassigned',
@@ -1619,12 +1747,12 @@ export const SuperAdminFeedbackView: React.FC = () => {
           {
             label: 'Awaiting verification',
             value: pipelineStats.reviewPending,
-            tone: 'text-purple-600 dark:text-purple-400',
+            tone: 'text-primary-600 dark:text-primary-400',
           },
           {
             label: 'NEW > 24h',
             value: pipelineStats.staleNew,
-            tone: 'text-orange-600 dark:text-orange-400',
+            tone: 'text-amber-600 dark:text-amber-400',
           },
         ].map((card) => (
           <div
@@ -1702,7 +1830,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
               >
                 {isLoadingMore
                   ? t('feedback.loadingMore', 'Loading…')
-                  : t('feedback.loadMore', `Load ${Math.min(1000, totalCount - feedback.length)} more`)}
+                  : t(
+                      'feedback.loadMore',
+                      `Load ${Math.min(1000, totalCount - feedback.length)} more`
+                    )}
               </button>
             )}
           </div>

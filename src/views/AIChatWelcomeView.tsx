@@ -26,6 +26,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
 import { useAIContext } from '@/contexts/AIContext';
@@ -38,9 +39,9 @@ import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
-import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
+import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
@@ -53,8 +54,8 @@ import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
 import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
-import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useTeresaVoiceContext } from '../contexts/TeresaVoiceContext';
+import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
 import { useAppStore } from '../store/useAppStore';
@@ -62,6 +63,7 @@ import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { ChatCitation, ChatMessage, ChatResponseAction, TeresaChatProposal } from '../types';
 import { MessageFeedback } from '../types';
+import { readPreferredChatLanguage } from '../utils/chatLanguagePreference';
 import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
 import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
@@ -127,6 +129,8 @@ function downloadFile(filename: string, content: string, mimeType: string): void
 export const AIChatWelcomeView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // App state
   const {
@@ -185,9 +189,7 @@ export const AIChatWelcomeView: React.FC = () => {
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    const explicitPref =
-      localStorage.getItem('consultinity-preferred-chat-lang') ||
-      localStorage.getItem('consultify-preferred-chat-lang');
+    const explicitPref = readPreferredChatLanguage();
     // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
@@ -196,7 +198,8 @@ export const AIChatWelcomeView: React.FC = () => {
     const uiLang = i18n.language?.split('-')[0] || 'en';
     const candidate = explicitPref || activeLang || draftChatLanguage || uiLang;
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? (base as SupportedLanguage) : 'en') as SupportedLanguage;
+    return (readPreferredChatLanguage(candidate) ||
+      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')) as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
   const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 
@@ -398,12 +401,7 @@ export const AIChatWelcomeView: React.FC = () => {
   });
 
   // Action handler for AI-initiated actions
-  const {
-    executeAction,
-    confirmAction,
-    pendingActions,
-    isExecuting: isActionExecuting,
-  } = useActionHandler();
+  const { executeAction, isExecuting: isActionExecuting } = useActionHandler();
 
   // Local state
   const [citationsCollapsed, setCitationsCollapsed] = useState(false);
@@ -662,26 +660,6 @@ export const AIChatWelcomeView: React.FC = () => {
     [executeAction, addMessage]
   );
 
-  // Handle pending action confirmation
-  const handleConfirmPendingAction = useCallback(
-    async (actionId: string, confirmed: boolean) => {
-      const result = await confirmAction(actionId, confirmed);
-
-      if (result.status === 'success') {
-        const convId = activeConversationIdRef.current;
-        if (convId) {
-          void addMessage({
-            conversationId: convId,
-            role: 'ai',
-            content: confirmed ? '✅ Akcja wykonana pomyślnie.' : '❌ Akcja anulowana.',
-            messageType: 'text',
-          });
-        }
-      }
-    },
-    [confirmAction, addMessage]
-  );
-
   const handleTeresaProposalUpdated = useCallback(
     async (proposal: TeresaChatProposal) => {
       const convId = activeConversationIdRef.current;
@@ -884,12 +862,35 @@ For example: REMEMBER: preferred_language: Polish`;
             (a: any): a is File => typeof File !== 'undefined' && a instanceof File
           )
         : [];
+      const urlAttachments: Array<{ kind?: string; url: string; title?: string; name?: string }> =
+        Array.isArray(attachments)
+          ? attachments
+              .filter((a: any) => a && typeof a === 'object' && typeof a.url === 'string')
+              .map((a: any) => ({
+                kind: a.kind,
+                url: String(a.url),
+                title: a.title ? String(a.title) : undefined,
+                name: a.name ? String(a.name) : undefined,
+              }))
+          : [];
 
       const uploadedAttachments: Array<{
         docId: string;
         filename: string;
         mimeType?: string;
         size?: number;
+        extractionStatus?: string;
+        sourceUrl?: string;
+        kind?: 'file' | 'url';
+      }> = [];
+      const failedAttachments: Array<{
+        filename: string;
+        mimeType?: string;
+        size?: number;
+        error: string;
+        code?: string;
+        extractionStatus?: string;
+        kind?: 'file' | 'url';
       }> = [];
 
       for (const file of files) {
@@ -921,9 +922,55 @@ For example: REMEMBER: preferred_language: Polish`;
             filename: file.name,
             mimeType: file.type || undefined,
             size: file.size,
+            extractionStatus: String((resp as any)?.extractionStatus || 'extracted'),
+            kind: 'file',
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('[AIChatWelcomeView] Failed to upload attachment:', err);
+          failedAttachments.push({
+            filename: file.name,
+            mimeType: file.type || undefined,
+            size: file.size,
+            error:
+              String(err?.data?.error || err?.message || '').trim() ||
+              t('aiChat.attachmentUploadFailed', 'Nie udało się odczytać pliku.'),
+            code: typeof err?.data?.code === 'string' ? err.data.code : undefined,
+            extractionStatus:
+              typeof err?.data?.extractionStatus === 'string'
+                ? err.data.extractionStatus
+                : 'failed',
+            kind: 'file',
+          });
+        }
+      }
+      for (const urlAtt of urlAttachments) {
+        const url = String(urlAtt.url || '').trim();
+        if (!url) continue;
+        try {
+          const resp = await Api.ingestChatUrlAttachment(url, { title: urlAtt.title });
+          const docId = String((resp as any)?.docId || '');
+          if (!docId) continue;
+          uploadedAttachments.push({
+            docId,
+            filename: String((resp as any)?.filename || '').trim() || urlAtt.name || url,
+            mimeType: (resp as any)?.mimeType || 'text/html',
+            sourceUrl: String((resp as any)?.sourceUrl || url),
+            extractionStatus: 'extracted',
+            kind: 'url',
+          });
+        } catch (err: any) {
+          failedAttachments.push({
+            filename: urlAtt.name || url,
+            error:
+              String(err?.data?.error || err?.message || '').trim() ||
+              t('aiChat.attachmentUploadFailed', 'Nie udało się odczytać pliku.'),
+            code: typeof err?.data?.code === 'string' ? err.data.code : undefined,
+            extractionStatus:
+              typeof err?.data?.extractionStatus === 'string'
+                ? err.data.extractionStatus
+                : 'failed',
+            kind: 'url',
+          });
         }
       }
 
@@ -947,8 +994,8 @@ For example: REMEMBER: preferred_language: Polish`;
           content: message.trim(),
           messageType: 'text',
           metadata:
-            uploadedAttachments.length > 0
-              ? ({ attachments: uploadedAttachments } as any)
+            uploadedAttachments.length > 0 || failedAttachments.length > 0
+              ? ({ attachments: uploadedAttachments, failedAttachments } as any)
               : undefined,
         });
       } catch (err) {
@@ -980,6 +1027,7 @@ For example: REMEMBER: preferred_language: Polish`;
         conversationLanguage: chatLanguage,
         attachmentDocIds,
         attachments: uploadedAttachments,
+        failedAttachments,
         virtualWorkerSlug: 'teresa',
         proposalMode: 'proposal_first',
       };
@@ -1122,6 +1170,25 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
   // F1.1: Consume chatKickoffMessage on full-screen chat (mobile/tablet from Help → Ask AI)
   const kickoffSentRef = useRef<string | null>(null);
+  const queryKickoffHandledRef = useRef(false);
+  useEffect(() => {
+    if (queryKickoffHandledRef.current) return;
+
+    const rawPrompt = searchParams.get('prompt');
+    if (!rawPrompt) return;
+    queryKickoffHandledRef.current = true;
+
+    const normalizedPrompt = rawPrompt.trim().slice(0, 8000);
+    if (normalizedPrompt.length > 0) {
+      setChatKickoffMessage(normalizedPrompt);
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('prompt');
+    const nextSearch = nextParams.toString();
+    navigate(nextSearch ? `/chat?${nextSearch}` : '/chat', { replace: true });
+  }, [navigate, searchParams, setChatKickoffMessage]);
+
   useEffect(() => {
     if (!chatKickoffMessage) return;
     if (isStreaming) return;
@@ -1358,7 +1425,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
     // Show visual feedback - "krzyk" (scream)
     const alertDiv = document.createElement('div');
     alertDiv.className =
-      'fixed top-4 right-4 z-50 p-4 bg-red-600 text-white rounded-lg shadow-xl animate-pulse';
+      'fixed top-4 right-4 z-50 p-4 bg-rose-600 text-white rounded-lg shadow-xl animate-pulse';
     alertDiv.innerHTML = `
             <div class="flex items-center gap-2">
                 <span class="text-2xl">⚠️</span>
@@ -1607,7 +1674,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
       <div
         className={`h-full w-full bg-slate-50 dark:bg-navy-950 overflow-hidden relative ${
           isPrivateMode
-            ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
+            ? 'ring-1 ring-primary-200/70 dark:ring-primary-800/45'
             : 'ring-1 ring-transparent'
         }`}
       >
@@ -1634,7 +1701,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
               />
               {isPrivateMode && (
                 <div
-                  className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"
+                  className="mr-1 inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700 dark:border-primary-800/70 dark:bg-primary-900/25 dark:text-primary-300"
                   title={t(
                     'aiChat.menu.modes.privateMode.desc',
                     'Disable memory injection and personalization for this chat'
@@ -1733,7 +1800,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                           label={
                             retryInfo
                               ? `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries}...`
-                              : 'Thinking...'
+                              : 'Preparing answer...'
                           }
                           compact
                         />
@@ -1855,7 +1922,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                         !isStreamingThis &&
                         (msg as any).metadata?.deepThinking?.kind === 'confirm' &&
                         dtPendingConfirm?.messageId === msg.id && (
-                          <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+                          <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
                             <div className="flex flex-col gap-3">
                               <div className="text-sm font-medium text-primary-700 dark:text-primary-300">
                                 {t(
@@ -1946,46 +2013,12 @@ When citing knowledge base articles, always reference them by article_id (slug).
             </div>
           </div>
 
-          {/* Pending Actions Banner */}
-          {pendingActions.length > 0 && (
-            <div className="shrink-0 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
-              <div className="max-w-5xl mx-auto">
-                {pendingActions.map((pa) => {
-                  const message =
-                    typeof pa.payload?.message === 'string'
-                      ? pa.payload.message
-                      : t('aiChat.pendingAction', 'Action requires confirmation');
-
-                  return (
-                    <div key={pa.id} className="flex items-center justify-between text-sm">
-                      <span className="text-yellow-800 dark:text-yellow-200">🔔 {message}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleConfirmPendingAction(pa.id, true)}
-                          className="px-3 py-1 bg-green-500 text-white rounded-md text-xs hover:bg-green-600"
-                        >
-                          Potwierdź
-                        </button>
-                        <button
-                          onClick={() => handleConfirmPendingAction(pa.id, false)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
-                        >
-                          Anuluj
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Continuous Voice Mode Indicator */}
           {continuousVoiceMode && (
             <div className="shrink-0 p-2 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-200 dark:border-primary-800">
               <div className="max-w-5xl mx-auto flex items-center justify-center gap-3 text-sm">
                 <span
-                  className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-400'}`}
+                  className={`w-3 h-3 rounded-full ${voiceState.isListening ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'}`}
                 />
                 <span className="text-primary-700 dark:text-primary-300">
                   {voiceState.isListening
@@ -2001,7 +2034,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 )}
                 <button
                   onClick={handleContinuousVoiceToggle}
-                  className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
+                  className="px-3 py-1 bg-rose-500 text-white rounded-md text-xs hover:bg-rose-600"
                 >
                   Zatrzymaj
                 </button>
@@ -2038,6 +2071,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 onStopGenerating={abortStream}
                 onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
                 teresaVoiceStatus={teresaVoice.voiceStatus}
+                teresaVoiceAvailable={teresaVoice.voiceAvailable}
+                teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
                 teresaVoiceMuted={teresaVoice.isMuted}
                 onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
                 isStreaming={isStreaming}
@@ -2061,7 +2096,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
           onClose={() => setShowExportModal(false)}
           onExport={handleExportFormat}
         />
-
       </div>
     );
   }
@@ -2171,6 +2205,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
               onStopGenerating={abortStream}
               onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
               teresaVoiceStatus={teresaVoice.voiceStatus}
+              teresaVoiceAvailable={teresaVoice.voiceAvailable}
+              teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
               teresaVoiceMuted={teresaVoice.isMuted}
               onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
               isStreaming={isStreaming}
@@ -2204,8 +2240,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
                   'aiChat.homeCards.market.desc',
                   'Research a market, competitors, and positioning'
                 ),
-                color: 'text-violet-500',
-                bg: 'bg-violet-50 dark:bg-violet-900/20',
+                color: 'text-primary-500',
+                bg: 'bg-primary-50 dark:bg-primary-900/20',
                 onClick: () => {
                   const kickoff = t(
                     'aiChat.homeCards.market.kickoff',
@@ -2379,7 +2415,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
       {/* TTS Indicator - shows when speaking */}
       <TTSIndicator />
-
     </div>
   );
 };

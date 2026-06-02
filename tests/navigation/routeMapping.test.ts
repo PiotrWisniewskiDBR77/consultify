@@ -17,6 +17,12 @@ import {
 // Mock menu config structure (matches actual menuConfig.ts)
 const MENU_VIEW_IDS: AppView[] = [
   AppView.AI_CHAT,
+  AppView.AI_OS_HOME,
+  AppView.AI_OS_ACTION_CENTER,
+  AppView.AI_OS_CONTEXT_MEMORY,
+  AppView.AI_OS_CONNECTORS,
+  AppView.AI_OS_AGENTS,
+  AppView.AI_OS_OUTCOMES,
   AppView.MY_WORK,
   AppView.DISCOVERY_CONSULTANT,
   AppView.DISCOVERY_TOOLS,

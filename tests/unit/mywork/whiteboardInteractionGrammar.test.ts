@@ -24,6 +24,17 @@ describe('whiteboardInteractionGrammar', () => {
   it('exposes only the small trusted shortcut set for whiteboard help', () => {
     const shortcuts = getWhiteboardShortcuts(false).map((item) => item.key);
 
-    expect(shortcuts).toEqual(['?', 'Escape', 'Ctrl+S']);
+    expect(shortcuts).toEqual([
+      '?',
+      'Escape',
+      'Ctrl+S',
+      'Ctrl/Cmd+Z',
+      'Ctrl/Cmd+Shift+Z',
+      'Ctrl/Cmd+G',
+      'Ctrl/Cmd+Shift+G',
+      'Ctrl/Cmd+A',
+      'Delete / Backspace',
+      '/',
+    ]);
   });
 });

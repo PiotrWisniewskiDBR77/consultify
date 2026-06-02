@@ -32,8 +32,9 @@ Order from left to right:
 4. Artifact index/ID
 5. Link/permalink + link-between-artifacts tools
 6. Save button
-7. Chat button (context transfer to chat)
-8. View mode switcher (`N` / `C`)
+7. Card view settings button (visible cards)
+8. Chat button (context transfer to chat)
+9. View mode switcher (`N` / `C`)
 
 Visual:
 
@@ -48,6 +49,7 @@ Behavior:
 - If nothing to save: reduce visual prominence (not hidden)
 - If dirty: increase prominence
 - Permalink/link controls are treated as standard controls and should be visible by default
+- Card view settings opens the visibility menu for N-mode cards and lives near save/view controls, not in the left nav or Menu 3
 
 ---
 
@@ -56,6 +58,9 @@ Behavior:
 - Final target mode set: **`N` + `C` only**
 - `D` mode may exist temporarily as legacy/transition mode
 - Long-term UX and documentation must treat `N/C` as canonical
+- `N` is the default active mode until `C-mode` is fully designed, implemented and approved
+- Selecting `C` before implementation shows `C-mode coming soon` / `C-mode wkrótce`
+- Selecting unavailable `C` must not switch to an unfinished view or lose draft/context
 
 ---
 
@@ -65,6 +70,12 @@ Behavior:
 - Field content depends on artifact type/context
 - Inputs/selects/chips in this strip must have the same control height, border weight, and corner radius
 - No mixed control heights inside the strip
+- Properties strip is connected to workflow, not just metadata:
+  - status drives lifecycle actions,
+  - priority/deadline drive risk, alerts and ordering,
+  - owner/assignee/decider drive permissions and responsibility,
+  - workflow-blocking fields require inline validation,
+  - important changes are reflected in activity/audit history.
 
 ---
 
@@ -74,12 +85,21 @@ Behavior:
 - Right side: global AI CTA for current screen
 - In top CTA bar: **only one AI CTA**
 - Section-level AI actions are allowed inside section canvases (not in top CTA bar)
+- Workflow/lifecycle buttons should fit in one compact line on desktop
+- If actions exceed available width, secondary actions move to `More` / overflow
+- Buttons follow DBR77 Tech Sexy 2027 density and shape:
+  - compact `h-8` or tight `h-9`,
+  - `rounded-hig-full` or `rounded-hig-xl`,
+  - neutral Layer 2/3 surface,
+  - subtle hover only,
+  - no rectangular legacy buttons,
+  - no gradients or strong shadows
 
 ---
 
 ## 6) N-mode left navigation standard
 
-- Same fixed width for all artifacts: **220px**
+- Same fixed width for all N-type/N-mode artifacts: **242px**
 - Section labels should be designed for one-line display
 - Drag handle for reorder: visible on hover (not permanently visible)
 - Badge counters are allowed but optional; no globally forced usage
@@ -97,16 +117,23 @@ Fallback for long labels:
 Adopt one baseline and keep it global:
 
 - `--artifact-header-h: 48px`
-- `--artifact-properties-h: 60px`
-- `--artifact-actionbar-h: 36px`
+- `--artifact-properties-h: 44-56px`
+- `--artifact-actionbar-h: 36-44px`
 - `--artifact-field-h: 32px`
 - `--artifact-btn-h: 28px`
 - `--artifact-nav-item-h: 30px`
-- `--artifact-stack-gap: 12px`
+- `--artifact-stack-gap: 8-12px`
 - `--artifact-canvas-gap: 14px`
 - `--artifact-nav-canvas-gutter: 20px`
 - `--artifact-radius: 12px`
-- `--artifact-left-nav-w: 220px`
+- `--artifact-left-nav-w: 242px`
+
+Vertical density rule:
+
+- header + properties + workflow/action row must preserve working canvas space,
+- properties and workflow rows should stay compact on desktop,
+- avoid large stacked cards in the top control area,
+- the first N-mode card should remain visible in a standard desktop viewport whenever possible.
 
 Implementation note:
 
@@ -153,6 +180,17 @@ Excluded for this canonical version:
 - If explicit `visibleSections` exists, it is the source of truth
 - No automatic "show all defaults" override when explicit template visibility exists
 
+N-mode card visibility:
+
+- Full SSOT: `docs/ui-standards/01-shell-layout/n-mode-card-standard.md`.
+- every artifact/tool defines a potential card list,
+- each card has a stable id, label, content role and AI role,
+- every tool can suggest a default visible card set,
+- users/templates can show or hide optional cards through a card view settings menu,
+- this menu uses checkbox/checkmark behavior similar to table column visibility,
+- hidden cards keep data; visibility changes presentation only,
+- required cards can be locked and cannot be hidden if they are necessary for workflow or governance.
+
 ---
 
 ## 10) Definition of Done (UI shell)
@@ -161,7 +199,7 @@ A change to artifact detail UI is done only if:
 
 - 4-layer shell is preserved
 - N/C mode behavior is unchanged and stable
-- Left nav width remains 220px
+- Left nav width remains 242px
 - Strip/control/button heights follow canonical tokens
 - Save visibility logic follows standard (visible but low prominence when clean)
 - Top CTA bar has max one AI CTA on the right

@@ -23,8 +23,8 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
 import { Link, useParams } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -149,7 +149,7 @@ export const DocsArticleView: React.FC = () => {
         </p>
         <Link
           to="/docs"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
         >
           <ArrowLeft size={16} />
           {t('docs.article.backToDocs', 'Back to Documentation')}
@@ -164,13 +164,13 @@ export const DocsArticleView: React.FC = () => {
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6">
-        <Link to="/docs" className="hover:text-purple-600 dark:hover:text-purple-400">
+        <Link to="/docs" className="hover:text-primary-600 dark:hover:text-primary-400">
           {t('docs.common.docs', 'Docs')}
         </Link>
         <ChevronRight size={14} />
         <Link
           to={`/docs/${categorySlug}`}
-          className="hover:text-purple-600 dark:hover:text-purple-400"
+          className="hover:text-primary-600 dark:hover:text-primary-400"
         >
           {article.category_name}
         </Link>
@@ -188,7 +188,7 @@ export const DocsArticleView: React.FC = () => {
             {/* Category Badge */}
             <Link
               to={`/docs/${categorySlug}`}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium mb-3 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium mb-3 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
             >
               <Book size={12} />
               {article.category_name}
@@ -210,12 +210,10 @@ export const DocsArticleView: React.FC = () => {
               </span>
               <button
                 onClick={handleCopyLink}
-                className="flex items-center gap-1 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                className="flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
               >
                 {copied ? <Check size={14} /> : <Share2 size={14} />}
-                {copied
-                  ? t('docs.article.copied', 'Copied!')
-                  : t('docs.article.share', 'Share')}
+                {copied ? t('docs.article.copied', 'Copied!') : t('docs.article.share', 'Share')}
               </button>
             </div>
           </header>
@@ -230,7 +228,7 @@ export const DocsArticleView: React.FC = () => {
                 className="block relative aspect-video bg-slate-900 group"
               >
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-full bg-purple-600/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-20 h-20 rounded-full bg-primary-600/90 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <PlayCircle size={40} className="text-white" />
                   </div>
                 </div>
@@ -243,7 +241,7 @@ export const DocsArticleView: React.FC = () => {
           )}
 
           {/* Markdown Content */}
-          <div className="prose prose-slate dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-purple-600 dark:prose-a:text-purple-400 prose-code:before:content-none prose-code:after:content-none max-w-none">
+          <div className="prose prose-slate dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-primary-600 dark:prose-a:text-primary-400 prose-code:before:content-none prose-code:after:content-none max-w-none">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
@@ -271,7 +269,7 @@ export const DocsArticleView: React.FC = () => {
                     .replace(/(^-|-$)/g, '');
                   return <h3 id={id}>{children}</h3>;
                 },
-                code({ node, className, children, ...props }) {
+                code({ node, className, children, ref: _ref, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const inline = !match;
                   return inline ? (
@@ -321,7 +319,7 @@ export const DocsArticleView: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleFeedback('down')}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-700 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-300 dark:hover:border-rose-700 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                 >
                   <ThumbsDown size={16} />
                   No
@@ -334,7 +332,7 @@ export const DocsArticleView: React.FC = () => {
           <div className="mt-8 flex items-center justify-between">
             <Link
               to={`/docs/${categorySlug}`}
-              className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
             >
               <ArrowLeft size={16} />
               Back to {article.category_name}
@@ -360,7 +358,7 @@ export const DocsArticleView: React.FC = () => {
                       h.level === 2 && 'pl-3',
                       h.level === 3 && 'pl-6',
                       activeHeading === h.id
-                        ? 'text-purple-600 dark:text-purple-400 font-medium'
+                        ? 'text-primary-600 dark:text-primary-400 font-medium'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     )}
                   >

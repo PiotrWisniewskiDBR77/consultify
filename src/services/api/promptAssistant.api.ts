@@ -3,7 +3,7 @@
  * Shared client for prompt block preview, test bench, and assistant chat flows.
  */
 
-import { apiGet, apiPost, API_URL, fetchWithRetry, handleResponse } from './baseClient';
+import { API_URL, apiGet, apiPost, fetchWithRetry, handleResponse } from './baseClient';
 
 export interface PromptAssistantBlock {
   code: string;

@@ -1,5 +1,5 @@
-import { type AuthenticatedRequest, AppError, catchAsync, deps, tableExists } from './shared.js';
 import logger from '../../utils/Logger.js';
+import { AppError, type AuthenticatedRequest, catchAsync, deps, tableExists } from './shared.js';
 
 /**
  * Get all security incidents

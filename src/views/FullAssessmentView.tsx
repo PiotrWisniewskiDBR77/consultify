@@ -284,8 +284,8 @@ export const FullAssessmentView: React.FC = () => {
                 onClick={() => setIsAISidebarOpen(!isAISidebarOpen)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isAISidebarOpen
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-900/50'
                 }`}
               >
                 <Brain size={16} />

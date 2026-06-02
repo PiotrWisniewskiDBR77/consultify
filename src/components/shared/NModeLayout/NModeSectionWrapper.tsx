@@ -54,7 +54,7 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
             <button
               onClick={aiAction.onClick}
               disabled={aiAction.disabled || aiAction.loading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-purple-500 dark:text-purple-400 hover:bg-purple-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {aiAction.loading ? (
                 <Loader2 size={13} className="animate-spin" />

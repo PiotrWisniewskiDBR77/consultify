@@ -87,13 +87,13 @@ function parseMatrixContent(content: string): ComparisonMatrixData | null {
 function getScoreColor(value: number): string {
   if (value >= 8) return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
   if (value >= 5) return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
-  return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300';
+  return 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300';
 }
 
 function getScoreBarColor(value: number): string {
   if (value >= 8) return 'bg-green-500';
   if (value >= 5) return 'bg-amber-500';
-  return 'bg-red-500';
+  return 'bg-rose-500';
 }
 
 function calculateWeightedTotal(

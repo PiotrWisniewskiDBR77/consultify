@@ -37,7 +37,7 @@ function getSelectOptions(fieldOptions?: Record<string, unknown>): TablePlatform
 }
 
 const baseCls =
-  'w-full rounded-lg border border-violet-400 dark:border-violet-500 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] md:text-[11px] text-sm text-slate-800 dark:text-slate-200 outline-none ring-2 ring-violet-500/30 min-h-[44px] md:min-h-0 touch-manipulation';
+  'w-full rounded-lg border border-primary-400 dark:border-primary-500 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] md:text-[11px] text-sm text-slate-800 dark:text-slate-200 outline-none ring-2 ring-primary-500/30 min-h-[44px] md:min-h-0 touch-manipulation';
 
 // ── Text Editor ──────────────────────────────────────────────────────────────
 
@@ -139,7 +139,7 @@ const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) 
       <div
         ref={editorRef}
         contentEditable
-        className="min-h-[80px] p-2 border rounded bg-white dark:bg-navy-950 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500 text-slate-800 dark:text-slate-200"
+        className="min-h-[80px] p-2 border rounded bg-white dark:bg-navy-950 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 text-slate-800 dark:text-slate-200"
         onInput={() => {
           /* value tracked via ref */
         }}
@@ -267,7 +267,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
                 setOpen(false);
               }}
               className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0 touch-manipulation ${
-                String(value) === optVal ? 'bg-violet-50 dark:bg-violet-500/10' : ''
+                String(value) === optVal ? 'bg-primary-50 dark:bg-primary-500/10' : ''
               }`}
             >
               {opt.color && (
@@ -350,7 +350,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
               <span
                 className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
                   isSelected
-                    ? 'bg-violet-500 border-violet-500'
+                    ? 'bg-primary-500 border-primary-500'
                     : 'border-slate-300 dark:border-navy-600'
                 }`}
               >
@@ -425,7 +425,7 @@ const ValidatedTextEditor: React.FC<
       onKeyDown={handleKeyDown}
       onBlur={handleSave}
       placeholder={placeholder}
-      className={`${baseCls} ${invalid ? 'border-red-400 dark:border-red-500 ring-red-500/30' : ''}`}
+      className={`${baseCls} ${invalid ? 'border-rose-400 dark:border-rose-500 ring-rose-500/30' : ''}`}
     />
   );
 };

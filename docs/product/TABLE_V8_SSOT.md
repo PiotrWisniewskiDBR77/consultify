@@ -635,3 +635,21 @@ This document is satisfied only when:
 - `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
 - `IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
 - `IDEA_WORKSPACE_V5_SSOT.md`
+
+---
+
+## 15. Table Studio Foundation lane integration — 2026-05-07
+
+The `TABLE_STUDIO_FOUNDATION_BLOCK` delivered the first KIMI artifact-lane integration for Table:
+
+- `/tabele` is now a first-class artifact lane alongside Wordy, Excele, and Prezentacje.
+- The lane uses a Word-style document canvas for schema, records, relations, and AI rationale review.
+- Schema-changing chat intents remain proposal-governed: `proposal -> approval -> execution -> audit`.
+- Relation explainability is available through an ACL-filtered backend route.
+- The Table Builder transition uses Option A: `/my-work/sheets/:workspaceId/tables/:tableId` in a new tab with a toast.
+
+Canonical evidence:
+
+- Work packet: `docs/product/work-packets/table-studio-foundation/`
+- QA report: `docs/product/work-packets/table-studio-foundation/evidence/sprint-6/qa-report.md`
+- Closeout: `docs/product/work-packets/table-studio-foundation/03_BLOCK_CLOSEOUT.md`

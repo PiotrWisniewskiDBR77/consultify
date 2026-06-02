@@ -78,14 +78,14 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-2">
-              <PlayCircle size={18} className="text-purple-500" />
+              <PlayCircle size={18} className="text-primary-500" />
               <span className="text-sm font-semibold text-slate-900 dark:text-white">
                 {t('help.microVideo.header', 'Quick Tutorial')}
               </span>
             </div>
             <button
               onClick={handleClose}
-              className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
             >
               <X size={16} />
             </button>
@@ -106,7 +106,7 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
           ) : (
             <div className="px-5 py-5">
               {/* Thumbnail / preview */}
-              <div className="relative aspect-video bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-xl flex items-center justify-center mb-4 border border-slate-200 dark:border-navy-700">
+              <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-indigo-100 dark:from-primary-900/30 dark:to-indigo-900/30 rounded-xl flex items-center justify-center mb-4 border border-slate-200 dark:border-navy-700">
                 {video.thumbnailUrl ? (
                   <img
                     src={video.thumbnailUrl}
@@ -117,7 +117,7 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
                   <div className="text-center">
                     <PlayCircle
                       size={48}
-                      className="mx-auto text-purple-400 dark:text-purple-500 mb-2"
+                      className="mx-auto text-primary-400 dark:text-primary-500 mb-2"
                     />
                     {video.duration && (
                       <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
@@ -142,12 +142,12 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
             {!isPlaying && (
               <button
                 onClick={handleWatch}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors"
               >
                 <PlayCircle size={16} />
                 {t('help.microVideo.watch', 'Watch')}
                 {video.duration && (
-                  <span className="text-purple-200 text-xs ml-1">({video.duration})</span>
+                  <span className="text-primary-200 text-xs ml-1">({video.duration})</span>
                 )}
               </button>
             )}

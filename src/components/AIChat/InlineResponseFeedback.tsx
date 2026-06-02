@@ -31,6 +31,7 @@ interface InlineResponseFeedbackProps {
   screenContext?: string;
   onFeedback: (feedback: ResponseFeedback) => void;
   compact?: boolean;
+  thumbsOnly?: boolean;
 }
 
 type LengthFeedback = 'too-short' | 'just-right' | 'too-long';
@@ -48,6 +49,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
   screenContext,
   onFeedback,
   compact = false,
+  thumbsOnly = false,
 }) => {
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
@@ -68,6 +70,11 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
 
   const handleInitialRating = (r: 'positive' | 'negative') => {
     setRating(r);
+
+    if (thumbsOnly) {
+      submitFeedback(r);
+      return;
+    }
 
     // C8.1 / C8.2: Both positive and negative feedback show detail options
     if (r === 'positive') {
@@ -182,7 +189,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           </button>
           <button
             onClick={() => handleInitialRating('negative')}
-            className="p-1 rounded transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500"
+            className="p-1 rounded transition-colors hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 dark:text-slate-500 hover:text-rose-500"
             title={t('aiChat.actions.notHelpful', 'Niepomocne')}
           >
             <ThumbsDown size={12} />

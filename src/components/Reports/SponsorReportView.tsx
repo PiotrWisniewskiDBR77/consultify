@@ -76,9 +76,9 @@ const STATUS_COLORS: Record<string, string> = {
   GENERATING: 'bg-blue-100 text-blue-700',
   PENDING_APPROVAL: 'bg-yellow-100 text-yellow-700',
   APPROVED: 'bg-green-100 text-green-700',
-  REJECTED: 'bg-red-100 text-red-700',
+  REJECTED: 'bg-rose-100 text-rose-700',
   FINAL: 'bg-indigo-100 text-indigo-700',
-  UTILIZED: 'bg-purple-100 text-purple-700',
+  UTILIZED: 'bg-primary-100 text-primary-700',
   ARCHIVED: 'bg-gray-100 text-gray-500',
 };
 
@@ -430,11 +430,11 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
                   </div>
                 )}
                 {counterpoints.length > 0 && (
-                  <div className="p-3 bg-red-50 dark:bg-red-900/10 rounded-lg">
-                    <h4 className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1">
+                  <div className="p-3 bg-rose-50 dark:bg-rose-900/10 rounded-lg">
+                    <h4 className="text-xs font-semibold text-rose-700 dark:text-rose-400 mb-1">
                       {t('sponsorReport.counterpoints', 'Counterpoints')}
                     </h4>
-                    <ul className="text-xs text-red-600 dark:text-red-500 space-y-1">
+                    <ul className="text-xs text-rose-600 dark:text-rose-500 space-y-1">
                       {counterpoints.map((c: string, i: number) => (
                         <li key={i}>• {c}</li>
                       ))}
@@ -509,7 +509,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
                 <button
                   onClick={() => setShowRejectModal(true)}
                   className="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs font-medium
-                    bg-red-50 text-red-700 rounded-lg hover:bg-red-100"
+                    bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100"
                 >
                   <ThumbsDown className="w-3 h-3" /> {t('sponsorReport.reject', 'Reject')}
                 </button>
@@ -518,7 +518,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
                 <button
                   onClick={() => setShowUtilizeModal(true)}
                   className="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs font-medium
-                    bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100"
+                    bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100"
                 >
                   <CheckCircle2 className="w-3 h-3" />{' '}
                   {t('sponsorReport.markUtilized', 'Mark Utilized')}
@@ -586,7 +586,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
                   setShowRejectModal(false);
                   setRejectReason('');
                 }}
-                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg"
+                className="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg"
               >
                 {t('sponsorReport.confirmReject', 'Reject')}
               </button>
@@ -625,7 +625,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
                   setShowUtilizeModal(false);
                   setUtilizeNotes('');
                 }}
-                className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg"
+                className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg"
               >
                 {t('sponsorReport.confirmUtilize', 'Mark Utilized')}
               </button>

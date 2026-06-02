@@ -29,7 +29,7 @@ interface AISentimentOverlayProps {
 const SENTIMENT_CONFIG = {
   positive: { color: '#22c55e', bg: 'bg-emerald-500/10', text: 'text-emerald-600', emoji: '😊' },
   neutral: { color: '#94a3b8', bg: 'bg-slate-500/10', text: 'text-slate-500', emoji: '😐' },
-  negative: { color: '#ef4444', bg: 'bg-red-500/10', text: 'text-red-600', emoji: '😟' },
+  negative: { color: '#f43f5e', bg: 'bg-rose-500/10', text: 'text-rose-600', emoji: '😟' },
 };
 
 export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
@@ -174,7 +174,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
                   )}
                   {counts.negative > 0 && (
                     <div
-                      className="h-full bg-red-500"
+                      className="h-full bg-rose-500"
                       style={{ width: `${(counts.negative / results.length) * 100}%` }}
                     />
                   )}

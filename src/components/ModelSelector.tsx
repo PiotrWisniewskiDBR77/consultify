@@ -29,7 +29,7 @@ const StatusDot: React.FC<{ isConnected: boolean; isLoading?: boolean }> = ({
   }
   return (
     <div
-      className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}
+      className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-rose-500'}`}
       title={isConnected ? 'Model LLM połączony' : 'Model LLM niedostępny'}
     />
   );
@@ -309,7 +309,7 @@ export const ModelSelector: React.FC = () => {
                   <button
                     key={opt.id}
                     onClick={() => handleSelect(opt)}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${isSelected ? 'bg-purple-50 dark:bg-purple-500/10' : ''}`}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div
@@ -317,13 +317,13 @@ export const ModelSelector: React.FC = () => {
                       />
                       <div className="flex flex-col items-start min-w-0">
                         <span
-                          className={`truncate font-medium text-xs ${isSelected ? 'text-purple-600 dark:text-purple-300' : 'text-slate-700 dark:text-white'}`}
+                          className={`truncate font-medium text-xs ${isSelected ? 'text-primary-600 dark:text-primary-300' : 'text-slate-700 dark:text-white'}`}
                         >
                           {opt.name}
                         </span>
                       </div>
                     </div>
-                    {isSelected && <Check size={14} className="text-purple-500 flex-shrink-0" />}
+                    {isSelected && <Check size={14} className="text-primary-500 flex-shrink-0" />}
                   </button>
                 );
               })

@@ -4,6 +4,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 
 import { CustomersModule } from '../../../src/views/superadmin/CustomersModule';
 import { Api } from '../../../src/services/api';
@@ -67,7 +68,11 @@ describe('CustomersModule', () => {
   });
 
   it('renders the communication center when opened through the communication initial tab', async () => {
-    render(<CustomersModule initialTab="communication" />);
+    render(
+      <MemoryRouter>
+        <CustomersModule initialTab="communication" />
+      </MemoryRouter>
+    );
 
     expect(await screen.findByText('Communication Center View')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Communication' })).toBeInTheDocument();

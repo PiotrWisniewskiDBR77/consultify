@@ -28,7 +28,6 @@ import aiAsyncRoutes from './aiAsync.routes.js';
 import aiCoachRoutes from './aiCoach.routes.js';
 import aiExplainRoutes from './aiExplain.routes.js';
 import aiLearningRoutes from './aiLearning.routes.js';
-import aiMemoryRoutesV2 from './aiMemory.routes.js';
 import aiPlaybooksRoutes from './aiPlaybooks.routes.js';
 import deepThinkingRoutes from './deep-thinking.routes.js';
 
@@ -48,7 +47,8 @@ router.use('/drafts', aiDraftsRoutes);
 router.use('/feedback', aiFeedbackRoutes);
 router.use('/infrastructure', aiInfrastructureRoutes);
 router.use('/memory', aiMemoryRoutesV1);
-router.use('/memory-v2', aiMemoryRoutesV2);
+// Wave 6: memory-v2 bypassed stewardship/private-mode gates. Keep the canonical
+// /memory route only, backed by ai-memory.routes.ts + AIMemoryController guards.
 router.use('/nudges', aiNudgesRoutes);
 router.use('/operations', aiOperationsRoutes);
 router.use('/preferences-extended', aiPreferencesExtendedRoutes);

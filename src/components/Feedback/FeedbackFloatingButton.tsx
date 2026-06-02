@@ -76,9 +76,9 @@ export const FeedbackFloatingButton: React.FC = () => {
       aria-label={ariaLabel}
       title={`${label} · ${HOTKEY_HINT}`}
       data-feedback-redact
-      className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold shadow-lg shadow-amber-500/30 px-4 py-2.5 transition-all hover:shadow-xl hover:scale-[1.02] active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-navy-900"
+      className="fixed bottom-5 right-8 z-40 inline-flex items-center gap-2 rounded-full border border-amber-200/70 bg-white/90 px-3.5 py-2 text-xs font-semibold text-amber-700 shadow-md shadow-slate-950/10 backdrop-blur transition-all hover:scale-[1.02] hover:border-amber-400/80 hover:bg-amber-500 hover:text-white hover:shadow-lg hover:shadow-amber-500/20 active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400/70 focus:ring-offset-2 focus:ring-offset-white dark:border-amber-300/20 dark:bg-navy-950/85 dark:text-amber-300 dark:shadow-black/25 dark:hover:border-amber-400/50 dark:hover:bg-amber-500 dark:hover:text-white dark:focus:ring-offset-navy-900"
     >
-      <Bug size={16} />
+      <Bug size={14} />
       <span className="hidden sm:inline">{label}</span>
     </button>
   );

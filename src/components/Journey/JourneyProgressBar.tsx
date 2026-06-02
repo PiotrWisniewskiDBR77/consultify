@@ -29,8 +29,8 @@ const PhaseNode: React.FC<PhaseNodeProps> = ({ phase, isCurrent, isLast }) => {
     }
     if (isCurrent) {
       return {
-        ring: 'bg-purple-500 ring-4 ring-purple-200 dark:ring-purple-900/50',
-        text: 'text-purple-600 dark:text-purple-400',
+        ring: 'bg-primary-500 ring-4 ring-primary-200 dark:ring-primary-900/50',
+        text: 'text-primary-600 dark:text-primary-400',
         line: 'bg-slate-200 dark:bg-slate-700',
       };
     }
@@ -67,7 +67,7 @@ const PhaseNode: React.FC<PhaseNodeProps> = ({ phase, isCurrent, isLast }) => {
         {isCurrent && phase.progress > 0 && phase.progress < 100 && (
           <div className="absolute -bottom-3 w-12 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-purple-500 rounded-full transition-all duration-500"
+              className="h-full bg-primary-500 rounded-full transition-all duration-500"
               style={{ width: `${phase.progress}%` }}
             />
           </div>
@@ -96,7 +96,7 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center py-4 ${className}`}>
-        <Loader2 size={20} className="animate-spin text-purple-500" />
+        <Loader2 size={20} className="animate-spin text-primary-500" />
       </div>
     );
   }
@@ -111,7 +111,7 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
     return (
       <div className={`flex items-center gap-3 ${className}`}>
         <div className="flex items-center gap-1.5">
-          <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
             <span className="text-xs font-bold text-white">{progress.currentPhase}</span>
           </div>
           <span className="text-xs font-medium text-navy-900 dark:text-white">
@@ -120,7 +120,7 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
         </div>
         <div className="w-20 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-purple-500 rounded-full transition-all duration-500"
+            className="h-full bg-primary-500 rounded-full transition-all duration-500"
             style={{ width: `${progress.overallProgress}%` }}
           />
         </div>
@@ -161,13 +161,13 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
       {showNextAction && progress.nextAction && (
         <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
           <div className="flex items-center gap-2">
-            <Circle size={8} className="text-purple-500 fill-purple-500" />
+            <Circle size={8} className="text-primary-500 fill-primary-500" />
             <span className="text-xs text-slate-500 dark:text-slate-400">Następny krok:</span>
             <span className="text-xs font-medium text-navy-900 dark:text-white">
               {progress.nextAction.label}
             </span>
           </div>
-          <button className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium transition-colors">
+          <button className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors">
             Wykonaj
             <ChevronRight size={14} />
           </button>

@@ -19,6 +19,8 @@ const __dirname = path.dirname(__filename);
 
 const isProductionEnv = process.env.NODE_ENV === 'production';
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+const shouldIgnoreLocalEnv =
+  process.env.DOTENV_IGNORE_LOCAL === '1' || process.env.DOTENV_IGNORE_LOCAL === 'true';
 
 const repoRootEnvPath = path.resolve(__dirname, '../../../.env');
 const repoRootEnvLocalPath = path.resolve(__dirname, '../../../.env.local');
@@ -39,11 +41,13 @@ const extraEnvPath = (() => {
 // Prefer repo-root `.env` (workspace-level config), fallback to `server/.env` for legacy setups.
 const baseEnvPath = fs.existsSync(repoRootEnvPath) ? repoRootEnvPath : serverEnvPath;
 // Prefer repo-root `.env.local`, fallback to `server/.env.local` for legacy setups.
-const localEnvPath = fs.existsSync(repoRootEnvLocalPath)
-  ? repoRootEnvLocalPath
-  : fs.existsSync(serverEnvLocalPath)
-    ? serverEnvLocalPath
-    : null;
+const localEnvPath = shouldIgnoreLocalEnv
+  ? null
+  : fs.existsSync(repoRootEnvLocalPath)
+    ? repoRootEnvLocalPath
+    : fs.existsSync(serverEnvLocalPath)
+      ? serverEnvLocalPath
+      : null;
 
 // By default, do NOT override env vars already set by the shell / npm scripts.
 // This is critical for local dev where scripts explicitly set DB_TYPE/DATABASE_URL.
@@ -114,15 +118,14 @@ if (extraEnvPath && fs.existsSync(extraEnvPath)) {
 
 // Dev-only visibility: confirm which env files were loaded (helps debug "keys pasted but not used").
 if (!isProductionEnv) {
-  // eslint-disable-next-line no-console
   logger.info('[Env] Loaded from:', loadedPaths.join(' + ') || '(none)');
-  // eslint-disable-next-line no-console
+
   logger.info('[Env] JWT_SECRET length:', process.env.JWT_SECRET?.length || 0);
-  // eslint-disable-next-line no-console
+
   logger.info('[Env] OPENAI_API_KEY set:', !!process.env.OPENAI_API_KEY);
-  // eslint-disable-next-line no-console
+
   logger.info('[Env] OPENROUTER_API_KEY set:', !!process.env.OPENROUTER_API_KEY);
-  // eslint-disable-next-line no-console
+
   logger.info(
     '[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:',
     !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_AI_API_KEY

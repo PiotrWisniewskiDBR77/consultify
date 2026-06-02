@@ -137,7 +137,7 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
   return (
     <div className="space-y-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700">
       <div className="flex items-center gap-2">
-        <Shield size={14} className="text-cyan-500" />
+        <Shield size={14} className="text-blue-500" />
         <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
           {t('execution.mitigation.title')}
         </span>
@@ -225,7 +225,7 @@ export const MitigationPanel: React.FC<MitigationPanelProps> = ({
       <button
         onClick={handleSave}
         disabled={saving}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition-colors disabled:opacity-50"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors disabled:opacity-50"
       >
         {saved ? <Check size={12} /> : <Shield size={12} />}
         {saved ? t('execution.mitigation.saved') : t('execution.mitigation.save')}

@@ -67,16 +67,16 @@ const STATUS_CONFIG: Record<
     label: 'Approved',
   },
   [InitiativeStatus.EXECUTING]: {
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-100',
-    darkBgColor: 'dark:bg-purple-900/30',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-100',
+    darkBgColor: 'dark:bg-primary-900/30',
     icon: <Rocket size={14} />,
     label: 'Executing',
   },
   [InitiativeStatus.BLOCKED]: {
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100',
-    darkBgColor: 'dark:bg-red-900/30',
+    color: 'text-rose-600 dark:text-rose-400',
+    bgColor: 'bg-rose-100',
+    darkBgColor: 'dark:bg-rose-900/30',
     icon: <Pause size={14} />,
     label: 'Blocked',
   },
@@ -303,7 +303,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
               onChange={(e) => setReason(e.target.value)}
               placeholder="Enter reason..."
               rows={3}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
               autoFocus
             />
             <div className="flex justify-end gap-3 mt-4">
@@ -320,7 +320,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
               <button
                 onClick={() => executeTransition(pendingStatus, reason)}
                 disabled={!reason.trim() || isLoading}
-                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Updating...' : 'Confirm'}
               </button>
@@ -380,7 +380,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                 className={`px-4 py-2 text-white text-sm font-medium rounded-lg disabled:opacity-50 ${
                   pendingStatus === InitiativeStatus.DONE
                     ? 'bg-green-600 hover:bg-green-500'
-                    : 'bg-purple-600 hover:bg-purple-500'
+                    : 'bg-primary-600 hover:bg-primary-500'
                 }`}
               >
                 {isLoading ? 'Updating...' : 'Confirm'}

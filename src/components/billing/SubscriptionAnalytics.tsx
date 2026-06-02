@@ -166,14 +166,14 @@ export const SubscriptionAnalytics: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-8 h-8 animate-spin text-purple-600" />
+        <RefreshCw className="w-8 h-8 animate-spin text-primary-600" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400">
+      <div className="p-6 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">
         <p>{error}</p>
         <button onClick={fetchAllData} className="mt-2 text-sm underline">
           Try again
@@ -217,8 +217,8 @@ export const SubscriptionAnalytics: React.FC = () => {
         <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-slate-500 dark:text-slate-400">MRR</span>
-            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-              <DollarSign className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+              <DollarSign className="w-4 h-4 text-primary-600 dark:text-primary-400" />
             </div>
           </div>
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -227,7 +227,7 @@ export const SubscriptionAnalytics: React.FC = () => {
           {mrrTrend?.summary && (
             <div
               className={`flex items-center gap-1 mt-2 text-sm ${
-                parseFloat(mrrTrend.summary.totalGrowth) >= 0 ? 'text-green-600' : 'text-red-600'
+                parseFloat(mrrTrend.summary.totalGrowth) >= 0 ? 'text-green-600' : 'text-rose-600'
               }`}
             >
               {parseFloat(mrrTrend.summary.totalGrowth) >= 0 ? (
@@ -263,8 +263,8 @@ export const SubscriptionAnalytics: React.FC = () => {
             <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
               Churn Rate
             </span>
-            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-              <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <div className="p-2 rounded-lg bg-rose-100 dark:bg-rose-900/30">
+              <TrendingDown className="w-4 h-4 text-rose-600 dark:text-rose-400" />
             </div>
           </div>
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -302,7 +302,7 @@ export const SubscriptionAnalytics: React.FC = () => {
               return (
                 <div
                   key={i}
-                  className="flex-1 bg-purple-500 dark:bg-purple-600 rounded-t hover:bg-purple-600 dark:hover:bg-purple-500 transition-colors cursor-pointer group relative"
+                  className="flex-1 bg-primary-500 dark:bg-primary-600 rounded-t hover:bg-primary-600 dark:hover:bg-primary-500 transition-colors cursor-pointer group relative"
                   style={{ height: `${Math.max(height, 2)}%` }}
                 >
                   <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">
@@ -330,7 +330,7 @@ export const SubscriptionAnalytics: React.FC = () => {
               const totalMRR = mrr?.totalMRR || 1;
               const percentage = (plan.plan_mrr / totalMRR) * 100;
               const colors = [
-                'bg-purple-500',
+                'bg-primary-500',
                 'bg-blue-500',
                 'bg-green-500',
                 'bg-amber-500',
@@ -390,7 +390,7 @@ export const SubscriptionAnalytics: React.FC = () => {
                     <td className="py-2 text-right text-slate-600 dark:text-slate-300">
                       {row.churnedCustomers}
                     </td>
-                    <td className="py-2 text-right text-red-600 dark:text-red-400">
+                    <td className="py-2 text-right text-rose-600 dark:text-rose-400">
                       {formatCurrency(row.churnedMRR)}
                     </td>
                     <td className="py-2 text-right text-slate-600 dark:text-slate-300">
@@ -432,12 +432,12 @@ export const SubscriptionAnalytics: React.FC = () => {
                     <td className="py-2 text-right text-green-600 dark:text-green-400">
                       +{formatCurrency(row.expansion_mrr)}
                     </td>
-                    <td className="py-2 text-right text-red-600 dark:text-red-400">
+                    <td className="py-2 text-right text-rose-600 dark:text-rose-400">
                       -{formatCurrency(row.contraction_mrr)}
                     </td>
                     <td
                       className={`py-2 text-right font-medium ${
-                        row.netExpansion >= 0 ? 'text-green-600' : 'text-red-600'
+                        row.netExpansion >= 0 ? 'text-green-600' : 'text-rose-600'
                       }`}
                     >
                       {row.netExpansion >= 0 ? '+' : ''}
@@ -489,9 +489,9 @@ export const SubscriptionAnalytics: React.FC = () => {
           Customer Value Metrics
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="text-center p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+          <div className="text-center p-4 rounded-lg bg-primary-50 dark:bg-primary-900/20">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Lifetime Value</p>
-            <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
+            <p className="text-xl font-bold text-primary-600 dark:text-primary-400">
               {formatCurrency(ltv?.ltv || 0)}
             </p>
           </div>

@@ -7,13 +7,14 @@
 
 import { Router } from 'express';
 
-import logger from '../../utils/Logger.js';
 import ProjectControllerRaw from '../../controllers/ProjectController.js';
+import logger from '../../utils/Logger.js';
 const ProjectController = ProjectControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { checkPlanLimit } from '../../middleware/planLimits.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { validateBody, validateQuery } from '../../middleware/validation.middleware.js';
 import {
   ArchiveProjectSchema,
@@ -31,6 +32,7 @@ router.use(apiAuthRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+router.use(requireOrgAccess());
 
 // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
 router.use(demoContextMiddleware);

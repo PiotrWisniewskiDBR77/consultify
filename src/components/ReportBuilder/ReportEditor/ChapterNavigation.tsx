@@ -187,7 +187,7 @@ interface SortableBlockItemProps {
 const RAG_DOT_CLASSES: Record<string, string> = {
   green: 'bg-green-500',
   amber: 'bg-amber-500',
-  red: 'bg-red-500',
+  red: 'bg-rose-500',
 };
 
 const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
@@ -483,7 +483,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                       )}
 
                       {!isUngrouped && (
-                        <span className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                        <span className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
                           {namedChapters.indexOf(chapter) + 1}
                         </span>
                       )}
@@ -545,7 +545,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                             >
                               <button
                                 onClick={() => handleDeleteChapter(chapter.key)}
-                                className="p-0.5 text-red-500 hover:text-red-700 rounded"
+                                className="p-0.5 text-rose-500 hover:text-rose-700 rounded"
                                 title={isPl ? 'Potwierdź' : 'Confirm'}
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -563,7 +563,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                                 e.stopPropagation();
                                 setConfirmDeleteChapter(chapter.key);
                               }}
-                              className="p-0.5 text-slate-400 hover:text-red-500 rounded"
+                              className="p-0.5 text-slate-400 hover:text-rose-500 rounded"
                               title={isPl ? 'Usuń rozdział' : 'Delete chapter'}
                             >
                               <Trash2 className="w-3 h-3" />

@@ -271,7 +271,9 @@ export function fromProcessFlowToMindMap(input: TransformInput): MindMapOutput {
   if (selected.length === 0) return { nodes: [], edges: [] };
 
   const flowEdges = input.edges.filter(
-    (e) => new Set(selected.map((n) => n.id)).has(e.source) || new Set(selected.map((n) => n.id)).has(e.target)
+    (e) =>
+      new Set(selected.map((n) => n.id)).has(e.source) ||
+      new Set(selected.map((n) => n.id)).has(e.target)
   );
 
   const ordered = orderByFlow(selected, flowEdges);
@@ -280,7 +282,8 @@ export function fromProcessFlowToMindMap(input: TransformInput): MindMapOutput {
     const trace = buildTrace(n, 'process_flow');
     const enriched = enrichProcessFlowTrace(n, trace);
     const shape = String(n.data?.shape || 'action');
-    const prefix = shape === 'decision' ? '◇ ' : shape === 'start' ? '▶ ' : shape === 'end' ? '⏹ ' : '';
+    const prefix =
+      shape === 'decision' ? '◇ ' : shape === 'start' ? '▶ ' : shape === 'end' ? '⏹ ' : '';
     return {
       id: `xf-mm-${uid()}`,
       type: 'idea',
@@ -357,7 +360,8 @@ export function transformSelection(
     case 'mindmap':
       return {
         type: 'mindmap',
-        data: input.sourceTool === 'process_flow' ? fromProcessFlowToMindMap(input) : toMindMap(input),
+        data:
+          input.sourceTool === 'process_flow' ? fromProcessFlowToMindMap(input) : toMindMap(input),
       };
     case 'table':
       return { type: 'table', data: toTable(input) };

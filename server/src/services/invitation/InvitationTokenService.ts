@@ -1,6 +1,10 @@
 import crypto from 'crypto';
 
-import { INVITATION_EXPIRY_DAYS, TOKEN_LENGTH_BYTES } from './InvitationTypes.js';
+import {
+  INVITATION_EXPIRY_DAYS,
+  INVITATION_TOKEN_HEX_LENGTH,
+  TOKEN_LENGTH_BYTES,
+} from './InvitationTypes.js';
 
 export interface InvitationTokenDependencies {
   crypto: typeof crypto;
@@ -27,6 +31,12 @@ export class InvitationTokenService {
    */
   hashToken(token: string): string {
     return this.deps.crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  isCanonicalInvitationRawToken(token: unknown): token is string {
+    if (typeof token !== 'string') return false;
+    const normalized = token.trim();
+    return normalized.length === INVITATION_TOKEN_HEX_LENGTH && /^[a-fA-F0-9]+$/.test(normalized);
   }
 
   /**

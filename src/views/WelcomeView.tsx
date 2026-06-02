@@ -78,7 +78,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
           <div className="h-4 w-px bg-slate-200 dark:bg-white/15"></div>
           <button
             onClick={onLoginClick}
-            className="text-sm font-medium text-navy-700 hover:text-purple-600 dark:text-white dark:hover:text-purple-400 transition-colors"
+            className="text-sm font-medium text-navy-700 hover:text-primary-600 dark:text-white dark:hover:text-primary-400 transition-colors"
           >
             {text.logIn}
           </button>
@@ -102,12 +102,12 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold mb-2 tracking-tight text-navy-950 dark:text-white">
                 {text.titleStart}{' '}
-                <span className="text-purple-600 dark:text-purple-500">{text.titleEnd}</span>
+                <span className="text-primary-600 dark:text-primary-500">{text.titleEnd}</span>
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg mb-4">{text.subtitle}</p>
               {/* North Star Statement */}
-              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-500/20 rounded-lg p-4">
-                <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">
+              <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-500/20 rounded-lg p-4">
+                <p className="text-xs font-medium text-primary-600 dark:text-primary-400 mb-1">
                   {text.northStarLabel}
                 </p>
                 <p className="text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
@@ -119,7 +119,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
             <div className="space-y-4">
               {/* PRIMARY CTA: EXPLORE DEMO (Low Pressure Entry) */}
               <div
-                className="group relative bg-gradient-to-br from-purple-600 to-indigo-700 border border-purple-500 rounded-lg p-6 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20 cursor-pointer"
+                className="group relative bg-gradient-to-br from-primary-600 to-indigo-700 border border-primary-500 rounded-lg p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/20 cursor-pointer"
                 onClick={() => onStartSession(SessionMode.DEMO)}
               >
                 <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
@@ -143,22 +143,22 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
 
                 <p className="text-white/80 text-sm mb-6 leading-relaxed">{text.demoDesc}</p>
 
-                <button className="w-full py-3 bg-white dark:bg-navy-900 text-purple-700 font-semibold rounded transition-colors hover:bg-white/90 flex items-center justify-center gap-2">
+                <button className="w-full py-3 bg-white dark:bg-navy-900 text-primary-700 font-semibold rounded transition-colors hover:bg-white/90 flex items-center justify-center gap-2">
                   {text.demoBtn}
                 </button>
               </div>
 
               {/* SECONDARY: Quick Assessment */}
               <div
-                className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 hover:border-purple-500/50 rounded-lg p-4 transition-all duration-300 hover:shadow-md cursor-pointer"
+                className="group relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 hover:border-primary-500/50 rounded-lg p-4 transition-all duration-300 hover:shadow-md cursor-pointer"
                 onClick={() => onStartSession(SessionMode.FREE)}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center border border-purple-100 dark:border-purple-500/30">
-                    <Zap className="text-purple-600 dark:text-purple-300" size={20} />
+                  <div className="w-10 h-10 rounded bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center border border-primary-100 dark:border-primary-500/30">
+                    <Zap className="text-primary-600 dark:text-primary-300" size={20} />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {text.quickTitle}
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -166,7 +166,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
                     </p>
                   </div>
                   <ArrowRight
-                    className="text-slate-400 dark:text-slate-500 group-hover:text-purple-500 transition-colors"
+                    className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
                     size={20}
                   />
                 </div>
@@ -214,7 +214,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
                   ))}
                 </div>
 
-                <button className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded transition-colors flex items-center justify-center gap-2">
+                <button className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded transition-colors flex items-center justify-center gap-2">
                   <Lock size={16} />
                   {text.fullBtn}
                 </button>
@@ -259,7 +259,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
         {/* RIGHT COLUMN - VIDEO INTRO */}
         <div className="w-1/2 relative bg-gray-50 dark:bg-navy-950 flex flex-col items-center justify-center p-12 transition-colors duration-300">
           {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-100/50 dark:from-purple-900/20 via-gray-50 dark:via-navy-950 to-gray-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
+          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-100/50 dark:from-primary-900/20 via-gray-50 dark:via-navy-950 to-gray-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
           <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-100/50 dark:from-blue-900/10 via-gray-50 dark:via-navy-950 to-gray-50 dark:to-navy-950 pointer-events-none transition-colors duration-300"></div>
 
           <div className="relative z-10 w-full max-w-2xl">
@@ -267,7 +267,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
               <h2 className="text-2xl font-light tracking-wide text-navy-900 dark:text-white mb-2">
                 {text.videoTitle}
               </h2>
-              <div className="h-0.5 w-16 bg-purple-600 mx-auto"></div>
+              <div className="h-0.5 w-16 bg-primary-600 mx-auto"></div>
             </div>
 
             {/* Video Player Placeholder */}
@@ -280,7 +280,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
               <p className="text-lg font-medium text-navy-900 dark:text-white">
                 {text.videoPerson}
               </p>
-              <p className="text-sm text-purple-600 dark:text-purple-400">{text.videoRole}</p>
+              <p className="text-sm text-primary-600 dark:text-primary-400">{text.videoRole}</p>
             </div>
 
             <div className="mt-12 pt-8 border-t border-slate-200 dark:border-navy-700 text-center">
@@ -292,7 +292,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
               </p>
               <a
                 href="#"
-                className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 underline inline-flex items-center gap-1"
+                className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 underline inline-flex items-center gap-1"
               >
                 {text.masterclassLink} →
               </a>

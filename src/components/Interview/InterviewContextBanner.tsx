@@ -86,16 +86,16 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
   // Compact version
   if (compact) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/30 rounded-lg">
-        <Brain className="text-purple-500" size={16} />
-        <span className="text-sm text-purple-700 dark:text-purple-300 flex-1">
+      <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/30 rounded-lg">
+        <Brain className="text-primary-500" size={16} />
+        <span className="text-sm text-primary-700 dark:text-primary-300 flex-1">
           Interview context available ({completenessPercent}% complete)
         </span>
         {!isImported && onImportContext && (
           <button
             onClick={handleImport}
             disabled={isExporting}
-            className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:underline"
+            className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
           >
             {isExporting ? 'Importing...' : 'Use context'}
           </button>
@@ -111,10 +111,10 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
 
   // Full version
   return (
-    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border border-purple-200 dark:border-purple-800/30 rounded-xl p-4">
+    <div className="bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 border border-primary-200 dark:border-primary-800/30 rounded-xl p-4">
       <div className="flex items-start gap-4">
-        <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg shrink-0">
-          <Brain className="text-purple-600 dark:text-purple-400" size={20} />
+        <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg shrink-0">
+          <Brain className="text-primary-600 dark:text-primary-400" size={20} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -122,7 +122,7 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
             <h4 className="font-semibold text-navy-900 dark:text-white">
               Interview Context Available
             </h4>
-            <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-full">
+            <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-full">
               {completenessPercent}% complete
             </span>
           </div>
@@ -164,7 +164,7 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
               <button
                 onClick={handleImport}
                 disabled={isExporting}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 <Sparkles size={14} />
                 {isExporting ? 'Importing...' : 'Use this context'}

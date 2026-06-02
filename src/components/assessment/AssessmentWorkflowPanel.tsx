@@ -114,8 +114,8 @@ const STATUS_CONFIG = {
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'bg-red-500',
-    textColor: 'text-red-600 dark:text-red-400',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-600 dark:text-rose-400',
     icon: XCircle,
     description: 'Requires revision',
   },
@@ -272,7 +272,7 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
               });
               loadWorkflowData();
             }}
-            className="mt-3 px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700"
+            className="mt-3 px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700"
           >
             Initialize Workflow
           </button>
@@ -333,7 +333,7 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
                 </button>
                 <button
                   onClick={() => setShowRejectModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 text-white text-sm rounded-lg hover:bg-rose-700 transition-colors"
                 >
                   <ThumbsDown size={14} />
                   Reject
@@ -363,14 +363,14 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
 
         {/* Rejection Reason */}
         {workflow.status === 'REJECTED' && workflow.rejection_reason && (
-          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+          <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
             <div className="flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
                   Rejection Reason
                 </p>
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
                   {workflow.rejection_reason}
                 </p>
               </div>
@@ -391,7 +391,7 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors ${
               activeTab === tab.id
-                ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -491,7 +491,7 @@ const WorkflowTimeline: React.FC<{ workflow: WorkflowStatus }> = ({ workflow }) 
                   isCompleted
                     ? 'bg-green-500'
                     : isRejected
-                      ? 'bg-red-500'
+                      ? 'bg-rose-500'
                       : isCurrent
                         ? 'bg-blue-500'
                         : 'bg-slate-200 dark:bg-navy-700'
@@ -553,7 +553,7 @@ const ReviewsList: React.FC<{
         <div key={review.id} className="p-3 bg-slate-50 dark:bg-navy-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-sm font-medium">
+              <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-medium">
                 {review.reviewer_role?.charAt(0) || 'R'}
               </div>
               <div>
@@ -574,7 +574,7 @@ const ReviewsList: React.FC<{
                     review.recommendation === 'APPROVE'
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                       : review.recommendation === 'REJECT'
-                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                         : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                   }`}
                 >
@@ -628,7 +628,7 @@ const VersionHistory: React.FC<{
           key={version.id}
           className={`p-3 rounded-lg flex items-center justify-between ${
             version.version === currentVersion
-              ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800'
+              ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800'
               : 'bg-slate-50 dark:bg-navy-800'
           }`}
         >
@@ -636,7 +636,7 @@ const VersionHistory: React.FC<{
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 version.version === currentVersion
-                  ? 'bg-purple-500 text-white'
+                  ? 'bg-primary-500 text-white'
                   : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
               }`}
             >
@@ -646,7 +646,7 @@ const VersionHistory: React.FC<{
               <p className="text-sm font-medium text-navy-900 dark:text-white">
                 Version {version.version}
                 {version.version === currentVersion && (
-                  <span className="ml-2 text-xs text-purple-600 dark:text-purple-400">
+                  <span className="ml-2 text-xs text-primary-600 dark:text-primary-400">
                     (Current)
                   </span>
                 )}
@@ -661,7 +661,7 @@ const VersionHistory: React.FC<{
           {version.version !== currentVersion && (
             <button
               onClick={() => onRestore(version.version)}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
             >
               <RotateCcw size={12} />
               Restore
@@ -740,11 +740,11 @@ const SubmitForReviewModal: React.FC<{
                   onClick={() => toggleReviewer(user)}
                   className={`w-full p-2 rounded-lg flex items-center gap-3 text-left transition-colors ${
                     isSelected
-                      ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800'
+                      ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800'
                       : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-sm">
+                  <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm">
                     {user.name?.charAt(0) || 'U'}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -756,7 +756,7 @@ const SubmitForReviewModal: React.FC<{
                     </p>
                   </div>
                   {isSelected && (
-                    <CheckCircle className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   )}
                 </button>
               );
@@ -855,7 +855,7 @@ const RejectModal: React.FC<{
     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-rose-500 flex items-center justify-center">
             <XCircle className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -869,7 +869,7 @@ const RejectModal: React.FC<{
 
       <div className="p-4">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Rejection Reason <span className="text-red-500">*</span>
+          Rejection Reason <span className="text-rose-500">*</span>
         </label>
         <textarea
           value={reason}
@@ -890,7 +890,7 @@ const RejectModal: React.FC<{
         <button
           onClick={onReject}
           disabled={!reason.trim()}
-          className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Reject Assessment
         </button>

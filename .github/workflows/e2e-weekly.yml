@@ -1,5 +1,7 @@
 name: Weekly E2E (Full Playwright Suite)
 
+# Weekly run: broad full-regression pass across the default Playwright config.
+
 on:
   schedule:
     - cron: '30 3 * * 0'

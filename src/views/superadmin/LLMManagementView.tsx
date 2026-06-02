@@ -30,6 +30,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { StatusBadge } from '../../components/Admin/shared/AdminTable';
 import { Button, IconButton } from '../../components/Admin/shared/Button';
 import { Card } from '../../components/Admin/shared/Card';
@@ -38,6 +39,7 @@ import { SectionHeader } from '../../components/Admin/shared/PageHeader';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { LLMProviderConfig } from '../../types/domain/ai';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 type LLMConfigTab = 'providers' | 'routing' | 'usage' | 'health';
 
@@ -156,6 +158,60 @@ const getProviderModelChoices = (provider: string, providers: any[]) => {
   return Array.from(merged.values());
 };
 
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const providerMatchesForm = (
+  provider: LLMProviderConfig,
+  expected: Partial<LLMProviderConfig> & { id?: string | null }
+) =>
+  (!expected.id || provider.id === expected.id) &&
+  (!expected.name || provider.name === expected.name) &&
+  (!expected.model_id || provider.model_id === expected.model_id);
+
 export const LLMManagementView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<LLMConfigTab>('providers');
   const [loading, setLoading] = useState(true);
@@ -163,7 +219,10 @@ export const LLMManagementView: React.FC = () => {
 
   // Providers
   const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
+  const [providerLoadError, setProviderLoadError] = useState<string | null>(null);
+  const [providerActionError, setProviderActionError] = useState<string | null>(null);
   const [showProviderModal, setShowProviderModal] = useState(false);
+  const [savingProvider, setSavingProvider] = useState(false);
   const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
   const [cloningFromProviderId, setCloningFromProviderId] = useState<string | null>(null);
   const [showInactive, setShowInactive] = useState(false);
@@ -245,35 +304,51 @@ export const LLMManagementView: React.FC = () => {
 
   const loadInitialData = async () => {
     setLoading(true);
+    let loadedProviders: LLMProviderConfig[] | null = null;
     try {
+      setProviderLoadError(null);
+      setProviderActionError(null);
       const providersData = await Api.getLLMProviders();
-      setProviders(providersData);
+      const nextProviders = getListPayload<LLMProviderConfig>(providersData, [
+        'providers',
+        'items',
+      ]);
+      if (!hasListShape(providersData, ['providers', 'items'])) {
+        throw new Error('LLM providers response was not a list');
+      }
+      setProviders(nextProviders);
+      loadedProviders = nextProviders;
 
       try {
         const usage = await Api.getLLMControlUsage();
-        setUsageStats(usage);
+        setUsageStats(getObjectPayload(usage));
       } catch (e) {
         console.error('Usage load failed:', e);
       }
 
       try {
         const costs = await Api.getLLMCosts();
-        setCostStats(costs);
+        setCostStats(getObjectPayload(costs));
       } catch (e) {
         console.error('Costs load failed:', e);
       }
 
       try {
         const health = await Api.diagnoseLLM();
-        setHealthStatus(health);
+        setHealthStatus(getObjectPayload(health));
       } catch (e) {
         console.error('Health load failed:', e);
       }
-    } catch (err) {
-      console.error('Failed to load LLM data:', err);
-      toast.error('Failed to load LLM configuration');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load LLM configuration');
+      setProviderLoadError(message);
+      setProviders([]);
+      toast.error(message);
+      return null;
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+    return loadedProviders;
   };
 
   const handleApplyRecommendedPreset = async () => {
@@ -298,9 +373,17 @@ export const LLMManagementView: React.FC = () => {
 
   const handleProviderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingProvider) return;
+    setSavingProvider(true);
+    setProviderActionError(null);
     try {
+      let successMessage = 'Provider added';
+      let expectedProvider: Partial<LLMProviderConfig> & { id?: string | null } = {
+        name: providerForm.name,
+        model_id: providerForm.model_id,
+      };
       if (cloningFromProviderId) {
-        await (Api as any).cloneLLMProviderModel(cloningFromProviderId, {
+        const result = await (Api as any).cloneLLMProviderModel(cloningFromProviderId, {
           name: providerForm.name,
           model_id: providerForm.model_id,
           tier: providerForm.tier,
@@ -309,34 +392,61 @@ export const LLMManagementView: React.FC = () => {
           priority: providerForm.priority,
           ...(providerForm.api_key ? { api_key: providerForm.api_key } : {}),
         });
-        toast.success('Model cloned');
+        const payload = getObjectPayload(result) as any;
+        expectedProvider = {
+          id: payload?.id,
+          name: providerForm.name,
+          model_id: providerForm.model_id,
+        };
+        successMessage = 'Model cloned';
       } else if (editingProviderId) {
         if (providerForm.tier) {
           await Api.updateProviderTier(editingProviderId, providerForm.tier);
         }
         await Api.updateLLMProvider(editingProviderId, providerForm as any);
-        toast.success('Provider updated');
+        expectedProvider = { ...providerForm, id: editingProviderId };
+        successMessage = 'Provider updated';
       } else {
-        await Api.addLLMProvider(providerForm as any);
-        toast.success('Provider added');
+        const result = await Api.addLLMProvider(providerForm as any);
+        const payload = getObjectPayload(result) as any;
+        expectedProvider = {
+          id: payload?.id,
+          name: providerForm.name,
+          model_id: providerForm.model_id,
+        };
       }
+      const refreshed = await loadInitialData();
+      if (!refreshed?.some((provider) => providerMatchesForm(provider, expectedProvider))) {
+        throw new Error('LLM provider operation was not confirmed by the server');
+      }
+      toast.success(successMessage);
       setShowProviderModal(false);
       setEditingProviderId(null);
       setCloningFromProviderId(null);
       resetProviderForm();
-      loadInitialData();
-    } catch (err) {
-      toast.error('Operation failed');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Provider operation failed');
+      setProviderActionError(message);
+      toast.error(message);
+    } finally {
+      setSavingProvider(false);
     }
   };
 
   const handleTierChange = async (providerId: string, newTier: string) => {
+    setProviderActionError(null);
     try {
       await Api.updateProviderTier(providerId, newTier);
+      const refreshed = await loadInitialData();
+      const refreshedProvider = refreshed?.find((provider) => provider.id === providerId);
+      if (!refreshedProvider || String(refreshedProvider.tier || '') !== newTier) {
+        throw new Error('LLM provider tier update was not confirmed by the server');
+      }
       toast.success('Tier updated');
-      setProviders((prev) => prev.map((p) => (p.id === providerId ? { ...p, tier: newTier } : p)));
-    } catch (err) {
-      toast.error('Failed to update tier');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to update tier');
+      setProviderActionError(message);
+      toast.error(message);
     }
   };
 
@@ -376,12 +486,18 @@ export const LLMManagementView: React.FC = () => {
 
   const handleDeleteProvider = async (id: string) => {
     if (!confirm('Are you sure you want to delete this provider?')) return;
+    setProviderActionError(null);
     try {
       await Api.deleteLLMProvider(id);
+      const refreshed = await loadInitialData();
+      if (!refreshed || refreshed.some((provider) => provider.id === id)) {
+        throw new Error('LLM provider deletion was not confirmed by the server');
+      }
       toast.success('Provider deleted');
-      loadInitialData();
-    } catch (err) {
-      toast.error('Delete failed');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Delete failed');
+      setProviderActionError(message);
+      toast.error(message);
     }
   };
 
@@ -537,7 +653,7 @@ export const LLMManagementView: React.FC = () => {
                   onClick={handleApplyRecommendedPreset}
                   icon={Settings}
                   size="sm"
-                  disabled={applyingPreset}
+                  disabled={applyingPreset || !!providerLoadError}
                 >
                   {applyingPreset ? 'Applying preset...' : 'Apply v3 recommended preset'}
                 </Button>
@@ -546,7 +662,7 @@ export const LLMManagementView: React.FC = () => {
                   onClick={handleTestAll}
                   icon={testingAll ? Loader2 : Wifi}
                   size="sm"
-                  disabled={testingAll}
+                  disabled={testingAll || !!providerLoadError}
                 >
                   {testingAll ? 'Testing…' : 'Test All'}
                 </Button>
@@ -555,6 +671,7 @@ export const LLMManagementView: React.FC = () => {
                   onClick={() => setShowInactive(!showInactive)}
                   icon={showInactive ? Eye : EyeOff}
                   size="sm"
+                  disabled={!!providerLoadError}
                 >
                   {showInactive ? 'Hide Inactive' : 'Show Inactive'}
                 </Button>
@@ -567,6 +684,7 @@ export const LLMManagementView: React.FC = () => {
                   }}
                   icon={Plus}
                   size="sm"
+                  disabled={!!providerLoadError}
                 >
                   Add Provider
                 </Button>
@@ -574,222 +692,245 @@ export const LLMManagementView: React.FC = () => {
             </div>
 
             <Card variant="bordered" padding="none">
-              {lastTestReport && (
-                <div className="px-4 py-3 text-xs border-b border-slate-200 dark:border-white/[0.04] text-slate-700 dark:text-slate-300">
-                  <span className="text-slate-600 dark:text-slate-400">Last test:</span>{' '}
-                  <span className="font-medium">{lastTestReport}</span>
+              {providerActionError && (
+                <div
+                  role="alert"
+                  className="m-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+                >
+                  {providerActionError}
                 </div>
               )}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/[0.06]">
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Provider
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Model ID
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Kind
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Tier
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Visibility
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        Config
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      <tr>
-                        <td colSpan={9} className="p-8 text-center">
-                          <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500 dark:text-slate-400" />
-                        </td>
-                      </tr>
-                    ) : providers.filter((p) => showInactive || p.is_active).length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={9}
-                          className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm"
-                        >
-                          No providers configured
-                        </td>
-                      </tr>
-                    ) : (
-                      managedProviders
-                        .filter((p) => showInactive || p.is_active)
-                        .map((p) => (
-                          <tr
-                            key={p.id}
-                            className="border-b border-slate-200/70 dark:border-white/[0.04] last:border-b-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
-                          >
-                            <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-200">
-                              {p.name}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 capitalize">
-                              {p.provider}
-                            </td>
-                            <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
-                              {p.model_id}
-                            </td>
-                            <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
-                              {String((p as any).kind || 'TEXT_LLM')}
-                            </td>
-                            <td className="px-4 py-3">
-                              <select
-                                value={p.tier || 'STANDARD'}
-                                onChange={(e) => handleTierChange(p.id, e.target.value)}
-                                className="text-xs px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 outline-none cursor-pointer"
-                              >
-                                <option value="BUDGET">Budget</option>
-                                <option value="STANDARD">Standard</option>
-                                <option value="PREMIUM">Premium</option>
-                                <option value="REASONING">Reasoning</option>
-                              </select>
-                            </td>
-                            <td className="px-4 py-3">
-                              <StatusBadge
-                                variant={
-                                  p.visibility === 'public'
-                                    ? 'success'
-                                    : p.visibility === 'beta'
-                                      ? 'warning'
-                                      : 'neutral'
-                                }
-                                label={p.visibility || 'admin'}
-                                dot={false}
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              {!p.is_active ? (
-                                <StatusBadge variant="neutral" label="Inactive" />
-                              ) : (
-                                (() => {
-                                  const live = providerTestResults[p.id];
-                                  const hs = (p as any).health_status as string | null | undefined;
-                                  const lastCheck = (p as any).last_health_check as
-                                    | string
-                                    | null
-                                    | undefined;
-                                  const checkedAgo = lastCheck
-                                    ? (() => {
-                                        const diff = Date.now() - new Date(lastCheck).getTime();
-                                        const mins = Math.floor(diff / 60000);
-                                        return mins < 1 ? 'just now' : `${mins}m ago`;
-                                      })()
-                                    : null;
-
-                                  // Live test result takes priority
-                                  if (live) {
-                                    const badge =
-                                      live.status === 'testing' ? (
-                                        <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300">
-                                          <Loader2 size={11} className="animate-spin" /> Testing…
-                                        </span>
-                                      ) : live.status === 'ok' ? (
-                                        <StatusBadge
-                                          variant="success"
-                                          label={live.latency ? `OK · ${live.latency}ms` : 'OK'}
-                                        />
-                                      ) : (
-                                        <StatusBadge variant="error" label="Failed" />
-                                      );
-                                    return (
-                                      <div className="flex flex-col gap-0.5">
-                                        {badge}
-                                        {live.status === 'error' && (
-                                          <span
-                                            className="text-[10px] text-red-400 max-w-[140px] truncate"
-                                            title={live.message}
-                                          >
-                                            {live.message}
-                                          </span>
-                                        )}
-                                      </div>
-                                    );
-                                  }
-
-                                  // Fallback to sentinel health_status
-                                  const badge =
-                                    hs === 'healthy' ? (
-                                      <StatusBadge variant="success" label="Healthy" />
-                                    ) : hs === 'degraded' ? (
-                                      <StatusBadge variant="warning" label="Degraded" />
-                                    ) : hs === 'unhealthy' ? (
-                                      <StatusBadge variant="error" label="Unhealthy" />
-                                    ) : (
-                                      <StatusBadge variant="neutral" label="Untested" />
-                                    );
-                                  return (
-                                    <div className="flex flex-col gap-0.5">
-                                      {badge}
-                                      {checkedAgo && (
-                                        <span className="text-[10px] text-slate-500">
-                                          {checkedAgo}
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })()
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              <StatusBadge
-                                variant={(p as any).is_configured ? 'success' : 'warning'}
-                                label={(p as any).is_configured ? 'Configured' : 'Missing key'}
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center justify-end gap-1">
-                                <IconButton
-                                  icon={Wifi}
-                                  onClick={() => handleTestConnection(p)}
-                                  label="Test Connection"
-                                  size="sm"
-                                  loading={testingConnection}
-                                  disabled={testingConnection}
-                                />
-                                <IconButton
-                                  icon={Copy}
-                                  onClick={() => handleCloneModel(p)}
-                                  label="Clone Model"
-                                  size="sm"
-                                />
-                                <IconButton
-                                  icon={Edit}
-                                  onClick={() => handleEditProvider(p)}
-                                  label="Edit"
-                                  size="sm"
-                                />
-                                <IconButton
-                                  icon={Trash2}
-                                  onClick={() => handleDeleteProvider(p.id)}
-                                  label="Delete"
-                                  variant="danger"
-                                  size="sm"
-                                />
-                              </div>
+              {providerLoadError ? (
+                <div className="p-6">
+                  <DegradedState
+                    title="LLM providers unavailable"
+                    description={providerLoadError}
+                  />
+                </div>
+              ) : (
+                <>
+                  {lastTestReport && (
+                    <div className="px-4 py-3 text-xs border-b border-slate-200 dark:border-white/[0.04] text-slate-700 dark:text-slate-300">
+                      <span className="text-slate-600 dark:text-slate-400">Last test:</span>{' '}
+                      <span className="font-medium">{lastTestReport}</span>
+                    </div>
+                  )}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-white/[0.06]">
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Name
+                          </th>
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Provider
+                          </th>
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Model ID
+                          </th>
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Kind
+                          </th>
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Tier
+                          </th>
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Visibility
+                          </th>
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Config
+                          </th>
+                          <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loading ? (
+                          <tr>
+                            <td colSpan={9} className="p-8 text-center">
+                              <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-500 dark:text-slate-400" />
                             </td>
                           </tr>
-                        ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                        ) : providers.filter((p) => showInactive || p.is_active).length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={9}
+                              className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm"
+                            >
+                              No providers configured
+                            </td>
+                          </tr>
+                        ) : (
+                          managedProviders
+                            .filter((p) => showInactive || p.is_active)
+                            .map((p) => (
+                              <tr
+                                key={p.id}
+                                className="border-b border-slate-200/70 dark:border-white/[0.04] last:border-b-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                              >
+                                <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-200">
+                                  {p.name}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 capitalize">
+                                  {p.provider}
+                                </td>
+                                <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
+                                  {p.model_id}
+                                </td>
+                                <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
+                                  {String((p as any).kind || 'TEXT_LLM')}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <select
+                                    value={p.tier || 'STANDARD'}
+                                    onChange={(e) => handleTierChange(p.id, e.target.value)}
+                                    className="text-xs px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/[0.06] text-slate-900 dark:text-slate-200 outline-none cursor-pointer"
+                                  >
+                                    <option value="BUDGET">Budget</option>
+                                    <option value="STANDARD">Standard</option>
+                                    <option value="PREMIUM">Premium</option>
+                                    <option value="REASONING">Reasoning</option>
+                                  </select>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <StatusBadge
+                                    variant={
+                                      p.visibility === 'public'
+                                        ? 'success'
+                                        : p.visibility === 'beta'
+                                          ? 'warning'
+                                          : 'neutral'
+                                    }
+                                    label={p.visibility || 'admin'}
+                                    dot={false}
+                                  />
+                                </td>
+                                <td className="px-4 py-3">
+                                  {!p.is_active ? (
+                                    <StatusBadge variant="neutral" label="Inactive" />
+                                  ) : (
+                                    (() => {
+                                      const live = providerTestResults[p.id];
+                                      const hs = (p as any).health_status as
+                                        | string
+                                        | null
+                                        | undefined;
+                                      const lastCheck = (p as any).last_health_check as
+                                        | string
+                                        | null
+                                        | undefined;
+                                      const checkedAgo = lastCheck
+                                        ? (() => {
+                                            const diff = Date.now() - new Date(lastCheck).getTime();
+                                            const mins = Math.floor(diff / 60000);
+                                            return mins < 1 ? 'just now' : `${mins}m ago`;
+                                          })()
+                                        : null;
+
+                                      // Live test result takes priority
+                                      if (live) {
+                                        const badge =
+                                          live.status === 'testing' ? (
+                                            <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300">
+                                              <Loader2 size={11} className="animate-spin" />{' '}
+                                              Testing…
+                                            </span>
+                                          ) : live.status === 'ok' ? (
+                                            <StatusBadge
+                                              variant="success"
+                                              label={live.latency ? `OK · ${live.latency}ms` : 'OK'}
+                                            />
+                                          ) : (
+                                            <StatusBadge variant="error" label="Failed" />
+                                          );
+                                        return (
+                                          <div className="flex flex-col gap-0.5">
+                                            {badge}
+                                            {live.status === 'error' && (
+                                              <span
+                                                className="text-[10px] text-rose-400 max-w-[140px] truncate"
+                                                title={live.message}
+                                              >
+                                                {live.message}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+
+                                      // Fallback to sentinel health_status
+                                      const badge =
+                                        hs === 'healthy' ? (
+                                          <StatusBadge variant="success" label="Healthy" />
+                                        ) : hs === 'degraded' ? (
+                                          <StatusBadge variant="warning" label="Degraded" />
+                                        ) : hs === 'unhealthy' ? (
+                                          <StatusBadge variant="error" label="Unhealthy" />
+                                        ) : (
+                                          <StatusBadge variant="neutral" label="Untested" />
+                                        );
+                                      return (
+                                        <div className="flex flex-col gap-0.5">
+                                          {badge}
+                                          {checkedAgo && (
+                                            <span className="text-[10px] text-slate-500">
+                                              {checkedAgo}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })()
+                                  )}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <StatusBadge
+                                    variant={(p as any).is_configured ? 'success' : 'warning'}
+                                    label={(p as any).is_configured ? 'Configured' : 'Missing key'}
+                                  />
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <IconButton
+                                      icon={Wifi}
+                                      onClick={() => handleTestConnection(p)}
+                                      label="Test Connection"
+                                      size="sm"
+                                      loading={testingConnection}
+                                      disabled={testingConnection}
+                                    />
+                                    <IconButton
+                                      icon={Copy}
+                                      onClick={() => handleCloneModel(p)}
+                                      label="Clone Model"
+                                      size="sm"
+                                    />
+                                    <IconButton
+                                      icon={Edit}
+                                      onClick={() => handleEditProvider(p)}
+                                      label="Edit"
+                                      size="sm"
+                                    />
+                                    <IconButton
+                                      icon={Trash2}
+                                      onClick={() => handleDeleteProvider(p.id)}
+                                      label="Delete"
+                                      variant="danger"
+                                      size="sm"
+                                    />
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           </div>
         )}
@@ -1327,8 +1468,14 @@ export const LLMManagementView: React.FC = () => {
                 >
                   Test
                 </Button>
-                <Button variant="primary" type="submit" className="flex-1">
-                  Save Provider
+                <Button
+                  variant="primary"
+                  type="submit"
+                  className="flex-1"
+                  disabled={savingProvider}
+                  loading={savingProvider}
+                >
+                  {savingProvider ? 'Saving…' : 'Save Provider'}
                 </Button>
               </div>
             </form>

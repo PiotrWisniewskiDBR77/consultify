@@ -47,12 +47,12 @@ import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 
-interface CommandItem {
+export interface CommandItem {
   id: string;
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
-  category: 'navigation' | 'action' | 'recent' | 'search';
+  category: 'workspace' | 'navigation' | 'action' | 'recent' | 'search';
   shortcut?: string;
   action: () => void | Promise<void>;
   keywords?: string[];
@@ -62,6 +62,11 @@ interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate?: (path: string) => void;
+  /**
+   * Context-specific commands injected by the host (e.g. the Ideas workspace
+   * surfaces "Switch tool", "Export", "Search this idea"). Rendered first.
+   */
+  extraCommands?: CommandItem[];
 }
 
 // Fuzzy search function
@@ -82,7 +87,12 @@ const fuzzyMatch = (query: string, text: string): boolean => {
   return false;
 };
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({
+  isOpen,
+  onClose,
+  onNavigate,
+  extraCommands = [],
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -193,7 +203,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         icon: <Calculator size={18} />,
         category: 'navigation',
         shortcut: 'G $',
-        keywords: ['finance', 'finanse', 'economics', 'model', 'valuation', 'budget', 'statement', 'analysis', 'lane'],
+        keywords: [
+          'finance',
+          'finanse',
+          'economics',
+          'model',
+          'valuation',
+          'budget',
+          'statement',
+          'analysis',
+          'lane',
+        ],
         action: () => {
           navigate('/finance');
           onClose();
@@ -261,7 +281,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           'command.action.reviewNextDecisionDesc',
           'Queue mode with shortcuts (J/K, A/R/S, ?)'
         ),
-        icon: <FileQuestion size={18} className="text-violet-500" />,
+        icon: <FileQuestion size={18} className="text-primary-500" />,
         category: 'action',
         keywords: ['review', 'queue', 'decisions', 'inbox'],
         action: () => {
@@ -274,7 +294,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         id: 'action-mark-done',
         title: t('command.action.markDone', 'Mark Task Done'),
         subtitle: t('command.action.markDoneDesc', 'Complete current task'),
-        icon: <CheckCircle2 size={18} className="text-cyan-500" />,
+        icon: <CheckCircle2 size={18} className="text-blue-500" />,
         category: 'action',
         shortcut: 'D',
         keywords: ['complete', 'finish', 'done'],
@@ -300,7 +320,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         id: 'action-schedule',
         title: t('command.action.schedule', 'Open Calendar'),
         subtitle: t('command.action.scheduleDesc', 'View scheduled items'),
-        icon: <Calendar size={18} className="text-violet-500" />,
+        icon: <Calendar size={18} className="text-primary-500" />,
         category: 'action',
         keywords: ['calendar', 'schedule', 'timeline'],
         action: () => {
@@ -350,10 +370,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     [t, pendingDecisions, onClose, onNavigate, navigate]
   );
 
-  // Combined items
+  // Combined items — host-injected workspace commands first.
   const allItems = useMemo(() => {
-    return [...navigationItems, ...actionItems, ...recentItems];
-  }, [navigationItems, actionItems, recentItems]);
+    return [...extraCommands, ...navigationItems, ...actionItems, ...recentItems];
+  }, [extraCommands, navigationItems, actionItems, recentItems]);
 
   // Filtered items based on query
   const filteredItems = useMemo(() => {
@@ -371,6 +391,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   // Group items by category
   const groupedItems = useMemo(() => {
     const groups: { [key: string]: CommandItem[] } = {
+      workspace: [],
       navigation: [],
       action: [],
       recent: [],
@@ -470,7 +491,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                                 transition-colors cursor-pointer text-left
                                 ${
                                   isSelected
-                                    ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-900 dark:text-violet-100'
+                                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-900 dark:text-primary-100'
                                     : 'hover:bg-slate-100 dark:hover:bg-white/5 text-navy-900 dark:text-white'
                                 }
                             `}
@@ -478,7 +499,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                   isSelected
-                    ? 'bg-violet-200 dark:bg-violet-800/50 text-violet-700 dark:text-violet-300'
+                    ? 'bg-primary-200 dark:bg-primary-800/50 text-primary-700 dark:text-primary-300'
                     : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                 }`}
               >
@@ -498,7 +519,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                                     hidden sm:flex items-center gap-0.5 px-2 py-1 rounded text-[10px] font-mono font-medium
                                     ${
                                       isSelected
-                                        ? 'bg-violet-200/50 dark:bg-violet-700/50 text-violet-700 dark:text-violet-300'
+                                        ? 'bg-primary-200/50 dark:bg-primary-700/50 text-primary-700 dark:text-primary-300'
                                         : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                                     }
                                 `}
@@ -509,7 +530,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               <ArrowRight
                 size={14}
                 className={`shrink-0 ${
-                  isSelected ? 'text-violet-500' : 'text-slate-300 dark:text-slate-600'
+                  isSelected ? 'text-primary-500' : 'text-slate-300 dark:text-slate-600'
                 }`}
               />
             </motion.button>
@@ -563,6 +584,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               <div ref={listRef} className="max-h-[400px] overflow-y-auto p-2">
                 {filteredItems.length > 0 ? (
                   <>
+                    {renderGroup(
+                      t('command.category.workspace', 'This idea'),
+                      groupedItems.workspace,
+                      'workspace'
+                    )}
                     {renderGroup(
                       t('command.category.navigation', 'Navigate'),
                       groupedItems.navigation,

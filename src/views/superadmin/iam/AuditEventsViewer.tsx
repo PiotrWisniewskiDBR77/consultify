@@ -16,7 +16,9 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface AuditEvent {
   id: string;
@@ -32,10 +34,85 @@ interface AuditEvent {
 
 const PAGE_SIZE = 50;
 
+function formatDateTime(value?: string | null): string {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown date';
+  return date.toLocaleString();
+}
+
+function safeNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function asText(value: unknown, fallback = '—'): string {
+  if (value === null || value === undefined || value === '') return fallback;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  // Defensive: never render `[object Object]` from upstream payloads.
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function summarizeMetadata(metadata: unknown): string {
+  if (metadata === null || metadata === undefined) return '—';
+  if (typeof metadata === 'string') {
+    const trimmed = metadata.trim();
+    return trimmed ? trimmed.slice(0, 80) : '—';
+  }
+  try {
+    const serialized = JSON.stringify(metadata);
+    if (!serialized || serialized === '{}' || serialized === '[]') return '—';
+    return serialized.slice(0, 80);
+  } catch {
+    return '—';
+  }
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const normalizeAuditEventsResponse = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  const events = Array.isArray(payload)
+    ? payload
+    : isRecord(payload) && Array.isArray(payload.events)
+      ? payload.events
+      : isRecord(payload) && Array.isArray(payload.items)
+        ? payload.items
+        : isRecord(payload) && Array.isArray(payload.data)
+          ? payload.data
+          : null;
+  if (!Array.isArray(events)) {
+    throw new Error('Audit events response was not a list');
+  }
+  const totalSource = isRecord(payload)
+    ? payload.total
+    : isRecord(value)
+      ? value.total
+      : events.length;
+  return {
+    events: events as AuditEvent[],
+    total: Math.max(0, safeNumber(totalSource, events.length)),
+  };
+};
+
 const AuditEventsViewer: React.FC = () => {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
 
   const [resourceType, setResourceType] = useState('');
@@ -46,6 +123,7 @@ const AuditEventsViewer: React.FC = () => {
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const res = await Api.getAuditEvents({
         resourceType: resourceType || undefined,
         actorId: actorId || undefined,
@@ -54,10 +132,15 @@ const AuditEventsViewer: React.FC = () => {
         limit: PAGE_SIZE,
         offset,
       });
-      setEvents(res?.data || []);
-      setTotal(res?.total || 0);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to load audit events');
+      const normalized = normalizeAuditEventsResponse(res);
+      setEvents(normalized.events);
+      setTotal(normalized.total);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load audit events');
+      setLoadError(message);
+      setEvents([]);
+      setTotal(0);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -101,6 +184,7 @@ const AuditEventsViewer: React.FC = () => {
               setOffset(0);
             }}
             placeholder="Resource type"
+            disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none w-32"
           />
         </div>
@@ -113,6 +197,7 @@ const AuditEventsViewer: React.FC = () => {
               setOffset(0);
             }}
             placeholder="Actor ID"
+            disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none w-32"
           />
         </div>
@@ -125,6 +210,7 @@ const AuditEventsViewer: React.FC = () => {
               setFromDate(e.target.value);
               setOffset(0);
             }}
+            disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none"
           />
           <span className="text-xs text-slate-400">to</span>
@@ -135,11 +221,12 @@ const AuditEventsViewer: React.FC = () => {
               setToDate(e.target.value);
               setOffset(0);
             }}
+            disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none"
           />
         </div>
         <span className="text-[10px] text-slate-400 ml-auto">
-          {total} event{total !== 1 ? 's' : ''}
+          {loadError ? 'Events unavailable' : `${total} event${total !== 1 ? 's' : ''}`}
         </span>
       </div>
 
@@ -156,7 +243,13 @@ const AuditEventsViewer: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {loading && events.length === 0 ? (
+            {loadError ? (
+              <tr>
+                <td colSpan={5} className="py-8">
+                  <DegradedState title="Audit events unavailable" description={loadError} />
+                </td>
+              </tr>
+            ) : loading && events.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center py-12 text-slate-400">
                   <Loader2 size={20} className="animate-spin mx-auto mb-2" />
@@ -177,31 +270,36 @@ const AuditEventsViewer: React.FC = () => {
                   className="border-b border-slate-100 dark:border-navy-800 hover:bg-slate-50/50 dark:hover:bg-navy-900/30 transition-colors"
                 >
                   <td className="px-3 py-2 text-slate-500 whitespace-nowrap">
-                    {new Date(ev.created_at).toLocaleString()}
+                    {formatDateTime(ev.created_at)}
                   </td>
                   <td className="px-3 py-2">
                     <span className="px-1.5 py-0.5 rounded-md bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium">
-                      {ev.action}
+                      {asText(ev.action)}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
-                    <span className="font-medium">{ev.resource_type}</span>
+                    <span className="font-medium">{asText(ev.resource_type)}</span>
                     {ev.resource_id && (
                       <span className="text-slate-400 ml-1 font-mono text-[10px]">
-                        {ev.resource_id.slice(0, 12)}
+                        {asText(ev.resource_id).slice(0, 12)}
                       </span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-slate-600 dark:text-slate-400">
                     {ev.actor_type && (
                       <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">
-                        {ev.actor_type}
+                        {asText(ev.actor_type)}
                       </span>
                     )}
-                    <span className="font-mono text-[10px]">{ev.actor_id?.slice(0, 12)}</span>
+                    <span className="font-mono text-[10px]">
+                      {asText(ev.actor_id).slice(0, 12)}
+                    </span>
                   </td>
-                  <td className="px-3 py-2 text-slate-400 max-w-[200px] truncate">
-                    {ev.metadata ? JSON.stringify(ev.metadata).slice(0, 80) : '—'}
+                  <td
+                    className="px-3 py-2 text-slate-400 max-w-[200px] truncate"
+                    title={ev.metadata ? JSON.stringify(ev.metadata) : ''}
+                  >
+                    {summarizeMetadata(ev.metadata)}
                   </td>
                 </tr>
               ))

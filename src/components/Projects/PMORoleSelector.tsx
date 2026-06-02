@@ -51,7 +51,7 @@ interface PMORoleSelectorProps {
 const LEVEL_ICONS: Record<number, React.ReactNode> = {
   0: <Crown className="h-4 w-4 text-amber-500" />,
   1: <Briefcase className="h-4 w-4 text-blue-500" />,
-  2: <Shield className="h-4 w-4 text-purple-500" />,
+  2: <Shield className="h-4 w-4 text-primary-500" />,
   3: <Users className="h-4 w-4 text-green-500" />,
   4: <Eye className="h-4 w-4 text-gray-500 dark:text-gray-400" />,
 };
@@ -144,7 +144,7 @@ export const PMORoleSelector: React.FC<PMORoleSelectorProps> = ({
             {LEVEL_ICONS[selectedRole.level]}
             <span>{isPl ? selectedRole.namePl : selectedRole.name}</span>
             {selectedRole.isRequired && (
-              <span className="text-xs bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded">
+              <span className="text-xs bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded">
                 {t('admin.pmoRoles.required', 'Required')}
               </span>
             )}
@@ -200,7 +200,7 @@ export const PMORoleSelector: React.FC<PMORoleSelectorProps> = ({
                             {isPl ? role.namePl : role.name}
                           </span>
                           {role.isRequired && (
-                            <span className="text-xs bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded">
+                            <span className="text-xs bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded">
                               *
                             </span>
                           )}

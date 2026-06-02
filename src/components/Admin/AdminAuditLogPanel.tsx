@@ -6,7 +6,11 @@ import { Api } from '../../services/api';
 
 export const AdminAuditLogPanel: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
-  const [stats, setStats] = useState<{ totalLogs: number; unresolvedCount: number; highRiskCount: number }>({
+  const [stats, setStats] = useState<{
+    totalLogs: number;
+    unresolvedCount: number;
+    highRiskCount: number;
+  }>({
     totalLogs: 0,
     unresolvedCount: 0,
     highRiskCount: 0,
@@ -35,7 +39,9 @@ export const AdminAuditLogPanel: React.FC = () => {
       });
       setRiskSummary(riskResult?.summary || null);
       setComplianceSummary(complianceResult?.summary || null);
-      setRetentionDays(Number(complianceResult?.summary?.dataRetention?.auditLogRetentionDays || 730));
+      setRetentionDays(
+        Number(complianceResult?.summary?.dataRetention?.auditLogRetentionDays || 730)
+      );
     } catch (error: any) {
       toast.error(error?.message || 'Failed to load audit logs');
     } finally {
@@ -93,7 +99,9 @@ export const AdminAuditLogPanel: React.FC = () => {
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Total logs
           </p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{stats.totalLogs}</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+            {stats.totalLogs}
+          </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -145,7 +153,7 @@ export const AdminAuditLogPanel: React.FC = () => {
             />
             <button
               onClick={() => void saveRetention()}
-              className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white"
+              className="rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white"
             >
               Save retention
             </button>
@@ -156,7 +164,9 @@ export const AdminAuditLogPanel: React.FC = () => {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Admin Audit Log</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Admin Audit Log
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Membership, security, collaboration, and integration changes emitted by P32 surfaces.
             </p>
@@ -179,9 +189,13 @@ export const AdminAuditLogPanel: React.FC = () => {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
               Export CSV
             </button>
           </div>

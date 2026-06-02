@@ -88,7 +88,7 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
           <span className="text-xs text-gray-500 dark:text-gray-400">
             Benchmark: {assessment.industry_benchmark.toFixed(1)}
           </span>
-          <span className={`text-xs font-medium ${gap > 0 ? 'text-red-500' : 'text-green-500'}`}>
+          <span className={`text-xs font-medium ${gap > 0 ? 'text-rose-500' : 'text-green-500'}`}>
             {gap > 0 ? `Gap: -${gap.toFixed(1)}` : `Ahead: +${Math.abs(gap).toFixed(1)}`}
           </span>
         </div>
@@ -115,7 +115,7 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
                 <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
-                      score >= 4 ? 'bg-green-500' : score >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                      score >= 4 ? 'bg-green-500' : score >= 3 ? 'bg-yellow-500' : 'bg-rose-500'
                     }`}
                     style={{ width: `${percentage}%` }}
                   />
@@ -128,14 +128,14 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
 
       {/* Top Gaps */}
       {assessment.top_gaps && assessment.top_gaps.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 mb-6">
-          <h4 className="font-semibold text-red-700 dark:text-red-400 flex items-center gap-2 mb-2">
+        <div className="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4 mb-6">
+          <h4 className="font-semibold text-rose-700 dark:text-rose-400 flex items-center gap-2 mb-2">
             <Target className="w-4 h-4" />
             Priority Improvement Areas
           </h4>
           <ul className="space-y-1">
             {assessment.top_gaps.map((gap, index) => (
-              <li key={index} className="text-sm text-red-600 dark:text-red-300">
+              <li key={index} className="text-sm text-rose-600 dark:text-rose-300">
                 • {DIMENSION_NAMES[gap] || gap}
               </li>
             ))}
@@ -145,8 +145,8 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
 
       {/* DRD Mapping Section */}
       {assessment.drdMapping && (
-        <div className="bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 p-4 mb-6">
-          <h4 className="font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-2 mb-3">
+        <div className="bg-primary-50 dark:bg-primary-900/20 border-l-4 border-primary-500 p-4 mb-6">
+          <h4 className="font-semibold text-primary-700 dark:text-primary-400 flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4" />
             DRD Maturity Mapping
           </h4>
@@ -162,11 +162,11 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-500 transition-all"
+                      className="h-full bg-primary-500 transition-all"
                       style={{ width: `${(level / 7) * 100}%` }}
                     />
                   </div>
-                  <span className="text-sm font-semibold text-purple-600 w-12 text-right">
+                  <span className="text-sm font-semibold text-primary-600 w-12 text-right">
                     {level.toFixed(1)}/7
                   </span>
                 </div>
@@ -174,7 +174,7 @@ export const RapidLeanResultsCard: React.FC<RapidLeanResultsCardProps> = ({ asse
             ))}
           </div>
           {assessment.observationsCount && assessment.observationsCount > 0 && (
-            <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800">
+            <div className="mt-3 pt-3 border-t border-primary-200 dark:border-primary-800">
               <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
                 <Link className="w-3 h-3" />
                 Based on {assessment.observationsCount} production floor observations

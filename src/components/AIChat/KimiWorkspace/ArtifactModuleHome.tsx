@@ -18,12 +18,16 @@ import {
   Presentation,
   Save,
   Sparkles,
+  Table,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { isTemplateLifecycleEnabled } from '@/utils/templateLifecycleFlag';
+
 import type { KimiLane } from './KimiWorkspaceShell';
+import { TabeleTemplatesGrid } from './templateLifecycle/TabeleTemplatesGrid';
 import { useModuleRecentArtifacts } from './useModuleRecentArtifacts';
 import { useModuleTemplates } from './useModuleTemplates';
 
@@ -41,12 +45,12 @@ const LANE_META: Record<
   wordy: {
     icon: FileText,
     route: '/wordy',
-    accentBg: 'bg-purple-500/10',
-    accentText: 'text-purple-500',
+    accentBg: 'bg-primary-500/10',
+    accentText: 'text-primary-500',
   },
   excele: {
     icon: FileSpreadsheet,
-    route: '/excele',
+    route: '/tabele',
     accentBg: 'bg-emerald-500/10',
     accentText: 'text-emerald-500',
   },
@@ -56,6 +60,12 @@ const LANE_META: Record<
     accentBg: 'bg-fuchsia-500/10',
     accentText: 'text-fuchsia-500',
   },
+  tabele: {
+    icon: Table,
+    route: '/tabele',
+    accentBg: 'bg-sky-500/10',
+    accentText: 'text-sky-500',
+  },
 };
 
 interface ArtifactModuleHomeProps {
@@ -63,7 +73,7 @@ interface ArtifactModuleHomeProps {
 }
 
 export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const [activeTab, setActiveTab] = useState<HomeTab>('templates');
@@ -73,6 +83,11 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
   const { templates, loading: templatesLoading } = useModuleTemplates(lane);
   const { artifacts: recentArtifacts, loading: recentLoading } = useModuleRecentArtifacts(lane);
+  // Block A / A-S5b — when ON, lane=tabele swaps to the
+  // `tp_base_templates` lifecycle endpoint via `<TabeleTemplatesGrid>`
+  // and surfaces the lifecycle filter + dot badge + governance drawer.
+  // OFF preserves the legacy Outputs Library behaviour for every lane.
+  const useTabeleLifecycleGrid = lane === 'tabele' && isTemplateLifecycleEnabled();
 
   const heroText = useMemo(() => {
     if (lane === 'wordy')
@@ -83,6 +98,10 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
       return isPolish
         ? 'Budżety, modele finansowe, harmonogramy, matryce ryzyk'
         : 'Budgets, financial models, timelines, risk matrices';
+    if (lane === 'tabele')
+      return isPolish
+        ? 'Tabele operacyjne, master data, rejestry, logi, OKR-y, decyzje'
+        : 'Operational tables, master data, registers, logs, OKRs, decisions';
     return isPolish
       ? 'Decki zarządcze, pitch, status update, prezentacje warsztatowe'
       : 'Executive decks, pitch, status updates, workshop presentations';
@@ -91,6 +110,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
   const laneLabel = useMemo(() => {
     if (lane === 'wordy') return isPolish ? 'Dokumenty' : 'Documents';
     if (lane === 'excele') return isPolish ? 'Tabele' : 'Tables';
+    if (lane === 'tabele') return isPolish ? 'Tabele Studio' : 'Table Studio';
     return isPolish ? 'Prezentacje' : 'Presentations';
   }, [lane, isPolish]);
 
@@ -164,7 +184,10 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 
       {/* Tab content */}
       <div className="px-6 pb-8 flex-1">
-        {activeTab === 'templates' && (
+        {activeTab === 'templates' && useTabeleLifecycleGrid && (
+          <TabeleTemplatesGrid onTemplateClick={(tplId) => handleTemplateClick(tplId)} />
+        )}
+        {activeTab === 'templates' && !useTabeleLifecycleGrid && (
           <TemplatesGrid
             templates={templates}
             loading={templatesLoading}
@@ -205,40 +228,251 @@ interface TemplatesGridProps {
   lane: KimiLane;
 }
 
-const BUILTIN_TEMPLATES: Record<KimiLane, Array<{ id: string; title: string; titlePl: string; desc: string; descPl: string }>> = {
+const BUILTIN_TEMPLATES: Record<
+  KimiLane,
+  Array<{ id: string; title: string; titlePl: string; desc: string; descPl: string }>
+> = {
   wordy: [
-    { id: 'bt-doc-weekly', title: 'Weekly Execution Report', titlePl: 'Tygodniowy raport wykonania', desc: 'Sprint progress, KPIs, blockers', descPl: 'Postęp sprintu, KPI, blokery' },
-    { id: 'bt-doc-steering', title: 'Steering Committee Brief', titlePl: 'Brief dla Komitetu Sterującego', desc: 'Executive summary for decision-makers', descPl: 'Podsumowanie dla decydentów' },
-    { id: 'bt-doc-benefits', title: 'Benefits Tracking Report', titlePl: 'Raport śledzenia korzyści', desc: 'KPI realization and ROI tracking', descPl: 'Realizacja KPI i śledzenie ROI' },
-    { id: 'bt-doc-portfolio', title: 'Portfolio Overview', titlePl: 'Przegląd portfela', desc: 'Cross-initiative health dashboard', descPl: 'Dashboard zdrowia inicjatyw' },
-    { id: 'bt-doc-kickoff', title: 'Project Kickoff Document', titlePl: 'Dokument startu projektu', desc: 'Goals, scope, team, timeline', descPl: 'Cele, zakres, zespół, harmonogram' },
-    { id: 'bt-doc-risk', title: 'Risk Assessment Report', titlePl: 'Raport oceny ryzyk', desc: 'Risk identification and mitigation', descPl: 'Identyfikacja i mitygacja ryzyk' },
-    { id: 'bt-doc-dd', title: 'Due Diligence Report', titlePl: 'Raport due diligence', desc: 'Investment analysis and findings', descPl: 'Analiza inwestycyjna i wnioski' },
-    { id: 'bt-doc-market', title: 'Market Analysis Report', titlePl: 'Raport analizy rynku', desc: 'Market sizing, competitors, trends', descPl: 'Wielkość rynku, konkurencja, trendy' },
+    {
+      id: 'bt-doc-weekly',
+      title: 'Weekly Execution Report',
+      titlePl: 'Tygodniowy raport wykonania',
+      desc: 'Sprint progress, KPIs, blockers',
+      descPl: 'Postęp sprintu, KPI, blokery',
+    },
+    {
+      id: 'bt-doc-steering',
+      title: 'Steering Committee Brief',
+      titlePl: 'Brief dla Komitetu Sterującego',
+      desc: 'Executive summary for decision-makers',
+      descPl: 'Podsumowanie dla decydentów',
+    },
+    {
+      id: 'bt-doc-benefits',
+      title: 'Benefits Tracking Report',
+      titlePl: 'Raport śledzenia korzyści',
+      desc: 'KPI realization and ROI tracking',
+      descPl: 'Realizacja KPI i śledzenie ROI',
+    },
+    {
+      id: 'bt-doc-portfolio',
+      title: 'Portfolio Overview',
+      titlePl: 'Przegląd portfela',
+      desc: 'Cross-initiative health dashboard',
+      descPl: 'Dashboard zdrowia inicjatyw',
+    },
+    {
+      id: 'bt-doc-kickoff',
+      title: 'Project Kickoff Document',
+      titlePl: 'Dokument startu projektu',
+      desc: 'Goals, scope, team, timeline',
+      descPl: 'Cele, zakres, zespół, harmonogram',
+    },
+    {
+      id: 'bt-doc-risk',
+      title: 'Risk Assessment Report',
+      titlePl: 'Raport oceny ryzyk',
+      desc: 'Risk identification and mitigation',
+      descPl: 'Identyfikacja i mitygacja ryzyk',
+    },
+    {
+      id: 'bt-doc-dd',
+      title: 'Due Diligence Report',
+      titlePl: 'Raport due diligence',
+      desc: 'Investment analysis and findings',
+      descPl: 'Analiza inwestycyjna i wnioski',
+    },
+    {
+      id: 'bt-doc-market',
+      title: 'Market Analysis Report',
+      titlePl: 'Raport analizy rynku',
+      desc: 'Market sizing, competitors, trends',
+      descPl: 'Wielkość rynku, konkurencja, trendy',
+    },
   ],
   excele: [
-    { id: 'bt-sheet-finmodel', title: 'Financial Model', titlePl: 'Model finansowy', desc: 'P&L + Balance Sheet + Cash Flow', descPl: 'RZiS + Bilans + Cash Flow' },
-    { id: 'bt-sheet-budget', title: 'Budget Planning', titlePl: 'Planowanie budżetu', desc: 'Annual/quarterly budget template', descPl: 'Szablon budżetu rocznego/kwartalnego' },
-    { id: 'bt-sheet-resource', title: 'Resource Allocation Matrix', titlePl: 'Macierz alokacji zasobów', desc: 'Team capacity and assignment', descPl: 'Pojemność zespołu i przypisania' },
-    { id: 'bt-sheet-risk', title: 'Risk Register', titlePl: 'Rejestr ryzyk', desc: 'Risk log with scoring and owners', descPl: 'Log ryzyk z oceną i właścicielami' },
-    { id: 'bt-sheet-timeline', title: 'Project Timeline', titlePl: 'Harmonogram projektu', desc: 'Gantt-style milestone tracker', descPl: 'Tracker kamieni milowych' },
-    { id: 'bt-sheet-competitive', title: 'Competitive Analysis Matrix', titlePl: 'Macierz analizy konkurencji', desc: 'Feature comparison grid', descPl: 'Siatka porównania funkcji' },
-    { id: 'bt-sheet-recruit', title: 'Recruitment Pipeline', titlePl: 'Pipeline rekrutacji', desc: 'Candidate tracking and stages', descPl: 'Śledzenie kandydatów i etapów' },
-    { id: 'bt-sheet-okr', title: 'OKR Tracking Sheet', titlePl: 'Arkusz śledzenia OKR', desc: 'Objectives, key results, progress', descPl: 'Cele, kluczowe rezultaty, postęp' },
+    {
+      id: 'bt-sheet-finmodel',
+      title: 'Financial Model',
+      titlePl: 'Model finansowy',
+      desc: 'P&L + Balance Sheet + Cash Flow',
+      descPl: 'RZiS + Bilans + Cash Flow',
+    },
+    {
+      id: 'bt-sheet-budget',
+      title: 'Budget Planning',
+      titlePl: 'Planowanie budżetu',
+      desc: 'Annual/quarterly budget template',
+      descPl: 'Szablon budżetu rocznego/kwartalnego',
+    },
+    {
+      id: 'bt-sheet-resource',
+      title: 'Resource Allocation Matrix',
+      titlePl: 'Macierz alokacji zasobów',
+      desc: 'Team capacity and assignment',
+      descPl: 'Pojemność zespołu i przypisania',
+    },
+    {
+      id: 'bt-sheet-risk',
+      title: 'Risk Register',
+      titlePl: 'Rejestr ryzyk',
+      desc: 'Risk log with scoring and owners',
+      descPl: 'Log ryzyk z oceną i właścicielami',
+    },
+    {
+      id: 'bt-sheet-timeline',
+      title: 'Project Timeline',
+      titlePl: 'Harmonogram projektu',
+      desc: 'Gantt-style milestone tracker',
+      descPl: 'Tracker kamieni milowych',
+    },
+    {
+      id: 'bt-sheet-competitive',
+      title: 'Competitive Analysis Matrix',
+      titlePl: 'Macierz analizy konkurencji',
+      desc: 'Feature comparison grid',
+      descPl: 'Siatka porównania funkcji',
+    },
+    {
+      id: 'bt-sheet-recruit',
+      title: 'Recruitment Pipeline',
+      titlePl: 'Pipeline rekrutacji',
+      desc: 'Candidate tracking and stages',
+      descPl: 'Śledzenie kandydatów i etapów',
+    },
+    {
+      id: 'bt-sheet-okr',
+      title: 'OKR Tracking Sheet',
+      titlePl: 'Arkusz śledzenia OKR',
+      desc: 'Objectives, key results, progress',
+      descPl: 'Cele, kluczowe rezultaty, postęp',
+    },
   ],
   prezentacje: [
-    { id: 'bt-deck-steering', title: 'Steering Committee Deck', titlePl: 'Deck dla Komitetu Sterującego', desc: 'Board-level status presentation', descPl: 'Prezentacja statusu dla zarządu' },
-    { id: 'bt-deck-status', title: 'Project Status Update', titlePl: 'Status update projektu', desc: 'Weekly/monthly progress slides', descPl: 'Slajdy postępu tygodniowego/miesięcznego' },
-    { id: 'bt-deck-pitch', title: 'Pitch Deck', titlePl: 'Pitch Deck', desc: 'Investor / stakeholder pitch', descPl: 'Pitch dla inwestorów / interesariuszy' },
-    { id: 'bt-deck-workshop', title: 'Workshop Facilitation Deck', titlePl: 'Deck warsztatowy', desc: 'Interactive exercises and agenda', descPl: 'Interaktywne ćwiczenia i agenda' },
-    { id: 'bt-deck-qbr', title: 'Quarterly Business Review', titlePl: 'Kwartalny przegląd biznesowy', desc: 'QBR metrics and roadmap', descPl: 'Metryki QBR i roadmapa' },
-    { id: 'bt-deck-strategy', title: 'Strategy Roadmap', titlePl: 'Roadmapa strategiczna', desc: 'Vision, goals, milestones', descPl: 'Wizja, cele, kamienie milowe' },
-    { id: 'bt-deck-invest', title: 'Investment Case Deck', titlePl: 'Deck case inwestycyjnego', desc: 'NPV/IRR/ROI decision support', descPl: 'Wsparcie decyzji NPV/IRR/ROI' },
-    { id: 'bt-deck-digital', title: 'Digital Transformation Assessment', titlePl: 'Ocena transformacji cyfrowej', desc: 'Maturity, gaps, recommendations', descPl: 'Dojrzałość, luki, rekomendacje' },
+    {
+      id: 'bt-deck-steering',
+      title: 'Steering Committee Deck',
+      titlePl: 'Deck dla Komitetu Sterującego',
+      desc: 'Board-level status presentation',
+      descPl: 'Prezentacja statusu dla zarządu',
+    },
+    {
+      id: 'bt-deck-status',
+      title: 'Project Status Update',
+      titlePl: 'Status update projektu',
+      desc: 'Weekly/monthly progress slides',
+      descPl: 'Slajdy postępu tygodniowego/miesięcznego',
+    },
+    {
+      id: 'bt-deck-pitch',
+      title: 'Pitch Deck',
+      titlePl: 'Pitch Deck',
+      desc: 'Investor / stakeholder pitch',
+      descPl: 'Pitch dla inwestorów / interesariuszy',
+    },
+    {
+      id: 'bt-deck-workshop',
+      title: 'Workshop Facilitation Deck',
+      titlePl: 'Deck warsztatowy',
+      desc: 'Interactive exercises and agenda',
+      descPl: 'Interaktywne ćwiczenia i agenda',
+    },
+    {
+      id: 'bt-deck-qbr',
+      title: 'Quarterly Business Review',
+      titlePl: 'Kwartalny przegląd biznesowy',
+      desc: 'QBR metrics and roadmap',
+      descPl: 'Metryki QBR i roadmapa',
+    },
+    {
+      id: 'bt-deck-strategy',
+      title: 'Strategy Roadmap',
+      titlePl: 'Roadmapa strategiczna',
+      desc: 'Vision, goals, milestones',
+      descPl: 'Wizja, cele, kamienie milowe',
+    },
+    {
+      id: 'bt-deck-invest',
+      title: 'Investment Case Deck',
+      titlePl: 'Deck case inwestycyjnego',
+      desc: 'NPV/IRR/ROI decision support',
+      descPl: 'Wsparcie decyzji NPV/IRR/ROI',
+    },
+    {
+      id: 'bt-deck-digital',
+      title: 'Digital Transformation Assessment',
+      titlePl: 'Ocena transformacji cyfrowej',
+      desc: 'Maturity, gaps, recommendations',
+      descPl: 'Dojrzałość, luki, rekomendacje',
+    },
+  ],
+  tabele: [
+    {
+      id: 'bt-tab-rolereg',
+      title: 'Role Register',
+      titlePl: 'Rejestr ról',
+      desc: 'Roles, owners, RACI matrix per initiative',
+      descPl: 'Role, właściciele, macierz RACI per inicjatywa',
+    },
+    {
+      id: 'bt-tab-vendor',
+      title: 'Vendor Master Data',
+      titlePl: 'Master danych dostawców',
+      desc: 'Vendor master data, contracts, status, SLAs',
+      descPl: 'Master danych dostawców, umowy, status, SLA',
+    },
+    {
+      id: 'bt-tab-okrset',
+      title: 'OKR Set',
+      titlePl: 'Zestaw OKR',
+      desc: 'Objectives and key results with check-ins',
+      descPl: 'Cele i kluczowe rezultaty z check-inami',
+    },
+    {
+      id: 'bt-tab-incidentlog',
+      title: 'Incident Log',
+      titlePl: 'Log incydentów',
+      desc: 'Operational incidents with severity and owners',
+      descPl: 'Incydenty operacyjne z severity i właścicielami',
+    },
+    {
+      id: 'bt-tab-clientreg',
+      title: 'Client Registry',
+      titlePl: 'Rejestr klientów',
+      desc: 'Customer accounts, segment, lifecycle',
+      descPl: 'Konta klientów, segment, cykl życia',
+    },
+    {
+      id: 'bt-tab-tasktracker',
+      title: 'Task Tracker',
+      titlePl: 'Tracker zadań',
+      desc: 'Cross-team task backlog with owners and due dates',
+      descPl: 'Backlog zadań między zespołami z właścicielami i terminami',
+    },
+    {
+      id: 'bt-tab-meetingbacklog',
+      title: 'Meeting Backlog',
+      titlePl: 'Backlog spotkań',
+      desc: 'Pending meetings, agenda items, follow-ups',
+      descPl: 'Oczekujące spotkania, punkty agendy, follow-upy',
+    },
+    {
+      id: 'bt-tab-decisionlog',
+      title: 'Decision Log',
+      titlePl: 'Log decyzji',
+      desc: 'Captured decisions, owners, rationale, status',
+      descPl: 'Zapisane decyzje, właściciele, uzasadnienie, status',
+    },
   ],
 };
 
-function TemplatesGrid({ templates, loading, onTemplateClick, isPolish, lane }: TemplatesGridProps) {
+function TemplatesGrid({
+  templates,
+  loading,
+  onTemplateClick,
+  isPolish,
+  lane,
+}: TemplatesGridProps) {
   const builtinCards = BUILTIN_TEMPLATES[lane];
 
   const allCards = useMemo(() => {
@@ -291,14 +525,26 @@ function TemplatesGrid({ templates, loading, onTemplateClick, isPolish, lane }: 
 }
 
 interface ArtifactsListProps {
-  artifacts: Array<{ originRecordId: string; artifactId?: string; title: string; updatedAt: string; statusKey: string }>;
+  artifacts: Array<{
+    originRecordId: string;
+    artifactId?: string;
+    title: string;
+    updatedAt: string;
+    statusKey: string;
+  }>;
   loading: boolean;
   onArtifactClick: (id: string) => void;
   isPolish: boolean;
   emptyLabel: string;
 }
 
-function ArtifactsList({ artifacts, loading, onArtifactClick, isPolish, emptyLabel }: ArtifactsListProps) {
+function ArtifactsList({
+  artifacts,
+  loading,
+  onArtifactClick,
+  isPolish,
+  emptyLabel,
+}: ArtifactsListProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -319,12 +565,14 @@ function ArtifactsList({ artifacts, loading, onArtifactClick, isPolish, emptyLab
   return (
     <div className="space-y-2">
       {artifacts.map((item) => {
-        const id = item.artifactId || item.originRecordId;
+        const id = item.originRecordId || item.artifactId;
         const d = new Date(item.updatedAt);
+        if (!id) return null;
+        const safeId = id;
         return (
           <button
-            key={id}
-            onClick={() => onArtifactClick(id)}
+            key={safeId}
+            onClick={() => onArtifactClick(safeId)}
             className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
           >
             <div className="min-w-0 flex-1">

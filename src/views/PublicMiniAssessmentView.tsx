@@ -7,12 +7,12 @@ import {
   ArrowRight,
   BarChart3,
   CheckCircle2,
+  Copy,
   Loader2,
   Mail,
   Sparkles,
   Star,
   TrendingUp,
-  Copy,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -133,7 +133,8 @@ export const PublicMiniAssessmentView: React.FC = () => {
     trackFunnelEvent('external_assessment_started');
   }, []);
 
-  const hasDraftAnswers = Array.isArray(assessmentData?.answers) && assessmentData.answers.length > 0;
+  const hasDraftAnswers =
+    Array.isArray(assessmentData?.answers) && assessmentData.answers.length > 0;
 
   const handleAnswer = useCallback((answer: SurveyAnswer) => {
     // No-op for public assessment — answers tracked internally by SurveyShell
@@ -243,7 +244,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
       case 'basic':
         return 'text-yellow-600';
       default:
-        return 'text-red-600';
+        return 'text-rose-600';
     }
   };
 
@@ -284,7 +285,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
   if (viewState === 'intro') {
     return (
       <div
-        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4"
+        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-primary-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 flex items-center justify-center p-4"
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
@@ -375,7 +376,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
   if (viewState === 'result' && aiResult) {
     return (
       <div
-        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 p-4 md:p-8"
+        className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-primary-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950 p-4 md:p-8"
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
         <div className="max-w-2xl mx-auto">
@@ -385,7 +386,9 @@ export const PublicMiniAssessmentView: React.FC = () => {
               <p className="text-xs uppercase tracking-[0.2em] text-indigo-100/80 mb-3">
                 {aiResult.resultLabel}
               </p>
-              <h1 className="text-xl font-bold mb-2">{t('publicAssessment.resultTitle', 'Your Readiness Score')}</h1>
+              <h1 className="text-xl font-bold mb-2">
+                {t('publicAssessment.resultTitle', 'Your Readiness Score')}
+              </h1>
               <div className="text-5xl font-bold mb-2">{aiResult.overallScore}%</div>
               <span
                 className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-white/20`}
@@ -480,7 +483,10 @@ export const PublicMiniAssessmentView: React.FC = () => {
               </h2>
               <div className="space-y-3">
                 {aiResult.answerSummary.map((entry) => (
-                  <div key={entry.questionId} className="rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3">
+                  <div
+                    key={entry.questionId}
+                    className="rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3"
+                  >
                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                       {entry.question}
                     </p>
@@ -546,7 +552,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
       </header>
       <div className="max-w-3xl mx-auto py-6">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
             {error}
           </div>
         )}

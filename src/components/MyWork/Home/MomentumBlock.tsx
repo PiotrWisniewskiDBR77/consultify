@@ -18,7 +18,9 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
     <HomeBlockShell block={block}>
       <div className="grid gap-2.5">
         <div>
-          <h4 className="text-sm font-semibold leading-tight text-white md:text-base">{payload.headline}</h4>
+          <h4 className="text-sm font-semibold leading-tight text-white md:text-base">
+            {payload.headline}
+          </h4>
           <p className="mt-1 text-[11px] leading-relaxed text-slate-300/80">{payload.summary}</p>
         </div>
 
@@ -31,7 +33,9 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
               <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">
                 {stat.label}
               </div>
-              <div className="mt-0.5 text-base font-semibold tabular-nums text-white">{stat.value}</div>
+              <div className="mt-0.5 text-base font-semibold tabular-nums text-white">
+                {stat.value}
+              </div>
               <div className="mt-0.5 text-[10px] text-slate-300/75">{stat.trend}</div>
             </div>
           ))}

@@ -15,21 +15,18 @@ import {
   AlertTriangle,
   Calendar,
   Check,
-  Clock,
   Copy,
-  Eye,
-  EyeOff,
   Key,
   Plus,
   RefreshCw,
   Shield,
   Trash2,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -37,14 +34,32 @@ import { ApiKey } from '../../types';
 
 // Available API permissions (scopes) - matches backend
 const API_PERMISSIONS = [
-  { id: 'read', label: 'Read', description: 'Read access to data' },
-  { id: 'write', label: 'Write', description: 'Create and update data' },
-  { id: 'delete', label: 'Delete', description: 'Delete data' },
-  { id: 'admin', label: 'Admin', description: 'Administrative operations' },
-  { id: 'ai', label: 'AI', description: 'AI and LLM operations' },
-  { id: 'export', label: 'Export', description: 'Export data' },
-  { id: 'projects', label: 'Projects', description: 'Project management' },
-  { id: 'assessments', label: 'Assessments', description: 'Assessment operations' },
+  { id: 'read:projects', label: 'Read projects', description: 'Read project data' },
+  { id: 'write:projects', label: 'Write projects', description: 'Create and modify projects' },
+  { id: 'read:tasks', label: 'Read tasks', description: 'Read task data' },
+  { id: 'write:tasks', label: 'Write tasks', description: 'Create and modify tasks' },
+  { id: 'read:calendar', label: 'Read calendar', description: 'Read calendar sources and items' },
+  {
+    id: 'write:calendar',
+    label: 'Write calendar',
+    description: 'Create and modify calendar sources and items',
+  },
+  {
+    id: 'read:integrations',
+    label: 'Read integrations',
+    description: 'Read integration connections and health',
+  },
+  {
+    id: 'write:integrations',
+    label: 'Write integrations',
+    description: 'Create and modify integration connections',
+  },
+  { id: 'read:reports', label: 'Read reports', description: 'Read reports and analytics' },
+  { id: 'write:reports', label: 'Write reports', description: 'Generate and export reports' },
+  { id: 'ai:execute', label: 'AI execute', description: 'Execute AI actions' },
+  { id: 'ai:read', label: 'AI read', description: 'Read AI insights and recommendations' },
+  { id: 'webhooks:manage', label: 'Webhooks', description: 'Manage webhook configurations' },
+  { id: 'full:access', label: 'Full access', description: 'Full API access' },
 ];
 
 interface ApiKeysManagementViewProps {
@@ -53,7 +68,7 @@ interface ApiKeysManagementViewProps {
 
 export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const { currentOrganization, currentUser } = useAppStore();
+  const { currentOrganization } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -62,6 +77,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
   const [newKeyValue, setNewKeyValue] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Form state
   const [newKeyForm, setNewKeyForm] = useState({
@@ -74,6 +90,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
   const loadApiKeys = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const data = await Api.get('/api/api-keys');
       // Map the response to match expected format
       setApiKeys(
@@ -84,18 +101,19 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
           description: k.description,
           keyPrefix: k.keyPrefix,
           keyHash: '***',
-          permissions: k.scopes || [],
+          permissions: k.permissions || k.scopes || [],
           expiresAt: k.expiresAt,
           lastUsedAt: k.lastUsedAt,
           createdBy: k.createdBy,
           createdAt: k.createdAt,
-          revokedAt: k.isRevoked ? k.revokedAt : undefined,
+          revokedAt: k.revokedAt || (k.status === 'revoked' ? k.updatedAt : undefined),
         }))
       );
     } catch (error: any) {
       console.error('Failed to load API keys:', error);
       toast.error(error.message || 'Failed to load API keys');
       setApiKeys([]);
+      setLoadError(error.message || 'Failed to load API keys');
     }
     setLoading(false);
   }, [currentOrganization?.id]);
@@ -134,15 +152,17 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
       const data = await Api.post('/api/api-keys', {
         name: newKeyForm.name,
         description: newKeyForm.description,
-        scopes: newKeyForm.permissions,
+        permissions: newKeyForm.permissions,
+        expiresInDays: newKeyForm.expiresIn ? parseInt(newKeyForm.expiresIn, 10) : undefined,
         expiresAt,
       });
 
-      if (data.success && data.key) {
-        setNewKeyValue(data.key.apiKey); // The full key is only returned once!
+      const plainTextKey = data.plainTextKey || data.apiKey || data.key?.apiKey || data.key?.key;
+      if (plainTextKey && data.key) {
+        setNewKeyValue(plainTextKey); // The full key is only returned once!
         setShowCreateModal(false);
         setShowNewKeyModal(true);
-        loadApiKeys();
+        await loadApiKeys();
         setNewKeyForm({ name: '', description: '', permissions: [], expiresIn: '90' });
         toast.success('API key created successfully');
       } else {
@@ -162,9 +182,9 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
     try {
       const data = await Api.delete(`/api/api-keys/${keyId}`);
 
-      if (data.success) {
+      if (data.success !== false) {
         toast.success('API key revoked');
-        loadApiKeys();
+        await loadApiKeys();
       } else {
         toast.error(data.error || 'Failed to revoke API key');
       }
@@ -229,7 +249,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -251,12 +271,15 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+          disabled={!!loadError}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
         >
           <Plus size={18} />
           Create API Key
         </button>
       </div>
+
+      {loadError && <DegradedState title="API keys unavailable" description={loadError} />}
 
       {/* Security Notice */}
       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
@@ -273,7 +296,11 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
       </div>
 
       {/* API Keys List */}
-      {apiKeys.length === 0 ? (
+      {loadError ? (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <DegradedState title="API key list unavailable" description={loadError} />
+        </div>
+      ) : apiKeys.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <Key className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No API Keys</h3>
@@ -282,7 +309,8 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+            disabled={!!loadError}
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
           >
             Create API Key
           </button>
@@ -294,7 +322,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
               key={key.id}
               className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
                 isKeyExpired(key)
-                  ? 'border-red-200 dark:border-red-800'
+                  ? 'border-rose-200 dark:border-rose-800'
                   : isKeyExpiringSoon(key)
                     ? 'border-amber-200 dark:border-amber-800'
                     : 'border-slate-200 dark:border-navy-700'
@@ -305,15 +333,15 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                   <div
                     className={`p-3 rounded-lg ${
                       isKeyExpired(key) || key.revokedAt
-                        ? 'bg-red-100 dark:bg-red-900/30'
-                        : 'bg-violet-100 dark:bg-violet-900/30'
+                        ? 'bg-rose-100 dark:bg-rose-900/30'
+                        : 'bg-primary-100 dark:bg-primary-900/30'
                     }`}
                   >
                     <Key
                       className={`w-5 h-5 ${
                         isKeyExpired(key) || key.revokedAt
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-violet-600 dark:text-violet-400'
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : 'text-primary-600 dark:text-primary-400'
                       }`}
                     />
                   </div>
@@ -321,12 +349,12 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-slate-900 dark:text-white">{key.name}</h3>
                       {isKeyExpired(key) && (
-                        <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 text-xs rounded-full">
                           Expired
                         </span>
                       )}
                       {key.revokedAt && (
-                        <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 text-xs rounded-full">
                           Revoked
                         </span>
                       )}
@@ -376,7 +404,8 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                   {!key.revokedAt && (
                     <button
                       onClick={() => handleRevokeKey(key.id)}
-                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600"
+                      disabled={!!loadError}
+                      className="p-2 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-rose-600"
                       title="Revoke key"
                     >
                       <Trash2 size={16} />
@@ -464,7 +493,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                         key={perm.id}
                         className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                           newKeyForm.permissions.includes(perm.id)
-                            ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800'
+                            ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800'
                             : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
                         }`}
                       >
@@ -472,7 +501,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                           type="checkbox"
                           checked={newKeyForm.permissions.includes(perm.id)}
                           onChange={() => togglePermission(perm.id)}
-                          className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                          className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
                         />
                         <div>
                           <span className="font-medium text-slate-900 dark:text-white text-sm">
@@ -497,7 +526,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                 <button
                   onClick={handleCreateKey}
                   disabled={creating || !newKeyForm.name || newKeyForm.permissions.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {creating && <RefreshCw className="w-4 h-4 animate-spin" />}
                   Create Key
@@ -530,14 +559,14 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                 </h3>
               </div>
               <div className="p-6 space-y-4">
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
+                    <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                      <p className="text-sm font-medium text-rose-800 dark:text-rose-200">
                         This key will only be shown once!
                       </p>
-                      <p className="text-xs text-red-600 dark:text-red-300 mt-1">
+                      <p className="text-xs text-rose-600 dark:text-rose-300 mt-1">
                         Make sure to copy it now. You won't be able to see it again.
                       </p>
                     </div>
@@ -554,7 +583,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     </code>
                     <button
                       onClick={() => copyToClipboard(newKeyValue)}
-                      className="flex-shrink-0 p-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg"
+                      className="flex-shrink-0 p-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg"
                     >
                       {copiedKey === 'new' ? <Check size={18} /> : <Copy size={18} />}
                     </button>
@@ -567,7 +596,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     setShowNewKeyModal(false);
                     setNewKeyValue('');
                   }}
-                  className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
                 >
                   I've Copied the Key
                 </button>

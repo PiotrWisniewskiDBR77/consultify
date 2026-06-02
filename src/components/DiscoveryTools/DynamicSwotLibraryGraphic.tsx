@@ -202,15 +202,15 @@ export function DynamicSwotLibraryGraphic({
       id: 1,
       title: labels.stage1,
       value: labels.stage1Value,
-      tone: 'from-violet-500/18 to-fuchsia-500/8',
-      accent: 'bg-violet-500',
+      tone: 'from-primary-500/18 to-fuchsia-500/8',
+      accent: 'bg-primary-500',
       badge: null,
     },
     {
       id: 2,
       title: labels.stage2,
       value: labels.stage2Value,
-      tone: 'from-sky-500/18 to-cyan-500/8',
+      tone: 'from-sky-500/18 to-blue-500/8',
       accent: 'bg-sky-500',
       badge: null,
     },
@@ -218,7 +218,7 @@ export function DynamicSwotLibraryGraphic({
       id: 3,
       title: labels.stage3,
       value: labels.stage3Value,
-      tone: 'from-emerald-500/18 to-teal-500/8',
+      tone: 'from-emerald-500/18 to-blue-500/8',
       accent: 'bg-emerald-500',
       badge: null,
     },
@@ -226,7 +226,7 @@ export function DynamicSwotLibraryGraphic({
       id: 4,
       title: labels.stage4,
       value: labels.stage4Value,
-      tone: 'from-amber-500/22 to-orange-500/10',
+      tone: 'from-amber-500/22 to-amber-500/10',
       accent: 'bg-amber-500',
       badge: labels.stage4Badge,
     },
@@ -234,8 +234,8 @@ export function DynamicSwotLibraryGraphic({
       id: 5,
       title: labels.stage5,
       value: labels.stage5Value,
-      tone: 'from-violet-500/22 to-indigo-500/10',
-      accent: 'bg-violet-600',
+      tone: 'from-primary-500/22 to-indigo-500/10',
+      accent: 'bg-primary-600',
       badge: labels.stage5Badge,
     },
   ];
@@ -280,7 +280,7 @@ export function DynamicSwotLibraryGraphic({
       <div className="border-b border-slate-200/70 px-5 py-5 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-200">
+            <span className="inline-flex items-center rounded-full border border-primary-400/20 bg-primary-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-200">
               {labels.eyebrow}
             </span>
             <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
@@ -309,8 +309,8 @@ export function DynamicSwotLibraryGraphic({
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-violet-200/80 bg-violet-500/5 p-4 shadow-sm dark:border-violet-900/40">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+        <div className="rounded-[22px] border border-primary-200/80 bg-primary-500/5 p-4 shadow-sm dark:border-primary-900/40">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
             {labels.decision}
           </div>
           <div className="mt-2 text-sm font-medium leading-relaxed text-slate-900 dark:text-white">
@@ -367,7 +367,7 @@ export function DynamicSwotLibraryGraphic({
             {stages.slice(3).map((stage) => (
               <div
                 key={stage.id}
-                className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${stage.tone} p-3 shadow-sm ring-1 ring-white/30 dark:border-white/10 dark:ring-violet-400/20`}
+                className={`rounded-2xl border border-slate-200/70 bg-gradient-to-br ${stage.tone} p-3 shadow-sm ring-1 ring-white/30 dark:border-white/10 dark:ring-primary-400/20`}
               >
                 <div className="flex items-center gap-2">
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">
@@ -467,12 +467,12 @@ export function DynamicSwotLibraryGraphic({
           </ul>
         </div>
 
-        <div className="rounded-[26px] border border-violet-200/70 bg-violet-500/5 p-4 shadow-sm dark:border-violet-900/40">
+        <div className="rounded-[26px] border border-primary-200/70 bg-primary-500/5 p-4 shadow-sm dark:border-primary-900/40">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
               {labels.moves}
             </div>
-            <span className="inline-flex rounded-full border border-violet-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200">
+            <span className="inline-flex rounded-full border border-primary-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
               {labels.stage5Badge}
             </span>
           </div>
@@ -482,7 +482,7 @@ export function DynamicSwotLibraryGraphic({
           <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
             {labels.moveItems.map((item) => (
               <li key={item} className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500" />
                 <span>{item}</span>
               </li>
             ))}

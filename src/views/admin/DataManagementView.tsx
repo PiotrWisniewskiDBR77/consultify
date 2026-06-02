@@ -12,24 +12,20 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
   Archive,
-  Calendar,
-  Check,
   Clock,
   Database,
   Download,
-  Eye,
   FileText,
   FolderOpen,
-  Lock,
   RefreshCw,
   Shield,
-  Trash2,
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -48,7 +44,7 @@ interface DataManagementViewProps {
 
 export const DataManagementView: React.FC<DataManagementViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const { currentOrganization, currentUser } = useAppStore();
+  const { currentOrganization } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState<string | null>(null);
@@ -56,6 +52,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [statsLoadError, setStatsLoadError] = useState<string | null>(null);
 
   // Data categories
   const [dataCategories, setDataCategories] = useState<DataCategory[]>([
@@ -64,42 +61,42 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
       name: 'Users & Team',
       description: 'User accounts, profiles, and team structure',
       icon: <Users size={20} />,
-      recordCount: 45,
+      recordCount: 0,
     },
     {
       id: 'projects',
       name: 'Projects',
       description: 'All projects and associated data',
       icon: <FolderOpen size={20} />,
-      recordCount: 12,
+      recordCount: 0,
     },
     {
       id: 'tasks',
       name: 'Tasks & Activities',
       description: 'Tasks, comments, and activity logs',
       icon: <FileText size={20} />,
-      recordCount: 1283,
+      recordCount: 0,
     },
     {
       id: 'decisions',
       name: 'Decisions',
       description: 'Decisions and voting records',
       icon: <Shield size={20} />,
-      recordCount: 87,
+      recordCount: 0,
     },
     {
       id: 'documents',
       name: 'Documents',
       description: 'Uploaded files and documents',
       icon: <Archive size={20} />,
-      recordCount: 234,
+      recordCount: 0,
     },
     {
       id: 'audit',
       name: 'Audit Logs',
       description: 'Activity and security logs',
       icon: <Clock size={20} />,
-      recordCount: 15420,
+      recordCount: 0,
     },
   ]);
 
@@ -111,22 +108,26 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      setStatsLoadError(null);
       const res = await fetch('/api/organization-data/stats', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.stats) {
-          setDataCategories((prev) =>
-            prev.map((cat) => ({
-              ...cat,
-              recordCount: data.stats[cat.id] || cat.recordCount,
-            }))
-          );
-        }
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      const data = await res.json();
+      if (!data.success || !data.stats) {
+        throw new Error('Organization data statistics are unavailable');
+      }
+      setDataCategories((prev) =>
+        prev.map((cat) => ({
+          ...cat,
+          recordCount: data.stats[cat.id] ?? 0,
+        }))
+      );
     } catch (error) {
       console.error('Failed to load data stats:', error);
+      setStatsLoadError(error instanceof Error ? error.message : 'Failed to load data statistics');
     }
     setLoading(false);
   }, []);
@@ -223,10 +224,13 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
 
     setDeleting(true);
     try {
-      await fetch(`/api/organizations/${currentOrganization?.id}`, {
+      const res = await fetch(`/api/organizations/${currentOrganization?.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       toast.success('Organization deletion initiated');
       // Redirect or logout
     } catch (error) {
@@ -240,7 +244,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
       </div>
     );
   }
@@ -265,13 +269,17 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
         </div>
         <button
           onClick={handleExportAll}
-          disabled={exportingAll}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
+          disabled={exportingAll || !!statsLoadError}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium disabled:opacity-50"
         >
           {exportingAll ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />}
           Export All Data
         </button>
       </div>
+
+      {statsLoadError && (
+        <DegradedState title="Data inventory unavailable" description={statsLoadError} />
+      )}
 
       {/* GDPR Notice */}
       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-3">
@@ -287,69 +295,77 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
       </div>
 
       {/* Data Summary */}
-      <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-slate-900 dark:text-white">Data Summary</h3>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
-            Total: <span className="font-semibold">{totalRecords.toLocaleString()}</span> records
-          </span>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {dataCategories.map((category) => (
-            <div key={category.id} className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
-              <div className="flex items-center gap-2 mb-2 text-slate-600 dark:text-slate-400">
-                {category.icon}
-                <span className="text-xs font-medium">{category.name}</span>
+      {!statsLoadError && (
+        <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-slate-900 dark:text-white">Data Summary</h3>
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              Total: <span className="font-semibold">{totalRecords.toLocaleString()}</span> records
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {dataCategories.map((category) => (
+              <div key={category.id} className="p-3 bg-slate-50 dark:bg-navy-900 rounded-lg">
+                <div className="flex items-center gap-2 mb-2 text-slate-600 dark:text-slate-400">
+                  {category.icon}
+                  <span className="text-xs font-medium">{category.name}</span>
+                </div>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">
+                  {category.recordCount.toLocaleString()}
+                </p>
               </div>
-              <p className="text-lg font-bold text-slate-900 dark:text-white">
-                {category.recordCount.toLocaleString()}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Export by Category */}
-      <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-        <h3 className="font-medium text-slate-900 dark:text-white mb-4">Export by Category</h3>
-        <div className="space-y-3">
-          {dataCategories.map((category) => (
-            <div
-              key={category.id}
-              className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900 rounded-lg"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-400">
-                  {category.icon}
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900 dark:text-white">{category.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {category.description}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                  {category.recordCount.toLocaleString()} records
-                </span>
-                <button
-                  onClick={() => handleExportCategory(category.id)}
-                  disabled={exporting === category.id}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 rounded-lg text-sm font-medium disabled:opacity-50"
-                >
-                  {exporting === category.id ? (
-                    <RefreshCw size={14} className="animate-spin" />
-                  ) : (
-                    <Download size={14} />
-                  )}
-                  Export
-                </button>
-              </div>
-            </div>
-          ))}
+      {statsLoadError ? (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <DegradedState title="Data export unavailable" description={statsLoadError} />
         </div>
-      </div>
+      ) : (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <h3 className="font-medium text-slate-900 dark:text-white mb-4">Export by Category</h3>
+          <div className="space-y-3">
+            {dataCategories.map((category) => (
+              <div
+                key={category.id}
+                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-900 rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-400">
+                    {category.icon}
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900 dark:text-white">{category.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {category.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {category.recordCount.toLocaleString()} records
+                  </span>
+                  <button
+                    onClick={() => handleExportCategory(category.id)}
+                    disabled={exporting === category.id}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 rounded-lg text-sm font-medium disabled:opacity-50"
+                  >
+                    {exporting === category.id ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : (
+                      <Download size={14} />
+                    )}
+                    Export
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Data Retention */}
       <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
@@ -357,6 +373,11 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
           <Clock size={18} />
           Data Retention Policy
         </h3>
+        <ReadOnlyState
+          title="Retention policy editing is read-only"
+          description="Current retention settings are not loaded from the backend yet, so the defaults below are not saved state."
+          className="mb-4"
+        />
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -365,6 +386,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
             <select
               value={retentionPeriod}
               onChange={(e) => setRetentionPeriod(e.target.value)}
+              disabled
               className="w-full max-w-xs px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg"
             >
               <option value="30">30 days</option>
@@ -384,6 +406,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
               id="autoDelete"
               checked={autoDeleteInactive}
               onChange={(e) => setAutoDeleteInactive(e.target.checked)}
+              disabled
               className="mt-0.5"
             />
             <div>
@@ -400,6 +423,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                 <select
                   value={inactivePeriod}
                   onChange={(e) => setInactivePeriod(e.target.value)}
+                  disabled
                   className="mt-2 px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
                 >
                   <option value="180">After 180 days</option>
@@ -412,7 +436,8 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
 
           <button
             onClick={handleSaveRetention}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+            disabled
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium"
           >
             Save Retention Settings
           </button>
@@ -420,13 +445,13 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
       </div>
 
       {/* Danger Zone */}
-      <div className="p-6 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
-        <h3 className="font-medium text-red-800 dark:text-red-200 mb-4 flex items-center gap-2">
+      <div className="p-6 bg-rose-50 dark:bg-rose-900/20 rounded-xl border border-rose-200 dark:border-rose-800">
+        <h3 className="font-medium text-rose-800 dark:text-rose-200 mb-4 flex items-center gap-2">
           <AlertTriangle size={18} />
           Danger Zone
         </h3>
         <div className="space-y-4">
-          <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-red-200 dark:border-red-800">
+          <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-rose-200 dark:border-rose-800">
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-medium text-slate-900 dark:text-white">Delete Organization</p>
@@ -437,7 +462,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
               </div>
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-medium"
               >
                 Delete
               </button>
@@ -462,17 +487,17 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
               className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden"
             >
               <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-                <h3 className="text-lg font-semibold text-red-600 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-rose-600 flex items-center gap-2">
                   <AlertTriangle size={20} />
                   Delete Organization
                 </h3>
               </div>
               <div className="p-6 space-y-4">
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                  <p className="text-sm text-red-800 dark:text-red-200 font-medium">
+                <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+                  <p className="text-sm text-rose-800 dark:text-rose-200 font-medium">
                     This action is irreversible!
                   </p>
-                  <ul className="mt-2 text-xs text-red-700 dark:text-red-300 space-y-1">
+                  <ul className="mt-2 text-xs text-rose-700 dark:text-rose-300 space-y-1">
                     <li>• All users will lose access</li>
                     <li>• All projects and data will be deleted</li>
                     <li>• Active subscriptions will be cancelled</li>
@@ -507,7 +532,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                 <button
                   onClick={handleDeleteOrganization}
                   disabled={deleting || deleteConfirmation !== currentOrganization?.name}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-medium disabled:opacity-50"
                 >
                   {deleting && <RefreshCw className="w-4 h-4 animate-spin" />}
                   Delete Organization

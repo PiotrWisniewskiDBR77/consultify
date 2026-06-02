@@ -153,8 +153,8 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-          <Link2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+          <Link2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
         </div>
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
@@ -173,7 +173,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
               key={tension.id}
               className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
             >
-              <div className="text-xs uppercase tracking-wide text-purple-500 mb-1">
+              <div className="text-xs uppercase tracking-wide text-primary-500 mb-1">
                 {tension.type}
               </div>
               <div className="text-sm font-medium text-slate-900 dark:text-white">

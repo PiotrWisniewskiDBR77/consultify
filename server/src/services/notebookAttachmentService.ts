@@ -5,14 +5,17 @@ import { v4 as uuidv4 } from 'uuid';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   P07_ATTACHMENT_ERROR_TAXONOMY,
-  type P07AttachmentState,
   type P07AttachmentError,
+  type P07AttachmentState,
 } from './v8/notebookCanon.js';
 
 const NOTEBOOK_ATTACHMENT_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'notebook-attachments');
 const MAX_NOTEBOOK_ATTACHMENT_SIZE = 25 * 1024 * 1024;
 const NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES = 3;
-const NOTEBOOK_ATTACHMENT_STAGING_DIR = path.join(NOTEBOOK_ATTACHMENT_UPLOAD_DIR, '.staging-delete');
+const NOTEBOOK_ATTACHMENT_STAGING_DIR = path.join(
+  NOTEBOOK_ATTACHMENT_UPLOAD_DIR,
+  '.staging-delete'
+);
 const BLOCKED_EXTENSIONS = new Set([
   '.exe',
   '.bat',
@@ -111,7 +114,11 @@ async function loadPageAttachments(pageId: string): Promise<NotebookAttachmentRe
     [pageId]
   );
   if (!row) {
-    throw new NotebookAttachmentMutationError(404, 'NOTEBOOK_PAGE_NOT_FOUND', 'Notebook page not found');
+    throw new NotebookAttachmentMutationError(
+      404,
+      'NOTEBOOK_PAGE_NOT_FOUND',
+      'Notebook page not found'
+    );
   }
   return parseNotebookAttachments(row.attachmentsJson);
 }
@@ -236,7 +243,10 @@ export function classifyAttachmentError(
   const errno = (error as NodeJS.ErrnoException)?.code;
 
   if (errno === 'ENOSPC') {
-    return { errorType: 'storage_unavailable', ...P07_ATTACHMENT_ERROR_TAXONOMY.storage_unavailable };
+    return {
+      errorType: 'storage_unavailable',
+      ...P07_ATTACHMENT_ERROR_TAXONOMY.storage_unavailable,
+    };
   }
   if (errno === 'EACCES' || errno === 'EPERM') {
     return { errorType: 'permission_denied', ...P07_ATTACHMENT_ERROR_TAXONOMY.permission_denied };
@@ -373,7 +383,11 @@ export async function addNotebookAttachmentsToPage(params: {
     for (const file of params.files) {
       let lastLifecycleError: AttachmentLifecycleError | undefined;
 
-      for (let retryAttempt = 0; retryAttempt < NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES; retryAttempt += 1) {
+      for (
+        let retryAttempt = 0;
+        retryAttempt < NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES;
+        retryAttempt += 1
+      ) {
         try {
           const attachment = await persistNotebookAttachment({
             organizationId: params.organizationId,
@@ -421,9 +435,7 @@ export async function addNotebookAttachmentsToPage(params: {
       }
 
       const nextAttachments = [...currentAttachments, ...uploaded];
-      if (
-        await compareAndSwapPageAttachments(params.pageId, currentAttachments, nextAttachments)
-      ) {
+      if (await compareAndSwapPageAttachments(params.pageId, currentAttachments, nextAttachments)) {
         return nextAttachments;
       }
     }

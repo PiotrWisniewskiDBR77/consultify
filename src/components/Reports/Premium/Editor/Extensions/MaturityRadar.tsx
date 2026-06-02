@@ -258,7 +258,7 @@ export const MaturityRadarExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(MaturityRadarComponent);
+    return ReactNodeViewRenderer(MaturityRadarComponent) as any;
   },
 });
 

@@ -28,12 +28,12 @@ export const BUSINESS_AREAS = [
 
 export const MATURITY_LEVELS = [
   { level: 7, name: 'Autonomous', namePl: 'Autonomiczny', color: '#ec4899' },
-  { level: 6, name: 'AI-Driven', namePl: 'AI-Driven', color: '#8b5cf6' },
+  { level: 6, name: 'AI-Driven', namePl: 'AI-Driven', color: '#6366f1' },
   { level: 5, name: 'Optimized', namePl: 'Zoptymalizowany', color: '#3b82f6' },
   { level: 4, name: 'Automated', namePl: 'Zautomatyzowany', color: '#22c55e' },
   { level: 3, name: 'Integrated', namePl: 'Zintegrowany', color: '#eab308' },
-  { level: 2, name: 'Digitized', namePl: 'Zdigitalizowany', color: '#f97316' },
-  { level: 1, name: 'Basic/Manual', namePl: 'Podstawowy/Ręczny', color: '#ef4444' },
+  { level: 2, name: 'Digitized', namePl: 'Zdigitalizowany', color: '#f59e0b' },
+  { level: 1, name: 'Basic/Manual', namePl: 'Podstawowy/Ręczny', color: '#f43f5e' },
 ] as const;
 
 // ============================================================================
@@ -99,7 +99,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
 
   // Get gap color based on size
   const getGapColor = (gap: number): string => {
-    if (gap >= 3) return '#ef4444'; // Critical
+    if (gap >= 3) return '#f43f5e'; // Critical
     if (gap >= 2) return '#f59e0b'; // High
     if (gap >= 1) return '#eab308'; // Medium
     return '#22c55e'; // Low
@@ -303,7 +303,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
         </div>
         <div className="legend-separator">|</div>
         <div className="legend-item">
-          <span className="priority-dot" style={{ background: '#ef4444' }}></span>
+          <span className="priority-dot" style={{ background: '#f43f5e' }}></span>
           <span>{isPolish ? 'Krytyczny (≥3)' : 'Critical (≥3)'}</span>
         </div>
         <div className="legend-item">
@@ -328,7 +328,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                     margin: 24px 0;
                 }
-                
+
                 .matrix-header {
                     display: flex;
                     justify-content: space-between;
@@ -337,29 +337,29 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     flex-wrap: wrap;
                     gap: 16px;
                 }
-                
+
                 .matrix-title {
                     display: flex;
                     align-items: center;
                     gap: 12px;
                 }
-                
+
                 .matrix-title .axis-icon {
                     font-size: 28px;
                 }
-                
+
                 .matrix-title h3 {
                     margin: 0;
                     font-size: 18px;
                     font-weight: 600;
                     color: #1e1b4b;
                 }
-                
+
                 .matrix-summary {
                     display: flex;
                     gap: 16px;
                 }
-                
+
                 .summary-card {
                     display: flex;
                     flex-direction: column;
@@ -368,35 +368,35 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     background: #f8fafc;
                     border-radius: 8px;
                 }
-                
+
                 .summary-card .summary-value {
                     font-size: 20px;
                     font-weight: 700;
                 }
-                
+
                 .summary-card .summary-label {
                     font-size: 11px;
                     color: #64748b;
                 }
-                
+
                 .matrix-table-wrapper {
                     overflow-x: auto;
                 }
-                
+
                 .matrix-table {
                     width: 100%;
                     border-collapse: collapse;
                     font-size: 13px;
                     min-width: 900px;
                 }
-                
+
                 .matrix-table th,
                 .matrix-table td {
                     border: 1px solid #e5e7eb;
                     padding: 8px;
                     text-align: center;
                 }
-                
+
                 .level-header {
                     background: #1e1b4b;
                     color: white;
@@ -405,7 +405,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     padding: 12px !important;
                     min-width: 140px;
                 }
-                
+
                 .area-header {
                     background: #1e1b4b;
                     color: white;
@@ -414,116 +414,116 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     min-width: 85px;
                     transition: background 0.2s;
                 }
-                
+
                 .area-header:hover {
                     background: #312e81;
                 }
-                
+
                 .area-header .area-icon {
                     display: block;
                     font-size: 18px;
                     margin-bottom: 4px;
                 }
-                
+
                 .area-header .area-name {
                     display: block;
                     font-size: 10px;
                     line-height: 1.2;
                 }
-                
+
                 .level-cell {
                     text-align: left !important;
                     padding: 10px 12px !important;
                     font-weight: 500;
                 }
-                
+
                 .level-cell .level-number {
                     font-weight: 700;
                     margin-right: 8px;
                 }
-                
+
                 .level-cell .level-name {
                     font-size: 12px;
                 }
-                
+
                 .matrix-cell {
                     height: 44px;
                     transition: background 0.2s;
                 }
-                
+
                 .matrix-cell:hover {
                     background: #f1f5f9;
                 }
-                
+
                 .matrix-cell.current {
                     background: #3b82f620;
                 }
-                
+
                 .matrix-cell.target {
                     background: #10b98120;
                 }
-                
+
                 .matrix-cell.current.target {
                     background: linear-gradient(135deg, #3b82f620 50%, #10b98120 50%);
                 }
-                
+
                 .marker {
                     font-size: 16px;
                 }
-                
+
                 .marker.current {
                     color: #3b82f6;
                 }
-                
+
                 .marker.target {
                     color: #10b981;
                 }
-                
+
                 .marker.both {
                     background: linear-gradient(90deg, #3b82f6 50%, #10b981 50%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
                     background-clip: text;
                 }
-                
+
                 .separator-row td {
                     height: 4px;
                     background: #1e1b4b;
                     padding: 0 !important;
                     border: none;
                 }
-                
+
                 .summary-row td {
                     font-weight: 600;
                     padding: 10px 8px !important;
                 }
-                
+
                 .summary-label-cell {
                     background: #f8fafc;
                     text-align: left !important;
                 }
-                
+
                 .summary-value-cell.current {
                     color: #3b82f6;
                     font-size: 15px;
                 }
-                
+
                 .summary-value-cell.target {
                     color: #10b981;
                     font-size: 15px;
                 }
-                
+
                 .summary-value-cell.gap {
                     font-size: 15px;
                     font-weight: 700;
                 }
-                
+
                 .summary-value-cell.priority {
                     font-size: 11px;
                     font-weight: 600;
                     border-radius: 4px;
                 }
-                
+
                 .matrix-legend {
                     display: flex;
                     flex-wrap: wrap;
@@ -534,49 +534,49 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     font-size: 12px;
                     color: #64748b;
                 }
-                
+
                 .legend-item {
                     display: flex;
                     align-items: center;
                     gap: 6px;
                 }
-                
+
                 .legend-marker.current {
                     color: #3b82f6;
                     font-size: 14px;
                 }
-                
+
                 .legend-marker.target {
                     color: #10b981;
                     font-size: 14px;
                 }
-                
+
                 .legend-separator {
                     color: #e5e7eb;
                 }
-                
+
                 .priority-dot {
                     width: 10px;
                     height: 10px;
                     border-radius: 50%;
                 }
-                
+
                 @media (max-width: 768px) {
                     .matrix-header {
                         flex-direction: column;
                         align-items: flex-start;
                     }
-                    
+
                     .matrix-summary {
                         width: 100%;
                         justify-content: space-between;
                     }
-                    
+
                     .area-header .area-name {
                         font-size: 9px;
                     }
                 }
-                
+
                 @media print {
                     .area-matrix-container {
                         box-shadow: none;

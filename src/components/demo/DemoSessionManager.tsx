@@ -16,10 +16,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useDemo } from '../../hooks/useDemo';
 import { useDemoSession } from '../../hooks/useDemoSession';
+import { Api } from '../../services/api';
 import { trackTourCompleted, trackUpgradeClick } from '../../services/demoAnalyticsService';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { DemoConversionCTA, type ValueMomentType } from './DemoConversionCTA';
 import { DemoLoadingOverlay } from './DemoLoadingOverlay';
@@ -56,13 +57,11 @@ const CONFIG = {
 export const DemoSessionManager: React.FC = () => {
   const { t } = useTranslation();
   const { currentUser, isDemoMode, isDemoLoading } = useAppStore();
+  const { demoExperienceType, exitDemoMode } = useDemo();
   const {
     isDemo,
-    sessionStartTime,
     sessionDurationMs,
     timeRemainingMs,
-    aiInteractionsRemaining,
-    aiInteractionsLimit,
     hasCompletedTour,
     hasSeenWelcome,
     featuresExplored,
@@ -73,6 +72,7 @@ export const DemoSessionManager: React.FC = () => {
     markExitIntent,
     extendSession,
   } = useDemoSession();
+  const isWorkspaceDemo = demoExperienceType === 'workspace_demo';
 
   // Get session ID for analytics
   const sessionId = sessionStorage.getItem('demo_session_id') || 'unknown';
@@ -96,7 +96,7 @@ export const DemoSessionManager: React.FC = () => {
 
   // Exit intent detection
   const { showExitIntent, dismissExitIntent } = useExitIntent({
-    disabled: !isDemo,
+    disabled: !isDemo || isWorkspaceDemo,
     delayMs: 10000, // Wait 10 seconds before enabling
     triggerOnce: true,
   });
@@ -137,10 +137,19 @@ export const DemoSessionManager: React.FC = () => {
     trackFunnelEvent('demo_started', {
       source: entrySource || 'demo_session',
       isDemoMode,
+      demoExperienceType: demoExperienceType || 'sales_demo',
       organization: demoOrgName,
       scenarioCount: demoScenarios.length,
     });
-  }, [demoOrgName, demoScenarios.length, entrySource, isDemo, isDemoMode, sessionId]);
+  }, [
+    demoExperienceType,
+    demoOrgName,
+    demoScenarios.length,
+    entrySource,
+    isDemo,
+    isDemoMode,
+    sessionId,
+  ]);
 
   // --------------------------------------------------------
   // TOUR TRIGGER
@@ -169,6 +178,7 @@ export const DemoSessionManager: React.FC = () => {
   // Time-based upgrade prompt
   useEffect(() => {
     if (!isDemo) return;
+    if (isWorkspaceDemo) return;
     if (upgradePromptsShown >= CONFIG.MAX_UPGRADE_PROMPTS) return;
     if (hasCompletedTour === false) return; // Wait for tour completion
 
@@ -177,11 +187,19 @@ export const DemoSessionManager: React.FC = () => {
       setShowUpgradePrompt(true);
       incrementUpgradePrompts();
     }
-  }, [isDemo, sessionDurationMs, upgradePromptsShown, hasCompletedTour, incrementUpgradePrompts]);
+  }, [
+    hasCompletedTour,
+    incrementUpgradePrompts,
+    isDemo,
+    isWorkspaceDemo,
+    sessionDurationMs,
+    upgradePromptsShown,
+  ]);
 
   // Feature exploration upgrade prompt
   useEffect(() => {
     if (!isDemo) return;
+    if (isWorkspaceDemo) return;
     if (upgradePromptsShown >= CONFIG.MAX_UPGRADE_PROMPTS) return;
 
     if (
@@ -195,7 +213,14 @@ export const DemoSessionManager: React.FC = () => {
         incrementUpgradePrompts();
       }
     }
-  }, [isDemo, featuresExplored, upgradePromptsShown, sessionDurationMs, incrementUpgradePrompts]);
+  }, [
+    featuresExplored,
+    incrementUpgradePrompts,
+    isDemo,
+    isWorkspaceDemo,
+    sessionDurationMs,
+    upgradePromptsShown,
+  ]);
 
   // --------------------------------------------------------
   // SESSION WARNINGS
@@ -249,19 +274,21 @@ export const DemoSessionManager: React.FC = () => {
     toast.success(
       t(
         'demo.tourComplete.message',
-        "You're ready to explore! This platform typically saves teams 3+ weeks of consulting work."
+        isWorkspaceDemo
+          ? "You're ready to explore the sample workspace. Use it as a safe reference before applying the same workflow in your own environment."
+          : "You're ready to explore! This platform typically saves teams 3+ weeks of consulting work."
       ),
       {
         duration: 5000,
         icon: '🎉',
         style: {
-          background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+          background: 'linear-gradient(135deg, #6366F1 0%, #6366F1 100%)',
           color: 'white',
           fontWeight: '500',
         },
       }
     );
-  }, [markTourCompleted, sessionId, t]);
+  }, [isWorkspaceDemo, markTourCompleted, sessionId, t]);
 
   const handleUpgradePromptClose = useCallback(() => {
     setShowUpgradePrompt(false);
@@ -280,6 +307,7 @@ export const DemoSessionManager: React.FC = () => {
   // T090: Value moment CTA trigger (can be called externally via window event)
   useEffect(() => {
     if (!isDemo) return;
+    if (isWorkspaceDemo) return;
 
     const handleValueMoment = (e: CustomEvent<{ type: ValueMomentType }>) => {
       setCurrentValueMoment(e.detail.type);
@@ -290,7 +318,7 @@ export const DemoSessionManager: React.FC = () => {
     window.addEventListener('demo:value_moment', handleValueMoment as EventListener);
     return () =>
       window.removeEventListener('demo:value_moment', handleValueMoment as EventListener);
-  }, [isDemo]);
+  }, [isDemo, isWorkspaceDemo]);
 
   const handleStartTrialFromCTA = useCallback(() => {
     setShowValueCTA(false);
@@ -306,6 +334,10 @@ export const DemoSessionManager: React.FC = () => {
 
   const handleContactSales = useCallback(
     (source: string = 'banner') => {
+      if (isWorkspaceDemo) {
+        void exitDemoMode();
+        return;
+      }
       // Track upgrade click
       trackUpgradeClick(sessionId, source);
 
@@ -314,7 +346,7 @@ export const DemoSessionManager: React.FC = () => {
         '_blank'
       );
     },
-    [sessionId]
+    [exitDemoMode, isWorkspaceDemo, sessionId]
   );
 
   // --------------------------------------------------------
@@ -341,16 +373,20 @@ export const DemoSessionManager: React.FC = () => {
         scenarios={demoScenarios}
       />
 
-      {/* Upgrade Prompt - Strategic moments */}
-      <DemoUpgradePrompt
-        isVisible={showUpgradePrompt}
-        onClose={handleUpgradePromptClose}
-        feature={upgradePromptFeature}
-        variant="toast"
-      />
+      {!isWorkspaceDemo && (
+        <>
+          {/* Upgrade Prompt - Strategic moments */}
+          <DemoUpgradePrompt
+            isVisible={showUpgradePrompt}
+            onClose={handleUpgradePromptClose}
+            feature={upgradePromptFeature}
+            variant="toast"
+          />
 
-      {/* Exit Intent Modal - When leaving */}
-      <ExitIntentModal isOpen={showExitIntent} onClose={handleExitIntentClose} />
+          {/* Exit Intent Modal - When leaving */}
+          <ExitIntentModal isOpen={showExitIntent} onClose={handleExitIntentClose} />
+        </>
+      )}
 
       {/* Session Warning Modal */}
       {showSessionWarning && (
@@ -358,27 +394,44 @@ export const DemoSessionManager: React.FC = () => {
           type={sessionWarningType}
           onExtend={handleExtendSession}
           onContactSales={() => handleContactSales('session_warning')}
+          actionLabel={
+            isWorkspaceDemo
+              ? t('demo.session.returnWorkspace', 'Back to my workspace')
+              : t('demo.session.fullAccess', 'Get Full Access')
+          }
           onDismiss={() => setShowSessionWarning(false)}
+          isWorkspaceDemo={isWorkspaceDemo}
         />
       )}
 
-      {/* T090: Persistent Trial Button */}
-      <DemoTrialButton onClick={() => setShowSignupModal(true)} />
+      {isWorkspaceDemo ? (
+        <WorkspaceDemoNextSteps
+          isVisible={!showTour}
+          organizationName={demoOrgName}
+          scenarios={demoScenarios}
+          onExit={exitDemoMode}
+        />
+      ) : (
+        <>
+          {/* T090: Persistent Trial Button */}
+          <DemoTrialButton onClick={() => setShowSignupModal(true)} />
 
-      {/* T090: Contextual Value Moment CTA */}
-      <DemoConversionCTA
-        isVisible={showValueCTA}
-        valueMoment={currentValueMoment}
-        onStartTrial={handleStartTrialFromCTA}
-        onDismiss={() => setShowValueCTA(false)}
-      />
+          {/* T090: Contextual Value Moment CTA */}
+          <DemoConversionCTA
+            isVisible={showValueCTA}
+            valueMoment={currentValueMoment}
+            onStartTrial={handleStartTrialFromCTA}
+            onDismiss={() => setShowValueCTA(false)}
+          />
 
-      {/* T090: Signup Modal */}
-      <DemoSignupModal
-        isOpen={showSignupModal}
-        onClose={() => setShowSignupModal(false)}
-        onSignupComplete={handleSignupComplete}
-      />
+          {/* T090: Signup Modal */}
+          <DemoSignupModal
+            isOpen={showSignupModal}
+            onClose={() => setShowSignupModal(false)}
+            onSignupComplete={handleSignupComplete}
+          />
+        </>
+      )}
     </>
   );
 };
@@ -391,35 +444,43 @@ interface SessionWarningModalProps {
   type: '1h' | '5min' | 'expired';
   onExtend: () => void;
   onContactSales: () => void;
+  actionLabel: string;
   onDismiss: () => void;
+  isWorkspaceDemo: boolean;
 }
 
 const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
   type,
   onExtend,
   onContactSales,
+  actionLabel,
   onDismiss,
+  isWorkspaceDemo,
 }) => {
   const getContent = () => {
     switch (type) {
       case '1h':
         return {
           title: 'Session Ending Soon',
-          description: 'Your demo session will expire in 1 hour. Would you like to extend it?',
+          description: isWorkspaceDemo
+            ? 'Your sample workspace will refresh in 1 hour. Extend the session if you want to keep exploring.'
+            : 'Your demo session will expire in 1 hour. Would you like to extend it?',
           showExtend: true,
         };
       case '5min':
         return {
           title: 'Session Almost Over',
-          description:
-            'Only 5 minutes left in your demo. Extend now or schedule a full demo with our team.',
+          description: isWorkspaceDemo
+            ? 'Only 5 minutes remain in this sample workspace. Extend it or return to your own workspace.'
+            : 'Only 5 minutes left in your demo. Extend now or schedule a full demo with our team.',
           showExtend: true,
         };
       case 'expired':
         return {
           title: 'Session Expired',
-          description:
-            'Your demo session has ended. Start a new session or get full access with your own data.',
+          description: isWorkspaceDemo
+            ? 'This sample workspace has expired. Start a fresh sample session or return to your own workspace.'
+            : 'Your demo session has ended. Start a new session or get full access with your own data.',
           showExtend: false,
         };
     }
@@ -454,16 +515,16 @@ const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
           {content.showExtend && (
             <button
               onClick={onExtend}
-              className="flex-1 py-3 px-6 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-all"
+              className="flex-1 py-3 px-6 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-xl transition-all"
             >
               Extend Session
             </button>
           )}
           <button
             onClick={onContactSales}
-            className="flex-1 py-3 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-purple-500/25"
+            className="flex-1 py-3 px-6 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-primary-500/25"
           >
-            Get Full Access
+            {actionLabel}
           </button>
         </div>
 
@@ -475,6 +536,83 @@ const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
             Remind me later
           </button>
         )}
+      </div>
+    </div>
+  );
+};
+
+interface WorkspaceDemoNextStepsProps {
+  isVisible: boolean;
+  organizationName: string;
+  scenarios: Array<{
+    id: string;
+    title: string;
+    duration?: string;
+    audience?: string;
+    persona?: string;
+  }>;
+  onExit: () => void | Promise<void>;
+}
+
+const WorkspaceDemoNextSteps: React.FC<WorkspaceDemoNextStepsProps> = ({
+  isVisible,
+  organizationName,
+  scenarios,
+  onExit,
+}) => {
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed bottom-6 left-6 z-40 max-w-md rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-navy-900/95">
+      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500 dark:text-indigo-300">
+        Sample workspace
+      </p>
+      <h3 className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+        {organizationName} is here to show you how the workflow looks in practice.
+      </h3>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        Review a guided scenario, note the flow you want to reuse, then return to your own workspace
+        to apply it on real data.
+      </p>
+      {scenarios.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {scenarios.slice(0, 3).map((scenario) => (
+            <div
+              key={scenario.id}
+              className="rounded-xl border border-slate-200 px-3 py-2 text-xs dark:border-white/10"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium text-slate-800 dark:text-slate-100">
+                  {scenario.title}
+                </span>
+                {scenario.duration ? (
+                  <span className="text-slate-400 dark:text-slate-500">{scenario.duration}</span>
+                ) : null}
+              </div>
+              {(scenario.persona || scenario.audience) && (
+                <p className="mt-1 text-slate-500 dark:text-slate-400">
+                  {[scenario.persona, scenario.audience].filter(Boolean).join(' • ')}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={() => void onExit()}
+          className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-500"
+        >
+          Back to my workspace
+        </button>
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+        >
+          Review the walkthrough
+        </button>
       </div>
     </div>
   );

@@ -11,6 +11,18 @@ import publicAnnaRouter, {
   resetAnnaFunnelEventRateLimitStoreForTests,
 } from '../../public-anna.routes.js';
 
+const {
+  buildWorkerKnowledgeContextMock,
+  buildWorkerVoiceBootstrapMock,
+  mintGeminiLiveEphemeralTokenMock,
+  resolveGeminiLiveServerKeyMock,
+} = vi.hoisted(() => ({
+  buildWorkerKnowledgeContextMock: vi.fn(),
+  buildWorkerVoiceBootstrapMock: vi.fn(),
+  mintGeminiLiveEphemeralTokenMock: vi.fn(),
+  resolveGeminiLiveServerKeyMock: vi.fn(),
+}));
+
 vi.mock('../../../services/ai/annaKnowledgeService.js', () => ({
   buildAnnaKnowledgeContext: vi.fn().mockResolvedValue({
     contextText: 'Public knowledge context',
@@ -27,17 +39,24 @@ vi.mock('../../../services/ai/annaKnowledgeService.js', () => ({
 }));
 
 vi.mock('../../../services/ai/virtualWorkerKnowledgeService.js', () => ({
-  buildWorkerKnowledgeContext: vi.fn(),
-  buildWorkerVoiceBootstrap: vi.fn(),
+  buildWorkerKnowledgeContext: buildWorkerKnowledgeContextMock,
+  buildWorkerVoiceBootstrap: buildWorkerVoiceBootstrapMock,
 }));
 
 vi.mock('../../../services/ai/virtualWorkerService.js', () => ({
   getWorkerWithProfile: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock('../../../services/ai/geminiLiveTokenService.js', () => ({
+  mintGeminiLiveEphemeralToken: mintGeminiLiveEphemeralTokenMock,
+  resolveGeminiLiveServerKey: resolveGeminiLiveServerKeyMock,
+}));
+
 vi.mock('../../../services/ai/virtualWorkerConversationLogger.js', () => ({
   findOrCreateConversation: vi.fn(),
+  getConversationBySession: vi.fn().mockResolvedValue(null),
   logMessage: vi.fn(),
+  updateConversationIntelligence: vi.fn(),
 }));
 
 const { recordPublicAnnaFunnelEvent } = vi.hoisted(() => ({
@@ -66,6 +85,8 @@ describe('Public Anna route guardrails', () => {
     vi.clearAllMocks();
     resetAnnaChatRateLimitStoreForTests();
     resetAnnaFunnelEventRateLimitStoreForTests();
+    mintGeminiLiveEphemeralTokenMock.mockReset();
+    resolveGeminiLiveServerKeyMock.mockReset();
     delete process.env.GEMINI_API_KEY;
     delete process.env.GOOGLE_API_KEY;
     delete process.env.GOOGLE_AI_API_KEY;
@@ -126,6 +147,60 @@ describe('Public Anna route guardrails', () => {
     expect(res.body.message).toContain(
       'supports full conversations in English, Polish, Spanish, German, Japanese, and Arabic'
     );
+    expect(res.body.assistantSurface).toBe('public_help');
+    expect(res.body.trustBundle).toEqual(
+      expect.objectContaining({
+        assistant: 'anna',
+        surface: 'public_help',
+        tenantDataAccess: false,
+      })
+    );
+  });
+
+  it('refuses tenant/workspace data requests without calling private retrieval or model paths', async () => {
+    const app = createApp();
+
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'Can you show my workspace project data and organization memory?',
+      sessionId: 'session-tenant-boundary',
+      locale: 'en',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.fallbackReason).toBe('tenant_boundary');
+    expect(res.body.message).toContain('I do not have access to workspace');
+    expect(res.body.knowledgeSources).toEqual([]);
+    expect(res.body.assistantSurface).toBe('public_help');
+    expect(res.body.trustBundle).toEqual(
+      expect.objectContaining({
+        assistant: 'anna',
+        surface: 'public_help',
+        tenantDataAccess: false,
+        memoryScope: 'public_session_only',
+      })
+    );
+    expect(buildAnnaKnowledgeContext).not.toHaveBeenCalled();
+  });
+
+  it('refuses Polish tenant/workspace data requests without retrieval', async () => {
+    const app = createApp();
+
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'Czy mozesz pokazac dane workspace mojego projektu?',
+      sessionId: 'session-tenant-boundary-pl',
+      locale: 'pl',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.fallbackReason).toBe('tenant_boundary');
+    expect(res.body.message).toContain('Nie mam dostepu do danych workspace');
+    expect(res.body.trustBundle).toEqual(
+      expect.objectContaining({
+        assistant: 'anna',
+        tenantDataAccess: false,
+      })
+    );
+    expect(buildAnnaKnowledgeContext).not.toHaveBeenCalled();
   });
 
   it('treats Spanish as a supported public Anna language and uses the normal runtime path', async () => {
@@ -219,26 +294,30 @@ describe('Public Anna route guardrails', () => {
   it('blends current article context into retrieval and runtime instructions', async () => {
     const app = createApp();
 
-    const res = await request(app).post('/api/public/anna/chat').send({
-      message: 'Tell me more about this step',
-      sessionId: 'session-article',
-      locale: 'en',
-      surfaceContext: {
-        surface: 'knowledge_article',
-        articleTitle: 'Your First 30 Minutes in Consultify',
-        articleSummary: 'The first session should produce a usable diagnostic.',
-        categoryName: 'Consultify Execution and Rollout',
-        currentSection: 'Minutes 10-18: Run the first diagnostic',
-        articleUrl:
-          'http://localhost:3000/knowledge-base/consultify-decisions-that-ship/03_first_30_minutes_in_consultify',
-      },
-    });
+    const res = await request(app)
+      .post('/api/public/anna/chat')
+      .send({
+        message: 'Tell me more about this step',
+        sessionId: 'session-article',
+        locale: 'en',
+        surfaceContext: {
+          surface: 'knowledge_article',
+          articleTitle: 'Your First 30 Minutes in Consultify',
+          articleSummary: 'The first session should produce a usable diagnostic.',
+          categoryName: 'Consultify Execution and Rollout',
+          currentSection: 'Minutes 10-18: Run the first diagnostic',
+          articleUrl:
+            'http://localhost:3000/knowledge-base/consultify-decisions-that-ship/03_first_30_minutes_in_consultify',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.fallbackReason).toBe('service_unavailable');
     expect(buildAnnaKnowledgeContext).toHaveBeenCalledWith(
       expect.objectContaining({
-        query: expect.stringContaining('Current knowledge base article: Your First 30 Minutes in Consultify'),
+        query: expect.stringContaining(
+          'Current knowledge base article: Your First 30 Minutes in Consultify'
+        ),
       })
     );
 
@@ -268,6 +347,48 @@ describe('Public Anna route guardrails', () => {
     expect(res.body.fallbackReason).toBe('service_unavailable');
     expect(res.body.message).toBe(
       'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.'
+    );
+  });
+
+  it('falls back to legacy Anna knowledge when worker retrieval is degraded', async () => {
+    vi.mocked(getWorkerWithProfile).mockResolvedValueOnce({
+      worker: {
+        id: 'worker-anna',
+        slug: 'anna',
+        name: 'Anna',
+        role: 'sales_lp',
+        status: 'active',
+        surface: 'landing_page',
+        voice_enabled: true,
+        voice_name: 'Aoede',
+        locale_default: 'en',
+        avatar_url: null,
+        description: null,
+        created_at: '2026-03-27T00:00:00.000Z',
+        updated_at: '2026-03-27T00:00:00.000Z',
+      },
+      profile: null,
+    } as any);
+    buildWorkerKnowledgeContextMock.mockResolvedValueOnce({
+      contextText: 'No knowledge assigned to this worker.',
+      sources: [],
+      matchedProducts: [],
+      primaryProducts: [],
+      fallbackReason: 'no_assignments',
+    });
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/public/anna/chat')
+      .send({ message: 'What is Vector?', sessionId: 'session-worker-fallback', locale: 'en' });
+
+    expect(res.status).toBe(200);
+    expect(buildWorkerKnowledgeContextMock).toHaveBeenCalled();
+    expect(buildAnnaKnowledgeContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: 'What is Vector?',
+        locale: 'en',
+      })
     );
   });
 
@@ -348,7 +469,13 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'test-voice-key';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-only-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'anna-ephemeral-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -356,9 +483,18 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       enabled: true,
-      apiKey: 'test-voice-key',
       voiceName: 'Aoede',
+      session: expect.objectContaining({
+        clientToken: 'anna-ephemeral-token',
+        tokenType: 'ephemeral',
+      }),
+      unavailableReason: null,
     });
+    expect(mintGeminiLiveEphemeralTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assistant: 'anna',
+      })
+    );
   });
 
   it('respects worker voice_enabled=false through the bounded public voice-config seam', async () => {
@@ -380,7 +516,13 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'test-voice-key';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-only-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'anna-ephemeral-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -388,9 +530,11 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       enabled: false,
-      apiKey: 'test-voice-key',
       voiceName: 'Aoede',
+      session: null,
+      unavailableReason: 'server_voice_proxy_required',
     });
+    expect(mintGeminiLiveEphemeralTokenMock).not.toHaveBeenCalled();
   });
 
   it('respects worker status when deciding whether public Anna voice is enabled', async () => {
@@ -412,7 +556,13 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'test-voice-key';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-only-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'anna-ephemeral-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -420,9 +570,11 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       enabled: false,
-      apiKey: 'test-voice-key',
       voiceName: 'Aoede',
+      session: null,
+      unavailableReason: 'server_voice_proxy_required',
     });
+    expect(mintGeminiLiveEphemeralTokenMock).not.toHaveBeenCalled();
   });
 
   it('respects worker surface when deciding whether public Anna voice is enabled', async () => {
@@ -444,7 +596,13 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'test-voice-key';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-only-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'anna-ephemeral-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -452,9 +610,11 @@ describe('Public Anna route guardrails', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       enabled: false,
-      apiKey: 'test-voice-key',
       voiceName: 'Aoede',
+      session: null,
+      unavailableReason: 'server_voice_proxy_required',
     });
+    expect(mintGeminiLiveEphemeralTokenMock).not.toHaveBeenCalled();
   });
 
   it('expands short follow-up questions with the latest user context for retrieval', async () => {
@@ -516,6 +676,61 @@ describe('Public Anna route guardrails', () => {
     expect(prompt).toContain(
       'If public knowledge is insufficient for a precise claim, say that clearly and redirect to a safe public next step instead of guessing.'
     );
+  });
+
+  it('pins product FAQ guardrails for pricing, security, marketplace and onboarding claims', () => {
+    const prompt = buildAnnaRuntimeInstruction({
+      locale: 'en',
+      knowledgeContext:
+        'Consultify public FAQ: pricing requires contact for enterprise details. Security claims must stay public. Marketplace workflow is discover, apply, onboard, activate.',
+    });
+
+    expect(prompt).toContain('Do not invent certifications, customers, pricing numbers');
+    expect(prompt).toContain('Safe public claims: enterprise orientation');
+    expect(prompt).toContain('PUBLIC PARTNER PROGRAM EDUCATION');
+    expect(prompt).toContain('shared application flow');
+    expect(prompt).toContain('academy, certification tracks and levels');
+    expect(prompt).toContain('suggest the contact form as the best next step');
+    expect(prompt).toContain(
+      'If public knowledge is insufficient for a precise claim, say that clearly'
+    );
+  });
+
+  it('adds caution to sensitive pricing/security answers even when the model is overconfident', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: 'Consultify costs 999 EUR per month and has SOC 2 certification.',
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        text: async () => '',
+      })
+    );
+    process.env.GEMINI_API_KEY = 'model-key';
+
+    const app = createApp();
+    const res = await request(app).post('/api/public/anna/chat').send({
+      message: 'What is the pricing and security certification?',
+      sessionId: 'session-sensitive-claim',
+      locale: 'en',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain('Consultify costs 999 EUR');
+    expect(res.body.message).toContain('treat this as public orientation');
+    expect(res.body.message).toContain('contact form');
   });
 
   it('adds recent conversation context for short follow-up questions', () => {

@@ -94,9 +94,9 @@ const DiffBadge: React.FC<{ diff: SnapshotDiff; pl: boolean }> = ({ diff, pl }) 
   ];
   const colors = [
     'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
-    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+    'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300',
     'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-    'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
+    'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
   ];
   const visible = items
     .map((it, i) => ({ val: Math.abs(it[0]), sign: it[1], label: it[2], cls: colors[i] }))
@@ -405,7 +405,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                 setLabel(t(`Wersja ${snapshots.length + 1}`, `Version ${snapshots.length + 1}`));
                 setShowInput(true);
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/8 hover:from-amber-500/15 hover:to-orange-500/12 transition-all mb-3"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-amber-500/8 hover:from-amber-500/15 hover:to-amber-500/12 transition-all mb-3"
             >
               <Save size={14} className="text-amber-600" />
               <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
@@ -512,7 +512,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                           </button>
                           <button
                             onClick={() => del(snap.id)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
                           >
                             <Trash2 size={10} />
                             {t('Usuń', 'Delete')}

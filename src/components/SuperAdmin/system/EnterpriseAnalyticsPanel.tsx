@@ -14,33 +14,26 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   BarChart3,
-  Calendar,
   ChevronDown,
-  ChevronRight,
   Clock,
-  Cpu,
   Database,
   Download,
   FileText,
-  Filter,
   Globe,
-  LineChart,
   Loader2,
   Mail,
-  PieChart,
   Plus,
   RefreshCw,
   Settings,
-  TrendingDown,
-  TrendingUp,
   Users,
-  X,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 
 interface MetricCard {
   id: string;
@@ -48,7 +41,7 @@ interface MetricCard {
   value: string | number;
   change: number;
   changeLabel: string;
-  icon: React.FC<any>;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }
 
@@ -72,6 +65,37 @@ interface ScheduledReport {
   is_active: boolean;
 }
 
+type AnalyticsTab = 'dashboard' | 'reports' | 'scheduled';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getList = (payload: unknown, keys: string[]) => {
+  if (Array.isArray(payload)) return payload;
+  if (!isRecord(payload)) return [];
+  for (const key of keys) {
+    const value = payload[key];
+    if (Array.isArray(value)) return value;
+    if (isRecord(value)) {
+      for (const nestedKey of keys) {
+        const nested = value[nestedKey];
+        if (Array.isArray(nested)) return nested;
+      }
+    }
+  }
+  return [];
+};
+
+const asText = (value: unknown, fallback = 'Unknown') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+};
+
 const TIME_RANGES = [
   { id: '24h', label: 'Last 24 Hours' },
   { id: '7d', label: 'Last 7 Days' },
@@ -91,17 +115,28 @@ const REPORT_TYPES = [
 export const EnterpriseAnalyticsPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'reports' | 'scheduled'>('dashboard');
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>('dashboard');
   const [metrics, setMetrics] = useState<MetricCard[]>([]);
   const [apiChartData, setApiChartData] = useState<ChartData | null>(null);
   const [aiChartData, setAiChartData] = useState<ChartData | null>(null);
   const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
-  const [showCreateReport, setShowCreateReport] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [scheduledLoadError, setScheduledLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const analyticsTabs: {
+    id: AnalyticsTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'reports', label: 'Generate Report', icon: FileText },
+    { id: 'scheduled', label: 'Scheduled Reports', icon: Clock },
+  ];
 
   const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const analyticsData = await Api.getSystemAnalytics(timeRange);
 
       // Transform to metrics with real data
@@ -149,67 +184,76 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
         setApiChartData({
           labels: analyticsData.charts.api.labels,
           datasets: [
-            { label: 'Requests', data: analyticsData.charts.api.requests, color: '#06b6d4' },
-            { label: 'Errors', data: analyticsData.charts.api.errors, color: '#ef4444' },
+            { label: 'Requests', data: analyticsData.charts.api.requests, color: '#3b82f6' },
+            { label: 'Errors', data: analyticsData.charts.api.errors, color: '#f43f5e' },
           ],
         });
       } else {
-        // Fallback to generated labels if no data
-        const labels = generateTimeLabels(timeRange);
-        setApiChartData({
-          labels,
-          datasets: [
-            { label: 'Requests', data: labels.map(() => 0), color: '#06b6d4' },
-            { label: 'Errors', data: labels.map(() => 0), color: '#ef4444' },
-          ],
-        });
+        setApiChartData(null);
       }
 
       if (analyticsData.charts?.ai?.labels?.length > 0) {
         setAiChartData({
           labels: analyticsData.charts.ai.labels,
           datasets: [
-            { label: 'Tokens (K)', data: analyticsData.charts.ai.tokens, color: '#8b5cf6' },
+            { label: 'Tokens (K)', data: analyticsData.charts.ai.tokens, color: '#6366f1' },
             { label: 'Requests', data: analyticsData.charts.ai.requests, color: '#10b981' },
           ],
         });
       } else {
-        const labels = generateTimeLabels(timeRange);
-        setAiChartData({
-          labels,
-          datasets: [
-            { label: 'Tokens (K)', data: labels.map(() => 0), color: '#8b5cf6' },
-            { label: 'Requests', data: labels.map(() => 0), color: '#10b981' },
-          ],
-        });
+        setAiChartData(null);
       }
+      setLoading(false);
+      return true;
     } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-      // Set empty state on error
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to fetch analytics'));
       setMetrics([]);
-
-      const labels = generateTimeLabels(timeRange);
-      setApiChartData({
-        labels,
-        datasets: [
-          { label: 'Requests', data: labels.map(() => 0), color: '#06b6d4' },
-          { label: 'Errors', data: labels.map(() => 0), color: '#ef4444' },
-        ],
-      });
-      setAiChartData({
-        labels,
-        datasets: [
-          { label: 'Tokens (K)', data: labels.map(() => 0), color: '#8b5cf6' },
-          { label: 'Requests', data: labels.map(() => 0), color: '#10b981' },
-        ],
-      });
+      setApiChartData(null);
+      setAiChartData(null);
+      setLoading(false);
+      return false;
     }
-    setLoading(false);
   }, [timeRange]);
 
   const fetchScheduledReports = useCallback(async () => {
-    // Empty state - no mock data
-    setScheduledReports([]);
+    try {
+      setScheduledLoadError(null);
+      const reports = await Api.getAnalyticsReports();
+      const normalizedReports = getList(reports, ['reports', 'items', 'data'])
+        .filter(isRecord)
+        .filter((report) => report.schedule)
+        .map((report) => ({
+          id: asText(report.id, ''),
+          name: asText(report.name),
+          type: asText(report.report_type || report.type, 'custom'),
+          schedule:
+            typeof report.schedule === 'string'
+              ? report.schedule
+              : isRecord(report.schedule)
+                ? asText(report.schedule.frequency, 'scheduled')
+                : 'scheduled',
+          recipients: Array.isArray(report.recipients)
+            ? report.recipients.map((recipient) => String(recipient))
+            : [],
+          last_sent:
+            (report.last_sent || report.lastSent) === null ||
+            (report.last_sent || report.lastSent) === undefined
+              ? undefined
+              : String(report.last_sent || report.lastSent),
+          next_run:
+            (report.next_run || report.nextRun) === null ||
+            (report.next_run || report.nextRun) === undefined
+              ? undefined
+              : String(report.next_run || report.nextRun),
+          is_active: report.status !== 'paused' && report.status !== 'disabled',
+        }));
+      setScheduledReports(normalizedReports);
+    } catch (error) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load scheduled reports');
+      setScheduledLoadError(message);
+      setScheduledReports([]);
+      toast.error(message);
+    }
   }, []);
 
   useEffect(() => {
@@ -219,44 +263,43 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchAnalytics();
+    const ok = await fetchAnalytics();
     setRefreshing(false);
-    toast.success('Analytics refreshed');
+    if (ok) {
+      toast.success('Analytics refreshed');
+    }
   };
 
   const handleExport = (format: 'pdf' | 'csv' | 'xlsx') => {
-    toast.success(`Exporting report as ${format.toUpperCase()}...`);
-    // In real implementation, this would call the API
-  };
-
-  const generateTimeLabels = (range: string): string[] => {
-    const now = new Date();
-    switch (range) {
-      case '24h':
-        return Array.from({ length: 24 }, (_, i) => {
-          const d = new Date(now);
-          d.setHours(d.getHours() - (23 - i));
-          return d.toLocaleTimeString('en', { hour: '2-digit' });
-        });
-      case '7d':
-        return Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(now);
-          d.setDate(d.getDate() - (6 - i));
-          return d.toLocaleDateString('en', { weekday: 'short' });
-        });
-      case '30d':
-        return Array.from({ length: 30 }, (_, i) => {
-          const d = new Date(now);
-          d.setDate(d.getDate() - (29 - i));
-          return d.toLocaleDateString('en', { day: 'numeric', month: 'short' });
-        });
-      default:
-        return Array.from({ length: 12 }, (_, i) => {
-          const d = new Date(now);
-          d.setMonth(d.getMonth() - (11 - i));
-          return d.toLocaleDateString('en', { month: 'short' });
-        });
+    if (loadError || metrics.length === 0) {
+      toast.error('Analytics data is unavailable');
+      return;
     }
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      timeRange,
+      metrics,
+      apiChartData,
+      aiChartData,
+    };
+    const filename = `superadmin-analytics-${timeRange}.${format === 'pdf' ? 'json' : format}`;
+    const content =
+      format === 'csv'
+        ? [
+            'metric,value,change',
+            ...metrics.map((metric) => `${metric.title},${metric.value},${metric.change}`),
+          ].join('\n')
+        : JSON.stringify(payload, null, 2);
+    const blob = new Blob([content], {
+      type: format === 'csv' ? 'text/csv;charset=utf-8' : 'application/json;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Report exported as ${filename}`);
   };
 
   // Note: All analytics data comes from real API endpoints
@@ -302,14 +345,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
-        {[
-          { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-          { id: 'reports', label: 'Generate Report', icon: FileText },
-          { id: 'scheduled', label: 'Scheduled Reports', icon: Clock },
-        ].map(({ id, label, icon: Icon }) => (
+        {analyticsTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
                 ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
@@ -331,210 +370,165 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {/* Dashboard Tab */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
-              {/* Metric Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {metrics.map((metric) => {
-                  const Icon = metric.icon;
-                  const isPositive = metric.change >= 0;
-                  return (
-                    <div
-                      key={metric.id}
-                      className={`p-4 bg-${metric.color}-500/10 rounded-xl border border-${metric.color}-500/30`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <Icon className={`w-5 h-5 text-${metric.color}-400`} />
+              {loadError ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState title="Analytics dashboard unavailable" description={loadError} />
+                </div>
+              ) : (
+                <>
+                  {/* Metric Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {metrics.map((metric) => {
+                      const Icon = metric.icon;
+                      const isPositive = metric.change >= 0;
+                      return (
                         <div
-                          className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}
+                          key={metric.id}
+                          className={`p-4 bg-${metric.color}-500/10 rounded-xl border border-${metric.color}-500/30`}
                         >
-                          {isPositive ? (
-                            <ArrowUpRight className="w-3 h-3" />
-                          ) : (
-                            <ArrowDownRight className="w-3 h-3" />
-                          )}
-                          {Math.abs(metric.change)}%
-                        </div>
-                      </div>
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {metric.value}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {metric.title}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* API Chart */}
-                <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                      <Globe className="w-5 h-5 text-primary-500 dark:text-primary-400" />
-                      API Traffic
-                    </h3>
-                    <button
-                      onClick={() => handleExport('csv')}
-                      className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
-                    >
-                      <Download className="w-3 h-3" />
-                      Export
-                    </button>
-                  </div>
-                  {apiChartData && <SimpleBarChart data={apiChartData} />}
-                </div>
-
-                {/* AI Chart */}
-                <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-purple-400" />
-                      AI Usage
-                    </h3>
-                    <button
-                      onClick={() => handleExport('csv')}
-                      className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
-                    >
-                      <Download className="w-3 h-3" />
-                      Export
-                    </button>
-                  </div>
-                  {aiChartData && <SimpleBarChart data={aiChartData} />}
-                </div>
-              </div>
-
-              {/* Performance Breakdown */}
-              <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-emerald-400" />
-                  Performance Breakdown
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <div className="text-sm text-slate-400 dark:text-slate-500 mb-2">
-                      Response Time Distribution
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { label: '< 100ms', value: 65, color: 'bg-emerald-500' },
-                        { label: '100-500ms', value: 25, color: 'bg-amber-500' },
-                        { label: '> 500ms', value: 10, color: 'bg-red-500' },
-                      ].map((item) => (
-                        <div key={item.label} className="flex items-center gap-2">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 w-20">
-                            {item.label}
-                          </span>
-                          <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className="flex items-center justify-between mb-2">
+                            <Icon className={`w-5 h-5 text-${metric.color}-400`} />
                             <div
-                              className={`h-full ${item.color}`}
-                              style={{ width: `${item.value}%` }}
-                            />
+                              className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}
+                            >
+                              {isPositive ? (
+                                <ArrowUpRight className="w-3 h-3" />
+                              ) : (
+                                <ArrowDownRight className="w-3 h-3" />
+                              )}
+                              {Math.abs(metric.change)}%
+                            </div>
                           </div>
-                          <span className="text-xs text-slate-900 dark:text-white w-10 text-right">
-                            {item.value}%
-                          </span>
+                          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                            {metric.value}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {metric.title}
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                  <div>
-                    <div className="text-sm text-slate-400 dark:text-slate-500 mb-2">
-                      Top Endpoints
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { endpoint: '/api/projects', calls: 12453 },
-                        { endpoint: '/api/auth/me', calls: 8932 },
-                        { endpoint: '/api/initiatives', calls: 6721 },
-                        { endpoint: '/api/ai/analyze', calls: 4512 },
-                      ].map((item) => (
-                        <div
-                          key={item.endpoint}
-                          className="flex items-center justify-between text-sm"
+
+                  {/* Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* API Chart */}
+                    <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          <Globe className="w-5 h-5 text-primary-500 dark:text-primary-400" />
+                          API Traffic
+                        </h3>
+                        <button
+                          onClick={() => handleExport('csv')}
+                          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
                         >
-                          <code className="text-cyan-400 text-xs">{item.endpoint}</code>
-                          <span className="text-slate-400 dark:text-slate-500">
-                            {item.calls.toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
+                          <Download className="w-3 h-3" />
+                          Export
+                        </button>
+                      </div>
+                      {apiChartData ? (
+                        <SimpleBarChart data={apiChartData} />
+                      ) : (
+                        <ReadOnlyState
+                          title="API traffic chart unavailable"
+                          description="The analytics endpoint did not return API chart data for this period."
+                        />
+                      )}
+                    </div>
+
+                    {/* AI Chart */}
+                    <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-primary-400" />
+                          AI Usage
+                        </h3>
+                        <button
+                          onClick={() => handleExport('csv')}
+                          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
+                        >
+                          <Download className="w-3 h-3" />
+                          Export
+                        </button>
+                      </div>
+                      {aiChartData ? (
+                        <SimpleBarChart data={aiChartData} />
+                      ) : (
+                        <ReadOnlyState
+                          title="AI usage chart unavailable"
+                          description="The analytics endpoint did not return AI chart data for this period."
+                        />
+                      )}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-sm text-slate-400 dark:text-slate-500 mb-2">
-                      Error Rate by Type
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { type: '4xx Client', count: 234, color: 'text-amber-400' },
-                        { type: '5xx Server', count: 12, color: 'text-red-400' },
-                        { type: 'Timeout', count: 8, color: 'text-orange-400' },
-                      ].map((item) => (
-                        <div key={item.type} className="flex items-center justify-between text-sm">
-                          <span className={item.color}>{item.type}</span>
-                          <span className="text-slate-400 dark:text-slate-500">{item.count}</span>
-                        </div>
-                      ))}
-                    </div>
+
+                  {/* Performance Breakdown */}
+                  <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <ReadOnlyState
+                      title="Performance breakdown unavailable"
+                      description="Endpoint-level latency, top endpoints, and error-type distribution require backend analytics fields that are not provided to this panel yet."
+                    />
                   </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           )}
 
           {/* Generate Report Tab */}
           {activeTab === 'reports' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {REPORT_TYPES.map((report) => {
-                  const Icon = report.icon;
-                  return (
-                    <div
-                      key={report.id}
-                      className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary-500/50 transition-colors cursor-pointer"
-                      onClick={() => handleExport('pdf')}
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary-600/10 flex items-center justify-center">
-                          <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              {loadError ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState title="Report generation unavailable" description={loadError} />
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {REPORT_TYPES.map((report) => {
+                      const Icon = report.icon;
+                      return (
+                        <div
+                          key={report.id}
+                          className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary-500/50 transition-colors cursor-pointer"
+                          onClick={() => handleExport('pdf')}
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-lg bg-primary-600/10 flex items-center justify-center">
+                              <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                            </div>
+                            <h3 className="font-medium text-slate-900 dark:text-slate-100">
+                              {report.label}
+                            </h3>
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                            Generate a comprehensive {report.label.toLowerCase()} report for the
+                            selected time period.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button className="px-3 py-1.5 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
+                              PDF
+                            </button>
+                            <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
+                              CSV
+                            </button>
+                            <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
+                              Excel
+                            </button>
+                          </div>
                         </div>
-                        <h3 className="font-medium text-slate-900 dark:text-slate-100">
-                          {report.label}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                        Generate a comprehensive {report.label.toLowerCase()} report for the
-                        selected time period.
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <button className="px-3 py-1.5 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
-                          PDF
-                        </button>
-                        <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
-                          CSV
-                        </button>
-                        <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
-                          Excel
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
 
-              <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
-                  Custom Report Builder
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  Create custom reports by selecting metrics, filters, and visualization options.
-                </p>
-                <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
-                  <Plus className="w-4 h-4" />
-                  Create Custom Report
-                </button>
-              </div>
+                  <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <ReadOnlyState
+                      title="Custom report builder unavailable"
+                      description="The export buttons can download the currently loaded analytics snapshot, but the custom report builder workflow is not wired to an audited backend yet."
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -546,15 +540,30 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   Scheduled Reports
                 </h3>
                 <button
-                  onClick={() => setShowCreateReport(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                  disabled
+                  title="Scheduled report creation requires an audited backend workflow"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Schedule Report
                 </button>
               </div>
 
-              {scheduledReports.length === 0 ? (
+              {!scheduledLoadError && (
+                <ReadOnlyState
+                  title="Scheduled report creation unavailable"
+                  description="The reporting backend exposes scheduled report reads here, but no audited create/update workflow is wired to this panel yet."
+                />
+              )}
+
+              {scheduledLoadError ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState
+                    title="Scheduled reports unavailable"
+                    description={scheduledLoadError}
+                  />
+                </div>
+              ) : scheduledReports.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">
                   <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No scheduled reports</p>
@@ -594,7 +603,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                             {report.next_run && (
                               <>
                                 <span>•</span>
-                                <span>Next: {new Date(report.next_run).toLocaleDateString()}</span>
+                                <span>Next: {formatDate(report.next_run)}</span>
                               </>
                             )}
                           </div>
@@ -615,19 +624,6 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
             </div>
           )}
         </>
-      )}
-
-      {/* Create Scheduled Report Modal */}
-      {showCreateReport && (
-        <CreateScheduledReportModal
-          onClose={() => setShowCreateReport(false)}
-          onSave={() => {
-            fetchScheduledReports();
-            setShowCreateReport(false);
-            toast.success('Scheduled report created');
-          }}
-          reportTypes={REPORT_TYPES}
-        />
       )}
     </div>
   );
@@ -671,126 +667,6 @@ const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
             </span>
           </div>
         ))}
-      </div>
-    </div>
-  );
-};
-
-// Create Scheduled Report Modal
-const CreateScheduledReportModal: React.FC<{
-  onClose: () => void;
-  onSave: () => void;
-  reportTypes: { id: string; label: string }[];
-}> = ({ onClose, onSave, reportTypes }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    type: 'system_performance',
-    schedule: 'weekly',
-    recipients: '',
-  });
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 500));
-    onSave();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Schedule Report</h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-          >
-            <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Report Name
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              placeholder="Monthly Performance Summary"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Report Type
-              </label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              >
-                {reportTypes.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Schedule
-              </label>
-              <select
-                value={formData.schedule}
-                onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Recipients (comma-separated emails)
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.recipients}
-              onChange={(e) => setFormData({ ...formData, recipients: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              placeholder="admin@example.com, cto@example.com"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
-            >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Schedule
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

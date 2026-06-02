@@ -1,25 +1,84 @@
-import {
-  AlertCircle,
-  BarChart,
-  Building,
-  Calendar,
-  CheckCircle,
-  CreditCard,
-  FileText,
-  Users,
-  X,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { BarChart, Building, CreditCard, FileText, Users, X } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface SuperAdminOrgDetailsModalProps {
   org: Organization;
   onClose: () => void;
   onUpdate: () => void;
 }
+
+type BillingDetails = {
+  billing?: Record<string, unknown>;
+  usage?: Record<string, unknown>;
+  invoices?: InvoiceRow[];
+};
+
+type InvoiceRow = {
+  id: string;
+  created_at?: string | null;
+  amount_due?: unknown;
+  status?: string;
+  pdf_url?: string;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const getOrganizationsPayload = (value: unknown) =>
+  getListPayload<Organization>(value, ['organizations', 'items']);
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const hasBillingShape = (value: unknown) =>
+  isRecord(value) &&
+  (isRecord(value.billing) || isRecord(value.usage) || Array.isArray(value.invoices));
 
 export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps> = ({
   org,
@@ -28,42 +87,112 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
 }) => {
   const [activeTab, setActiveTab] = useState<'general' | 'billing' | 'users'>('general');
   const [loading, setLoading] = useState(false);
-  const [billingDetails, setBillingDetails] = useState<any>(null);
+  const [billingDetails, setBillingDetails] = useState<BillingDetails | null>(null);
+  const [billingLoadError, setBillingLoadError] = useState<string | null>(null);
   const [editingOrg, setEditingOrg] = useState<Organization>(org);
+  const [savingGeneral, setSavingGeneral] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const fetchBillingDetails = useCallback(async () => {
+    setLoading(true);
+    setBillingLoadError(null);
+    try {
+      const data = await Api.getOrganizationBillingDetails(org.id);
+      const payload = getObjectPayload(data);
+      if (!isRecord(payload)) {
+        throw new Error('Billing details response was not an object');
+      }
+      if (!hasBillingShape(payload)) {
+        throw new Error('Billing details response was incomplete');
+      }
+      setBillingDetails({
+        billing: isRecord(payload.billing) ? payload.billing : undefined,
+        usage: isRecord(payload.usage) ? payload.usage : undefined,
+        invoices: Array.isArray(payload.invoices) ? (payload.invoices as InvoiceRow[]) : undefined,
+      });
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load billing details');
+      setBillingDetails(null);
+      setBillingLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [org.id]);
 
   // Fetch billing details when tab changes to billing
   useEffect(() => {
     if (activeTab === 'billing' && !billingDetails) {
-      fetchBillingDetails();
+      void fetchBillingDetails();
     }
-  }, [activeTab]);
-
-  const fetchBillingDetails = async () => {
-    setLoading(true);
-    try {
-      const data = await Api.getOrganizationBillingDetails(org.id);
-      setBillingDetails(data);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to load billing details');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [activeTab, billingDetails, fetchBillingDetails]);
 
   const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setSavingGeneral(true);
+      setActionError(null);
       await Api.updateOrganization(org.id, {
         plan: editingOrg.plan,
         status: editingOrg.status,
         discount_percent: editingOrg.discount_percent,
       });
+      const refreshedOrganizations = await Api.getOrganizations();
+      if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
+        throw new Error('Organization update could not be confirmed by read-back');
+      }
+      const refreshedOrg = getOrganizationsPayload(refreshedOrganizations).find(
+        (candidate) => candidate.id === org.id
+      );
+      if (
+        !refreshedOrg ||
+        refreshedOrg.plan !== editingOrg.plan ||
+        refreshedOrg.status !== editingOrg.status ||
+        (refreshedOrg.discount_percent || 0) !== (editingOrg.discount_percent || 0)
+      ) {
+        throw new Error('Organization update was not confirmed by the server');
+      }
       toast.success('Organization updated');
       onUpdate();
-    } catch (err) {
-      toast.error('Failed to update organization');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to update organization');
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setSavingGeneral(false);
     }
+  };
+
+  const formatDate = (value?: string | null, fallback = 'Unknown date') => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString();
+  };
+
+  const safeNumber = (value: unknown, fallback = 0) => {
+    const parsed = Number(value ?? fallback);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const formatMoney = (value: unknown) => `$${safeNumber(value).toFixed(2)}`;
+
+  const formatText = (value: unknown, fallback = '-') =>
+    typeof value === 'string' && value.trim()
+      ? value
+      : typeof value === 'number' || typeof value === 'boolean'
+        ? String(value)
+        : fallback;
+
+  const formatInteger = (value: unknown, fallback = '0') => {
+    const parsed = safeNumber(value, Number.NaN);
+    return Number.isFinite(parsed) ? Math.round(parsed).toLocaleString() : fallback;
+  };
+
+  const getUsagePercent = (usedValue: unknown, includedValue: unknown) => {
+    const used = safeNumber(usedValue);
+    const included = safeNumber(includedValue);
+    if (included <= 0) return 0;
+    return Math.min(100, Math.max(0, (used / included) * 100));
   };
 
   const renderGeneralTab = () => (
@@ -86,7 +215,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           </label>
           <input
             disabled
-            value={new Date(org.created_at || org.createdAt || '').toLocaleDateString()}
+            value={formatDate(org.created_at || org.createdAt)}
             className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-slate-500 dark:text-slate-400"
           />
         </div>
@@ -99,7 +228,9 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           </label>
           <select
             value={editingOrg.plan}
-            onChange={(e) => setEditingOrg({ ...editingOrg, plan: e.target.value as any })}
+            onChange={(e) =>
+              setEditingOrg({ ...editingOrg, plan: e.target.value as Organization['plan'] })
+            }
             className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
           >
             <option value="free">Free</option>
@@ -114,7 +245,9 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           </label>
           <select
             value={editingOrg.status}
-            onChange={(e) => setEditingOrg({ ...editingOrg, status: e.target.value as any })}
+            onChange={(e) =>
+              setEditingOrg({ ...editingOrg, status: e.target.value as Organization['status'] })
+            }
             className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
           >
             <option value="active">Active</option>
@@ -146,11 +279,17 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
       </div>
 
       <div className="pt-4 border-t border-white/10 flex justify-end">
+        {actionError && (
+          <div role="alert" className="mr-auto text-sm text-rose-400">
+            {actionError}
+          </div>
+        )}
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium shadow-lg shadow-blue-500/20 transition-all"
+          disabled={savingGeneral}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium shadow-lg shadow-blue-500/20 transition-all disabled:opacity-60"
         >
-          Save Changes
+          {savingGeneral ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </form>
@@ -163,6 +302,8 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           Loading billing details...
         </div>
       );
+    if (billingLoadError)
+      return <DegradedState title="Billing details unavailable" description={billingLoadError} />;
     if (!billingDetails)
       return (
         <div className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -170,7 +311,11 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         </div>
       );
 
-    const { billing, usage, invoices } = billingDetails;
+    const billing = billingDetails.billing ?? {};
+    const usage = billingDetails.usage ?? {};
+    const invoices = billingDetails.invoices ?? [];
+    const billingStatus = formatText(billing.status, 'unknown');
+    const tokenUsagePercent = getUsagePercent(usage?.tokens_used, usage?.tokens_included);
 
     return (
       <div className="space-y-6">
@@ -184,30 +329,30 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
               <div>
                 <h4 className="text-sm font-semibold text-white">Current Subscription</h4>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {billing.plan_name || org.plan?.toUpperCase() || '-'} Plan
+                  {formatText(billing.plan_name, org.plan?.toUpperCase() || '-')} Plan
                 </p>
               </div>
             </div>
             <span
-              className={`px-2 py-1 rounded text-xs font-bold uppercase ${billing.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}
+              className={`px-2 py-1 rounded text-xs font-bold uppercase ${billingStatus === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}
             >
-              {billing.status}
+              {billingStatus}
             </span>
           </div>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div className="bg-navy-900 rounded p-3">
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Monthly Cost</p>
-              <p className="font-medium text-white">${billing.price_monthly || 0}</p>
+              <p className="font-medium text-white">{formatMoney(billing.price_monthly)}</p>
             </div>
             <div className="bg-navy-900 rounded p-3">
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Billing Email</p>
-              <p className="font-medium text-white truncate">{billing.billing_email || '-'}</p>
+              <p className="font-medium text-white truncate">{formatText(billing.billing_email)}</p>
             </div>
             <div className="bg-navy-900 rounded p-3">
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Next Invoice</p>
               <p className="font-medium text-white">
-                {billing.current_period_end
-                  ? new Date(billing.current_period_end).toLocaleDateString()
+                {typeof billing.current_period_end === 'string'
+                  ? formatDate(billing.current_period_end)
                   : '-'}
               </p>
             </div>
@@ -225,39 +370,37 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-slate-400 dark:text-slate-500">Used</span>
                   <span className="text-white font-medium">
-                    {usage?.tokens_used?.toLocaleString() || 0}
+                    {formatInteger(usage?.tokens_used)}
                   </span>
                 </div>
                 <div className="w-full bg-navy-900 h-1.5 rounded-full overflow-hidden">
                   <div
                     className="bg-blue-500 h-full rounded-full"
                     style={{
-                      width: `${Math.min(100, (usage?.tokens_used / (usage?.tokens_included || 1)) * 100)}%`,
+                      width: `${tokenUsagePercent}%`,
                     }}
                   />
                 </div>
                 <div className="flex justify-between text-xs mt-1 text-slate-500 dark:text-slate-400">
-                  <span>Limit: {usage?.tokens_included?.toLocaleString() || 'Unlimited'}</span>
-                  <span>
-                    {((usage?.tokens_used / (usage?.tokens_included || 1)) * 100).toFixed(1)}%
-                  </span>
+                  <span>Limit: {formatInteger(usage?.tokens_included, 'Unlimited')}</span>
+                  <span>{tokenUsagePercent.toFixed(1)}%</span>
                 </div>
               </div>
             </div>
           </div>
           <div className="bg-navy-950 rounded-lg p-4 border border-white/5">
             <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <CreditCard size={16} className="text-purple-400" /> Overage
+              <CreditCard size={16} className="text-primary-400" /> Overage
             </h4>
             <div className="space-y-2">
               <div className="flex justify-between text-sm border-b border-white/5 pb-2">
                 <span className="text-slate-400 dark:text-slate-500">Tokens Overage</span>
-                <span className="text-white">{usage?.tokens_overage?.toLocaleString() || 0}</span>
+                <span className="text-white">{formatInteger(usage?.tokens_overage)}</span>
               </div>
               <div className="flex justify-between text-sm pt-1">
                 <span className="text-slate-400 dark:text-slate-500">Estimated Cost</span>
                 <span className="text-green-400 font-bold">
-                  ${usage?.overage_amount?.toFixed(2) || '0.00'}
+                  {formatMoney(usage?.overage_amount)}
                 </span>
               </div>
             </div>
@@ -283,15 +426,13 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
               </thead>
               <tbody className="divide-y divide-white/5 text-xs">
                 {invoices && invoices.length > 0 ? (
-                  invoices.map((inv: any) => (
+                  invoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                      <td className="p-3 text-slate-300">
-                        {new Date(inv.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="p-3 text-white font-medium">${inv.amount_due?.toFixed(2)}</td>
+                      <td className="p-3 text-slate-300">{formatDate(inv.created_at)}</td>
+                      <td className="p-3 text-white font-medium">{formatMoney(inv.amount_due)}</td>
                       <td className="p-3">
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${inv.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${inv.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-rose-500/20 text-rose-400'}`}
                         >
                           {inv.status}
                         </span>
@@ -361,7 +502,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'general' | 'billing' | 'users')}
                 className={`py-4 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-white'

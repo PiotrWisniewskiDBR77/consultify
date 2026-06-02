@@ -63,7 +63,7 @@ const getStatusColor = (status: string) => {
     case 'APPROVED':
       return 'text-emerald-500 bg-emerald-500/10';
     case 'REJECTED':
-      return 'text-red-500 bg-red-500/10';
+      return 'text-rose-500 bg-rose-500/10';
     case 'PENDING':
       return 'text-amber-500 bg-amber-500/10';
     case 'SKIPPED':
@@ -88,7 +88,7 @@ const SLACountdown: React.FC<{ dueAt: string }> = ({ dueAt }) => {
   if (isOverdue) {
     const overdueHours = Math.abs(diffHours);
     return (
-      <span className="flex items-center gap-1 text-xs font-medium text-red-500">
+      <span className="flex items-center gap-1 text-xs font-medium text-rose-500">
         <AlertTriangle size={12} />
         {overdueHours}h overdue
       </span>
@@ -122,7 +122,7 @@ const ApprovalStep: React.FC<{
           className={`
                     w-10 h-10 rounded-full flex items-center justify-center
                     ${statusColor}
-                    ${isActive ? 'ring-2 ring-offset-2 ring-violet-500' : ''}
+                    ${isActive ? 'ring-2 ring-offset-2 ring-primary-500' : ''}
                 `}
         >
           {approval.status === 'APPROVED' && <CheckCircle2 size={20} />}
@@ -214,7 +214,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
       case 'APPROVED':
         return { label: 'Approved', color: 'bg-emerald-500 text-white' };
       case 'REJECTED':
-        return { label: 'Rejected', color: 'bg-red-500 text-white' };
+        return { label: 'Rejected', color: 'bg-rose-500 text-white' };
       case 'PENDING':
         return { label: 'Pending Approval', color: 'bg-amber-500 text-white' };
       default:
@@ -284,7 +284,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 disabled:bg-violet-300 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-lg font-medium transition-colors"
             >
               <Send size={16} />
               {submitting ? 'Submitting...' : 'Submit for Approval'}
@@ -305,8 +305,8 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-            <Shield size={20} className="text-violet-600 dark:text-violet-400" />
+          <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+            <Shield size={20} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div className="text-left">
             <h3 className="font-semibold text-navy-900 dark:text-white">Approval Workflow</h3>
@@ -359,7 +359,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
               {approvalStatus.canReject && (
                 <button
                   onClick={() => setShowDecisionModal('reject')}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-medium transition-colors"
                 >
                   <XCircle size={18} />
                   Reject
@@ -393,7 +393,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                       ? 'Add an optional comment...'
                       : 'Please provide a reason for rejection...'
                   }
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   rows={4}
                 />
               </div>
@@ -404,7 +404,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                     type="checkbox"
                     checked={returnToDraft}
                     onChange={(e) => setReturnToDraft(e.target.checked)}
-                    className="w-4 h-4 text-violet-500 rounded focus:ring-violet-500"
+                    className="w-4 h-4 text-primary-500 rounded focus:ring-primary-500"
                   />
                   <span className="text-sm text-slate-600 dark:text-slate-300">
                     Return report to DRAFT status for revisions
@@ -429,7 +429,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                 className={`flex-1 px-4 py-2 rounded-lg font-medium text-white transition-colors ${
                   showDecisionModal === 'approve'
                     ? 'bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300'
-                    : 'bg-red-500 hover:bg-red-600 disabled:bg-red-300'
+                    : 'bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300'
                 }`}
               >
                 {submitting

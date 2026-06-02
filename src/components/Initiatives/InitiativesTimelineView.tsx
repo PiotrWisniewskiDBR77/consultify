@@ -125,11 +125,7 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
   const timelineInitiatives = useMemo(
     () =>
       localInitiatives.map((initiative) =>
-        mapPortfolioToFullInitiative(
-          initiative,
-          projectId,
-          dependencyMap.get(initiative.id) || []
-        )
+        mapPortfolioToFullInitiative(initiative, projectId, dependencyMap.get(initiative.id) || [])
       ),
     [dependencyMap, localInitiatives, projectId]
   );

@@ -289,12 +289,12 @@ export const PlaybookEditorView: React.FC<PlaybookEditorViewProps> = ({ template
 
       {/* Validation Errors */}
       {validationErrors.length > 0 && (
-        <div className="bg-red-50 border-t border-red-200 px-4 py-2">
-          <div className="flex items-center gap-2 text-red-700 text-sm">
+        <div className="bg-rose-50 border-t border-rose-200 px-4 py-2">
+          <div className="flex items-center gap-2 text-rose-700 text-sm">
             <AlertTriangle size={16} />
             <span className="font-medium">Validation Errors:</span>
             {validationErrors.map((err, i) => (
-              <span key={i} className="bg-red-100 px-2 py-0.5 rounded text-xs">
+              <span key={i} className="bg-rose-100 px-2 py-0.5 rounded text-xs">
                 {err.message}
               </span>
             ))}

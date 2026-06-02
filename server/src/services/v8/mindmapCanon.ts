@@ -48,12 +48,18 @@ export type MindmapNodeKind = (typeof P12_NODE_KINDS)[number];
 export const P12_CALM_LOOP_RULES = {
   selectionAfterCreate: 'New node is selected and scrolled into view immediately after creation',
   selectionAfterMove: 'Moved/reparented node retains selection; viewport adjusts if needed',
-  anchorAfterDelete: 'After delete, selection anchors to parent; if parent deleted, nearest sibling; if none, root',
-  cycleDetection: 'Reparent to own descendant is blocked with explicit user-facing error; no silent reorder',
-  collapsePreservesData: 'Collapse hides subtree visually but never deletes data; expand restores full subtree',
-  collapseStateVisible: 'Collapsed state is indicated by a visual cue (chevron/badge) on the parent node',
-  renameInPlace: 'Rename activates inline editing on the selected node; Escape cancels, Enter confirms',
-  rootConstraint: 'A mindmap always has exactly one root; create_root is only valid on an empty canvas',
+  anchorAfterDelete:
+    'After delete, selection anchors to parent; if parent deleted, nearest sibling; if none, root',
+  cycleDetection:
+    'Reparent to own descendant is blocked with explicit user-facing error; no silent reorder',
+  collapsePreservesData:
+    'Collapse hides subtree visually but never deletes data; expand restores full subtree',
+  collapseStateVisible:
+    'Collapsed state is indicated by a visual cue (chevron/badge) on the parent node',
+  renameInPlace:
+    'Rename activates inline editing on the selected node; Escape cancels, Enter confirms',
+  rootConstraint:
+    'A mindmap always has exactly one root; create_root is only valid on an empty canvas',
 } as const;
 
 // ────────────────────────────────────────────────────────────────
@@ -66,7 +72,8 @@ export type MindmapExportFormat = (typeof P12_EXPORT_FORMATS)[number];
 
 export const P12_EXPORT_RULES = {
   json: 'Full graph serialization preserving hierarchy (parentId), node kinds, labels, positions, and metadata',
-  markdown: 'Indented markdown outline: root at h1, children indented with dashes, depth = indent level',
+  markdown:
+    'Indented markdown outline: root at h1, children indented with dashes, depth = indent level',
   hierarchyPreserved: 'Both formats must preserve parent-child relationships without data loss',
   roundTrip: 'JSON export → import must produce identical graph (idempotent round-trip)',
 } as const;
@@ -79,7 +86,8 @@ export const P12_AI_COBUILDING_RULES = {
   previewDiff: 'AI-generated changes are shown as a visual diff overlay before application',
   explicitAcceptReject: 'User must explicitly accept or reject the AI proposal; no silent apply',
   undoableAsOneStep: 'Accepted AI proposal is recorded as a single undo step (atomic batch)',
-  proposalVisibility: 'AI proposal starts as personal_draft per W4-7; shared only on explicit share',
+  proposalVisibility:
+    'AI proposal starts as personal_draft per W4-7; shared only on explicit share',
   noSilentEdits: 'AI cannot modify the graph without going through the preview→accept flow',
   scopeBounded: 'AI proposals are bounded to the current subtree context; no cross-tree mutations',
 } as const;
@@ -160,16 +168,48 @@ export const P12_ACCEPTANCE_CHECKLIST: ReadonlyArray<{
   requirement: string;
   testable: boolean;
 }> = [
-  { id: 'P12-AC-01', requirement: 'Create root + child + sibling via UI; graph state correct', testable: true },
-  { id: 'P12-AC-02', requirement: 'New node selected and visible (scrolled into view) after creation', testable: true },
+  {
+    id: 'P12-AC-01',
+    requirement: 'Create root + child + sibling via UI; graph state correct',
+    testable: true,
+  },
+  {
+    id: 'P12-AC-02',
+    requirement: 'New node selected and visible (scrolled into view) after creation',
+    testable: true,
+  },
   { id: 'P12-AC-03', requirement: 'Move/reparent keeps selection on moved node', testable: true },
-  { id: 'P12-AC-04', requirement: 'Collapse/expand subtree; collapsed state visually indicated', testable: true },
-  { id: 'P12-AC-05', requirement: 'Collapse does not delete data; expand restores full subtree', testable: true },
-  { id: 'P12-AC-06', requirement: 'Delete node deletes subtree; selection anchors to parent/sibling', testable: true },
-  { id: 'P12-AC-07', requirement: 'Invalid reparent (cycle) blocked with user-facing error', testable: true },
+  {
+    id: 'P12-AC-04',
+    requirement: 'Collapse/expand subtree; collapsed state visually indicated',
+    testable: true,
+  },
+  {
+    id: 'P12-AC-05',
+    requirement: 'Collapse does not delete data; expand restores full subtree',
+    testable: true,
+  },
+  {
+    id: 'P12-AC-06',
+    requirement: 'Delete node deletes subtree; selection anchors to parent/sibling',
+    testable: true,
+  },
+  {
+    id: 'P12-AC-07',
+    requirement: 'Invalid reparent (cycle) blocked with user-facing error',
+    testable: true,
+  },
   { id: 'P12-AC-08', requirement: 'Undo/redo works for all node operations', testable: true },
-  { id: 'P12-AC-09', requirement: 'Export JSON/Markdown preserves hierarchy without data loss', testable: true },
-  { id: 'P12-AC-10', requirement: 'AI co-building: preview diff shown, explicit accept/reject, undoable as one step', testable: true },
+  {
+    id: 'P12-AC-09',
+    requirement: 'Export JSON/Markdown preserves hierarchy without data loss',
+    testable: true,
+  },
+  {
+    id: 'P12-AC-10',
+    requirement: 'AI co-building: preview diff shown, explicit accept/reject, undoable as one step',
+    testable: true,
+  },
 ] as const;
 
 // ────────────────────────────────────────────────────────────────
@@ -236,7 +276,7 @@ export function resolveDeleteAnchor(
 export function exportToMarkdown(
   nodes: ReadonlyArray<{ id: string; label?: string; parentId?: string | null }>
 ): string {
-  const childrenMap = new Map<string | null, typeof nodes[number][]>();
+  const childrenMap = new Map<string | null, (typeof nodes)[number][]>();
   for (const node of nodes) {
     const pid = node.parentId ?? null;
     if (!childrenMap.has(pid)) childrenMap.set(pid, []);

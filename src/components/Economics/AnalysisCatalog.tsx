@@ -239,7 +239,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search analyses by name or project..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700
                             dark:border-navy-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
           />
         </div>
@@ -250,7 +250,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as AnalysisStatus | 'all')}
-              className="appearance-none px-4 py-2.5 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 
+              className="appearance-none px-4 py-2.5 pr-10 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700
                                 dark:border-navy-700 rounded-xl text-sm cursor-pointer"
             >
               <option value="all">Wszystkie statusy</option>
@@ -282,7 +282,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
 
           {/* Compare Button */}
           {selectedIds.length >= 2 && (
-            <button className="px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-500 transition-colors">
+            <button className="px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-500 transition-colors">
               Compare ({selectedIds.length})
             </button>
           )}
@@ -292,7 +292,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
       {/* Bulk Action Toolbar */}
       {selectedIds.length > 0 && (
         <div
-          className="flex items-center gap-3 p-3 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 
+          className="flex items-center gap-3 p-3 bg-gradient-to-r from-emerald-500/10 to-blue-500/10
                     border border-emerald-500/20 rounded-xl animate-fade-in"
         >
           <div className="flex items-center gap-2">
@@ -311,8 +311,8 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handleBulkExport}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700 
-                                dark:border-navy-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700
+                                dark:border-navy-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300
                                 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
             >
               <Download size={14} />
@@ -322,8 +322,8 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
             {/* Bulk Status Change Dropdown */}
             <div className="relative group">
               <button
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700 
-                                    dark:border-navy-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700
+                                    dark:border-navy-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300
                                     hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
                 <CheckCircle size={14} />
@@ -331,7 +331,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
                 <ChevronDown size={14} />
               </button>
               <div
-                className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700 
+                className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700
                                 dark:border-navy-700 rounded-xl shadow-xl z-10 py-1 hidden group-hover:block"
               >
                 <button
@@ -357,9 +357,9 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
 
             <button
               onClick={handleBulkDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-500/10 border border-red-200 
-                                dark:border-red-500/30 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 
-                                hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-200
+                                dark:border-rose-500/30 rounded-lg text-sm font-medium text-rose-600 dark:text-rose-400
+                                hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
             >
               <Trash2 size={14} />
               Delete
@@ -368,7 +368,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
           <div className="flex-1" />
           <button
             onClick={clearSelection}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300
                             hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             title="Clear selection"
           >
@@ -435,7 +435,7 @@ const StatCard: React.FC<{ label: string; value: number | string; icon: any; col
   color,
 }) => {
   const colors: Record<string, string> = {
-    purple: 'bg-purple-500/10 text-purple-500',
+    purple: 'bg-primary-500/10 text-primary-500',
     green: 'bg-green-500/10 text-green-500',
     yellow: 'bg-yellow-500/10 text-yellow-500',
     emerald: 'bg-emerald-500/10 text-emerald-500',
@@ -472,7 +472,7 @@ const EmptyState: React.FC<{ onCreateNew: () => void; onImport: () => void }> = 
     <div className="flex gap-3">
       <button
         onClick={onImport}
-        className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-navy-700 
+        className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-navy-700
                     text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
       >
         <Upload size={18} />
@@ -546,7 +546,7 @@ const AnalysisCard: React.FC<{
         </button>
         {showMenu && (
           <div
-            className="absolute right-0 mt-1 w-44 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700 
+            className="absolute right-0 mt-1 w-44 bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-700
                         dark:border-navy-700 rounded-xl shadow-xl z-10 py-1 overflow-hidden"
           >
             <button
@@ -586,7 +586,7 @@ const AnalysisCard: React.FC<{
                 onDelete();
                 setShowMenu(false);
               }}
-              className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2"
+              className="w-full px-4 py-2.5 text-left text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 flex items-center gap-2"
             >
               <Trash2 size={14} /> Delete
             </button>
@@ -597,7 +597,7 @@ const AnalysisCard: React.FC<{
       {/* Card Content */}
       <div onClick={onSelect} className="pt-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center">
             <BarChart3 size={24} className="text-emerald-500" />
           </div>
           <div className="flex-1 min-w-0">
@@ -620,7 +620,7 @@ const AnalysisCard: React.FC<{
           </div>
           <div className="h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full transition-all"
               style={{ width: `${analysis.completionPercent || 0}%` }}
             />
           </div>
@@ -835,7 +835,7 @@ const AnalysisTable: React.FC<{
                   </button>
                   <button
                     onClick={() => onDelete(analysis.id)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

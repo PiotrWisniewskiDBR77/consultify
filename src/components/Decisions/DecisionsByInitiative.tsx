@@ -54,7 +54,7 @@ const GroupHeader: React.FC<{
   const getIcon = () => {
     switch (group.type) {
       case 'project':
-        return <FolderKanban size={16} className="text-purple-500" />;
+        return <FolderKanban size={16} className="text-primary-500" />;
       case 'initiative':
         return <Target size={16} className="text-blue-500" />;
       case 'assessment':
@@ -69,8 +69,8 @@ const GroupHeader: React.FC<{
   const getTypeBadge = () => {
     const badges: Record<string, { bg: string; text: string; label: string }> = {
       project: {
-        bg: 'bg-purple-100 dark:bg-purple-900/30',
-        text: 'text-purple-700 dark:text-purple-300',
+        bg: 'bg-primary-100 dark:bg-primary-900/30',
+        text: 'text-primary-700 dark:text-primary-300',
         label: 'Project',
       },
       initiative: {
@@ -101,10 +101,10 @@ const GroupHeader: React.FC<{
         bg-white dark:bg-navy-900
         border border-slate-200 dark:border-navy-700
         rounded-lg
-        hover:border-purple-300 dark:hover:border-purple-500/50
+        hover:border-primary-300 dark:hover:border-primary-500/50
         transition-all duration-150
         ${group.counts.overdue > 0 ? 'border-l-4 border-l-amber-500' : ''}
-        ${group.counts.critical > 0 ? 'border-l-4 border-l-red-500' : ''}
+        ${group.counts.critical > 0 ? 'border-l-4 border-l-rose-500' : ''}
       `}
     >
       <div className="flex items-center gap-3">
@@ -122,7 +122,7 @@ const GroupHeader: React.FC<{
           <div className="flex items-center gap-2">
             <button
               onClick={onClick}
-              className="font-medium text-sm text-navy-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors truncate"
+              className="font-medium text-sm text-navy-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate"
             >
               {group.name}
             </button>
@@ -143,7 +143,7 @@ const GroupHeader: React.FC<{
           </span>
         )}
         {group.counts.critical > 0 && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 font-medium">
             {group.counts.critical} critical
           </span>
         )}
@@ -339,7 +339,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-purple-500" size={24} />
+        <Loader2 className="animate-spin text-primary-500" size={24} />
       </div>
     );
   }
@@ -353,7 +353,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
       <div className="shrink-0 p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-lg shadow-sm">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-primary-600 text-white rounded-lg shadow-sm">
               <Target size={20} />
             </div>
             <div>
@@ -387,7 +387,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('decisions.searchByInitiative', 'Search initiatives and decisions...')}
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
       </div>

@@ -243,7 +243,7 @@ export const ClientAccessView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -251,13 +251,13 @@ export const ClientAccessView: React.FC = () => {
   if (error && clients.length === 0 && employees.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="p-4 rounded-full bg-red-500/10 mb-4">
-          <Users className="w-8 h-8 text-red-400" />
+        <div className="p-4 rounded-full bg-rose-500/10 mb-4">
+          <Users className="w-8 h-8 text-rose-400" />
         </div>
         <p className="text-slate-500 mb-4">{error}</p>
         <button
           onClick={fetchData}
-          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
         >
           {t('common.retry', 'Try Again')}
         </button>
@@ -288,7 +288,7 @@ export const ClientAccessView: React.FC = () => {
             className={cn(
               'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'clients'
-                ? 'text-slate-900 dark:text-white border-violet-500'
+                ? 'text-slate-900 dark:text-white border-primary-500'
                 : 'text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
             )}
           >
@@ -299,7 +299,7 @@ export const ClientAccessView: React.FC = () => {
             className={cn(
               'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
               activeTab === 'employees'
-                ? 'text-slate-900 dark:text-white border-violet-500'
+                ? 'text-slate-900 dark:text-white border-primary-500'
                 : 'text-slate-500 border-transparent hover:text-slate-900 dark:hover:text-white'
             )}
           >
@@ -309,7 +309,7 @@ export const ClientAccessView: React.FC = () => {
         <button
           onClick={handleGetAccessLink}
           disabled={generatingLink}
-          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/50 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+          className="px-4 py-2 bg-primary-600 hover:bg-primary-500 disabled:bg-primary-600/50 text-white rounded-lg text-sm font-medium flex items-center gap-2"
         >
           {generatingLink ? (
             <RefreshCw className="w-4 h-4 animate-spin" />
@@ -322,10 +322,10 @@ export const ClientAccessView: React.FC = () => {
 
       {/* Access Link Display */}
       {accessLink && (
-        <div className="bg-violet-500/10 border border-violet-500/30 rounded-xl p-4">
+        <div className="bg-primary-500/10 border border-primary-500/30 rounded-xl p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
-              <p className="text-sm text-violet-300 mb-1">
+              <p className="text-sm text-primary-300 mb-1">
                 {t('partner.clientAccess.generatedLink', 'Your access link is ready:')}
               </p>
               <code className="text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-navy-900/50 px-3 py-1.5 rounded block truncate">
@@ -334,7 +334,7 @@ export const ClientAccessView: React.FC = () => {
             </div>
             <button
               onClick={handleCopyLink}
-              className="p-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-white"
+              className="p-2 bg-primary-600 hover:bg-primary-500 rounded-lg text-white"
             >
               {copiedLink ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
             </button>
@@ -354,7 +354,7 @@ export const ClientAccessView: React.FC = () => {
                 className={cn(
                   'rounded-full px-4 py-1.5 text-xs font-medium transition',
                   selectedRegion === null
-                    ? 'bg-violet-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 )}
               >
@@ -367,7 +367,7 @@ export const ClientAccessView: React.FC = () => {
                   className={cn(
                     'flex items-center gap-1 rounded-full px-4 py-1.5 text-xs font-medium transition',
                     selectedRegion === region
-                      ? 'bg-violet-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   )}
                 >
@@ -409,7 +409,7 @@ export const ClientAccessView: React.FC = () => {
             </p>
             <button
               onClick={() => setShowAddTeamMember(true)}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium flex items-center gap-2"
             >
               <UserPlus className="w-4 h-4" />
               {t('partner.clientAccess.addTeamMember', 'Add new team member')}
@@ -445,7 +445,7 @@ export const ClientAccessView: React.FC = () => {
                             className={cn(
                               'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
                               employee.status === 'ACTIVE'
-                                ? 'bg-violet-500/20 text-violet-400'
+                                ? 'bg-primary-500/20 text-primary-400'
                                 : 'bg-slate-700 text-slate-400'
                             )}
                           >
@@ -510,7 +510,7 @@ export const ClientAccessView: React.FC = () => {
       {/* PMO Compliance Info */}
       <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
         <div className="flex items-center gap-3 mb-3">
-          <Shield className="w-5 h-5 text-orange-400" />
+          <Shield className="w-5 h-5 text-amber-400" />
           <h3 className="font-semibold text-slate-900 dark:text-white">
             {t('partner.clientAccess.compliance', 'Access Control Compliance')}
           </h3>
@@ -539,13 +539,13 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
     ACTIVE: 'bg-emerald-500/20 text-emerald-400',
     PENDING: 'bg-amber-500/20 text-amber-400',
     TRIAL: 'bg-blue-500/20 text-blue-400',
-    REVOKED: 'bg-red-500/20 text-red-400',
+    REVOKED: 'bg-rose-500/20 text-rose-400',
   };
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-violet-500/30">
+    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-slate-50/50 dark:bg-navy-900/30 p-4 transition hover:border-primary-500/30">
       <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20 text-sm font-bold text-violet-400">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/20 text-sm font-bold text-primary-400">
           {(client.clientName || client.organizationName || 'UN').substring(0, 2).toUpperCase()}
         </div>
         <div>

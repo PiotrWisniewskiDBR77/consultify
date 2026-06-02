@@ -182,9 +182,7 @@ describe('RapidLeanService', () => {
     });
 
     describe('getObservations', () => {
-        it.skip('should fetch observations for assessment - requires DB mock', async () => {
-            // This test requires complex DB mocking - skipped for now
-        });
+        it.todo('should fetch observations for assessment (requires DB mock)');
     });
 
     describe('analyzeObservationsForDRD', () => {

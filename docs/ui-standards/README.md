@@ -1,9 +1,9 @@
 # UI/UX Standards — Consultify
 
 > **JEDYNE KANONICZNE ŹRÓDŁO** wytycznych UI/UX i specyfikacji komponentów.  
-> **Data konsolidacji:** 2026-02-15 (v2.0 — "Tech Sexy" Edition)
+> **Data konsolidacji:** 2026-05-01 (v2.1 — "DBR77 Tech Sexy 2027" Edition)
 >
-> **v2.0 Changelog:** Ewolucja visual language na podstawie analizy wzorców UI 2025-2026 (ChatGPT, Notion, ClickUp, Gemini, NotebookLM). Kluczowe zmiany: invisible borders, multi-layer depth, monochromatic chrome, outline-only icons, refined hover/spacing. Nie rewolucja — refinement.
+> **v2.1 Changelog:** Golden Standard jako najwyższy SSOT, DBR77 Tech Sexy 2027, Menu 2/3 bez improwizacji, segmented view controls, primary CTA bez plusa, AI actions po prawej stronie Menu 3.
 
 ---
 
@@ -41,70 +41,81 @@ docs/ui-standards/
 
 ## Szybka nawigacja
 
-| Obszar                   | Dokument                                                                         | Zakres                                                                 |
-| ------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **Kanon v3 (SSOT)**      | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                           | Konsolidacja decyzji v3 (topbary, light mode, preview, AI, inbox)      |
-| **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                   | Paleta DBR77, semantyka, WCAG                                          |
-| **Język wizualny**       | [00-foundation/visual-language.md](00-foundation/visual-language.md)             | Tła, ramki, typografia, motion                                         |
-| **Canvas Mode**          | [00-foundation/canvas-mode.md](00-foundation/canvas-mode.md)                     | Rozszerzenie DBR77 dla experience surfaces (Home tab, landing, onboarding) |
-| **Tożsamość artefaktów** | [00-foundation/artifact-identity-map.md](00-foundation/artifact-identity-map.md) | Kanon: 1 artefakt = 1 ikona + 1 akcent kolorystyczny (v3)              |
-| **Shell artefaktu**      | [01-shell-layout/artifact-shell.md](01-shell-layout/artifact-shell.md)           | 4-warstwowy shell, tokeny rozmiaru                                     |
-| **Tryby D/N/C**          | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md)   | Architektura 3 trybów, N blocks kit                                    |
-| **App Topbar (v3)**      | [01-shell-layout/app-topbar-standard-v3.md](01-shell-layout/app-topbar-standard-v3.md) | Globalny topbar: Data/Model/Inbox/Tasks/User + zasady AI (v3)      |
-| **Współdzielone sekcje** | [02-components/shared-sections.md](02-components/shared-sections.md)             | CommentsCanvas, ActivityLog, Risk, Governance                          |
-| **Building blocks**      | [02-components/building-blocks.md](02-components/building-blocks.md)             | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView |
-| **AI suggestions modal** | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md)   | Standard modala do przeglądu i zastosowania sugestii AI                |
-| **Help + Intro**         | [02-components/help-intro-standard.md](02-components/help-intro-standard.md)      | Delikatny standard intro, contextual help i wejść do AI                |
-| **Help Panel + Intro Spec** | [02-components/help-sidepanel-intro-spec.md](02-components/help-sidepanel-intro-spec.md) | Spec ekranów, sekcji, stanów i zachowań dla helpa i intro          |
-| **Help + Intro Implementation Plan** | [02-components/help-intro-implementation-plan.md](02-components/help-intro-implementation-plan.md) | Kolejność wdrożenia 1:1 dla frontendu, pliki i fazy prac        |
-| **Workspace 3-tools strip** | [02-components/workspace-3-tools-strip.md](02-components/workspace-3-tools-strip.md) | Kanon: Tools / Context / AI Suggestions (prawy panel)              |
-| **Team table**           | [02-components/team-management-table.md](02-components/team-management-table.md) | Standard tabeli zespołu (N‑mode)                                       |
-| **Task Panel**           | [02-components/task-panel.md](02-components/task-panel.md)                       | TaskDetailView — layout, sekcje                                        |
-| **Decision Panel**       | [02-components/decision-panel.md](02-components/decision-panel.md)               | DecisionDetailView — layout, sekcje                                    |
-| **Notification Panel**   | [02-components/notification-panel.md](02-components/notification-panel.md)       | NotificationDetailView                                                 |
-| **Initiative sections**  | [02-components/initiative-sections.md](02-components/initiative-sections.md)     | Karty inicjatywy (KPI, Decisions, Gates, RAID…)                        |
-| **Moduł hub**            | [03-modules/module-hub-standard.md](03-modules/module-hub-standard.md)           | Struktura ekranu modułu                                                |
-| **Tabele**               | [03-modules/app-table-standard.md](03-modules/app-table-standard.md)             | Standard tabel aplikacyjnych                                           |
-| **Table + Preview**      | [03-modules/table-preview-pane-standard.md](03-modules/table-preview-pane-standard.md) | Kanon “tabela + preview pane” (Outlook style)                       |
-| **Golden Standard v3**   | [03-modules/golden-standard-table-cards-preview-v3.md](03-modules/golden-standard-table-cards-preview-v3.md) | SSOT: Table + Cards + Preview (Sprint 1) |
-| **Interactive boards (v3)** | [03-modules/interactive-board-standard.md](03-modules/interactive-board-standard.md) | Kanon tablic KPI/finanse: definicja kolumn + view modes             |
-| **Tools library & detail** | [03-modules/tools-library-detail-standard.md](03-modules/tools-library-detail-standard.md) | Kanon modułu Tools: Goal tab layout, kolory, badge taxonomy, grafiki |
+| Obszar                               | Dokument                                                                                                     | Zakres                                                                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Golden Standard**                  | [CONSULTIFY_UI_UX_GOLDEN_STANDARD.md](CONSULTIFY_UI_UX_GOLDEN_STANDARD.md)                                   | Najwyższy SSOT UI/UX: DBR77 Tech Sexy 2027, komponenty, Menu 2/3, N-mode, tabele, timeline                                                   |
+| **Operating Standard**               | [CONSULTIFY_UI_UX_OPERATING_STANDARD.md](CONSULTIFY_UI_UX_OPERATING_STANDARD.md)                             | Operacyjna brama dla Cursor, audytu, refactorów i zatwierdzania wyjątków                                                                     |
+| **Documentation audit**              | [UI_UX_DOCUMENTATION_COMPLETENESS_AUDIT.md](UI_UX_DOCUMENTATION_COMPLETENESS_AUDIT.md)                       | Audyt kompletności, spójności i egzekwowalności dokumentacji UI/UX                                                                           |
+| **Enforcement plan**                 | [UI_UX_ENFORCEMENT_PLAN.md](UI_UX_ENFORCEMENT_PLAN.md)                                                       | Plan bramek Cursor/CI/review, aby egzekwować Golden Standard                                                                                 |
+| **Migration audit**                  | [UI_UX_MIGRATION_AUDIT.md](UI_UX_MIGRATION_AUDIT.md)                                                         | Mapa obecnego stanu UI/UX, migration debt, decyzje per moduł                                                                                 |
+| **Migration plan**                   | [UI_UX_MIGRATION_PLAN.md](UI_UX_MIGRATION_PLAN.md)                                                           | Fale migracji, bramki komponentów, kolejność refactorów                                                                                      |
+| **Reference screens**                | [UI_UX_REFERENCE_SCREENS.md](UI_UX_REFERENCE_SCREENS.md)                                                     | Kandydaci na ekrany referencyjne i warunki zatwierdzenia                                                                                     |
+| **Kanon v3 (legacy/consolidated)**   | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                                                       | Historyczna konsolidacja decyzji v3; podporządkowana Golden Standard                                                                         |
+| **Kolory**                           | [00-foundation/color-system.md](00-foundation/color-system.md)                                               | Paleta DBR77, semantyka, WCAG                                                                                                                |
+| **Czytelność light mode**            | [00-foundation/light-mode-readability.md](00-foundation/light-mode-readability.md)                           | Kontrast, badge taxonomy, metadata i zasady surface hierarchy                                                                                |
+| **Język wizualny**                   | [00-foundation/visual-language.md](00-foundation/visual-language.md)                                         | Tła, ramki, typografia, motion                                                                                                               |
+| **Canvas Mode**                      | [00-foundation/canvas-mode.md](00-foundation/canvas-mode.md)                                                 | Rozszerzenie DBR77 dla experience surfaces (Home tab, landing, onboarding)                                                                   |
+| **Tożsamość artefaktów**             | [00-foundation/artifact-identity-map.md](00-foundation/artifact-identity-map.md)                             | Kanon: 1 artefakt = 1 ikona + 1 akcent kolorystyczny (v3)                                                                                    |
+| **Shell artefaktu**                  | [01-shell-layout/artifact-shell.md](01-shell-layout/artifact-shell.md)                                       | 4-warstwowy shell, tokeny rozmiaru                                                                                                           |
+| **Tryby D/N/C**                      | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md)                               | Architektura 3 trybów, N blocks kit                                                                                                          |
+| **N-mode cards**                     | [01-shell-layout/n-mode-card-standard.md](01-shell-layout/n-mode-card-standard.md)                           | SSOT kart roboczych N-mode: anatomia, AI, visibility, katalog kart, standard `Interview Insight`                                             |
+| **Shared N-mode sections**           | [shared-nmode-sections-standard.md](shared-nmode-sections-standard.md)                                       | Reużywalne sekcje N-mode i zasady niedublowania powiązanego kontekstu                                                                        |
+| **App Topbar (v3)**                  | [01-shell-layout/app-topbar-standard-v3.md](01-shell-layout/app-topbar-standard-v3.md)                       | Globalny topbar: Data/Model/Inbox/Tasks/User + zasady AI (v3)                                                                                |
+| **Artifact shell future**            | [artifact-shell-future-standard.md](artifact-shell-future-standard.md)                                       | Future/next-iteration shell N/C; pomocniczy względem Golden Standard i artifact-shell                                                        |
+| **Współdzielone sekcje**             | [02-components/shared-sections.md](02-components/shared-sections.md)                                         | CommentsCanvas, ActivityLog, Risk, Governance                                                                                                |
+| **Building blocks**                  | [02-components/building-blocks.md](02-components/building-blocks.md)                                         | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView                                                                       |
+| **AI suggestions modal**             | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md)                               | Standard modala do przeglądu i zastosowania sugestii AI                                                                                      |
+| **Help + Intro**                     | [02-components/help-intro-standard.md](02-components/help-intro-standard.md)                                 | Delikatny standard intro, contextual help i wejść do AI                                                                                      |
+| **Help Panel + Intro Spec**          | [02-components/help-sidepanel-intro-spec.md](02-components/help-sidepanel-intro-spec.md)                     | Spec ekranów, sekcji, stanów i zachowań dla helpa i intro                                                                                    |
+| **Help + Intro Implementation Plan** | [02-components/help-intro-implementation-plan.md](02-components/help-intro-implementation-plan.md)           | Kolejność wdrożenia 1:1 dla frontendu, pliki i fazy prac                                                                                     |
+| **Workspace 3-tools strip**          | [02-components/workspace-3-tools-strip.md](02-components/workspace-3-tools-strip.md)                         | Kanon: Tools / Context / AI Suggestions (prawy panel)                                                                                        |
+| **Team table**                       | [02-components/team-management-table.md](02-components/team-management-table.md)                             | Standard tabeli zespołu (N‑mode)                                                                                                             |
+| **Task Panel**                       | [02-components/task-panel.md](02-components/task-panel.md)                                                   | TaskDetailView — layout, sekcje                                                                                                              |
+| **Decision Panel**                   | [02-components/decision-panel.md](02-components/decision-panel.md)                                           | DecisionDetailView — layout, sekcje                                                                                                          |
+| **Notification Panel**               | [02-components/notification-panel.md](02-components/notification-panel.md)                                   | NotificationDetailView                                                                                                                       |
+| **Initiative sections**              | [02-components/initiative-sections.md](02-components/initiative-sections.md)                                 | Karty inicjatywy (KPI, Decisions, Gates, RAID…)                                                                                              |
+| **Moduł hub**                        | [03-modules/module-hub-standard.md](03-modules/module-hub-standard.md)                                       | Struktura ekranu modułu                                                                                                                      |
+| **Tabele**                           | [03-modules/app-table-standard.md](03-modules/app-table-standard.md)                                         | Złoty standard tabel aplikacyjnych: My Work > Pomysły, dark/light reference, Excel-like boundary resize, chips, row states, settings popover |
+| **Table + Preview**                  | [03-modules/table-preview-pane-standard.md](03-modules/table-preview-pane-standard.md)                       | Kanon “tabela + preview pane” (Outlook style)                                                                                                |
+| **Golden Standard v3**               | [03-modules/golden-standard-table-cards-preview-v3.md](03-modules/golden-standard-table-cards-preview-v3.md) | SSOT: Table + Cards + Preview (Sprint 1)                                                                                                     |
+| **Interactive boards (v3)**          | [03-modules/interactive-board-standard.md](03-modules/interactive-board-standard.md)                         | Kanon tablic KPI/finanse: definicja kolumn + view modes                                                                                      |
+| **Tools library & detail**           | [03-modules/tools-library-detail-standard.md](03-modules/tools-library-detail-standard.md)                   | Kanon modułu Tools: Goal tab layout, kolory, badge taxonomy, grafiki                                                                         |
 
 ---
 
 ## Katalog komponentów (alfabetycznie)
 
-| Komponent                | Plik                     | Używany w                                    |
-| ------------------------ | ------------------------ | -------------------------------------------- |
-| `ActivityLogCanvas`      | shared-sections.md       | Task, Decision, Initiative, Notification     |
-| `AICoachPanel`           | _(MyWork/Focus)_         | Focus tab — AI priority recommendations      |
-| `AIConnections`          | _(MyWork/shared)_        | Task, Decision, Idea — AI-discovered links   |
-| `AIPlanView`             | _(MyWork/Focus)_         | Focus tab — AI time-blocked schedule          |
-| `AttachmentsLinksCanvas` | shared-sections.md       | Task, Decision, Initiative                   |
-| `Callout`                | building-blocks.md       | Wszędzie (info/warning/critical)             |
-| `ChecklistBlock`         | building-blocks.md       | Task, Notification                           |
-| `CommentsCanvas`         | shared-sections.md       | Task, Decision, Initiative, Notification     |
-| `ConvertToMenu`          | _(MyWork/shared)_        | Universal "Convert to..." dropdown            |
-| `DecisionDetailView`     | decision-panel.md        | MyWork                                       |
-| `EmbeddedView`           | building-blocks.md       | Tasks, Decisions, RAID w artefaktach         |
-| `EmptyStateInline`       | building-blocks.md       | Sekcje z pustym stanem                       |
-| `GovernanceCanvas`       | shared-sections.md       | Task, Decision (RACI, Reminders, Escalation) |
-| `IdeaMapWorkspace`       | _(MyWork)_               | MyWork — Idea workspace with map + tools     |
-| `IdeaWorkspaceTools`     | _(MyWork)_               | Idea Workspace — standard tools sidebar      |
-| `InlineTable`            | building-blocks.md       | Options, KPIs, tabele lekkie                 |
-| `MorningBriefCard`       | _(MyWork)_               | MyWorkHub — collapsible daily briefing       |
-| `NModeHeader`            | presentation-modes.md    | Wszystkie artefakty N-mode                   |
-| `NModeLeftNav`           | presentation-modes.md    | Wszystkie artefakty N-mode                   |
-| `NModePropertiesStrip`   | artifact-shell.md        | Wszystkie artefakty N-mode                   |
-| `NotificationDetailView` | notification-panel.md    | MyWork                                       |
-| `NudgeStrip`             | _(MyWork/Focus)_         | Focus tab — proactive nudge alerts           |
-| `PostDecisionFollowUp`   | _(MyWork/shared)_        | Decision — follow-up task modal              |
-| `RelatedContext`          | _(MyWork/shared)_        | Task, Decision — cross-entity KnowledgePulse |
-| `RiskCanvas`             | shared-sections.md       | Task, Decision, Initiative                   |
-| `TaskDetailView`         | task-panel.md            | MyWork                                       |
-| `TeamManagementPanel`    | team-management-table.md | Initiative → Team, Assessment → Team         |
-| `ToggleBlock`            | building-blocks.md       | Sekcje rozwijane                             |
-| `WorkspacePanelStrip`    | workspace-3-tools-strip.md | Workspace → 3 przyciski: Tools/Context/AI |
+| Komponent                | Plik                       | Używany w                                    |
+| ------------------------ | -------------------------- | -------------------------------------------- |
+| `ActivityLogCanvas`      | shared-sections.md         | Task, Decision, Initiative, Notification     |
+| `AICoachPanel`           | _(MyWork/Focus)_           | Focus tab — AI priority recommendations      |
+| `AIConnections`          | _(MyWork/shared)_          | Task, Decision, Idea — AI-discovered links   |
+| `AIPlanView`             | _(MyWork/Focus)_           | Focus tab — AI time-blocked schedule         |
+| `AttachmentsLinksCanvas` | shared-sections.md         | Task, Decision, Initiative                   |
+| `Callout`                | building-blocks.md         | Wszędzie (info/warning/critical)             |
+| `ChecklistBlock`         | building-blocks.md         | Task, Notification                           |
+| `CommentsCanvas`         | shared-sections.md         | Task, Decision, Initiative, Notification     |
+| `ConvertToMenu`          | _(MyWork/shared)_          | Universal "Convert to..." dropdown           |
+| `DecisionDetailView`     | decision-panel.md          | MyWork                                       |
+| `EmbeddedView`           | building-blocks.md         | Tasks, Decisions, RAID w artefaktach         |
+| `EmptyStateInline`       | building-blocks.md         | Sekcje z pustym stanem                       |
+| `GovernanceCanvas`       | shared-sections.md         | Task, Decision (RACI, Reminders, Escalation) |
+| `IdeaMapWorkspace`       | _(MyWork)_                 | MyWork — Idea workspace with map + tools     |
+| `IdeaWorkspaceTools`     | _(MyWork)_                 | Idea Workspace — standard tools sidebar      |
+| `InlineTable`            | building-blocks.md         | Options, KPIs, tabele lekkie                 |
+| `MorningBriefCard`       | _(MyWork)_                 | MyWorkHub — collapsible daily briefing       |
+| `NModeHeader`            | presentation-modes.md      | Wszystkie artefakty N-mode                   |
+| `NModeLeftNav`           | presentation-modes.md      | Wszystkie artefakty N-mode                   |
+| `NModePropertiesStrip`   | artifact-shell.md          | Wszystkie artefakty N-mode                   |
+| `NotificationDetailView` | notification-panel.md      | MyWork                                       |
+| `NudgeStrip`             | _(MyWork/Focus)_           | Focus tab — proactive nudge alerts           |
+| `PostDecisionFollowUp`   | _(MyWork/shared)_          | Decision — follow-up task modal              |
+| `RelatedContext`         | _(MyWork/shared)_          | Task, Decision — cross-entity KnowledgePulse |
+| `RiskCanvas`             | shared-sections.md         | Task, Decision, Initiative                   |
+| `TaskDetailView`         | task-panel.md              | MyWork                                       |
+| `TeamManagementPanel`    | team-management-table.md   | Initiative → Team, Assessment → Team         |
+| `ToggleBlock`            | building-blocks.md         | Sekcje rozwijane                             |
+| `WorkspacePanelStrip`    | workspace-3-tools-strip.md | Workspace → 3 przyciski: Tools/Context/AI    |
 
 ---
 
@@ -113,6 +124,7 @@ docs/ui-standards/
 **Workspace** to wzorzec UI dla widoku roboczego artefaktu (idea map, notebook, przyszłe typy).
 
 Każdy Workspace składa się z:
+
 - **Główny content** — mapa/edytor/diagram zajmujący maks. przestrzeń
 - **Tools panel** — sidebar (w-80) z narzędziami specyficznymi dla workspace + współdzielonymi sekcjami
 
@@ -130,10 +142,10 @@ Zaimplementowane w `@/components/shared/WorkspaceTools`:
 
 ### Sekcje per workspace
 
-| Workspace  | Sekcje specyficzne                                              |
-| ---------- | --------------------------------------------------------------- |
-| Notebook   | Insert Block, Create from Note, Page metadata, Compose strip    |
-| Idea Map   | Challenge, AI Map expand, Metadata, Convert (init/task/decision)|
+| Workspace | Sekcje specyficzne                                               |
+| --------- | ---------------------------------------------------------------- |
+| Notebook  | Insert Block, Create from Note, Page metadata, Compose strip     |
+| Idea Map  | Challenge, AI Map expand, Metadata, Convert (init/task/decision) |
 
 ### Implementacja
 

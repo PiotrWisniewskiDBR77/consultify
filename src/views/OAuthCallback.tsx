@@ -120,7 +120,7 @@ const OAuthCallback: React.FC = () => {
             <h2 className="mt-6 text-3xl font-bold tracking-tight text-navy-900 dark:text-white">
               Processing authentication...
             </h2>
-            <div className="mt-4 animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto"></div>
+            <div className="mt-4 animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
           </div>
         )}
         {status === 'success' && (
@@ -133,13 +133,13 @@ const OAuthCallback: React.FC = () => {
         )}
         {status === 'error' && (
           <div>
-            <h2 className="mt-6 text-3xl font-bold tracking-tight text-red-600 dark:text-red-400">
+            <h2 className="mt-6 text-3xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
               Authentication Failed
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{message}</p>
             <button
               onClick={() => navigate('/')}
-              className="mt-4 rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 transition-colors"
+              className="mt-4 rounded-md bg-primary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-colors"
             >
               Back to Home
             </button>

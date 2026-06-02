@@ -394,9 +394,9 @@ export const EnhancedDataTable = forwardRef<
         return <ChevronsUpDown size={14} className="text-slate-400 dark:text-slate-500" />;
       }
       if (sortDirection === 'asc') {
-        return <ChevronUp size={14} className="text-violet-500" />;
+        return <ChevronUp size={14} className="text-primary-500" />;
       }
-      return <ChevronDown size={14} className="text-violet-500" />;
+      return <ChevronDown size={14} className="text-primary-500" />;
     };
 
     const alignmentClasses = {
@@ -433,7 +433,7 @@ export const EnhancedDataTable = forwardRef<
               {/* Bulk selection info & actions */}
               {selectable && selectedCount > 0 && (
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-violet-600 dark:text-violet-400">
+                  <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
                     {selectedCount} {t('admin.table.selected', 'selected')}
                   </span>
                   <button
@@ -534,7 +534,7 @@ export const EnhancedDataTable = forwardRef<
                         if (input) input.indeterminate = isSomeSelected;
                       }}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                      className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
                     />
                   </th>
                 )}
@@ -607,7 +607,7 @@ export const EnhancedDataTable = forwardRef<
                             'cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-700/50',
                           striped && index % 2 === 1 && 'bg-slate-50/50 dark:bg-navy-800/50',
                           isSelected &&
-                            'bg-violet-50 dark:bg-violet-900/20 border-l-2 border-violet-600'
+                            'bg-primary-50 dark:bg-primary-900/20 border-l-2 border-primary-600'
                         )}
                       >
                         {/* Selection checkbox */}
@@ -617,7 +617,7 @@ export const EnhancedDataTable = forwardRef<
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => handleSelectRow(rowId, row)}
-                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                              className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
                             />
                           </td>
                         )}
@@ -651,7 +651,7 @@ export const EnhancedDataTable = forwardRef<
                                       type="text"
                                       value={String(editValue ?? '')}
                                       onChange={(e) => setEditValue(e.target.value)}
-                                      className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-violet-500"
+                                      className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                                       autoFocus
                                     />
                                   )}
@@ -777,7 +777,7 @@ export const EnhancedDataTable = forwardRef<
                       className={cn(
                         'w-8 h-8 text-sm rounded-lg transition-colors',
                         currentPage === pageNum
-                          ? 'bg-violet-600 text-white'
+                          ? 'bg-primary-600 text-white'
                           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-700'
                       )}
                     >
@@ -837,7 +837,7 @@ export const EnhancedDataTable = forwardRef<
                       }
                       setVisibleColumns(newVisible);
                     }}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600 focus:ring-violet-500"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
                   />
                   <GripVertical
                     size={14}

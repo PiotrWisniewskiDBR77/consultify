@@ -10,10 +10,11 @@
 
 import {
   Bookmark,
-  Bot,
   BrainCircuit,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Copy,
   Database,
   Download,
@@ -23,6 +24,7 @@ import {
   Loader2,
   Pencil,
   RefreshCw,
+  ShieldCheck,
   Sparkles,
   User,
   Volume2,
@@ -32,6 +34,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import TeresaMark from '@/components/shared/TeresaMark';
 
 import { usePermissions } from '../../hooks/usePermissions';
 import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../types';
@@ -44,7 +47,9 @@ import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
-import { ThinkingStatusLine } from './ThinkingStatusLine';
+import { TeresaProposalCard } from './TeresaProposalCard';
+import { ThinkingIndicator } from './Messages/InlineThinkingStream';
+import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
 
 // V8 governed proposal / execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
@@ -81,12 +86,29 @@ const V8_EXECUTION_MESSAGE_TYPES = new Set<string>([
 //    path where the pipeline never attached citations).
 // ============================================================================
 
-const CITATION_MARKER_RE = /\[(\d{1,3})\]/g;
+const CITATION_MARKER_RE = /\[(A?)(\d{1,3})\]/gi;
 const VERBOSE_CITATION_PREFIX_RE = /\s*Source\s+\d+\s*;\s*[A-Za-z0-9_-]+\s*;\s*(\[\d{1,3}\])/g;
+const INTERNAL_SOURCE_MARKER_RE = /\s*\[(?:MEM|DT|BM|KB|WEB|ASS|FIN)\](?=[\s.,;:!?)]|$)/gi;
+const INTERNAL_RAG_ID_RE = /\b(?:rag|chunk)_\d+\b/gi;
+const INTERNAL_DEBUG_LINE_RE =
+  /^[^\S\r\n]*(?:[-*•]|\d+[.)])?[^\S\r\n]*(?:\*\*)?(?:No sources|No cited sources|Uncertainty\s*\/\s*verification|Source ledger|Blocked scopes|cross_tenant|other_user_private|organization_data|forbidden_by_policy|disabled_by_user|Source\s+\d+)(?:\*\*)?\b.*(?:\r?\n)?/gim;
+const RAW_ARTIFACT_ENVELOPE_RE = /(?:^|\n)artifact:[a-z0-9_-]+:\s*\{[\s\S]*$/i;
 
 function stripVerboseCitationPrefixes(text: string): string {
   if (!text) return text;
   return text.replace(VERBOSE_CITATION_PREFIX_RE, ' $1');
+}
+
+export function sanitizeUserVisibleAiText(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(RAW_ARTIFACT_ENVELOPE_RE, '')
+    .replace(INTERNAL_DEBUG_LINE_RE, '')
+    .replace(INTERNAL_SOURCE_MARKER_RE, '')
+    .replace(INTERNAL_RAG_ID_RE, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function renderNodesWithCitations(
@@ -109,7 +131,7 @@ function renderNodesWithCitations(
         if (match.index > lastIndex) {
           parts.push(node.slice(lastIndex, match.index));
         }
-        const num = parseInt(match[1], 10);
+        const num = parseInt(match[2], 10);
         const citation = citations[num - 1];
         if (citation) {
           parts.push(
@@ -139,7 +161,15 @@ function renderNodesWithCitations(
       }
       if (lastIndex < node.length) parts.push(node.slice(lastIndex));
       CITATION_MARKER_RE.lastIndex = 0;
-      return parts.length === 1 ? parts[0] : <>{parts.map((p, idx) => <React.Fragment key={`${path}-f-${idx}`}>{p}</React.Fragment>)}</>;
+      return parts.length === 1 ? (
+        parts[0]
+      ) : (
+        <>
+          {parts.map((p, idx) => (
+            <React.Fragment key={`${path}-f-${idx}`}>{p}</React.Fragment>
+          ))}
+        </>
+      );
     }
     if (Array.isArray(node)) {
       return node.map((n, idx) => (
@@ -279,8 +309,9 @@ export interface MessageRendererProps {
   // V8 governed proposal handlers (CHAT_V8_ACTIONS_AND_APPROVALS)
   onProposalApprove?: (proposalId: string, msg: ChatMessage) => void;
   onProposalReject?: (proposalId: string, msg: ChatMessage, reason?: string) => void;
+  onProposalExecute?: (proposalId: string, msg: ChatMessage) => void;
   onProposalInspect?: (proposalId: string, msg: ChatMessage) => void;
-  proposalBusyById?: Record<string, { approve?: boolean; reject?: boolean }>;
+  proposalBusyById?: Record<string, { approve?: boolean; reject?: boolean; execute?: boolean }>;
 }
 
 // ============================================================================
@@ -355,6 +386,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   onOptionSelect,
   onProposalApprove,
   onProposalReject,
+  onProposalExecute,
   onProposalInspect,
   proposalBusyById,
 }) => {
@@ -369,12 +401,20 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const isHovered = hoveredMessageId === msg.id;
   const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
   const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
-  const hasCitations = msg.citations && msg.citations.length > 0;
+  const hasCitations = Array.isArray(msg.citations) && msg.citations.length > 0;
+  const metadata = (msg as any).metadata || {};
+  const isDeepSearchAnswer = Boolean(metadata?.deepThinking?.kind === 'report');
+  const visibleCitations = Array.isArray(msg.citations) ? msg.citations : [];
+  const hasVisibleCitations = visibleCitations.length > 0;
   const isCopied = copiedMessageId === msg.id;
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
   const isContextSaved = contextSavedMessageIds.has(msg.id);
+  const [showCompactActions, setShowCompactActions] = useState(false);
+  const [showSourcesDetails, setShowSourcesDetails] = useState(false);
   const canSaveToContext = msg.role === 'user' || msg.role === 'ai';
   const contextSaveRole: 'user' | 'ai' = msg.role === 'user' ? 'user' : 'ai';
+  const userVisibleContent =
+    msg.role === 'ai' ? sanitizeUserVisibleAiText(msg.content || '') : msg.content || '';
   const isDeepThinkingConfirm = (msg as any).metadata?.deepThinking?.kind === 'confirm';
   const confirmPayload =
     isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
@@ -384,14 +424,18 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const policyNotices = Array.isArray((msg as any).metadata?.policyNotices)
     ? ((msg as any).metadata.policyNotices as any[])
     : [];
-  const sourceLedger = (msg as any).metadata?.sourceLedger || null;
+  const visiblePolicyNotices = policyNotices.filter((n: any) => n?.displayToUser === true);
   const policyUncertaintyNotice =
-    policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'uncertainty') ||
-    policyNotices.find((n: any) => n?.kind === 'uncertainty') ||
+    visiblePolicyNotices.find(
+      (n: any) => n?.type === 'policy_notice' && n?.kind === 'uncertainty'
+    ) ||
+    visiblePolicyNotices.find((n: any) => n?.kind === 'uncertainty') ||
     null;
   const policyNoSourcesNotice =
-    policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'no_sources') ||
-    policyNotices.find((n: any) => n?.kind === 'no_sources') ||
+    visiblePolicyNotices.find(
+      (n: any) => n?.type === 'policy_notice' && n?.kind === 'no_sources'
+    ) ||
+    visiblePolicyNotices.find((n: any) => n?.kind === 'no_sources') ||
     null;
   const isPolicyRefusal = msg.role === 'ai' && policyDecision && policyDecision.allowed === false;
 
@@ -399,7 +443,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   // (CHAT_V8_ACTIONS_AND_APPROVALS, CHAT_V8_RESPONSE_MODEL).
   // Intercepts before the generic bubble so proposals are never rendered as
   // plain chat text and can never silently mutate state.
-  const msgType = (msg as any).type as string | undefined;
+  const msgType = ((msg as any).type ||
+    (msg as any).messageType ||
+    (msg as any).metadata?.messageType) as string | undefined;
   if (msgType && V8_EXECUTION_MESSAGE_TYPES.has(msgType)) {
     const proposalId =
       ((msg as any).metadata?.executionProposal?.proposalId as string | undefined) ||
@@ -413,9 +459,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         isRtl={isRtlChatLanguage}
         onApprove={onProposalApprove}
         onReject={onProposalReject}
+        onExecute={onProposalExecute}
         onInspect={onProposalInspect}
         isApproveBusy={!!busy?.approve}
         isRejectBusy={!!busy?.reject}
+        isExecuteBusy={!!busy?.execute}
       />
     );
   }
@@ -427,30 +475,16 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       onMouseEnter={() => setHoveredMessageId(msg.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
     >
-      {/* Cursor-like thinking log: plain dim text, no background, no panel */}
-      {/* Only show for the LAST streaming AI message to avoid duplicated lines */}
+      {/* Minimal streaming state: one "Thinking..." with 3 dots only */}
       {msg.role === 'ai' &&
         msg.isStreaming &&
         isLastMessage &&
         (thinkingSteps.length > 0 || !msg.content?.trim()) && (
           <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-            <ThinkingStatusLine
-              compact={isCompact}
-              show
-              showSpinner={false}
-              steps={thinkingSteps
-                .filter((s) => String((s as any)?.label || '').trim())
-                .map((s) => ({
-                  label: String((s as any)?.label || '').trim(),
-                  status:
-                    s.status === 'done' || s.status === 'completed'
-                      ? ('done' as const)
-                      : s.status === 'in_progress'
-                        ? ('in_progress' as const)
-                        : ('pending' as const),
-                }))
-                .slice(-6)}
-              label={t('thinking.processing', 'Thinking…') as string}
+            <ThinkingIndicator
+              isActive
+              label={t('thinking.processing', 'Thinking...') as string}
+              className={isCompact ? 'text-[11px]' : ''}
             />
           </div>
         )}
@@ -467,7 +501,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           }`}
         >
           {msg.role === 'ai' ? (
-            <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
+            <TeresaMark
+              size={isCompact ? 12 : 14}
+              className="text-primary-600 dark:text-primary-400"
+            />
           ) : (
             <User size={isCompact ? 12 : 14} className="text-slate-500 dark:text-slate-400" />
           )}
@@ -542,7 +579,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-                {!isPolicyRefusal && policyNoSourcesNotice && (
+                {!isPolicyRefusal && policyNoSourcesNotice && !hasCitations && (
                   <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30">
                     <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                       {t('policy.noSources.title', 'No sources found')}
@@ -559,38 +596,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-                {!isPolicyRefusal &&
-                  sourceLedger &&
-                  Array.isArray((sourceLedger as any).blocked_sources) &&
-                  (sourceLedger as any).blocked_sources.length > 0 && (
-                    <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/25">
-                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {t('policy.sourceLedger.title', 'Source ledger')}
-                      </div>
-                      <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
-                        {t('policy.sourceLedger.blockedLabel', 'Blocked scopes (high-level):')}
-                      </div>
-                      <ul className="mt-1 list-disc pl-4 space-y-0.5 text-[11px] text-slate-600 dark:text-slate-300">
-                        {(sourceLedger as any).blocked_sources
-                          .slice(0, 8)
-                          .map((b: any, i: number) => (
-                            <li key={i}>
-                              {String(b?.category || 'blocked')}
-                              {b?.reason ? ` (${String(b.reason)})` : ''}
-                            </li>
-                          ))}
-                      </ul>
-                      {sourceLedger?.degraded?.mode ? (
-                        <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                          {t('policy.sourceLedger.degraded', 'Degraded mode:')}{' '}
-                          <span className="font-medium">{String(sourceLedger.degraded.mode)}</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
+                {/* Source ledger remains in message metadata for operator telemetry.
+                    It is intentionally not rendered in the normal chat UX. */}
 
                 {/* Deep Thinking: Research progress (SSE events) */}
-                {(msg as any).metadata?.researchVisibility?.items && (
+                {isDeepSearchAnswer && (msg as any).metadata?.researchVisibility?.items && (
                   <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>
                     <div className="mb-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
                       Research & Sources (planned)
@@ -640,6 +650,28 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     />
                   </div>
                 )}
+
+                {msg.role === 'ai' &&
+                  (msg as any).metadata?.proposal &&
+                  (msg as any).metadata?.type !== 'table_proposal' && (
+                    <div className="not-prose mb-3">
+                      <TeresaProposalCard
+                        proposal={(msg as any).metadata.proposal}
+                        onNavigate={(proposal) => {
+                          const targetModule = String(proposal?.targetModule || '').toLowerCase();
+                          if (targetModule.includes('canvas')) {
+                            window.location.href = '/ai/work-canvas';
+                            return;
+                          }
+                          if (targetModule.includes('action')) {
+                            window.location.href = '/ai/action-center';
+                            return;
+                          }
+                          window.location.href = '/chat';
+                        }}
+                      />
+                    </div>
+                  )}
 
                 {(msg as any).metadata?.type === 'table_proposal' ? (
                   <div className="not-prose">
@@ -875,9 +907,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       while ((match = ideaHintRegex.exec(msg.content)) !== null) {
                         hints.push({ title: match[1].trim(), description: match[2].trim() });
                       }
-                      const cleanContent = stripVerboseCitationPrefixes(
-                        msg.content.replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '')
-                      ).trim();
+                      const cleanContent = sanitizeUserVisibleAiText(
+                        stripVerboseCitationPrefixes(
+                          msg.content.replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '')
+                        )
+                      );
 
                       const structuredEnvelope = (msg as any)?.metadata?.structuredOutput ?? null;
 
@@ -885,7 +919,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       // to `msg.citations[N-1]` so tappers actually open the
                       // source card. Empty/missing citations fall through to a
                       // muted non-clickable pill (see renderNodesWithCitations).
-                      const inlineCitations = Array.isArray(msg.citations) ? msg.citations : [];
+                      const inlineCitations = visibleCitations;
                       const handleInlineCitationClick = (citation: any) => {
                         if (!citation) return;
                         if (citation.type === 'external' && citation.link) {
@@ -958,24 +992,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               // citation rewiring on all text-carrying block
                               // elements so `[N]` markers become clickable
                               // pills linked to `msg.citations`.
-                              p: ({ children }: any) => (
-                                <p>{withCitations(children, 'p')}</p>
-                              ),
-                              li: ({ children }: any) => (
-                                <li>{withCitations(children, 'li')}</li>
-                              ),
-                              td: ({ children }: any) => (
-                                <td>{withCitations(children, 'td')}</td>
-                              ),
-                              th: ({ children }: any) => (
-                                <th>{withCitations(children, 'th')}</th>
-                              ),
+                              p: ({ children }: any) => <p>{withCitations(children, 'p')}</p>,
+                              li: ({ children }: any) => <li>{withCitations(children, 'li')}</li>,
+                              td: ({ children }: any) => <td>{withCitations(children, 'td')}</td>,
+                              th: ({ children }: any) => <th>{withCitations(children, 'th')}</th>,
                               strong: ({ children }: any) => (
                                 <strong>{withCitations(children, 'strong')}</strong>
                               ),
-                              em: ({ children }: any) => (
-                                <em>{withCitations(children, 'em')}</em>
-                              ),
+                              em: ({ children }: any) => <em>{withCitations(children, 'em')}</em>,
                             }}
                           >
                             {cleanContent}
@@ -1320,7 +1344,21 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <span>{msg.content}</span>
+                  <div className="flex flex-col">
+                    <span>{userVisibleContent}</span>
+                    {msg.role === 'user' && !msg.isStreaming && editingMessageId !== msg.id && (
+                      <div className="flex justify-end mt-2">
+                        <button
+                          onClick={() => handleStartEditMessage(msg.id)}
+                          title={t('chat.actions.editAndResend', 'Edit & Resend')}
+                          aria-label={t('chat.actions.editAndResend', 'Edit & Resend')}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/15 text-white/75 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -1351,7 +1389,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   {t('stream.complete', 'Response complete')}
                 </span>
                 {/* Cost-per-analysis estimate badge */}
-                {msg.content && msg.content.length > 50 && (
+                {userVisibleContent && userVisibleContent.length > 50 && (
                   <span
                     className="text-slate-400 dark:text-slate-500"
                     title={t(
@@ -1361,8 +1399,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   >
                     ~$
                     {(
-                      (msg.content.length / 4) * 0.000015 +
-                      (msg.content.length / 4) * 0.00006
+                      (userVisibleContent.length / 4) * 0.000015 +
+                      (userVisibleContent.length / 4) * 0.00006
                     ).toFixed(4)}{' '}
                     est.
                   </span>
@@ -1428,7 +1466,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 isDone
                                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
                                   : isError
-                                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+                                    ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
                                     : isActive
                                       ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
                                       : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
@@ -1437,7 +1475,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               {isDone ? (
                                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                               ) : isError ? (
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               ) : isActive ? (
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                               ) : (
@@ -1489,7 +1527,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               >
                 {/* Copy */}
                 <button
-                  onClick={() => handleCopyMessage(msg.content, msg.id)}
+                  onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
                   className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
                   title={t('chat.actions.copy', 'Copy')}
                 >
@@ -1509,7 +1547,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
                 {canSaveToContext && (
                   <button
-                    onClick={() => handleSaveToContext(msg.id, msg.content, contextSaveRole)}
+                    onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
                     disabled={isContextSaveBusy || isContextSaved}
                     className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
@@ -1546,10 +1584,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       // Replay behavior: always restart reading from the beginning.
                       stopSpeaking();
                       setTimeout(() => {
-                        speak(msg.content);
+                        speak(userVisibleContent);
                       }, 60);
                     }}
-                    className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                    className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
                     title={
                       voiceState.isSpeaking
                         ? t('chat.actions.stop', 'Stop')
@@ -1585,14 +1623,30 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
+      {/* TRUST T-TR1 — compact summary chip. Render whenever the backend
+          provides real citations; empty/missing citations stay silent. */}
+      {msg.role === 'ai' && !msg.isStreaming && hasVisibleCitations && (
+        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
+          <TrustBadge
+            citations={visibleCitations}
+            modelUsed={
+              typeof (msg as { metadata?: { modelUsed?: unknown } }).metadata?.modelUsed ===
+              'string'
+                ? ((msg as { metadata?: { modelUsed?: string } }).metadata?.modelUsed as string)
+                : null
+            }
+          />
+        </div>
+      )}
+
       {/* Citations */}
-      {msg.role === 'ai' && hasCitations && (
+      {msg.role === 'ai' && hasVisibleCitations && showCompactActions && showSourcesDetails && (
         <div
           className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}
           data-message-id={msg.id}
           data-citations-list="true"
         >
-          <CitationList citations={msg.citations!} />
+          <CitationList citations={visibleCitations} collapsed />
         </div>
       )}
 
@@ -1603,19 +1657,23 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         unaffected. Skipped while streaming — the bundle is only sealed
         at DONE.
       */}
-      {msg.role === 'ai' && !msg.isStreaming && (msg as any).metadata?.trustBundle && (
+      {msg.role === 'ai' &&
+        !msg.isStreaming &&
+        metadata?.trustBundle &&
+        showCompactActions &&
+        showSourcesDetails && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-col gap-1`}>
           {/* Chat V9 / TRUST TS1 — post-send sources aggregate. Silent when
               the bundle has no meaningful breakdown, so single-class turns
               still read exactly like pre-TS1 (TrustPanel primary pill
               carries the signal). */}
           <SourcesStrip
-            bundle={(msg as any).metadata.trustBundle}
+            bundle={metadata.trustBundle}
             messageId={msg.id || null}
             isCompact={isCompact}
           />
           <TrustPanel
-            bundle={(msg as any).metadata.trustBundle}
+            bundle={metadata.trustBundle}
             isCompact={isCompact}
             isRtl={isRtlChatLanguage}
             showOperatorDetail={showOperatorDetail}
@@ -1624,52 +1682,65 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
-      {/* Unified Feedback Block (AI only): feedback + idea + note */}
+      {/* Unified Feedback Block (AI only): compact, opt-in actions panel */}
       {msg.role === 'ai' && !msg.isStreaming && (
-        <div
-          className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-wrap items-start gap-3 p-2 rounded-lg bg-slate-50/80 dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60`}
-        >
-          <InlineResponseFeedback
-            messageId={msg.id}
-            conversationId={activeConversationId || undefined}
-            responseLength={msg.content.length}
-            onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
-            compact={isCompact}
-          />
-          <div className="flex items-center gap-1 border-l border-slate-200 dark:border-navy-700 pl-3">
-            <button
-              onClick={() => handleSaveAsIdea(msg.id, msg.content)}
-              className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-              title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
-            >
-              <Lightbulb size={14} />
-            </button>
-            <button
-              onClick={() => handleSaveAsNote(msg.id, msg.content)}
-              className="p-1.5 rounded-md text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-              title={t('myWork.notebook.saveAsNote', 'Save as note')}
-            >
-              <Bookmark size={14} />
-            </button>
-            <button
-              onClick={() => handleSaveToContext(msg.id, msg.content, 'ai')}
-              disabled={isContextSaveBusy || isContextSaved}
-              className="p-1.5 rounded-md text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title={
-                isContextSaved
-                  ? t('chat.actions.savedToContext', 'Saved to Context OS')
-                  : t('chat.actions.saveToContext', 'Save to Context OS')
-              }
-            >
-              {isContextSaveBusy ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : isContextSaved ? (
-                <CheckCircle2 size={14} />
-              ) : (
-                <Database size={14} />
-              )}
-            </button>
-          </div>
+        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex items-center gap-1.5`}>
+          <button
+            onClick={() =>
+              setShowCompactActions((v) => {
+                const next = !v;
+                if (!next) setShowSourcesDetails(false);
+                return next;
+              })
+            }
+            className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300/50 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+            title={t('chat.actions.toggleResponseActions', 'Toggle response actions')}
+            aria-label={t('chat.actions.toggleResponseActions', 'Toggle response actions')}
+          >
+            {showCompactActions ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </button>
+
+          {showCompactActions && (
+            <div className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-900/40">
+              <InlineResponseFeedback
+                messageId={msg.id}
+                conversationId={activeConversationId || undefined}
+                responseLength={userVisibleContent.length}
+                onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
+                compact
+                thumbsOnly
+              />
+              <button
+                onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
+                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                title={t('myWork.notebook.saveAsNote', 'Save as note')}
+                aria-label={t('myWork.notebook.saveAsNote', 'Save as note')}
+              >
+                <Bookmark size={12} />
+              </button>
+              <button
+                onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
+                className="p-1 rounded-md text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+                aria-label={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+              >
+                <Lightbulb size={12} />
+              </button>
+              <button
+                onClick={() => setShowSourcesDetails((v) => !v)}
+                className={`p-1 rounded-md transition-colors ${
+                  showSourcesDetails
+                    ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/25'
+                    : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                }`}
+                title={t('chat.sources.details', 'Sources details')}
+                aria-label={t('chat.sources.details', 'Sources details')}
+              >
+                <ShieldCheck size={12} />
+              </button>
+              <span className="mx-0.5 h-3 w-px bg-slate-200 dark:bg-navy-700" />
+            </div>
+          )}
         </div>
       )}
 
@@ -1726,7 +1797,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             </p>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => handleSaveAsDecision(msg.id, msg.content)}
+                onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 transition-colors flex items-center gap-1"
               >
@@ -1736,7 +1807,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   : t('deepThinking.saveDecision', 'Save as Decision')}
               </button>
               <button
-                onClick={() => handleSaveAsDecision(msg.id, msg.content)}
+                onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50 transition-colors flex items-center gap-1"
               >
@@ -1757,7 +1828,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     '---',
                     '',
                   ].join('\n');
-                  const fullContent = header + msg.content;
+                  const fullContent = header + userVisibleContent;
                   const blob = new Blob([fullContent], { type: 'text/markdown' });
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement('a');
@@ -1778,7 +1849,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   const reportType = isMarketResearch ? 'Market Research' : 'Deep Thinking';
                   const dateStr = new Date().toISOString().slice(0, 10);
                   const reportTitle = `${reportType} Report — ${dateStr}`;
-                  handleSaveAsNote(msg.id, `# ${reportTitle}\n\n${msg.content}`);
+                  handleSaveAsNote(msg.id, `# ${reportTitle}\n\n${userVisibleContent}`);
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"
               >
@@ -1788,7 +1859,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               {/* Voice Executive Brief */}
               <button
                 onClick={() => {
-                  const brief = formatExecutiveBrief(msg.content, 'en');
+                  const brief = formatExecutiveBrief(userVisibleContent, 'en');
                   speak(brief);
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"

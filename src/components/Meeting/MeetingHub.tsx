@@ -4,7 +4,6 @@ import {
   ClipboardList,
   FileText,
   Loader2,
-  Plus,
   Sparkles,
   Users,
   X,
@@ -21,7 +20,16 @@ import {
   type ViewMode,
 } from '@/components/shared/ModuleHub';
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
+import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { Api } from '@/services/api';
@@ -325,20 +333,17 @@ export const MeetingHub: React.FC = () => {
     ];
 
     return (
-      <div className="flex items-center gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
         {chips.map((chip) => (
           <button
             key={chip.id}
             type="button"
             onClick={chip.onClick}
-            className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap ${
-              chip.active
-                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06]'
-            }`}
+            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
           >
+            {chip.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
             <span>{chip.label}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 dark:bg-navy-700">
+            <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
               {chip.count}
             </span>
           </button>
@@ -346,6 +351,24 @@ export const MeetingHub: React.FC = () => {
       </div>
     );
   }, [activeFilters, counts, t]);
+
+  const commandRowRightContent = useMemo(
+    () => (
+      <button
+        type="button"
+        disabled={!briefingMeeting}
+        onClick={() => {
+          if (briefingMeeting) openMeetingDocument(briefingMeeting);
+        }}
+        className={getMenu3AiButtonClass(Boolean(briefingMeeting && activeDocumentId))}
+        title={t('meeting.actions.operatorBrief', 'Open operator brief')}
+      >
+        <Sparkles size={12} />
+        <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
+      </button>
+    ),
+    [activeDocumentId, briefingMeeting, t]
+  );
 
   const handleCreateMeeting = async () => {
     if (!draft.title.trim() || !draft.startAt) return;
@@ -482,7 +505,6 @@ export const MeetingHub: React.FC = () => {
             onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
           >
-            <Plus size={16} />
             <span>{t('meeting.actions.new', 'New meeting')}</span>
           </button>
         }
@@ -499,8 +521,8 @@ export const MeetingHub: React.FC = () => {
           </div>
         }
         commandRowContent={commandRowContent}
+        commandRowRightContent={commandRowRightContent}
         availableViewModes={['table', 'calendar']}
-        showTabCounts
       >
         {loading ? (
           <div className="flex h-full items-center justify-center">
@@ -549,6 +571,18 @@ export const MeetingHub: React.FC = () => {
                 selectedRowId={selectedId}
                 onRowClick={(row) => setSelectedId(row.id)}
                 onRowDoubleClick={(row) => openMeetingDocument(row as MeetingItem)}
+                getRowActions={(row) => [
+                  {
+                    id: 'preview',
+                    label: t('common.preview', 'Preview'),
+                    onClick: () => setSelectedId(String(row.id)),
+                  },
+                  {
+                    id: 'edit',
+                    label: t('common.open', 'Open'),
+                    onClick: () => openMeetingDocument(row as MeetingItem),
+                  },
+                ]}
                 activeFilters={activeFilters}
                 onFilterChange={setActiveFilters}
                 emptyMessage={t('meeting.empty', 'No meetings yet')}
@@ -1003,9 +1037,9 @@ const MeetingOperatorBriefCard: React.FC<{
   className?: string;
 }> = ({ isPolish, brief, loading = false, className = '' }) => (
   <div
-    className={`rounded-xl border border-purple-200/70 dark:border-purple-500/20 bg-purple-50/60 dark:bg-purple-500/5 p-3 ${className}`.trim()}
+    className={`rounded-xl border border-primary-200/70 dark:border-primary-500/20 bg-primary-50/60 dark:bg-primary-500/5 p-3 ${className}`.trim()}
   >
-    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">
+    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
       <Sparkles size={14} />
       <span>{isPolish ? 'Operator brief' : 'Operator brief'}</span>
     </div>

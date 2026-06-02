@@ -349,7 +349,7 @@ export const ProjectTeamBoard: React.FC<ProjectTeamBoardProps> = ({
                 : color === 'blue'
                   ? 'bg-blue-100 dark:bg-blue-900/30'
                   : color === 'purple'
-                    ? 'bg-purple-100 dark:bg-purple-900/30'
+                    ? 'bg-primary-100 dark:bg-primary-900/30'
                     : color === 'green'
                       ? 'bg-green-100 dark:bg-green-900/30'
                       : 'bg-gray-100 dark:bg-gray-900/30',
@@ -359,7 +359,7 @@ export const ProjectTeamBoard: React.FC<ProjectTeamBoardProps> = ({
                 : color === 'blue'
                   ? 'text-blue-600 dark:text-blue-400'
                   : color === 'purple'
-                    ? 'text-purple-600 dark:text-purple-400'
+                    ? 'text-primary-600 dark:text-primary-400'
                     : color === 'green'
                       ? 'text-green-600 dark:text-green-400'
                       : 'text-gray-600 dark:text-gray-400',
@@ -432,7 +432,7 @@ export const ProjectTeamBoard: React.FC<ProjectTeamBoardProps> = ({
                       {!readOnly && (
                         <button
                           onClick={() => handleRemoveMember(member.userId)}
-                          className="p-1 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-1 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="h-4 w-4" />
                         </button>

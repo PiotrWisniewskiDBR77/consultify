@@ -5,8 +5,8 @@ import { analyzeBlockers } from '../laneHeuristics/blockersHeuristics.js';
 import { analyzeDecisions } from '../laneHeuristics/decisionsHeuristics.js';
 import { analyzePeopleChange } from '../laneHeuristics/peopleChangeHeuristics.js';
 import { analyzeRisk } from '../laneHeuristics/riskHeuristics.js';
-import { analyzeWorkload } from '../laneHeuristics/workloadHeuristics.js';
 import type { HeuristicInput, HeuristicOutput } from '../laneHeuristics/types.js';
+import { analyzeWorkload } from '../laneHeuristics/workloadHeuristics.js';
 
 const pastDate = '2020-01-15T00:00:00.000Z';
 
@@ -45,9 +45,7 @@ describe('lane heuristics (pure)', () => {
         { id: 't1', due_date: pastDate, status: 'IN_PROGRESS', assignee_id: 'u1' },
         { id: 't2', due_date: pastDate, status: 'IN_PROGRESS', assignee_id: 'u1' },
       ],
-      decisions: [
-        { id: 'd1', status: 'PENDING', dueDate: pastDate, title: 'Approve scope' },
-      ],
+      decisions: [{ id: 'd1', status: 'PENDING', dueDate: pastDate, title: 'Approve scope' }],
     });
     const out: HeuristicOutput = analyzeActionQueue(input);
     expect(out.observations.length).toBeGreaterThan(0);
@@ -57,7 +55,13 @@ describe('lane heuristics (pure)', () => {
   it('analyzeDecisions reacts to pending decisions with past dueDate', () => {
     const input = baseInput({
       decisions: [
-        { id: 'd1', status: 'PENDING', dueDate: pastDate, ownerId: 'u1', createdAt: '2020-01-01T00:00:00.000Z' },
+        {
+          id: 'd1',
+          status: 'PENDING',
+          dueDate: pastDate,
+          ownerId: 'u1',
+          createdAt: '2020-01-01T00:00:00.000Z',
+        },
         { id: 'd2', status: 'PENDING', dueDate: pastDate, ownerId: 'u1' },
       ],
       controlTowerCounts: { blocked: 2, late: 0, at_risk: 0, overloaded: 0, stale: 0 },

@@ -196,8 +196,8 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
         <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <FileOutput className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <FileOutput className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">Nowy Raport</h3>
@@ -255,7 +255,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
             </div>
           ) : assessments.length === 0 ? (
             <div className="text-center py-8">
@@ -316,7 +316,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                                     w-full text-left p-3 rounded-lg border-2 transition-all
                                                     ${
                                                       isSelected
-                                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                                                         : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
                                                     }
                                                 `}
@@ -328,7 +328,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                                             w-5 h-5 rounded-full flex items-center justify-center border-2
                                                             ${
                                                               isSelected
-                                                                ? 'bg-purple-600 border-purple-600'
+                                                                ? 'bg-primary-600 border-primary-600'
                                                                 : 'border-slate-300 dark:border-slate-600'
                                                             }
                                                         `}
@@ -364,7 +364,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
 
           {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 mt-4 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm">
+            <div className="flex items-center gap-2 p-3 mt-4 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
               <AlertCircle size={16} />
               {error}
             </div>
@@ -396,7 +396,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                       reportName.trim() &&
                                       !creating &&
                                       (!projectId || canGenerateReport)
-                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                        ? 'bg-primary-600 hover:bg-primary-500 text-white'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}

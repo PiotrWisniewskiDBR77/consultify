@@ -99,13 +99,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const getProviderColor = (provider: string) => {
     switch (provider) {
       case 'openai':
-        return 'from-emerald-500 to-teal-500';
+        return 'from-emerald-500 to-blue-500';
       case 'anthropic':
-        return 'from-amber-500 to-orange-500';
+        return 'from-amber-500 to-amber-500';
       case 'google':
-        return 'from-blue-500 to-cyan-500';
+        return 'from-blue-500 to-blue-500';
       case 'ollama':
-        return 'from-violet-500 to-purple-500';
+        return 'from-primary-500 to-primary-500';
       case 'deepseek':
         return 'from-rose-500 to-pink-500';
       default:
@@ -156,7 +156,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cpu className="w-5 h-5 text-violet-400" />
+          <Cpu className="w-5 h-5 text-primary-400" />
           <h3 className="font-semibold text-slate-900 dark:text-white">AI Models</h3>
         </div>
         {value && (
@@ -266,7 +266,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                         absolute bottom-2 right-2 p-1.5 rounded-lg transition-colors
                                         ${
                                           isVisible
-                                            ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
+                                            ? 'bg-primary-500/20 text-primary-400 hover:bg-primary-500/30'
                                             : 'bg-slate-200 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                         }
                                     `}

@@ -20,7 +20,7 @@ export const ResetPasswordView: React.FC = () => {
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-800 px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-md text-center">
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="text-xl font-semibold text-red-600">
+            <h2 className="text-xl font-semibold text-rose-600">
               {t('auth.resetPassword.invalidToken', 'Invalid or missing reset token')}
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -159,7 +159,7 @@ export const ResetPasswordView: React.FC = () => {
             </div>
 
             {status === 'error' && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errorMsg}</p>
+              <p className="text-sm text-rose-600 dark:text-rose-400">{errorMsg}</p>
             )}
 
             <button

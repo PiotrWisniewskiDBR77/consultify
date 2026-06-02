@@ -119,7 +119,7 @@ export const SmartBlockRenderer: React.FC<SmartBlockRendererProps> = ({
   blockType,
   renderKind,
   primaryColor = '#3b82f6',
-  accentColor = '#8b5cf6',
+  accentColor = '#6366f1',
   blockSettings,
 }) => {
   const detected = useMemo(() => detectContentType(content), [content]);

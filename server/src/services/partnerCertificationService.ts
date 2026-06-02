@@ -266,7 +266,9 @@ function certificationPassingScore(certificationLevel?: string | null): number {
   return certificationLevel === 'practitioner' ? 80 : 70;
 }
 
-function certificationBlueprint(type: string | null | undefined): PartnerCertificationBlueprint | null {
+function certificationBlueprint(
+  type: string | null | undefined
+): PartnerCertificationBlueprint | null {
   if (!type) return null;
   return CERTIFICATION_BLUEPRINTS.find((item) => item.type === type) || null;
 }
@@ -413,7 +415,9 @@ export async function getCertificationModules(
   return rows;
 }
 
-export async function getSalesModules(language: PartnerResourceLanguage): Promise<LearningModuleRow[]> {
+export async function getSalesModules(
+  language: PartnerResourceLanguage
+): Promise<LearningModuleRow[]> {
   return getCertificationModules('sales_foundation', language);
 }
 
@@ -690,7 +694,9 @@ export async function submitCertificationExam(params: {
   const blueprint = certificationBlueprint(cert.certification_type);
   const certificateId = crypto.randomUUID();
   const shareToken = crypto.randomBytes(18).toString('hex');
-  const validUntil = validUntilFromPolicy(cert.recertification_policy || blueprint?.recertificationPolicy);
+  const validUntil = validUntilFromPolicy(
+    cert.recertification_policy || blueprint?.recertificationPolicy
+  );
 
   await DbPromise.run(
     db,

@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   AlertTriangle,
   ChevronRight,
@@ -9,6 +8,8 @@ import {
   Split,
   Square,
 } from 'lucide-react';
+import React from 'react';
+
 import { Button } from '@/components/ui/Button';
 
 export interface ReadbackStep {
@@ -39,13 +40,13 @@ function stepIcon(type: ReadbackStep['type']) {
     case 'start':
       return { Icon: Play, className: 'text-emerald-600 dark:text-emerald-400' };
     case 'end':
-      return { Icon: Square, className: 'text-red-600 dark:text-red-400' };
+      return { Icon: Square, className: 'text-rose-600 dark:text-rose-400' };
     case 'decision':
       return { Icon: GitBranch, className: 'text-amber-600 dark:text-amber-400' };
     case 'parallel_split':
-      return { Icon: Split, className: 'text-violet-600 dark:text-violet-400' };
+      return { Icon: Split, className: 'text-primary-600 dark:text-primary-400' };
     case 'parallel_join':
-      return { Icon: Merge, className: 'text-violet-600 dark:text-violet-400' };
+      return { Icon: Merge, className: 'text-primary-600 dark:text-primary-400' };
     case 'step':
     default:
       return { Icon: ChevronRight, className: 'text-slate-500 dark:text-slate-400' };
@@ -67,7 +68,9 @@ const ReadbackStepRow: React.FC<{
       >
         <Icon size={14} className={`shrink-0 ${className}`} />
         <span className="min-w-0 flex-1 truncate font-medium">{step.label}</span>
-        <span className="shrink-0 font-mono text-[9px] text-slate-400 dark:text-slate-500">{step.object_id}</span>
+        <span className="shrink-0 font-mono text-[9px] text-slate-400 dark:text-slate-500">
+          {step.object_id}
+        </span>
       </button>
 
       {step.branches && step.branches.length > 0 ? (
@@ -139,7 +142,11 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
       {hasPaths ? (
         <div className="max-h-[min(420px,55vh)] overflow-y-auto rounded-lg border border-slate-200/60 bg-slate-50/50 p-2 dark:border-navy-700 dark:bg-navy-950/30">
           {result!.paths.map((step, i) => (
-            <ReadbackStepRow key={`${step.object_id}-root-${i}`} step={step} onClickStep={onClickStep} />
+            <ReadbackStepRow
+              key={`${step.object_id}-root-${i}`}
+              step={step}
+              onClickStep={onClickStep}
+            />
           ))}
         </div>
       ) : null}
@@ -152,7 +159,10 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
           </div>
           <ul className="flex flex-col gap-1">
             {result.warnings.map((w, i) => (
-              <li key={i} className="flex items-start gap-1.5 text-[11px] text-amber-900 dark:text-amber-100/90">
+              <li
+                key={i}
+                className="flex items-start gap-1.5 text-[11px] text-amber-900 dark:text-amber-100/90"
+              >
                 <AlertTriangle size={12} className="mt-0.5 shrink-0 opacity-70" />
                 <span>{w}</span>
               </li>

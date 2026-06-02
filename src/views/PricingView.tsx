@@ -1,21 +1,6 @@
 import { motion } from 'framer-motion';
 import {
-  ArrowRight,
-  BarChart3,
-  Bot,
-  Building2,
-  Calendar,
-  Check,
-  Cpu,
-  HelpCircle,
-  Key,
-  Rocket,
-  Server,
-  Shield,
-  Users,
-  X,
-  Zap,
-} from 'lucide-react';
+  ArrowRight, BarChart3, Building2, Calendar, Check, Cpu, HelpCircle, Key, Rocket, Server, Shield, Users, X, Zap } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +9,7 @@ import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 
+import TeresaMark from '../components/shared/TeresaMark';
 const CALENDAR_URL =
   'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';
 
@@ -200,7 +186,7 @@ export const PricingView: React.FC = () => {
       />
 
       {/* Hero */}
-      <section className="pt-32 pb-12 px-6 bg-gradient-to-b from-purple-50 to-white dark:from-navy-900 dark:to-navy-950">
+      <section className="pt-32 pb-12 px-6 bg-gradient-to-b from-primary-50 to-white dark:from-navy-900 dark:to-navy-950">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -208,8 +194,8 @@ export const PricingView: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <span
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 
-                                         text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30
+                                         text-primary-600 dark:text-primary-400 text-sm font-semibold mb-6"
             >
               <BarChart3 size={16} />
               Pricing
@@ -217,14 +203,14 @@ export const PricingView: React.FC = () => {
 
             <h1 className="text-4xl md:text-5xl font-black text-navy-950 dark:text-white mb-6 tracking-tight">
               AI Strategic Consulting,{' '}
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
                 priced for scale
               </span>
             </h1>
 
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8">
-              Replace expensive consultants with AI-powered strategic guidance. 7-day free trial.
-              No credit card required.
+              Replace expensive consultants with AI-powered strategic guidance. 7-day free trial. No
+              credit card required.
             </p>
 
             {/* Billing Toggle */}
@@ -273,7 +259,7 @@ export const PricingView: React.FC = () => {
                   transition={{ duration: 0.5, delay: idx * 0.1 }}
                   className={`relative rounded-xl p-8 flex flex-col ${
                     tier.highlight
-                      ? 'bg-gradient-to-b from-purple-600 to-purple-700 text-white ring-4 ring-purple-500/50 shadow-2xl shadow-purple-500/20 scale-105 z-10'
+                      ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white ring-4 ring-primary-500/50 shadow-2xl shadow-primary-500/20 scale-105 z-10'
                       : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700'
                   }`}
                 >
@@ -288,13 +274,13 @@ export const PricingView: React.FC = () => {
                   <div className="flex items-center gap-3 mb-4">
                     <div
                       className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        tier.highlight ? 'bg-white/20' : 'bg-purple-100 dark:bg-purple-900/30'
+                        tier.highlight ? 'bg-white/20' : 'bg-primary-100 dark:bg-primary-900/30'
                       }`}
                     >
                       <Icon
                         size={24}
                         className={
-                          tier.highlight ? 'text-white' : 'text-purple-600 dark:text-purple-400'
+                          tier.highlight ? 'text-white' : 'text-primary-600 dark:text-primary-400'
                         }
                       />
                     </div>
@@ -306,7 +292,7 @@ export const PricingView: React.FC = () => {
                   </div>
 
                   <p
-                    className={`text-sm mb-6 ${tier.highlight ? 'text-purple-100' : 'text-slate-500 dark:text-slate-400'}`}
+                    className={`text-sm mb-6 ${tier.highlight ? 'text-primary-100' : 'text-slate-500 dark:text-slate-400'}`}
                   >
                     {tier.description}
                   </p>
@@ -318,7 +304,7 @@ export const PricingView: React.FC = () => {
                       {displayPrice}
                     </span>
                     <span
-                      className={`text-sm ml-2 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-sm ml-2 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
                     >
                       {tier.priceNote}
                     </span>
@@ -332,7 +318,7 @@ export const PricingView: React.FC = () => {
                   >
                     <div>
                       <div
-                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
                       >
                         Seats
                       </div>
@@ -344,7 +330,7 @@ export const PricingView: React.FC = () => {
                     </div>
                     <div>
                       <div
-                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
                       >
                         AI Credits
                       </div>
@@ -356,7 +342,7 @@ export const PricingView: React.FC = () => {
                     </div>
                     <div>
                       <div
-                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
                       >
                         Extra Seats
                       </div>
@@ -368,7 +354,7 @@ export const PricingView: React.FC = () => {
                     </div>
                     <div>
                       <div
-                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'}`}
+                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
                       >
                         Overage
                       </div>
@@ -388,7 +374,7 @@ export const PricingView: React.FC = () => {
                           <Check
                             size={16}
                             className={`flex-shrink-0 ${
-                              tier.highlight ? 'text-purple-200' : 'text-green-500'
+                              tier.highlight ? 'text-primary-200' : 'text-green-500'
                             }`}
                           />
                         ) : (
@@ -396,7 +382,7 @@ export const PricingView: React.FC = () => {
                             size={16}
                             className={`flex-shrink-0 ${
                               tier.highlight
-                                ? 'text-purple-300/50'
+                                ? 'text-primary-300/50'
                                 : 'text-slate-300 dark:text-slate-600'
                             }`}
                           />
@@ -405,10 +391,10 @@ export const PricingView: React.FC = () => {
                           className={`text-sm ${
                             feature.included
                               ? tier.highlight
-                                ? 'text-purple-100'
+                                ? 'text-primary-100'
                                 : 'text-slate-600 dark:text-slate-300'
                               : tier.highlight
-                                ? 'text-purple-300/50'
+                                ? 'text-primary-300/50'
                                 : 'text-slate-400 dark:text-slate-500'
                           }`}
                         >
@@ -422,9 +408,9 @@ export const PricingView: React.FC = () => {
                     onClick={() => handleCtaClick(tier)}
                     className={`w-full py-4 px-6 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                       tier.ctaVariant === 'primary'
-                        ? 'bg-white text-purple-700 hover:bg-purple-50 shadow-lg'
+                        ? 'bg-white text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
-                          ? 'bg-purple-600 text-white hover:bg-purple-500'
+                          ? 'bg-primary-600 text-white hover:bg-primary-500'
                           : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >
@@ -448,7 +434,7 @@ export const PricingView: React.FC = () => {
                 <span>Cancel anytime</span>
               </div>
               <div className="flex items-center gap-2">
-                <Cpu size={18} className="text-purple-500" />
+                <Cpu size={18} className="text-primary-500" />
                 <span>EU Data Centers</span>
               </div>
             </div>
@@ -478,8 +464,8 @@ export const PricingView: React.FC = () => {
               className="bg-white dark:bg-navy-900 rounded-xl p-8 border border-slate-200 dark:border-navy-700"
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-                  <Bot size={24} className="text-purple-600 dark:text-purple-400" />
+                <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
+                  <TeresaMark size={24} className="text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-navy-950 dark:text-white">Managed AI</h3>
@@ -523,7 +509,7 @@ export const PricingView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-navy-950 dark:text-white">BYOK Mode</h3>
-                  <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                  <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
                     Scale+ only
                   </span>
                 </div>
@@ -558,7 +544,7 @@ export const PricingView: React.FC = () => {
           {/* Credit Usage Examples */}
           <div className="mt-12 bg-white dark:bg-navy-900 rounded-xl p-8 border border-slate-200 dark:border-navy-700">
             <h3 className="text-lg font-bold text-navy-950 dark:text-white mb-6 flex items-center gap-2">
-              <Server size={20} className="text-purple-500" />
+              <Server size={20} className="text-primary-500" />
               What uses AI Credits?
             </h3>
             <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -577,7 +563,7 @@ export const PricingView: React.FC = () => {
                   className="flex justify-between items-center p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
                 >
                   <span className="text-sm text-slate-600 dark:text-slate-400">{item.action}</span>
-                  <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                  <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
                     {item.credits}
                   </span>
                 </div>
@@ -596,7 +582,7 @@ export const PricingView: React.FC = () => {
             </h2>
             <p className="text-slate-600 dark:text-slate-400">
               Have more questions?{' '}
-              <a href="/contact" className="text-purple-600 hover:underline">
+              <a href="/contact" className="text-primary-600 hover:underline">
                 Contact us
               </a>
             </p>
@@ -613,7 +599,7 @@ export const PricingView: React.FC = () => {
                 className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-navy-700"
               >
                 <h3 className="font-bold text-navy-950 dark:text-white mb-2 flex items-start gap-3">
-                  <HelpCircle size={20} className="text-purple-500 mt-0.5 flex-shrink-0" />
+                  <HelpCircle size={20} className="text-primary-500 mt-0.5 flex-shrink-0" />
                   {faq.q}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 text-sm pl-8">{faq.a}</p>
@@ -636,7 +622,7 @@ export const PricingView: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handleTrialClick}
-              className="px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               Start Free Trial
               <ArrowRight size={18} />

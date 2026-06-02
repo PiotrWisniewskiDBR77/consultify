@@ -38,7 +38,7 @@ const KanbanCard = React.memo<{
     onClick={() => onClick(record.id)}
     className={`rounded-xl border bg-white dark:bg-navy-950 p-3 cursor-pointer hover:shadow-md transition-all ${
       isDragging
-        ? 'opacity-40 scale-95 border-violet-300 dark:border-violet-500'
+        ? 'opacity-40 scale-95 border-primary-300 dark:border-primary-500'
         : 'border-slate-200/60 dark:border-navy-700/40'
     }`}
     style={{ borderLeftWidth: 3, borderLeftColor: groupColor }}
@@ -163,7 +163,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             key={laneKey}
             className={`flex-shrink-0 w-[280px] flex flex-col rounded-2xl bg-slate-50/80 dark:bg-navy-900/80 border transition-colors ${
               isDropping
-                ? 'border-violet-400 dark:border-violet-500 bg-violet-50/30 dark:bg-violet-500/5'
+                ? 'border-primary-400 dark:border-primary-500 bg-primary-50/30 dark:bg-primary-500/5'
                 : 'border-slate-200/40 dark:border-navy-700/40'
             }`}
             onDragOver={(e) => {

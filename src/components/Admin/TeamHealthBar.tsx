@@ -24,10 +24,10 @@ export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = 'Team' }) => 
 
   if (blockedRatio > 0.1 || overdueRatio > 0.15) {
     healthStatus = 'Critical';
-    color = 'bg-red-500';
+    color = 'bg-rose-500';
   } else if (blockedRatio > 0.05 || overdueRatio > 0.05) {
     healthStatus = 'At Risk';
-    color = 'bg-orange-500';
+    color = 'bg-amber-500';
   }
 
   return (
@@ -42,25 +42,25 @@ export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = 'Team' }) => 
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-red-50 dark:bg-red-900/10 p-2 rounded border border-red-100 dark:border-red-500/10 flex items-center gap-3">
-          <div className="p-1.5 bg-red-100 dark:bg-red-500/20 rounded text-red-600 dark:text-red-400">
+        <div className="bg-rose-50 dark:bg-rose-900/10 p-2 rounded border border-rose-100 dark:border-rose-500/10 flex items-center gap-3">
+          <div className="p-1.5 bg-rose-100 dark:bg-rose-500/20 rounded text-rose-600 dark:text-rose-400">
             <AlertCircle size={16} />
           </div>
           <div>
-            <div className="text-lg font-bold text-red-700 dark:text-red-400">{overdue}</div>
-            <div className="text-[10px] text-red-500 dark:text-red-400/70 uppercase font-medium">
+            <div className="text-lg font-bold text-rose-700 dark:text-rose-400">{overdue}</div>
+            <div className="text-[10px] text-rose-500 dark:text-rose-400/70 uppercase font-medium">
               Overdue
             </div>
           </div>
         </div>
 
-        <div className="bg-orange-50 dark:bg-orange-900/10 p-2 rounded border border-orange-100 dark:border-orange-500/10 flex items-center gap-3">
-          <div className="p-1.5 bg-orange-100 dark:bg-orange-500/20 rounded text-orange-600 dark:text-orange-400">
+        <div className="bg-amber-50 dark:bg-amber-900/10 p-2 rounded border border-amber-100 dark:border-amber-500/10 flex items-center gap-3">
+          <div className="p-1.5 bg-amber-100 dark:bg-amber-500/20 rounded text-amber-600 dark:text-amber-400">
             <Lock size={16} />
           </div>
           <div>
-            <div className="text-lg font-bold text-orange-700 dark:text-orange-400">{blocked}</div>
-            <div className="text-[10px] text-orange-500 dark:text-orange-400/70 uppercase font-medium">
+            <div className="text-lg font-bold text-amber-700 dark:text-amber-400">{blocked}</div>
+            <div className="text-[10px] text-amber-500 dark:text-amber-400/70 uppercase font-medium">
               Blocked
             </div>
           </div>

@@ -86,8 +86,8 @@ const ROLE_CONFIG: Record<
     label: { en: 'Accountable', pl: 'Rozliczany' },
     description: { en: 'Makes the final decision', pl: 'Podejmuje ostateczną decyzję' },
     icon: UserCheck,
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10',
+    color: 'text-primary-500',
+    bgColor: 'bg-primary-500/10',
     defaultTriggers: [
       'on_create',
       'on_update',
@@ -287,7 +287,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                 animate={{ opacity: 1, x: 0 }}
                                 className={`rounded-xl border overflow-hidden transition-all ${
                                   isStakeholderExpanded
-                                    ? 'border-purple-300 dark:border-purple-500/50 bg-purple-50/30 dark:bg-purple-500/5'
+                                    ? 'border-primary-300 dark:border-primary-500/50 bg-primary-50/30 dark:bg-primary-500/5'
                                     : 'border-slate-200 dark:border-navy-600 bg-slate-50 dark:bg-navy-800/50'
                                 }`}
                               >
@@ -346,7 +346,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                       }
                                       className={`p-1.5 rounded-lg transition-colors ${
                                         isStakeholderExpanded
-                                          ? 'text-purple-500 bg-purple-500/10'
+                                          ? 'text-primary-500 bg-primary-500/10'
                                           : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-700'
                                       }`}
                                       title={isPolish ? 'Ustawienia' : 'Settings'}
@@ -358,7 +358,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                     {!readOnly && (
                                       <button
                                         onClick={() => onRemove(stakeholder.id)}
-                                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
+                                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors opacity-0 group-hover:opacity-100"
                                         title={isPolish ? 'Usuń' : 'Remove'}
                                       >
                                         <Trash2 size={14} />
@@ -401,7 +401,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                     disabled={readOnly}
                                                     className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${
                                                       isActive
-                                                        ? 'bg-purple-500 text-white'
+                                                        ? 'bg-primary-500 text-white'
                                                         : 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-600'
                                                     } ${readOnly ? 'cursor-not-allowed' : ''}`}
                                                   >
@@ -432,7 +432,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                 })
                                               }
                                               disabled={readOnly}
-                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-purple-500 focus:ring-purple-500"
+                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
                                             />
                                             <Mail size={12} className="text-slate-400" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
@@ -456,7 +456,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                                 })
                                               }
                                               disabled={readOnly}
-                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-purple-500 focus:ring-purple-500"
+                                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
                                             />
                                             <Bell size={12} className="text-slate-400" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
@@ -517,7 +517,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                           >
                             <option value="">{isPolish ? 'Wybierz...' : 'Select...'}</option>
                             {availableToAdd.map((user) => (
@@ -534,7 +534,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                           <select
                             value={selectedRole}
                             onChange={(e) => setSelectedRole(e.target.value as StakeholderRole)}
-                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400"
+                            className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400"
                           >
                             {Object.entries(ROLE_CONFIG).map(([role, config]) => (
                               <option key={role} value={role}>
@@ -570,7 +570,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                         <button
                           onClick={handleAdd}
                           disabled={!selectedUserId}
-                          className="px-4 py-2 text-xs font-medium bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-4 py-2 text-xs font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           {isPolish ? 'Dodaj' : 'Add'}
                         </button>
