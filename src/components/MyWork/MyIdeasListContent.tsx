@@ -3,6 +3,8 @@ import {
   ChevronDown,
   ChevronRight,
   Flower2,
+  Folder,
+  FolderPlus,
   GitBranch,
   Lightbulb,
   Link2,
@@ -363,6 +365,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const { recentIds, record: recordRecent } = useRecentIdeas();
   const { isFavorite, toggleFavorite, hydrateFromServer } = useFavoriteIdeas();
   const [showStarredOnly, setShowStarredOnly] = useState(false);
+  const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
+  const [foldersAvailable, setFoldersAvailable] = useState(false);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
 
   // Record opens (for the "Recently opened" rail), then delegate to the host.
   const openIdea = useCallback(
@@ -402,6 +407,66 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       ideas.filter((i: any) => i?.isFavorite).map((i: any) => String(i.id))
     );
   }, [ideas, hydrateFromServer]);
+
+  // Load folders. The endpoint 503s until the M2 migration lands; we only show
+  // the folders UI once it resolves (foldersAvailable), so nothing breaks early.
+  useEffect(() => {
+    let cancelled = false;
+    Api.getMyIdeaFolders()
+      .then((list) => {
+        if (cancelled) return;
+        setFolders(Array.isArray(list) ? list.map((f: any) => ({ id: f.id, name: f.name })) : []);
+        setFoldersAvailable(true);
+      })
+      .catch(() => {
+        if (!cancelled) setFoldersAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTrigger]);
+
+  const handleMoveToFolder = useCallback(
+    async (idea: MyIdea, folderId: string | null) => {
+      // Optimistic local update, then persist.
+      setIdeas((prev) =>
+        prev.map((i) => (i.id === idea.id ? ({ ...i, folderId } as MyIdea) : i))
+      );
+      try {
+        await Api.setIdeaFolder(idea.id, folderId);
+        toast.success(isPolish ? 'Przeniesiono' : 'Moved', { duration: 800 });
+      } catch {
+        toast.error(isPolish ? 'Nie udało się przenieść' : 'Failed to move idea');
+        fetchIdeas();
+      }
+    },
+    [isPolish, fetchIdeas]
+  );
+
+  const handleCreateFolder = useCallback(async () => {
+    const name = window.prompt(isPolish ? 'Nazwa folderu' : 'Folder name')?.trim();
+    if (!name) return;
+    try {
+      const created = await Api.createMyIdeaFolder({ name });
+      setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder');
+    }
+  }, [isPolish]);
+
+  const handleDeleteFolder = useCallback(
+    async (folderId: string) => {
+      try {
+        await Api.deleteMyIdeaFolder(folderId);
+        setFolders((prev) => prev.filter((f) => f.id !== folderId));
+        if (activeFolderId === folderId) setActiveFolderId(null);
+        fetchIdeas(); // ideas were unfiled server-side
+      } catch {
+        toast.error(isPolish ? 'Nie udało się usunąć folderu' : 'Failed to delete folder');
+      }
+    },
+    [activeFolderId, fetchIdeas, isPolish]
+  );
 
   useEffect(() => {
     const counts = {
@@ -447,6 +512,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     if (showStarredOnly) {
       list = list.filter((i) => isFavorite(i.id));
     }
+    if (activeFolderId) {
+      list = list.filter((i) => (i as any).folderId === activeFolderId);
+    }
     if (viewMode !== 'garden' && stageFilter !== 'all') {
       list = list.filter((i) => (i.stage || 'spark') === stageFilter);
     }
@@ -456,7 +524,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       );
     }
     return list;
-  }, [ideas, stageFilter, activeTag, viewMode, showStarredOnly, isFavorite]);
+  }, [ideas, stageFilter, activeTag, viewMode, showStarredOnly, isFavorite, activeFolderId]);
 
   const availableStageOptions = useMemo<FilterOption[]>(() => {
     const seen = new Set<string>();
@@ -1220,6 +1288,57 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
+        {/* M2: folders bar (only once the folders endpoint is live) */}
+        {foldersAvailable && (
+          <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+            <button
+              type="button"
+              onClick={() => setActiveFolderId(null)}
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                !activeFolderId
+                  ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+              }`}
+            >
+              {isPolish ? 'Wszystkie' : 'All'}
+            </button>
+            {folders.map((f) => (
+              <span key={f.id} className="inline-flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setActiveFolderId(f.id)}
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                    activeFolderId === f.id
+                      ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
+                      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+                  }`}
+                >
+                  <Folder size={12} />
+                  <span className="max-w-[140px] truncate">{f.name}</span>
+                </button>
+                {activeFolderId === f.id && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteFolder(f.id)}
+                    title={isPolish ? 'Usuń folder' : 'Delete folder'}
+                    aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
+                    className="ml-0.5 rounded-full p-0.5 text-slate-400 hover:text-rose-500"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={handleCreateFolder}
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-navy-600 dark:text-slate-400 dark:hover:bg-navy-800"
+            >
+              <FolderPlus size={12} />
+              {isPolish ? 'Nowy folder' : 'New folder'}
+            </button>
+          </div>
+        )}
         {/* M2: "Starred only" filter toggle (shown once anything is starred) */}
         {(showStarredOnly || ideas.some((i) => isFavorite(i.id))) && (
           <div className="px-4 pt-3">
@@ -1305,6 +1424,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             onOpenIdea={(idea) => openIdea(idea.id, idea)}
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
+            folders={foldersAvailable ? folders : undefined}
+            onMoveToFolder={foldersAvailable ? handleMoveToFolder : undefined}
             onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
             onOpenIdeaAiChat={handleOpenIdeaAiChat}
             onOpenIdeaAiInsights={handleOpenIdeaAiInsights}

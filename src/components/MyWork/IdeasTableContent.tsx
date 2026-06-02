@@ -3,6 +3,8 @@ import {
   CheckCircle2,
   ExternalLink,
   FileText,
+  Folder,
+  FolderMinus,
   Lightbulb,
   MessageSquare,
   MessageSquarePlus,
@@ -230,6 +232,8 @@ interface IdeasTableContentProps {
   onOpenIdea: (idea: MyIdea) => void;
   isFavorite?: (id: string) => boolean;
   onToggleFavorite?: (id: string) => void;
+  folders?: Array<{ id: string; name: string }>;
+  onMoveToFolder?: (idea: MyIdea, folderId: string | null) => void;
   onOpenIdeaInProcessFlow: (idea: MyIdea) => void;
   onOpenIdeaAiChat?: (idea: MyIdea) => void;
   onOpenIdeaAiInsights?: (idea: MyIdea) => void;
@@ -287,6 +291,8 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onOpenIdea,
   isFavorite,
   onToggleFavorite,
+  folders,
+  onMoveToFolder,
   onOpenIdeaInProcessFlow,
   onOpenIdeaAiChat,
   onOpenIdeaAiInsights,
@@ -1071,6 +1077,32 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       },
                     ],
                   },
+                  ...(folders && onMoveToFolder
+                    ? [
+                        {
+                          id: 'folder',
+                          kind: 'manage' as const,
+                          label: isPolish ? 'Folder' : 'Folder',
+                          actions: [
+                            {
+                              id: 'folder-none',
+                              label: isPolish ? 'Bez folderu' : 'No folder',
+                              icon: FolderMinus,
+                              onClick: () => onMoveToFolder(idea, null),
+                              disabled: !(idea as any).folderId,
+                            },
+                            ...folders.map((f) => ({
+                              id: `folder-${f.id}`,
+                              label: f.name,
+                              icon: Folder,
+                              onClick: () => onMoveToFolder(idea, f.id),
+                              rightLabel:
+                                (idea as any).folderId === f.id ? '✓' : undefined,
+                            })),
+                          ],
+                        },
+                      ]
+                    : []),
                   {
                     id: 'output',
                     kind: 'output',
