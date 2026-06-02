@@ -41,27 +41,42 @@ export interface ExportSource {
 }
 
 class UnifiedExportService {
-  async exportPdf(src: ExportSource): Promise<Buffer> {
+  /**
+   * Low-level, layout-agnostic PDF primitive: the pdfkit "create doc → collect
+   * chunks → resolve Buffer" plumbing that every PDF exporter repeats. Callers
+   * supply only the layout via `build(doc)`, keeping their own formatting.
+   * Simple-tier exporters can adopt this without changing their output.
+   */
+  async renderPdf(
+    build: (doc: any) => void,
+    options: Record<string, unknown> = { margin: 48 }
+  ): Promise<Buffer> {
     const PDFDocument = (await import('pdfkit')).default as any;
-    const doc = new PDFDocument({ margin: 48 });
+    const doc = new PDFDocument(options);
     const chunks: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));
     const finished = new Promise<Buffer>((resolve, reject) => {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
     });
-    doc.fontSize(18).text(src.title, { underline: true });
-    doc.moveDown();
-    doc.fontSize(9).fillColor('#475569').text(src.sourceLabel || '');
-    doc.text(`Lifecycle: ${src.lifecycle}`);
-    doc.text(`Updated: ${src.updatedAt}`);
-    doc.moveDown();
-    doc.fillColor('#111827').fontSize(11).text(src.markdown, {
-      width: 500,
-      lineGap: 3,
-    });
+    build(doc);
     doc.end();
     return finished;
+  }
+
+  async exportPdf(src: ExportSource): Promise<Buffer> {
+    return this.renderPdf((doc) => {
+      doc.fontSize(18).text(src.title, { underline: true });
+      doc.moveDown();
+      doc.fontSize(9).fillColor('#475569').text(src.sourceLabel || '');
+      doc.text(`Lifecycle: ${src.lifecycle}`);
+      doc.text(`Updated: ${src.updatedAt}`);
+      doc.moveDown();
+      doc.fillColor('#111827').fontSize(11).text(src.markdown, {
+        width: 500,
+        lineGap: 3,
+      });
+    });
   }
 
   async exportDocx(src: ExportSource): Promise<Buffer> {

@@ -57,6 +57,16 @@ describe('UnifiedExportService', () => {
     expect(isZip(buf)).toBe(true);
   });
 
+  it('renderPdf primitive runs the build callback and yields a PDF buffer', async () => {
+    let received: any = null;
+    const buf = await unifiedExportService.renderPdf((doc) => {
+      received = doc;
+      doc.fontSize(12).text('Hello from a custom layout');
+    });
+    expect(received).not.toBeNull();
+    expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+
   it('caps PPTX at 20 slides without throwing', async () => {
     const slides = Array.from({ length: 50 }, (_, i) => ({
       title: `Slide ${i + 1}`,
