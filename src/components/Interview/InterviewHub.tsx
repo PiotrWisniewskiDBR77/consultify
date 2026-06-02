@@ -20,9 +20,9 @@ import {
   Brain,
   Calendar,
   Check,
-  CircleHelp,
   ChevronDown,
   ChevronRight,
+  CircleHelp,
   ClipboardList,
   Clock,
   Columns3,
@@ -42,6 +42,7 @@ import {
   MessageSquare,
   Minus,
   MoreVertical,
+  RefreshCw,
   Rocket,
   RotateCcw,
   Send,
@@ -75,6 +76,7 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { TeresaMark } from '@/components/shared/TeresaMark';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -83,11 +85,11 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { getPriorityStyle, getStatusStyle, getTypeStyle } from '@/constants/statusColors';
+import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
-import { useHelpSidePanel } from '@/contexts/HelpContext';
 
 import {
   type FilterChip,
@@ -1130,6 +1132,122 @@ export const InterviewHub: React.FC = () => {
       );
     }
   }, [isPolish, unwrapApiList]);
+
+  const loadTemplates = useCallback(async () => {
+    try {
+      const templatesRes = await Api.get('/interview/templates');
+      setTemplates(unwrapApiList(templatesRes, 'templates').map(normalizeTemplateRecord));
+    } catch (error) {
+      console.error('[InterviewHub] Failed to load templates:', error);
+    }
+  }, [normalizeTemplateRecord, unwrapApiList]);
+
+  // ── Bulk actions ────────────────────────────────────────────────────────
+  // Cheap, fully-wired bulk operations backed by existing endpoints.
+  const [bulkActionBusy, setBulkActionBusy] = useState(false);
+
+  const handleBulkRemind = useCallback(async () => {
+    const ids = Array.from(selectedAssignmentIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    setBulkActionBusy(true);
+    let sent = 0;
+    for (const id of ids) {
+      try {
+        await V8InterviewApi.remindAssignment(id);
+        sent += 1;
+      } catch {
+        // continue; per-item failures are tolerated and reflected in the count
+      }
+    }
+    setBulkActionBusy(false);
+    setSelectedAssignmentIds(new Set());
+    if (sent > 0) {
+      toast.success(isPolish ? `Wysłano ${sent} przypomnień` : `${sent} reminders sent`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się wysłać przypomnień' : 'Could not send reminders');
+    }
+  }, [selectedAssignmentIds, bulkActionBusy, isPolish]);
+
+  const downloadCsv = useCallback((rows: string[][], filename: string) => {
+    const escapeCell = (value: string) => {
+      const v = value ?? '';
+      return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+    };
+    const csv = rows.map((row) => row.map(escapeCell).join(',')).join('\r\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleBulkExportSessions = useCallback(() => {
+    const ids = selectedSessionIds;
+    if (ids.size === 0) return;
+    const selected = sessions.filter((s) => ids.has(s.id));
+    if (selected.length === 0) return;
+    const header = ['id', 'name', 'status', 'assignee', 'startedAt'];
+    const rows: string[][] = [
+      header,
+      ...selected.map((s) => [
+        s.id,
+        s.name || '',
+        normalizeInterviewAssignmentStatus(s.assignmentStatus || s.status || 'in_progress'),
+        s.assigneeName || s.respondentName || '',
+        s.startedAt || '',
+      ]),
+    ];
+    downloadCsv(rows, `interview-sessions-${new Date().toISOString().slice(0, 10)}.csv`);
+    setSelectedSessionIds(new Set());
+    toast.success(isPolish ? 'Eksport pobrany' : 'Export downloaded');
+  }, [selectedSessionIds, sessions, downloadCsv, isPolish]);
+
+  const handleBulkCloneTemplates = useCallback(async () => {
+    const ids = Array.from(selectedTemplateIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    setBulkActionBusy(true);
+    let cloned = 0;
+    for (const id of ids) {
+      try {
+        await Api.post(`/interview/templates/${id}/clone`, {});
+        cloned += 1;
+      } catch {
+        // tolerate per-item failures
+      }
+    }
+    setBulkActionBusy(false);
+    setSelectedTemplateIds(new Set());
+    if (cloned > 0) {
+      await loadTemplates();
+      toast.success(isPolish ? `Sklonowano ${cloned} szablonów` : `${cloned} templates cloned`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się sklonować szablonów' : 'Could not clone templates');
+    }
+  }, [selectedTemplateIds, bulkActionBusy, isPolish, loadTemplates]);
+
+  const handleBulkExportInsights = useCallback(() => {
+    const ids = selectedInsightIds;
+    if (ids.size === 0) return;
+    const selected = insights.filter((i) => ids.has(i.id));
+    if (selected.length === 0) return;
+    const header = ['id', 'title', 'type', 'status'];
+    const rows: string[][] = [
+      header,
+      ...selected.map((i) => [
+        i.id,
+        i.title || '',
+        i.insightType || i.type || i.category || '',
+        i.reviewStatus || i.status || '',
+      ]),
+    ];
+    downloadCsv(rows, `interview-insights-${new Date().toISOString().slice(0, 10)}.csv`);
+    setSelectedInsightIds(new Set());
+    toast.success(isPolish ? 'Eksport pobrany' : 'Export downloaded');
+  }, [selectedInsightIds, insights, downloadCsv, isPolish]);
 
   // Load assignments data
   useEffect(() => {
@@ -2255,31 +2373,16 @@ export const InterviewHub: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Przypomnienie zbiorcze w przygotowaniu'
-                        : 'Bulk reminder coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
+                  onClick={handleBulkRemind}
+                  disabled={bulkActionBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  <Bell size={14} />
+                  {bulkActionBusy ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Bell size={14} />
+                  )}
                   {isPolish ? 'Przypomnij' : 'Remind'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorcza zmiana terminu w przygotowaniu'
-                        : 'Bulk due date coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Calendar size={14} />
-                  {isPolish ? 'Termin' : 'Due date'}
                 </button>
               </div>
             </div>
@@ -2422,17 +2525,11 @@ export const InterviewHub: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Eksport zaznaczonych sesji w przygotowaniu'
-                        : 'Selected sessions export coming soon'
-                    )
-                  }
+                  onClick={handleBulkExportSessions}
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Download size={14} />
-                  {isPolish ? 'Eksport' : 'Export'}
+                  {isPolish ? 'Eksport CSV' : 'Export CSV'}
                 </button>
               </div>
             </div>
@@ -2530,34 +2627,17 @@ export const InterviewHub: React.FC = () => {
               <div className={MENU_3_RIGHT_CLASS}>
                 <button
                   type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorcze klonowanie szablonów w przygotowaniu'
-                        : 'Bulk template cloning coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
+                  onClick={handleBulkCloneTemplates}
+                  disabled={bulkActionBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  <Copy size={14} />
+                  {bulkActionBusy ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Copy size={14} />
+                  )}
                   {isPolish ? 'Klonuj' : 'Clone'}
                 </button>
-                {canAssign ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      toast(
-                        isPolish
-                          ? 'Zbiorcze przydzielanie szablonów w przygotowaniu'
-                          : 'Bulk template assignment coming soon'
-                      )
-                    }
-                    className={MENU_3_ACTION_NEUTRAL}
-                  >
-                    <UserPlus size={14} />
-                    {isPolish ? 'Przydziel' : 'Assign'}
-                  </button>
-                ) : null}
               </div>
             </div>
           </div>
@@ -2666,31 +2746,11 @@ export const InterviewHub: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorczy eksport wniosków w przygotowaniu'
-                        : 'Bulk insight export coming soon'
-                    )
-                  }
+                  onClick={handleBulkExportInsights}
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Download size={14} />
-                  {isPolish ? 'Eksport' : 'Export'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorcze przekazanie do narzędzi w przygotowaniu'
-                        : 'Bulk Tools export coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Send size={14} />
-                  Tools
+                  {isPolish ? 'Eksport CSV' : 'Export CSV'}
                 </button>
               </div>
             </div>
@@ -2787,22 +2847,6 @@ export const InterviewHub: React.FC = () => {
                   className={bulkGhostPill}
                 >
                   {isPolish ? 'Odznacz' : 'Clear'}
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorcze przekazanie inicjatyw w przygotowaniu'
-                        : 'Bulk initiative promotion coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Rocket size={14} />
-                  {isPolish ? 'Przekaż dalej' : 'Move forward'}
                 </button>
               </div>
             </div>
@@ -3346,17 +3390,43 @@ export const InterviewHub: React.FC = () => {
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center">
-                    <MessageSquare className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-slate-600 dark:text-slate-400 text-sm">
-                      {isPolish ? 'Brak sesji managera' : 'No manager sessions yet'}
+                <td colSpan={visibleColumns.length} className="px-4 py-12">
+                  <div className="mx-auto max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center">
+                    <div className="mb-3 flex items-center justify-center gap-2 text-crimson-700 dark:text-crimson-300">
+                      <TeresaMark size={18} />
+                      <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
+                    </div>
+                    <p className="text-base font-semibold text-slate-900 dark:text-white">
+                      {isPolish ? 'Przeprowadź pierwszy wywiad' : 'Run your first interview'}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-md">
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">
                       {isPolish
-                        ? 'Tutaj pojawiają się wszystkie uruchomione sesje z workflow managera: w trakcie, wysłane, do poprawy i zatwierdzone.'
-                        : 'This view shows manager workflow sessions across in progress, submitted, sent back, and approved states.'}
+                        ? 'Rozpocznij pierwszy wywiad z interesariuszem. Wybierz szablon lub zbuduj go od podstaw.'
+                        : 'Start your first stakeholder interview. Pick a template or build one from scratch.'}
                     </p>
+                    <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('templates');
+                          setActiveDocumentId(null);
+                        }}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-crimson-600 px-4 text-xs font-semibold text-white transition hover:bg-crimson-700"
+                      >
+                        <FileText size={14} />
+                        {isPolish ? 'Użyj szablonu' : 'Use a template'}
+                      </button>
+                      {canAssign ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowAssignModal(true)}
+                          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                        >
+                          <UserPlus size={14} />
+                          {isPolish ? 'Nowa sesja' : 'New session'}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -6423,16 +6493,21 @@ Return ONLY the answer text (no markdown fences).`;
         <div className="flex items-center justify-center h-full p-6">
           <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
             <div className="text-lg font-semibold text-slate-900 dark:text-white">
-              {isPolish
-                ? 'Realne zrodlo Interview wymaga uwagi'
-                : 'Real interview source needs attention'}
+              {isPolish ? 'Nie udało się załadować wywiadów' : 'Could not load your interviews'}
             </div>
-            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{loadError}</div>
-            <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">
               {isPolish
-                ? 'Nie wstrzyknieto danych demo. Sprawdz aktywna baze, scope organizacji i data-context.'
-                : 'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context.'}
+                ? 'Coś poszło nie tak podczas ładowania wywiadów. Odśwież stronę lub skontaktuj się z pomocą techniczną, jeśli problem się powtarza.'
+                : 'Something went wrong loading your interviews. Please refresh or contact support if the issue persists.'}
             </div>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-crimson-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-crimson-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600/30"
+            >
+              <RefreshCw size={14} />
+              {isPolish ? 'Odśwież' : 'Refresh'}
+            </button>
           </div>
         </div>
       );
@@ -7366,24 +7441,33 @@ Return ONLY the answer text (no markdown fences).`;
                         {interviewInitiatives.length === 0 ? (
                           <>
                             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                              {canCreateInsights
-                                ? isPolish
-                                  ? 'Uzyj przycisku "Dodaj inicjatywy" w prawym gornym rogu, aby przeprowadzic kreator z evidence z wywiadow.'
-                                  : 'Use the "Add initiatives" button in the top right to run the wizard with interview evidence.'
-                                : isPolish
-                                  ? 'Brak uprawnien do uruchamiania kreatora inicjatyw. Skontaktuj sie z adminem lub PMO.'
-                                  : 'You do not have permission to run the initiative wizard. Contact your admin or PMO.'}
+                              {isPolish
+                                ? 'Brak inicjatyw — przekaż wnioski z zakładki Wnioski lub uruchom kreator inicjatyw.'
+                                : 'No initiatives yet — promote insights from the Insights tab or run the initiative wizard.'}
                             </p>
-                            {canCreateInsights ? (
+                            <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row">
                               <button
                                 type="button"
-                                onClick={() => setShowInitiativeWizard(true)}
-                                className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-full border border-blue-300/70 bg-blue-500/10 px-3 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-500/15 dark:border-blue-400/25 dark:text-blue-200"
+                                onClick={() => {
+                                  setActiveTab('insights');
+                                  setActiveDocumentId(null);
+                                }}
+                                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-crimson-600 px-3 text-[11px] font-semibold text-white transition hover:bg-crimson-700"
                               >
-                                <Sparkles size={14} />
-                                {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                                <Lightbulb size={14} />
+                                {isPolish ? 'Przejdź do Wniosków' : 'Go to Insights'}
                               </button>
-                            ) : null}
+                              {canCreateInsights ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowInitiativeWizard(true)}
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                                >
+                                  <Sparkles size={14} />
+                                  {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                                </button>
+                              ) : null}
+                            </div>
                           </>
                         ) : null}
                       </div>

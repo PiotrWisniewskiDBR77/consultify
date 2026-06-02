@@ -58,6 +58,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { TeresaMark } from '@/components/shared/TeresaMark';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
 
@@ -140,6 +141,23 @@ type AiQuestionProposal = {
   remove?: Array<{ questionId: string; reason: string }>;
   reorder?: { order: string[]; note?: string };
 };
+
+// AI quality-gate response shape (matches InterviewController.evaluateTemplateQuality)
+interface QualityWarning {
+  rule?: string;
+  severity: 'error' | 'warning' | 'info';
+  message: { en: string; pl: string };
+}
+interface QualityQuestionResult {
+  questionId?: string;
+  score: number;
+  warnings: QualityWarning[];
+}
+interface TemplateQualityResult {
+  results: QualityQuestionResult[];
+  averageScore: number;
+  totalWarnings: number;
+}
 
 // Constants
 const ANSWER_TYPES: { id: AnswerType; labelPl: string; labelEn: string }[] = [
@@ -271,6 +289,10 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const [isCloning, setIsCloning] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const reviewImportInputRef = useRef<HTMLInputElement | null>(null);
+
+  // AI quality gate (V6-B04) — POST /interview/templates/evaluate-quality
+  const [isCheckingQuality, setIsCheckingQuality] = useState(false);
+  const [qualityResult, setQualityResult] = useState<TemplateQualityResult | null>(null);
 
   // Load existing template
   useEffect(() => {
@@ -667,6 +689,61 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     });
   }, []);
 
+  // Evaluate template question quality via the AI quality-gate endpoint.
+  // Returns the result (and stores it) so callers can react to a weak score.
+  const evaluateQuality = useCallback(
+    async (silent = false): Promise<TemplateQualityResult | null> => {
+      const ordered = [...questions].sort((a, b) => a.sortOrder - b.sortOrder);
+      if (ordered.length === 0) {
+        if (!silent) {
+          toast.error(
+            isPolish ? 'Dodaj pytania, aby sprawdzić jakość' : 'Add questions to check quality'
+          );
+        }
+        return null;
+      }
+      try {
+        const payload = ordered.map((q) => ({
+          id: q.id,
+          questionText: q.questionText,
+          answerType: q.answerType,
+          answerOptions: q.answerOptions,
+          isRequired: q.isRequired,
+          helpHint: q.helpHint || '',
+        }));
+        const result = (await Api.post('/interview/templates/evaluate-quality', {
+          questions: payload,
+        })) as TemplateQualityResult;
+        if (result && Array.isArray(result.results)) {
+          setQualityResult(result);
+          return result;
+        }
+        return null;
+      } catch (error) {
+        console.error('[TemplateBuilder] Quality check failed:', error);
+        if (!silent) {
+          toast.error(
+            isPolish ? 'Nie udało się sprawdzić jakości' : 'Could not check template quality'
+          );
+        }
+        return null;
+      }
+    },
+    [questions, isPolish]
+  );
+
+  const handleCheckQuality = useCallback(async () => {
+    setIsCheckingQuality(true);
+    const result = await evaluateQuality(false);
+    setIsCheckingQuality(false);
+    if (!result) return;
+    if (result.averageScore >= 70 && result.totalWarnings === 0) {
+      toast.success(
+        isPolish ? 'Jakość szablonu wygląda świetnie!' : 'Template quality looks great!'
+      );
+    }
+  }, [evaluateQuality, isPolish]);
+
   // Save template
   const handleSave = useCallback(
     async (publish: boolean = false) => {
@@ -752,6 +829,17 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               : 'Template saved!'
         );
 
+        // Non-blocking AI quality gate: surface a warning when questions are weak.
+        const quality = await evaluateQuality(true);
+        if (quality && (quality.averageScore < 70 || quality.totalWarnings > 0)) {
+          toast(
+            isPolish
+              ? `Jakość szablonu: ${quality.averageScore}/100 — ${quality.totalWarnings} ostrzeżenie(a). Sprawdź przed publikacją.`
+              : `Template quality: ${quality.averageScore}/100 — ${quality.totalWarnings} warning(s). Review before publishing.`,
+            { icon: '⚠️', duration: 6000 }
+          );
+        }
+
         const savedTemplate =
           savedTemplateId != null
             ? ((templateId
@@ -780,6 +868,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       onSuccess,
       onClose,
       presentation,
+      evaluateQuality,
     ]
   );
 
@@ -2164,6 +2253,94 @@ ${sourceText || '(none)'}`;
           </div>
         ) : null}
 
+        {/* AI quality-gate result panel */}
+        {qualityResult ? (
+          <div className="mx-4 mb-3 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 shrink-0">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-crimson-50 text-crimson-700 dark:bg-crimson-500/15 dark:text-crimson-300">
+                  <TeresaMark size={16} />
+                </span>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {isPolish ? 'Teresa sprawdziła Twój szablon' : 'Teresa reviewed your template'}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish
+                      ? `${qualityResult.totalWarnings} uwag(a) do rozważenia`
+                      : `${qualityResult.totalWarnings} item(s) to consider`}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    qualityResult.averageScore >= 85
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200'
+                      : qualityResult.averageScore >= 70
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200'
+                        : 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200'
+                  }`}
+                >
+                  {qualityResult.averageScore}/100
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQualityResult(null)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06]"
+                  aria-label={isPolish ? 'Zamknij' : 'Dismiss'}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+            {qualityResult.results.some((r) => r.warnings.length > 0) ? (
+              <ul className="mt-3 space-y-2 max-h-40 overflow-y-auto">
+                {qualityResult.results
+                  .filter((r) => r.warnings.length > 0)
+                  .map((r, idx) => {
+                    const q = questions.find((qq) => qq.id === r.questionId);
+                    const label =
+                      q?.questionText?.slice(0, 60) ||
+                      (isPolish ? `Pytanie ${idx + 1}` : `Question ${idx + 1}`);
+                    return (
+                      <li
+                        key={r.questionId || idx}
+                        className="rounded-xl border border-slate-100 dark:border-navy-700 bg-slate-50/60 dark:bg-white/[0.03] px-3 py-2"
+                      >
+                        <div className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {label}
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {r.warnings.map((w, wi) => (
+                            <span
+                              key={wi}
+                              className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                                w.severity === 'error'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200'
+                                  : w.severity === 'warning'
+                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200'
+                                    : 'bg-slate-100 text-slate-700 dark:bg-white/[0.08] dark:text-slate-300'
+                              }`}
+                            >
+                              {isPolish ? w.message.pl : w.message.en}
+                            </span>
+                          ))}
+                        </div>
+                      </li>
+                    );
+                  })}
+              </ul>
+            ) : (
+              <div className="mt-3 text-xs text-emerald-700 dark:text-emerald-300">
+                {isPolish
+                  ? 'Brak ostrzeżeń — pytania wyglądają dobrze.'
+                  : 'No warnings — your questions look solid.'}
+              </div>
+            )}
+          </div>
+        ) : null}
+
         {/* Footer */}
         <div className="p-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between shrink-0">
           <div className="text-xs text-slate-500">
@@ -2175,6 +2352,20 @@ ${sourceText || '(none)'}`;
               className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
             >
               {isPolish ? 'Anuluj' : 'Cancel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleCheckQuality}
+              disabled={isCheckingQuality || questions.length === 0}
+              title={isPolish ? 'Sprawdź jakość pytań (AI)' : 'Check question quality (AI)'}
+              className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {isCheckingQuality ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <TeresaMark size={14} />
+              )}
+              {isPolish ? 'Sprawdź jakość' : 'Check quality'}
             </button>
             <button
               onClick={() => handleSave(false)}

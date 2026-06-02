@@ -25,6 +25,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { TeresaMark } from '@/components/shared/TeresaMark';
 import { Api } from '@/services/api';
 import { type V8ContextDocument, V8InterviewApi } from '@/services/api/v8/interview';
 
@@ -1956,7 +1957,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-            <Sparkles size={20} className="text-slate-500 dark:text-slate-400" />
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-crimson-50 text-crimson-700 dark:bg-crimson-500/15 dark:text-crimson-300">
+              <TeresaMark size={16} />
+            </span>
             {isPolish ? 'Kreator Wniosków AI' : 'AI Insight Creator'}
           </h2>
           <button

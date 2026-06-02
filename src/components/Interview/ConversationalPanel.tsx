@@ -20,6 +20,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { TeresaMark } from '@/components/shared/TeresaMark';
+
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 const API_BASE = '/api/interview';
@@ -238,9 +240,16 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
             className={`rounded-xl border p-3 ${roleColors[msg.role] || roleColors.system}`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {msg.role}
-              </span>
+              {msg.role === 'ai' ? (
+                <span className="inline-flex items-center gap-1 text-crimson-700 dark:text-crimson-300">
+                  <TeresaMark size={13} />
+                  <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
+                </span>
+              ) : (
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {msg.role}
+                </span>
+              )}
               <span className="text-xs text-gray-400 dark:text-gray-500">
                 {new Date(msg.createdAt).toLocaleTimeString()}
               </span>

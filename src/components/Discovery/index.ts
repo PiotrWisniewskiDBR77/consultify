@@ -10,7 +10,9 @@ export { DiscoveryConsultantView } from './DiscoveryConsultantView'; // Legacy -
 export { DiscoveryFooterActions } from './DiscoveryFooterActions';
 export { DiscoveryHeader } from './DiscoveryHeader';
 export { DiscoveryToolsHub } from './DiscoveryToolsHub';
-export { InterviewHub } from './InterviewHub'; // New ModuleHub pattern
+// NOTE: The canonical interview hub lives at '@/components/Interview/InterviewHub'
+// and is the only one mounted by routes. The former Discovery/InterviewHub.tsx
+// thin wrapper was dead code and has been removed.
 export { ProjectConversionModal } from './ProjectConversionModal';
 export { RecommendationPanel } from './RecommendationPanel';
 
