@@ -7,6 +7,41 @@ import prettierPlugin from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 
+// Frontend ingestion bans (Organization Context Engine SoT §11). Shared between the
+// general src block and the Admin-fork-ban block so non-Admin files keep both guards.
+const FRONTEND_INGESTION_RESTRICTED_PATHS = [
+  {
+    name: 'pdfjs-dist',
+    message:
+      'Frontend ingestion of PDFs is forbidden. Upload files via the documents API and let the backend Organization Context Engine extract page locators (tenant-safe, lineage-aware).',
+  },
+  {
+    name: 'mammoth',
+    message:
+      'Frontend ingestion of DOCX is forbidden. Upload via documents API; the backend Organization Context Engine extracts paragraph/table locators with ACL.',
+  },
+  {
+    name: 'xlsx',
+    message:
+      'Frontend ingestion of XLSX is forbidden. Upload via documents API; the backend extracts sheet locators with quotas and lineage.',
+  },
+  {
+    name: 'tesseract.js',
+    message:
+      'Frontend OCR is forbidden. Upload images via documents API; the backend Organization Context Engine handles OCR with confidence scores, prompt-injection treatment and cost metering.',
+  },
+  {
+    name: 'jszip',
+    message:
+      'Frontend zip parsing of context files (PPTX/DOCX) is forbidden. Use the documents API and the shared engine.',
+  },
+  {
+    name: 'pdf-parse',
+    message:
+      'Frontend PDF parsing is forbidden. Use the documents API and the shared backend engine.',
+  },
+];
+
 export default tseslint.config(
   {
     ignores: [
@@ -131,6 +166,43 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-object-type': 'warn',
       '@typescript-eslint/no-unsafe-function-type': 'warn',
       '@typescript-eslint/no-require-imports': 'warn',
+
+      // ==========================================
+      // X1 DESIGN SYSTEM GUARDRAILS
+      // See: docs/plans/cross-cutting/PLAN_X1_design_system.md §6
+      // warn level during transition (1458 existing hex literals would hard-break
+      // CI at error); CI runs `eslint --max-warnings 0` so new violations fail.
+      // Overridden off inside src/components/ui/ (see ui override block below).
+      // ==========================================
+      'no-restricted-syntax': [
+        'warn',
+        {
+          // Ban inline style={{}} outside src/components/ui/
+          selector: 'JSXAttribute[name.name="style"][value.type="JSXExpressionContainer"]',
+          message:
+            'Inline style={{}} is banned outside src/components/ui/. Use Tailwind design tokens (crimson-*, navy-*, token-*).',
+        },
+        {
+          // Ban raw hex color literals (className strings, props, style values)
+          selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b/]',
+          message:
+            'Hardcoded hex color detected. Use a Tailwind token (crimson-*, navy-*, danger-*, etc.) instead.',
+        },
+        {
+          // Ban arbitrary Tailwind color brackets, e.g. bg-[#A51C30]
+          selector: 'Literal[value=/\\[#[0-9a-fA-F]/]',
+          message:
+            'Arbitrary Tailwind color bg-[#…] is banned. Use a token class (bg-crimson-600, etc.).',
+        },
+      ],
+    },
+  },
+  {
+    // X1: design-system guardrails do not apply inside the primitives layer —
+    // ui/ owns the raw style/hex/token definitions.
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
   {
@@ -142,39 +214,33 @@ export default tseslint.config(
     files: ['src/**/*.{ts,tsx}'],
     ignores: ['src/components/Document/**', 'src/services/api.ts'],
     rules: {
+      'no-restricted-imports': ['warn', { paths: FRONTEND_INGESTION_RESTRICTED_PATHS }],
+    },
+  },
+  {
+    // X1: ban importing the retired Admin/shared primitive forks from NEW code.
+    // The forks are now thin adapters over ui/primitives. The Admin module and the
+    // existing SuperAdmin views legitimately keep using them because they rely on
+    // IconButton / Section / CardWithHeader / StatsCard, which have no primitive
+    // equivalent yet (Week-2 migration). Everything else must use ui/primitives.
+    // Re-declares the ingestion paths so non-Admin src files keep both guards.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/components/Document/**',
+      'src/services/api.ts',
+      'src/components/Admin/**',
+      'src/views/superadmin/**',
+    ],
+    rules: {
       'no-restricted-imports': [
         'warn',
         {
-          paths: [
+          paths: FRONTEND_INGESTION_RESTRICTED_PATHS,
+          patterns: [
             {
-              name: 'pdfjs-dist',
+              group: ['**/Admin/shared/Button', '**/Admin/shared/Card'],
               message:
-                'Frontend ingestion of PDFs is forbidden. Upload files via the documents API and let the backend Organization Context Engine extract page locators (tenant-safe, lineage-aware).',
-            },
-            {
-              name: 'mammoth',
-              message:
-                'Frontend ingestion of DOCX is forbidden. Upload via documents API; the backend Organization Context Engine extracts paragraph/table locators with ACL.',
-            },
-            {
-              name: 'xlsx',
-              message:
-                'Frontend ingestion of XLSX is forbidden. Upload via documents API; the backend extracts sheet locators with quotas and lineage.',
-            },
-            {
-              name: 'tesseract.js',
-              message:
-                'Frontend OCR is forbidden. Upload images via documents API; the backend Organization Context Engine handles OCR with confidence scores, prompt-injection treatment and cost metering.',
-            },
-            {
-              name: 'jszip',
-              message:
-                'Frontend zip parsing of context files (PPTX/DOCX) is forbidden. Use the documents API and the shared engine.',
-            },
-            {
-              name: 'pdf-parse',
-              message:
-                'Frontend PDF parsing is forbidden. Use the documents API and the shared backend engine.',
+                'Import Button/Card from @/components/ui/primitives instead of the retired Admin/shared forks.',
             },
           ],
         },

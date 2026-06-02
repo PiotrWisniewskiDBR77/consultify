@@ -13,6 +13,7 @@ import {
 } from './atelierToysDemoTemplate.js';
 import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
 import { getDemoAnchorDate, materializeRelativeIso } from './demoRelativeDate.js';
+import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 
 export interface SeedDemoDatasetInput {
   organizationId: string;
@@ -1758,6 +1759,129 @@ async function upsertOrg(organizationId: string): Promise<void> {
   );
 }
 
+/**
+ * Seed the ORGANIZATION CONTEXT for the canonical Atelier Toys demo org.
+ *
+ * This is the demo backbone that makes Teresa context-aware: it records
+ * profile / strategic-goals / operations claims from the Atelier Toys identity
+ * (edtech/STEM manufacturer, Lyon, est. 1948, "Ateliertoy Forward" 2015
+ * transformation) and rebuilds the resolved context snapshot.
+ *
+ * Idempotent: recordContextSource appends an authoritative system source each
+ * run, and rebuildSnapshot recomputes the snapshot from current claims.
+ */
+async function upsertOrganizationContext(organizationId: string): Promise<void> {
+  try {
+    await organizationContextService.recordContextSource({
+      organizationId,
+      sourceType: 'demo_seed',
+      sourceId: makeId(organizationId, 'context', 'atelier-toys'),
+      channel: 'system',
+      sourceLabel: 'Atelier Toys canonical demo context',
+      isExplicit: true,
+      // Skip the per-call rebuild; we rebuild once after all claims are recorded.
+      rebuildSnapshot: false,
+      content: {
+        summary:
+          'Atelier Toys canonical demo organization context — edtech / STEM manufacturer headquartered in Lyon, France, founded 1948. "Ateliertoy Forward" (2015) transformed it from a pure product company into an edtech platform with physical roots.',
+        story: 'Ateliertoy Forward',
+      },
+      claims: [
+        { claimPath: 'profile.companyName', value: 'Atelier Toys' },
+        {
+          claimPath: 'profile.description',
+          value:
+            'EdTech / STEM learning-tools manufacturer founded in 1948 in Lyon, France. Atelier Toys designs and produces hands-on STEM kits (Atelier Core, Atelier Motion) and a digital learning platform (Atelier Digital), serving 1.2M+ subscribers across 4,000+ institutions in 45 countries. The 2015 "Ateliertoy Forward" programme shifted the company from a pure product manufacturer into an edtech platform with physical roots.',
+        },
+        { claimPath: 'profile.industry', value: 'EdTech Manufacturing (STEM learning tools)' },
+        { claimPath: 'profile.industrySubsector', value: 'STEM educational hardware & digital learning' },
+        { claimPath: 'profile.organizationType', value: 'Manufacturer / EdTech platform' },
+        { claimPath: 'profile.revenueModel', value: 'Hardware sales + recurring digital subscriptions' },
+        { claimPath: 'profile.location', value: 'Lyon, France' },
+        { claimPath: 'profile.foundingYear', value: 1948 },
+        { claimPath: 'profile.companySize', value: '1,200 employees' },
+        { claimPath: 'profile.employeeCount', value: 1200 },
+        { claimPath: 'profile.annualRevenue', value: '~€280M (demo anchor year)' },
+        { claimPath: 'profile.currency', value: 'EUR' },
+        { claimPath: 'profile.defaultLanguage', value: 'fr' },
+        { claimPath: 'profile.website', value: 'ateliertoys.com' },
+        {
+          claimPath: 'strategic.mission',
+          value:
+            'Make hands-on STEM learning accessible everywhere by combining trusted physical learning tools with a modern digital platform.',
+        },
+        {
+          claimPath: 'strategic.vision',
+          value:
+            'Become the leading edtech platform with physical roots — the "Ateliertoy Forward" horizon of subscription-scale digital products built on a 75-year manufacturing heritage.',
+        },
+        { claimPath: 'strategic.growthStage', value: 'Scale-up (digital subscription expansion)' },
+        { claimPath: 'strategic.competitivePosition', value: 'Established global STEM manufacturer transforming into an edtech platform' },
+        {
+          claimPath: 'strategic.goals',
+          value: [
+            'Reach €10M Digital ARR by 2026-Q2',
+            'Achieve OEE 85%+ on core production lines by 2025-Q4',
+            'Scale Atelier Digital subscriptions beyond 1.2M subscribers and 4,000+ institutions',
+            'Close ISO 14001 packaging-waste gap (target -20%)',
+          ],
+        },
+        {
+          claimPath: 'strategic.priorities',
+          value: [
+            'Ateliertoy Forward wave 3: go-to-market and subscription scale (2023+)',
+            'ERP migration and digital product buildout',
+            'Operational excellence and OEE recovery on bottleneck lines',
+            'Reduce APAC subscriber churn (currently 4.1%, target <3%)',
+          ],
+        },
+        {
+          claimPath: 'operations.keyMetrics',
+          value: [
+            { name: 'Subscribers', value: '1.2M+ end-users' },
+            { name: 'Institutions served', value: '4,000+' },
+            { name: 'Countries', value: '45' },
+            { name: 'Founded', value: '1948' },
+            { name: 'Digital ARR', value: '~€6.2M (target €8M)' },
+            { name: 'OEE (Line 4)', value: '74% (target 82%)' },
+          ],
+        },
+        {
+          claimPath: 'operations.constraints',
+          value: [
+            'Legacy ERP integration limiting digital product velocity',
+            'OEE below target on bottleneck Line 4',
+            'Raw-material and supplier lead-time volatility',
+            'APAC subscription churn above target',
+          ],
+        },
+        {
+          claimPath: 'operations.productionArchetype',
+          value: 'Discrete manufacturing of STEM learning kits + digital platform delivery',
+        },
+        {
+          claimPath: 'metadata.custom',
+          value: [
+            { key: 'certifications', value: 'ISO 9001, ISO 14001' },
+            { key: 'products', value: 'Atelier Core, Atelier Motion, Atelier Digital' },
+            {
+              key: 'transformationStory',
+              value:
+                'Ateliertoy Forward (2015): wave 1 (2015-2018) operational excellence; wave 2 (2019-2022) digital product buildout; wave 3 (2023+) go-to-market and subscription scale.',
+            },
+          ],
+        },
+      ],
+    });
+
+    await organizationContextService.rebuildSnapshot(organizationId);
+  } catch (error) {
+    // Non-fatal: context seeding should not block the rest of the demo dataset.
+    // eslint-disable-next-line no-console
+    console.warn('[demoSeedService] Failed to seed Atelier Toys organization context', error);
+  }
+}
+
 function buildEmail(leader: DemoLeaderTemplate, organizationId: string): string {
   return (
     `${leader.firstName}.${leader.lastName}`.toLowerCase().replace(/\s+/g, '.') +
@@ -3130,6 +3254,8 @@ export async function seedAtelierToysDemoDataset(
   const toolCoverage = getAtelierToysToolCoverage(locale);
 
   await upsertOrg(organizationId);
+  // Seed the organization CONTEXT so Teresa is context-aware in the demo.
+  await upsertOrganizationContext(organizationId);
   const userMap = await upsertUsers(organizationId, locale);
   await upsertTeams(organizationId, userMap, locale);
   const projectMap = await upsertProjects(organizationId, userMap, locale);

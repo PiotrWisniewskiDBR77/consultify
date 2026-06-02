@@ -26,7 +26,6 @@ import {
   Lightbulb,
   Map,
   MessageSquare,
-  Package,
   Presentation,
   Rocket,
   Settings,
@@ -93,7 +92,10 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       id: 'MODULE_INITIATIVES',
       label: t('sidebar.initiatives', 'Initiatives'),
       icon: React.createElement(Lightbulb, { size: 20 }),
-      viewId: AppView.PORTFOLIO_ROADMAP,
+      // Spine-nav fix (BL-1): point to the canonical InitiativesHub at
+      // /initiatives. Previously AppView.PORTFOLIO_ROADMAP routed to the legacy
+      // /portfolio view, breaking the hub-and-spoke flow.
+      viewId: AppView.FULL_STEP2_INITIATIVES,
     },
     // 6. Wdrożenie - realizacja zatwierdzonych inicjatyw
     {
@@ -153,20 +155,8 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       viewId: AppView.MEETING,
       badge: 'soon',
     },
-    {
-      id: 'MCP_IRIS',
-      label: t('sidebar.mcpIris', 'MCP IRIS'),
-      icon: React.createElement(Brain, { size: 20 }),
-      viewId: AppView.MCP_IRIS_COMING_SOON,
-      badge: 'soon',
-    },
-    {
-      id: 'MCP_MARKETPLACE',
-      label: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
-      icon: React.createElement(Package, { size: 20 }),
-      viewId: AppView.MCP_MARKETPLACE_COMING_SOON,
-      badge: 'soon',
-    },
+    // MCP IRIS (14) and MCP Marketplace (15) removed from navigation per decision
+    // D7 (placeholder-only modules dropped). Their routes now redirect to /chat.
     // Ecosystem affiliate dashboard (Phase G - conditional)
     ...(journeyState === 'ECOSYSTEM_NODE'
       ? [

@@ -1,19 +1,27 @@
 /**
- * Admin Button Component
+ * Admin Button — COMPATIBILITY ADAPTER (fork retired, X1 Design System)
  *
- * Minimalist button variants for Admin module
- * Variants: primary, secondary, ghost, icon
- * Sizes: sm, md, lg
+ * The bespoke Admin button implementation was deleted. This module is now a thin
+ * adapter that delegates rendering to the canonical primitive
+ * `src/components/ui/primitives/Button`, preserving the legacy Admin API
+ * (`icon` as a LucideIcon component, `iconPosition`, variants) so existing
+ * Admin / SuperAdmin views keep working. Prefer importing directly from
+ * `@/components/ui/primitives` in new code.
  */
 
 import { Loader2, LucideIcon } from 'lucide-react';
 import React from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type ButtonSize = 'sm' | 'md' | 'lg';
+import {
+  Button as PrimitiveButton,
+  type ButtonSize,
+  type ButtonVariant as PrimitiveButtonVariant,
+} from '../../ui/primitives/Button';
+
+type AdminButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
+  variant?: AdminButtonVariant;
   size?: ButtonSize;
   icon?: LucideIcon;
   iconPosition?: 'left' | 'right';
@@ -21,29 +29,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
 }
 
-/**
- * DBR77 Color System - Button Variants
- * See: docs/ui-standards/00-foundation/color-system.md
- */
-const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-primary-600 hover:bg-primary-700 text-white', // Fiolet
-  secondary: 'bg-secondary-800 hover:bg-secondary-900 text-white border border-white/10', // Navy
-  ghost:
-    'bg-transparent hover:bg-slate-100 text-slate-700 hover:text-slate-900 ' +
-    'dark:hover:bg-white/[0.04] dark:text-slate-400 dark:hover:text-slate-100',
-  danger: 'bg-danger-600/10 hover:bg-danger-600/20 text-danger-400 border border-danger-500/20', // Czerwień
-};
-
-const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs gap-1.5',
-  md: 'px-4 py-2 text-sm gap-2',
-  lg: 'px-5 py-2.5 text-sm gap-2',
-};
-
-const iconSizes: Record<ButtonSize, number> = {
-  sm: 14,
-  md: 16,
-  lg: 18,
+// Admin variants map 1:1 onto canonical primitive variants.
+const variantMap: Record<AdminButtonVariant, PrimitiveButtonVariant> = {
+  primary: 'primary',
+  secondary: 'secondary',
+  ghost: 'ghost',
+  danger: 'danger',
 };
 
 export const Button: React.FC<ButtonProps> = ({
@@ -52,43 +43,25 @@ export const Button: React.FC<ButtonProps> = ({
   icon: Icon,
   iconPosition = 'left',
   loading = false,
-  disabled,
   children,
-  className = '',
   ...props
 }) => {
-  const isDisabled = disabled || loading;
-  const iconSize = iconSizes[size];
-
+  const iconEl = Icon ? <Icon /> : undefined;
   return (
-    <button
-      className={`
-                inline-flex items-center justify-center font-medium rounded-lg
-                transition-colors focus:outline-none focus-visible:ring-2
-                focus-visible:ring-primary-500/50 focus-visible:ring-offset-2
-                focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900
-                disabled:opacity-50 disabled:cursor-not-allowed
-                ${variantClasses[variant]}
-                ${sizeClasses[size]}
-                ${className}
-            `
-        .trim()
-        .replace(/\s+/g, ' ')}
-      disabled={isDisabled}
-      {...props}
+    <PrimitiveButton
+      variant={variantMap[variant]}
+      size={size}
+      loading={loading}
+      icon={iconPosition === 'left' ? iconEl : undefined}
+      iconRight={iconPosition === 'right' ? iconEl : undefined}
+      {...(props as Record<string, unknown>)}
     >
-      {loading ? (
-        <Loader2 size={iconSize} className="animate-spin" />
-      ) : (
-        Icon && iconPosition === 'left' && <Icon size={iconSize} />
-      )}
       {children}
-      {!loading && Icon && iconPosition === 'right' && <Icon size={iconSize} />}
-    </button>
+    </PrimitiveButton>
   );
 };
 
-// Icon-only button variant
+// Icon-only button — kept as a small composed wrapper (no direct primitive equivalent).
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon: LucideIcon;
   size?: ButtonSize;
@@ -96,6 +69,8 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   label?: string;
   loading?: boolean;
 }
+
+const iconSizes: Record<ButtonSize, number> = { sm: 14, md: 16, lg: 18 };
 
 export const IconButton: React.FC<IconButtonProps> = ({
   icon: Icon,
@@ -112,19 +87,12 @@ export const IconButton: React.FC<IconButtonProps> = ({
 
   const variantClass =
     variant === 'danger'
-      ? 'text-slate-600 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10'
-      : 'text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]';
+      ? 'text-navy-500 dark:text-navy-400 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-500/10'
+      : 'text-navy-500 dark:text-navy-400 hover:text-navy-900 dark:hover:text-white hover:bg-navy-100 dark:hover:bg-white/[0.04]';
 
   return (
     <button
-      className={`
-                ${paddingClass} rounded-lg transition-colors
-                focus:outline-none focus-visible:ring-2
-                focus-visible:ring-primary-500/50
-                disabled:opacity-50 disabled:cursor-not-allowed
-                ${variantClass}
-                ${className}
-            `
+      className={`${paddingClass} rounded-token-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600/40 disabled:opacity-50 disabled:cursor-not-allowed ${variantClass} ${className}`
         .trim()
         .replace(/\s+/g, ' ')}
       disabled={disabled || loading}

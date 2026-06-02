@@ -84,11 +84,10 @@ function toDateOnly(daysFromNow: number): string {
 
 export function shouldUseResultsShowcaseData(): boolean {
   if (import.meta.env.MODE === 'test') return false;
-  if (shouldAllowDemoData()) return true;
-
-  if (typeof window === 'undefined') return false;
-  const hostname = window.location.hostname;
-  return import.meta.env.DEV || hostname === 'localhost' || hostname === '127.0.0.1';
+  // Demo data must NEVER auto-activate. It only renders when the user has
+  // explicitly toggled the demo session on (shouldAllowDemoData). No
+  // localhost / DEV / hostname auto-trigger.
+  return shouldAllowDemoData();
 }
 
 export function createResultsShowcaseInitiatives(): ResultsTrackedInitiative[] {

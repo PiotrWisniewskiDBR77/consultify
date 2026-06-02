@@ -153,3 +153,11 @@ export {
   ResponsiveImage,
   type ResponsiveImageProps,
 } from './OptimizedImage';
+
+// Shared state primitives (X1 Design System)
+// NOTE: EmptyState is intentionally NOT exported here — the canonical EmptyState
+// lives in ./composed (already used app-wide). Reconcile styling to the brand
+// canon (crimson/rounded) in the Week-2 design-system pass.
+export { ErrorState, type ErrorStateProps } from './ErrorState';
+export { LoadingState, type LoadingStateProps } from './LoadingState';
+export { OnboardingHint, type OnboardingHintProps } from './OnboardingHint';

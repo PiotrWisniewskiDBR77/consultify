@@ -8,7 +8,7 @@
     "dev": "tsx src/index.ts",
     "dev:watch": "tsx watch src/index.ts",
     "dev:ts": "tsx watch src/index.ts",
-    "build": "tsc --noCheck",
+    "build": "tsc",
     "build:clean": "rm -rf dist && tsc --build",
     "build:watch": "tsc --build --watch",
     "build:fast": "tsc --build --incremental",

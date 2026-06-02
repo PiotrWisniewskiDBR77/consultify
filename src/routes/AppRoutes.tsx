@@ -2156,30 +2156,10 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        <Route
-          path={ROUTES.MCP_IRIS}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['MCP IRIS']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
-        <Route
-          path={ROUTES.MCP_MARKETPLACE}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['MCP Marketplace']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
+        {/* MCP IRIS + Marketplace dropped from navigation (decision D7). Redirect
+            any direct/bookmarked URL access to the canonical home (/chat). */}
+        <Route path={ROUTES.MCP_IRIS} element={<Navigate to={ROUTES.AI_CHAT} replace />} />
+        <Route path={ROUTES.MCP_MARKETPLACE} element={<Navigate to={ROUTES.AI_CHAT} replace />} />
 
         {/* Settings with nested routes - Protected & Error Boundary */}
         <Route

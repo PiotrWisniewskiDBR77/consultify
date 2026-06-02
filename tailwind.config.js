@@ -34,6 +34,27 @@ export default {
         // See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
         // ========================================
 
+        // ========================================
+        // BRAND ACCENT — Harvard Crimson
+        // Canonical CTA / brand accent (replaces violet primary for CTAs).
+        // #A51C30 = 600/DEFAULT brand value. NO Harvard logo usage.
+        // See: docs/plans/cross-cutting/PLAN_X1_design_system.md
+        // ========================================
+        crimson: {
+          DEFAULT: '#A51C30', // brand canonical — key CTAs, Teresa, brand moments
+          50: '#FDF2F3',
+          100: '#FBDDE0',
+          200: '#F6B8BE',
+          300: '#EF8A94',
+          400: '#E45868',
+          500: '#D42B3D', // accessible on white, WCAG AA
+          600: '#A51C30', // brand canonical (#A51C30)
+          700: '#851627',
+          800: '#651120',
+          900: '#450C16',
+          950: '#2B070D',
+        },
+
         // NEUTRAL - Navy-based grays (tła, ramki, tekst)
         // Updated for softer dark mode appearance (HIG refinement)
         navy: {
@@ -149,7 +170,9 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        display: ['Inter', 'sans-serif'], // Can swap for a more display-oriented font later
+        display: ['Inter', 'sans-serif'], // UI display headings — keep Inter until serif decision finalised
+        // Editorial / brand-moment serif — ONLY for deliverable covers & landing hero, never product UI.
+        serif: ["'Playfair Display'", 'Georgia', 'serif'],
         japanese: ['Noto Sans JP', 'Inter', 'sans-serif'], // Japanese font with full character support
       },
       boxShadow: {
@@ -183,6 +206,12 @@ export default {
         // Focus ring
         'hig-focus': '0 0 0 3px rgba(124, 58, 237, 0.3)',
         'hig-focus-danger': '0 0 0 3px rgba(220, 38, 38, 0.3)',
+        // ----------------------------------------
+        // Semantic shadow tokens — canonical names for shared primitives
+        // ----------------------------------------
+        'token-card': '0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06)',
+        'token-card-hover': '0 8px 16px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.06)',
+        'token-focus': '0 0 0 3px rgba(165, 28, 48, 0.30)', // crimson brand focus ring
       },
       backgroundImage: {
         // Legacy gradients
@@ -280,6 +309,16 @@ export default {
         'hig-2xl': '24px',
         'hig-3xl': '28px',
         'hig-full': '9999px',
+        // ----------------------------------------
+        // Semantic radius tokens (map to hig-* values)
+        // Canonical names used by shared primitives.
+        // ----------------------------------------
+        'token-xs': '6px', // badges, chips
+        'token-sm': '8px', // small cards, inputs
+        'token-md': '12px', // cards, modals (--radius default)
+        'token-lg': '16px', // panels, drawers
+        'token-xl': '20px', // hero cards
+        'token-pill': '9999px', // tags, toggles
       },
       // ========================================
       // APPLE HIG ANIMATION CURVES

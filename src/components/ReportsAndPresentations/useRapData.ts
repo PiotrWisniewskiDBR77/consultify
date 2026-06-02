@@ -16,7 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
+import { API_URL, getHeaders } from '../../services/api';
 import type {
   ArtifactGovernanceSummary,
   PresentationItem,
@@ -146,6 +146,11 @@ async function fetchArtifactActionTarget(
   }
 }
 
+/*
+ * Demo fixtures below are intentionally retained as commented reference only.
+ * They are NEVER injected at runtime — demo data is served exclusively by the
+ * canonical Atelier Toys seed when the user explicitly enables the demo toggle.
+ *
 const DEMO_REPORTS: ReportItem[] = [
   {
     id: 'demo-r1',
@@ -343,6 +348,7 @@ const DEMO_TEMPLATES: TemplateItem[] = [
     sectionCount: 7,
   },
 ];
+*/
 
 // ─── Reports ──────────────────────────────────────────────────────
 
@@ -419,7 +425,6 @@ function mapArtifactReport(raw: any): ReportItem {
 export function useReports() {
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const allowDemoData = shouldAllowDemoData();
   const [error, setError] = useState<string | null>(null);
 
   const fetchReports = useCallback(async () => {
@@ -439,12 +444,6 @@ export function useReports() {
         return;
       }
 
-      if (allowDemoData && (artifactRes.status === 404 || artifactRes.status === 501)) {
-        setReports(DEMO_REPORTS);
-        setError(null);
-        return;
-      }
-
       setReports([]);
       setError('Canonical artifact registry failed to load reports.');
     } catch {
@@ -453,7 +452,7 @@ export function useReports() {
     } finally {
       setLoading(false);
     }
-  }, [allowDemoData]);
+  }, []);
 
   useEffect(() => {
     fetchReports();
@@ -1059,7 +1058,6 @@ export function useAssessmentOutputsForOrigins(
 export function usePresentations() {
   const [presentations, setPresentations] = useState<PresentationItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const allowDemoData = shouldAllowDemoData();
   const [error, setError] = useState<string | null>(null);
 
   const fetchPresentations = useCallback(async () => {
@@ -1079,12 +1077,6 @@ export function usePresentations() {
         return;
       }
 
-      if (allowDemoData && (artifactRes.status === 404 || artifactRes.status === 501)) {
-        setPresentations(DEMO_PRESENTATIONS);
-        setError(null);
-        return;
-      }
-
       setPresentations([]);
       setError('Canonical artifact registry failed to load presentations.');
     } catch {
@@ -1093,7 +1085,7 @@ export function usePresentations() {
     } finally {
       setLoading(false);
     }
-  }, [allowDemoData]);
+  }, []);
 
   useEffect(() => {
     fetchPresentations();
@@ -1121,7 +1113,6 @@ export function usePresentations() {
 export function useSheetOutputs() {
   const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const allowDemoData = shouldAllowDemoData();
   const [error, setError] = useState<string | null>(null);
 
   const fetchSheets = useCallback(async () => {
@@ -1143,12 +1134,6 @@ export function useSheetOutputs() {
         return;
       }
 
-      if (allowDemoData && (res.status === 404 || res.status === 501)) {
-        setRows([]);
-        setError(null);
-        return;
-      }
-
       setRows([]);
       setError('Canonical artifact registry failed to load sheets.');
     } catch {
@@ -1157,7 +1142,7 @@ export function useSheetOutputs() {
     } finally {
       setLoading(false);
     }
-  }, [allowDemoData]);
+  }, []);
 
   useEffect(() => {
     void fetchSheets();
@@ -1260,7 +1245,6 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
 export function useTemplates() {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const allowDemoData = shouldAllowDemoData();
   const [error, setError] = useState<string | null>(null);
 
   const fetchTemplates = useCallback(async () => {
@@ -1325,7 +1309,7 @@ export function useTemplates() {
     } finally {
       setLoading(false);
     }
-  }, [allowDemoData]);
+  }, []);
 
   useEffect(() => {
     fetchTemplates();

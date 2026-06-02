@@ -65,6 +65,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Security P0 (audit ADM-RAW-P0-001): SUPERADMIN must NOT silently inherit
+  // tenant ADMIN access via the role hierarchy. A superadmin is not an admin of
+  // any single tenant; redirect them to their dedicated control plane instead of
+  // letting `3 >= 2` quietly grant /admin/* access without an explicit grant.
+  if (requiredRole === 'ADMIN' && normalizeAppRole(currentUser?.role ?? '') === 'SUPERADMIN') {
+    return <Navigate to={ROUTES.SUPERADMIN.ROOT} replace />;
+  }
+
   // Check role authorization with hierarchy
   if (requiredRole && !hasRequiredRole(currentUser?.role, requiredRole)) {
     // User is authenticated but doesn't have required role level

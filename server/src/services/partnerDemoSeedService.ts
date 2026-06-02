@@ -27,8 +27,24 @@ async function tableExists(tableName: string): Promise<boolean> {
   }
 }
 
+/**
+ * Demo partner data must NEVER auto-seed into production (owner decision D19/D22).
+ * This guard makes the function a no-op in production unless the explicit demo
+ * flag (DEMO_WRITES_ENABLED=true) is set. In non-production it remains available
+ * for local/preview demos. Partner demo data otherwise lives only in the
+ * canonical Atelier Toys seed (npm run db:seed:atelier).
+ */
+function isPartnerDemoSeedAllowed(): boolean {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const explicitDemoEnabled = process.env.DEMO_WRITES_ENABLED === 'true';
+  return !isProduction || explicitDemoEnabled;
+}
+
 export async function ensurePartnerDemoDataset(partnerOrgId: string): Promise<void> {
   if (!partnerOrgId) return;
+  if (!isPartnerDemoSeedAllowed()) {
+    return;
+  }
   const db = getDatabase();
 
   try {

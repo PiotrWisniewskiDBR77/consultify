@@ -14,7 +14,11 @@ import i18n from '@/i18n';
 
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
-import { dispatchAccessBlocked, getAccessBlockedCode, isAccessBlockedCode } from '../utils/accessBlocked';
+import {
+  dispatchAccessBlocked,
+  getAccessBlockedCode,
+  isAccessBlockedCode,
+} from '../utils/accessBlocked';
 import { normalizeApiErrorMessage } from '../utils/apiError';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';
@@ -554,7 +558,6 @@ let _cachedDemoFlags: DemoFlags = {
 };
 
 export function getDemoFlags(): DemoFlags {
-  const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
   let raw: string | null = null;
   try {
     raw = localStorage.getItem('consultify-storage');
@@ -572,13 +575,15 @@ export function getDemoFlags(): DemoFlags {
   try {
     if (raw) {
       const parsed = JSON.parse(raw);
+      // Demo data is gated STRICTLY to the explicit user toggle. `isDemoMode`
+      // is set only when the user flips the Settings "Show demo data" toggle
+      // (persisted server-side as `demo:enabled` and rehydrated into the store).
+      // There is NO localhost/DEV auto-trigger and NO hardcoded-email backdoor.
       isDemoMode = parsed?.state?.isDemoMode === true;
       demoSessionOrgId = parsed?.state?.demoSessionOrgId || null;
-      const persistedUser = parsed?.state?.currentUser;
-      isDemoSession =
-        persistedUser?.isDemo === true ||
-        persistedUser?.email === DEMO_EMAIL ||
-        (sessionStorage.getItem('isDemo') === 'true' && persistedUser?.email === DEMO_EMAIL);
+      // `isDemoSession` mirrors the same explicit toggle so existing callers of
+      // shouldAllowDemoData() keep working when demo is ON.
+      isDemoSession = isDemoMode;
     }
   } catch {
     // Ignore parsing errors
