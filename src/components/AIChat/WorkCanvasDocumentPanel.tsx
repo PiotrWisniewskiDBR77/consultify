@@ -46,6 +46,7 @@ import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import type { Editor as TiptapEditor } from '@tiptap/react';
 
 import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
+import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
 
@@ -283,7 +284,6 @@ function starterTemplateById(starterId?: CanvasStarterId | null): StarterTemplat
   return starterTemplates.find((template) => template.id === starterId) || starterTemplates[1];
 }
 
-const VIEW_MODE_STORAGE_KEY = 'workCanvas.viewMode';
 const LAST_DRAFT_ID_STORAGE_KEY = 'workCanvas.lastDraftId';
 
 const menuWorkspaceActionIds: CanvasActionId[] = [
@@ -418,13 +418,6 @@ const actionIcons: Record<CanvasActionId, React.ComponentType<{ size?: number }>
 const toolbarGroupClass =
   'flex items-center gap-1 rounded-full border border-slate-200 px-1 dark:border-white/10';
 
-function getInitialMode(): CanvasMode {
-  if (typeof window === 'undefined') return 'rich';
-  const stored = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-  if (stored === 'md') return 'md';
-  if (stored === 'document') return 'document';
-  return 'rich';
-}
 
 function createDocumentState(
   template: StarterTemplate,
@@ -562,7 +555,7 @@ export function WorkCanvasDocumentPanel({
   onCanvasSelectionChange,
   onClose,
 }: WorkCanvasDocumentPanelProps) {
-  const [mode, setMode] = React.useState<CanvasMode>(() => getInitialMode());
+  const [mode, setMode] = React.useState<CanvasMode>(() => getInitialCanvasMode());
   const [documentState, setDocumentState] = React.useState<CanvasDocumentState>(() =>
     createDocumentState(
       starterTemplateById(initialStarterId),
@@ -838,7 +831,7 @@ export function WorkCanvasDocumentPanel({
   }, [conversationId]);
 
   React.useEffect(() => {
-    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    persistCanvasMode(mode);
   }, [mode]);
 
   React.useEffect(() => {
