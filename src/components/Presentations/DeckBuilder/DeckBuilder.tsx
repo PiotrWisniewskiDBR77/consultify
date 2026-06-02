@@ -27,6 +27,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
 import type { WorkspaceContext } from '@/types/workspace';
+import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
@@ -35,6 +36,8 @@ import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 import { DeckAuditLogModal } from './DeckAuditLogModal';
 import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
+import type { DeckBuilderTopBarChipsState } from './DeckBuilderMelsChips';
+import { DeckBuilderMelsView } from './DeckBuilderMelsView';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
@@ -909,6 +912,213 @@ export const DeckBuilder: React.FC = () => {
         onExit={() => setPresentMode('off')}
         presenterView={presentMode === 'presenter'}
       />
+    );
+  }
+
+  // WS-A4: unified ExecutiveModuleShell rendering, behind a default-OFF flag.
+  // The shell adapter is presentational only — all deck state/handlers below
+  // are reused verbatim, so the legacy path stays the source of truth until
+  // the flag is enabled.
+  if (isMelsDeckBuilderEnabled()) {
+    const deckConfidentiality = ((deck as any)?.confidentiality ||
+      (deck as any)?.meta?.confidentiality ||
+      'internal') as 'public' | 'internal' | 'confidential';
+    return (
+      <DeckThemeProvider
+        initialColorSetId={deck.color_set_id || 'midnight_navy'}
+        initialBrandKit={brandKit}
+      >
+        <DeckBuilderMelsView
+          title={deck.title}
+          onTitleChange={handleTitleChange}
+          moduleLabel={t('presentations.builder.moduleLabel', 'Prezentacje')}
+          backLabel={t('presentations.builder.back', 'Back to presentations')}
+          topBarHandlers={{
+            onTheme: () => setThemeSwitcherOpen(true),
+            onHistory: () => setVersionHistoryOpen((v) => !v),
+            onQa: () => setQualityGatesOpen((v) => !v),
+            onGovernance: () => setGovernanceModalOpen(true),
+            onAnalytics: () => setAnalyticsOpen((v) => !v),
+            onAudit: () => setAuditLogOpen(true),
+            onShare: () => setShareModalOpen(true),
+            onToggleAgent: () => setTeresaOpen((v) => !v),
+            onRun: () => setPresentMode('fullscreen'),
+          }}
+          topBarState={
+            {
+              confidentiality: deckConfidentiality,
+              governanceVerdict: governanceVerdict ?? null,
+              agentOpen: teresaOpen,
+              runEnabled: deck.cards.length > 0,
+            } satisfies DeckBuilderTopBarChipsState
+          }
+          rightRailState={{
+            agentActivityCount: runtimeEvents.events.length,
+            activityTone: runtimeEvents.degraded
+              ? 'warning'
+              : runtimeEvents.events.length > 0
+                ? 'info'
+                : null,
+          }}
+          rightRailPanels={{
+            blocks: (
+              <BlockToolbar
+                onInsertBlock={handleInsertBlock}
+                onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
+              />
+            ),
+            activity: (
+              <AgentActivityPanel
+                events={runtimeEvents.events}
+                degraded={runtimeEvents.degraded}
+                reason={runtimeEvents.reason}
+              />
+            ),
+          }}
+          leftRailTitle={t('presentations.builder.slides', 'Slides')}
+          leftRail={
+            <SlideSorter
+              cards={deck.cards}
+              activeIndex={activeCardIndex}
+              colorSetId={deck.color_set_id}
+              onSelect={setActiveCardIndex}
+              onReorder={reorderCards}
+              onDuplicate={duplicateCard}
+              onDelete={deleteCard}
+              onAddCard={handleAddBlankCard}
+              isCardOutdated={isCardOutdated}
+            />
+          }
+          canvas={
+            <CardCanvas
+              cards={deck.cards}
+              activeCardIndex={activeCardIndex}
+              colorSetId={deck.color_set_id}
+              onSelectCard={setActiveCardIndex}
+              onBlockClick={() => {}}
+              onAddCard={handleAddBlankCard}
+              speakerNotes={activeCard?.speaker_notes}
+              showNotes={showNotes}
+              animationsEnabled={animationsEnabled}
+            />
+          }
+          teresaSlot={
+            teresaOpen ? (
+              <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+                <UnifiedChatPanel
+                  mode="split"
+                  title={t('presentations.builder.teresa.title', 'Teresa')}
+                  workspaceContext={deckWorkspaceContext}
+                  onModuleIntent={handleTeresaDeckIntent}
+                  showModeToggle={false}
+                  showHistoryTrigger
+                  showFocusMode
+                  maxHeight="100%"
+                />
+              </aside>
+            ) : null
+          }
+          bannerSlot={
+            pendingAgentEdit ? (
+              <div className="flex items-center gap-3 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-2.5">
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-200 flex-1">
+                  {pendingAgentEdit.reply}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAcceptAgentEdit}
+                  className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                >
+                  {isPolish ? 'Zastosuj' : 'Accept'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRejectAgentEdit}
+                  className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                >
+                  {isPolish ? 'Odrzuć' : 'Reject'}
+                </button>
+              </div>
+            ) : null
+          }
+          bottomBarSlot={
+            <DeckBuilderBottomBar
+              currentIndex={activeCardIndex}
+              totalCards={deck.cards.length}
+              cardTitle={activeCard?.title || ''}
+              onQuickEdits={() => setTeresaOpen(true)}
+              onToggleNotes={() => setShowNotes((v) => !v)}
+              notesOpen={showNotes}
+            />
+          }
+          overlays={
+            <>
+              <ThemeSwitcher
+                isOpen={themeSwitcherOpen}
+                onClose={() => setThemeSwitcherOpen(false)}
+              />
+              <VersionHistoryPanel
+                isOpen={versionHistoryOpen}
+                onClose={() => setVersionHistoryOpen(false)}
+                versions={versions}
+                onRestore={handleRestoreVersion}
+                onSaveCheckpoint={saveManualCheckpoint}
+                hasUnsavedChanges={hasUnsavedChanges}
+                lastSavedAt={lastSavedAt}
+              />
+              <MediaLibraryBrowser
+                isOpen={mediaLibraryOpen}
+                onClose={() => setMediaLibraryOpen(false)}
+                onSelect={handleInsertMediaImage}
+              />
+              <DeckQualityGatesPanel
+                deckId={deckId || deck?.deck_id || ''}
+                isOpen={qualityGatesOpen}
+                onClose={() => setQualityGatesOpen(false)}
+                onJumpToCard={setActiveCardIndex}
+              />
+              <ShareAnalyticsPanel
+                deckId={deckId || deck?.deck_id || ''}
+                isOpen={analyticsOpen}
+                onClose={() => setAnalyticsOpen(false)}
+                totalCards={deck?.cards.length || 0}
+              />
+              {auditLogOpen && (
+                <DeckAuditLogModal
+                  deckId={deckId || deck?.deck_id || ''}
+                  onClose={() => setAuditLogOpen(false)}
+                />
+              )}
+              {governanceModalOpen && (
+                <DeckGovernanceCardModal
+                  deckId={deckId || deck?.deck_id || ''}
+                  onClose={() => setGovernanceModalOpen(false)}
+                  onCardLoaded={(card) => setGovernanceVerdict(card.overallVerdict)}
+                />
+              )}
+              <ShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                deckId={deck.deck_id}
+                deckTitle={deck.title}
+                onExport={handleExport}
+              />
+              <CommandPalette
+                isOpen={commandPaletteOpen}
+                onClose={() => setCommandPaletteOpen(false)}
+                onInsertBlock={handleInsertBlock}
+                onPresent={() => setPresentMode('fullscreen')}
+                onExport={handleExport}
+                onToggleAgent={() => setTeresaOpen((v) => !v)}
+                onOpenTheme={() => setThemeSwitcherOpen(true)}
+                onAddCard={() => handleAddBlankCard()}
+              />
+            </>
+          }
+          onRunPrimary={() => setPresentMode('fullscreen')}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        />
+      </DeckThemeProvider>
     );
   }
 
