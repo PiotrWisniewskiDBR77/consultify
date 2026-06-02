@@ -5,8 +5,9 @@
 // Controlled component that accepts industry prop.
 // ---------------------------------------------------------------
 
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Globe, Sparkles } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MegatrendDetail } from './TrendDetailCard';
 
@@ -25,6 +26,8 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
   error,
   onTrendSelect,
 }) => {
+  const { t } = useTranslation();
+  const isEmpty = !loading && !error && megatrends.length === 0;
   return (
     <div className="space-y-6">
       <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg flex items-start gap-3 border border-blue-100 dark:border-navy-700">
@@ -41,16 +44,42 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400 animate-pulse">
-          Loading industry baseline...
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-32 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] animate-pulse"
+            />
+          ))}
         </div>
       )}
 
       {error && (
-        <div className="p-4 bg-rose-100 text-rose-600 rounded">Error loading baseline: {error}</div>
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-8 text-center">
+          <Globe className="mx-auto mb-3 text-slate-400" size={28} strokeWidth={1.5} />
+          <p className="text-base font-medium text-slate-700 dark:text-slate-200">
+            {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}
+          </p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{error}</p>
+          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            {t('tools.megatrends.contactAdmin', 'Contact your admin')}
+          </p>
+        </div>
       )}
 
-      {!loading && !error && (
+      {isEmpty && (
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-8 text-center">
+          <Globe className="mx-auto mb-3 text-slate-400" size={28} strokeWidth={1.5} />
+          <p className="text-base font-medium text-slate-700 dark:text-slate-200">
+            {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}
+          </p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            {t('tools.megatrends.contactAdmin', 'Contact your admin')}
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && megatrends.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {megatrends.map((trend) => (
             <div

@@ -7455,6 +7455,22 @@
         "alreadyConnected": "Połączony",
         "comingSoon": "Wkrótce"
       }
+    },
+    "comingSoon": "Wkrótce dostępne",
+    "startSession": "Uruchom narzędzie",
+    "hideCategory": "Wkrótce",
+    "megatrends": {
+      "notAvailable": "Dane Megatrendów nie są jeszcze dostępne",
+      "contactAdmin": "Skontaktuj się z administratorem"
+    },
+    "domain": {
+      "useCases": "Case'y użycia",
+      "prerequisites": "Prerekwizyty",
+      "pilotPlan": "Plan pilota",
+      "problems": "Problemy",
+      "hypotheses": "Hipotezy",
+      "candidates": "Kandydaci",
+      "sizing": "Sizing"
     }
   },
   "aiAuthoring": {

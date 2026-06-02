@@ -32,7 +32,18 @@ export const useMegatrendStore = create<MegatrendState>((set) => ({
         headers,
       });
 
-      if (!res.ok) throw new Error('Failed to load megatrends');
+      if (!res.ok) {
+        // Surface the backend's friendly message (e.g. the 503 not_configured userMessage)
+        // so the UI can render a clean empty/error state instead of a silent failure.
+        let userMessage = 'Failed to load megatrends';
+        try {
+          const body = await res.clone().json();
+          if (body?.userMessage) userMessage = String(body.userMessage);
+        } catch {
+          /* non-JSON body — keep the generic message */
+        }
+        throw new Error(userMessage);
+      }
 
       let data: any[];
       try {

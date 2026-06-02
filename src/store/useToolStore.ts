@@ -1269,6 +1269,152 @@ export const TOOLSET_DIGITAL_STEPS: StepDefinition[] = [
   ...TOOLSET_OPERATIONAL_STEPS.filter((s) => !['context', 'fill'].includes(s.id)),
 ];
 
+// --- Wave 1 dedicated digital tool step flows (context -> 3 domain sections -> summary) ---
+
+export const AI_DISCOVERY_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Discovery Context',
+    namePl: 'Kontekst Odkrycia',
+    description: 'Define the function, data landscape, and AI ambition',
+    descriptionPl: 'Zdefiniuj funkcję, krajobraz danych i ambicję AI',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'use-cases',
+    name: 'Use cases',
+    namePl: "Case'y użycia",
+    description: 'Shortlist candidate AI use cases by value and feasibility',
+    descriptionPl: 'Wyselekcjonuj kandydujące case AI wg wartości i wykonalności',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'prerequisites',
+    name: 'Prerequisites',
+    namePl: 'Prerekwizyty',
+    description: 'Capture data, skills, and platform prerequisites',
+    descriptionPl: 'Zbierz prerekwizyty danych, kompetencji i platformy',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'pilot-plan',
+    name: 'Pilot plan',
+    namePl: 'Plan pilota',
+    description: 'Define the first pilot, owners, and success signals',
+    descriptionPl: 'Zdefiniuj pierwszy pilot, ownerów i sygnały sukcesu',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize discovery and generate initiatives',
+    descriptionPl: 'Podsumuj odkrycie i wygeneruj inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const PAIN_EXPLORER_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Pain Context',
+    namePl: 'Kontekst Bólu',
+    description: 'Define the process, stakeholders, and pain surface',
+    descriptionPl: 'Zdefiniuj proces, interesariuszy i powierzchnię bólu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'problems',
+    name: 'Problems',
+    namePl: 'Problemy',
+    description: 'Capture the observed problems and their symptoms',
+    descriptionPl: 'Zbierz zaobserwowane problemy i ich objawy',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'hypotheses',
+    name: 'Hypotheses',
+    namePl: 'Hipotezy',
+    description: 'Frame root-cause hypotheses to validate',
+    descriptionPl: 'Sformułuj hipotezy przyczyn źródłowych do walidacji',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'evidence-gaps',
+    name: 'Evidence gaps',
+    namePl: 'Luki w dowodach',
+    description: 'List the evidence still needed to confirm each hypothesis',
+    descriptionPl: 'Wypisz dowody potrzebne do potwierdzenia każdej hipotezy',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize pains and generate initiatives',
+    descriptionPl: 'Podsumuj bóle i wygeneruj inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const RPA_SCANNER_STEPS: StepDefinition[] = [
+  {
+    id: 'context',
+    name: 'Automation Context',
+    namePl: 'Kontekst Automatyzacji',
+    description: 'Define the process family and automation goal',
+    descriptionPl: 'Zdefiniuj rodzinę procesów i cel automatyzacji',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'candidates',
+    name: 'Candidates',
+    namePl: 'Kandydaci',
+    description: 'List candidate processes for RPA',
+    descriptionPl: 'Wypisz procesy kandydujące do RPA',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'sizing',
+    name: 'Sizing',
+    namePl: 'Sizing',
+    description: 'Size each candidate by volume, effort, and complexity',
+    descriptionPl: 'Oszacuj każdego kandydata wg wolumenu, wysiłku i złożoności',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'backlog',
+    name: 'Backlog',
+    namePl: 'Backlog',
+    description: 'Prioritize the automation backlog',
+    descriptionPl: 'Spriorytetyzuj backlog automatyzacji',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'summary',
+    name: 'Summary & Initiatives',
+    namePl: 'Podsumowanie i Inicjatywy',
+    description: 'Summarize the scan and generate initiatives',
+    descriptionPl: 'Podsumuj skan i wygeneruj inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
 export const PROCESS_AUTOMATION_STEPS: StepDefinition[] = [
   {
     id: 'context',
@@ -1606,14 +1752,14 @@ const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'automation-pipeline': TOOLSET_OPERATIONAL_STEPS,
   'robotics-feasibility': TOOLSET_DIGITAL_STEPS,
   'logistics-automation': TOOLSET_DIGITAL_STEPS,
-  'rpa-scanner': TOOLSET_DIGITAL_STEPS,
-  'ai-discovery': TOOLSET_DIGITAL_STEPS,
+  'rpa-scanner': RPA_SCANNER_STEPS,
+  'ai-discovery': AI_DISCOVERY_STEPS,
   'integration-diagnostic': TOOLSET_DIGITAL_STEPS,
   'digital-value-pool': TOOLSET_DIGITAL_STEPS,
   'legacy-analyzer': TOOLSET_DIGITAL_STEPS,
   'data-inventory': TOOLSET_DIGITAL_STEPS,
   'pain-to-solution': TOOLSET_DIGITAL_STEPS,
-  'pain-explorer': TOOLSET_DIGITAL_STEPS,
+  'pain-explorer': PAIN_EXPLORER_STEPS,
   'process-automation': PROCESS_AUTOMATION_STEPS,
 };
 
@@ -1649,14 +1795,14 @@ const TOOL_INITIAL_DATA: Record<
   'automation-pipeline': createInitialToolsetFlowData(['fill']),
   'robotics-feasibility': createInitialToolsetFlowData(['fill']),
   'logistics-automation': createInitialToolsetFlowData(['fill']),
-  'rpa-scanner': createInitialToolsetFlowData(['fill']),
-  'ai-discovery': createInitialToolsetFlowData(['fill']),
+  'rpa-scanner': createInitialToolsetFlowData(['candidates', 'sizing', 'backlog']),
+  'ai-discovery': createInitialToolsetFlowData(['use-cases', 'prerequisites', 'pilot-plan']),
   'integration-diagnostic': createInitialToolsetFlowData(['fill']),
   'digital-value-pool': createInitialToolsetFlowData(['fill']),
   'legacy-analyzer': createInitialToolsetFlowData(['fill']),
   'data-inventory': createInitialToolsetFlowData(['fill']),
   'pain-to-solution': createInitialToolsetFlowData(['fill']),
-  'pain-explorer': createInitialToolsetFlowData(['fill']),
+  'pain-explorer': createInitialToolsetFlowData(['problems', 'hypotheses', 'evidence-gaps']),
   'process-automation': createInitialToolsetFlowData(['process-mapping', 'redesign']),
 };
 

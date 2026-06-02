@@ -6904,6 +6904,22 @@
         "alreadyConnected": "Connected",
         "comingSoon": "Coming soon"
       }
+    },
+    "comingSoon": "Coming soon",
+    "startSession": "Start tool",
+    "hideCategory": "Coming soon",
+    "megatrends": {
+      "notAvailable": "Megatrends data is not yet configured",
+      "contactAdmin": "Contact your admin"
+    },
+    "domain": {
+      "useCases": "Use cases",
+      "prerequisites": "Prerequisites",
+      "pilotPlan": "Pilot plan",
+      "problems": "Problems",
+      "hypotheses": "Hypotheses",
+      "candidates": "Candidates",
+      "sizing": "Sizing"
     }
   },
   "aiAuthoring": {

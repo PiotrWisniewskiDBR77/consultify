@@ -21,6 +21,7 @@ const notConfigured = (res: Response) =>
     status: false,
     type: 'not_configured',
     message: 'Service temporarily unavailable due to missing configuration',
+    userMessage: 'Megatrends data is not yet configured for this environment.',
   });
 const respondIfUnavailable = (res: Response, err: unknown) => {
   if (err instanceof AppError && err.code === 'FEATURE_UNAVAILABLE') {
