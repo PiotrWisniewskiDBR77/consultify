@@ -1,5 +1,4 @@
-import PDFDocument from 'pdfkit';
-import { PassThrough } from 'stream';
+import { unifiedExportService } from './export/UnifiedExportService.js';
 
 export async function generatePartnerCertificatePdf(params: {
   certificateId: string;
@@ -10,19 +9,11 @@ export async function generatePartnerCertificatePdf(params: {
   language?: 'en' | 'pl';
 }): Promise<Buffer> {
   const language = params.language === 'pl' ? 'pl' : 'en';
-  const doc = new PDFDocument({ margin: 48, size: 'A4' });
-  const stream = new PassThrough();
-  const chunks: Buffer[] = [];
 
-  stream.on('data', (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-  const endPromise = new Promise<Buffer>((resolve, reject) => {
-    stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', reject);
-  });
-
-  doc.pipe(stream);
-
-  const title = language === 'pl' ? 'Certyfikat Partnera' : 'Partner Certificate';
+  // Plumbing (doc creation + buffer collection) is shared via the unified
+  // service's renderPdf primitive; the certificate layout below is unchanged.
+  return unifiedExportService.renderPdf((doc: any) => {
+    const title = language === 'pl' ? 'Certyfikat Partnera' : 'Partner Certificate';
   const subtitle =
     params.certificateType === 'sales'
       ? language === 'pl'
@@ -68,7 +59,5 @@ export async function generatePartnerCertificatePdf(params: {
     .fontSize(10)
     .fillColor('#94a3b8')
     .text(`Certificate ID: ${params.certificateId}`, { align: 'center' });
-
-  doc.end();
-  return endPromise;
+  }, { margin: 48, size: 'A4' });
 }
