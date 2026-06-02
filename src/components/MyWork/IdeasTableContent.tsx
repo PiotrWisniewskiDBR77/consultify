@@ -228,6 +228,8 @@ interface IdeasTableContentProps {
   onColumnResize: (columnId: string, width: number) => void;
   onTableFilterChange: (columnId: 'stage' | 'tags' | 'tool', value: string[]) => void;
   onOpenIdea: (idea: MyIdea) => void;
+  isFavorite?: (id: string) => boolean;
+  onToggleFavorite?: (id: string) => void;
   onOpenIdeaInProcessFlow: (idea: MyIdea) => void;
   onOpenIdeaAiChat?: (idea: MyIdea) => void;
   onOpenIdeaAiInsights?: (idea: MyIdea) => void;
@@ -283,6 +285,8 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onColumnResize,
   onTableFilterChange,
   onOpenIdea,
+  isFavorite,
+  onToggleFavorite,
   onOpenIdeaInProcessFlow,
   onOpenIdeaAiChat,
   onOpenIdeaAiInsights,
@@ -1154,8 +1158,37 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       </label>
                     </td>
                     <td className="px-3 py-3 align-middle" style={{ width: columnWidths.title }}>
-                      <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
-                        {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
+                      <div className="flex items-center gap-1.5">
+                        {onToggleFavorite ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleFavorite(idea.id);
+                            }}
+                            aria-label={
+                              isFavorite?.(idea.id)
+                                ? isPolish
+                                  ? 'Usuń z oznaczonych'
+                                  : 'Remove from starred'
+                                : isPolish
+                                  ? 'Oznacz gwiazdką'
+                                  : 'Star'
+                            }
+                            aria-pressed={isFavorite?.(idea.id) ?? false}
+                            className="shrink-0 rounded p-0.5 text-slate-300 transition-colors hover:text-amber-400 dark:text-slate-600"
+                          >
+                            <Star
+                              size={14}
+                              className={
+                                isFavorite?.(idea.id) ? 'fill-amber-400 text-amber-400' : ''
+                              }
+                            />
+                          </button>
+                        ) : null}
+                        <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
+                          {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
+                        </div>
                       </div>
                       {showRowDescription && idea.body ? (
                         <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">

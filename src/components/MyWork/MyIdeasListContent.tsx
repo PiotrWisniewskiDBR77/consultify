@@ -33,6 +33,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { tokenService } from '@/services/tokenService';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
+import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useRecentIdeas } from './hooks/useRecentIdeas';
 import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './ideaEntryTypes';
@@ -360,6 +361,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }, [searchQuery, t]);
 
   const { recentIds, record: recordRecent } = useRecentIdeas();
+  const { isFavorite, toggleFavorite } = useFavoriteIdeas();
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
 
   // Record opens (for the "Recently opened" rail), then delegate to the host.
   const openIdea = useCallback(
@@ -433,6 +436,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const baseFilteredIdeas = useMemo(() => {
     let list = ideas;
+    if (showStarredOnly) {
+      list = list.filter((i) => isFavorite(i.id));
+    }
     if (viewMode !== 'garden' && stageFilter !== 'all') {
       list = list.filter((i) => (i.stage || 'spark') === stageFilter);
     }
@@ -442,7 +448,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       );
     }
     return list;
-  }, [ideas, stageFilter, activeTag, viewMode]);
+  }, [ideas, stageFilter, activeTag, viewMode, showStarredOnly, isFavorite]);
 
   const availableStageOptions = useMemo<FilterOption[]>(() => {
     const seen = new Set<string>();
@@ -1206,6 +1212,27 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
+        {/* M2: "Starred only" filter toggle (shown once anything is starred) */}
+        {(showStarredOnly || ideas.some((i) => isFavorite(i.id))) && (
+          <div className="px-4 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowStarredOnly((v) => !v)}
+              aria-pressed={showStarredOnly}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                showStarredOnly
+                  ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+              }`}
+            >
+              <Star
+                size={13}
+                className={showStarredOnly ? 'fill-amber-400 text-amber-400' : ''}
+              />
+              {isPolish ? 'Tylko oznaczone' : 'Starred only'}
+            </button>
+          </div>
+        )}
         {/* M2: "Recently opened" rail (localStorage-backed, per device) */}
         {recentIdeas.length > 0 && (
           <div className="px-4 pt-3" data-testid="ideas-recents-rail">
@@ -1268,6 +1295,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               }))
             }
             onOpenIdea={(idea) => openIdea(idea.id, idea)}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
             onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
             onOpenIdeaAiChat={handleOpenIdeaAiChat}
             onOpenIdeaAiInsights={handleOpenIdeaAiInsights}
