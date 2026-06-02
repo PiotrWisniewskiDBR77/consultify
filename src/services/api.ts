@@ -16993,6 +16993,13 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to rebuild organization context snapshot');
   },
+  // M16 P0-5: live plan limits + current usage for the Organization → Limits section.
+  organizationPolicySnapshot: async () => {
+    const res = await fetch(`${API_URL}/organization/policy-snapshot`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load organization limits');
+  },
 
   // ──────────────────────────────────────────────
   // V4-FINC: Finance Enterprise API

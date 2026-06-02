@@ -120,7 +120,9 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
     if (!inviteEmail.trim() || !orgData?.id) return;
     try {
       setInviting(true);
-      await Api.addOrganizationMember(orgData.id, inviteEmail, inviteRole);
+      // M16 P1-2: send a real email invitation via /api/invitations (production route
+      // re-enabled in P0-1) instead of directly adding a membership row.
+      await Api.createOrganizationInvitation(inviteEmail.trim(), inviteRole);
       toast.success(t('organization.members.inviteSent', 'Invitation sent'));
       trackFunnelEvent('org_member_invite_sent', { role: inviteRole });
       setInviteEmail('');
@@ -258,10 +260,18 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
 
 const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   const { t } = useTranslation();
-  const plan = orgData?.subscription_plan || 'trial';
-  const tokens = orgData?.token_balance ?? 0;
-  const tokenLimit = orgData?.token_limit ?? 10000;
+  // M16 P2-3: prefer live subscription + token usage from the policy snapshot,
+  // falling back to whatever fields getUserOrganizations happened to expose.
+  const { snapshot } = useLimits(orgData?.id);
+  const livePlan = snapshot
+    ? snapshot.subscriptionStatus ||
+      (snapshot.isPaid ? 'active' : snapshot.isTrial ? 'trial' : null)
+    : null;
+  const plan = livePlan || orgData?.subscription_plan || 'trial';
+  const tokens = snapshot?.usageToday?.tokensUsed ?? orgData?.token_balance ?? 0;
+  const tokenLimit = snapshot?.limits?.maxTotalTokens || orgData?.token_limit || 10000;
   const usagePercent = tokenLimit > 0 ? Math.round((tokens / tokenLimit) * 100) : 0;
+  const isTrialPlan = String(plan).toLowerCase().includes('trial');
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -276,7 +286,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
               {plan}
             </p>
             <p className="text-sm text-slate-500 mt-1">
-              {plan === 'trial'
+              {isTrialPlan
                 ? t(
                     'organization.billing.trialDesc',
                     'You are on a free trial. Upgrade to unlock full features.'
@@ -284,7 +294,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 : t('organization.billing.activeDesc', 'Your subscription is active.')}
             </p>
           </div>
-          {plan === 'trial' && (
+          {isTrialPlan && (
             <button
               onClick={() =>
                 trackFunnelEvent('org_admin_cta_clicked', { action: 'billing_activate' })
@@ -324,34 +334,123 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   );
 };
 
+/**
+ * M16 P0-5: live plan limits + current usage from GET /api/organization/policy-snapshot
+ * (mounted via organization-limits.routes). Returns nullable so the section can show
+ * skeleton/error states instead of fabricated zeros.
+ */
+interface PolicyLimits {
+  maxProjects: number;
+  maxUsers: number;
+  maxAICallsPerDay: number;
+  maxStorageMb: number;
+  maxTotalTokens: number;
+}
+interface PolicyUsage {
+  aiCalls: number;
+  projects: number;
+  users: number;
+  storageMb: number;
+  tokensUsed: number;
+}
+interface PolicySnapshotResponse {
+  limits: PolicyLimits | null;
+  usageToday: PolicyUsage;
+  subscriptionStatus?: string | null;
+  isTrial?: boolean;
+  isPaid?: boolean;
+}
+
+function useLimits(orgId: string | undefined) {
+  const [snapshot, setSnapshot] = useState<PolicySnapshotResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = (await Api.organizationPolicySnapshot()) as PolicySnapshotResponse;
+      setSnapshot(data || null);
+    } catch {
+      setError(true);
+      setSnapshot(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load, orgId]);
+
+  return { snapshot, loading, error, reload: load };
+}
+
 const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   const { t } = useTranslation();
+  const { snapshot, loading, error, reload } = useLimits(orgData?.id);
+
+  const limitsConfig = snapshot?.limits;
+  const usage = snapshot?.usageToday;
   const limits = [
     {
       key: 'members',
       label: t('organization.limits.members', 'Team Members'),
-      current: orgData?.member_count ?? 1,
-      max: orgData?.member_limit ?? 5,
+      current: usage?.users ?? 0,
+      max: limitsConfig?.maxUsers ?? 0,
     },
     {
       key: 'projects',
       label: t('organization.limits.projects', 'Projects'),
-      current: orgData?.project_count ?? 0,
-      max: orgData?.project_limit ?? 3,
+      current: usage?.projects ?? 0,
+      max: limitsConfig?.maxProjects ?? 0,
     },
     {
       key: 'storage',
-      label: t('organization.limits.storage', 'Storage (GB)'),
-      current: orgData?.storage_used_gb ?? 0,
-      max: orgData?.storage_limit_gb ?? 1,
+      label: t('organization.limits.storage', 'Storage (MB)'),
+      current: usage?.storageMb ?? 0,
+      max: limitsConfig?.maxStorageMb ?? 0,
     },
     {
       key: 'ai_calls',
-      label: t('organization.limits.aiCalls', 'AI Calls / month'),
-      current: orgData?.ai_calls_used ?? 0,
-      max: orgData?.ai_calls_limit ?? 100,
+      label: t('organization.limits.aiCalls', 'AI Calls / day'),
+      current: usage?.aiCalls ?? 0,
+      max: limitsConfig?.maxAICallsPerDay ?? 0,
+    },
+    {
+      key: 'tokens',
+      label: t('organization.limits.tokens', 'Tokens'),
+      current: usage?.tokensUsed ?? 0,
+      max: limitsConfig?.maxTotalTokens ?? 0,
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+        <span className="ml-2 text-sm text-slate-500">{t('common.loading', 'Loading…')}</span>
+      </div>
+    );
+  }
+
+  if (error || !snapshot) {
+    return (
+      <div className="max-w-4xl rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-8 text-center">
+        <p className="text-sm text-slate-500">
+          {t('organization.limits.loadFailed', 'Could not load plan limits.')}
+        </p>
+        <button
+          type="button"
+          onClick={() => void reload()}
+          className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
+        >
+          {t('common.retry', 'Try again')}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">

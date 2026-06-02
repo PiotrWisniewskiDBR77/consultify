@@ -464,6 +464,17 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     }
   });
 
+  // M16 P2-1: Organization Context background rebuild sweep (every 4h) - non-blocking
+  scheduleStartupTask(async () => {
+    try {
+      const { startOrgContextRebuildJob } = await import('./jobs/orgContextRebuildJob.js');
+      startOrgContextRebuildJob();
+      logger.info('[Server] ✅ Org Context rebuild job scheduled');
+    } catch (err: any) {
+      logger.error('[Server] Org Context rebuild job failed to start:', err?.message);
+    }
+  });
+
   // V4-TASK-05: Init Automation Rules Engine - non-blocking
   scheduleStartupTask(async () => {
     try {
@@ -1770,6 +1781,15 @@ if (startServer && shouldStartHttpServer) {
       const { tablePlatformRealtime } = await import('./services/tablePlatform/RealtimeService.js');
       tablePlatformRealtime.init(io);
       logger.info('[Server] Table Platform Realtime (Socket.IO /table-platform) initialized');
+
+      // M16 P1-3: Organization Context realtime (Socket.IO /org-context namespace)
+      try {
+        const { orgContextRealtime } = await import('./realtime/orgContextRealtime.js');
+        orgContextRealtime.init(io);
+        logger.info('[Server] Org Context Realtime (Socket.IO /org-context) initialized');
+      } catch (err: any) {
+        logger.warn('[Server] Org Context Realtime not available:', err?.message);
+      }
     } catch (err: any) {
       logger.warn('[Server] Table Platform Realtime not available:', err?.message);
     }

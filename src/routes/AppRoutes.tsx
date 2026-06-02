@@ -46,11 +46,9 @@ const StudioView = React.lazy(() =>
 const MyWorkView = lazyWithRetry(() =>
   import('@/views/MyWorkView').then((m) => ({ default: m.MyWorkView }))
 );
-const ContextBuilderView = React.lazy(() =>
-  import('@/views/ContextBuilder/ContextBuilderView').then((m) => ({
-    default: m.ContextBuilderView,
-  }))
-);
+// M16 P0-4: ContextBuilderView is no longer routed standalone — /context/* now
+// redirects to the canonical /organization/* workspace. The view file is retained
+// because quick-step entry paths still resolve through these (redirected) routes.
 // Discovery Tools Module - New Hub
 const DiscoveryToolsHub = React.lazy(() =>
   import('@/components/Discovery/DiscoveryToolsHub').then((m) => ({ default: m.DiscoveryToolsHub }))
@@ -1609,30 +1607,80 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Context Builder with nested routes */}
+        {/* M16 P0-4 — Legacy /context/* decommissioned: redirect to canonical /organization/*.
+            ContextBuilderView is retained (referenced by quick-step entry paths) but the
+            standalone /context route group now converges on the unified Organization workspace. */}
         <Route
           path={`${ROUTES.CONTEXT_BUILDER.ROOT}/*`}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Context Builder']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <Routes>
-                    <Route index element={<ContextBuilderView initialTab={1} />} />
-                    <Route path="profile" element={<ContextBuilderView initialTab={1} />} />
-                    <Route path="goals" element={<ContextBuilderView initialTab={2} />} />
-                    <Route path="challenges" element={<ContextBuilderView initialTab={3} />} />
-                    {/* T064 — Redirect to canonical */}
-                    <Route
-                      path="megatrends"
-                      element={
-                        <Navigate to={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS} replace />
-                      }
-                    />
-                    <Route path="strategy" element={<ContextBuilderView initialTab={5} />} />
-                  </Routes>
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
+            <Routes>
+              <Route
+                index
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.ROOT}
+                    to={ROUTES.ORGANIZATION.ROOT}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              <Route
+                path="profile"
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.PROFILE}
+                    to={ROUTES.ORGANIZATION.PROFILE}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              <Route
+                path="goals"
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.GOALS}
+                    to={ROUTES.ORGANIZATION.GOALS}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              <Route
+                path="challenges"
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.CHALLENGES}
+                    to={ROUTES.ORGANIZATION.CHALLENGES}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              {/* T064 — Megatrends redirect to canonical Discovery Tools route */}
+              <Route
+                path="megatrends"
+                element={<Navigate to={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS} replace />}
+              />
+              <Route
+                path="strategy"
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.STRATEGY}
+                    to={ROUTES.ORGANIZATION.STRATEGY}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              {/* Any other /context/* path → organization root */}
+              <Route
+                path="*"
+                element={
+                  <RedirectWithTracking
+                    from={`${ROUTES.CONTEXT_BUILDER.ROOT}/*`}
+                    to={ROUTES.ORGANIZATION.ROOT}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+            </Routes>
           }
         />
 

@@ -656,7 +656,9 @@ export class ApiGateway {
       app.use('/api/organizations', ownershipRoutes);
       app.use('/api/organizations', approvedDomainsRoutes);
       app.use('/api/invitations', gatewayVerifyToken, trialEntryGuard);
-      mountStub('/api/invitations', invitationRoutes, 'invitationRoutes');
+      // M16 P0-1: invitations are now a production route (auth guard applied above).
+      // Previously wrapped in mountStub, which 404'd the member-invite funnel in prod.
+      app.use('/api/invitations', invitationRoutes);
       app.use('/api/organization-context', organizationContextRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);
       app.use('/api/organization-data', organizationDataRoutes);

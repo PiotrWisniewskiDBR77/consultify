@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import ReactFlow, {
   Background,
   Controls,
@@ -31,6 +32,7 @@ import ReactFlow, {
   useNodesState,
 } from 'reactflow';
 
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 
 interface KGEntity {
@@ -137,6 +139,7 @@ function layoutGraph(
 export const KnowledgeGraphExplorer: React.FC = () => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
 
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -333,19 +336,44 @@ export const KnowledgeGraphExplorer: React.FC = () => {
         {/* Graph */}
         <div className="flex-1 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/30 overflow-hidden">
           {entities.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
-              <Network size={48} className="opacity-30" />
-              <p className="text-sm font-medium">
-                {isPl
-                  ? 'Wyszukaj encje aby zobaczyć graf wiedzy'
-                  : 'Search entities to explore the knowledge graph'}
-              </p>
-              <p className="text-xs opacity-60">
-                {isPl
-                  ? 'Kliknij na węzeł aby zobaczyć szczegóły i proweniencję'
-                  : 'Click a node to see details and provenance'}
-              </p>
-            </div>
+            stats && stats.totalEntities === 0 ? (
+              // P2-2: onboarding empty state for a fresh org with no graph yet.
+              <div className="flex flex-col items-center justify-center h-full px-6 text-center gap-3">
+                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-crimson-50 text-crimson-600 dark:bg-crimson-950/40 dark:text-crimson-400">
+                  <Network size={32} />
+                </span>
+                <p className="text-base font-semibold text-slate-800 dark:text-white">
+                  {isPl ? 'Twój graf wiedzy jest jeszcze pusty' : 'Your knowledge graph is empty'}
+                </p>
+                <p className="max-w-md text-sm text-slate-500 dark:text-slate-400">
+                  {isPl
+                    ? 'Graf wiedzy będzie się wypełniać, gdy Teresa przetworzy wywiady, dokumenty i kontekst organizacji.'
+                    : 'Your knowledge graph will fill as Teresa processes interviews, documents, and organization context.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate(ROUTES.ORGANIZATION.PROFILE)}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-xl bg-crimson-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-crimson-700"
+                >
+                  {isPl ? 'Uzupełnij profil organizacji' : 'Set up your org profile'}
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
+                <Network size={48} className="opacity-30" />
+                <p className="text-sm font-medium">
+                  {isPl
+                    ? 'Wyszukaj encje aby zobaczyć graf wiedzy'
+                    : 'Search entities to explore the knowledge graph'}
+                </p>
+                <p className="text-xs opacity-60">
+                  {isPl
+                    ? 'Kliknij na węzeł aby zobaczyć szczegóły i proweniencję'
+                    : 'Click a node to see details and provenance'}
+                </p>
+              </div>
+            )
           ) : (
             <ReactFlow
               nodes={nodes}

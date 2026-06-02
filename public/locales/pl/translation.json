@@ -3074,13 +3074,34 @@
       "note": "Uwaga",
       "noteText": "Godziny pracy są używane przez funkcje planowania, takie jak dostępność spotkań, powiadomienia o nieobecności i sugestie czasu skupienia.",
       "days": {
-        "monday": { "full": "Poniedziałek", "short": "Pon." },
-        "tuesday": { "full": "Wtorek", "short": "Wt." },
-        "wednesday": { "full": "Środa", "short": "Śr." },
-        "thursday": { "full": "Czwartek", "short": "Czw." },
-        "friday": { "full": "Piątek", "short": "Pt." },
-        "saturday": { "full": "Sobota", "short": "Sob." },
-        "sunday": { "full": "Niedziela", "short": "Nd." }
+        "monday": {
+          "full": "Poniedziałek",
+          "short": "Pon."
+        },
+        "tuesday": {
+          "full": "Wtorek",
+          "short": "Wt."
+        },
+        "wednesday": {
+          "full": "Środa",
+          "short": "Śr."
+        },
+        "thursday": {
+          "full": "Czwartek",
+          "short": "Czw."
+        },
+        "friday": {
+          "full": "Piątek",
+          "short": "Pt."
+        },
+        "saturday": {
+          "full": "Sobota",
+          "short": "Sob."
+        },
+        "sunday": {
+          "full": "Niedziela",
+          "short": "Nd."
+        }
       }
     },
     "avatar": {
@@ -3443,13 +3464,34 @@
       "autoReplyMessage": "Treść automatycznej odpowiedzi",
       "autoReplyPlaceholder": "Jestem teraz niedostępny. Odpowiem po powrocie.",
       "days": {
-        "sun": { "short": "Nd", "full": "Niedziela" },
-        "mon": { "short": "Pn", "full": "Poniedziałek" },
-        "tue": { "short": "Wt", "full": "Wtorek" },
-        "wed": { "short": "Śr", "full": "Środa" },
-        "thu": { "short": "Cz", "full": "Czwartek" },
-        "fri": { "short": "Pt", "full": "Piątek" },
-        "sat": { "short": "Sb", "full": "Sobota" }
+        "sun": {
+          "short": "Nd",
+          "full": "Niedziela"
+        },
+        "mon": {
+          "short": "Pn",
+          "full": "Poniedziałek"
+        },
+        "tue": {
+          "short": "Wt",
+          "full": "Wtorek"
+        },
+        "wed": {
+          "short": "Śr",
+          "full": "Środa"
+        },
+        "thu": {
+          "short": "Cz",
+          "full": "Czwartek"
+        },
+        "fri": {
+          "short": "Pt",
+          "full": "Piątek"
+        },
+        "sat": {
+          "short": "Sb",
+          "full": "Sobota"
+        }
       }
     },
     "data": {
@@ -3683,11 +3725,26 @@
       "tip": "Wskazówka",
       "tipText": "Naciśnij \"?\" w dowolnym miejscu aplikacji, aby zobaczyć dostępne skróty. Sekwencje typu \"g h\" oznaczają: naciśnij g, puść, potem naciśnij h.",
       "presets": {
-        "default": { "label": "Domyślny", "description": "Domyślne skróty Consultify" },
-        "vscode": { "label": "VS Code", "description": "Styl Visual Studio Code" },
-        "sublime": { "label": "Sublime Text", "description": "Styl Sublime Text" },
-        "vim": { "label": "Vim", "description": "Nawigacja w stylu Vim" },
-        "custom": { "label": "Własny", "description": "Twoja własna konfiguracja" }
+        "default": {
+          "label": "Domyślny",
+          "description": "Domyślne skróty Consultify"
+        },
+        "vscode": {
+          "label": "VS Code",
+          "description": "Styl Visual Studio Code"
+        },
+        "sublime": {
+          "label": "Sublime Text",
+          "description": "Styl Sublime Text"
+        },
+        "vim": {
+          "label": "Vim",
+          "description": "Nawigacja w stylu Vim"
+        },
+        "custom": {
+          "label": "Własny",
+          "description": "Twoja własna konfiguracja"
+        }
       },
       "categories": {
         "navigation": "NAWIGACJA",
@@ -3737,34 +3794,82 @@
         }
       },
       "actions": {
-        "go_home": { "name": "Przejdź do strony głównej", "description": "Przejdź do panelu" },
-        "go_tasks": { "name": "Przejdź do zadań", "description": "Przejdź do moich zadań" },
+        "go_home": {
+          "name": "Przejdź do strony głównej",
+          "description": "Przejdź do panelu"
+        },
+        "go_tasks": {
+          "name": "Przejdź do zadań",
+          "description": "Przejdź do moich zadań"
+        },
         "go_inbox": {
           "name": "Przejdź do skrzynki",
           "description": "Przejdź do skrzynki odbiorczej"
         },
-        "go_settings": { "name": "Przejdź do ustawień", "description": "Przejdź do ustawień" },
+        "go_settings": {
+          "name": "Przejdź do ustawień",
+          "description": "Przejdź do ustawień"
+        },
         "search_global": {
           "name": "Wyszukiwanie globalne",
           "description": "Otwórz wyszukiwanie globalne"
         },
-        "search_tasks": { "name": "Szukaj zadań", "description": "Szukaj w zadaniach" },
-        "new_task": { "name": "Nowe zadanie", "description": "Utwórz nowe zadanie" },
+        "search_tasks": {
+          "name": "Szukaj zadań",
+          "description": "Szukaj w zadaniach"
+        },
+        "new_task": {
+          "name": "Nowe zadanie",
+          "description": "Utwórz nowe zadanie"
+        },
         "complete_task": {
           "name": "Ukończ zadanie",
           "description": "Oznacz wybrane zadanie jako wykonane"
         },
-        "edit_task": { "name": "Edytuj zadanie", "description": "Edytuj wybrane zadanie" },
-        "delete_task": { "name": "Usuń zadanie", "description": "Usuń wybrane zadanie" },
-        "assign_task": { "name": "Przypisz zadanie", "description": "Przypisz wybrane zadanie" },
-        "save": { "name": "Zapisz", "description": "Zapisz bieżące zmiany" },
-        "undo": { "name": "Cofnij", "description": "Cofnij ostatnią akcję" },
-        "redo": { "name": "Ponów", "description": "Ponów ostatnią akcję" },
-        "ai_assist": { "name": "Asystent AI", "description": "Otwórz asystenta AI" },
-        "ai_summarize": { "name": "Podsumowanie AI", "description": "Podsumuj zaznaczony tekst" },
-        "toggle_sidebar": { "name": "Przełącz sidebar", "description": "Pokaż lub ukryj sidebar" },
-        "notifications": { "name": "Powiadomienia", "description": "Otwórz powiadomienia" },
-        "help": { "name": "Pomoc", "description": "Pokaż skróty klawiszowe" }
+        "edit_task": {
+          "name": "Edytuj zadanie",
+          "description": "Edytuj wybrane zadanie"
+        },
+        "delete_task": {
+          "name": "Usuń zadanie",
+          "description": "Usuń wybrane zadanie"
+        },
+        "assign_task": {
+          "name": "Przypisz zadanie",
+          "description": "Przypisz wybrane zadanie"
+        },
+        "save": {
+          "name": "Zapisz",
+          "description": "Zapisz bieżące zmiany"
+        },
+        "undo": {
+          "name": "Cofnij",
+          "description": "Cofnij ostatnią akcję"
+        },
+        "redo": {
+          "name": "Ponów",
+          "description": "Ponów ostatnią akcję"
+        },
+        "ai_assist": {
+          "name": "Asystent AI",
+          "description": "Otwórz asystenta AI"
+        },
+        "ai_summarize": {
+          "name": "Podsumowanie AI",
+          "description": "Podsumuj zaznaczony tekst"
+        },
+        "toggle_sidebar": {
+          "name": "Przełącz sidebar",
+          "description": "Pokaż lub ukryj sidebar"
+        },
+        "notifications": {
+          "name": "Powiadomienia",
+          "description": "Otwórz powiadomienia"
+        },
+        "help": {
+          "name": "Pomoc",
+          "description": "Pokaż skróty klawiszowe"
+        }
       }
     },
     "developer": {
@@ -5000,17 +5105,31 @@
         {
           "title": "Inteligencja finansowa",
           "description": "Consultify rozszerza klasyczny consulting o modele finansowe, analizy, wycenę i forecasting.",
-          "bullets": ["Modele finansowe", "Analiza finansowa", "Wycena spółki", "Forecasting"]
+          "bullets": [
+            "Modele finansowe",
+            "Analiza finansowa",
+            "Wycena spółki",
+            "Forecasting"
+          ]
         },
         {
           "title": "Raporty i prezentacje",
           "description": "Consultify zamienia bieżącą pracę w raporty, prezentacje executive i consulting deliverables.",
-          "bullets": ["Raporty", "Prezentacje executive", "Consulting deliverables"]
+          "bullets": [
+            "Raporty",
+            "Prezentacje executive",
+            "Consulting deliverables"
+          ]
         },
         {
           "title": "Moja praca",
           "description": "Consultify daje zespołom osobisty i współdzielony workspace do dowożenia pracy po rozpoczęciu działań strategicznych.",
-          "bullets": ["Taski", "Decyzje", "Pomysły", "Notatki"]
+          "bullets": [
+            "Taski",
+            "Decyzje",
+            "Pomysły",
+            "Notatki"
+          ]
         }
       ]
     },
@@ -5169,37 +5288,61 @@
           "badge": "AI Core",
           "title": "Strategiczny doradca AI",
           "description": "AI analizuje organizację, identyfikuje luki i generuje priorytetyzowaną mapę strategiczną — w minuty, nie miesiące.",
-          "highlights": ["Ocena diagnostyczna", "Analiza luk", "Benchmark vs. branża"]
+          "highlights": [
+            "Ocena diagnostyczna",
+            "Analiza luk",
+            "Benchmark vs. branża"
+          ]
         },
         "economics": {
           "badge": "Ekonomia",
           "title": "Modelowanie finansowe i ROI",
           "description": "Buduj business case'y, modeluj scenariusze NPV / IRR i śledź rzeczywiste vs. zakładane zwroty dla każdej inicjatywy.",
-          "highlights": ["Modelowanie NPV / IRR", "Analiza wrażliwości", "Śledzenie ROI na żywo"]
+          "highlights": [
+            "Modelowanie NPV / IRR",
+            "Analiza wrażliwości",
+            "Śledzenie ROI na żywo"
+          ]
         },
         "execution": {
           "badge": "Egzekucja",
           "title": "Zarządzanie inicjatywami",
           "description": "Zamień strategię w egzekucję. Zarządzaj workstreamami, kamieniami milowymi i governance — z AI popychającym Cię ku wpływowi.",
-          "highlights": ["Roadmapa inicjatyw", "Ludzkie bramki zatwierdzenia", "Flagowanie ryzyk"]
+          "highlights": [
+            "Roadmapa inicjatyw",
+            "Ludzkie bramki zatwierdzenia",
+            "Flagowanie ryzyk"
+          ]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Generator raportów i prezentacji",
           "description": "Generuj raporty gotowe dla zarządu i decki dla inwestorów z żywych danych. Jedno kliknięcie od analizy do polerowanego outputu.",
-          "highlights": ["Auto-generowane decki", "Silnik narracji", "Śledzenie źródeł"]
+          "highlights": [
+            "Auto-generowane decki",
+            "Silnik narracji",
+            "Śledzenie źródeł"
+          ]
         },
         "chat": {
           "badge": "Czat",
           "title": "Wywiad z ekspertem AI",
           "description": "Zapytaj o cokolwiek w kontekście Twojego biznesu. AI korzysta z 10 000+ frameworków i Twoich danych wewnętrznych.",
-          "highlights": ["Czat kontekstowy", "Biblioteka frameworków", "Odpowiedzi ze źródłami"]
+          "highlights": [
+            "Czat kontekstowy",
+            "Biblioteka frameworków",
+            "Odpowiedzi ze źródłami"
+          ]
         },
         "results": {
           "badge": "Wyniki",
           "title": "Śledzenie wpływu",
           "description": "Połącz inicjatywy z realnymi KPI. Mierz faktycznie dostarczoną wartość i automatycznie flaguj odchylenia.",
-          "highlights": ["Dashboard KPI", "Alerty odchyleń", "Atrybucja wartości"]
+          "highlights": [
+            "Dashboard KPI",
+            "Alerty odchyleń",
+            "Atrybucja wartości"
+          ]
         }
       }
     },
@@ -5682,27 +5825,42 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
+        "benefits": [
+          "Podstawowe narzędzia",
+          "Wpis w katalogu"
+        ]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
+        "benefits": [
+          "Priorytetowe wsparcie",
+          "Materiały szkoleniowe"
+        ]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
+        "benefits": [
+          "Dedykowany manager",
+          "Dostęp do beta funkcji"
+        ]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
+        "benefits": [
+          "Co-marketing",
+          "Wystąpienia na konferencjach"
+        ]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
+        "benefits": [
+          "Zwiększony udział w przychodach",
+          "Partnerstwo na poziomie zarządu"
+        ]
       }
     },
     "onboarding": {
@@ -7609,10 +7767,12 @@
       "title": "Limity planu i bieżące użycie",
       "members": "Członkowie zespołu",
       "projects": "Projekty",
-      "storage": "Miejsce (GB)",
-      "aiCalls": "Wywołania AI / miesiąc",
+      "storage": "Pamięć (MB)",
+      "aiCalls": "Wywołania AI / dzień",
       "upgradeHint": "Potrzebujesz więcej? Uaktualnij plan, aby zwiększyć limity.",
-      "viewPlans": "Zobacz plany"
+      "viewPlans": "Zobacz plany",
+      "tokens": "Tokeny",
+      "loadFailed": "Nie udało się wczytać limitów planu."
     },
     "domains": {
       "title": "Domena własna",
@@ -7632,6 +7792,17 @@
       "language": "Język",
       "dateFormat": "Format daty",
       "currency": "Waluta"
+    },
+    "context": {
+      "banner": {
+        "aria": "Kontekst organizacji Teresy",
+        "claims": "Kontekst Teresy: {{count}} elementów · zaktualizowano {{ago}}",
+        "teresaUsing": "Teresa korzysta z tego kontekstu, aby odpowiadać na Twoje pytania",
+        "empty": "Uzupełnij profil organizacji, aby Teresa odpowiadała trafniej",
+        "rebuild": "Odbuduj",
+        "viewGraph": "Zobacz graf wiedzy",
+        "errorRebuild": "Odbudowa nie powiodła się — spróbuj ponownie"
+      }
     }
   },
   "megatrends": {
@@ -9172,19 +9343,38 @@
           "registered": {
             "title": "Registered",
             "description": "Dla rozpoczynających współpracę",
-            "requirements": ["Rejestracja", "Podstawowe szkolenie"],
-            "benefits": ["10% rabat", "Dostęp do materiałów", "Wsparcie email"]
+            "requirements": [
+              "Rejestracja",
+              "Podstawowe szkolenie"
+            ],
+            "benefits": [
+              "10% rabat",
+              "Dostęp do materiałów",
+              "Wsparcie email"
+            ]
           },
           "certified": {
             "title": "Certified",
             "description": "Dla doświadczonych konsultantów",
-            "requirements": ["Egzamin certyfikacyjny", "Min. 3 projekty"],
-            "benefits": ["12% rabat", "Logo partnera", "Dedykowane wsparcie", "Listing w katalogu"]
+            "requirements": [
+              "Egzamin certyfikacyjny",
+              "Min. 3 projekty"
+            ],
+            "benefits": [
+              "12% rabat",
+              "Logo partnera",
+              "Dedykowane wsparcie",
+              "Listing w katalogu"
+            ]
           },
           "premier": {
             "title": "Premier",
             "description": "Dla partnerów strategicznych",
-            "requirements": ["10+ projektów", "Case study", "Referencje"],
+            "requirements": [
+              "10+ projektów",
+              "Case study",
+              "Referencje"
+            ],
             "benefits": [
               "14% rabat",
               "Dedykowany opiekun",

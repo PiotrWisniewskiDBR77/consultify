@@ -183,17 +183,31 @@
         {
           "title": "Financial Intelligence",
           "description": "Consultify extends classic consulting with financial models, analysis, valuation, and forecasting.",
-          "bullets": ["Financial models", "Financial analysis", "Company valuation", "Forecasting"]
+          "bullets": [
+            "Financial models",
+            "Financial analysis",
+            "Company valuation",
+            "Forecasting"
+          ]
         },
         {
           "title": "Reports & Presentations",
           "description": "Consultify turns live work into reports, executive presentations, and consulting deliverables.",
-          "bullets": ["Reports", "Executive presentations", "Notes"]
+          "bullets": [
+            "Reports",
+            "Executive presentations",
+            "Notes"
+          ]
         },
         {
           "title": "My Work",
           "description": "Consultify gives teams a personal and shared workspace for follow-through after strategy work starts.",
-          "bullets": ["Tasks", "Decisions", "Ideas", "Initiatives"]
+          "bullets": [
+            "Tasks",
+            "Decisions",
+            "Ideas",
+            "Initiatives"
+          ]
         }
       ]
     },
@@ -352,37 +366,61 @@
           "badge": "AI Core",
           "title": "Strategic AI Advisor",
           "description": "AI analyzes your organization, identifies gaps, and generates a prioritized strategic roadmap — in minutes, not months.",
-          "highlights": ["Diagnostic Assessment", "Gap Analysis", "Benchmark vs. Industry"]
+          "highlights": [
+            "Diagnostic Assessment",
+            "Gap Analysis",
+            "Benchmark vs. Industry"
+          ]
         },
         "economics": {
           "badge": "Economics",
           "title": "Financial Modeling & ROI",
           "description": "Build business cases, model NPV / IRR scenarios, and track actual vs. projected returns across every initiative.",
-          "highlights": ["NPV / IRR Modeling", "Sensitivity Analysis", "Live ROI Tracking"]
+          "highlights": [
+            "NPV / IRR Modeling",
+            "Sensitivity Analysis",
+            "Live ROI Tracking"
+          ]
         },
         "execution": {
           "badge": "Execution",
           "title": "Initiative Management",
           "description": "Turn strategy into execution. Manage workstreams, milestones, and governance — with AI nudging you toward impact.",
-          "highlights": ["Initiative Roadmap", "Human Approval Gates", "Risk Flagging"]
+          "highlights": [
+            "Initiative Roadmap",
+            "Human Approval Gates",
+            "Risk Flagging"
+          ]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Report & Presentation Builder",
           "description": "Generate board-ready reports and investor decks from your live data. One click from analysis to polished output.",
-          "highlights": ["Auto-Generated Decks", "Narrative Engine", "Source Traceability"]
+          "highlights": [
+            "Auto-Generated Decks",
+            "Narrative Engine",
+            "Source Traceability"
+          ]
         },
         "chat": {
           "badge": "Chat",
           "title": "AI Expert Interview",
           "description": "Ask anything about your business context. AI draws on 10,000+ frameworks and your internal data to answer precisely.",
-          "highlights": ["Context-Aware Chat", "Framework Library", "Cited Answers"]
+          "highlights": [
+            "Context-Aware Chat",
+            "Framework Library",
+            "Cited Answers"
+          ]
         },
         "results": {
           "badge": "Results",
           "title": "Impact Tracking",
           "description": "Connect initiatives to real KPIs. Measure actual delivered value and automatically flag deviations before they become problems.",
-          "highlights": ["KPI Dashboard", "Deviation Alerts", "Value Attribution"]
+          "highlights": [
+            "KPI Dashboard",
+            "Deviation Alerts",
+            "Value Attribution"
+          ]
         }
       }
     },
@@ -769,27 +807,42 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": ["Basic tools", "Directory listing"]
+        "benefits": [
+          "Basic tools",
+          "Directory listing"
+        ]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": ["Priority support", "Training materials"]
+        "benefits": [
+          "Priority support",
+          "Training materials"
+        ]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": ["Dedicated manager", "Beta feature access"]
+        "benefits": [
+          "Dedicated manager",
+          "Beta feature access"
+        ]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": ["Co-marketing", "Conference speaking"]
+        "benefits": [
+          "Co-marketing",
+          "Conference speaking"
+        ]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": ["Revenue share boost", "Executive partnership"]
+        "benefits": [
+          "Revenue share boost",
+          "Executive partnership"
+        ]
       }
     },
     "onboarding": {
@@ -3607,13 +3660,34 @@
       "note": "Note",
       "noteText": "Your working hours are used for scheduling features like meeting availability, out-of-office notifications, and focus time suggestions.",
       "days": {
-        "monday": { "full": "Monday", "short": "Mon" },
-        "tuesday": { "full": "Tuesday", "short": "Tue" },
-        "wednesday": { "full": "Wednesday", "short": "Wed" },
-        "thursday": { "full": "Thursday", "short": "Thu" },
-        "friday": { "full": "Friday", "short": "Fri" },
-        "saturday": { "full": "Saturday", "short": "Sat" },
-        "sunday": { "full": "Sunday", "short": "Sun" }
+        "monday": {
+          "full": "Monday",
+          "short": "Mon"
+        },
+        "tuesday": {
+          "full": "Tuesday",
+          "short": "Tue"
+        },
+        "wednesday": {
+          "full": "Wednesday",
+          "short": "Wed"
+        },
+        "thursday": {
+          "full": "Thursday",
+          "short": "Thu"
+        },
+        "friday": {
+          "full": "Friday",
+          "short": "Fri"
+        },
+        "saturday": {
+          "full": "Saturday",
+          "short": "Sat"
+        },
+        "sunday": {
+          "full": "Sunday",
+          "short": "Sun"
+        }
       }
     },
     "billing": "Billing",
@@ -3955,13 +4029,34 @@
       "autoReplyMessage": "Auto-reply message",
       "autoReplyPlaceholder": "I'm currently unavailable. I'll respond when I return.",
       "days": {
-        "sun": { "short": "Sun", "full": "Sunday" },
-        "mon": { "short": "Mon", "full": "Monday" },
-        "tue": { "short": "Tue", "full": "Tuesday" },
-        "wed": { "short": "Wed", "full": "Wednesday" },
-        "thu": { "short": "Thu", "full": "Thursday" },
-        "fri": { "short": "Fri", "full": "Friday" },
-        "sat": { "short": "Sat", "full": "Saturday" }
+        "sun": {
+          "short": "Sun",
+          "full": "Sunday"
+        },
+        "mon": {
+          "short": "Mon",
+          "full": "Monday"
+        },
+        "tue": {
+          "short": "Tue",
+          "full": "Tuesday"
+        },
+        "wed": {
+          "short": "Wed",
+          "full": "Wednesday"
+        },
+        "thu": {
+          "short": "Thu",
+          "full": "Thursday"
+        },
+        "fri": {
+          "short": "Fri",
+          "full": "Friday"
+        },
+        "sat": {
+          "short": "Sat",
+          "full": "Saturday"
+        }
       }
     },
     "data": {
@@ -4195,11 +4290,26 @@
       "tip": "Tip",
       "tipText": "Press \"?\" anywhere in the app to see available shortcuts. Sequences like \"g h\" mean press g, release, then press h.",
       "presets": {
-        "default": { "label": "Default", "description": "Consultify default shortcuts" },
-        "vscode": { "label": "VS Code", "description": "Visual Studio Code style" },
-        "sublime": { "label": "Sublime Text", "description": "Sublime Text style" },
-        "vim": { "label": "Vim", "description": "Vim-style navigation" },
-        "custom": { "label": "Custom", "description": "Your custom configuration" }
+        "default": {
+          "label": "Default",
+          "description": "Consultify default shortcuts"
+        },
+        "vscode": {
+          "label": "VS Code",
+          "description": "Visual Studio Code style"
+        },
+        "sublime": {
+          "label": "Sublime Text",
+          "description": "Sublime Text style"
+        },
+        "vim": {
+          "label": "Vim",
+          "description": "Vim-style navigation"
+        },
+        "custom": {
+          "label": "Custom",
+          "description": "Your custom configuration"
+        }
       },
       "categories": {
         "navigation": "NAVIGATION",
@@ -4249,25 +4359,82 @@
         }
       },
       "actions": {
-        "go_home": { "name": "Go to Home", "description": "Navigate to dashboard" },
-        "go_tasks": { "name": "Go to Tasks", "description": "Navigate to my tasks" },
-        "go_inbox": { "name": "Go to Inbox", "description": "Navigate to inbox" },
-        "go_settings": { "name": "Go to Settings", "description": "Navigate to settings" },
-        "search_global": { "name": "Global Search", "description": "Open global search" },
-        "search_tasks": { "name": "Search Tasks", "description": "Search in tasks" },
-        "new_task": { "name": "New Task", "description": "Create a new task" },
-        "complete_task": { "name": "Complete Task", "description": "Mark selected task as done" },
-        "edit_task": { "name": "Edit Task", "description": "Edit selected task" },
-        "delete_task": { "name": "Delete Task", "description": "Delete selected task" },
-        "assign_task": { "name": "Assign Task", "description": "Assign selected task" },
-        "save": { "name": "Save", "description": "Save current changes" },
-        "undo": { "name": "Undo", "description": "Undo last action" },
-        "redo": { "name": "Redo", "description": "Redo last action" },
-        "ai_assist": { "name": "AI Assistant", "description": "Open AI assistant" },
-        "ai_summarize": { "name": "AI Summarize", "description": "Summarize selected text" },
-        "toggle_sidebar": { "name": "Toggle Sidebar", "description": "Show/hide sidebar" },
-        "notifications": { "name": "Notifications", "description": "Open notifications" },
-        "help": { "name": "Help", "description": "Show keyboard shortcuts" }
+        "go_home": {
+          "name": "Go to Home",
+          "description": "Navigate to dashboard"
+        },
+        "go_tasks": {
+          "name": "Go to Tasks",
+          "description": "Navigate to my tasks"
+        },
+        "go_inbox": {
+          "name": "Go to Inbox",
+          "description": "Navigate to inbox"
+        },
+        "go_settings": {
+          "name": "Go to Settings",
+          "description": "Navigate to settings"
+        },
+        "search_global": {
+          "name": "Global Search",
+          "description": "Open global search"
+        },
+        "search_tasks": {
+          "name": "Search Tasks",
+          "description": "Search in tasks"
+        },
+        "new_task": {
+          "name": "New Task",
+          "description": "Create a new task"
+        },
+        "complete_task": {
+          "name": "Complete Task",
+          "description": "Mark selected task as done"
+        },
+        "edit_task": {
+          "name": "Edit Task",
+          "description": "Edit selected task"
+        },
+        "delete_task": {
+          "name": "Delete Task",
+          "description": "Delete selected task"
+        },
+        "assign_task": {
+          "name": "Assign Task",
+          "description": "Assign selected task"
+        },
+        "save": {
+          "name": "Save",
+          "description": "Save current changes"
+        },
+        "undo": {
+          "name": "Undo",
+          "description": "Undo last action"
+        },
+        "redo": {
+          "name": "Redo",
+          "description": "Redo last action"
+        },
+        "ai_assist": {
+          "name": "AI Assistant",
+          "description": "Open AI assistant"
+        },
+        "ai_summarize": {
+          "name": "AI Summarize",
+          "description": "Summarize selected text"
+        },
+        "toggle_sidebar": {
+          "name": "Toggle Sidebar",
+          "description": "Show/hide sidebar"
+        },
+        "notifications": {
+          "name": "Notifications",
+          "description": "Open notifications"
+        },
+        "help": {
+          "name": "Help",
+          "description": "Show keyboard shortcuts"
+        }
       }
     },
     "developer": {
@@ -7081,10 +7248,12 @@
       "title": "Plan Limits & Current Usage",
       "members": "Team Members",
       "projects": "Projects",
-      "storage": "Storage (GB)",
-      "aiCalls": "AI Calls / month",
+      "storage": "Storage (MB)",
+      "aiCalls": "AI Calls / day",
       "upgradeHint": "Need more? Upgrade your plan to increase limits.",
-      "viewPlans": "View Plans"
+      "viewPlans": "View Plans",
+      "tokens": "Tokens",
+      "loadFailed": "Could not load plan limits."
     },
     "domains": {
       "title": "Custom Domain",
@@ -7104,6 +7273,17 @@
       "language": "Language",
       "dateFormat": "Date Format",
       "currency": "Currency"
+    },
+    "context": {
+      "banner": {
+        "aria": "Teresa organization context",
+        "claims": "Teresa context: {{count}} claims · updated {{ago}}",
+        "teresaUsing": "Teresa is using this context to answer your questions",
+        "empty": "Add org profile details to improve Teresa's answers",
+        "rebuild": "Rebuild",
+        "viewGraph": "View knowledge graph",
+        "errorRebuild": "Rebuild failed — try again"
+      }
     }
   },
   "megatrends": {
@@ -7307,9 +7487,7 @@
     },
     "banner": {
       "mode": "Demo Mode",
-      "sampleWorkspace": "Sample Workspace",
       "exit": "Exit Demo",
-      "exitWorkspace": "Exit Sample Workspace",
       "exitShort": "Exit",
       "startTrial": "Start Trial",
       "restartLocale": "Reload demo in {{locale}}",
@@ -7317,15 +7495,25 @@
       "initiatives": "initiatives",
       "hints": "Hints",
       "readOnlyTitle": "Read-only mode",
-      "readOnlyDesc": "Changes are not saved and the sample can be explored safely",
-      "exploreTitle": "Understand the workflow",
-      "exploreDesc": "See how dashboards, initiatives, and AI fit together",
-      "hintTitle": "What to review next",
-      "defaultHint": "Open one initiative and trace the linked tasks, decisions, and AI context",
+      "readOnlyDesc": "Changes are not saved",
+      "exploreTitle": "Explore features",
+      "exploreDesc": "Browse all modules",
+      "hintTitle": "Hint",
+      "defaultHint": "Click on initiatives to see details",
       "help": "Help",
-      "backToWorkspace": "Back to my workspace",
-      "readyForMore": "Ready for your own data?",
-      "readyForMoreWorkspace": "Ready to try the same flow in your own workspace?"
+      "partnerProgram": "Partner Program",
+      "showLimitations": "Limitations",
+      "hideLimitations": "Hide",
+      "limitations": {
+        "readOnly": "Read-only mode — changes won't persist",
+        "sampleData": "Sample data — explore with realistic examples",
+        "session": "Session expires in 24h",
+        "aiQuota": "AI interactions limited ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "AI",
+      "used": "used",
+      "aiUsageTooltip": "AI calls used today / daily limit",
+      "tokenUsageTooltip": "Tokens used today / daily limit"
     },
     "session": {
       "returnWorkspace": "Back to my workspace",
@@ -7386,36 +7574,6 @@
         "initiatives": "Deep Dive: Initiatives & Execution",
         "finance": "Deep Dive: Finance & ROI"
       }
-    },
-    "banner": {
-      "mode": "Demo Mode",
-      "exit": "Exit Demo",
-      "exitShort": "Exit",
-      "startTrial": "Start Trial",
-      "restartLocale": "Reload demo in {{locale}}",
-      "projects": "projects",
-      "initiatives": "initiatives",
-      "hints": "Hints",
-      "readOnlyTitle": "Read-only mode",
-      "readOnlyDesc": "Changes are not saved",
-      "exploreTitle": "Explore features",
-      "exploreDesc": "Browse all modules",
-      "hintTitle": "Hint",
-      "defaultHint": "Click on initiatives to see details",
-      "help": "Help",
-      "partnerProgram": "Partner Program",
-      "showLimitations": "Limitations",
-      "hideLimitations": "Hide",
-      "limitations": {
-        "readOnly": "Read-only mode — changes won't persist",
-        "sampleData": "Sample data — explore with realistic examples",
-        "session": "Session expires in 24h",
-        "aiQuota": "AI interactions limited ({{remaining}}/{{limit}})"
-      },
-      "aiUsageLabel": "AI",
-      "used": "used",
-      "aiUsageTooltip": "AI calls used today / daily limit",
-      "tokenUsageTooltip": "Tokens used today / daily limit"
     }
   },
   "ui": {
@@ -8483,19 +8641,38 @@
           "registered": {
             "title": "Registered",
             "description": "For those starting the partnership",
-            "requirements": ["Registration", "Basic training"],
-            "benefits": ["10% discount", "Access to materials", "Email support"]
+            "requirements": [
+              "Registration",
+              "Basic training"
+            ],
+            "benefits": [
+              "10% discount",
+              "Access to materials",
+              "Email support"
+            ]
           },
           "certified": {
             "title": "Certified",
             "description": "For experienced consultants",
-            "requirements": ["Certification exam", "Min. 3 projects"],
-            "benefits": ["12% discount", "Partner logo", "Dedicated support", "Catalog listing"]
+            "requirements": [
+              "Certification exam",
+              "Min. 3 projects"
+            ],
+            "benefits": [
+              "12% discount",
+              "Partner logo",
+              "Dedicated support",
+              "Catalog listing"
+            ]
           },
           "premier": {
             "title": "Premier",
             "description": "For strategic partners",
-            "requirements": ["10+ projects", "Case study", "References"],
+            "requirements": [
+              "10+ projects",
+              "Case study",
+              "References"
+            ],
             "benefits": [
               "14% discount",
               "Dedicated account manager",
