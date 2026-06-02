@@ -2337,6 +2337,18 @@ router.get(
       ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
     ].join(',\n          ');
 
+    // Home-shell columns (folders / favorites / recents). Guarded so the list
+    // works whether or not the M2 migration has been applied yet.
+    const homeSelect = [
+      ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"',
+      ideaColumns.has('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"',
+      ideaColumns.has('last_opened_at') ? 'last_opened_at as "lastOpenedAt"' : 'NULL as "lastOpenedAt"',
+    ].join(',\n          ');
+
+    const folder = req.query.folder ? String(req.query.folder).trim() : '';
+    const favoriteOnly =
+      String(req.query.favoriteOnly || '') === 'true' || req.query.favoriteOnly === '1';
+
     const params: any[] = [userId, orgId];
     let whereExtra = '';
     if (q) {
@@ -2346,6 +2358,13 @@ router.get(
     if (tag) {
       whereExtra += " AND lower(coalesce(tags,'')) LIKE ?";
       params.push(`%${tag}%`);
+    }
+    if (folder && ideaColumns.has('folder_id')) {
+      whereExtra += ' AND folder_id = ?';
+      params.push(folder);
+    }
+    if (favoriteOnly && ideaColumns.has('is_favorite')) {
+      whereExtra += ' AND is_favorite = 1';
     }
     params.push(limit);
 
@@ -2368,6 +2387,7 @@ router.get(
           branch,
           promoted_to as "promotedTo",
           ${lineageSelect},
+          ${homeSelect},
           created_at as "createdAt",
           updated_at as "updatedAt"
         FROM my_ideas
@@ -2379,7 +2399,15 @@ router.get(
         params
       )) || [];
 
-    res.json(rows.map((r: any) => decorateIdeaLineage({ ...r, tags: parseTagsArray(r?.tags) })));
+    res.json(
+      rows.map((r: any) =>
+        decorateIdeaLineage({
+          ...r,
+          tags: parseTagsArray(r?.tags),
+          isFavorite: !!r?.isFavorite,
+        })
+      )
+    );
   })
 );
 
@@ -2658,6 +2686,15 @@ router.put(
       set('priority', Math.max(0, Math.min(100, req.body.priority)));
     if (typeof req.body?.stage === 'string') set('stage', req.body.stage);
 
+    // Home-shell fields (guarded so they no-op until the M2 migration lands).
+    const ideaColumns = await getTableColumns('my_ideas');
+    if (typeof req.body?.isFavorite === 'boolean' && ideaColumns.has('is_favorite')) {
+      set('is_favorite', req.body.isFavorite ? 1 : 0);
+    }
+    if (req.body?.folderId !== undefined && ideaColumns.has('folder_id')) {
+      set('folder_id', req.body.folderId ? String(req.body.folderId) : null);
+    }
+
     if (setParts.length === 0) {
       const row = await queryHelpers.queryOne<any>(
         `
@@ -2745,6 +2782,140 @@ router.put(
     });
 
     res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+  })
+);
+
+// Record that an idea was opened (server-backed "recents"). Lightweight, no audit.
+router.post(
+  '/my-ideas/:id/opened',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const ideaColumns = await getTableColumns('my_ideas');
+    if (!ideaColumns.has('last_opened_at')) {
+      res.json({ ok: true, skipped: true });
+      return;
+    }
+    const id = String(req.params.id || '').trim();
+    await queryHelpers.queryRun(
+      `UPDATE my_ideas SET last_opened_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [id, userId, orgId]
+    );
+    res.json({ ok: true });
+  })
+);
+
+// ── Idea folders (per-user organization) ─────────────────────────────────────
+router.get(
+  '/my-idea-folders',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_folders']))) return;
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT id, name, description, color,
+                parent_folder_id as "parentFolderId",
+                created_at as "createdAt", updated_at as "updatedAt"
+         FROM my_idea_folders
+         WHERE user_id = ? AND organization_id = ?
+         ORDER BY lower(name) ASC`,
+        [userId, orgId]
+      )) || [];
+    res.json(rows);
+  })
+);
+
+router.post(
+  '/my-idea-folders',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_folders']))) return;
+    const name = String(req.body?.name || '').trim();
+    if (!name) {
+      res.status(400).json({ error: 'name is required' });
+      return;
+    }
+    const description = typeof req.body?.description === 'string' ? req.body.description : null;
+    const color = req.body?.color ? String(req.body.color) : null;
+    const parentFolderId = req.body?.parentFolderId ? String(req.body.parentFolderId) : null;
+    const id = uuidv4();
+    await queryHelpers.queryRun(
+      `INSERT INTO my_idea_folders
+         (id, user_id, organization_id, name, description, color, parent_folder_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, orgId, name, description, color, parentFolderId]
+    );
+    res.json({ id, name, description, color, parentFolderId });
+  })
+);
+
+router.put(
+  '/my-idea-folders/:folderId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_folders']))) return;
+    const folderId = String(req.params.folderId || '').trim();
+    const setParts: string[] = [];
+    const params: any[] = [];
+    const set = (col: string, val: any) => {
+      setParts.push(`${col} = ?`);
+      params.push(val);
+    };
+    if (typeof req.body?.name === 'string') set('name', req.body.name.trim());
+    if (typeof req.body?.description === 'string') set('description', req.body.description);
+    if (typeof req.body?.color === 'string') set('color', req.body.color);
+    if (req.body?.parentFolderId !== undefined)
+      set('parent_folder_id', req.body.parentFolderId ? String(req.body.parentFolderId) : null);
+    if (setParts.length === 0) {
+      res.json({ ok: true });
+      return;
+    }
+    setParts.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(folderId, userId, orgId);
+    await queryHelpers.queryRun(
+      `UPDATE my_idea_folders SET ${setParts.join(', ')}
+       WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      params
+    );
+    res.json({ ok: true });
+  })
+);
+
+router.delete(
+  '/my-idea-folders/:folderId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_folders']))) return;
+    const folderId = String(req.params.folderId || '').trim();
+    // Keep the ideas — just unfile them — then drop the folder.
+    const ideaColumns = await getTableColumns('my_ideas');
+    if (ideaColumns.has('folder_id')) {
+      await queryHelpers.queryRun(
+        `UPDATE my_ideas SET folder_id = NULL
+         WHERE folder_id = ? AND user_id = ? AND organization_id = ?`,
+        [folderId, userId, orgId]
+      );
+    }
+    await queryHelpers.queryRun(
+      `DELETE FROM my_idea_folders WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [folderId, userId, orgId]
+    );
+    res.json({ ok: true });
   })
 );
 
