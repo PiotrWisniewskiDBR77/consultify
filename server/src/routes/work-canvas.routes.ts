@@ -14,6 +14,7 @@ import {
   normalizeCanvasArtifactBlocks,
   projectCanvasArtifactBlockToMarkdown,
 } from '../services/artifacts/contentProjectionService.js';
+import { unifiedExportService } from '../services/export/UnifiedExportService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
@@ -882,70 +883,48 @@ function exportJson(draft: WorkCanvasDraft, userId: string) {
   };
 }
 
+// The binary generators (PDF/DOCX/XLSX/PPTX) were extracted into the
+// domain-agnostic UnifiedExportService (STEP 1 of system-unification). These
+// thin wrappers project the Canvas-domain draft into a generic ExportSource and
+// delegate, preserving byte-for-byte output.
+
 async function exportPdfBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  const PDFDocument = (await import('pdfkit')).default as any;
-  const doc = new PDFDocument({ margin: 48 });
-  const chunks: Buffer[] = [];
-  doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-  const finished = new Promise<Buffer>((resolve, reject) => {
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+  return unifiedExportService.exportPdf({
+    title: draft.title,
+    markdown: exportMarkdown(draft),
+    sourceLabel: `Source Canvas: ${draft.id}`,
+    lifecycle: draft.lifecycleState,
+    updatedAt: draft.updatedAt,
   });
-  doc.fontSize(18).text(draft.title, { underline: true });
-  doc.moveDown();
-  doc.fontSize(9).fillColor('#475569').text(`Source Canvas: ${draft.id}`);
-  doc.text(`Lifecycle: ${draft.lifecycleState}`);
-  doc.text(`Updated: ${draft.updatedAt}`);
-  doc.moveDown();
-  doc.fillColor('#111827').fontSize(11).text(exportMarkdown(draft), {
-    width: 500,
-    lineGap: 3,
-  });
-  doc.end();
-  return finished;
 }
 
 async function exportDocxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  const docx = await import('docx');
-  const paragraphs = [
-    new docx.Paragraph({
-      children: [new docx.TextRun({ text: draft.title, bold: true, size: 32 })],
-    }),
-    new docx.Paragraph(`Source Canvas: ${draft.id}`),
-    new docx.Paragraph(`Lifecycle: ${draft.lifecycleState}`),
-    new docx.Paragraph(''),
-    ...exportMarkdown(draft)
-      .split('\n')
-      .slice(0, 500)
-      .map((line) => new docx.Paragraph(line || ' ')),
-  ];
-  const document = new docx.Document({ sections: [{ properties: {}, children: paragraphs }] });
-  return Buffer.from(await docx.Packer.toBuffer(document));
+  return unifiedExportService.exportDocx({
+    title: draft.title,
+    markdown: exportMarkdown(draft),
+    sourceLabel: `Source Canvas: ${draft.id}`,
+    lifecycle: draft.lifecycleState,
+  });
 }
 
 async function exportXlsxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  const ExcelJS = (await import('exceljs')).default as any;
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Business Work Canvas';
-  workbook.created = new Date();
-  const sheet = workbook.addWorksheet('Canvas Export');
-  exportCsv(draft)
-    .split('\n')
-    .forEach((line) => {
-      sheet.addRow(line.split(',').map((cell) => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
-    });
-  sheet.addRow([]);
-  sheet.addRow(['Source Canvas', draft.id]);
-  sheet.addRow(['Lifecycle', draft.lifecycleState]);
-  const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer);
+  // XLSX renders a two-cell footer (`['Source Canvas', <id>]`), so the raw draft
+  // id is passed as sourceLabel here (not the prefixed `Source Canvas: <id>`
+  // label used by PDF/DOCX/PPTX), keeping the spreadsheet byte-for-byte.
+  return unifiedExportService.exportXlsx({
+    title: draft.title,
+    markdown: exportMarkdown(draft),
+    csv: exportCsv(draft),
+    sourceLabel: draft.id,
+    lifecycle: draft.lifecycleState,
+    author: 'Business Work Canvas',
+  });
 }
 
 async function exportPptxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  const module = await import('pptxgenjs');
-  const PptxGenJS = (module.default || module) as any;
-  const pptx = new PptxGenJS();
-  pptx.author = 'Business Work Canvas';
+  // The Canvas-specific sectionizer (markdownSections/markdownSummary) stays in
+  // the route; pre-built slides are handed to the generic service so the cap and
+  // footer rendering live in one place.
   const sections = markdownSections(draft.contentMd);
   const slides = sections.length
     ? sections.map((section, index) => ({
@@ -953,28 +932,13 @@ async function exportPptxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
         body: markdownSummary(section.body, 700),
       }))
     : [{ title: draft.title, body: markdownSummary(draft.contentMd, 700) }];
-  slides.slice(0, 20).forEach((slide, index) => {
-    const page = pptx.addSlide();
-    page.addText(slide.title, { x: 0.5, y: 0.4, w: 9, h: 0.5, fontSize: 24, bold: true });
-    page.addText(slide.body || 'No slide body available.', {
-      x: 0.5,
-      y: 1.1,
-      w: 9,
-      h: 4.5,
-      fontSize: 13,
-      fit: 'shrink',
-    });
-    page.addText(`Source Canvas: ${draft.id} · Slide ${index + 1}`, {
-      x: 0.5,
-      y: 6.8,
-      w: 9,
-      h: 0.3,
-      fontSize: 8,
-      color: '64748B',
-    });
+  return unifiedExportService.exportPptx({
+    title: draft.title,
+    markdown: markdownSummary(draft.contentMd, 700),
+    sourceLabel: `Source Canvas: ${draft.id}`,
+    author: 'Business Work Canvas',
+    slides,
   });
-  const output = await pptx.write({ outputType: 'nodebuffer' });
-  return Buffer.from(output);
 }
 
 async function exportFormatPayload(draft: WorkCanvasDraft, userId: string, format: ExportFormat) {
