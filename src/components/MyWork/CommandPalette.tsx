@@ -47,12 +47,12 @@ import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 
-interface CommandItem {
+export interface CommandItem {
   id: string;
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
-  category: 'navigation' | 'action' | 'recent' | 'search';
+  category: 'workspace' | 'navigation' | 'action' | 'recent' | 'search';
   shortcut?: string;
   action: () => void | Promise<void>;
   keywords?: string[];
@@ -62,6 +62,11 @@ interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate?: (path: string) => void;
+  /**
+   * Context-specific commands injected by the host (e.g. the Ideas workspace
+   * surfaces "Switch tool", "Export", "Search this idea"). Rendered first.
+   */
+  extraCommands?: CommandItem[];
 }
 
 // Fuzzy search function
@@ -82,7 +87,12 @@ const fuzzyMatch = (query: string, text: string): boolean => {
   return false;
 };
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({
+  isOpen,
+  onClose,
+  onNavigate,
+  extraCommands = [],
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -360,10 +370,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     [t, pendingDecisions, onClose, onNavigate, navigate]
   );
 
-  // Combined items
+  // Combined items — host-injected workspace commands first.
   const allItems = useMemo(() => {
-    return [...navigationItems, ...actionItems, ...recentItems];
-  }, [navigationItems, actionItems, recentItems]);
+    return [...extraCommands, ...navigationItems, ...actionItems, ...recentItems];
+  }, [extraCommands, navigationItems, actionItems, recentItems]);
 
   // Filtered items based on query
   const filteredItems = useMemo(() => {
@@ -381,6 +391,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   // Group items by category
   const groupedItems = useMemo(() => {
     const groups: { [key: string]: CommandItem[] } = {
+      workspace: [],
       navigation: [],
       action: [],
       recent: [],
@@ -573,6 +584,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               <div ref={listRef} className="max-h-[400px] overflow-y-auto p-2">
                 {filteredItems.length > 0 ? (
                   <>
+                    {renderGroup(
+                      t('command.category.workspace', 'This idea'),
+                      groupedItems.workspace,
+                      'workspace'
+                    )}
                     {renderGroup(
                       t('command.category.navigation', 'Navigate'),
                       groupedItems.navigation,

@@ -543,7 +543,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     isValidating: isBackendValidating,
     validate: runBackendValidation,
     issuesForObject,
-  } = useProcessFlowValidation({ processId, nodes, edges, autoValidate: false });
+  } = useProcessFlowValidation({
+    processId,
+    nodes,
+    edges,
+    autoValidate: false,
+    onError: (message) =>
+      toast.error(
+        isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message
+      ),
+  });
   const {
     activeProposal,
     isGenerating: isAIGenerating,
