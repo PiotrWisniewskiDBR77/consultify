@@ -79,7 +79,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the capability-status/-note panel, workflow-capability badge and 'Workflow template' selector no longer exist after the rich-editor rollout.
-  it.skip('shows capability honesty labels for the active Canvas and workflow template', async () => {
+  it('shows capability honesty labels for the active Canvas and workflow template', async () => {
     const user = userEvent.setup();
     render(<WorkCanvasDocumentPanel />);
 
@@ -99,7 +99,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the diagnostics 'canvas-research-session-id' readout is no longer rendered.
-  it.skip('links a research Canvas draft to a planned ResearchSession', async () => {
+  it('links a research Canvas draft to a planned ResearchSession', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/research/sessions') {
@@ -396,7 +396,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the 'Finalize research report' button was removed from diagnostics (handler is now dead code).
-  it.skip('finalizes research report from diagnostics with lineage feedback', async () => {
+  it('finalizes research report from diagnostics with lineage feedback', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/work-canvas/drafts?conversationId=conv-1') {
@@ -483,7 +483,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the 'canvas-selection-block-actions' chrome (Create table/chart/diagram/...) is no longer rendered (selectionBlockActions = null).
-  it.skip('turns selected Canvas text into native artifact blocks', async () => {
+  it('turns selected Canvas text into native artifact blocks', async () => {
     const user = userEvent.setup();
     const generatedBlocks: any[] = [];
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -657,7 +657,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the 'canvas-selection-edit-panel' (Selection edit replacement / Preview edit) is no longer rendered.
-  it.skip('previews and applies a governed edit for selected Canvas text', async () => {
+  it('previews and applies a governed edit for selected Canvas text', async () => {
     const user = userEvent.setup();
     const originalContent = '# Company Work Note\n\n- [ ] Define the business question.';
     const replacement = '- [x] Define the business question and decision owner.';
@@ -785,7 +785,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the 'canvas-selection-writing-shortcuts' panel is no longer rendered.
-  it.skip('uses writing shortcuts to draft replacement Markdown without bypassing preview', async () => {
+  it('uses writing shortcuts to draft replacement Markdown without bypassing preview', async () => {
     const user = userEvent.setup();
     const originalContent = '# Company Work Note\n\n- [ ] Define the business question.';
     const replacement = '- [ ] Define the business question';
@@ -865,7 +865,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: dataset upload has no persistent input[type=file]; upload is now a transient programmatic input, so the dataset-actions flow cannot be driven from tests.
-  it.skip('turns an uploaded CSV dataset into a KPI dashboard block', async () => {
+  it('turns an uploaded CSV dataset into a KPI dashboard block', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/work-canvas/drafts') {
@@ -1012,7 +1012,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: dataset upload has no persistent input[type=file]; the dataset-actions flow cannot be driven from tests.
-  it.skip('turns an uploaded XLSX dataset into a governed dashboard preview', async () => {
+  it('turns an uploaded XLSX dataset into a governed dashboard preview', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/work-canvas/drafts') {
@@ -1143,7 +1143,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: dataset upload has no persistent input[type=file]; the dataset-actions flow cannot be driven from tests.
-  it.skip('creates an aggregate analysis chart from an uploaded dataset through approval preview', async () => {
+  it('creates an aggregate analysis chart from an uploaded dataset through approval preview', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === '/api/work-canvas/drafts') {
@@ -1275,7 +1275,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the workflow ledger, 'Workflow template' selector and 'Start workflow' control are no longer rendered (workflow helpers are now dead code).
-  it.skip('starts and resumes a governed workflow from Canvas diagnostics', async () => {
+  it('starts and resumes a governed workflow from Canvas diagnostics', async () => {
     const user = userEvent.setup();
     const workflowRun = {
       id: 'workflow-1',
@@ -1698,7 +1698,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the 'Start workflow' control / workflow ledger is no longer rendered.
-  it.skip('disables workflow creation while start workflow is in flight', async () => {
+  it('disables workflow creation while start workflow is in flight', async () => {
     const user = userEvent.setup();
     const workflowRun = {
       id: 'workflow-1',
@@ -1717,19 +1717,21 @@ describe('WorkCanvasDocumentPanel', () => {
     };
     let resolveCreateWorkflow: ((response: Response) => void) | null = null;
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === '/api/work-canvas/drafts') {
+      if (url === '/api/work-canvas/drafts?conversationId=conv-1') {
         return {
           ok: true,
           json: async () => ({
-            data: {
-              id: 'draft-1',
-              title: 'Company Work Note',
-              contentMd: '# Company Work Note',
-              blocks: [],
-              saveState: 'saved',
-              lifecycleState: 'draft',
-              markdownProjectionStatus: 'synced',
-            },
+            data: [
+              {
+                id: 'draft-1',
+                title: 'Company Work Note',
+                contentMd: '# Company Work Note',
+                blocks: [],
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+              },
+            ],
           }),
         } as Response;
       }
@@ -1776,7 +1778,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the 'Start workflow' control is no longer rendered.
-  it.skip('shows friendly conflict copy when starting a workflow from a stale draft', async () => {
+  it('shows friendly conflict copy when starting a workflow from a stale draft', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string) => {
       if (url === '/api/work-canvas/drafts') {
@@ -1827,7 +1829,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the workflow reviewer/approval ledger is no longer rendered.
-  it.skip('preserves an existing workflow reviewer when approving without editing the reviewer field', async () => {
+  it('preserves an existing workflow reviewer when approving without editing the reviewer field', async () => {
     const user = userEvent.setup();
     const workflowRun = {
       id: 'workflow-1',
@@ -1991,7 +1993,7 @@ describe('WorkCanvasDocumentPanel', () => {
   });
 
   // OBSOLETE — REMOVED UI: the workflow 'Approve and run' ledger control is no longer rendered.
-  it.skip('disables workflow execution while run-next is in flight', async () => {
+  it('disables workflow execution while run-next is in flight', async () => {
     const user = userEvent.setup();
     const workflowRun = {
       id: 'workflow-1',
@@ -2028,19 +2030,21 @@ describe('WorkCanvasDocumentPanel', () => {
     };
     let resolveRunNext: ((response: Response) => void) | null = null;
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url === '/api/work-canvas/drafts') {
+      if (url === '/api/work-canvas/drafts?conversationId=conv-1') {
         return {
           ok: true,
           json: async () => ({
-            data: {
-              id: 'draft-1',
-              title: 'Company Work Note',
-              contentMd: '# Company Work Note',
-              blocks: [],
-              saveState: 'saved',
-              lifecycleState: 'draft',
-              markdownProjectionStatus: 'synced',
-            },
+            data: [
+              {
+                id: 'draft-1',
+                title: 'Company Work Note',
+                contentMd: '# Company Work Note',
+                blocks: [],
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+              },
+            ],
           }),
         } as Response;
       }

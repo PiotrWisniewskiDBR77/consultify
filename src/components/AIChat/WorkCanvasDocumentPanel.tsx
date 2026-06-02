@@ -107,6 +107,7 @@ type CanvasWorkflowTemplate =
   | 'client_proposal_to_deck'
   | 'decision_memo_to_execution_plan';
 type CanvasQuickAddElement = 'text' | 'heading' | 'table' | 'diagram' | 'list' | 'summary';
+type SelectionEditShortcut = 'use_selection' | 'action_list' | 'bullet_summary';
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -518,6 +519,30 @@ function buildLineDiff(before: string, after: string): CanvasDiffSummary {
   };
 }
 
+function selectedTextLines(text: string): string[] {
+  return String(text || '')
+    .split('\n')
+    .map((line) =>
+      line
+        .replace(/^\s*[-*]\s+/, '')
+        .replace(/^\s*-\s+\[[ xX]\]\s+/, '')
+        .trim()
+    )
+    .filter(Boolean);
+}
+
+function shortcutReplacementForSelection(
+  shortcut: SelectionEditShortcut,
+  selectedText: string
+): string {
+  if (shortcut === 'use_selection') return selectedText.trim();
+  const lines = selectedTextLines(selectedText);
+  if (shortcut === 'action_list') {
+    return lines.map((line) => `- [ ] ${line.replace(/[.;]\s*$/, '')}`).join('\n');
+  }
+  return lines.map((line) => `- ${line.replace(/[.;]\s*$/, '')}`).join('\n');
+}
+
 const canvasActionErrorMessage = workCanvasActionErrorMessage;
 
 function isWorkflowReviewBlocked(workflow: {
@@ -632,6 +657,7 @@ export function WorkCanvasDocumentPanel({
   const autosaveTimerRef = React.useRef<number | null>(null);
   const titleInputRef = React.useRef<HTMLInputElement | null>(null);
   const markdownEditorRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
   const initialStarterPersistedRef = React.useRef(false);
 
   const activeTemplate =
@@ -1301,14 +1327,7 @@ export function WorkCanvasDocumentPanel({
   };
 
   const triggerDatasetUpload = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.accept = '.csv,.json,.xlsx';
-    input.onchange = () => {
-      void handleUploadFiles(input.files);
-    };
-    input.click();
+    uploadInputRef.current?.click();
   };
 
   const applyBuiltTemplate = () => {
@@ -1388,6 +1407,16 @@ export function WorkCanvasDocumentPanel({
     } catch (error) {
       setCanvasErrorFeedback(error, `Failed to create ${kind} block.`);
     }
+  };
+
+  const applySelectionEditShortcut = (shortcut: SelectionEditShortcut) => {
+    const selectedText = canvasSelection?.selectedText || '';
+    const replacement = shortcutReplacementForSelection(shortcut, selectedText);
+    if (!replacement.trim()) {
+      setAlertFeedback('Select Canvas text before using a writing shortcut.');
+      return;
+    }
+    setSelectionEditDraft(replacement);
   };
 
   const previewSelectionEdit = async () => {
@@ -2045,7 +2074,115 @@ export function WorkCanvasDocumentPanel({
     );
   };
 
-  const selectionBlockActions = null;
+  const selectionBlockActions = canvasSelection?.selectedText?.trim() ? (
+    <div
+      className="mb-5 rounded-2xl border border-primary-200 bg-primary-50/70 p-3 text-sm dark:border-primary-400/20 dark:bg-primary-400/10"
+      data-testid="canvas-selection-block-actions"
+    >
+      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
+        Turn selection into a block
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
+          onClick={() => createArtifactBlockFromSelection('table')}
+        >
+          Create table
+        </button>
+        <button
+          type="button"
+          className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
+          onClick={() => createArtifactBlockFromSelection('chart')}
+        >
+          Create chart
+        </button>
+        <button
+          type="button"
+          className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
+          onClick={() => createArtifactBlockFromSelection('diagram')}
+        >
+          Create diagram
+        </button>
+        <button
+          type="button"
+          className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
+          onClick={() => createArtifactBlockFromSelection('research')}
+        >
+          Create research
+        </button>
+        <button
+          type="button"
+          className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
+          onClick={() => createArtifactBlockFromSelection('decision')}
+        >
+          Create decision
+        </button>
+      </div>
+      <div
+        className="mt-3 rounded-2xl border border-primary-200/70 bg-white/80 p-3 dark:border-primary-300/20 dark:bg-white/[0.04]"
+        data-testid="canvas-selection-edit-panel"
+      >
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
+          Edit selected text
+        </div>
+        <div className="mt-1 line-clamp-2 text-xs text-primary-900/70 dark:text-primary-100/70">
+          {canvasSelection.selectedText}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2" data-testid="canvas-selection-writing-shortcuts">
+          <button
+            type="button"
+            onClick={() => applySelectionEditShortcut('use_selection')}
+            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+          >
+            Use selection
+          </button>
+          <button
+            type="button"
+            onClick={() => applySelectionEditShortcut('action_list')}
+            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+          >
+            Action list
+          </button>
+          <button
+            type="button"
+            onClick={() => applySelectionEditShortcut('bullet_summary')}
+            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+          >
+            Bullet summary
+          </button>
+        </div>
+        <textarea
+          value={selectionEditDraft}
+          onChange={(event) => setSelectionEditDraft(event.target.value)}
+          aria-label="Selection edit replacement"
+          placeholder="Write the replacement Markdown here..."
+          className="mt-3 min-h-24 w-full resize-y rounded-2xl border border-primary-200 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-primary-400 dark:border-primary-300/20 dark:bg-navy-950 dark:text-slate-100"
+        />
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void previewSelectionEdit()}
+            disabled={!selectionEditDraft.trim()}
+            className={
+              selectionEditDraft.trim()
+                ? 'rounded-full bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-700'
+                : 'cursor-not-allowed rounded-full bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+            }
+          >
+            Preview edit
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectionEditDraft('')}
+            className="rounded-full px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 dark:text-primary-200 dark:hover:bg-primary-300/10"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
@@ -2130,6 +2267,57 @@ export function WorkCanvasDocumentPanel({
             {renderCommandButton('save')}
             {renderCommandButton('close')}
           </div>
+
+          <input
+            ref={uploadInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            aria-hidden="true"
+            onChange={(event) => {
+              void handleUploadFiles(event.target.files);
+              event.target.value = '';
+            }}
+          />
+
+          {pendingDataset ? (
+            <div
+              className="absolute right-5 top-16 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-[#1a1d25]"
+              data-testid="canvas-dataset-actions"
+            >
+              <div className="font-semibold text-slate-900 dark:text-white">
+                Dataset ready: {pendingDataset.filename}
+              </div>
+              <div className="mt-1 text-slate-500 dark:text-slate-400">
+                Deterministic Canvas analysis. No code execution.
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {datasetArtifactActions.map((action) => (
+                  <button
+                    key={`${action.kind}-${action.analysisKind || 'default'}`}
+                    type="button"
+                    onClick={() =>
+                      void createArtifactFromDataset(
+                        action.kind,
+                        action.analysisKind,
+                        action.titlePrefix
+                      )
+                    }
+                    className="rounded-full border border-slate-200 px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+                  >
+                    {action.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setPendingDataset(null)}
+                  className="rounded-full px-3 py-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           <div className="relative" data-testid="canvas-menu-root">
             <button
@@ -2494,10 +2682,7 @@ export function WorkCanvasDocumentPanel({
                 </div>
 
                 {pendingDataset ? (
-                  <div
-                    className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-white/[0.03]"
-                    data-testid="canvas-dataset-actions"
-                  >
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-white/[0.03]">
                     <div className="font-semibold text-slate-900 dark:text-white">
                       Dataset ready: {pendingDataset.filename}
                     </div>
@@ -2638,6 +2823,337 @@ export function WorkCanvasDocumentPanel({
                           {activeActionId ? 'Running' : 'Idle'}
                         </strong>
                       </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-slate-600 dark:border-white/10 dark:text-slate-300">
+                  <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                    Możliwości i workflow
+                  </div>
+                  <div className="flex items-start justify-between gap-3 px-2.5">
+                    <span>Capability</span>
+                    <div className="min-w-0 text-right">
+                      {renderCapabilityBadge(activeTemplate.capability, 'canvas-capability-status')}
+                      <div
+                        className="mt-1 max-w-[200px] text-[10px] leading-3 text-slate-500 dark:text-slate-400"
+                        data-testid="canvas-capability-note"
+                      >
+                        {activeTemplate.capabilityNote}
+                      </div>
+                    </div>
+                  </div>
+                  {documentState.researchSessionId ? (
+                    <div className="flex items-center justify-between gap-3 px-2.5">
+                      <span>ResearchSession</span>
+                      <strong
+                        className="max-w-[180px] truncate font-semibold text-primary-700 dark:text-primary-300"
+                        data-testid="canvas-research-session-id"
+                        title={documentState.researchSessionId}
+                      >
+                        {documentState.researchSessionId}
+                      </strong>
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap items-center gap-2 px-2.5">
+                    <label className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-300">
+                      <span className="sr-only">Workflow template</span>
+                      <select
+                        value={selectedWorkflowTemplate}
+                        onChange={(event) =>
+                          setSelectedWorkflowTemplate(event.target.value as CanvasWorkflowTemplate)
+                        }
+                        aria-label="Workflow template"
+                        className="max-w-[190px] rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 outline-none hover:bg-slate-50 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
+                      >
+                        {workflowTemplateOptions.map((template) => (
+                          <option key={template.id} value={template.id}>
+                            {template.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => void startWorkflow()}
+                      disabled={isStartingWorkflow}
+                      className={
+                        isStartingWorkflow
+                          ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                          : 'inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2.5 py-1 font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-primary-100'
+                      }
+                    >
+                      {isStartingWorkflow ? 'Starting...' : 'Start workflow'}
+                    </button>
+                  </div>
+                  <div className="px-2.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-2">
+                      {renderCapabilityBadge(
+                        selectedWorkflowTemplateOption.capability,
+                        'canvas-workflow-capability-status'
+                      )}
+                      <span>{selectedWorkflowTemplateOption.description}</span>
+                    </div>
+                    <div className="mt-1">{selectedWorkflowTemplateOption.capabilityNote}</div>
+                  </div>
+                  {documentState.kind === 'research' ? (
+                    <div className="px-2.5">
+                      <button
+                        type="button"
+                        onClick={() => void finalizeResearchReport()}
+                        disabled={isFinalizingResearchReport}
+                        className={
+                          isFinalizingResearchReport
+                            ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                            : 'inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-100'
+                        }
+                      >
+                        {isFinalizingResearchReport ? 'Finalizing...' : 'Finalize research report'}
+                      </button>
+                    </div>
+                  ) : null}
+                  {documentState.workflowRuns?.length ? (
+                    <div
+                      className="mt-1 max-h-72 space-y-2 overflow-auto border-t border-slate-200 px-2.5 pt-3 dark:border-white/10"
+                      data-testid="canvas-workflow-ledger"
+                    >
+                      {documentState.workflowRuns.map((workflow) => {
+                        const reviewBlocked = isWorkflowReviewBlocked(workflow);
+                        const workflowLifecycle = workflow.collaboration?.lifecycle || 'draft';
+                        const pendingApproval = getPendingWorkflowApproval(workflow);
+                        const terminalExecutionLabel = getWorkflowTerminalExecutionLabel(workflow);
+                        const isWorkflowStepRunning = Boolean(runningWorkflowStepById[workflow.id]);
+                        const isWorkflowResuming = Boolean(resumingWorkflowById[workflow.id]);
+                        const isWorkflowReviewUpdating = Boolean(
+                          updatingWorkflowReviewById[workflow.id]
+                        );
+                        const isWorkflowCommentAdding = Boolean(
+                          addingWorkflowCommentById[workflow.id]
+                        );
+                        const workflowCommentBody = (workflowCommentById[workflow.id] || '').trim();
+                        const isWorkflowCommentBlocked =
+                          isWorkflowCommentAdding || workflowCommentBody.length === 0;
+                        const isSendToReviewBlocked =
+                          isWorkflowReviewUpdating || workflowLifecycle === 'in_review';
+                        const isMarkApprovedBlocked =
+                          isWorkflowReviewUpdating || workflowLifecycle === 'approved';
+                        const executionBlocked =
+                          reviewBlocked || Boolean(terminalExecutionLabel) || isWorkflowStepRunning;
+                        return (
+                          <div
+                            key={workflow.id}
+                            className="rounded-xl bg-slate-50 p-2 text-[11px] dark:bg-white/[0.06]"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div className="font-semibold text-slate-700 dark:text-slate-100">
+                                  {workflow.title}
+                                </div>
+                                <div className="mt-0.5 text-slate-500 dark:text-slate-300">
+                                  {workflow.status} · {workflow.conversationId}
+                                </div>
+                                <div className="mt-1 text-slate-500 dark:text-slate-300">
+                                  Owner: {workflow.collaboration?.ownerId || workflow.createdBy} ·
+                                  Reviewer: {workflow.collaboration?.reviewerId || 'not assigned'} ·
+                                  Lifecycle: {workflow.collaboration?.lifecycle || 'draft'}
+                                </div>
+                                {pendingApproval ? (
+                                  <div className="mt-1 font-semibold text-primary-700 dark:text-primary-200">
+                                    Approval checkpoint: {pendingApproval.stepTitle} awaits explicit
+                                    approval.
+                                  </div>
+                                ) : null}
+                                {reviewBlocked ? (
+                                  <div className="mt-1 font-semibold text-amber-700 dark:text-amber-200">
+                                    Review gate: mark approved before running next.
+                                  </div>
+                                ) : null}
+                                {terminalExecutionLabel ? (
+                                  <div className="mt-1 font-semibold text-emerald-700 dark:text-emerald-200">
+                                    Workflow {workflow.status}: output is available in the ledger.
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => void runWorkflowStep(workflow.id)}
+                                  disabled={executionBlocked}
+                                  className={
+                                    executionBlocked
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      : 'rounded-full bg-primary-600 px-2 py-0.5 font-semibold text-white hover:bg-primary-700'
+                                  }
+                                >
+                                  {isWorkflowStepRunning
+                                    ? 'Running...'
+                                    : terminalExecutionLabel ||
+                                      (pendingApproval ? 'Approve and run' : 'Run next')}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void resumeWorkflow(workflow.id)}
+                                  disabled={isWorkflowResuming}
+                                  className={
+                                    isWorkflowResuming
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      : 'rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white'
+                                  }
+                                >
+                                  {isWorkflowResuming ? 'Resuming...' : 'Resume'}
+                                </button>
+                              </div>
+                            </div>
+                            <ol className="mt-2 space-y-1">
+                              {workflow.steps.map((step) => (
+                                <li key={step.id} className="text-slate-500 dark:text-slate-300">
+                                  <span className="font-semibold text-slate-700 dark:text-slate-100">
+                                    {step.status}
+                                  </span>{' '}
+                                  · {step.title}
+                                  {step.approvalRequired ? ' · approval required' : ''}
+                                </li>
+                              ))}
+                            </ol>
+                            {workflow.events?.length ? (
+                              <div className="mt-3 rounded-lg bg-white/70 p-2 dark:bg-white/[0.04]">
+                                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                                  Timeline
+                                </div>
+                                <ul className="mt-1 space-y-1 text-slate-500 dark:text-slate-300">
+                                  {workflow.events.slice(-4).map((event) => (
+                                    <li key={event.id}>
+                                      <span className="font-semibold text-slate-700 dark:text-slate-100">
+                                        {event.type.replaceAll('_', ' ')}
+                                      </span>{' '}
+                                      · {event.summary}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+                            {workflow.outputs?.length ? (
+                              <div className="mt-3 rounded-lg bg-primary-50 p-2 dark:bg-primary-400/10">
+                                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-500 dark:text-primary-200">
+                                  Outputs
+                                </div>
+                                <ul className="mt-1 space-y-1 text-slate-600 dark:text-slate-200">
+                                  {workflow.outputs.map((output) => (
+                                    <li
+                                      key={`${output.stepId}-${output.id}`}
+                                      className="flex flex-wrap items-center gap-1"
+                                    >
+                                      <span className="font-semibold">{output.type}</span>
+                                      <span>· {output.title}</span>
+                                      {output.url ? (
+                                        <a
+                                          href={output.url}
+                                          className="font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-200 dark:hover:text-primary-100"
+                                        >
+                                          Open
+                                        </a>
+                                      ) : null}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+                            <div className="mt-3 space-y-2 border-t border-slate-200 pt-2 dark:border-white/10">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <input
+                                  value={
+                                    workflowReviewerById[workflow.id] ??
+                                    workflow.collaboration?.reviewerId ??
+                                    ''
+                                  }
+                                  onChange={(event) =>
+                                    setWorkflowReviewerById((current) => ({
+                                      ...current,
+                                      [workflow.id]: event.target.value,
+                                    }))
+                                  }
+                                  disabled={isWorkflowReviewUpdating}
+                                  placeholder="Reviewer id"
+                                  aria-label={`Reviewer for ${workflow.title}`}
+                                  className={
+                                    isWorkflowReviewUpdating
+                                      ? 'min-w-[160px] cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-400 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
+                                      : 'min-w-[160px] rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100'
+                                  }
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void updateWorkflowCollaboration(workflow.id, 'in_review')
+                                  }
+                                  disabled={isSendToReviewBlocked}
+                                  className={
+                                    isSendToReviewBlocked
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      : 'rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-200 dark:bg-amber-400/20 dark:text-amber-100'
+                                  }
+                                >
+                                  {isWorkflowReviewUpdating ? 'Updating...' : 'Send to review'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void updateWorkflowCollaboration(workflow.id, 'approved')
+                                  }
+                                  disabled={isMarkApprovedBlocked}
+                                  className={
+                                    isMarkApprovedBlocked
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      : 'rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-400/20 dark:text-emerald-100'
+                                  }
+                                >
+                                  {isWorkflowReviewUpdating ? 'Updating...' : 'Mark approved'}
+                                </button>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <input
+                                  value={workflowCommentById[workflow.id] || ''}
+                                  onChange={(event) =>
+                                    setWorkflowCommentById((current) => ({
+                                      ...current,
+                                      [workflow.id]: event.target.value,
+                                    }))
+                                  }
+                                  disabled={isWorkflowCommentAdding}
+                                  placeholder="Add workflow comment"
+                                  aria-label={`Comment for ${workflow.title}`}
+                                  className={
+                                    isWorkflowCommentAdding
+                                      ? 'min-w-[220px] flex-1 cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-400 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
+                                      : 'min-w-[220px] flex-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100'
+                                  }
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => void addWorkflowComment(workflow.id)}
+                                  disabled={isWorkflowCommentBlocked}
+                                  className={
+                                    isWorkflowCommentBlocked
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      : 'rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white'
+                                  }
+                                >
+                                  {isWorkflowCommentAdding ? 'Adding...' : 'Add comment'}
+                                </button>
+                              </div>
+                              {workflow.collaboration?.comments?.length ? (
+                                <ul className="space-y-1 text-slate-500 dark:text-slate-300">
+                                  {workflow.collaboration.comments.slice(-3).map((comment) => (
+                                    <li key={comment.id}>
+                                      {comment.authorId}: {comment.body}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : null}
                 </div>
