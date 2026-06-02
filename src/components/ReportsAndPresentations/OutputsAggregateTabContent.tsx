@@ -14,6 +14,7 @@ import {
   Loader2,
   MessageCircle,
   Presentation,
+  Sparkles,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -27,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/primitives';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
@@ -183,6 +185,20 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     },
     [isEnabled, isPolish, navigate]
   );
+
+  // Teresa touchpoint: open chat pre-seeded with an output-generation goal so a
+  // brand-new (empty) Outputs Library has a one-click path to its first artifact.
+  const openTeresaForOutput = useCallback(() => {
+    openChatWithContext({
+      entityType: 'outputs_module',
+      entityId: 'outputs_onboarding',
+      entityName: t('rap.hub.entityName', 'Reports & Presentations'),
+      contextData: {
+        intent: 'generate_output',
+        goal: t('rap.onboarding.body', 'Generate a report or deck with Teresa'),
+      },
+    });
+  }, [openChatWithContext, t]);
 
   const resetLineage = useCallback(() => {
     setLineageLoading(false);
@@ -638,6 +654,41 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             {t('rap.errors.outputsRegistryTitle', 'Outputs library source needs attention')}
           </div>
           <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="mt-4 inline-flex h-9 items-center gap-2 rounded-xl border border-amber-300/70 bg-white/70 px-4 text-sm font-medium text-amber-900 transition-colors hover:bg-white dark:border-amber-400/30 dark:bg-white/[0.04] dark:text-amber-100 dark:hover:bg-white/[0.08]"
+          >
+            {t('rap.error.retry', 'Retry')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Teresa onboarding empty state — only the truly empty library (no rows, no
+  // error, no active search/filter) gets the "Generate with Teresa" touchpoint.
+  if (!loading && !error && rows.length === 0 && !searchQuery && activeFilters.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <div className="w-full max-w-xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-crimson-50 text-crimson-600 dark:bg-crimson-950/40 dark:text-crimson-400">
+            <Sparkles size={26} />
+          </div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('rap.onboarding.title', 'Your outputs land here')}
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            {t(
+              'rap.onboarding.body',
+              'Ask Teresa to generate a report or deck — it will appear here for review and export.'
+            )}
+          </p>
+          <div className="mt-5 flex items-center justify-center">
+            <Button variant="brand" onClick={openTeresaForOutput} icon={<Sparkles size={16} />}>
+              {t('rap.onboarding.cta', 'Generate with Teresa')}
+            </Button>
+          </div>
         </div>
       </div>
     );

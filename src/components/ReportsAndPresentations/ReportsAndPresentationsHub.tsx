@@ -25,6 +25,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
+import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
@@ -901,18 +902,25 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     templates,
   ]);
 
+  // Document Studio is a Wave-2 format-lane. On public production where non-core
+  // modules are hidden, do NOT surface its entry point (avoids leading the paid
+  // path to a blocked module view — no "coming soon" in the hub).
+  const documentStudioAvailable = useMemo(() => !shouldHideNonCoreModulesInPublicProduction(), []);
+
   const commandRowRightContent = useMemo(
     () => (
       <>
-        <button
-          type="button"
-          onClick={() => navigate('/document-studio')}
-          className={`${getMenu3AiButtonClass(false)} !border-sky-300/60 !bg-sky-500/10 !text-sky-800 dark:!border-sky-400/30 dark:!bg-sky-500/20 dark:!text-sky-200`}
-          title={t('rap.actions.newDocumentStudio', 'New AI document (Document Studio)')}
-        >
-          <Plus size={12} />
-          <span>{t('rap.actions.newDocumentStudio', 'New AI document')}</span>
-        </button>
+        {documentStudioAvailable ? (
+          <button
+            type="button"
+            onClick={() => navigate('/document-studio')}
+            className={`${getMenu3AiButtonClass(false)} !border-sky-300/60 !bg-sky-500/10 !text-sky-800 dark:!border-sky-400/30 dark:!bg-sky-500/20 dark:!text-sky-200`}
+            title={t('rap.actions.newDocumentStudio', 'New AI document (Document Studio)')}
+          >
+            <Plus size={12} />
+            <span>{t('rap.actions.newDocumentStudio', 'New AI document')}</span>
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() =>
@@ -939,6 +947,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     [
       activeFilters.length,
       activeTab,
+      documentStudioAvailable,
       navigate,
       openChatWithContext,
       openDocuments.length,

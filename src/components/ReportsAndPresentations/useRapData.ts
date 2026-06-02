@@ -27,13 +27,13 @@ import type {
 
 export type ReportActionTarget =
   | string
-  | Pick<ReportItem, 'id' | 'artifactId' | 'title'>
-  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title'>;
+  | Pick<ReportItem, 'id' | 'artifactId' | 'title' | 'governance'>
+  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title' | 'governance'>;
 
 export type PresentationActionTarget =
   | string
-  | Pick<PresentationItem, 'id' | 'artifactId' | 'title'>
-  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title'>;
+  | Pick<PresentationItem, 'id' | 'artifactId' | 'title' | 'governance'>
+  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title' | 'governance'>;
 
 type ArtifactOriginActionTarget = ReportActionTarget | PresentationActionTarget;
 
@@ -128,6 +128,44 @@ export function normalizePresentationActionTarget(target: PresentationActionTarg
   label: string;
 } {
   return normalizeArtifactOriginActionTarget(target);
+}
+
+/**
+ * Approval-before-export client guard.
+ *
+ * The server already enforces quality/approval gates on the export routes
+ * (`report-builder.routes.ts` → `enforceQualityGatesForExport`,
+ * `presentations.routes.ts` → quality + legal-hold gates). This client-side
+ * pre-flight ensures the hub never *offers* export on an unapproved artifact:
+ * it reads `governance.publishState` from the registry row that the action
+ * was invoked with (already mapped via `mapArtifactGovernance`) and refuses
+ * to call the export endpoint unless the artifact is approved/published.
+ *
+ * Backward-compatible: when the target carries no governance (e.g. a bare
+ * originRecordId string, or a legacy report/deck row without a registry
+ * publishState), the guard is a no-op and export proceeds — the server gate
+ * remains the hard backstop.
+ */
+const EXPORTABLE_PUBLISH_STATES = new Set(['approved', 'published']);
+
+function readTargetPublishState(target: ArtifactOriginActionTarget): string | null {
+  if (!target || typeof target !== 'object') return null;
+  const governance = target.governance;
+  if (!governance) return null;
+  const publishState = governance.publishState;
+  return publishState ? String(publishState).toLowerCase() : null;
+}
+
+/**
+ * Returns true when the artifact is safe to export (no governance signal, or an
+ * approved/published publishState). Returns false only when governance is
+ * present AND the publishState is a non-approved value — i.e. the export must be
+ * blocked at the client.
+ */
+function isExportApproved(target: ArtifactOriginActionTarget): boolean {
+  const publishState = readTargetPublishState(target);
+  if (!publishState) return true;
+  return EXPORTABLE_PUBLISH_STATES.has(publishState);
 }
 
 async function fetchArtifactActionTarget(
@@ -1325,6 +1363,10 @@ export function useRapActions() {
 
   const exportReportPdf = useCallback(
     async (target: ReportActionTarget) => {
+      if (!isExportApproved(target)) {
+        toast.error(t('rap.toast.exportBlocked', 'Approve the artifact before exporting'));
+        return;
+      }
       const { originRecordId, artifactId } = normalizeReportActionTarget(target);
       const actionTarget = await fetchArtifactActionTarget(artifactId);
       const exportPath =
@@ -1356,6 +1398,10 @@ export function useRapActions() {
 
   const exportDeckPptx = useCallback(
     async (target: PresentationActionTarget) => {
+      if (!isExportApproved(target)) {
+        toast.error(t('rap.toast.exportBlocked', 'Approve the artifact before exporting'));
+        return;
+      }
       const { originRecordId, artifactId } = normalizePresentationActionTarget(target);
       const actionTarget = await fetchArtifactActionTarget(artifactId);
       const exportPath =

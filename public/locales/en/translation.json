@@ -8500,7 +8500,9 @@
     "empty": {
       "templates": "No templates found",
       "reports": "No reports found",
-      "presentations": "No presentations found"
+      "presentations": "No presentations found",
+      "noOutputs": "No outputs yet",
+      "newWithTeresa": "New with Teresa"
     },
     "preview": {
       "useTemplate": "Use this template",
@@ -8510,7 +8512,19 @@
       "exported": "Exported successfully",
       "exportFailed": "Export failed",
       "archived": "Archived",
-      "archiveFailed": "Failed to archive"
+      "archiveFailed": "Failed to archive",
+      "exportBlocked": "Approve the artifact before exporting"
+    },
+    "sheets": {
+      "error": "Could not load sheets"
+    },
+    "onboarding": {
+      "title": "Your outputs land here",
+      "body": "Ask Teresa to generate a report or deck — it will appear here for review and export.",
+      "cta": "Generate with Teresa"
+    },
+    "error": {
+      "retry": "Retry"
     }
   },
   "rbHub": {
@@ -9032,5 +9046,10 @@
     "documents": "Documents",
     "tables": "Tables",
     "presentations": "Presentations"
+  },
+  "v8": {
+    "artifactRun": {
+      "openInOutputs": "View in Outputs"
+    }
   }
 }

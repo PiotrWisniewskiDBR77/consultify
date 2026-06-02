@@ -9162,7 +9162,9 @@
     "empty": {
       "templates": "Brak wzorców",
       "reports": "Brak raportów",
-      "presentations": "Brak prezentacji"
+      "presentations": "Brak prezentacji",
+      "noOutputs": "Brak wyników",
+      "newWithTeresa": "Nowe z Teresą"
     },
     "preview": {
       "useTemplate": "Użyj tego wzorca",
@@ -9172,7 +9174,19 @@
       "exported": "Wyeksportowano",
       "exportFailed": "Eksport nie powiódł się",
       "archived": "Zarchiwizowano",
-      "archiveFailed": "Archiwizacja nie powiodła się"
+      "archiveFailed": "Archiwizacja nie powiodła się",
+      "exportBlocked": "Zatwierdź artefakt przed eksportem"
+    },
+    "sheets": {
+      "error": "Nie można załadować arkuszy"
+    },
+    "onboarding": {
+      "title": "Tutaj lądują Twoje wyniki",
+      "body": "Poproś Teresę o raport lub prezentację — pojawi się tutaj do przeglądu i eksportu.",
+      "cta": "Wygeneruj z Teresą"
+    },
+    "error": {
+      "retry": "Spróbuj ponownie"
     }
   },
   "rbHub": {
@@ -10168,6 +10182,11 @@
       "subtitle": "Po szczegóły bezpieczeństwa specyficzne dla wdrożenia, przegląd prawny lub walkthrough architektury — skontaktuj się z nami przed procurement lub rolloutem.",
       "review": "Umów przegląd bezpieczeństwa",
       "walkthrough": "Zaplanuj walkthrough architektury"
+    }
+  },
+  "v8": {
+    "artifactRun": {
+      "openInOutputs": "Zobacz w Outputs"
     }
   }
 }

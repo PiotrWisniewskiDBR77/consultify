@@ -1936,7 +1936,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <RedirectWithTracking
               from={ROUTES.REPORTS.ROOT}
-              to={`${ROUTES.PRESENTATIONS}?tab=documents`}
+              to={`${ROUTES.PRESENTATIONS}?tab=all`}
               reason="reports_ui_moved_to_presentations"
             />
           }
@@ -1998,7 +1998,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <RedirectWithTracking
               from={ROUTES.REPORTS.MANAGEMENT}
-              to={`${ROUTES.PRESENTATIONS}?tab=documents`}
+              to={`${ROUTES.PRESENTATIONS}?tab=all`}
               reason="reports_management_deprecated"
             />
           }
