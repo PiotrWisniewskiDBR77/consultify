@@ -1115,10 +1115,11 @@ export async function getModel(modelId: string): Promise<any> {
 
 export async function listModels(orgId: string): Promise<any[]> {
   return ((await dbAll(
-    `SELECT id, name, description, project_id, initiative_id, currency, horizon_months, start_date, granularity, scenario, status, version, created_at, updated_at, source_statement_id, source_statement_pack_id
-     FROM financial_models
-     WHERE organization_id = ?
-     ORDER BY updated_at DESC
+    `SELECT fm.id, fm.name, fm.description, fm.project_id, fm.initiative_id, fm.currency, fm.horizon_months, fm.start_date, fm.granularity, fm.scenario, fm.status, fm.version, fm.created_at, fm.updated_at, fm.source_statement_id, fm.source_statement_pack_id,
+            (SELECT COUNT(*) FROM financial_model_events fme WHERE fme.model_id = fm.id AND fme.is_active = TRUE) AS event_count
+     FROM financial_models fm
+     WHERE fm.organization_id = ?
+     ORDER BY fm.updated_at DESC
      LIMIT 50`,
     [orgId]
   )) || []) as any[];

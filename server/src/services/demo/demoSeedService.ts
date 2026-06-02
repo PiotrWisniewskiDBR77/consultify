@@ -1,5 +1,6 @@
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import {
   type DemoLeaderTemplate,
   getAtelierToysDemoScenarios,
@@ -13,7 +14,6 @@ import {
 } from './atelierToysDemoTemplate.js';
 import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
 import { getDemoAnchorDate, materializeRelativeIso } from './demoRelativeDate.js';
-import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 
 export interface SeedDemoDatasetInput {
   organizationId: string;
@@ -1794,9 +1794,15 @@ async function upsertOrganizationContext(organizationId: string): Promise<void> 
             'EdTech / STEM learning-tools manufacturer founded in 1948 in Lyon, France. Atelier Toys designs and produces hands-on STEM kits (Atelier Core, Atelier Motion) and a digital learning platform (Atelier Digital), serving 1.2M+ subscribers across 4,000+ institutions in 45 countries. The 2015 "Ateliertoy Forward" programme shifted the company from a pure product manufacturer into an edtech platform with physical roots.',
         },
         { claimPath: 'profile.industry', value: 'EdTech Manufacturing (STEM learning tools)' },
-        { claimPath: 'profile.industrySubsector', value: 'STEM educational hardware & digital learning' },
+        {
+          claimPath: 'profile.industrySubsector',
+          value: 'STEM educational hardware & digital learning',
+        },
         { claimPath: 'profile.organizationType', value: 'Manufacturer / EdTech platform' },
-        { claimPath: 'profile.revenueModel', value: 'Hardware sales + recurring digital subscriptions' },
+        {
+          claimPath: 'profile.revenueModel',
+          value: 'Hardware sales + recurring digital subscriptions',
+        },
         { claimPath: 'profile.location', value: 'Lyon, France' },
         { claimPath: 'profile.foundingYear', value: 1948 },
         { claimPath: 'profile.companySize', value: '1,200 employees' },
@@ -1816,7 +1822,10 @@ async function upsertOrganizationContext(organizationId: string): Promise<void> 
             'Become the leading edtech platform with physical roots — the "Ateliertoy Forward" horizon of subscription-scale digital products built on a 75-year manufacturing heritage.',
         },
         { claimPath: 'strategic.growthStage', value: 'Scale-up (digital subscription expansion)' },
-        { claimPath: 'strategic.competitivePosition', value: 'Established global STEM manufacturer transforming into an edtech platform' },
+        {
+          claimPath: 'strategic.competitivePosition',
+          value: 'Established global STEM manufacturer transforming into an edtech platform',
+        },
         {
           claimPath: 'strategic.goals',
           value: [
@@ -3241,6 +3250,246 @@ async function upsertActivityLogs(
   }
 }
 
+/**
+ * Seeds the Atelier Toys "Transformation 2015 ROI" business-case financial model.
+ *
+ * This makes the Finance → Models tab non-empty on first demo load and tells the
+ * board-ready ROI story (NPV / ROI / payback) for the 3-year digitization program.
+ * The model is linked to the `line-3-digital-twin` initiative so it becomes the
+ * business-case source for the spine (Initiatives / Results) handoff.
+ *
+ * Gated to the demo dataset seed only; never runs for real organizations.
+ */
+async function upsertAtelierRoiFinancialModel(
+  organizationId: string,
+  userMap: UserMap,
+  projectMap: Record<string, string>,
+  initiativeMap: InitiativeMap,
+  locale: DemoLocale
+): Promise<void> {
+  if (!(await tableExists('financial_models'))) return;
+
+  const isPl = locale === 'pl';
+  const modelId = makeId(organizationId, 'financial-model', 'transformation-2015-roi');
+  const createdBy = userMap['hugo-bernard']?.id || userMap['antoine-laurent']?.id || null;
+  const projectId = projectMap['forward-pmo'] || null;
+  const initiativeId = initiativeMap['line-3-digital-twin'] || null;
+
+  const modelName = isPl
+    ? 'Atelier Toys — Transformacja 2015 (ROI)'
+    : 'Atelier Toys — Transformation 2015 ROI';
+  const modelDescription = isPl
+    ? 'Business case zarządu dla 3-letniego programu cyfryzacji: NPV, ROI i okres zwrotu.'
+    : 'Board business case for the 3-year digitization program: NPV, ROI, and payback.';
+
+  const hasModelInitiativeCol = await columnExists('financial_models', 'initiative_id');
+  const modelCols = [
+    'id',
+    'organization_id',
+    'project_id',
+    'name',
+    'description',
+    'currency',
+    'horizon_months',
+    'start_date',
+    'granularity',
+    'scenario',
+    'status',
+    'created_by',
+  ];
+  const modelVals: Array<string | number | null> = [
+    modelId,
+    organizationId,
+    projectId,
+    modelName,
+    modelDescription,
+    'PLN',
+    36,
+    '2015-01-01',
+    'annual',
+    'base',
+    'approved',
+    createdBy,
+  ];
+  if (hasModelInitiativeCol) {
+    modelCols.push('initiative_id');
+    modelVals.push(initiativeId);
+  }
+
+  await DbPromise.run(
+    `INSERT INTO financial_models (${modelCols.join(', ')})
+     VALUES (${modelCols.map(() => '?').join(', ')})
+     ON CONFLICT(id) DO UPDATE SET
+       name=excluded.name,
+       description=excluded.description,
+       status=excluded.status,
+       horizon_months=excluded.horizon_months`,
+    modelVals,
+    { fallback: false }
+  );
+
+  // Three economic events drive the business case (revenue uplift, capex, opex reduction).
+  const events: Array<{
+    slug: string;
+    type: string;
+    nameEn: string;
+    namePl: string;
+    amount: number;
+    periodStart: string;
+    recurrence: string;
+    growthRate: number;
+    cfClass: string;
+    sortOrder: number;
+  }> = [
+    {
+      slug: 'revenue-uplift',
+      type: 'revenue',
+      nameEn: 'Revenue uplift (digitized lines)',
+      namePl: 'Wzrost przychodów (zdigitalizowane linie)',
+      amount: 2_400_000,
+      periodStart: '2015-01-01',
+      recurrence: 'annual',
+      growthRate: 0.08,
+      cfClass: 'operating',
+      sortOrder: 1,
+    },
+    {
+      slug: 'digital-capex',
+      type: 'capex_purchase',
+      nameEn: 'Digital transformation capex',
+      namePl: 'Capex transformacji cyfrowej',
+      amount: 800_000,
+      periodStart: '2015-01-01',
+      recurrence: 'one_time',
+      growthRate: 0,
+      cfClass: 'investing',
+      sortOrder: 2,
+    },
+    {
+      slug: 'opex-reduction',
+      type: 'opex',
+      nameEn: 'OpEx reduction (automation)',
+      namePl: 'Redukcja OpEx (automatyzacja)',
+      amount: -400_000,
+      periodStart: '2016-01-01',
+      recurrence: 'annual',
+      growthRate: 0,
+      cfClass: 'operating',
+      sortOrder: 3,
+    },
+  ];
+
+  if (await tableExists('financial_model_events')) {
+    for (const event of events) {
+      const eventId = makeId(organizationId, 'financial-model-event', event.slug);
+      await DbPromise.run(
+        `INSERT INTO financial_model_events (
+           id, model_id, event_type, name, amount, currency, period_start,
+           recurrence, growth_rate, cf_classification, posting_rules, sort_order, is_active, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name=excluded.name,
+           amount=excluded.amount,
+           is_active=excluded.is_active`,
+        [
+          eventId,
+          modelId,
+          event.type,
+          isPl ? event.namePl : event.nameEn,
+          event.amount,
+          'PLN',
+          event.periodStart,
+          event.recurrence,
+          event.growthRate,
+          event.cfClass,
+          '{}',
+          event.sortOrder,
+          true,
+          createdBy,
+        ],
+        { fallback: true }
+      );
+    }
+  }
+
+  // Link the model's business-case ROI to the initiative via the economics analysis
+  // tables, so the spine (Initiatives / Results) surfaces NPV / ROI / payback.
+  if (
+    initiativeId &&
+    (await tableExists('digitization_analyses')) &&
+    (await tableExists('analysis_financials'))
+  ) {
+    const analysisId = makeId(organizationId, 'analysis', 'transformation-2015-roi');
+    const hasAnalysisType = await columnExists('digitization_analyses', 'analysis_type');
+    const analysisCols = [
+      'id',
+      'name',
+      'description',
+      'status',
+      'project_id',
+      'initiative_id',
+      'organization_id',
+      'created_by',
+    ];
+    const analysisVals: Array<string | number | null> = [
+      analysisId,
+      modelName,
+      modelDescription,
+      'completed',
+      projectId,
+      initiativeId,
+      organizationId,
+      createdBy,
+    ];
+    if (hasAnalysisType) {
+      analysisCols.push('analysis_type');
+      analysisVals.push('financial');
+    }
+    await DbPromise.run(
+      `INSERT INTO digitization_analyses (${analysisCols.join(', ')})
+       VALUES (${analysisCols.map(() => '?').join(', ')})
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, status=excluded.status, initiative_id=excluded.initiative_id`,
+      analysisVals,
+      { fallback: true }
+    );
+
+    await DbPromise.run(
+      `INSERT INTO analysis_financials (
+         id, analysis_id, initiative_id, organization_id,
+         initial_investment, annual_operating_cost, annual_cost_savings, annual_revenue_increase,
+         implementation_months, analysis_horizon_years, discount_rate,
+         npv, irr, payback_months, roi_percent, currency, last_calculated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(analysis_id) DO UPDATE SET
+         npv=excluded.npv,
+         irr=excluded.irr,
+         payback_months=excluded.payback_months,
+         roi_percent=excluded.roi_percent,
+         last_calculated_at=excluded.last_calculated_at`,
+      [
+        makeId(organizationId, 'analysis-financials', 'transformation-2015-roi'),
+        analysisId,
+        initiativeId,
+        organizationId,
+        800_000,
+        0,
+        400_000,
+        2_400_000,
+        12,
+        3,
+        10,
+        1_820_000,
+        34,
+        14,
+        218,
+        'PLN',
+        new Date().toISOString(),
+      ],
+      { fallback: true }
+    );
+  }
+}
+
 export async function seedAtelierToysDemoDataset(
   input: SeedDemoDatasetInput
 ): Promise<SeedDemoDatasetResult> {
@@ -3260,7 +3509,7 @@ export async function seedAtelierToysDemoDataset(
   await upsertTeams(organizationId, userMap, locale);
   const projectMap = await upsertProjects(organizationId, userMap, locale);
   await upsertProjectUsers(projectMap, userMap, locale);
-  const { taskCount, decisionCount } = await upsertInitiatives(
+  const { initiativeMap, taskCount, decisionCount } = await upsertInitiatives(
     organizationId,
     userMap,
     projectMap,
@@ -3282,6 +3531,7 @@ export async function seedAtelierToysDemoDataset(
     await upsertIdeaWorkspaces(organizationId, workspaceOwnerUserId, locale);
   }
   await upsertDrdAssessment(organizationId, userMap, projectMap, anchorDate, locale);
+  await upsertAtelierRoiFinancialModel(organizationId, userMap, projectMap, initiativeMap, locale);
   await upsertNotifications(organizationId, userMap, locale);
   await upsertActivityLogs(organizationId, userMap, locale);
 
@@ -3382,6 +3632,12 @@ export async function deleteDemoDatasetForOrganization(organizationId: string): 
     ['my_idea_maps', 'organization_id'],
     ['my_idea_edges', 'organization_id'],
     ['my_ideas', 'organization_id'],
+    ['financial_model_events', 'model_id', 'financial_models', 'organization_id'],
+    ['financial_model_outputs', 'model_id', 'financial_models', 'organization_id'],
+    ['financial_model_validations', 'model_id', 'financial_models', 'organization_id'],
+    ['financial_models', 'organization_id'],
+    ['analysis_financials', 'organization_id'],
+    ['digitization_analyses', 'organization_id'],
     ['initiatives', 'organization_id'],
     ['projects', 'organization_id'],
     ['users', 'organization_id'],

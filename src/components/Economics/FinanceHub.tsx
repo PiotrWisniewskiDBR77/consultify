@@ -83,6 +83,7 @@ import { getFinanceErrorMessage } from './financeErrorMap';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
 import { FinanceModelDocumentView } from './FinanceModelDocumentView';
+import { buildFinanceTeresaPrompt } from './financeModelLabels';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
   CANVAS_PADDING,
@@ -240,6 +241,7 @@ export const FinanceHub: React.FC = () => {
         valuation: 'valuation',
         investment: 'financial_analysis',
       };
+      const teresaPrompt = buildFinanceTeresaPrompt(row.kind, t);
       openChatWithContext({
         entityType: entityTypeMap[row.kind] || 'financial_model',
         entityId: row.id,
@@ -249,10 +251,11 @@ export const FinanceHub: React.FC = () => {
           status: row.status,
           tab: activeTab,
           organizationName: currentOrganization?.name,
+          teresaPrompt,
         },
       });
     },
-    [openChatWithContext, activeTab, currentOrganization?.name]
+    [openChatWithContext, activeTab, currentOrganization?.name, t]
   );
 
   const loadV8Dashboard = useCallback(async () => {
@@ -1525,6 +1528,10 @@ export const FinanceHub: React.FC = () => {
                 activeTab,
                 organizationName: currentOrganization?.name,
                 laneStatus: lane.activeLaneRun?.currentStep ?? 'idle',
+                teresaPrompt:
+                  activeTab === 'models' || activeTab === 'prediction'
+                    ? buildFinanceTeresaPrompt(activeTab, t)
+                    : undefined,
               },
             })
           }
@@ -2000,6 +2007,64 @@ export const FinanceHub: React.FC = () => {
           </div>
         </div>
       );
+    if (!activeDocumentId && activeTab === 'models' && filteredRows.length === 0)
+      return (
+        <div className="flex items-center justify-center h-full p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+            <div className="flex items-start gap-4">
+              <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
+                <Calculator size={20} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {t('finance.model.emptyTitle', 'Build your first financial model')}
+                </div>
+                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  {t(
+                    'finance.model.emptyBody',
+                    'A financial model turns a statement pack into a board-ready business case: P&L, balance sheet, cash flow, and the NPV / ROI / payback story for the client.'
+                  )}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModelModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-crimson-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-crimson-700"
+                  >
+                    <Plus size={14} />
+                    {t('finance.model.createModel', 'Create Financial Model')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openChatWithContext({
+                        entityType: 'finance_module',
+                        entityId: 'finance',
+                        entityName: t('finance.aiChat', 'Finance'),
+                        contextData: {
+                          activeTab,
+                          organizationName: currentOrganization?.name,
+                          teresaPrompt: buildFinanceTeresaPrompt('models', t),
+                        },
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white/70 dark:bg-white/[0.04] px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
+                  >
+                    <Sparkles size={14} />
+                    {t('finance.model.emptyAskTeresa', 'Ask Teresa to start')}
+                  </button>
+                </div>
+                <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t(
+                    'finance.model.emptyHint',
+                    'Seed a model from a statement pack or start from scratch — Teresa proposes the assumptions.'
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
     if (activeDocumentId && activeDocument) return fullView;
     if (viewMode === 'grid') return gridView;
     return tableWithPreview;
@@ -2007,6 +2072,10 @@ export const FinanceHub: React.FC = () => {
     loadingTab,
     loadError,
     t,
+    activeTab,
+    filteredRows.length,
+    currentOrganization?.name,
+    openChatWithContext,
     activeDocumentId,
     activeDocument,
     fullView,

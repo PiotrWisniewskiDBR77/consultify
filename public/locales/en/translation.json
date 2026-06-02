@@ -7162,6 +7162,18 @@
     },
     "model": {
       "title": "Financial Models",
+      "scenarioBase": "Base",
+      "scenarioOptimistic": "Optimistic",
+      "scenarioConservative": "Conservative",
+      "depthL1": "L1 (light)",
+      "depthL2": "L2 (standard)",
+      "depthL3": "L3 (deep)",
+      "seededFromPack": "Seeded statement pack",
+      "seededManuallyShort": "Manual",
+      "emptyTitle": "Build your first financial model",
+      "emptyBody": "A financial model turns a statement pack into a board-ready business case: P&L, balance sheet, cash flow, and the NPV / ROI / payback story for the client.",
+      "emptyAskTeresa": "Ask Teresa to start",
+      "emptyHint": "Seed a model from a statement pack or start from scratch — Teresa proposes the assumptions.",
       "createModel": "Create Financial Model",
       "modelName": "Model Name",
       "modelNamePlaceholder": "e.g. Initiative Alpha — 5yr projection",
@@ -7237,7 +7249,13 @@
       "source": "Source",
       "method": "Method",
       "start": "Start",
-      "period": "Period"
+      "period": "Period",
+      "variants": "Variants",
+      "analyticalDepth": "Analytical depth"
+    },
+    "teresa": {
+      "explainModel": "Explain this financial model: its assumptions, the key drivers, and what the NPV/ROI/payback results mean for the client.",
+      "explainEntity": "Explain this financial deliverable: its assumptions, key drivers, and what the results mean for the client."
     },
     "units": {
       "mo": "mo",

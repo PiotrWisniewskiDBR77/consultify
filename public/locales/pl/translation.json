@@ -7681,6 +7681,18 @@
     },
     "model": {
       "title": "Modele finansowe",
+      "scenarioBase": "Bazowy",
+      "scenarioOptimistic": "Optymistyczny",
+      "scenarioConservative": "Konserwatywny",
+      "depthL1": "L1 (podstawowy)",
+      "depthL2": "L2 (standardowy)",
+      "depthL3": "L3 (zaawansowany)",
+      "seededFromPack": "Z pakietu sprawozdań",
+      "seededManuallyShort": "Ręcznie",
+      "emptyTitle": "Zbuduj swój pierwszy model finansowy",
+      "emptyBody": "Model finansowy zamienia pakiet sprawozdań w gotowy dla zarządu business case: rachunek wyników, bilans, przepływy pieniężne oraz historię NPV / ROI / okresu zwrotu dla klienta.",
+      "emptyAskTeresa": "Poproś Teresę o start",
+      "emptyHint": "Utwórz model z pakietu sprawozdań lub od zera — Teresa zaproponuje założenia.",
       "createModel": "Utwórz model finansowy",
       "modelName": "Nazwa modelu",
       "modelNamePlaceholder": "np. Inicjatywa Alpha — prognoza 5-letnia",
@@ -7756,7 +7768,13 @@
       "source": "Źródło",
       "method": "Metoda",
       "start": "Start",
-      "period": "Okres"
+      "period": "Okres",
+      "variants": "Warianty",
+      "analyticalDepth": "Głębokość analizy"
+    },
+    "teresa": {
+      "explainModel": "Wyjaśnij ten model finansowy: jego założenia, kluczowe czynniki oraz co wyniki NPV/ROI/okres zwrotu oznaczają dla klienta.",
+      "explainEntity": "Wyjaśnij ten materiał finansowy: jego założenia, kluczowe czynniki oraz co wyniki oznaczają dla klienta."
     },
     "units": {
       "mo": "mies.",
