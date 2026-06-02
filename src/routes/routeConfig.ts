@@ -330,7 +330,10 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.FULL_STEP1_CYBERSECURITY]: ROUTES.ASSESSMENT.DRD,
   [AppView.FULL_STEP1_AI]: ROUTES.ASSESSMENT.DRD,
   [AppView.FULL_STEP2_INITIATIVES]: ROUTES.INITIATIVES,
-  [AppView.FULL_STEP3_ROADMAP]: ROUTES.ROADMAP,
+  // Module 05: /roadmap is retired — the Portfolio Timeline tab covers the
+  // roadmap use case. Map legacy navigate() calls to the Portfolio hub so they
+  // land safely instead of on the deprecated @ts-nocheck FullRoadmapView.
+  [AppView.FULL_STEP3_ROADMAP]: ROUTES.PORTFOLIO,
   [AppView.FULL_STEP4_ROI]: ROUTES.ROI,
   [AppView.ECONOMICS]: ROUTES.FINANCE,
   [AppView.FULL_STEP5_EXECUTION]: ROUTES.EXECUTION,

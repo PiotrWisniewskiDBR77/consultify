@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   CheckSquare,
   ChevronRight,
+  ClipboardList,
   Clock,
   DollarSign,
   ExternalLink,
@@ -486,6 +487,41 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           >
             {priority}
           </span>
+          {/* Spine source chip — Insights/Tools → Initiatives provenance */}
+          {(() => {
+            const src = String(initiative?.sourceType || '').toLowerCase();
+            if (!src) return null;
+            const isInterview =
+              src === 'interview' || src === 'interview_insight' || src === 'insight';
+            const isTool =
+              src === 'tool' || src === 'tool_session' || src === 'idea' || src === 'assessment';
+            if (!isInterview && !isTool) return null;
+            const label = isInterview
+              ? t('initiatives.source.interview', 'From Interview')
+              : t('initiatives.source.tool', 'From Assessment');
+            const sid = initiative?.sourceId;
+            const clickable = !!sid;
+            return (
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => {
+                  if (!sid) return;
+                  if (isInterview) navigate(`/interview?insightId=${sid}`);
+                  else navigate(`/my-work?tab=ideas&sessionId=${sid}`);
+                }}
+                title={label}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${
+                  isInterview
+                    ? 'border-emerald-300/60 text-emerald-600 dark:border-emerald-500/30 dark:text-emerald-400'
+                    : 'border-crimson-200/70 text-crimson-600 dark:border-crimson-500/30 dark:text-crimson-400'
+                } ${clickable ? 'hover:bg-slate-50 dark:hover:bg-white/5' : 'cursor-default'}`}
+              >
+                {isInterview ? <ClipboardList size={10} /> : <Sparkles size={10} />}
+                {label}
+              </button>
+            );
+          })()}
           {/* Quick status actions */}
           {statusActions
             .filter((a) => a.variant === 'primary')

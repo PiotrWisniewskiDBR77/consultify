@@ -1,12 +1,13 @@
 // @ts-nocheck
+// DEAD — /roadmap is redirected to /portfolio (see src/routes/AppRoutes.tsx).
+// Do NOT import this view; it is no longer mounted on any route. Scheduled for
+// deletion in the Wave-2 cleanup once the redirect has proven stable.
 /**
  * FullRoadmapView
  *
  * @deprecated This view is replaced by PortfolioView (AppView.PORTFOLIO_ROADMAP)
  * which provides a unified Portfolio & Roadmap experience with List, Kanban,
- * Timeline, and Matrix views.
- *
- * Kept for backward compatibility and AI-assisted roadmap generation features.
+ * Timeline, and Matrix views. /roadmap now redirects to /portfolio.
  */
 
 import React, { useCallback, useEffect } from 'react';

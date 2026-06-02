@@ -1652,6 +1652,64 @@
     }
   },
   "initiatives": {
+    "roi": {
+      "title": "Realizacja wartości i ROI",
+      "subtitle": "Analizy ekonomiczne powiązane z inicjatywami",
+      "kpi": {
+        "roi": "ROI portfela",
+        "npv": "Wartość bieżąca netto (NPV)",
+        "payback": "Okres zwrotu",
+        "analyses": "Powiązane analizy"
+      },
+      "table": {
+        "title": "ROI według analizy",
+        "analysis": "Analiza",
+        "initiative": "Inicjatywa",
+        "npv": "NPV",
+        "roi": "ROI %",
+        "status": "Status",
+        "unlinked": "Niepowiązana"
+      },
+      "tabs": {
+        "overview": "Przegląd",
+        "compare": "Porównanie scenariuszy"
+      },
+      "compare": {
+        "title": "Porównanie scenariuszy",
+        "hint": "Wybierz co najmniej dwie analizy, aby porównać NPV i ROI.",
+        "best": "Najlepsze NPV",
+        "run": "Porównaj wybrane",
+        "empty": "Wybierz powyżej co najmniej dwie analizy do porównania."
+      },
+      "empty": {
+        "title": "Brak analiz ekonomicznych",
+        "description": "Powiąż inicjatywę z analizą ekonomiczną, aby zobaczyć tu ROI, NPV i okres zwrotu.",
+        "cta": "Przejdź do portfela"
+      },
+      "error": {
+        "title": "Nie udało się wczytać danych ROI",
+        "message": "Nie udało się połączyć z usługą ekonomiczną. Spróbuj ponownie."
+      },
+      "teresa": {
+        "hint": "Poproś Teresę o model ROI dla konkretnej inicjatywy."
+      },
+      "months": "{{count}} mies."
+    },
+    "generate": {
+      "button": "Generuj z Teresą",
+      "running": "Generowanie…",
+      "success": "Rozpoczęto generowanie inicjatyw",
+      "error": "Nie udało się wygenerować inicjatyw"
+    },
+    "source": {
+      "interview": "Z wywiadu",
+      "tool": "Z oceny",
+      "assessment": "Z oceny",
+      "interview_insight": "Z wywiadu"
+    },
+    "cta": {
+      "results": "Zobacz wyniki"
+    },
     "preview": {
       "financialAnalysis": "Analiza finansowa"
     },

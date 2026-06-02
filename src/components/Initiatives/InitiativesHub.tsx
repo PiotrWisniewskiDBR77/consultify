@@ -226,6 +226,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -1480,7 +1481,62 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  const rightControls = <div className="flex items-center gap-2">{scopeToggle}</div>;
+  // Module 05: AI initiative generation (Teresa) — real mount at
+  // /api/initiative-generator (promoted from the disabled stub). On success we
+  // refresh the portfolio so the new draft surfaces.
+  const handleGenerateWithTeresa = useCallback(async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    try {
+      await Api.generateInitiatives({
+        source: 'teresa',
+        context: { projectId: currentProjectId || undefined },
+      });
+      toast.success(t('initiatives.generate.success', 'Initiative generation started'));
+      await fetchData(true);
+    } catch {
+      toast.error(t('initiatives.generate.error', "Couldn't generate initiatives"));
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [isGenerating, currentProjectId, t, fetchData]);
+
+  // Module 05 spine: Initiatives → Results. Surface a "View Results" CTA once any
+  // initiative is in execution (Results = Benefits Realization at /benefits).
+  const hasExecutingInitiative = useMemo(
+    () => allInitiatives.some((i) => i.status === InitiativeStatus.EXECUTING),
+    [allInitiatives]
+  );
+
+  const rightControls = (
+    <div className="flex items-center gap-2">
+      {!isPilotParticipant && (
+        <button
+          type="button"
+          onClick={handleGenerateWithTeresa}
+          disabled={isGenerating}
+          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-crimson-200/70 dark:border-crimson-500/30 px-3 text-[11px] font-medium text-crimson-700 dark:text-crimson-300 transition-colors hover:bg-crimson-50 dark:hover:bg-crimson-500/10 disabled:opacity-50"
+          title={t('initiatives.roi.teresa.hint', 'Ask Teresa to model ROI')}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {isGenerating
+            ? t('initiatives.generate.running', 'Generating…')
+            : t('initiatives.generate.button', 'Generate with Teresa')}
+        </button>
+      )}
+      {hasExecutingInitiative && (
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.BENEFITS)}
+          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200/70 dark:border-white/[0.06] px-3 text-[11px] font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-white/60 dark:hover:bg-white/[0.06]"
+        >
+          <BarChart3 className="h-3.5 w-3.5" />
+          {t('initiatives.cta.results', 'View Results')}
+        </button>
+      )}
+      {scopeToggle}
+    </div>
+  );
 
   const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
     (sum, chain) =>

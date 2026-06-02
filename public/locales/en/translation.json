@@ -2239,6 +2239,64 @@
     }
   },
   "initiatives": {
+    "roi": {
+      "title": "Value Realization & ROI",
+      "subtitle": "Economic analyses linked to your initiatives",
+      "kpi": {
+        "roi": "Portfolio ROI",
+        "npv": "Net Present Value",
+        "payback": "Payback Period",
+        "analyses": "Linked Analyses"
+      },
+      "table": {
+        "title": "ROI by analysis",
+        "analysis": "Analysis",
+        "initiative": "Initiative",
+        "npv": "NPV",
+        "roi": "ROI %",
+        "status": "Status",
+        "unlinked": "Not linked"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "compare": "Scenario comparison"
+      },
+      "compare": {
+        "title": "Scenario comparison",
+        "hint": "Pick two or more analyses to compare NPV and ROI side by side.",
+        "best": "Best NPV",
+        "run": "Compare selected",
+        "empty": "Select at least two analyses above to compare."
+      },
+      "empty": {
+        "title": "No economic analyses yet",
+        "description": "Link an initiative to an Economics analysis to see ROI, NPV and payback here.",
+        "cta": "Go to Portfolio"
+      },
+      "error": {
+        "title": "Couldn't load ROI data",
+        "message": "We couldn't reach the economics service. Please try again."
+      },
+      "teresa": {
+        "hint": "Ask Teresa to model the ROI for a specific initiative."
+      },
+      "months": "{{count}} months"
+    },
+    "generate": {
+      "button": "Generate with Teresa",
+      "running": "Generating…",
+      "success": "Initiative generation started",
+      "error": "Couldn't generate initiatives"
+    },
+    "source": {
+      "interview": "From Interview",
+      "tool": "From Assessment",
+      "assessment": "From Assessment",
+      "interview_insight": "From Interview"
+    },
+    "cta": {
+      "results": "View Results"
+    },
     "preview": {
       "financialAnalysis": "Financial Analysis"
     },

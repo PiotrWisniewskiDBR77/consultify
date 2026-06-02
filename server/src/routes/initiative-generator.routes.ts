@@ -38,10 +38,21 @@ router.post(
     const userId = req.user?.id;
     const { source, context, assessmentId } = req.body;
     const id = uuidv4();
+    // Portable timestamp (ISO string) so the INSERT works on both SQLite and
+    // Postgres — `datetime('now')` is SQLite-only and breaks on Postgres.
+    const createdAt = new Date().toISOString();
     await dbRun(
       `INSERT INTO generated_initiatives (id, organization_id, title, description, source, priority, status, assessment_id, created_by, created_at)
-    VALUES (?, ?, 'AI Generated Initiative', ?, ?, 'medium', 'draft', ?, ?, datetime('now'))`,
-      [id, orgId, JSON.stringify(context || {}), source || 'manual', assessmentId, userId]
+    VALUES (?, ?, 'AI Generated Initiative', ?, ?, 'medium', 'draft', ?, ?, ?)`,
+      [
+        id,
+        orgId,
+        JSON.stringify(context || {}),
+        source || 'manual',
+        assessmentId ?? null,
+        userId ?? null,
+        createdAt,
+      ]
     );
     res.json({ success: true, id, message: 'Initiative generation started' });
   })

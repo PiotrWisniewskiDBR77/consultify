@@ -8843,6 +8843,61 @@ export const Api = {
   },
 
   /**
+   * Module 05 (Inicjatywy) — alias for the economics analyses list, used by the
+   * Value Realization & ROI dashboard (FullROIView). Returns analyses joined with
+   * `analysis_financials` (npv, roi_percent) and the linked initiative name.
+   */
+  getEconomicsAnalyses: async (filters?: {
+    status?: string;
+    projectId?: string;
+    initiativeId?: string;
+    search?: string;
+  }): Promise<{ analyses: any[]; total: number }> => {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
+      });
+    }
+    const url = `${API_URL}/economics/analyses${params.toString() ? `?${params.toString()}` : ''}`;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to load analyses');
+  },
+
+  // ============================================
+  // INITIATIVE GENERATOR API (Module 05 — Inicjatywy)
+  // Real mount at /api/initiative-generator (promoted from disabled stub).
+  // ============================================
+
+  /**
+   * List AI-generated initiative drafts for the current organization.
+   */
+  getGeneratedInitiatives: async (): Promise<any[]> => {
+    const res = await fetchWithRetry(`${API_URL}/initiative-generator`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load generated initiatives');
+  },
+
+  /**
+   * Trigger AI generation of an initiative draft (Teresa).
+   */
+  generateInitiatives: async (payload: {
+    source?: string;
+    context?: Record<string, unknown>;
+    assessmentId?: string;
+  }): Promise<{ success: boolean; id: string; message: string }> => {
+    const res = await fetchWithRetry(`${API_URL}/initiative-generator/generate`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
+    });
+    return handleResponse(res, 'Failed to generate initiatives');
+  },
+
+  /**
    * Create new digitization analysis
    */
   createDigitizationAnalysis: async (data: {

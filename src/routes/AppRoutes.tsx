@@ -86,9 +86,9 @@ const ResultsHub = React.lazy(() =>
 const FullInitiativesView = React.lazy(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
 );
-const FullRoadmapView = React.lazy(() =>
-  import('@/views/FullRoadmapView').then((m) => ({ default: m.FullRoadmapView }))
-);
+// FullRoadmapView (deprecated, @ts-nocheck) is intentionally NOT imported here:
+// /roadmap now redirects to /portfolio (see route below). The file is kept for
+// Wave-2 cleanup only.
 const PortfolioView = React.lazy(() => import('@/views/PortfolioView'));
 const FullROIView = React.lazy(() =>
   import('@/views/FullROIView').then((m) => ({ default: m.FullROIView }))
@@ -1760,23 +1760,12 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        <Route
-          path={ROUTES.ROADMAP}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Roadmap']}>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Initiatives"
-              >
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <FullRoadmapView />
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
-          }
-        />
+        {/*
+          Module 05: /roadmap is retired. The deprecated @ts-nocheck FullRoadmapView
+          is no longer reachable; the Portfolio hub's Timeline tab covers the roadmap
+          use case. Redirect to /portfolio so old links/bookmarks land safely.
+        */}
+        <Route path={ROUTES.ROADMAP} element={<Navigate to={ROUTES.PORTFOLIO} replace />} />
         <Route
           path={ROUTES.PORTFOLIO}
           element={

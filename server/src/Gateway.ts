@@ -754,7 +754,17 @@ export class ApiGateway {
         'externalAssessmentsRoutes'
       );
       app.use('/api/generic-reports', genericReportsRoutes);
-      mountStub('/api/initiatives', initiativeGeneratorRoutes, 'initiativeGeneratorRoutes');
+      // Module 05 Inicjatywy — AI initiative generator. Promoted off `mountStub`
+      // to a real mount: the prior path `/api/initiatives` collided with the PMO
+      // initiatives router (mounted above) AND was production-disabled, so AI
+      // generation silently 503'd. Now mounted at a dedicated, non-colliding path
+      // backed by the `generated_initiatives` table (migration 20260603).
+      app.use(
+        '/api/initiative-generator',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        initiativeGeneratorRoutes
+      );
       app.use('/api/assessments', assessmentHubRoutes);
       app.use('/api/assessment-reports', assessmentReportsRoutes);
       app.use('/api/assessment-level-attachments', assessmentLevelAttachmentsRoutes);
