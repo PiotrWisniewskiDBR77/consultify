@@ -9,6 +9,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { Api } from '@/services/api';
+
 const STORAGE_KEY = 'consultify.mywork.ideas.recents';
 export const MAX_RECENT_IDEAS = 8;
 
@@ -66,6 +68,10 @@ export function useRecentIdeas(): UseRecentIdeasReturn {
       const next = computeNextRecents(prev, id);
       writeRecents(next);
       return next;
+    });
+    // Best-effort server stamp (for future cross-device recents); never blocks.
+    Api.recordIdeaOpened(id).catch(() => {
+      /* offline / pre-migration: localStorage remains the source for the rail */
     });
   }, []);
 

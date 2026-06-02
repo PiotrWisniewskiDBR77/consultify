@@ -4092,18 +4092,94 @@ export const Api = {
   // ==========================================
   // MY WORK (V2): MY IDEAS (T009)
   // ==========================================
-  getMyIdeas: async (filters?: { q?: string; tag?: string; limit?: number }): Promise<any[]> => {
+  getMyIdeas: async (filters?: {
+    q?: string;
+    tag?: string;
+    limit?: number;
+    folder?: string;
+    favoriteOnly?: boolean;
+  }): Promise<any[]> => {
     let url = `${API_URL}/my-work/my-ideas`;
     if (filters) {
       const params = new URLSearchParams();
       if (filters.q) params.append('q', filters.q);
       if (filters.tag) params.append('tag', filters.tag);
       if (filters.limit) params.append('limit', String(filters.limit));
+      if (filters.folder) params.append('folder', filters.folder);
+      if (filters.favoriteOnly) params.append('favoriteOnly', '1');
       if (params.toString()) url += `?${params.toString()}`;
     }
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch ideas');
     return res.json();
+  },
+
+  // M2 home-shell: server-backed favorites / recents / folders.
+  setIdeaFavorite: async (id: string, isFavorite: boolean): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-ideas/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ isFavorite }),
+    });
+    await handleResponse(res, 'Failed to update favorite');
+  },
+
+  setIdeaFolder: async (id: string, folderId: string | null): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-ideas/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ folderId }),
+    });
+    await handleResponse(res, 'Failed to move idea');
+  },
+
+  recordIdeaOpened: async (id: string): Promise<void> => {
+    // Best-effort recents stamp; never block opening on this.
+    try {
+      await fetchWithRetry(`${API_URL}/my-work/my-ideas/${id}/opened`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
+    } catch {
+      /* ignore */
+    }
+  },
+
+  getMyIdeaFolders: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/my-work/my-idea-folders`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch folders');
+    return res.json();
+  },
+
+  createMyIdeaFolder: async (payload: {
+    name: string;
+    description?: string;
+    color?: string;
+    parentFolderId?: string | null;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-idea-folders`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create folder');
+  },
+
+  updateMyIdeaFolder: async (folderId: string, updates: any): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-idea-folders/${folderId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    await handleResponse(res, 'Failed to update folder');
+  },
+
+  deleteMyIdeaFolder: async (folderId: string): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-idea-folders/${folderId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(res, 'Failed to delete folder');
   },
 
   suggestMyIdeas: async (q?: string, limit = 5): Promise<any[]> => {
@@ -15617,6 +15693,7 @@ export const Api = {
   },
   getNotebookPages: async (filters?: {
     projectId?: string | null;
+    notebookId?: string | null;
     status?: string;
     pinned?: boolean;
     sort?: string;
@@ -15629,6 +15706,7 @@ export const Api = {
       if (filters) {
         const params = new URLSearchParams();
         if (filters.projectId) params.append('projectId', filters.projectId);
+        if (filters.notebookId) params.append('notebookId', filters.notebookId);
         if (filters.status) params.append('status', filters.status);
         if (filters.pinned !== undefined) params.append('pinned', filters.pinned ? '1' : '0');
         if (filters.sort) params.append('sort', filters.sort);
@@ -15641,6 +15719,12 @@ export const Api = {
       if (!res.ok) throw new Error('Failed to fetch notebook pages');
       return res.json();
     };
+
+    // notebookId scoping lives on the legacy container router only; force legacy
+    // so pages stay scoped to their notebook regardless of V8 mode.
+    if (filters?.notebookId) {
+      return fetchLegacy();
+    }
 
     if (Api.shouldPreferLegacyMyWorkNotebook()) {
       return fetchLegacy();
@@ -15656,6 +15740,64 @@ export const Api = {
         Api.lockLegacyMyWorkNotebookMode();
       }
       return fetchLegacy();
+    }
+  },
+
+  // ── Notebook containers (Notatniki, L1) ──────────────────────────────────
+  getNotebooks: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch notebooks');
+    const data = await res.json();
+    return Array.isArray(data?.notebooks) ? data.notebooks : Array.isArray(data) ? data : [];
+  },
+
+  getNotebook: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks/${encodeURIComponent(id)}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch notebook');
+  },
+
+  createNotebook: async (input: {
+    title: string;
+    icon?: string | null;
+    scope?: 'personal' | 'team';
+    teamId?: string | null;
+    contextSharing?: 'private' | 'org_context';
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    });
+    return handleResponse(res, 'Failed to create notebook');
+  },
+
+  updateNotebook: async (id: string, updates: Record<string, any>): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    return handleResponse(res, 'Failed to update notebook');
+  },
+
+  deleteNotebook: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      let detail: any = null;
+      try {
+        detail = await res.json();
+      } catch {
+        /* ignore */
+      }
+      const err: any = new Error(detail?.error || 'Failed to delete notebook');
+      err.status = res.status;
+      err.pageCount = detail?.pageCount;
+      throw err;
     }
   },
 
@@ -15811,6 +15953,7 @@ export const Api = {
   createNotebookPage: async (page: {
     title?: string;
     projectId?: string | null;
+    notebookId?: string | null;
     visibility?: string;
     tags?: string[];
     contentJson?: any;
@@ -15827,6 +15970,12 @@ export const Api = {
       });
       return handleResponse(res, 'Failed to create notebook page');
     };
+
+    // notebook_id assignment lives on the legacy container router; force legacy
+    // when a target notebook is specified so the page lands in it.
+    if (page.notebookId) {
+      return createLegacy();
+    }
 
     if (Api.shouldPreferLegacyMyWorkNotebook()) {
       return createLegacy();

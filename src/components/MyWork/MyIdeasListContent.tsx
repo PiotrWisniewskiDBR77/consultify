@@ -361,7 +361,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }, [searchQuery, t]);
 
   const { recentIds, record: recordRecent } = useRecentIdeas();
-  const { isFavorite, toggleFavorite } = useFavoriteIdeas();
+  const { isFavorite, toggleFavorite, hydrateFromServer } = useFavoriteIdeas();
   const [showStarredOnly, setShowStarredOnly] = useState(false);
 
   // Record opens (for the "Recently opened" rail), then delegate to the host.
@@ -394,6 +394,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   useEffect(() => {
     fetchIdeas();
   }, [fetchIdeas, refreshTrigger]);
+
+  // Seed local favorites from server-side `isFavorite` (cross-device). Union-merge
+  // (see useFavoriteIdeas) so this is safe before the M2 migration is applied.
+  useEffect(() => {
+    hydrateFromServer(
+      ideas.filter((i: any) => i?.isFavorite).map((i: any) => String(i.id))
+    );
+  }, [ideas, hydrateFromServer]);
 
   useEffect(() => {
     const counts = {

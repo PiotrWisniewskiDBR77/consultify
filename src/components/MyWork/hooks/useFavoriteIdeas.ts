@@ -8,6 +8,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { Api } from '@/services/api';
+
 const STORAGE_KEY = 'consultify.mywork.ideas.favorites';
 
 /** Pure toggle: add `id` if absent, remove if present. Exported for testing. */
@@ -41,6 +43,8 @@ export interface UseFavoriteIdeasReturn {
   favoriteIds: Set<string>;
   isFavorite: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
+  /** Merge server-side favorites (from the ideas list) into local state. */
+  hydrateFromServer: (serverFavoriteIds: string[]) => void;
 }
 
 export function useFavoriteIdeas(): UseFavoriteIdeasReturn {
@@ -59,16 +63,39 @@ export function useFavoriteIdeas(): UseFavoriteIdeasReturn {
 
   const isFavorite = useCallback((id: string) => favoriteIds.has(id), [favoriteIds]);
 
-  const toggleFavorite = useCallback((id: string) => {
-    if (!id) return;
+  const toggleFavorite = useCallback(
+    (id: string) => {
+      if (!id) return;
+      const willBeFavorite = !favoriteIds.has(id);
+      setIds((prev) => {
+        const next = toggleFavoriteId(prev, id);
+        writeFavorites(next);
+        return next;
+      });
+      // Persist server-side (best-effort; localStorage already gave instant UX).
+      Api.setIdeaFavorite(id, willBeFavorite).catch(() => {
+        /* offline / pre-migration: localStorage remains the fallback */
+      });
+    },
+    [favoriteIds]
+  );
+
+  // Union-merge server favorites into local state. UNION (not replace) on
+  // purpose: before the M2 migration lands the server reports no favorites, so
+  // replacing would wipe the user's local stars. Tradeoff: an un-star done on
+  // another device won't propagate here until server-truth replace is enabled.
+  const hydrateFromServer = useCallback((serverFavoriteIds: string[]) => {
+    const incoming = (serverFavoriteIds || []).filter(Boolean);
+    if (incoming.length === 0) return;
     setIds((prev) => {
-      const next = toggleFavoriteId(prev, id);
-      writeFavorites(next);
-      return next;
+      const merged = Array.from(new Set([...prev, ...incoming]));
+      if (merged.length === prev.length) return prev;
+      writeFavorites(merged);
+      return merged;
     });
   }, []);
 
-  return { favoriteIds, isFavorite, toggleFavorite };
+  return { favoriteIds, isFavorite, toggleFavorite, hydrateFromServer };
 }
 
 export default useFavoriteIdeas;
