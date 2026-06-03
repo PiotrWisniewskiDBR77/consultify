@@ -47,6 +47,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 // ==========================================
@@ -768,7 +769,7 @@ export const InitiativeTemplateEditor: React.FC<InitiativeTemplateEditorProps> =
       >
         <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
         <div className="relative ml-auto w-full max-w-4xl bg-white dark:bg-navy-900 shadow-2xl flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          <LoadingState variant="spinner" />
         </div>
       </motion.div>
     );

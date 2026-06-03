@@ -25,6 +25,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 interface Provider {
   id: string;
   name: string;
@@ -178,11 +180,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw size={24} className="animate-spin text-primary-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   const enabledProviders = providers.filter((p) => p.is_enabled_for_org);

@@ -19,7 +19,6 @@ import {
   FileText,
   GripVertical,
   Info,
-  Loader2,
   Plus,
   Search,
   Shield,
@@ -29,6 +28,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { PromptAssistantApi } from '../../services/api/promptAssistant.api';
 
@@ -224,11 +225,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
   };
 
   if (isLoading) {
-    return (
-      <div className={`flex items-center justify-center h-64 ${className}`}>
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className={`h-64 ${className}`.trim()} />;
   }
 
   return (

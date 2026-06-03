@@ -33,6 +33,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { ErrorState, LoadingState, StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 
 interface AuditLogEntry {
@@ -215,29 +218,11 @@ export function AuditLogViewer() {
     }
     switch (riskLevel) {
       case 'HIGH':
-        return (
-          <span
-            className={`${base} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400`}
-          >
-            HIGH
-          </span>
-        );
+        return <StatusChip label="HIGH" tone="danger" />;
       case 'MEDIUM':
-        return (
-          <span
-            className={`${base} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`}
-          >
-            MEDIUM
-          </span>
-        );
+        return <StatusChip label="MEDIUM" tone="warning" />;
       default:
-        return (
-          <span
-            className={`${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`}
-          >
-            LOW
-          </span>
-        );
+        return <StatusChip label="LOW" tone="success" />;
     }
   };
 
@@ -494,26 +479,15 @@ export function AuditLogViewer() {
         {/* Logs Table */}
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 size={32} className="animate-spin text-primary-500" />
-            </div>
+            <LoadingState variant="spinner" className="py-20" />
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-20 text-rose-500">
-              <AlertTriangle size={32} className="mb-2" />
-              <p>{error}</p>
-              <button
-                onClick={fetchLogs}
-                className="mt-4 px-4 py-2 bg-rose-100 dark:bg-rose-900/20 text-rose-600 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900/30 transition-colors"
-              >
-                Retry
-              </button>
-            </div>
+            <ErrorState message={error} retry={fetchLogs} />
           ) : logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
-              <FileText size={48} className="mb-4 opacity-50" />
-              <p>No audit logs found</p>
-              <p className="text-sm">Try adjusting your filters</p>
-            </div>
+            <EmptyState
+              icon={<FileText />}
+              title="No audit logs found"
+              description="Try adjusting your filters"
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

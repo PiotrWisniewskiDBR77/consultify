@@ -36,6 +36,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import { LoadingState } from '@/components/ui/primitives';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import api from '../../services/api';
@@ -490,9 +491,7 @@ export function PromptManagementUI() {
         {/* Prompt List */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 size={24} className="animate-spin text-primary-500" />
-            </div>
+            <LoadingState variant="spinner" className="py-10" />
           ) : error ? (
             <div className="p-4">
               <DegradedState title="Prompts unavailable" description={error} />
@@ -994,9 +993,7 @@ export function PromptManagementUI() {
                     </h3>
                     <div className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg">
                       {previewLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 size={24} className="animate-spin text-primary-500" />
-                        </div>
+                        <LoadingState variant="spinner" className="py-8" />
                       ) : (
                         <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
                           {previewResult || 'No result'}

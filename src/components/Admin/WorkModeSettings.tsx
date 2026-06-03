@@ -14,6 +14,8 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { InfoButton } from '../shared/InfoButton';
 
 /**
@@ -218,9 +220,7 @@ export const WorkModeSettings: React.FC = () => {
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        </div>
+        <LoadingState variant="spinner" />
       </div>
     );
   }

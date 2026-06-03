@@ -30,6 +30,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { Api, getHeaders } from '../../../services/api';
+import { LoadingState } from '../../ui/primitives';
 
 // ============================================
 // Types
@@ -800,9 +801,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         {/* Table */}
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-            </div>
+            <LoadingState variant="spinner" />
           ) : filteredReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 mb-3">

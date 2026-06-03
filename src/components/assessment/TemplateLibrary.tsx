@@ -25,6 +25,8 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { DRDAxis, InitiativeTemplate, TemplateCategory } from '../../types';
+import { EmptyState } from '../ui/composed/EmptyState';
+import { LoadingState } from '../ui/primitives';
 
 interface TemplateLibraryProps {
   templates: InitiativeTemplate[];
@@ -178,14 +180,9 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
       {/* Template Grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LoadingState variant="spinner" />
       ) : filteredTemplates.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-          <FileText size={48} className="mx-auto mb-3 opacity-30" />
-          <p>No templates found matching your criteria</p>
-        </div>
+        <EmptyState icon={<FileText />} title="No templates found matching your criteria" />
       ) : (
         <div className="space-y-3">
           {Object.entries(groupedTemplates).map(([category, categoryTemplates]) => {

@@ -6,7 +6,6 @@
  */
 
 import {
-  AlertCircle,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -18,6 +17,9 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import { EmptyState } from '../../ui/composed/EmptyState';
+import { ErrorState, LoadingState } from '../../ui/primitives';
 
 interface Version {
   version: number;
@@ -233,24 +235,15 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                 </p>
               </div>
             ) : loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-              </div>
+              <LoadingState variant="spinner" />
             ) : error ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <AlertCircle className="w-12 h-12 text-rose-400 mb-3" />
-                <p className="text-slate-500 dark:text-slate-400">{error}</p>
-              </div>
+              <ErrorState message={error} />
             ) : versions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <FileText className="w-12 h-12 text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-3" />
-                <p className="text-slate-500 dark:text-slate-400 font-medium">
-                  Brak zapisanych wersji
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-                  Historia pojawi się po zapisaniu zmian
-                </p>
-              </div>
+              <EmptyState
+                icon={<FileText />}
+                title="Brak zapisanych wersji"
+                description="Historia pojawi się po zapisaniu zmian"
+              />
             ) : (
               <div className="relative">
                 {/* Timeline line */}

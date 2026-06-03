@@ -23,6 +23,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 // ============================================
@@ -221,14 +222,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
 
   // Loading state
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-400 mx-auto mb-3" />
-          <p className="text-sm text-slate-600">Loading imported report...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-full" label="Loading imported report..." />;
   }
 
   // Error state

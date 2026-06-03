@@ -44,6 +44,7 @@ import {
   ObservationTemplate,
   RAPID_LEAN_OBSERVATION_TEMPLATES,
 } from '../../data/rapidLeanObservationTemplates';
+import { LoadingState } from '../ui/primitives';
 import { RapidLeanObservationForm } from './RapidLeanObservationForm';
 import { RapidLeanResultsCard } from './RapidLeanResultsCard';
 
@@ -462,10 +463,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({
         </div>
 
         {historyLoading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-gray-600 dark:text-gray-500 dark:text-gray-400" />
-            <p className="mt-2 text-gray-500 dark:text-gray-400">Loading history...</p>
-          </div>
+          <LoadingState variant="spinner" label="Loading history..." />
         ) : assessmentHistory.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
             <Award className="w-16 h-16 mx-auto text-gray-600 dark:text-gray-600 mb-4" />

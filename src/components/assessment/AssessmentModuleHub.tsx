@@ -44,6 +44,7 @@ import { AssessmentFramework, useMultiFrameworkStore } from '../../store/useMult
 import { AppView } from '../../types';
 import { DRDAxis } from '../../types';
 import { SplitLayout } from '../layout/SplitLayout';
+import { LoadingState } from '../ui/primitives';
 import { AssessmentAxisWorkspace } from './AssessmentAxisWorkspace';
 import { AssessmentInitiativesDrawer } from './AssessmentInitiativesDrawer';
 import { AssessmentSummaryWorkspace } from './AssessmentSummaryWorkspace';
@@ -732,9 +733,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     }
 
     const FallbackLoader = () => (
-      <div className="h-full flex items-center justify-center bg-transparent">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
+      <LoadingState variant="spinner" className="h-full bg-transparent" />
     );
 
     switch (activeTab) {
@@ -752,14 +751,11 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         // Show loading spinner while fetching assessment data
         if (isLoadingAssessment) {
           return (
-            <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950/50">
-              <div className="text-center">
-                <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto mb-3" />
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Ładowanie danych assessmentu...' : 'Loading assessment data...'}
-                </p>
-              </div>
-            </div>
+            <LoadingState
+              variant="spinner"
+              className="h-full bg-slate-50 dark:bg-navy-950/50"
+              label={isPolish ? 'Ładowanie danych assessmentu...' : 'Loading assessment data...'}
+            />
           );
         }
 

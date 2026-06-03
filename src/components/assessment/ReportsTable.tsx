@@ -43,6 +43,7 @@ import { useNavigate } from 'react-router-dom';
 import { Api } from '../../services/api';
 import { ImportReportModal } from '../Reports/ImportReportModal';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
+import { LoadingState } from '../ui/primitives';
 
 // ============================================
 // Types
@@ -545,9 +546,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
       {/* Table */}
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-          </div>
+          <LoadingState variant="spinner" className="h-64" />
         ) : filteredReports.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <FileOutput className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-3" />

@@ -24,6 +24,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { cn } from '../../utils/cn';
 
@@ -193,9 +195,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
           className
         )}
       >
-        <div className="flex items-center justify-center h-32">
-          <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LoadingState variant="spinner" className="h-32" />
       </div>
     );
   }

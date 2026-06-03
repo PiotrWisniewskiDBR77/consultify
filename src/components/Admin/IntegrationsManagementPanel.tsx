@@ -34,6 +34,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { ReadOnlyState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
 
@@ -770,19 +773,18 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           {activeTab === 'webhooks' ? (
             <div className="space-y-3">
               {loading ? (
-                <div className="text-center py-8">
-                  <RefreshCw className="animate-spin mx-auto text-primary-500 mb-2" size={24} />
-                  <p className="text-slate-500 dark:text-slate-400">
-                    {t('common.loading', 'Loading...')}
-                  </p>
-                </div>
+                <LoadingState
+                  variant="spinner"
+                  className="py-8"
+                  label={t('common.loading', 'Loading...')}
+                />
               ) : filteredWebhooks.length > 0 ? (
                 filteredWebhooks.map(renderWebhookCard)
               ) : (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                  <Webhook className="mx-auto mb-2 opacity-50" size={32} />
-                  {t('admin.integrations.noWebhooks', 'No webhooks configured')}
-                </div>
+                <EmptyState
+                  icon={<Webhook />}
+                  title={t('admin.integrations.noWebhooks', 'No webhooks configured')}
+                />
               )}
             </div>
           ) : (

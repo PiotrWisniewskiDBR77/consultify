@@ -38,6 +38,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { InfoButton } from '../shared/InfoButton';
@@ -747,19 +750,18 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
           {/* Templates Grid */}
           <div className="space-y-3">
             {loading ? (
-              <div className="text-center py-8">
-                <RefreshCw className="animate-spin mx-auto text-primary-500 mb-2" size={24} />
-                <p className="text-slate-500 dark:text-slate-400">
-                  {t('common.loading', 'Loading...')}
-                </p>
-              </div>
+              <LoadingState
+                variant="spinner"
+                className="py-8"
+                label={t('common.loading', 'Loading...')}
+              />
             ) : filteredTemplates.length > 0 ? (
               filteredTemplates.map(renderTemplateCard)
             ) : (
-              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                <Layout className="mx-auto mb-2 opacity-50" size={32} />
-                {t('admin.templates.noResults', 'No templates found')}
-              </div>
+              <EmptyState
+                icon={<Layout />}
+                title={t('admin.templates.noResults', 'No templates found')}
+              />
             )}
           </div>
         </div>

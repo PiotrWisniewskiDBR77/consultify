@@ -28,7 +28,6 @@ import {
   History,
   Layers,
   Link2,
-  Loader2,
   MessageSquare,
   Package,
   Plus,
@@ -45,6 +44,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 // ==========================================
@@ -263,11 +263,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
   // ==========================================
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-20" />;
   }
 
   return (

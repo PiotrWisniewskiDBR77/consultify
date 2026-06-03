@@ -13,7 +13,6 @@ import {
   Edit,
   Eye,
   FileText,
-  Loader2,
   Plus,
   RefreshCw,
   Sparkles,
@@ -23,6 +22,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, WorkflowState } from '../../types';
+import { LoadingState } from '../ui/primitives';
 
 interface DashboardStats {
   total: number;
@@ -163,11 +163,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-full" />;
   }
 
   return (

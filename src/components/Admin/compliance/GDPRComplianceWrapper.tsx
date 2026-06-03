@@ -1,10 +1,11 @@
 /**
  * GDPRComplianceWrapper - Wrapper with API integration for GDPR dashboard
  */
-import { RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { GDPRComplianceDashboard, GDPRConfig, GDPRFeature } from './GDPRComplianceDashboard';
 
@@ -101,11 +102,7 @@ export const GDPRComplianceWrapper: React.FC = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

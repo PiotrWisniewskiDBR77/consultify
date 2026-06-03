@@ -40,6 +40,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState, StatusChip, type StatusTone } from '@/components/ui/primitives';
+
 import api from '../../services/api';
 
 interface ComplianceMetric {
@@ -354,20 +356,14 @@ export function ComplianceDashboard() {
   };
 
   const getSeverityBadge = (severity: string) => {
-    const colors: Record<string, string> = {
-      LOW: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      MEDIUM: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-      HIGH: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-      CRITICAL: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    const tones: Record<string, StatusTone> = {
+      LOW: 'info',
+      MEDIUM: 'warning',
+      HIGH: 'warning',
+      CRITICAL: 'danger',
     };
 
-    return (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${colors[severity] || colors.MEDIUM}`}
-      >
-        {severity}
-      </span>
-    );
+    return <StatusChip label={severity} tone={tones[severity] || 'warning'} />;
   };
 
   const formatDate = (dateStr: string) => {
@@ -412,7 +408,7 @@ export function ComplianceDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-navy-900 flex items-center justify-center">
-        <Loader2 size={40} className="animate-spin text-blue-500" />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -804,15 +800,10 @@ export function ComplianceDashboard() {
                       {activity.retentionPeriod}
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          activity.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
-                        }`}
-                      >
-                        {activity.status}
-                      </span>
+                      <StatusChip
+                        label={activity.status}
+                        tone={activity.status === 'ACTIVE' ? 'success' : 'neutral'}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -847,15 +838,14 @@ export function ComplianceDashboard() {
                           {incident.title}
                         </h3>
                         {getSeverityBadge(incident.severity)}
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        <StatusChip
+                          label={incident.status}
+                          tone={
                             incident.status === 'RESOLVED' || incident.status === 'CLOSED'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                          }`}
-                        >
-                          {incident.status}
-                        </span>
+                              ? 'success'
+                              : 'warning'
+                          }
+                        />
                       </div>
                       <p className="text-sm text-slate-600 dark:text-slate-400">
                         {incident.description}

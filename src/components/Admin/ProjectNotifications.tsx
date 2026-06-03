@@ -11,6 +11,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+
 /**
  * MED-04c: Project Notification Settings UI
  * Allows admins to configure per-project notification preferences
@@ -109,15 +111,11 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-8" />;
   }
 
   if (!settings) {
-    return <div className="text-slate-500 dark:text-slate-400">Failed to load settings</div>;
+    return <ErrorState message="Failed to load settings" retry={fetchSettings} />;
   }
 
   const toggles = [

@@ -15,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { EmptyState } from '../ui/composed/EmptyState';
+import { LoadingState } from '../ui/primitives';
 
 interface AssessmentReport {
   id: string;
@@ -400,25 +402,16 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             </p>
           </div>
         ) : loading ? (
-          <div className="flex items-center justify-center h-48">
-            <Loader2 className="animate-spin text-primary-600" size={32} />
-          </div>
+          <LoadingState variant="spinner" className="h-48" />
         ) : reports.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-center">
-            <AlertCircle
-              className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-3"
-              size={48}
-            />
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
-              {t('assessment.reports.noReports', 'No reports generated yet')}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-              {t(
-                'assessment.reports.noReportsHint',
-                'Click "New Assessment" to create your first assessment report'
-              )}
-            </p>
-          </div>
+          <EmptyState
+            icon={<AlertCircle />}
+            title={t('assessment.reports.noReports', 'No reports generated yet')}
+            description={t(
+              'assessment.reports.noReportsHint',
+              'Click "New Assessment" to create your first assessment report'
+            )}
+          />
         ) : (
           <div className="grid gap-3">
             {filteredReports.map((report) => (

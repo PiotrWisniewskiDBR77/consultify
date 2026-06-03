@@ -20,7 +20,6 @@ import {
   Eye,
   FileText,
   Lightbulb,
-  Loader2,
   Minus,
   Package,
   Plus,
@@ -35,6 +34,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -507,11 +507,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
   const countGates = (milestones: any[]) => milestones.filter((m) => m.isGate).length;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-20" />;
   }
 
   return (

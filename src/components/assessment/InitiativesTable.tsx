@@ -13,7 +13,6 @@ import {
   Edit,
   Eye,
   Lightbulb,
-  Loader2,
   MapPin,
   MoreVertical,
   RefreshCw,
@@ -23,6 +22,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
 import { getStatusesForModule, getStatusMeta } from '../../services/initiativeLifecycle';
 import { InitiativeStatus } from '../../types';
@@ -133,11 +134,11 @@ interface InitiativesTableProps {
   onOpenInitiative?: (initiativeId: string, initiativeName: string, status?: string) => void;
 }
 
-const PRIORITY_CONFIG = {
-  LOW: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  HIGH: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  CRITICAL: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+const PRIORITY_TONE: Record<string, 'neutral' | 'warning' | 'danger'> = {
+  LOW: 'neutral',
+  MEDIUM: 'warning',
+  HIGH: 'warning',
+  CRITICAL: 'danger',
 };
 
 export const InitiativesTable: React.FC<InitiativesTableProps> = ({
@@ -412,9 +413,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       {/* Table */}
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-          </div>
+          <LoadingState variant="spinner" className="h-64" />
         ) : filteredInitiatives.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <Lightbulb className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-3" />
@@ -574,11 +573,10 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium ${PRIORITY_CONFIG[initiative.priority]}`}
-                        >
-                          {initiative.priority}
-                        </span>
+                        <StatusChip
+                          label={initiative.priority}
+                          tone={PRIORITY_TONE[initiative.priority] ?? 'neutral'}
+                        />
                       </td>
                       <td className="px-4 py-4">
                         <div className="text-sm">

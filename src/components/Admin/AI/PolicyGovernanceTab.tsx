@@ -25,6 +25,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
 import { ProactivitySelector, SettingsCard } from '../../AISettings';
@@ -148,11 +150,7 @@ export const PolicyGovernanceTab: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="h-64 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
