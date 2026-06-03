@@ -194,6 +194,14 @@ export default tseslint.config(
           message:
             'Arbitrary Tailwind color bg-[#…] is banned. Use a token class (bg-crimson-600, etc.).',
         },
+        {
+          // Design-system 2026-06-03: off-brand violet/fuchsia/purple GRADIENT stops.
+          // (Targets gradient prefixes only — `bg-purple-500/10` Menu-3 active is NOT matched.)
+          selector:
+            'Literal[value=/\\b(from|via|to)-(violet|fuchsia|purple)-/]',
+          message:
+            'Off-brand violet/fuchsia/purple gradient. Brand accent is Harvard crimson — use bg-c-accent / crimson-* / navy-* tokens (violet is chart-only).',
+        },
       ],
     },
   },
@@ -230,6 +238,8 @@ export default tseslint.config(
       'src/services/api.ts',
       'src/components/Admin/**',
       'src/views/superadmin/**',
+      // The primitives layer legitimately wraps the raw shadcn select/switch.
+      'src/components/ui/**',
     ],
     rules: {
       'no-restricted-imports': [
@@ -241,6 +251,12 @@ export default tseslint.config(
               group: ['**/Admin/shared/Button', '**/Admin/shared/Card'],
               message:
                 'Import Button/Card from @/components/ui/primitives instead of the retired Admin/shared forks.',
+            },
+            {
+              // Design-system 2026-06-03: use the token-enforcing wrappers, not raw shadcn.
+              group: ['**/ui/select', '**/ui/switch'],
+              message:
+                'Use SelectField / Switch from @/components/ui/primitives (token-enforcing, a11y) instead of raw shadcn ui/select|ui/switch.',
             },
           ],
         },
