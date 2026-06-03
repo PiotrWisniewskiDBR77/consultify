@@ -10,8 +10,11 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    /* shadcn --primary re-pointed crimson (was blue 221.2/83.2/53.3) so any
+     * raw shadcn `bg-primary` / `text-primary-foreground` consumers match the
+     * Tailwind primary scale + brand. */
+    --primary: 358 71% 38%; /* crimson-600 #A51C30 (was blue 221.2 83.2% 53.3%) */
+    --primary-foreground: 0 0% 100%; /* white on crimson */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
@@ -48,10 +51,18 @@
     --c-accent: #a51c30; /* Harvard Crimson — SOLE brand accent */
     --c-accent-soft: rgba(165, 28, 48, 0.08); /* accent tint (selected bg) */
     --c-focus: rgba(165, 28, 48, 0.35); /* focus ring (was violet) */
-    --c-success: #059669;
-    --c-warning: #d97706;
-    --c-danger: #dc2626;
-    --c-info: #2563eb;
+    /* Status tokens — Harvard complementary anchors (light mode).
+     * Each value is the DARK family member (HBS "1") so text-on-white is AA.
+     * Approx contrast on #ffffff:
+     *   success #026833 ≈ 7.0:1  (AAA)
+     *   warning #AE6429 ≈ 4.4:1  (AA Large; borderline for body — OK for icons/badges)
+     *   danger  #E80538 ≈ 5.3:1  (AA)  — distinct from crimson #A51C30 brand
+     *   info    #3B2883 ≈ 12.1:1 (AAA)
+     */
+    --c-success: #026833; /* was #059669 — HBS Green 1 */
+    --c-warning: #ae6429; /* was #d97706 — HBS Orange 1 */
+    --c-danger: #e80538; /* was #dc2626 — HBS Red 2 */
+    --c-info: #3b2883; /* was #2563eb — HBS Blue 1 */
   }
 
   .dark {
@@ -61,8 +72,10 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* shadcn --primary re-pointed crimson (was blue 217.2/91.2/59.8) — lifted
+     * crimson for dark contrast. */
+    --primary: 354 72% 62%; /* crimson-400 #E45868 (was blue 217.2 91.2% 59.8%) */
+    --primary-foreground: 0 0% 100%; /* white on lifted crimson */
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -93,10 +106,17 @@
     --c-accent: #c8324a; /* crimson lifted for dark contrast */
     --c-accent-soft: rgba(200, 50, 74, 0.14); /* accent tint (selected bg) */
     --c-focus: rgba(165, 28, 48, 0.35); /* focus ring */
-    --c-success: #34d399;
-    --c-warning: #fbbf24;
-    --c-danger: #f87171;
-    --c-info: #60a5fa;
+    /* Status tokens — Harvard complementary lifted for dark backgrounds.
+     * Each value is the LIGHT/mid family member so contrast on navy is good.
+     *   success #9EC44D (HBS Green 3)  — lifted from #026833
+     *   warning #F7C76B (HBS Orange 4) — lifted from #AE6429
+     *   danger  #ED5541 (HBS Red 3)    — lifted from #E80538
+     *   info    #AAC8EB (HBS Blue 4)   — lifted from #3B2883
+     */
+    --c-success: #9ec44d; /* was #34d399 — HBS Green 3 */
+    --c-warning: #f7c76b; /* was #fbbf24 — HBS Orange 4 */
+    --c-danger: #ed5541; /* was #f87171 — HBS Red 3 */
+    --c-info: #aac8eb; /* was #60a5fa — HBS Blue 4 */
   }
 }
 

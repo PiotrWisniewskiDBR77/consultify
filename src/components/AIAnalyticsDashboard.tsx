@@ -100,7 +100,16 @@ interface DashboardData {
   };
 }
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#6366f1', '#3b82f6'];
+// Harvard categorical chart palette — crimson-anchored, HBS complementary.
+// was ['#6366f1','#10b981','#f59e0b','#f43f5e','#6366f1','#3b82f6'].
+const COLORS = [
+  '#A51C30', // Harvard Crimson
+  '#6578B4', // HBS Blue 2
+  '#52A52E', // HBS Green 2
+  '#E87D1E', // HBS Orange 2
+  '#00979D', // HBS Teal 2
+  '#80408D', // HBS Purple 2
+];
 
 export const AIAnalyticsDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);

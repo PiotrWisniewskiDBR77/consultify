@@ -58,17 +58,21 @@ interface ChartRendererProps {
 // DEFAULT COLORS
 // ==========================================
 
+// Harvard categorical chart palette — crimson-anchored, HBS complementary order.
+// was arbitrary Tailwind hexes (blue/indigo/emerald/amber/rose/pink).
+// Order: crimson, hbs-blue, hbs-green, hbs-orange, hbs-teal, hbs-purple, hbs-gold, hbs-magenta,
+// then dark/light family members to keep array length and distinguishability.
 const DEFAULT_COLORS = [
-  '#3b82f6',
-  '#6366f1',
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#f43f5e',
-  '#ec4899',
-  '#6366f1',
-  '#3b82f6',
-  '#f59e0b',
+  '#A51C30', // Harvard Crimson — primary series
+  '#6578B4', // HBS Blue 2 (was #3b82f6)
+  '#52A52E', // HBS Green 2 (was #6366f1)
+  '#E87D1E', // HBS Orange 2 (was #3b82f6)
+  '#00979D', // HBS Teal 2 (was #10b981)
+  '#80408D', // HBS Purple 2 (was #f59e0b)
+  '#EBCD00', // HBS Gold 2 (was #f43f5e)
+  '#C9006B', // HBS Magenta 2 (was #ec4899)
+  '#3B2883', // HBS Blue 1 (dark) (was #6366f1)
+  '#AE6429', // HBS Orange 1 (dark) (was #f59e0b)
 ];
 
 // ==========================================
@@ -138,8 +142,8 @@ function parseChartData(content: string): ChartConfig | null {
 
 export const ChartRenderer: React.FC<ChartRendererProps> = ({
   content,
-  primaryColor = '#3b82f6',
-  accentColor = '#6366f1',
+  primaryColor = '#A51C30', // was '#3b82f6' — Harvard Crimson brand default
+  accentColor = '#6578B4', // was '#6366f1' — HBS Blue 2 complement
 }) => {
   const config = useMemo(() => parseChartData(content), [content]);
 
