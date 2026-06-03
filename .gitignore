@@ -269,3 +269,4 @@ knowledge/**/*.docx
 
 # Local IDE/sync backup folder (auto-managed, never tracked)
 .drive-sync-backup/
+docs/audit/2026-06-03/screenshots/
