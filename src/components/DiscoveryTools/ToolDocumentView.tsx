@@ -5,7 +5,6 @@ import {
   ExternalLink,
   History,
   Lightbulb,
-  Loader2,
   MessageSquare,
   Send,
   Sparkles,
@@ -16,6 +15,7 @@ import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -1936,10 +1936,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-          <p className="text-sm text-slate-500">{isPolish ? 'Ładowanie...' : 'Loading...'}</p>
-        </div>
+        <LoadingState variant="spinner" label={isPolish ? 'Ładowanie...' : 'Loading...'} />
       </div>
     );
   }

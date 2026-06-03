@@ -41,6 +41,7 @@ import { FullInitiative, InitiativeStatus, StrategicGoal, User } from '../../typ
 import { InitiativeFinancialIntegration } from '../Economics/InitiativeFinancialIntegration';
 import { InitiativeIntelligenceTab } from '../InitiativeIntelligenceTab';
 import { InitiativeTasksTab } from '../InitiativeTasksTab';
+import { LoadingState } from '../ui/primitives';
 import { Button } from '../ui/primitives/Button';
 import { Select } from '../ui/select';
 import { InitiativeSourceLink } from './InitiativeSourceLink';
@@ -229,10 +230,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="text-center">
-          <div className="w-10 h-10 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">Loading initiative...</p>
-        </div>
+        <LoadingState variant="spinner" label="Loading initiative..." />
       </div>
     );
   }

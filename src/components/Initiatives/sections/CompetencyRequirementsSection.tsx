@@ -5,11 +5,12 @@
  * Uses InlineTable pattern: "Add requirement" + table of requirements.
  */
 
-import { AlertCircle, BookOpen, Loader2, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, BookOpen, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { useInitiativeContext } from './InitiativeContext';
@@ -166,11 +167,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="animate-spin text-primary-500" size={20} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-8" />;
   }
 
   return (

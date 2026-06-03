@@ -36,6 +36,7 @@ import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { StatusChip } from '../ui/primitives';
 import { BenefitsTrackingDashboard } from './BenefitsTrackingDashboard';
 import { BusinessCaseGenerator } from './BusinessCaseGenerator';
 import { CashFlowChart } from './CashFlowChart';
@@ -674,11 +675,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                       <h4 className="font-semibold text-navy-900 dark:text-white">
                         {scenario.name || scenario.scenarioType}
                       </h4>
-                      {scenario.isActive && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                          Active
-                        </span>
-                      )}
+                      {scenario.isActive && <StatusChip tone="success" label="Active" />}
                     </div>
                     <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                       <div className="flex items-center justify-between">

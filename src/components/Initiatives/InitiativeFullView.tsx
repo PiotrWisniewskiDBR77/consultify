@@ -49,6 +49,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
@@ -583,10 +584,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <span>Loading initiative...</span>
-        </div>
+        <LoadingState variant="spinner" label="Loading initiative..." />
       </div>
     );
   }

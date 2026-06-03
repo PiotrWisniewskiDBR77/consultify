@@ -12,7 +12,6 @@ import {
   BookOpen,
   CheckCircle,
   HelpCircle,
-  Loader2,
   Users,
   UserX,
   XCircle,
@@ -20,6 +19,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { useInitiativeContext } from './InitiativeContext';
@@ -151,11 +151,7 @@ export const SkillsGapSection: React.FC<InitiativeSectionProps> = () => {
   }, [initiativeId, loadGap]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="animate-spin text-primary-500" size={20} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-8" />;
   }
 
   if (!gap || gap.totalRequirements === 0) {

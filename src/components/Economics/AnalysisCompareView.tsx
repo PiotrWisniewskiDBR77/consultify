@@ -26,6 +26,7 @@ import { toast } from 'react-hot-toast';
 import { DIGITIZATION_AXES, getLevelColor } from '../../data/digitizationEvaluationData';
 import { Api } from '../../services/api';
 import { AnalysisDataSeries, ComparisonRadarChart } from '../Charts';
+import { LoadingState } from '../ui/primitives';
 import { DigitizationAnalysis } from './types';
 
 const AXIS_ICONS: Record<string, any> = {
@@ -113,11 +114,7 @@ export const AnalysisCompareView: React.FC = () => {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

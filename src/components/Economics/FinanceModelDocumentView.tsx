@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { V8FinanceApi, type V8FinanceModelOutputsResult } from '../../services/api/v8/finance';
+import { StatusChip } from '../ui/primitives';
 import {
   type FinanceModelForecastLine,
   type FinanceModelPreviewDetail,
@@ -200,11 +201,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
 
         <div className="h-5 w-px bg-white/[0.08]" />
 
-        {isEstimated && (
-          <span className="text-[10px] font-medium px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/20">
-            estimated
-          </span>
-        )}
+        {isEstimated && <StatusChip tone="warning" label="estimated" />}
 
         <div className="flex flex-wrap gap-2">
           {(['P&L', 'BS', 'CF'] as const).map((statement) => (

@@ -1,10 +1,12 @@
-import { BookOpen, Layers, Loader2, Plus, Search, X } from 'lucide-react';
+import { BookOpen, Layers, Plus, Search, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { API_URL, fetchWithRetry, getHeaders, handleResponse } from '../../services/api/baseClient';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { EmptyState } from '../ui/composed/EmptyState';
+import { LoadingState } from '../ui/primitives';
 
 async function apiFetch<T>(url: string, opts?: RequestInit): Promise<T> {
   const res = await fetchWithRetry(`${API_URL}${url}`, {
@@ -173,11 +175,7 @@ export const CompetencyCatalog: React.FC = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin text-slate-600" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   const isEmpty = categories.length === 0 && competencies.length === 0;
@@ -185,23 +183,19 @@ export const CompetencyCatalog: React.FC = () => {
   return (
     <div className="space-y-6">
       {isEmpty && (
-        <div className="text-center py-12 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-          <BookOpen size={40} className="mx-auto text-slate-600 mb-3" />
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-1">
-            {t('competency.empty.title', 'No competency catalog yet')}
-          </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-md mx-auto">
-            {t(
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
+          <EmptyState
+            icon={<BookOpen />}
+            title={t('competency.empty.title', 'No competency catalog yet')}
+            description={t(
               'competency.empty.description',
               'Start by creating a default taxonomy with categories and skill levels, then customize it for your organization.'
             )}
-          </p>
-          <button
-            onClick={handleSeedDefaults}
-            className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors text-sm font-medium"
-          >
-            {t('competency.empty.seedDefaults', 'Create Default Taxonomy')}
-          </button>
+            action={{
+              label: t('competency.empty.seedDefaults', 'Create Default Taxonomy'),
+              onClick: handleSeedDefaults,
+            }}
+          />
         </div>
       )}
 

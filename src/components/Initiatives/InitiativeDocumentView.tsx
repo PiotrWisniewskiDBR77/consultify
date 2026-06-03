@@ -57,6 +57,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
@@ -7899,7 +7900,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+        <LoadingState variant="spinner" className="py-0" />
       </div>
     );
   }

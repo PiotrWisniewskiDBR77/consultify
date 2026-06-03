@@ -22,6 +22,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { LoadingState } from '../ui/primitives';
 
 interface LinkedAnalysis {
   id: string;
@@ -177,9 +178,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
   if (isLoading) {
     return (
       <div className="bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-500/10 dark:to-blue-500/10 rounded-xl border border-emerald-200 dark:border-emerald-500/30 p-6">
-        <div className="flex items-center justify-center py-4">
-          <Loader2 size={24} className="animate-spin text-emerald-500" />
-        </div>
+        <LoadingState variant="spinner" className="py-4" />
       </div>
     );
   }

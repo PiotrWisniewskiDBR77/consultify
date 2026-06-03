@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -233,10 +234,7 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-          <span>{t('common.loading', 'Loading...')}</span>
-        </div>
+        <LoadingState variant="spinner" label={t('common.loading', 'Loading...')} />
       </div>
     );
   }
