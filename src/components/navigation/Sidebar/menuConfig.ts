@@ -125,13 +125,14 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(FolderOutput, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
     },
-    // 10. Wordy — KIMI-style document generation (P22) — contact required
+    // 10. Documents — canonical Document Studio (Module 10). The legacy
+    // WORDY view now resolves to /document-studio (see routeConfig).
     {
-      id: 'MODULE_WORDY',
-      label: t('sidebar.wordy', 'Documents'),
+      id: 'MODULE_DOCUMENT_STUDIO',
+      label: t('sidebar.documentStudio', 'Documents'),
       icon: React.createElement(FileText, { size: 20 }),
       viewId: AppView.WORDY,
-      badge: 'soon',
+      badge: 'beta',
     },
     // 11. Prezentacje — Gamma-style presentation generation (P20) — contact required
     {

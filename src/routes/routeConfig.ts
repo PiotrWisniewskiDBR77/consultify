@@ -31,6 +31,9 @@ export const ROUTES = {
   AI_CHAT_V10_RUNTIME: '/internal/v10-runtime',
   APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
+  // Canonical Document module (Document Studio). `/wordy` is a
+  // redirect-only legacy alias kept for old bookmarks / KIMI links.
+  DOCUMENT_STUDIO: '/document-studio',
   WORDY: '/wordy',
   // Legacy spreadsheet route kept as a redirect-only alias to canonical Table Studio.
   EXCELE: '/excele',
@@ -346,7 +349,9 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.DRD_AUDIT_REPORT]: ROUTES.REPORTS.BUILDER,
   [AppView.PRESENTATIONS]: ROUTES.PRESENTATIONS,
   [AppView.MEETING]: ROUTES.MEETING,
-  [AppView.WORDY]: ROUTES.WORDY,
+  // Document module: the legacy WORDY view now resolves to the canonical
+  // Document Studio route (mirrors the EXCELE -> TABELE consolidation).
+  [AppView.WORDY]: ROUTES.DOCUMENT_STUDIO,
   [AppView.EXCELE]: ROUTES.TABELE,
   [AppView.PREZENTACJE_GEN]: ROUTES.PREZENTACJE_GEN,
   [AppView.TABELE]: ROUTES.TABELE,
@@ -743,8 +748,12 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.FULL_STEP6_REPORTS; // builder or builder/:id
   }
 
-  // KIMI-style workspaces
+  // Document module (canonical Document Studio + legacy /wordy alias).
+  // Both resolve to the WORDY view so the "Documents" sidebar entry
+  // highlights on /document-studio and /document-studio/:artifactId.
+  if (normalized.startsWith(ROUTES.DOCUMENT_STUDIO)) return AppView.WORDY;
   if (normalized.startsWith(ROUTES.WORDY)) return AppView.WORDY;
+  // KIMI-style workspaces
   if (normalized.startsWith(ROUTES.EXCELE)) return AppView.TABELE;
   if (normalized.startsWith(ROUTES.PREZENTACJE_GEN)) return AppView.PREZENTACJE_GEN;
   if (normalized.startsWith(ROUTES.TABELE)) return AppView.TABELE;

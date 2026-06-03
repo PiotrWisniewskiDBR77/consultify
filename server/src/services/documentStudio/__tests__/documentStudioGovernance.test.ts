@@ -120,7 +120,7 @@ describe('Document Studio governance flow', () => {
       },
     });
 
-    const rejected = rejectLocalEditProposal({
+    const rejected = await rejectLocalEditProposal({
       artifactId: 'artifact-1',
       organizationId: 'org-1',
       userId: 'user-3',

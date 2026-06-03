@@ -285,7 +285,7 @@ import {
   getDocumentLifecycleState,
   getDocumentVersionSnapshot,
   insertDocumentContentBlock,
-  listDocumentAuditEntries,
+  listDocumentAuditEntriesAsync,
   listDocumentComments,
   listDocumentCommentThreads,
   listDocumentVersionSnapshots,
@@ -3623,7 +3623,7 @@ router.post(
       return;
     }
     try {
-      const proposal = rejectEditProposal({
+      const proposal = await rejectEditProposal({
         artifactId,
         organizationId,
         userId,
@@ -3656,7 +3656,7 @@ router.get(
       res.status(404).json({ error: 'artifact_not_found' });
       return;
     }
-    const auditEntries = listDocumentAuditEntries(artifactId, organizationId);
+    const auditEntries = await listDocumentAuditEntriesAsync(artifactId, organizationId);
     res.json({ auditEntries });
   })
 );

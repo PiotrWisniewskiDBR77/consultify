@@ -221,10 +221,9 @@ const Wave9OutcomeAIOpsPanel = React.lazy(() =>
   }))
 );
 
-// KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
-const WordyView = React.lazy(() =>
-  import('@/components/AIChat/KimiWorkspace/WordyView').then((m) => ({ default: m.WordyView }))
-);
+// KIMI-style workspaces (P20 Prezentacje). The P22 Wordy workspace
+// (WordyView) is deprecated — `/wordy` now redirects to the canonical
+// Document Studio (`/document-studio`); see the route below.
 const PrezentacjeView = React.lazy(() =>
   import('@/components/AIChat/KimiWorkspace/PrezentacjeView').then((m) => ({
     default: m.PrezentacjeView,
@@ -1378,19 +1377,23 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* KIMI Dokumenty — contact-required blocking page */}
+        {/*
+          Legacy /wordy (KimiWorkspace report-builder) route -> canonical
+          Document Studio. Module 10 route-identity resolution: the fully
+          built Document Studio (`/document-studio`, backed by
+          `/api/document-studio`) is the canonical Document module. The
+          old KimiWorkspace `WordyView` (backed by `/api/report-builder`)
+          is deprecated and redirect-only, mirroring the
+          `/excele` -> `/tabele` consolidation.
+        */}
         <Route
           path={ROUTES.WORDY}
           element={
-            <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.wordy', 'Documents')]}>
-                <RouteErrorBoundary>
-                  <KimiModuleGate moduleKey="wordy">
-                    <WordyView />
-                  </KimiModuleGate>
-                </RouteErrorBoundary>
-              </MainLayout>
-            </ProtectedRoute>
+            <RedirectPreservingQuery
+              from={ROUTES.WORDY}
+              to={ROUTES.DOCUMENT_STUDIO}
+              reason="wordy_merged_into_document_studio"
+            />
           }
         />
 
@@ -2102,50 +2105,50 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        {/*
+          Canonical Document module (Module 10). Reachable for every
+          authenticated user — the public-production hide gate is lifted
+          because Document Studio is now the canonical Document surface
+          (with its own sidebar entry), not a hidden Outputs sub-tool.
+        */}
         <Route
           path="/document-studio"
           element={
-            <MainLayout
-              breadcrumbs={
-                breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
-                  t('documentStudio.breadcrumb', 'Document Studio'),
-                ]
-              }
-              noPadding
-            >
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Outputs"
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.documentStudio', 'Documents'),
+                    t('documentStudio.breadcrumb', 'Document Studio'),
+                  ]
+                }
+                noPadding
               >
                 <RouteErrorBoundary>
                   <DocumentStudioView />
                 </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/document-studio/:artifactId"
           element={
-            <MainLayout
-              breadcrumbs={
-                breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
-                  t('documentStudio.breadcrumb', 'Document Studio'),
-                ]
-              }
-              noPadding
-            >
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Outputs"
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.documentStudio', 'Documents'),
+                    t('documentStudio.breadcrumb', 'Document Studio'),
+                  ]
+                }
+                noPadding
               >
                 <RouteErrorBoundary>
                   <DocumentStudioView />
                 </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route

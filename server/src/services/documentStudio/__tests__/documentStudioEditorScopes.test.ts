@@ -213,7 +213,7 @@ describe('Document Studio editor — global scope (MVP-3)', () => {
       sectionId: 'sec-summary',
       instruction: 'Add a one-sentence recommendation at the end.',
     });
-    rejectEditProposal({
+    await rejectEditProposal({
       artifactId: 'artifact-scopes-1',
       organizationId: 'org-A',
       userId: 'user-3',
