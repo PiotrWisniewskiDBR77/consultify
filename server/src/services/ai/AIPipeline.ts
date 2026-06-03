@@ -1011,7 +1011,48 @@ export class AIPipeline {
     });
 
     // Add conversation history if provided (can come as 'history' or 'messages')
-    const history = request.history || (request as any).messages || [];
+    let history = request.history || (request as any).messages || [];
+
+    // A0 memory fix — server-side history rehydration.
+    // When the client sends no history but we have a conversationId, load the recent
+    // turns from conversation_messages so Teresa keeps in-conversation memory even on
+    // fresh page loads / API clients that don't replay history.
+    if ((!history || history.length === 0)) {
+      const conversationId =
+        (request.context as any)?.conversationId ||
+        (request as any)?.conversationId ||
+        (request.options as any)?.conversationId ||
+        null;
+      if (conversationId) {
+        try {
+          const dbMod = await import('../../utils/DbPromise.js');
+          const rows = (await (dbMod as any).all(
+            `SELECT content, role FROM conversation_messages
+             WHERE conversation_id = ?
+             ORDER BY created_at DESC LIMIT 12`,
+            [conversationId]
+          )) as Array<{ content?: string; role?: string }>;
+          if (Array.isArray(rows) && rows.length > 0) {
+            // rows are newest-first; reverse to chronological order for the prompt
+            history = rows
+              .reverse()
+              .filter((r) => r?.content)
+              .map((r) => ({
+                role: r.role === 'ai' || r.role === 'model' ? 'assistant' : 'user',
+                content: String(r.content),
+              }));
+            logger.debug(
+              `[AIPipeline] Rehydrated ${history.length} history turns from conversation ${conversationId}`
+            );
+          }
+        } catch (rehydrateErr: any) {
+          logger.debug(
+            `[AIPipeline] History rehydration skipped: ${rehydrateErr?.message || rehydrateErr}`
+          );
+        }
+      }
+    }
+
     if (history.length > 0) {
       for (const msg of history) {
         messages.push({
