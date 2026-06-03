@@ -153,7 +153,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
   if (loading) {
     return (
       <div
-        className={`flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-navy-700 dark:bg-navy-900/80 ${className}`.trim()}
+        className={`flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-white dark:border-navy-700/60 dark:bg-navy-900/40 px-4 py-3 ${className}`.trim()}
         aria-busy="true"
       >
         <div className="h-5 w-5 animate-pulse rounded-full bg-slate-100 dark:bg-navy-800" />
@@ -168,7 +168,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
 
   return (
     <section
-      className={`flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm dark:border-navy-700 dark:bg-navy-900/80 sm:flex-row sm:items-center sm:justify-between ${className}`.trim()}
+      className={`flex flex-col gap-3 rounded-2xl border border-slate-200/60 bg-white dark:border-navy-700/60 dark:bg-navy-900/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${className}`.trim()}
       aria-label={t('organization.context.banner.aria', 'Teresa organization context')}
     >
       <div className="flex min-w-0 items-center gap-3">

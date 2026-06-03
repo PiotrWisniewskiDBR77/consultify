@@ -175,7 +175,7 @@ export const CompetencyCatalog: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
+        <Loader2 className="animate-spin text-slate-400" size={24} />
       </div>
     );
   }
@@ -186,7 +186,7 @@ export const CompetencyCatalog: React.FC = () => {
     <div className="space-y-6">
       {isEmpty && (
         <div className="text-center py-12 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-          <BookOpen size={40} className="mx-auto text-primary-400 mb-3" />
+          <BookOpen size={40} className="mx-auto text-slate-400 mb-3" />
           <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-1">
             {t('competency.empty.title', 'No competency catalog yet')}
           </h3>
@@ -198,7 +198,7 @@ export const CompetencyCatalog: React.FC = () => {
           </p>
           <button
             onClick={handleSeedDefaults}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors text-sm font-medium"
           >
             {t('competency.empty.seedDefaults', 'Create Default Taxonomy')}
           </button>
@@ -211,12 +211,12 @@ export const CompetencyCatalog: React.FC = () => {
           <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-                <Layers size={16} className="text-primary-500" />
+                <Layers size={16} className="text-slate-400" />
                 {t('competency.categories.title', 'Categories')}
               </h3>
               <button
                 onClick={() => setShowAddCategory(true)}
-                className="text-xs flex items-center gap-1 text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium"
+                className="text-xs flex items-center gap-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium"
               >
                 <Plus size={14} />
                 {t('competency.categories.add', 'Add')}
@@ -225,10 +225,10 @@ export const CompetencyCatalog: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory(null)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
                   !selectedCategory
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-200 dark:hover:bg-navy-700'
                 }`}
               >
                 {t('competency.categories.all', 'All')}
@@ -237,10 +237,10 @@ export const CompetencyCatalog: React.FC = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 group ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 group border ${
                     selectedCategory === cat.id
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                      ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
@@ -278,7 +278,7 @@ export const CompetencyCatalog: React.FC = () => {
                 </div>
                 <button
                   onClick={handleAddCategory}
-                  className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded-lg hover:bg-primary-700"
+                  className="px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
                 >
                   {t('common.save', 'Save')}
                 </button>
@@ -304,7 +304,7 @@ export const CompetencyCatalog: React.FC = () => {
                     key={lvl.id}
                     className="flex-1 text-center px-2 py-2 bg-slate-50 dark:bg-navy-800 rounded-lg"
                   >
-                    <div className="text-xs font-bold text-primary-600 dark:text-primary-400">
+                    <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
                       {lvl.levelValue}
                     </div>
                     <div className="text-[10px] text-slate-600 dark:text-slate-400 truncate">
@@ -332,9 +332,8 @@ export const CompetencyCatalog: React.FC = () => {
             </div>
             <button
               onClick={() => setShowAddCompetency(true)}
-              className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-1.5 font-medium"
+              className="h-9 px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors flex items-center gap-1.5 font-medium"
             >
-              <Plus size={16} />
               {t('competency.add', 'Add Competency')}
             </button>
           </div>
@@ -372,7 +371,7 @@ export const CompetencyCatalog: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={handleAddCompetency}
-                  className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700"
+                  className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
                 >
                   {t('common.save', 'Save')}
                 </button>
@@ -431,7 +430,7 @@ export const CompetencyCatalog: React.FC = () => {
                       </td>
                       <td className="px-4 py-3">
                         {comp.categoryName ? (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-navy-700/60">
                             {comp.categoryName}
                           </span>
                         ) : (

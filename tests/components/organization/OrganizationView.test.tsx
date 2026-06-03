@@ -140,7 +140,7 @@ describe('OrganizationView (L2)', () => {
     const { OrganizationView } = await loadDeps();
     render(<OrganizationView />);
     expect(screen.getByTestId('org-context-summary-banner')).toHaveTextContent('org-1:member');
-    expect(screen.getByTestId('organization-context-overview')).toHaveTextContent('org-1:readonly');
+    expect(screen.queryByTestId('organization-context-overview')).not.toBeInTheDocument();
     expect(screen.getByTestId('module-profile')).toBeInTheDocument();
     expect(screen.getAllByTestId('active-section')[0]).toHaveTextContent('profile');
   });
@@ -173,7 +173,7 @@ describe('OrganizationView (L2)', () => {
     h.locationState.pathname = '/organization/members';
     render(<OrganizationView />);
     expect(screen.getByTestId('admin-panel')).toHaveTextContent('members');
-    expect(screen.getByTestId('organization-context-overview')).toHaveTextContent('org-1:rebuild');
+    expect(screen.queryByTestId('organization-context-overview')).not.toBeInTheDocument();
     expect(screen.getByTestId('org-context-summary-banner')).toHaveTextContent('org-1:admin');
   });
 

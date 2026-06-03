@@ -16,7 +16,6 @@ import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
-import { OrganizationContextOverview } from '../components/settings/OrganizationContextOverview';
 import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 import { useAppStore } from '../store/useAppStore';
@@ -254,14 +253,6 @@ export const OrganizationView: React.FC = () => {
             isAdmin={ADMIN_SECTIONS.includes(activeSection)}
             className="mb-4"
           />
-          {currentOrganization?.id ? (
-            <div className="mb-4">
-              <OrganizationContextOverview
-                organizationId={currentOrganization.id}
-                canRebuild={ADMIN_SECTIONS.includes(activeSection)}
-              />
-            </div>
-          ) : null}
         </div>
         <div className="px-4 lg:px-6 pb-6 pt-0">{renderContent()}</div>
       </div>

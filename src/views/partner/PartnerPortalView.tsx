@@ -1132,8 +1132,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             >
               <RefreshCw className="w-4 h-4" />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors">
-              <Plus className="w-4 h-4" />
+            <button className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500">
               {t('partner.clients.addOrganization', 'Add Organization')}
             </button>
           </div>
@@ -2004,7 +2003,7 @@ const CertificationSection: React.FC<{
               className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:border-primary-700 transition-colors"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-crimson-600 dark:bg-crimson-700 flex items-center justify-center">
                   <Award className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
@@ -3179,7 +3178,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
                   type="button"
                   onClick={handleConnectPartnerProfile}
                   disabled={connecting}
-                  className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
+                  className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:opacity-60"
                 >
                   {connecting
                     ? t('partner.connect.connecting', 'Connecting…')

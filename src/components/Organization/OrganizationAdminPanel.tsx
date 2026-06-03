@@ -154,7 +154,6 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
             onClick={() => setShowInviteForm(!showInviteForm)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
           >
-            <Plus size={14} />
             {t('organization.members.invite', 'Invite')}
           </button>
         </div>
@@ -708,7 +707,6 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   disabled={savingCustomDomain}
                   className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-300"
                 >
-                  <Plus size={14} />
                   {savingCustomDomain
                     ? t('common.saving', 'Saving...')
                     : t('organization.domains.saveCustomDomain', 'Save domain')}
@@ -744,7 +742,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             type="button"
             onClick={() => void handleAddApprovedDomain()}
             disabled={savingDomain}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-lg bg-slate-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 transition-colors"
           >
             {savingDomain ? t('common.saving', 'Saving...') : t('common.add', 'Add')}
           </button>

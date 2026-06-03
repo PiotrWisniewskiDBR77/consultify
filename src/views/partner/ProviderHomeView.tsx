@@ -71,11 +71,11 @@ const WelcomeHeroBanner: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-800 p-8 md:p-12">
+    <div className="relative overflow-hidden rounded-xl bg-crimson-700 dark:bg-crimson-800 p-8 md:p-12">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white dark:bg-navy-900 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary-300 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-crimson-300 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
       </div>
 
       <div className="relative z-10 max-w-3xl">
@@ -87,7 +87,7 @@ const WelcomeHeroBanner: React.FC = () => {
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
           {t('partner.hero.title1', 'Be Our Partner.')}
           <br />
-          <span className="text-primary-200">
+          <span className="text-crimson-200">
             {t('partner.hero.title2', "Let's Grow Together.")}
           </span>
         </h1>
@@ -102,7 +102,7 @@ const WelcomeHeroBanner: React.FC = () => {
         <div className="flex flex-wrap gap-4">
           <button
             onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-navy-900 text-primary-700 font-semibold rounded-lg hover:bg-primary-50 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-navy-900 text-crimson-700 dark:text-crimson-600 font-semibold rounded-lg hover:bg-crimson-50 dark:hover:bg-white/90 transition-colors"
           >
             {t('partner.hero.getStarted', 'Open onboarding')}
             <ArrowRight className="w-5 h-5" />

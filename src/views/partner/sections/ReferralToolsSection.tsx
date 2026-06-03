@@ -16,7 +16,6 @@ import {
   ExternalLink,
   Link2,
   MousePointerClick,
-  Plus,
   QrCode,
   Share2,
   Trash2,
@@ -740,9 +739,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
           </div>
           <button
             onClick={() => setShowNewCampaign(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500"
           >
-            <Plus className="w-4 h-4" />
             {t('partner.referrals.newCampaign', 'New Campaign')}
           </button>
         </div>
