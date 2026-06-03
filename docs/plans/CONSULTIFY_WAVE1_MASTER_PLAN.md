@@ -1,6 +1,6 @@
 # Consultify — Wave 1 Master Plan (do 98/100)
 
-**Data:** 2026-06-02 · **GA target:** niedziela 2026-06-08 (6 dni) · **Definicja gotowości:** D20 (98/100)
+**Data:** 2026-06-02 · **Tryb:** ⚠️ DEADLINE „niedziela" SKASOWANY (decyzja właściciela) — **jedziemy każdy moduł do pełnego 98/100, bez taryfy ulgowej** (P0+P1+P2 łącznie), quality‑first, sekwencjonowane zależnościami. Etykiety „Sunday/Week‑2" w planach modułów traktujemy tylko jako kolejność wewnątrz modułu, nie jako cięcie zakresu. · **Definicja gotowości:** D20 (98/100)
 **Decyzje bazowe:** `docs/plans/CONSULTIFY_PRODUCT_DECISIONS_2026-06-02.md` · **Pricing:** `CONSULTIFY_PRICING_STRATEGY_2026-06-02.md` · **Audyt:** `docs/audit/2026-06-02/`
 **Plany szczegółowe:** `docs/plans/modules/PLAN_*.md` + `docs/plans/cross-cutting/PLAN_X*.md`
 
