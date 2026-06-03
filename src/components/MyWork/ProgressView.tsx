@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
-  Loader2,
   Minus,
   Target,
   TrendingDown,
@@ -25,6 +24,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 
@@ -271,8 +272,8 @@ export const ProgressView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8">
+        <LoadingState variant="spinner" />
       </div>
     );
   }

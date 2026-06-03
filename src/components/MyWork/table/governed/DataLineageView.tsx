@@ -8,7 +8,6 @@ import {
   DollarSign,
   FileSpreadsheet,
   Layers,
-  Loader2,
   Rocket,
   Target,
   X,
@@ -17,6 +16,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import * as Api from '@/services/api/tablePlatform.api';
 
 /* ------------------------------------------------------------------ */
@@ -308,11 +308,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
   }, [tables, models, isPl]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="animate-spin text-slate-600" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-16" />;
   }
 
   return (

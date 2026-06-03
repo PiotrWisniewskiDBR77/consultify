@@ -11,7 +11,6 @@ import {
   Clock,
   Filter,
   Hourglass,
-  Loader2,
   Plus,
   RefreshCw,
   Search,
@@ -22,6 +21,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
 
 import { Api } from '../../services/api';
@@ -278,11 +278,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className={`${embedded ? 'p-4' : 'p-8'} flex items-center justify-center`}>
-        <Loader2 className="animate-spin text-primary-500" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className={`${embedded ? 'p-4' : 'p-8'} py-0`} />;
   }
 
   return (

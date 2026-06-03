@@ -9,7 +9,6 @@ import {
   FileText,
   Layout,
   LayoutGrid,
-  Loader2,
   Plus,
   Trash2,
   X,
@@ -18,6 +17,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 import { InterfaceDesigner } from '../InterfaceDesigner';
@@ -270,40 +271,29 @@ export function InterfacesIndex({
   // ── Loading ────────────────────────────────────────────────────────────────
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-20" />;
   }
 
   // ── Empty state ────────────────────────────────────────────────────────────
 
   if (interfaces.length === 0 && !showTemplates) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="mb-4 rounded-2xl bg-primary-50 p-4 dark:bg-primary-900/20">
-          <Layout className="h-10 w-10 text-primary-500" />
-        </div>
-        <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-          {t('interfacesIndex.emptyTitle', 'Build custom views of your data')}
-        </h3>
-        <p className="mb-6 max-w-sm text-center text-sm text-gray-500 dark:text-gray-400">
-          {t(
-            'interfacesIndex.emptyDescription',
-            'Interfaces let you create dashboards, detail views, and custom layouts.'
-          )}
-        </p>
-        {!locked && (
-          <button
-            onClick={() => setShowTemplates(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700"
-          >
-            <Plus className="h-4 w-4" />
-            {t('interfacesIndex.createInterface', 'Create Interface')}
-          </button>
+      <EmptyState
+        icon={<Layout />}
+        title={t('interfacesIndex.emptyTitle', 'Build custom views of your data')}
+        description={t(
+          'interfacesIndex.emptyDescription',
+          'Interfaces let you create dashboards, detail views, and custom layouts.'
         )}
-      </div>
+        action={
+          !locked
+            ? {
+                label: t('interfacesIndex.createInterface', 'Create Interface'),
+                onClick: () => setShowTemplates(true),
+              }
+            : undefined
+        }
+      />
     );
   }
 

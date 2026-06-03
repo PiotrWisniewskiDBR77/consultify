@@ -50,6 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
 import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -1221,10 +1222,10 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
   if (loading) {
     return (
       <div
-        className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 flex items-center justify-center"
+        className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8"
         data-testid="decisions-list"
       >
-        <Loader2 className="animate-spin text-primary-500" size={24} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

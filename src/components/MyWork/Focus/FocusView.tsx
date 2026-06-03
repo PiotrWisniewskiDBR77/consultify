@@ -64,6 +64,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { renderIconNode } from '@/components/shared/renderIconNode';
+import { LoadingState } from '@/components/ui/primitives';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -1616,11 +1617,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const activeItem = activeId ? findItemById(activeId) : null;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 size={32} className="animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-12" />;
   }
 
   return (

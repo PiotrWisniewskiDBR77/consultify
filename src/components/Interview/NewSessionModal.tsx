@@ -24,6 +24,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { PriorityChip, StatusChip } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -422,11 +423,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                             <span className="font-medium truncate">{member.name}</span>
                             <span className="ml-2 text-xs text-slate-500">{member.email}</span>
                           </div>
-                          {teamLeadId === member.id && (
-                            <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
-                              Lead
-                            </span>
-                          )}
+                          {teamLeadId === member.id && <StatusChip label="Lead" tone="info" />}
                         </button>
                       ))
                     )}
@@ -491,13 +488,14 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-left hover:border-slate-500 transition-colors"
                   >
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[priority].color}`}
-                    >
-                      {isPolish
-                        ? PRIORITY_CONFIG[priority].labelPl
-                        : PRIORITY_CONFIG[priority].label}
-                    </span>
+                    <PriorityChip
+                      level={priority}
+                      label={
+                        isPolish
+                          ? PRIORITY_CONFIG[priority].labelPl
+                          : PRIORITY_CONFIG[priority].label
+                      }
+                    />
                     <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
                   </button>
 
@@ -516,11 +514,10 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                             ${priority === p ? 'bg-primary-500/10' : 'hover:bg-navy-700'}
                           `}
                         >
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${PRIORITY_CONFIG[p].color}`}
-                          >
-                            {isPolish ? PRIORITY_CONFIG[p].labelPl : PRIORITY_CONFIG[p].label}
-                          </span>
+                          <PriorityChip
+                            level={p}
+                            label={isPolish ? PRIORITY_CONFIG[p].labelPl : PRIORITY_CONFIG[p].label}
+                          />
                           {priority === p && <Check size={16} className="text-primary-400" />}
                         </button>
                       ))}

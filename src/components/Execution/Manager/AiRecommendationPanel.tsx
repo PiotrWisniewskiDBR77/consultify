@@ -24,6 +24,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+
 import {
   type V8AiRecommendation,
   type V8AiStep,
@@ -816,26 +818,13 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
 
       <div className="flex-1 overflow-auto">
         {loading && (
-          <div className="flex flex-col items-center justify-center gap-3 py-20">
-            <Loader2 size={28} className="animate-spin text-blue-500" />
-            <p className="text-[12px] text-slate-500 dark:text-slate-400">
-              {t('execution.manager.ai.analyzing', 'AI is analyzing your data…')}
-            </p>
-          </div>
+          <LoadingState
+            variant="spinner"
+            label={t('execution.manager.ai.analyzing', 'AI is analyzing your data…')}
+          />
         )}
 
-        {error && !loading && (
-          <div className="m-4 rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-800/40 dark:bg-rose-900/10">
-            <p className="text-[12px] font-medium text-rose-700 dark:text-rose-400">{error}</p>
-            <button
-              type="button"
-              onClick={fetchData}
-              className="mt-2 rounded-lg bg-rose-100 px-3 py-1 text-[11px] font-medium text-rose-700 hover:bg-rose-200 dark:bg-rose-900/20 dark:text-rose-400"
-            >
-              {t('common.retry', 'Retry')}
-            </button>
-          </div>
-        )}
+        {error && !loading && <ErrorState message={error} retry={fetchData} />}
 
         {!loading && !error && mode === 'recommend' && recommendData && (
           <RecommendView data={recommendData} />

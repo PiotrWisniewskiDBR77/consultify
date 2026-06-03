@@ -23,9 +23,9 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import {
   AlertTriangle,
+  BarChart3,
   Calendar,
   CalendarDays,
-  BarChart3,
   CheckCircle2,
   ChevronRight,
   ClipboardList,
@@ -51,6 +51,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -2127,7 +2128,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     );
 
     if (!showScope) {
-      return <div className="flex items-center gap-2">{execChip}{resultsLink}</div>;
+      return (
+        <div className="flex items-center gap-2">
+          {execChip}
+          {resultsLink}
+        </div>
+      );
     }
 
     return (
@@ -2458,7 +2464,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+          <LoadingState variant="spinner" />
         </div>
       );
     }
@@ -2927,7 +2933,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+          <LoadingState variant="spinner" />
         </div>
       );
     }
@@ -3103,7 +3109,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingDecisions) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+          <LoadingState variant="spinner" />
         </div>
       );
     }

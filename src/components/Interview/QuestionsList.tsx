@@ -39,6 +39,7 @@ import {
   PreviewMetaCard,
 } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
 
@@ -83,7 +84,7 @@ export interface InterviewQuestion {
 export interface QuestionsListProps {
   questions: InterviewQuestion[];
   category: InterviewCategory | undefined;
-  runtimeMode?: 'single_question' | 'task_list';
+  runtimeMode?: 'single_question' | 'task_list' | 'conversational';
   onUpdateQuestion: (questionId: string, updates: Partial<InterviewQuestion>) => Promise<void>;
   onAddQuestion: (category: InterviewCategory, questionText: string) => Promise<void>;
   isLoading?: boolean;
@@ -553,11 +554,7 @@ Rules:
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-48 py-0" />;
   }
 
   return (

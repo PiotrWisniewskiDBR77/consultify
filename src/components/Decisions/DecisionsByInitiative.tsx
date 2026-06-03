@@ -11,13 +11,15 @@ import {
   Clock,
   FileText,
   FolderKanban,
-  Loader2,
   RefreshCw,
   Search,
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -336,11 +338,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-8" />;
   }
 
   return (
@@ -432,19 +430,14 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
             ))}
           </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <Clock size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-600" />
-            <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-              {t('decisions.noGroupedDecisions', 'No pending decisions')}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-500">
-              {t('decisions.allInitiativesClear', 'All initiatives are clear of pending decisions')}
-            </p>
-          </motion.div>
+          <EmptyState
+            icon={<Clock />}
+            title={t('decisions.noGroupedDecisions', 'No pending decisions')}
+            description={t(
+              'decisions.allInitiativesClear',
+              'All initiatives are clear of pending decisions'
+            )}
+          />
         )}
       </div>
     </div>

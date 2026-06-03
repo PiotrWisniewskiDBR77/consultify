@@ -1,6 +1,8 @@
-import { AlertCircle, Loader2, Plus } from 'lucide-react';
+import { AlertCircle, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { usePMOStore } from '../../store/usePMOStore';
@@ -40,11 +42,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center p-12">
-        <Loader2 className="animate-spin text-blue-600" size={32} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-12" />;
   }
 
   return (

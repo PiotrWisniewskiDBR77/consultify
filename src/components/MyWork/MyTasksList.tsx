@@ -13,13 +13,14 @@ import {
   ChevronRight,
   CircleDashed,
   Clock,
-  Loader2,
   Pin,
   Plus,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { Task } from '../../types';
@@ -300,7 +301,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="animate-spin text-blue-500" size={24} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

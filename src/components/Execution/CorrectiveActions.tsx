@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
+
 export type ActionStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 export type ActionPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -162,9 +165,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Loading actions...</p>
         </div>
-        <div className="flex items-center justify-center h-48">
-          <div className="animate-spin w-8 h-8 border-2 border-rose-500 border-t-transparent rounded-full" />
-        </div>
+        <LoadingState variant="spinner" label="Loading actions..." />
       </div>
     );
   }
@@ -190,13 +191,11 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
             New Action
           </button>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 text-slate-500 dark:text-slate-400 dark:text-slate-500">
-          <CheckCircle2 size={48} className="mb-4 text-green-500 opacity-50" />
-          <p className="text-lg font-medium text-navy-900 dark:text-white">No corrective actions</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            All KPIs are on track. Actions will appear here when needed.
-          </p>
-        </div>
+        <EmptyState
+          icon={<CheckCircle2 />}
+          title="No corrective actions"
+          description="All KPIs are on track. Actions will appear here when needed."
+        />
       </div>
     );
   }

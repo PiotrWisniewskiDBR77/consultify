@@ -36,6 +36,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import type { FocusBoardProps, FocusSuggestion, FocusTask, TimeBlock } from '../../../types/myWork';
 import { DueDateIndicator } from '../shared/DueDateIndicator';
@@ -532,11 +534,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 size={32} className="animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-12" />;
   }
 
   return (

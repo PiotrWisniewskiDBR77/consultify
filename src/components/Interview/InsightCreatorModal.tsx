@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { type V8ContextDocument, V8InterviewApi } from '@/services/api/v8/interview';
 
@@ -1566,9 +1567,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 size={24} className="animate-spin text-primary-400" />
-          </div>
+          <LoadingState variant="spinner" className="py-8" />
         ) : loadError ? (
           <EmptyStateInline
             icon={AlertTriangle}

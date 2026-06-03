@@ -9,6 +9,8 @@ import { Edit3, FileText, MoreVertical, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState, MetaChip } from '@/components/ui/primitives';
+
 import type { InterviewCategory } from './CategorySidebar';
 import { CATEGORY_CONFIG } from './CategorySidebar';
 
@@ -103,11 +105,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
   );
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-48 py-0" />;
   }
 
   return (
@@ -118,9 +116,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
             {isPolish ? 'Notatki' : 'Notes'}
           </h3>
-          <span className="px-2 py-0.5 text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded-full">
-            {filteredNotes.length}
-          </span>
+          <MetaChip label={filteredNotes.length} />
         </div>
 
         <div className="flex items-center gap-2">

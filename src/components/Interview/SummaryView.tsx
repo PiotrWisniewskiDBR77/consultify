@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+
 const CATEGORY_ICONS: Record<string, React.ComponentType<any>> = {
   strategy: Target,
   operations: Settings,
@@ -147,13 +149,11 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         </div>
 
         {!hasSummary ? (
-          <div className="text-center py-12 text-slate-600 dark:text-slate-500">
-            <FileText size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="text-lg mb-2">No summary generated yet</p>
-            <p className="text-sm">
-              Click "Generate Summary" to create a summary from your answers.
-            </p>
-          </div>
+          <EmptyState
+            icon={<FileText />}
+            title="No summary generated yet"
+            description='Click "Generate Summary" to create a summary from your answers.'
+          />
         ) : (
           <div className="space-y-6">
             {/* Key Facts */}

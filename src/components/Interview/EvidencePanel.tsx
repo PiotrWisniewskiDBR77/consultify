@@ -23,6 +23,8 @@ import {
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import type { InterviewCategory } from './CategorySidebar';
 import { CATEGORY_CONFIG } from './CategorySidebar';
 
@@ -160,11 +162,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   );
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-48 py-0" />;
   }
 
   return (

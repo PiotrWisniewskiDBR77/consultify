@@ -50,6 +50,7 @@ import {
 } from '@/components/Notifications/notificationContent';
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Callout } from '@/components/shared/NModeBlocks';
+import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useAppStore } from '@/store/useAppStore';
@@ -2185,7 +2186,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

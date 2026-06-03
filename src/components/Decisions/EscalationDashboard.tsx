@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Clock,
   Flame,
-  Loader2,
   Lock,
   RefreshCw,
   TrendingDown,
@@ -22,6 +21,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -338,11 +339,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
   }, [decisions]);
 
   if (loading) {
-    return (
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-8" />;
   }
 
   return (

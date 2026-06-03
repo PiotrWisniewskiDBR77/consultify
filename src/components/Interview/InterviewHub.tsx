@@ -76,6 +76,7 @@ import {
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
+import { LoadingState } from '@/components/ui/primitives';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -6474,11 +6475,7 @@ Return ONLY the answer text (no markdown fences).`;
   // Render list content based on active tab
   const renderListContent = () => {
     if (isLoading || assignmentsLoading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-        </div>
-      );
+      return <LoadingState variant="spinner" className="h-64 py-0" />;
     }
 
     if (loadError) {

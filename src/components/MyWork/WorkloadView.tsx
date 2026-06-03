@@ -10,17 +10,11 @@
  */
 
 import { motion } from 'framer-motion';
-import {
-  AlertTriangle,
-  BarChart3,
-  CheckCircle2,
-  Loader2,
-  RefreshCw,
-  User,
-  Users,
-} from 'lucide-react';
+import { AlertTriangle, BarChart3, CheckCircle2, RefreshCw, User, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -207,8 +201,8 @@ export const WorkloadView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8">
+        <LoadingState variant="spinner" />
       </div>
     );
   }

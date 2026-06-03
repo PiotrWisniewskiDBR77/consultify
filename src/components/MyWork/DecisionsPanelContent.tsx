@@ -37,6 +37,8 @@ import { useTranslation } from 'react-i18next';
 
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -1632,24 +1634,25 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
 
   if (displayedDecisions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <CheckCircle2 size={48} className="text-emerald-500 mb-4" />
-        <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
-          {viewMode === 'my'
+      <EmptyState
+        icon={<CheckCircle2 />}
+        title={
+          viewMode === 'my'
             ? 'No decisions awaiting your action'
             : viewMode === 'awaiting'
               ? 'No requests pending'
-              : 'No decisions'}
-        </h3>
-        <p className="text-sm text-slate-500">All caught up!</p>
-      </div>
+              : 'No decisions'
+        }
+        description="All caught up!"
+        className="h-full"
+      />
     );
   }
 

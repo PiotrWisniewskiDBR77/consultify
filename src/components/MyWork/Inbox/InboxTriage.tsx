@@ -23,7 +23,6 @@ import {
   FileCheck,
   Filter,
   Inbox,
-  Loader2,
   Sparkles,
   Square,
   UserPlus,
@@ -32,6 +31,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import type {
@@ -458,11 +459,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
   const criticalCount = groupedItems.critical.length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 size={32} className="animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-12" />;
   }
 
   return (

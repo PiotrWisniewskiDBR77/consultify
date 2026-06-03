@@ -59,6 +59,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { TeresaMark } from '@/components/shared/TeresaMark';
+import { LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
 
@@ -1618,9 +1619,7 @@ ${sourceText || '(none)'}`;
         </div>
 
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-          </div>
+          <LoadingState variant="spinner" className="flex-1 py-0" />
         ) : (
           <div className="flex-1 flex overflow-hidden bg-white dark:bg-navy-900">
             {/* Left Panel - Template Metadata */}

@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui';
+import { LoadingState } from '@/components/ui/primitives';
 import * as Api from '@/services/api/tablePlatform.api';
 
 import { DataLineageView } from './DataLineageView';
@@ -922,11 +923,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="animate-spin text-slate-600" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-16" />;
   }
 
   return (

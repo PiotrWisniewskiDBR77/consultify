@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+
 export type KPIStatus = 'ON_TARGET' | 'AT_RISK' | 'OFF_TARGET' | 'ACHIEVED';
 export type KPICategory = 'DELIVERY' | 'QUALITY' | 'FINANCIAL' | 'ADOPTION' | 'SATISFACTION';
 
@@ -181,9 +184,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Loading KPI data...</p>
           </div>
         </div>
-        <div className="flex items-center justify-center h-48">
-          <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
-        </div>
+        <LoadingState variant="spinner" label="Loading KPI data..." />
       </div>
     );
   }
@@ -199,15 +200,7 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             </h3>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <p className="text-sm text-rose-500 dark:text-rose-400">{fetchError}</p>
-          <button
-            onClick={fetchKPIs}
-            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorState message={fetchError} retry={fetchKPIs} />
       </div>
     );
   }
@@ -233,13 +226,11 @@ export const KPIDashboard: React.FC<KPIDashboardProps> = ({
             Add KPI
           </button>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 text-slate-500">
-          <Target size={48} className="mb-4 opacity-50" />
-          <p className="text-lg font-medium text-slate-900 dark:text-white">No KPIs defined yet</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Add KPIs to track transformation metrics and performance
-          </p>
-        </div>
+        <EmptyState
+          icon={<Target />}
+          title="No KPIs defined yet"
+          description="Add KPIs to track transformation metrics and performance"
+        />
       </div>
     );
   }

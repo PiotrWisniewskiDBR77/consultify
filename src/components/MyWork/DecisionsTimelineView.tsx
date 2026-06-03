@@ -12,11 +12,12 @@
  * DBR77 "Tech Sexy": monochromatic, navy-900 dark bg, subtle borders.
  */
 
-import { ChevronDown, GanttChart, Loader2 } from 'lucide-react';
+import { ChevronDown, GanttChart } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -451,7 +452,7 @@ export const DecisionsTimelineContainer: React.FC<DecisionsTimelineContainerProp
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center h-64 bg-navy-950">
-        <Loader2 className="animate-spin text-slate-600" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

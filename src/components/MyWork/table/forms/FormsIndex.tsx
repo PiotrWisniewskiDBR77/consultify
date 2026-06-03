@@ -9,7 +9,6 @@ import {
   FileText,
   Globe,
   KeyRound,
-  Loader2,
   Lock,
   Plus,
   Shield,
@@ -20,6 +19,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { TablePlatformField } from '@/types/tablePlatform';
 import { isTabeleFormIntakeEnabled } from '@/utils/tabeleFormIntakeFlag';
@@ -219,40 +220,29 @@ export function FormsIndex({
   // ── Loading state ──────────────────────────────────────────────────────────
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-20" />;
   }
 
   // ── Empty state ────────────────────────────────────────────────────────────
 
   if (forms.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="mb-4 rounded-2xl bg-primary-50 p-4 dark:bg-primary-900/20">
-          <FileText className="h-10 w-10 text-primary-500" />
-        </div>
-        <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-          {t('formsIndex.emptyTitle', 'Create a form to collect data')}
-        </h3>
-        <p className="mb-6 max-w-sm text-center text-sm text-gray-500 dark:text-gray-400">
-          {t(
-            'formsIndex.emptyDescription',
-            'Forms let you collect structured data from anyone — no login required for public forms.'
-          )}
-        </p>
-        {!locked && (
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700"
-          >
-            <Plus className="h-4 w-4" />
-            {t('formsIndex.createForm', 'Create Form')}
-          </button>
+      <EmptyState
+        icon={<FileText />}
+        title={t('formsIndex.emptyTitle', 'Create a form to collect data')}
+        description={t(
+          'formsIndex.emptyDescription',
+          'Forms let you collect structured data from anyone — no login required for public forms.'
         )}
-      </div>
+        action={
+          !locked
+            ? {
+                label: t('formsIndex.createForm', 'Create Form'),
+                onClick: handleCreate,
+              }
+            : undefined
+        }
+      />
     );
   }
 

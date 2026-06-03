@@ -9,6 +9,9 @@ import { AlertTriangle, MoreVertical, Search, X } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
+
 import type { ManagerProblemRow, ProblemAction, ProblemSeverity } from './types';
 
 interface ProblemTableProps {
@@ -278,19 +281,15 @@ export function ProblemTable({
 
       {/* Rows */}
       <div className="flex-1 overflow-y-auto">
-        {loading && (
-          <div className="flex items-center justify-center h-32">
-            <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
+        {loading && <LoadingState variant="spinner" />}
 
         {!loading && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-600 dark:text-slate-500">
-            <AlertTriangle size={20} className="mb-2 opacity-40" />
-            <p className="text-xs">
-              {emptyMessage || t('manager.noProblems', 'No problems detected — on track.')}
-            </p>
-          </div>
+          <EmptyState
+            compact
+            icon={<AlertTriangle />}
+            title={emptyMessage || t('manager.noProblems', 'No problems detected — on track.')}
+            description=""
+          />
         )}
 
         {!loading &&

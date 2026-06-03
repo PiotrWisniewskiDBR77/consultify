@@ -1,7 +1,6 @@
 import {
   Clock,
   History,
-  Loader2,
   MoreHorizontal,
   Pencil,
   Play,
@@ -12,6 +11,9 @@ import {
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
 import { ConnectorIcon, connectorMeta } from './ConnectorIcons';
 import type { Connector } from './useConnectors';
@@ -36,34 +38,10 @@ interface ConnectorListProps {
 /* ------------------------------------------------------------------ */
 
 const statusConfig = {
-  success: {
-    bgCls: 'bg-emerald-50 dark:bg-emerald-500/10',
-    textCls: 'text-emerald-600 dark:text-emerald-400',
-    dotCls: 'bg-emerald-500',
-    labelEn: 'Success',
-    labelPl: 'Sukces',
-  },
-  failed: {
-    bgCls: 'bg-rose-50 dark:bg-rose-500/10',
-    textCls: 'text-rose-600 dark:text-rose-400',
-    dotCls: 'bg-rose-500',
-    labelEn: 'Failed',
-    labelPl: 'Błąd',
-  },
-  running: {
-    bgCls: 'bg-blue-50 dark:bg-blue-500/10',
-    textCls: 'text-blue-600 dark:text-blue-400',
-    dotCls: 'bg-blue-500 animate-pulse',
-    labelEn: 'Running',
-    labelPl: 'W toku',
-  },
-  never: {
-    bgCls: 'bg-slate-100 dark:bg-navy-800',
-    textCls: 'text-slate-500 dark:text-slate-400',
-    dotCls: 'bg-slate-400',
-    labelEn: 'Never run',
-    labelPl: 'Nigdy',
-  },
+  success: { tone: 'success' as const, labelEn: 'Success', labelPl: 'Sukces' },
+  failed: { tone: 'danger' as const, labelEn: 'Failed', labelPl: 'Błąd' },
+  running: { tone: 'info' as const, labelEn: 'Running', labelPl: 'W toku' },
+  never: { tone: 'neutral' as const, labelEn: 'Never run', labelPl: 'Nigdy' },
 } as const;
 
 const StatusBadge: React.FC<{ status: Connector['lastRunStatus']; isPl: boolean }> = ({
@@ -71,14 +49,7 @@ const StatusBadge: React.FC<{ status: Connector['lastRunStatus']; isPl: boolean 
   isPl,
 }) => {
   const cfg = statusConfig[status ?? 'never'];
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${cfg.bgCls} ${cfg.textCls}`}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${cfg.dotCls}`} />
-      {isPl ? cfg.labelPl : cfg.labelEn}
-    </span>
-  );
+  return <StatusChip tone={cfg.tone} label={isPl ? cfg.labelPl : cfg.labelEn} />;
 };
 
 /* ------------------------------------------------------------------ */
@@ -116,36 +87,25 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
   /* ---- Empty state ---- */
   if (!isLoading && connectors.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="rounded-2xl bg-slate-100 dark:bg-navy-800 p-4 mb-4">
-          <RefreshCw size={28} className="text-slate-600 dark:text-slate-500" />
-        </div>
-        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          {isPl ? 'Brak skonfigurowanych konektorów' : 'No connectors configured'}
-        </p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 max-w-xs">
-          {isPl
+      <EmptyState
+        icon={<RefreshCw />}
+        title={isPl ? 'Brak skonfigurowanych konektorów' : 'No connectors configured'}
+        description={
+          isPl
             ? 'Połącz zewnętrzne źródła danych, aby automatycznie importować dane do tabeli.'
-            : 'Connect external data sources to automatically import data into your table.'}
-        </p>
-        <button
-          onClick={onAdd}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 transition-colors"
-        >
-          <Plus size={14} />
-          {isPl ? 'Dodaj konektor' : 'Add connector'}
-        </button>
-      </div>
+            : 'Connect external data sources to automatically import data into your table.'
+        }
+        action={{
+          label: isPl ? 'Dodaj konektor' : 'Add connector',
+          onClick: onAdd,
+        }}
+      />
     );
   }
 
   /* ---- Loading ---- */
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 size={20} className="animate-spin text-slate-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-12" />;
   }
 
   /* ---- List ---- */

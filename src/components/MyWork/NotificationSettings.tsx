@@ -30,6 +30,8 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 
 interface NotificationPreferences {
@@ -224,11 +226,7 @@ export const NotificationSettings: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-8" />;
   }
 
   return (

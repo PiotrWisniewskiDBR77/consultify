@@ -20,7 +20,6 @@ import {
   Eye,
   FolderOpen,
   Info,
-  Loader2,
   Megaphone,
   MessageSquare,
   Minus,
@@ -36,6 +35,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import {
   BulkActionBar,
   type ColumnDef,
@@ -1031,20 +1032,19 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-amber-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
 
   if (filteredNotifications.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <Bell size={48} className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-4" />
-        <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-          No notifications
-        </h3>
-        <p className="text-sm text-slate-500">You're all caught up!</p>
-      </div>
+      <EmptyState
+        icon={<Bell />}
+        title="No notifications"
+        description="You're all caught up!"
+        className="h-full"
+      />
     );
   }
 

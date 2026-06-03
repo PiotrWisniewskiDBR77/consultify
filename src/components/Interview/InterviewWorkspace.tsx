@@ -58,6 +58,7 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
+import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import {
@@ -77,6 +78,7 @@ import {
   InterviewCategory,
 } from './CategorySidebar';
 import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
+import { ConversationalPanel } from './ConversationalPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
@@ -491,12 +493,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       if (
         session?.assignmentId ||
         session?.runtimeModeDefault === 'single_question' ||
-        session?.runtimeModeDefault === 'task_list'
+        session?.runtimeModeDefault === 'task_list' ||
+        session?.runtimeModeDefault === 'conversational'
       ) {
         setRuntimeMode(
           session?.assignmentId ? 'single_question' : (session?.runtimeModeDefault as RuntimeMode)
         );
-      } else if (saved === 'single_question' || saved === 'task_list') {
+      } else if (
+        saved === 'single_question' ||
+        saved === 'task_list' ||
+        saved === 'conversational'
+      ) {
         setRuntimeMode(saved);
       } else {
         setRuntimeMode('single_question');
@@ -1478,12 +1485,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Ładowanie wywiadu...' : 'Loading interview...'}
-          </p>
-        </div>
+        <LoadingState
+          variant="spinner"
+          label={isPolish ? 'Ładowanie wywiadu...' : 'Loading interview...'}
+        />
       </div>
     );
   }
@@ -1909,7 +1914,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           />
         </div>
 
-        {runtimeMode === 'single_question' ? (
+        {runtimeMode === 'conversational' && session?.id ? (
+          <ConversationalPanel
+            sessionId={session.id}
+            questions={questions.map((q) => ({
+              id: q.id,
+              questionText: q.questionText,
+              category: String(q.category),
+              status: String(q.status),
+            }))}
+            onQuestionAnswered={(questionId, answerText) => {
+              handleUpdateQuestion(questionId, { answerText, status: 'answered' as any });
+            }}
+            locked={isLocked}
+          />
+        ) : runtimeMode === 'single_question' ? (
           activeCategory ? (
             <InterviewSingleQuestionRuntime
               questions={questions}

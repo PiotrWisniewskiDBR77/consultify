@@ -68,6 +68,7 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
+import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
@@ -5715,11 +5716,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-full bg-white dark:bg-navy-950 py-0" />;
   }
 
   if (error) {

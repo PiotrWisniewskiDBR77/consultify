@@ -25,6 +25,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -432,9 +433,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            </div>
+            <LoadingState variant="spinner" className="py-12" />
           ) : (
             <>
               {/* Template Selection */}

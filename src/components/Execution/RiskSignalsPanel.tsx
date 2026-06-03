@@ -19,6 +19,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import {
   shouldFallbackToLegacyExecutionControl,
   V8ExecutionControlApi,
@@ -177,21 +179,17 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
   const visibleSignals = visibleSignalsSource.filter((s) => !dismissedIds.has(s.id));
 
   if (effectiveLoading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   if (visibleSignals.length === 0) {
     return (
-      <div className="p-6 text-center">
-        <Shield className="w-10 h-10 mx-auto mb-2 text-slate-500/50" />
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t('execution.riskSignals.noSignals')}
-        </p>
-      </div>
+      <EmptyState
+        compact
+        icon={<Shield />}
+        title={t('execution.riskSignals.noSignals')}
+        description=""
+      />
     );
   }
 

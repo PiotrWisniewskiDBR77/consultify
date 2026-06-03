@@ -45,6 +45,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 const API_BASE = '/api/interview';
@@ -605,17 +608,10 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
         </div>
 
         <div className="p-6 space-y-3">
-          {loadingInsights && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-            </div>
-          )}
+          {loadingInsights && <LoadingState variant="spinner" className="py-12" />}
 
           {!loadingInsights && filteredInsights.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-600 dark:text-gray-500">
-              <BarChart3 className="w-12 h-12 mb-3 opacity-30" />
-              <p className="text-sm">{t('interview.inference.noInsights')}</p>
-            </div>
+            <EmptyState icon={<BarChart3 />} title={t('interview.inference.noInsights')} />
           )}
 
           {filteredInsights.map((insight) => {

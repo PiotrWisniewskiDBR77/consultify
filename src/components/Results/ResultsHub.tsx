@@ -1130,14 +1130,24 @@ export const ResultsHub: React.FC = () => {
       );
     }
 
-    const viewInOutputsButton = activeTab === 'results_reports' ? (
-      <button type="button" onClick={() => navigate('/outputs')} className={MENU_3_ACTION_NEUTRAL}>
-        <span>{t('results.actions.viewInOutputs', 'View in Outputs')}</span>
-      </button>
-    ) : null;
+    const viewInOutputsButton =
+      activeTab === 'results_reports' ? (
+        <button
+          type="button"
+          onClick={() => navigate('/outputs')}
+          className={MENU_3_ACTION_NEUTRAL}
+        >
+          <span>{t('results.actions.viewInOutputs', 'View in Outputs')}</span>
+        </button>
+      ) : null;
 
     if (!scopedExecutionButton && !viewInOutputsButton) return null;
-    return <div className={MENU_3_RIGHT_CLASS}>{scopedExecutionButton}{viewInOutputsButton}</div>;
+    return (
+      <div className={MENU_3_RIGHT_CLASS}>
+        {scopedExecutionButton}
+        {viewInOutputsButton}
+      </div>
+    );
   }, [activeTab, kpiWorkspaceMode, navigate, openScopedExecutionLane, scopedInitiativeId, t]);
 
   const commandRowContent = useMemo(() => {

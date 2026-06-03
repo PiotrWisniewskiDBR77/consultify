@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Clock,
   Hourglass,
-  Loader2,
   Plus,
   Scale,
   Target,
@@ -19,6 +18,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -254,7 +255,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

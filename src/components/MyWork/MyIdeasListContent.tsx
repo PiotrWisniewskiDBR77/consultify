@@ -28,6 +28,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
@@ -1181,7 +1182,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   if (loading) {
     return (
       <div className="w-full flex items-center justify-center" style={{ minHeight: 300 }}>
-        <Loader2 className="animate-spin text-amber-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

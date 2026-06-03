@@ -55,6 +55,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
@@ -3453,7 +3454,7 @@ Return ONLY the final comment text.`;
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

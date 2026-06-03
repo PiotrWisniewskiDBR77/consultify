@@ -12,7 +12,6 @@ import {
   GitBranch,
   Keyboard,
   LayoutTemplate,
-  Loader2,
   RefreshCw,
   Search,
   StickyNote,
@@ -25,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
+import { LoadingState } from '@/components/ui/primitives';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -2583,7 +2583,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   if (loading) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-amber-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { Task } from '@/types';
 
@@ -220,9 +221,8 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-slate-600 dark:text-slate-300">
-        <Loader2 className="animate-spin" size={18} />
-        <span className="ml-2 text-sm">{t('common.loading', 'Loading...')}</span>
+      <div className="flex h-64 items-center justify-center">
+        <LoadingState variant="spinner" label={t('common.loading', 'Loading...')} />
       </div>
     );
   }

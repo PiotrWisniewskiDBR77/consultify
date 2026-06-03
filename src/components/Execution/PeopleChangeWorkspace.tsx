@@ -15,6 +15,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import Api, { getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -377,9 +378,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           </span>
         </div>
         {capLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="animate-spin" size={20} />
-          </div>
+          <LoadingState variant="spinner" />
         ) : capabilities.length === 0 ? (
           <p className="text-sm text-slate-500 py-4 text-center">
             {t('capability.empty', 'No capabilities defined yet.')}
@@ -666,9 +665,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           <span className="text-xs text-slate-500">{segments.length}</span>
         </div>
         {commLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="animate-spin" size={20} />
-          </div>
+          <LoadingState variant="spinner" />
         ) : segments.length === 0 ? (
           <p className="text-sm text-slate-500 text-center py-3">
             {t('stakeholder.noSegments', 'No segments defined.')}

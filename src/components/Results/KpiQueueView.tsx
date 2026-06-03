@@ -12,6 +12,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { StatusChip, type StatusTone } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -68,6 +69,14 @@ const formatDate = (date: Date) =>
   });
 
 type PreviewSheet = SignalSheetRecord & PreviewableItem;
+
+const statusToneToChip = (tone: SignalSheetRecord['statusTone']): StatusTone => {
+  if (tone === 'amber') return 'warning';
+  if (tone === 'red') return 'danger';
+  if (tone === 'emerald') return 'success';
+  if (tone === 'primary') return 'info';
+  return 'neutral';
+};
 
 const toneClassName = (tone: SignalSheetRecord['statusTone']) => {
   if (tone === 'amber') return 'bg-amber-500/10 text-amber-600 dark:text-amber-300';
@@ -273,11 +282,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
         label: t('common.status', 'Status'),
         width: '18%',
         render: (row) => (
-          <span
-            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${toneClassName(row.statusTone)}`}
-          >
-            {String(row.status || '—')}
-          </span>
+          <StatusChip label={String(row.status || '—')} tone={statusToneToChip(row.statusTone)} />
         ),
       },
     ],
