@@ -535,9 +535,11 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('chat-work-panel')).toHaveAttribute('aria-label', 'Canvas work area');
     expect(screen.queryByText('Active document:')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Canvas document title')).toHaveValue('Company Work Note');
+    // The view toggle and diagnostics now live inside the Canvas menu dropdown.
+    fireEvent.click(screen.getByRole('button', { name: 'Canvas menu' }));
     expect(screen.getByRole('button', { name: 'Dock view' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Markdown view' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Właściwości pliku MD/i }));
     expect(screen.getByText('Markdown canonical')).toBeInTheDocument();
     expect(screen.queryByTestId('chat-full-welcome')).not.toBeInTheDocument();
     expect(screen.getByTestId('chat-work-panel-empty-state')).toBeInTheDocument();
@@ -549,6 +551,7 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel mode="full" />);
 
     fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Canvas menu' }));
     fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
     const mdView = await screen.findByTestId('canvas-md-view');
     const textarea = mdView as HTMLTextAreaElement;
@@ -620,6 +623,7 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel mode="full" />);
 
     fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Canvas menu' }));
     fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
     const mdView = (await screen.findByTestId('canvas-md-view')) as HTMLTextAreaElement;
     const selected = 'Operating workspace';
