@@ -977,7 +977,10 @@ router.get(
 /**
  * T007 (V2) — Personal Tasks (private per-user)
  *
- * NOTE: stored in `tasks` with `task_type='personal'` and filtered by assignee + org.
+ * NOTE: stored in `tasks` and filtered by assignee + org. The GET list returns
+ * all owner-scoped tasks regardless of task_type (real tasks default to
+ * 'execution'); personal tasks are sorted first. Org + owner scoping is always
+ * enforced — no cross-tenant leak.
  */
 router.get(
   '/personal-tasks',
@@ -1044,9 +1047,9 @@ router.get(
         LEFT JOIN users a ON t.assignee_id = a.id
         WHERE t.organization_id = ?
           AND ${ownerScope.whereSql}
-          AND lower(coalesce(t.task_type,'')) = 'personal'
           ${whereExtra}
         ORDER BY
+          CASE WHEN lower(coalesce(t.task_type,'')) = 'personal' THEN 0 ELSE 1 END,
           CASE lower(coalesce(t.priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
           COALESCE(t.due_date, '9999-12-31') ASC,
           t.updated_at DESC

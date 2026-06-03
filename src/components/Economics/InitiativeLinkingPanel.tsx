@@ -266,7 +266,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
               </div>
             </div>
             <a
-              href={`/initiatives/${linkedInitiative.id}`}
+              href={`/initiatives?open=${encodeURIComponent(linkedInitiative.id)}`}
               className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors"
               title="Open Initiative"
             >

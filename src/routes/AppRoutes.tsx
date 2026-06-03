@@ -39,7 +39,7 @@ import { ROUTES } from './routeConfig';
 import { WorkCanvasRedirect } from './WorkCanvasRedirect';
 
 // Lazy load views for new routes
-const StudioView = React.lazy(() =>
+const StudioView = lazyWithRetry(() =>
   import('@/views/StudioView').then((m) => ({ default: m.StudioView }))
 );
 const MyWorkView = lazyWithRetry(() =>
@@ -49,82 +49,82 @@ const MyWorkView = lazyWithRetry(() =>
 // redirects to the canonical /organization/* workspace. The view file is retained
 // because quick-step entry paths still resolve through these (redirected) routes.
 // Discovery Tools Module - New Hub
-const DiscoveryToolsHub = React.lazy(() =>
+const DiscoveryToolsHub = lazyWithRetry(() =>
   import('@/components/Discovery/DiscoveryToolsHub').then((m) => ({ default: m.DiscoveryToolsHub }))
 );
 
 // T064 — Megatrends canonical workspace
-const MegatrendsWorkspace = React.lazy(() =>
+const MegatrendsWorkspace = lazyWithRetry(() =>
   import('@/components/Megatrend/MegatrendsWorkspace').then((m) => ({
     default: m.MegatrendsWorkspace,
   }))
 );
 
 // Assessment Module - New Hub
-const AssessmentHub = React.lazy(() =>
+const AssessmentHub = lazyWithRetry(() =>
   import('@/components/assessment/AssessmentHub').then((m) => ({ default: m.AssessmentHub }))
 );
-const AssessmentSessionEditorView = React.lazy(() =>
+const AssessmentSessionEditorView = lazyWithRetry(() =>
   import('@/views/AssessmentSessionEditorView').then((m) => ({
     default: m.AssessmentSessionEditorView,
   }))
 );
 
 // Transformation Modules - New Hubs (ModuleHub pattern)
-const InitiativesHub = React.lazy(() =>
+const InitiativesHub = lazyWithRetry(() =>
   import('@/components/Initiatives/InitiativesHub').then((m) => ({ default: m.InitiativesHub }))
 );
-const ExecutionHub = React.lazy(() =>
+const ExecutionHub = lazyWithRetry(() =>
   import('@/components/Execution/ExecutionHub').then((m) => ({ default: m.ExecutionHub }))
 );
-const ResultsHub = React.lazy(() =>
+const ResultsHub = lazyWithRetry(() =>
   import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
 );
 
 // Legacy views (kept for backward compatibility)
-const FullInitiativesView = React.lazy(() =>
+const FullInitiativesView = lazyWithRetry(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
 );
 // FullRoadmapView (deprecated, @ts-nocheck) is intentionally NOT imported here:
 // /roadmap now redirects to /portfolio (see route below). The file is kept for
 // Wave-2 cleanup only.
-const PortfolioView = React.lazy(() => import('@/views/PortfolioView'));
-const FullROIView = React.lazy(() =>
+const PortfolioView = lazyWithRetry(() => import('@/views/PortfolioView'));
+const FullROIView = lazyWithRetry(() =>
   import('@/views/FullROIView').then((m) => ({ default: m.FullROIView }))
 );
-const EconomicsView = React.lazy(() =>
+const EconomicsView = lazyWithRetry(() =>
   import('@/views/EconomicsView').then((m) => ({ default: m.EconomicsView }))
 );
-const FullExecutionView = React.lazy(() =>
+const FullExecutionView = lazyWithRetry(() =>
   import('@/views/FullExecutionView').then((m) => ({ default: m.FullExecutionView }))
 );
-const ImplementationView = React.lazy(() =>
+const ImplementationView = lazyWithRetry(() =>
   import('@/views/ImplementationView').then((m) => ({ default: m.ImplementationView }))
 );
-const ReportBuilderView = React.lazy(() =>
+const ReportBuilderView = lazyWithRetry(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
 );
-const AssessmentReportBuilderView = React.lazy(() =>
+const AssessmentReportBuilderView = lazyWithRetry(() =>
   import('@/views/AssessmentReportBuilderView').then((m) => ({
     default: m.AssessmentReportBuilderView,
   }))
 );
-const BenefitsRealizationView = React.lazy(() =>
+const BenefitsRealizationView = lazyWithRetry(() =>
   import('@/views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView }))
 );
-const SharedPresentationView = React.lazy(() =>
+const SharedPresentationView = lazyWithRetry(() =>
   import('@/components/Presentations/SharedPresentationView').then((m) => ({
     default: m.SharedPresentationView,
   }))
 );
-const ReportsAndPresentationsHub = React.lazy(() =>
+const ReportsAndPresentationsHub = lazyWithRetry(() =>
   import('@/components/ReportsAndPresentations/ReportsAndPresentationsHub').then((m) => ({
     default: m.ReportsAndPresentationsHub,
   }))
 );
 // Consultify Presentation Studio (Module Delivery Contract S5) — read-only
 // surface that consumes the four /api/presentation-studio/*/preview endpoints.
-const PresentationStudioPage = React.lazy(() =>
+const PresentationStudioPage = lazyWithRetry(() =>
   import('@/components/PresentationStudio/PresentationStudioPage').then((m) => ({
     default: m.PresentationStudioPage,
   }))
@@ -132,83 +132,83 @@ const PresentationStudioPage = React.lazy(() =>
 // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
 // above the V8.1 substrate.
 // See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md.
-const DocumentStudioView = React.lazy(() =>
+const DocumentStudioView = lazyWithRetry(() =>
   import('@/components/DocumentStudio/DocumentStudioView').then((m) => ({
     default: m.DocumentStudioView,
   }))
 );
-const DeckBuilder = React.lazy(() =>
+const DeckBuilder = lazyWithRetry(() =>
   import('@/components/Presentations/DeckBuilder/DeckBuilder').then((m) => ({
     default: m.DeckBuilder,
   }))
 );
-const PresentationWizard = React.lazy(() =>
+const PresentationWizard = lazyWithRetry(() =>
   import('@/components/Presentations/PresentationWizard').then((m) => ({
     default: m.PresentationWizard,
   }))
 );
-const MeetingHub = React.lazy(() =>
+const MeetingHub = lazyWithRetry(() =>
   import('@/components/Meeting/MeetingHub').then((m) => ({ default: m.MeetingHub }))
 );
 // NOTE: Legacy Management Reports UI has been deprecated in favor of the unified
 // Reports & Presentations hub under /presentations (tab=documents).
 
 // Settings
-const SettingsView = React.lazy(() =>
+const SettingsView = lazyWithRetry(() =>
   import('@/views/SettingsView').then((m) => ({ default: m.SettingsView }))
 );
 
 // Organization
-const OrganizationView = React.lazy(() =>
+const OrganizationView = lazyWithRetry(() =>
   import('@/views/OrganizationView').then((m) => ({ default: m.OrganizationView }))
 );
 
 // Admin
-const AdminView = React.lazy(() =>
+const AdminView = lazyWithRetry(() =>
   import('@/views/admin/AdminView').then((m) => ({ default: m.AdminView }))
 );
 
 // SuperAdmin
-const SuperAdminView = React.lazy(() =>
+const SuperAdminView = lazyWithRetry(() =>
   import('@/views/superadmin/SuperAdminView').then((m) => ({ default: m.SuperAdminView }))
 );
 
 // AI Chat (Full Screen Chat View) — Wave 1 canonical shell.
-const UnifiedChatPanel = React.lazy(() =>
+const UnifiedChatPanel = lazyWithRetry(() =>
   import('@/components/AIChat/UnifiedChatPanel').then((m) => ({ default: m.UnifiedChatPanel }))
 );
-const AIOSHub = React.lazy(() =>
+const AIOSHub = lazyWithRetry(() =>
   import('@/components/AIChat/AIOSHub').then((m) => ({ default: m.AIOSHub }))
 );
-const ActionCenter = React.lazy(() =>
+const ActionCenter = lazyWithRetry(() =>
   import('@/components/AIChat/ActionCenter').then((m) => ({ default: m.ActionCenter }))
 );
-const ResearchSessionsDock = React.lazy(() =>
+const ResearchSessionsDock = lazyWithRetry(() =>
   import('@/components/AIChat/ResearchSessionsDock').then((m) => ({
     default: m.ResearchSessionsDock,
   }))
 );
-const Wave5ArtifactRuntimePanel = React.lazy(() =>
+const Wave5ArtifactRuntimePanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave5ArtifactRuntimePanel').then((m) => ({
     default: m.Wave5ArtifactRuntimePanel,
   }))
 );
-const Wave6ContextLearningPanel = React.lazy(() =>
+const Wave6ContextLearningPanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave6ContextLearningPanel').then((m) => ({
     default: m.Wave6ContextLearningPanel,
   }))
 );
-const Wave7ConnectorAdminPanel = React.lazy(() =>
+const Wave7ConnectorAdminPanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave7ConnectorAdminPanel').then((m) => ({
     default: m.Wave7ConnectorAdminPanel,
   }))
 );
-const Wave8AgentCatalogPanel = React.lazy(() =>
+const Wave8AgentCatalogPanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave8AgentCatalogPanel').then((m) => ({
     default: m.Wave8AgentCatalogPanel,
   }))
 );
-const Wave9OutcomeAIOpsPanel = React.lazy(() =>
+const Wave9OutcomeAIOpsPanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave9OutcomeAIOpsPanel').then((m) => ({
     default: m.Wave9OutcomeAIOpsPanel,
   }))
@@ -217,242 +217,242 @@ const Wave9OutcomeAIOpsPanel = React.lazy(() =>
 // KIMI-style workspaces (P20 Prezentacje). The P22 Wordy workspace
 // (WordyView) is deprecated — `/wordy` now redirects to the canonical
 // Document Studio (`/document-studio`); see the route below.
-const PrezentacjeView = React.lazy(() =>
+const PrezentacjeView = lazyWithRetry(() =>
   import('@/components/AIChat/KimiWorkspace/PrezentacjeView').then((m) => ({
     default: m.PrezentacjeView,
   }))
 );
 // KIMI-style Tabele workspace (Table Studio Foundation block — sky accent, D1=visible)
-const TabeleView = React.lazy(() =>
+const TabeleView = lazyWithRetry(() =>
   import('@/components/AIChat/KimiWorkspace/TabeleView').then((m) => ({
     default: m.default,
   }))
 );
 
 // Discovery Consultant (AI Discovery with Canvas)
-const DiscoveryConsultantView = React.lazy(() =>
+const DiscoveryConsultantView = lazyWithRetry(() =>
   import('@/components/Discovery/DiscoveryConsultantView').then((m) => ({
     default: m.DiscoveryConsultantView,
   }))
 );
 
 // Become Partner (Public Partner Recruitment Page)
-const BecomePartnerView = React.lazy(() => import('@/views/BecomePartnerView'));
-const PartnerApplicationView = React.lazy(() => import('@/views/PartnerApplicationView'));
+const BecomePartnerView = lazyWithRetry(() => import('@/views/BecomePartnerView'));
+const PartnerApplicationView = lazyWithRetry(() => import('@/views/PartnerApplicationView'));
 
 // Dashboard - DEPRECATED: Removed, redirects to Chat
 
 // Project Intelligence (legacy)
-const ProjectIntelligenceView = React.lazy(() =>
+const ProjectIntelligenceView = lazyWithRetry(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
 );
 
 // Interview Module - New Hub (ModuleHub pattern) - BCG Enterprise Level
-const InterviewHub = React.lazy(() =>
+const InterviewHub = lazyWithRetry(() =>
   import('@/components/Interview/InterviewHub').then((m) => ({ default: m.InterviewHub }))
 );
 
 // AI Actions
-const ActionProposalView = React.lazy(() =>
+const ActionProposalView = lazyWithRetry(() =>
   import('@/views/ActionProposalView').then((m) => ({ default: m.ActionProposalView }))
 );
 
 // Partner Portal - New DBR77 Consultify Partner Portal
-const PartnerPortalViewNew = React.lazy(() =>
+const PartnerPortalViewNew = lazyWithRetry(() =>
   import('@/views/partner/PartnerPortalView').then((m) => ({ default: m.PartnerPortalViewNew }))
 );
 
-const PartnerPricingView = React.lazy(() =>
+const PartnerPricingView = lazyWithRetry(() =>
   import('@/views/partner/PartnerPricingView').then((m) => ({ default: m.PartnerPricingView }))
 );
-const PartnerDashboardView = React.lazy(() =>
+const PartnerDashboardView = lazyWithRetry(() =>
   import('@/views/partner/PartnerDashboardView').then((m) => ({ default: m.PartnerDashboardView }))
 );
-const ClientAccessView = React.lazy(() =>
+const ClientAccessView = lazyWithRetry(() =>
   import('@/views/partner/ClientAccessView').then((m) => ({ default: m.ClientAccessView }))
 );
-const CommissionView = React.lazy(() =>
+const CommissionView = lazyWithRetry(() =>
   import('@/views/partner/CommissionView').then((m) => ({ default: m.CommissionView }))
 );
-const DirectoryView = React.lazy(() =>
+const DirectoryView = lazyWithRetry(() =>
   import('@/views/partner/DirectoryView').then((m) => ({ default: m.DirectoryView }))
 );
-const ResourcesView = React.lazy(() =>
+const ResourcesView = lazyWithRetry(() =>
   import('@/views/partner/ResourcesView').then((m) => ({ default: m.ResourcesView }))
 );
-const ProviderHomeView = React.lazy(() =>
+const ProviderHomeView = lazyWithRetry(() =>
   import('@/views/partner/ProviderHomeView').then((m) => ({ default: m.ProviderHomeView }))
 );
 
 // Consultant
-const ConsultantPanelView = React.lazy(() =>
+const ConsultantPanelView = lazyWithRetry(() =>
   import('@/views/consultant/ConsultantPanelView').then((m) => ({ default: m.ConsultantPanelView }))
 );
-const ConsultantInviteView = React.lazy(() =>
+const ConsultantInviteView = lazyWithRetry(() =>
   import('@/views/consultant/ConsultantInviteView').then((m) => ({
     default: m.ConsultantInviteView,
   }))
 );
 
 // Wizards
-const OrgSetupWizard = React.lazy(() =>
+const OrgSetupWizard = lazyWithRetry(() =>
   import('@/views/OrgSetupWizard').then((m) => ({ default: m.OrgSetupWizard }))
 );
-const OnboardingWizard = React.lazy(() =>
+const OnboardingWizard = lazyWithRetry(() =>
   import('@/views/OnboardingWizard').then((m) => ({ default: m.OnboardingWizard }))
 );
-const EnterpriseOnboardingWizard = React.lazy(() =>
+const EnterpriseOnboardingWizard = lazyWithRetry(() =>
   import('@/components/Onboarding/EnterpriseOnboardingWizard').then((m) => ({
     default: m.EnterpriseOnboardingWizard,
   }))
 );
-const TrialEntryView = React.lazy(() =>
+const TrialEntryView = lazyWithRetry(() =>
   import('@/views/TrialEntryView').then((m) => ({ default: m.TrialEntryView }))
 );
 
 // Affiliate
-const AffiliateDashboardView = React.lazy(() =>
+const AffiliateDashboardView = lazyWithRetry(() =>
   import('@/views/AffiliateDashboardView').then((m) => ({ default: m.AffiliateDashboardView }))
 );
 
 // Legal Pages
-const AboutView = React.lazy(() =>
+const AboutView = lazyWithRetry(() =>
   import('@/views/legal/AboutView').then((m) => ({ default: m.AboutView }))
 );
-const ContactView = React.lazy(() =>
+const ContactView = lazyWithRetry(() =>
   import('@/views/legal/ContactView').then((m) => ({ default: m.ContactView }))
 );
 // Standalone legal views removed — all legal documents served via LegalDocumentView (/legal/:docSlug)
-const VectorPage = React.lazy(() =>
+const VectorPage = lazyWithRetry(() =>
   import('../views/VectorPage').then((m) => ({ default: m.VectorPage }))
 );
-const LegalIndexView = React.lazy(() =>
+const LegalIndexView = lazyWithRetry(() =>
   import('@/views/LegalIndexView').then((m) => ({ default: m.LegalIndexView }))
 );
-const LegalDocumentView = React.lazy(() =>
+const LegalDocumentView = lazyWithRetry(() =>
   import('@/views/LegalDocumentView').then((m) => ({ default: m.LegalDocumentView }))
 );
-const OAuthCallbackView = React.lazy(() => import('@/views/OAuthCallback'));
-const ForgotPasswordView = React.lazy(() =>
+const OAuthCallbackView = lazyWithRetry(() => import('@/views/OAuthCallback'));
+const ForgotPasswordView = lazyWithRetry(() =>
   import('@/views/auth/ForgotPasswordView').then((m) => ({ default: m.ForgotPasswordView }))
 );
-const ResetPasswordView = React.lazy(() =>
+const ResetPasswordView = lazyWithRetry(() =>
   import('@/views/auth/ResetPasswordView').then((m) => ({ default: m.ResetPasswordView }))
 );
 
 // Status & Changelog
-const StatusPageView = React.lazy(() =>
+const StatusPageView = lazyWithRetry(() =>
   import('@/views/StatusPageView').then((m) => ({ default: m.StatusPageView }))
 );
-const ChangelogView = React.lazy(() =>
+const ChangelogView = lazyWithRetry(() =>
   import('@/views/ChangelogView').then((m) => ({ default: m.ChangelogView }))
 );
 
 // Knowledge Base & Pricing
-const KnowledgeBaseEntryView = React.lazy(() =>
+const KnowledgeBaseEntryView = lazyWithRetry(() =>
   import('@/views/KnowledgeBaseEntryView').then((m) => ({ default: m.KnowledgeBaseEntryView }))
 );
-const AppPricingView = React.lazy(() =>
+const AppPricingView = lazyWithRetry(() =>
   import('@/views/AppPricingView').then((m) => ({ default: m.AppPricingView }))
 );
-const ExecutiveView = React.lazy(() =>
+const ExecutiveView = lazyWithRetry(() =>
   import('@/views/ExecutiveView').then((m) => ({ default: m.ExecutiveView }))
 );
-const BusinessCasesPage = React.lazy(() =>
+const BusinessCasesPage = lazyWithRetry(() =>
   import('@/views/BusinessCasesPage').then((m) => ({ default: m.BusinessCasesPage }))
 );
 
 // Documentation Portal (Public)
-const KnowledgeBaseHomePage = React.lazy(() =>
+const KnowledgeBaseHomePage = lazyWithRetry(() =>
   import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({
     default: m.KnowledgeBaseHomePage,
   }))
 );
-const KnowledgeBaseCategoryPage = React.lazy(() =>
+const KnowledgeBaseCategoryPage = lazyWithRetry(() =>
   import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({
     default: m.KnowledgeBaseCategoryPage,
   }))
 );
-const KnowledgeBaseArticlePage = React.lazy(() =>
+const KnowledgeBaseArticlePage = lazyWithRetry(() =>
   import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({
     default: m.KnowledgeBaseArticlePage,
   }))
 );
-const DocsLayout = React.lazy(() =>
+const DocsLayout = lazyWithRetry(() =>
   import('@/layouts/DocsLayout').then((m) => ({ default: m.DocsLayout }))
 );
-const DocsHomeView = React.lazy(() =>
+const DocsHomeView = lazyWithRetry(() =>
   import('@/views/docs/DocsHomeView').then((m) => ({ default: m.DocsHomeView }))
 );
-const DocsCategoryView = React.lazy(() =>
+const DocsCategoryView = lazyWithRetry(() =>
   import('@/views/docs/DocsCategoryView').then((m) => ({ default: m.DocsCategoryView }))
 );
-const DocsArticleView = React.lazy(() =>
+const DocsArticleView = lazyWithRetry(() =>
   import('@/views/docs/DocsArticleView').then((m) => ({ default: m.DocsArticleView }))
 );
-const DocsSearchView = React.lazy(() =>
+const DocsSearchView = lazyWithRetry(() =>
   import('@/views/docs/DocsSearchView').then((m) => ({ default: m.DocsSearchView }))
 );
-const DocsApiReferenceView = React.lazy(() =>
+const DocsApiReferenceView = lazyWithRetry(() =>
   import('@/views/docs/DocsApiReferenceView').then((m) => ({ default: m.DocsApiReferenceView }))
 );
-const DocsChangelogView = React.lazy(() =>
+const DocsChangelogView = lazyWithRetry(() =>
   import('@/views/docs/DocsChangelogView').then((m) => ({ default: m.DocsChangelogView }))
 );
-const DocsSecurityView = React.lazy(() =>
+const DocsSecurityView = lazyWithRetry(() =>
   import('@/views/docs/DocsSecurityView').then((m) => ({ default: m.DocsSecurityView }))
 );
 
 // Public Form Page (Table Platform)
-const PublicFormPage = React.lazy(() =>
+const PublicFormPage = lazyWithRetry(() =>
   import('@/components/MyWork/table/forms/PublicFormPage').then((m) => ({
     default: m.PublicFormPage,
   }))
 );
 
 // Public JWT Form Page (Table Platform · Block D · D-S4)
-const PublicJwtFormPage = React.lazy(() =>
+const PublicJwtFormPage = lazyWithRetry(() =>
   import('@/components/MyWork/table/forms/PublicJwtFormPage').then((m) => ({
     default: m.PublicJwtFormPage,
   }))
 );
 
 // Public Shared View (Table Platform)
-const PublicViewPage = React.lazy(() => import('@/components/MyWork/table/PublicViewPage'));
+const PublicViewPage = lazyWithRetry(() => import('@/components/MyWork/table/PublicViewPage'));
 
 // Public Mini Assessment (T015)
-const PublicMiniAssessmentView = React.lazy(() =>
+const PublicMiniAssessmentView = lazyWithRetry(() =>
   import('@/views/PublicMiniAssessmentView').then((m) => ({ default: m.PublicMiniAssessmentView }))
 );
 
 // Education Hub (Public)
-const ToolsShowcasePage = React.lazy(() =>
+const ToolsShowcasePage = lazyWithRetry(() =>
   import('@/views/ToolsShowcasePage').then((m) => ({ default: m.ToolsShowcasePage }))
 );
-const AuditsShowcasePage = React.lazy(() =>
+const AuditsShowcasePage = lazyWithRetry(() =>
   import('@/views/AuditsShowcasePage').then((m) => ({ default: m.AuditsShowcasePage }))
 );
-const ResourcesPage = React.lazy(() =>
+const ResourcesPage = lazyWithRetry(() =>
   import('@/views/ResourcesPage').then((m) => ({ default: m.ResourcesPage }))
 );
-const HowItWorksPage = React.lazy(() =>
+const HowItWorksPage = lazyWithRetry(() =>
   import('@/views/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage }))
 );
-const AppIntroView = React.lazy(() => import('@/views/AppIntroView'));
+const AppIntroView = lazyWithRetry(() => import('@/views/AppIntroView'));
 
-const ForWhomPage = React.lazy(() =>
+const ForWhomPage = lazyWithRetry(() =>
   import('@/views/ForWhomPage').then((m) => ({ default: m.ForWhomPage }))
 );
 
-const PricingLandingPage = React.lazy(() =>
+const PricingLandingPage = lazyWithRetry(() =>
   import('@/views/PricingLandingPage').then((m) => ({ default: m.PricingLandingPage }))
 );
 
-const EnterprisePage = React.lazy(() =>
+const EnterprisePage = lazyWithRetry(() =>
   import('@/views/EnterprisePage').then((m) => ({ default: m.EnterprisePage }))
 );
 
-const OurStoryPage = React.lazy(() =>
+const OurStoryPage = lazyWithRetry(() =>
   import('@/views/OurStoryPage').then((m) => ({ default: m.OurStoryPage }))
 );
 

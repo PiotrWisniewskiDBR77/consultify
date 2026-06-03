@@ -45,7 +45,6 @@ export default defineConfig(({ mode }) => {
           './src/index.tsx',
           './src/App.tsx',
           './src/routes/AppRoutes.tsx',
-          './src/views/AIChatWelcomeView.tsx',
           './src/views/MyWorkView.tsx',
           './src/components/Interview/InterviewHub.tsx',
         ],

@@ -58,20 +58,52 @@ export const fetchWithRetry = async (
     ? { ...((requestOptions.headers as Record<string, string>) || {}) }
     : { ...getHeaders(), ...((requestOptions.headers as Record<string, string>) || {}) };
 
+  // Stabilization: every request without its own AbortSignal gets a 20s hard
+  // timeout so a stalled network call can never hang a list/table spinner
+  // forever. The caller's catch path then resolves to an error/empty state.
+  const hasExternalSignal = !!requestOptions.signal;
+  const timeoutController = hasExternalSignal ? null : new AbortController();
+  const timeoutTimer = timeoutController
+    ? window.setTimeout(() => {
+        try {
+          timeoutController.abort();
+        } catch {
+          // ignore
+        }
+      }, 20000)
+    : null;
+
   const doFetch = () =>
-    fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+    fetch(url, {
+      ...requestOptions,
+      headers,
+      credentials: options.credentials ?? 'include',
+      signal: requestOptions.signal || timeoutController?.signal,
+    });
 
   let res: Response;
   try {
-    res = await doFetch();
-  } catch (networkError: any) {
-    // Retry once on network errors (e.g., proxy down, ECONNREFUSED)
-    if (networkError?.name === 'TypeError' || networkError?.message?.includes('Failed to fetch')) {
-      await new Promise((r) => setTimeout(r, 1500));
+    try {
       res = await doFetch();
-    } else {
-      throw networkError;
+    } catch (networkError: any) {
+      if (timeoutController && networkError?.name === 'AbortError') {
+        const e: any = new Error('Request timed out');
+        e.code = 'REQUEST_TIMEOUT';
+        throw e;
+      }
+      // Retry once on network errors (e.g., proxy down, ECONNREFUSED)
+      if (
+        networkError?.name === 'TypeError' ||
+        networkError?.message?.includes('Failed to fetch')
+      ) {
+        await new Promise((r) => setTimeout(r, 1500));
+        res = await doFetch();
+      } else {
+        throw networkError;
+      }
     }
+  } finally {
+    if (timeoutTimer) window.clearTimeout(timeoutTimer);
   }
 
   const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());

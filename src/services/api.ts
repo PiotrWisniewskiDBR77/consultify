@@ -702,9 +702,12 @@ const fetchWithRetry = async (
     ...((fetchOptions.headers as Record<string, string>) || {}),
   };
   const hasExternalSignal = !!fetchOptions.signal;
-  const shouldApplyTimeout =
-    !hasExternalSignal && typeof url === 'string' && url.includes('/api/ai/refine-text');
-  const timeoutMs = shouldApplyTimeout ? 25000 : null;
+  const isAiRefine = typeof url === 'string' && url.includes('/api/ai/refine-text');
+  // Stabilization: every request that does not carry its own AbortSignal gets a
+  // hard timeout so a stalled network call can never hang a list/table spinner
+  // forever. AI refine keeps its longer 25s budget; everything else uses 20s.
+  const shouldApplyTimeout = !hasExternalSignal;
+  const timeoutMs = shouldApplyTimeout ? (isAiRefine ? 25000 : 20000) : null;
   const controller = shouldApplyTimeout ? new AbortController() : null;
   const timer = controller
     ? window.setTimeout(() => {
@@ -736,8 +739,8 @@ const fetchWithRetry = async (
     }
   } catch (err: any) {
     if (controller && err?.name === 'AbortError') {
-      const e: any = new Error('AI request timed out');
-      e.code = 'AI_TIMEOUT';
+      const e: any = new Error(isAiRefine ? 'AI request timed out' : 'Request timed out');
+      e.code = isAiRefine ? 'AI_TIMEOUT' : 'REQUEST_TIMEOUT';
       throw e;
     }
     throw err;
@@ -4137,12 +4140,18 @@ export const Api = {
       return cached as any[];
     }
 
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch personal tasks');
-    const raw = await res.json();
-    const data = Array.isArray(raw) ? raw : Array.isArray(raw?.tasks) ? raw.tasks : [];
-    personalTasksCacheSet(cacheKey, data);
-    return data;
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const res = await fetch(url, { headers: getHeaders(), signal: ctrl.signal });
+      if (!res.ok) throw new Error('Failed to fetch personal tasks');
+      const raw = await res.json();
+      const data = Array.isArray(raw) ? raw : Array.isArray(raw?.tasks) ? raw.tasks : [];
+      personalTasksCacheSet(cacheKey, data);
+      return data;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   },
 
   getPersonalTask: async (id: string): Promise<any> => {

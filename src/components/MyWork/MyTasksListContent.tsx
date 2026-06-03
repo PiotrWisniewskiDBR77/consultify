@@ -42,6 +42,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { ErrorState } from '@/components/ui/primitives';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -851,6 +852,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [dataContext, setDataContext] = useState<DataContextSummary | null>(null);
   const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
 
@@ -1013,10 +1015,12 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const data = await Api.getPersonalTasks();
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
+      setLoadError(true);
       toast.error(t('myWork.errors.fetchFailed', 'Failed to load tasks'));
     } finally {
       setLoading(false);
@@ -1788,6 +1792,19 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           <div className="flex-1 flex items-center justify-center h-64">
             <Loader2 className="animate-spin text-blue-500" size={32} />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+        <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
+          <ErrorState
+            message={t('myWork.errors.fetchFailed', 'Failed to load tasks')}
+            retry={() => void fetchTasks()}
+          />
         </div>
       </div>
     );
