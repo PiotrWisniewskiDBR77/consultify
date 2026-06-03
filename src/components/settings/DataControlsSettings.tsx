@@ -21,6 +21,7 @@ import {
   Download,
   ExternalLink,
   FileText,
+  FlaskConical,
   Globe,
   Info,
   Loader2,
@@ -35,6 +36,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { useDemo } from '../../hooks/useDemo';
 import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
@@ -205,6 +207,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+  const { isDemoMode, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
   const [consents, setConsents] = useState<ConsentSettings>(DEFAULT_CONSENTS);
   const [retention, setRetention] = useState<DataRetention>(DEFAULT_RETENTION);
   const [loading, setLoading] = useState(true);
@@ -642,6 +645,45 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       </button>
                     </div>
                   </div>
+                )}
+              </div>
+            </div>
+
+            <SettingsDivider />
+
+            {/* ─── Sample / Demo Data ─── */}
+            <div>
+              <h4 className={sectionLabel}>
+                <FlaskConical size={14} className="text-primary-400" />
+                {t('settings.data.sampleWorkspace', 'Sample Workspace')}
+              </h4>
+              <div className={cardClass}>
+                <SettingsToggle
+                  checked={isDemoMode}
+                  disabled={isDemoLoading}
+                  onChange={() => {
+                    void toggleDemoMode(undefined, { source: 'settings_data_controls' });
+                  }}
+                  label={t('settings.data.demoToggle', 'Explore the sample workspace')}
+                  description={
+                    isDemoMode
+                      ? t(
+                          'settings.data.demoToggleOnDesc',
+                          'Sample data is active — you are exploring a read-only demo organization. Toggle off to return to your own workspace.'
+                        )
+                      : t(
+                          'settings.data.demoToggleOffDesc',
+                          'Load a read-only sample organization to explore the product without touching your own data.'
+                        )
+                  }
+                />
+                {isDemoMode && demoOrganization && (
+                  <p className="mt-3 text-[11px] text-amber-300/90 flex items-center gap-1.5">
+                    <Info size={11} />
+                    {t('settings.data.demoActiveOrg', 'Active sample: {{name}} (read only)', {
+                      name: demoOrganization.name,
+                    })}
+                  </p>
                 )}
               </div>
             </div>

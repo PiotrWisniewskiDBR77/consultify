@@ -1203,7 +1203,8 @@
     "loadFailed": "Load failed",
     "periodStart": "Period start",
     "periodEnd": "Period end",
-    "noOrganizations": "No organizations found"
+    "noOrganizations": "No organizations found",
+    "retry": "Try again"
   },
   "superadmin": {
     "confirm": {
@@ -4253,7 +4254,22 @@
         "pos_top-left": "Top Left",
         "pos_bottom-right": "Bottom Right",
         "pos_bottom-left": "Bottom Left"
-      }
+      },
+      "pushTitle": "Push Notifications",
+      "pushDesc": "Get notified about important updates.",
+      "desktop": "Desktop Notifications",
+      "desktopDesc": "Show notifications in your browser when something needs your attention.",
+      "mobilePush": "Mobile Push Notifications",
+      "mobilePushDesc": "Mobile push requires the Consultify mobile app, which is coming soon.",
+      "loading": "Loading notification preferences…",
+      "loadErrorTitle": "Could not load preferences",
+      "loadError": "We could not load your notification preferences. Please try again.",
+      "saveFailed": "Could not save your preference",
+      "unsupported": "Your browser does not support notifications",
+      "pushDenied": "Permission denied",
+      "pushEnabled": "Desktop notifications enabled",
+      "blockedTitle": "Notifications are blocked",
+      "blocked": "Your browser is blocking notifications for this site. Enable them in your browser settings to receive desktop alerts."
     },
     "integrations": {
       "title": "Integrations",
@@ -4427,7 +4443,12 @@
       "subprocessors": "Sub-processors",
       "subprocessorsDesc": "Third-party services and data flow",
       "legalCenter": "Legal Center",
-      "legalCenterDesc": "All legal and compliance documents"
+      "legalCenterDesc": "All legal and compliance documents",
+      "sampleWorkspace": "Sample Workspace",
+      "demoToggle": "Explore the sample workspace",
+      "demoToggleOnDesc": "Sample data is active — you are exploring a read-only demo organization. Toggle off to return to your own workspace.",
+      "demoToggleOffDesc": "Load a read-only sample organization to explore the product without touching your own data.",
+      "demoActiveOrg": "Active sample: {{name}} (read only)"
     },
     "importExport": {
       "title": "Settings Export & Import",
@@ -4541,7 +4562,11 @@
       "sound_chime": "Chime",
       "sound_bell": "Bell",
       "sound_pop": "Pop",
-      "sound_none": "None"
+      "sound_none": "None",
+      "enableBrowserAlerts": "Allow browser notifications",
+      "permissionBlocked": "Notifications are blocked in your browser. Enable them in your browser settings to receive desktop alerts.",
+      "mobilePush": "Mobile push notifications",
+      "mobilePushDesc": "Requires the Consultify mobile app, which is coming soon."
     },
     "privacy": {
       "title": "Privacy & Visibility",

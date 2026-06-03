@@ -91,7 +91,8 @@
     "loadFailed": "Nie udało się wczytać",
     "periodStart": "Okres od",
     "periodEnd": "Okres do",
-    "noOrganizations": "Nie znaleziono organizacji"
+    "noOrganizations": "Nie znaleziono organizacji",
+    "retry": "Spróbuj ponownie"
   },
   "superadmin": {
     "confirm": {
@@ -3559,7 +3560,22 @@
         "pos_top-left": "Lewy górny róg",
         "pos_bottom-right": "Prawy dolny róg",
         "pos_bottom-left": "Lewy dolny róg"
-      }
+      },
+      "pushTitle": "Powiadomienia push",
+      "pushDesc": "Otrzymuj powiadomienia o ważnych aktualizacjach.",
+      "desktop": "Powiadomienia na pulpicie",
+      "desktopDesc": "Pokazuj powiadomienia w przeglądarce, gdy coś wymaga Twojej uwagi.",
+      "mobilePush": "Mobilne powiadomienia push",
+      "mobilePushDesc": "Mobilne powiadomienia push wymagają aplikacji mobilnej Consultify, która już wkrótce będzie dostępna.",
+      "loading": "Ładowanie ustawień powiadomień…",
+      "loadErrorTitle": "Nie udało się załadować ustawień",
+      "loadError": "Nie udało się załadować Twoich ustawień powiadomień. Spróbuj ponownie.",
+      "saveFailed": "Nie udało się zapisać Twojego ustawienia",
+      "unsupported": "Twoja przeglądarka nie obsługuje powiadomień",
+      "pushDenied": "Odmówiono uprawnień",
+      "pushEnabled": "Włączono powiadomienia na pulpicie",
+      "blockedTitle": "Powiadomienia są zablokowane",
+      "blocked": "Twoja przeglądarka blokuje powiadomienia dla tej witryny. Włącz je w ustawieniach przeglądarki, aby otrzymywać alerty na pulpicie."
     },
     "integrations": {
       "title": "Integracje",
@@ -3733,7 +3749,12 @@
       "subprocessors": "Podwykonawcy przetwarzania",
       "subprocessorsDesc": "Usługi zewnętrzne i przepływ danych",
       "legalCenter": "Centrum prawne",
-      "legalCenterDesc": "Wszystkie dokumenty prawne i zgodności"
+      "legalCenterDesc": "Wszystkie dokumenty prawne i zgodności",
+      "sampleWorkspace": "Przykładowa przestrzeń robocza",
+      "demoToggle": "Przeglądaj przykładową przestrzeń roboczą",
+      "demoToggleOnDesc": "Dane przykładowe są aktywne — przeglądasz tylko-do-odczytu organizację demo. Wyłącz, aby wrócić do własnej przestrzeni roboczej.",
+      "demoToggleOffDesc": "Załaduj tylko-do-odczytu przykładową organizację, aby poznać produkt bez naruszania własnych danych.",
+      "demoActiveOrg": "Aktywny przykład: {{name}} (tylko do odczytu)"
     },
     "importExport": {
       "title": "Eksport i import ustawień",
@@ -3847,7 +3868,11 @@
       "sound_chime": "Dzwonek",
       "sound_bell": "Bell",
       "sound_pop": "Pop",
-      "sound_none": "Brak"
+      "sound_none": "Brak",
+      "enableBrowserAlerts": "Zezwól na powiadomienia w przeglądarce",
+      "permissionBlocked": "Powiadomienia są zablokowane w Twojej przeglądarce. Włącz je w ustawieniach przeglądarki, aby otrzymywać alerty na pulpicie.",
+      "mobilePush": "Mobilne powiadomienia push",
+      "mobilePushDesc": "Wymaga aplikacji mobilnej Consultify, która już wkrótce będzie dostępna."
     },
     "privacy": {
       "title": "Prywatność i widoczność",

@@ -226,9 +226,43 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                       className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm"
                     >
                       <Bell size={14} />
-                      {t('settings.desktopSounds.enablePush', 'Enable Push Notifications')}
+                      {t(
+                        'settings.desktopSounds.enableBrowserAlerts',
+                        'Allow browser notifications'
+                      )}
                     </button>
                   )}
+
+                {'Notification' in window && Notification.permission === 'denied' && (
+                  <p className="text-xs text-amber-300/90">
+                    {t(
+                      'settings.desktopSounds.permissionBlocked',
+                      'Notifications are blocked in your browser. Enable them in your browser settings to receive desktop alerts.'
+                    )}
+                  </p>
+                )}
+
+                {/* Mobile push has no delivery backend yet — surface it as gated
+                    rather than offering a toggle that records a no-op flag. */}
+                <div className="flex items-start justify-between gap-4 p-3.5 bg-navy-900/30 border border-white/5 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Bell size={16} className="text-slate-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {t('settings.desktopSounds.mobilePush', 'Mobile push notifications')}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {t(
+                          'settings.desktopSounds.mobilePushDesc',
+                          'Requires the Consultify mobile app, which is coming soon.'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center rounded-full bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-400 flex-shrink-0">
+                    {t('common.comingSoon', 'Coming soon')}
+                  </span>
+                </div>
 
                 {prefs.desktopEnabled && (
                   <>

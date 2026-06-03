@@ -307,6 +307,11 @@ router.put(
       }
 
       const persisted = await getRecoveryOptions(userId);
+      // Audit log without persisting raw recovery contact values.
+      await logSettingsChange(userId, 'security', 'recovery', 'updated', null, {
+        recoveryEmailSet: !!persisted.recoveryEmail,
+        recoveryPhoneSet: !!persisted.recoveryPhone,
+      });
       return res.json({ success: true, ...persisted });
     } catch (error: any) {
       logger.error('[Settings] Failed to save recovery options:', error);
@@ -494,6 +499,7 @@ router.put(
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+      await logSettingsChange(userId, 'notifications', 'preferences', 'updated', null, preferences);
       logger.info(`[settings] Notification preferences updated for user ${userId}`);
 
       return res.json({ success: true });
@@ -2456,6 +2462,7 @@ router.put(
     const result = await upsertUserPreferenceValue(userId, preferencesKey('privacy'), payload);
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'privacy', 'preferences', 'updated', null, preferences);
     logger.info(`[settings] Privacy preferences updated for user ${userId}`);
     return res.json({ success: true });
   })
@@ -2700,6 +2707,7 @@ router.put(
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'privacy', 'gdpr-consents', 'updated', null, consents);
     return res.json({ success: true });
   })
 );
@@ -2748,6 +2756,7 @@ router.put(
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'privacy', 'gdpr-retention', 'updated', null, retention);
     return res.json({ success: true });
   })
 );
@@ -3811,6 +3820,7 @@ router.put(
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'ai', 'ai-instructions', 'updated', null, preferences);
     logger.info(`[settings] AI instructions updated for user ${userId}`);
     return res.json({ success: true });
   })
@@ -3862,6 +3872,7 @@ router.put(
     const result = await upsertUserPreferenceValue(userId, preferencesKey('ai-model'), payload);
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'ai', 'ai-model', 'updated', null, preferences);
     logger.info(`[settings] AI model preferences updated for user ${userId}`);
     return res.json({ success: true });
   })
@@ -3917,6 +3928,7 @@ router.put(
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'ai', 'ai-parameters', 'updated', null, preferences);
     logger.info(`[settings] AI parameters updated for user ${userId}`);
     return res.json({ success: true });
   })
@@ -3972,6 +3984,7 @@ router.put(
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'ai', 'ai-personality', 'updated', null, preferences);
     logger.info(`[settings] AI personality updated for user ${userId}`);
     return res.json({ success: true });
   })
@@ -4092,6 +4105,7 @@ router.put(
       });
     }
 
+    await logSettingsChange(userId, 'ai', 'ai-memory', 'updated', null, preferences);
     logger.info(`[settings] AI memory preferences updated for user ${userId}`);
     return res.json({ success: true });
   })
@@ -4167,6 +4181,7 @@ router.put(
     const result = await upsertUserPreferenceValue(userId, preferencesKey('ai-voice'), payload);
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'ai', 'ai-voice', 'updated', null, preferences);
     logger.info(`[settings] AI voice preferences updated for user ${userId}`);
     return res.json({ success: true });
   })
@@ -4222,6 +4237,7 @@ router.put(
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
+    await logSettingsChange(userId, 'ai', 'ai-privacy', 'updated', null, preferences);
     logger.info(`[settings] AI privacy preferences updated for user ${userId}`);
     return res.json({ success: true });
   })
@@ -5039,6 +5055,10 @@ router.post(
       'Failed to rotate API key'
     );
 
+    await logSettingsChange(userId, 'security', 'api-key', 'rotated', null, {
+      keyId: id,
+      keyPrefix,
+    });
     logger.info(`[settings] API key ${id} rotated for user ${userId}`);
     return res.json({ success: true, key: newKey, keyPrefix });
   })

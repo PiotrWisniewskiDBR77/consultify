@@ -15,6 +15,11 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import { normalizePlatformRole } from '../utils/roleNormalization.js';
+import {
+  getEffectiveSettingsFallback,
+  getUserSettingsFallback,
+  updateUserSettingsFallback,
+} from './aiSettingsFallback.js';
 
 const router = Router();
 
@@ -295,24 +300,26 @@ router.get(
   '/user',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Graceful degradation: if the AI settings service is unavailable, serve the
+    // user's personal settings from the user_preferences fallback store so the
+    // AI Behavior / Model / Parameters pages still render and persist.
     if (!AISettingsService?.getUserSettings) {
-      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { settings: {} });
+      const settings = await getUserSettingsFallback(userId);
+      return res.json({ ...settings, degraded: true });
     }
 
     try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
       const settings = await AISettingsService.getUserSettings(userId);
       res.json(settings);
     } catch (error: unknown) {
-      logger.error('[AI Settings] Error getting user settings:', error);
-      return res.status(500).json({
-        error: 'Failed to get settings',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      logger.error('[AI Settings] Error getting user settings, using fallback:', error);
+      const settings = await getUserSettingsFallback(userId);
+      return res.json({ ...settings, degraded: true });
     }
   })
 );
@@ -325,17 +332,29 @@ router.put(
   '/user',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || req.user?.organizationId;
+    const settings = req.body as { proactivityMode?: string; [key: string]: unknown };
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Graceful degradation: persist personal AI settings to the user_preferences
+    // fallback store when the service (or org validation) is unavailable.
     if (!AISettingsService?.updateUserSettings || !AISettingsService?.getOrgSettings) {
-      return respondServiceNotConfigured(req as Request, res, 'ai-settings');
+      const updated = await updateUserSettingsFallback(userId, settings as Record<string, unknown>);
+      return res.json({ ...updated, degraded: true });
     }
 
     try {
-      const userId = req.user?.id;
-      const organizationId = req.user?.organizationId || req.user?.organizationId;
-      const settings = req.body as { proactivityMode?: string; [key: string]: unknown };
-
-      if (!userId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
+      if (!organizationId) {
+        // No org context: fall back to personal-only persistence.
+        const updated = await updateUserSettingsFallback(
+          userId,
+          settings as Record<string, unknown>
+        );
+        return res.json({ ...updated, degraded: true });
       }
 
       // Validate proactivity mode against org settings
@@ -356,11 +375,20 @@ router.put(
       const updated = await AISettingsService.updateUserSettings(userId, settings);
       res.json(updated);
     } catch (error: unknown) {
-      logger.error('[AI Settings] Error updating user settings:', error);
-      return res.status(500).json({
-        error: 'Failed to update settings',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      logger.error('[AI Settings] Error updating user settings, using fallback:', error);
+      try {
+        const updated = await updateUserSettingsFallback(
+          userId,
+          settings as Record<string, unknown>
+        );
+        return res.json({ ...updated, degraded: true });
+      } catch (fallbackError: unknown) {
+        logger.error('[AI Settings] Fallback persistence also failed:', fallbackError);
+        return res.status(500).json({
+          error: 'Failed to update settings',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
     }
   })
 );
@@ -378,26 +406,27 @@ router.get(
   '/effective',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AISettingsService?.getEffectiveSettings) {
-      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { settings: {} });
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || req.user?.organizationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Graceful degradation: serve user-tier effective settings from the fallback
+    // store when the service is unavailable or the user has no org context.
+    if (!AISettingsService?.getEffectiveSettings || !organizationId) {
+      const effective = await getEffectiveSettingsFallback(userId);
+      return res.json({ ...effective, degraded: true });
     }
 
     try {
-      const userId = req.user?.id;
-      const organizationId = req.user?.organizationId || req.user?.organizationId;
-
-      if (!userId || !organizationId) {
-        return res.status(400).json({ error: 'User must belong to an organization' });
-      }
-
       const effective = await AISettingsService.getEffectiveSettings(userId, organizationId);
       res.json(effective);
     } catch (error: unknown) {
-      logger.error('[AI Settings] Error getting effective settings:', error);
-      return res.status(500).json({
-        error: 'Failed to get settings',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      logger.error('[AI Settings] Error getting effective settings, using fallback:', error);
+      const effective = await getEffectiveSettingsFallback(userId);
+      return res.json({ ...effective, degraded: true });
     }
   })
 );
@@ -415,18 +444,20 @@ router.get(
   '/available-models',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AISettingsService?.getAvailableModels) {
-      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { models: [] });
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || req.user?.organizationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Graceful degradation: an empty model list is preferable to a 503 that
+    // blanks the AI Model Selection page.
+    if (!AISettingsService?.getAvailableModels || !organizationId) {
+      return res.json([]);
     }
 
     try {
-      const userId = req.user?.id;
-      const organizationId = req.user?.organizationId || req.user?.organizationId;
-
-      if (!userId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
       const models = await AISettingsService.getAvailableModels(userId, organizationId);
       res.json(models);
     } catch (error: unknown) {
@@ -438,10 +469,8 @@ router.get(
           details: error.details,
         });
       }
-      return res.status(500).json({
-        error: 'Failed to get models',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      // Degrade to an empty list rather than failing the page.
+      return res.json([]);
     }
   })
 );
@@ -458,29 +487,24 @@ router.get(
   '/proactivity',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AIProactivityEngine?.getEffectiveProactivity) {
-      return respondServiceNotConfigured(req as Request, res, 'ai-proactivity', {
-        mode: 'BALANCED',
-        behaviors: [],
-      });
+    const userId = req.user?.id;
+    const organizationId = req.user?.organizationId || req.user?.organizationId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Graceful degradation: BALANCED is the safe default mode.
+    if (!AIProactivityEngine?.getEffectiveProactivity || !organizationId) {
+      return res.json({ mode: 'BALANCED', behaviors: [], degraded: true });
     }
 
     try {
-      const userId = req.user?.id;
-      const organizationId = req.user?.organizationId || req.user?.organizationId;
-
-      if (!userId || !organizationId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
       const proactivity = await AIProactivityEngine.getEffectiveProactivity(userId, organizationId);
       res.json(proactivity);
     } catch (error: unknown) {
-      logger.error('[AI Settings] Error getting proactivity:', error);
-      return res.status(500).json({
-        error: 'Failed to get proactivity',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      logger.error('[AI Settings] Error getting proactivity, using fallback:', error);
+      return res.json({ mode: 'BALANCED', behaviors: [], degraded: true });
     }
   })
 );
@@ -493,19 +517,24 @@ router.get(
   '/proactivity/modes',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    // Static fallback list mirrors the engine's canonical proactivity modes so
+    // the selector UI still works when the engine is unavailable.
+    const fallbackModes = [
+      { id: 'REACTIVE', name: 'Reactive', description: 'Only responds when asked.' },
+      { id: 'BALANCED', name: 'Balanced', description: 'Helpful suggestions in context.' },
+      { id: 'PROACTIVE', name: 'Proactive', description: 'Anticipates needs and offers help.' },
+    ];
+
     if (!AIProactivityEngine?.getAllModes) {
-      return respondServiceNotConfigured(req as Request, res, 'ai-proactivity', { modes: [] });
+      return res.json(fallbackModes);
     }
 
     try {
       const modes = AIProactivityEngine.getAllModes();
       res.json(modes);
     } catch (error: unknown) {
-      logger.error('[AI Settings] Error getting proactivity modes:', error);
-      return res.status(500).json({
-        error: 'Failed to get modes',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      logger.error('[AI Settings] Error getting proactivity modes, using fallback:', error);
+      return res.json(fallbackModes);
     }
   })
 );
@@ -619,26 +648,25 @@ router.get(
   '/user/costs',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { period = '30d' } = req.query;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Graceful degradation: an empty cost history keeps the usage dashboard
+    // rendering (it already handles the zero-data case) instead of 503.
     if (!AISettingsService?.getUserCostHistory) {
-      return respondServiceNotConfigured(req as Request, res, 'ai-settings', { costs: [] });
+      return res.json({ costs: [], total: 0, period });
     }
 
     try {
-      const userId = req.user?.id;
-      const { period = '30d' } = req.query;
-
-      if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
       const costs = await AISettingsService.getUserCostHistory(userId, period as string);
       res.json(costs);
     } catch (error: unknown) {
       logger.error('[AI Settings] Error getting user costs:', error);
-      return res.status(500).json({
-        error: 'Failed to get cost history',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      return res.json({ costs: [], total: 0, period });
     }
   })
 );
