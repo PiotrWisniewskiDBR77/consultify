@@ -39,16 +39,17 @@
 | | Stan | Co zostało |
 |---|---|---|
 | **X1 Design System** | 🟡 tokeny/prymitywy/ESLint/fork ✓ | **shell-e (18 SplitLayout + 11 Kimi), slate→navy (~45k), hex (~1450)** → sesja wizualna RAZEM |
-| **X2 Demo/Atelier** | 🟡 bramka + seed domen ✓ | weryfikacja spójności E2E jednej historii |
-| **X3 Realtime/Voice** | 🟡 namespaces + voice Phase 1 ✓ | zunifikowany gateway + voice Phase 2 + presence |
-| **X4 Onboarding/i18n** | 🟡 P0 fixy + i18n modułowe ✓ | realny first-run onboarding flow |
+| **X2 Demo/Atelier** | ✅ **DONE** | spójność E2E (interview→insight→initiative→ROI→results→rollout→deliverable) + test |
+| **X3 Realtime/Voice** | 🟡 namespaces + voice Phase 1 ✓ | **fast-follow / key-blocked:** voice Phase 2 (po kluczu), presence/collab (D18) |
+| **X4 Onboarding/i18n** | ✅ **DONE** | first-run flow (welcome→rola→demo/fresh→drzwi) + replay |
 | **X5 Higiena/P0** | ✅ kompletne | (debris, security, lint zielony) |
 
 ---
 
 ## 3. Dług techniczny (osobny program)
+- **🔴 KRYTYCZNE — dryf schematu (fresh Postgres):** **195 tabel** referowanych przez serwer jest definiowanych tylko w migracjach POMIJANYCH przez runner (wersja <500, `.sql.sql`, sqlite-only, `000_initdb_*`). Na świeżej bazie nie powstają → szerokie 503/500. Audyt: `docs/audit/2026-06-03/schema-bootstrap-orphans.md`. Subset generatora już załatany. **Reszta = migracja konsolidująca do wygenerowania i ZWALIDOWANIA na realnym Postgresie (faza testów, RAZEM).** Uwaga: samo „uruchom migracje" tego NIE naprawi — runner je pomija.
 - **Server type-safety:** ~4 543 błędy `tsc` (wzorzec overloadów Express) → tolerowane przez `--noCheck`; dopiero po naprawie można zdjąć `--noCheck`.
-- **`@ts-nocheck`:** 202 pliki (głównie serwer — sensowne dopiero po wyżej; front można redukować od razu).
+- **`@ts-nocheck`:** front zredukowany **66 → 4** ✅; serwer ~zostaje (sensowne dopiero po server type-safety).
 - Głębsze pokrycie testami (ponad smoke) + reszta „cichych 503" w nietkniętych obszarach.
 
 ---
@@ -65,17 +66,17 @@
 
 ## 5. Plan domknięcia — sekwencja do GA
 
-### Faza I — Cross-cutting completion (SOLO, w toku)
-- [ ] **X3** zunifikowany realtime gateway + Teresa voice Phase 2 (po Socket.IO) + presence/collab enable
-- [ ] **X4** realny first-run onboarding (welcome → rola → sample/Atelier → drzwi wejściowe)
-- [ ] **X2** weryfikacja spójności E2E datasetu Atelier (jedna historia transformacji)
+### Faza I — Cross-cutting completion (SOLO)
+- [x] **X4** realny first-run onboarding (welcome → rola → sample/Atelier → drzwi) ✅
+- [x] **X2** spójność E2E datasetu Atelier (jedna historia transformacji) ✅
+- [ ] **X3** — fast-follow / key-blocked (voice Phase 2 po kluczu, presence/collab per D18); celowo NIE robione blind
 
-### Faza II — Moduł 13 Meeting (SOLO, tanio)
-- [ ] Zamontować gotowy `MeetingHub` na `/meeting` + fix bug `operatorBrief.meetingId` + CRUD widoczny
-- [ ] (north-star fazowo: transkrypcja na żywo, Teresa-na-spotkaniu — własny stack)
+### Faza II — Moduł 13 Meeting (SOLO) ✅
+- [x] Zamontowany `MeetingHub` na `/meeting` + operatorBrief utwardzony + edit/delete + realny grid kalendarza ✅
+- [ ] (north-star fazowo, „później": transkrypcja na żywo, Teresa-na-spotkaniu — własny stack)
 
-### Faza III — Type-safety frontu (SOLO, bezpieczne)
-- [ ] Redukcja `@ts-nocheck` we froncie (utrzymując tsc=0); serwer dopiero po programie type-safety
+### Faza III — Type-safety frontu (SOLO) ✅
+- [x] Redukcja `@ts-nocheck` we froncie 66 → 4 (tsc=0 utrzymane) ✅
 
 ### Faza IV — RAZEM (potrzebuję właściciela)
 - [ ] **E. Podłączenia** (klucze, migracje, flagi) → **testy E2E na Atelier** → **A. sesja wizualna X1** (shell-e + tokeny, z Twoim okiem)
