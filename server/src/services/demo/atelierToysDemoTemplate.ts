@@ -128,6 +128,132 @@ export interface DemoScenario {
   persona: string;
 }
 
+// ============================================================================
+// SPINE TEMPLATES (X2 coherence) — Interviews → Insights → Findings →
+// Handoffs(→initiative) → Results KPIs → Rollout → Deliverable.
+// These stitch the Atelier "Ateliertoy Forward (2015)" transformation story
+// end-to-end so the same IDs flow through every spine stage.
+// ============================================================================
+
+export interface DemoInterviewTemplate {
+  slug: string;
+  /** Stakeholder (leader slug) who was interviewed. */
+  respondent: string;
+  /** Consultant (leader slug) who owns the discovery session. */
+  owner: string;
+  name: string;
+  /** Per-category completion percentage (strategy/operations/digital/people/finance). */
+  progress: {
+    strategy: number;
+    operations: number;
+    digital: number;
+    people: number;
+    finance: number;
+  };
+  totalQuestions: number;
+  answeredQuestions: number;
+  /** Most important verbatim facts captured (no recommendations). */
+  facts: Array<{ category: string; fact: string }>;
+  /** Pain points surfaced during discovery. */
+  painPoints: Array<{ category: string; painPoint: string }>;
+  /** Information gaps still open. */
+  gaps: Array<{ category: string; gap: string }>;
+  startedDaysAgo: number;
+}
+
+export interface DemoInsightFindingTemplate {
+  slug: string;
+  findingStatement: string;
+  confidence: 'high' | 'moderate' | 'low' | 'insufficient';
+  limits: string;
+  nextAction: string;
+  /** Initiative slug this finding hands off to (the insight→initiative link). */
+  handoffInitiative: string;
+}
+
+export interface DemoInsightTemplate {
+  slug: string;
+  title: string;
+  promptType: 'summary' | 'trends' | 'problems' | 'recommendations';
+  /** Interview slugs analyzed to produce this insight. */
+  sourceInterviews: string[];
+  content: string;
+  createdBy: string;
+  findings: DemoInsightFindingTemplate[];
+}
+
+export interface DemoResultsKpiTemplate {
+  slug: string;
+  /** Project slug the KPI is tracked under. */
+  projectSlug: string;
+  /** Initiative slug this result is attributed to (Results→initiative link). */
+  initiativeSlug: string;
+  name: string;
+  category: 'SCHEDULE' | 'BUDGET' | 'QUALITY' | 'SCOPE' | 'RISK' | 'RESOURCES' | 'CUSTOM';
+  description: string;
+  baselineValue: number;
+  currentValue: number;
+  targetValue: number;
+  unit: string;
+  trend: 'IMPROVING' | 'STABLE' | 'DECLINING';
+  thresholdDirection: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+  owner: string;
+  historical: Array<{ date: string; value: number }>;
+}
+
+export interface DemoRolloutKpiTemplate {
+  slug: string;
+  projectSlug: string;
+  name: string;
+  baseline: number;
+  target: number;
+  current: number;
+  unit: string;
+  createdBy: string;
+}
+
+export interface DemoRolloutRiskTemplate {
+  slug: string;
+  projectSlug: string;
+  title: string;
+  probability: 'low' | 'medium' | 'high';
+  impact: 'low' | 'medium' | 'high';
+  mitigation: string;
+  status: string;
+  owner: string;
+}
+
+export interface DemoRolloutChangeTemplate {
+  slug: string;
+  projectSlug: string;
+  title: string;
+  type: string;
+  status: string;
+  impact: string;
+  approvedBy: string;
+}
+
+export interface DemoRolloutClosureTemplate {
+  slug: string;
+  projectSlug: string;
+  title: string;
+  category: string;
+  status: string;
+  dueInDays: number;
+}
+
+export interface DemoDeliverableTemplate {
+  slug: string;
+  outputType: 'report' | 'presentation';
+  deliveryState: 'draft' | 'generated' | 'editing' | 'in_review' | 'ready' | 'shared' | 'archived';
+  templateFamily: string;
+  /** Initiative slug this deliverable presents (Deliverable→initiative link). */
+  sourceInitiative: string;
+  createdBy: string;
+  /** Export format produced for the deliverable. */
+  exportFormat: string;
+}
+
 export const atelierToysLeadership: DemoLeaderTemplate[] = [
   {
     slug: 'antoine-laurent',
@@ -2046,4 +2172,406 @@ export function getAtelierToysToolCoverage(locale: DemoLocale = 'en'): DemoToolC
 
 export function getAtelierToysDemoScenarios(locale: DemoLocale = 'en'): DemoScenario[] {
   return localizeScenarios(locale);
+}
+
+// ============================================================================
+// SPINE DATA — the "Ateliertoy Forward (2015)" discovery → value story.
+// Five discovery interviews feed one cross-interview insight; the insight
+// produces three findings that hand off to the three flagship initiatives
+// (Line 3 Digital Twin, Procurement Control Tower, Atelier Digital growth).
+// Those initiatives carry Results KPIs, Rollout artifacts, and an executive
+// deliverable — every record references a slug already in the portfolio so the
+// same IDs flow through the full spine.
+// ============================================================================
+
+export const atelierToysInterviews: DemoInterviewTemplate[] = [
+  {
+    slug: 'discovery-plant-manager',
+    respondent: 'marc-dubois',
+    owner: 'antoine-laurent',
+    name: 'Discovery — Plant Manager (Operations)',
+    progress: { strategy: 60, operations: 100, digital: 70, people: 80, finance: 40 },
+    totalQuestions: 24,
+    answeredQuestions: 22,
+    facts: [
+      { category: 'operations', fact: 'OEE on bottleneck Line 4 sits at 74% vs an 82% target.' },
+      {
+        category: 'digital',
+        fact: 'Plant telemetry is live on key lines but event taxonomy is not stable enough to scale.',
+      },
+      {
+        category: 'operations',
+        fact: 'Changeover is the single biggest throughput loss on Line 3.',
+      },
+    ],
+    painPoints: [
+      {
+        category: 'operations',
+        painPoint: 'Maintenance is still mostly reactive firefighting, not predictive.',
+      },
+      {
+        category: 'digital',
+        painPoint: 'Supervisors cannot trust live signal quality, so they fall back to paper.',
+      },
+    ],
+    gaps: [
+      { category: 'finance', gap: 'No agreed business case for scaling the Line 3 digital twin.' },
+    ],
+    startedDaysAgo: 38,
+  },
+  {
+    slug: 'discovery-procurement-director',
+    respondent: 'isabelle-leroy',
+    owner: 'antoine-laurent',
+    name: 'Discovery — Procurement Director (Supply Chain)',
+    progress: { strategy: 50, operations: 90, digital: 60, people: 50, finance: 70 },
+    totalQuestions: 22,
+    answeredQuestions: 20,
+    facts: [
+      {
+        category: 'operations',
+        fact: 'Raw-material lead times swing by up to 6 weeks with no early-warning signal.',
+      },
+      {
+        category: 'finance',
+        fact: 'Single-source dependency on two critical suppliers creates margin volatility.',
+      },
+    ],
+    painPoints: [
+      {
+        category: 'operations',
+        painPoint: 'Supplier risk is discovered late, usually only when a line is already starved.',
+      },
+    ],
+    gaps: [
+      {
+        category: 'digital',
+        gap: 'No supplier scorecard or control tower to consolidate signals.',
+      },
+    ],
+    startedDaysAgo: 34,
+  },
+  {
+    slug: 'discovery-vp-sales',
+    respondent: 'thomas-viau',
+    owner: 'antoine-laurent',
+    name: 'Discovery — VP Sales (Commercial / Digital)',
+    progress: { strategy: 80, operations: 30, digital: 90, people: 60, finance: 70 },
+    totalQuestions: 20,
+    answeredQuestions: 19,
+    facts: [
+      { category: 'digital', fact: 'Digital ARR is ~€6.2M against an €8M target.' },
+      { category: 'strategy', fact: 'APAC subscription churn is 4.1% versus a sub-3% target.' },
+    ],
+    painPoints: [
+      {
+        category: 'digital',
+        painPoint: 'Renewal insight is fragmented across teams, so churn signals arrive too late.',
+      },
+      {
+        category: 'people',
+        painPoint: 'Partner onboarding is inconsistent, slowing subscription attach rate.',
+      },
+    ],
+    gaps: [{ category: 'finance', gap: 'No shared value logic linking renewals to roadmap bets.' }],
+    startedDaysAgo: 30,
+  },
+  {
+    slug: 'discovery-cfo',
+    respondent: 'claire-laurent',
+    owner: 'antoine-laurent',
+    name: 'Discovery — CFO & Head of People (Finance)',
+    progress: { strategy: 70, operations: 50, digital: 60, people: 80, finance: 100 },
+    totalQuestions: 21,
+    answeredQuestions: 21,
+    facts: [
+      {
+        category: 'finance',
+        fact: 'Finance and operations still reconcile value numbers manually before board reviews.',
+      },
+      {
+        category: 'finance',
+        fact: 'The board wants a single NPV/ROI view for the 3-year digitization program.',
+      },
+    ],
+    painPoints: [
+      {
+        category: 'finance',
+        painPoint: 'Portfolio prioritization leans on sponsor push, not a shared value case.',
+      },
+    ],
+    gaps: [
+      { category: 'digital', gap: 'No live link between initiative ROI and realized KPI results.' },
+    ],
+    startedDaysAgo: 27,
+  },
+  {
+    slug: 'discovery-cto',
+    respondent: 'julien-moreau',
+    owner: 'antoine-laurent',
+    name: 'Discovery — CTO (Technology / Digital)',
+    progress: { strategy: 70, operations: 60, digital: 100, people: 50, finance: 50 },
+    totalQuestions: 23,
+    answeredQuestions: 21,
+    facts: [
+      {
+        category: 'digital',
+        fact: 'IRIS and the Digital Twin work as pilots but are not yet productized capabilities.',
+      },
+      { category: 'digital', fact: 'OT/IT segmentation is uneven across sites.' },
+    ],
+    painPoints: [
+      {
+        category: 'digital',
+        painPoint: 'Legacy ERP integration limits digital product velocity.',
+      },
+    ],
+    gaps: [
+      { category: 'people', gap: 'No capability academy to sustain supervisor-level adoption.' },
+    ],
+    startedDaysAgo: 24,
+  },
+];
+
+export const atelierToysInsights: DemoInsightTemplate[] = [
+  {
+    slug: 'forward-2015-discovery-synthesis',
+    title: 'Ateliertoy Forward — Discovery Synthesis (2015 baseline)',
+    promptType: 'recommendations',
+    sourceInterviews: [
+      'discovery-plant-manager',
+      'discovery-procurement-director',
+      'discovery-vp-sales',
+      'discovery-cfo',
+      'discovery-cto',
+    ],
+    content: [
+      '## Ateliertoy Forward — Discovery Synthesis',
+      '',
+      'Across five executive discovery interviews, three convergent themes define the 2015',
+      'transformation baseline:',
+      '',
+      '1. **Operations need trustworthy live signal.** Line 3/4 telemetry exists but the event',
+      '   taxonomy is unstable, so supervisors still run on paper and OEE sits at 74% vs 82% target.',
+      '2. **Supply-chain risk is discovered too late.** Lead-time volatility and single-source',
+      '   dependency create margin swings with no early-warning control tower.',
+      '3. **Digital growth is throttled by fragmented renewal insight.** ARR is €6.2M vs €8M target',
+      '   and APAC churn (4.1%) is detected after the fact.',
+      '',
+      'These three themes map directly to the three flagship initiatives of the program and form the',
+      'evidence base for the board NPV/ROI business case.',
+    ].join('\n'),
+    createdBy: 'antoine-laurent',
+    findings: [
+      {
+        slug: 'finding-line3-twin',
+        findingStatement:
+          'Line 3/4 lose throughput because telemetry is live but the event taxonomy is too unstable to act on, keeping OEE at 74% vs the 82% target.',
+        confidence: 'high',
+        limits:
+          'Based on 5 discovery interviews and plant telemetry to date; not yet validated against a full quarter of stable signal.',
+        nextAction:
+          'Stand up the Line 3 Digital Twin rollout to stabilize the event taxonomy and recover OEE.',
+        handoffInitiative: 'line-3-digital-twin',
+      },
+      {
+        slug: 'finding-procurement-tower',
+        findingStatement:
+          'Supplier risk is detected only when a line is already starved, driven by lead-time volatility and single-source dependency on two critical suppliers.',
+        confidence: 'high',
+        limits:
+          'Qualitative from procurement discovery; quantified supplier scorecards not yet in place.',
+        nextAction:
+          'Launch the Procurement Control Tower to consolidate supplier signals and add early-warning scorecards.',
+        handoffInitiative: 'procurement-control-tower',
+      },
+      {
+        slug: 'finding-digital-renewal',
+        findingStatement:
+          'Digital ARR is throttled at €6.2M (vs €8M target) because renewal insight is fragmented across teams and APAC churn (4.1%) surfaces too late.',
+        confidence: 'moderate',
+        limits:
+          'Churn attribution is partial; renewal data is fragmented across systems pending consolidation.',
+        nextAction:
+          'Drive the Atelier Digital Subscription Expansion to unify renewal insight and protect ARR.',
+        handoffInitiative: 'atelier-digital-growth',
+      },
+    ],
+  },
+];
+
+export const atelierToysResultsKpis: DemoResultsKpiTemplate[] = [
+  {
+    slug: 'result-line3-oee',
+    projectSlug: 'factory-excellence',
+    initiativeSlug: 'line-3-digital-twin',
+    name: 'Line 3 OEE',
+    category: 'QUALITY',
+    description: 'Overall Equipment Effectiveness on Line 3 after digital twin rollout.',
+    baselineValue: 74,
+    currentValue: 80,
+    targetValue: 82,
+    unit: '%',
+    trend: 'IMPROVING',
+    thresholdDirection: 'HIGHER_IS_BETTER',
+    owner: 'marc-dubois',
+    historical: [
+      { date: '2015-01-01', value: 74 },
+      { date: '2015-04-01', value: 76 },
+      { date: '2015-07-01', value: 78 },
+      { date: '2015-10-01', value: 80 },
+    ],
+  },
+  {
+    slug: 'result-procurement-leadtime',
+    projectSlug: 'forward-pmo',
+    initiativeSlug: 'procurement-control-tower',
+    name: 'Supplier lead-time variance',
+    category: 'RISK',
+    description: 'Variance in raw-material lead time after the control tower went live.',
+    baselineValue: 6,
+    currentValue: 3,
+    targetValue: 2,
+    unit: 'weeks',
+    trend: 'IMPROVING',
+    thresholdDirection: 'LOWER_IS_BETTER',
+    owner: 'isabelle-leroy',
+    historical: [
+      { date: '2015-01-01', value: 6 },
+      { date: '2015-04-01', value: 5 },
+      { date: '2015-07-01', value: 4 },
+      { date: '2015-10-01', value: 3 },
+    ],
+  },
+  {
+    slug: 'result-digital-arr',
+    projectSlug: 'digital-growth',
+    initiativeSlug: 'atelier-digital-growth',
+    name: 'Digital ARR',
+    category: 'SCOPE',
+    description: 'Annual recurring revenue from Atelier Digital subscriptions.',
+    baselineValue: 6.2,
+    currentValue: 7.4,
+    targetValue: 8,
+    unit: '€M',
+    trend: 'IMPROVING',
+    thresholdDirection: 'HIGHER_IS_BETTER',
+    owner: 'thomas-viau',
+    historical: [
+      { date: '2015-01-01', value: 6.2 },
+      { date: '2015-04-01', value: 6.6 },
+      { date: '2015-07-01', value: 7.0 },
+      { date: '2015-10-01', value: 7.4 },
+    ],
+  },
+];
+
+export const atelierToysRolloutKpis: DemoRolloutKpiTemplate[] = [
+  {
+    slug: 'rollout-line3-adoption',
+    projectSlug: 'factory-excellence',
+    name: 'Line 3 supervisor adoption',
+    baseline: 0,
+    target: 100,
+    current: 70,
+    unit: '%',
+    createdBy: 'marc-dubois',
+  },
+  {
+    slug: 'rollout-procurement-scorecards',
+    projectSlug: 'forward-pmo',
+    name: 'Suppliers on live scorecards',
+    baseline: 0,
+    target: 100,
+    current: 60,
+    unit: '%',
+    createdBy: 'isabelle-leroy',
+  },
+];
+
+export const atelierToysRolloutRisks: DemoRolloutRiskTemplate[] = [
+  {
+    slug: 'rollout-risk-signal-quality',
+    projectSlug: 'factory-excellence',
+    title: 'Telemetry signal quality regresses during scale-up',
+    probability: 'medium',
+    impact: 'high',
+    mitigation: 'Lock the event taxonomy before scaling and add automated signal-quality checks.',
+    status: 'OPEN',
+    owner: 'julien-moreau',
+  },
+];
+
+export const atelierToysRolloutChanges: DemoRolloutChangeTemplate[] = [
+  {
+    slug: 'rollout-change-changeover-standard',
+    projectSlug: 'factory-excellence',
+    title: 'Standardized changeover procedure for Line 3',
+    type: 'process',
+    status: 'APPROVED',
+    impact: 'Reduces changeover loss, supporting the OEE recovery target.',
+    approvedBy: 'marc-dubois',
+  },
+];
+
+export const atelierToysRolloutClosures: DemoRolloutClosureTemplate[] = [
+  {
+    slug: 'rollout-closure-line3-handover',
+    projectSlug: 'factory-excellence',
+    title: 'Line 3 Digital Twin operations handover',
+    category: 'handover',
+    status: 'OPEN',
+    dueInDays: 21,
+  },
+];
+
+export const atelierToysDeliverables: DemoDeliverableTemplate[] = [
+  {
+    slug: 'forward-2015-board-readout',
+    outputType: 'presentation',
+    deliveryState: 'ready',
+    templateFamily: 'executive-board-readout',
+    sourceInitiative: 'line-3-digital-twin',
+    createdBy: 'antoine-laurent',
+    exportFormat: 'pdf',
+  },
+  {
+    slug: 'forward-2015-roi-report',
+    outputType: 'report',
+    deliveryState: 'shared',
+    templateFamily: 'value-realization-report',
+    sourceInitiative: 'line-3-digital-twin',
+    createdBy: 'hugo-bernard',
+    exportFormat: 'pdf',
+  },
+];
+
+export function getAtelierToysInterviews(): DemoInterviewTemplate[] {
+  return atelierToysInterviews;
+}
+
+export function getAtelierToysInsights(): DemoInsightTemplate[] {
+  return atelierToysInsights;
+}
+
+export function getAtelierToysResultsKpis(): DemoResultsKpiTemplate[] {
+  return atelierToysResultsKpis;
+}
+
+export function getAtelierToysRolloutArtifacts(): {
+  kpis: DemoRolloutKpiTemplate[];
+  risks: DemoRolloutRiskTemplate[];
+  changes: DemoRolloutChangeTemplate[];
+  closures: DemoRolloutClosureTemplate[];
+} {
+  return {
+    kpis: atelierToysRolloutKpis,
+    risks: atelierToysRolloutRisks,
+    changes: atelierToysRolloutChanges,
+    closures: atelierToysRolloutClosures,
+  };
+}
+
+export function getAtelierToysDeliverables(): DemoDeliverableTemplate[] {
+  return atelierToysDeliverables;
 }

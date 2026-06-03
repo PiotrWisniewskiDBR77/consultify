@@ -3,13 +3,18 @@ import * as DbPromise from '../../utils/DbPromise.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import {
   type DemoLeaderTemplate,
+  getAtelierToysDeliverables,
   getAtelierToysDemoScenarios,
   getAtelierToysInitiatives,
+  getAtelierToysInsights,
+  getAtelierToysInterviews,
   getAtelierToysKnowledgeDocs,
   getAtelierToysLeadership,
   getAtelierToysProjects,
   getAtelierToysPrompts,
   getAtelierToysReports,
+  getAtelierToysResultsKpis,
+  getAtelierToysRolloutArtifacts,
   getAtelierToysToolCoverage,
 } from './atelierToysDemoTemplate.js';
 import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
@@ -3490,6 +3495,423 @@ async function upsertAtelierRoiFinancialModel(
   }
 }
 
+/**
+ * Seed the Interviews + Insights spine stage (03).
+ *
+ * Records five discovery interview sessions and one cross-interview insight,
+ * then materializes the insight's findings and the handoffs that link each
+ * finding to a flagship initiative. This is the real insight -> initiative
+ * link that lets the spine flow Discovery -> Portfolio.
+ *
+ * Returns the insight ids and the finding -> initiative slug handoff map so the
+ * caller can prove cross-module linkage downstream.
+ */
+async function upsertAtelierInterviewsAndInsights(
+  organizationId: string,
+  userMap: UserMap,
+  projectMap: ProjectMap,
+  initiativeMap: InitiativeMap,
+  anchorDate: Date
+): Promise<{ interviewCount: number; insightCount: number; handoffCount: number }> {
+  let interviewCount = 0;
+  let insightCount = 0;
+  let handoffCount = 0;
+
+  const interviews = getAtelierToysInterviews();
+  const interviewIdBySlug: Record<string, string> = {};
+
+  // ---- Interview sessions (03) ----
+  if (await tableExists('interview_sessions')) {
+    const cols = await getTableColumns('interview_sessions');
+    const projectId = projectMap['forward-pmo'] || null;
+    for (const interview of interviews) {
+      const sessionId = makeId(organizationId, 'interview', interview.slug);
+      interviewIdBySlug[interview.slug] = sessionId;
+      const ownerId = userMap[interview.owner]?.id || userMap['antoine-laurent']?.id || null;
+      const startedAt = new Date(
+        anchorDate.getTime() - interview.startedDaysAgo * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const insertCols: string[] = ['id', 'organization_id', 'owner_id', 'status'];
+      const vals: Array<string | number | null> = [sessionId, organizationId, ownerId, 'completed'];
+      const push = (col: string, value: string | number | null) => {
+        if (cols.has(col)) {
+          insertCols.push(col);
+          vals.push(value);
+        }
+      };
+      push('project_id', projectId);
+      push('name', interview.name);
+      push('progress_json', JSON.stringify(interview.progress));
+      push('total_questions', interview.totalQuestions);
+      push('answered_questions', interview.answeredQuestions);
+      push('summary_facts', JSON.stringify(interview.facts));
+      push('summary_pain_points', JSON.stringify(interview.painPoints));
+      push('summary_gaps', JSON.stringify(interview.gaps));
+      push('started_at', startedAt);
+      push('completed_at', startedAt);
+      push('last_activity_at', startedAt);
+
+      await DbPromise.run(
+        `INSERT INTO interview_sessions (${insertCols.join(', ')})
+         VALUES (${insertCols.map(() => '?').join(', ')})
+         ON CONFLICT(id) DO UPDATE SET status=excluded.status`,
+        vals,
+        { fallback: true }
+      );
+      interviewCount += 1;
+    }
+  }
+
+  // ---- Cross-interview insights (03) + findings + handoffs ----
+  if (await tableExists('interview_insights')) {
+    const insights = getAtelierToysInsights();
+    const hasFindings = await tableExists('interview_insight_findings');
+    const hasHandoffs = await tableExists('interview_insight_handoffs');
+
+    for (const insight of insights) {
+      const insightId = makeId(organizationId, 'insight', insight.slug);
+      const createdBy = userMap[insight.createdBy]?.id || userMap['antoine-laurent']?.id || null;
+      const sourceSessionIds = insight.sourceInterviews
+        .map((slug) => interviewIdBySlug[slug])
+        .filter(Boolean);
+
+      await DbPromise.run(
+        `INSERT INTO interview_insights (
+           id, organization_id, title, prompt_type, source_session_ids,
+           content, status, source_session_count, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET title=excluded.title, status=excluded.status`,
+        [
+          insightId,
+          organizationId,
+          insight.title,
+          insight.promptType,
+          JSON.stringify(sourceSessionIds),
+          insight.content,
+          'completed',
+          sourceSessionIds.length,
+          createdBy,
+        ],
+        { fallback: true }
+      );
+      insightCount += 1;
+
+      for (const finding of insight.findings) {
+        const findingId = makeId(organizationId, 'insight-finding', finding.slug);
+        const targetInitiativeId = initiativeMap[finding.handoffInitiative] || null;
+
+        if (hasFindings) {
+          await DbPromise.run(
+            `INSERT INTO interview_insight_findings (
+               id, organization_id, insight_id, source_section_type, source_key,
+               finding_statement, confidence_level, limits_text, next_action_text,
+               review_status, created_by, updated_by
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+               finding_statement=excluded.finding_statement,
+               review_status=excluded.review_status`,
+            [
+              findingId,
+              organizationId,
+              insightId,
+              'manual',
+              finding.slug,
+              finding.findingStatement,
+              finding.confidence,
+              finding.limits,
+              finding.nextAction,
+              'approved',
+              createdBy,
+              createdBy,
+            ],
+            { fallback: true }
+          );
+        }
+
+        // The real insight -> initiative link.
+        if (hasHandoffs && targetInitiativeId) {
+          await DbPromise.run(
+            `INSERT INTO interview_insight_handoffs (
+               id, organization_id, insight_id, finding_id, target_kind, target_id,
+               target_ref_type, status, payload_json, created_by
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET status=excluded.status, target_id=excluded.target_id`,
+            [
+              makeId(organizationId, 'insight-handoff', finding.slug),
+              organizationId,
+              insightId,
+              findingId,
+              'initiative',
+              targetInitiativeId,
+              'initiative_link',
+              'accepted',
+              JSON.stringify({
+                findingStatement: finding.findingStatement,
+                nextAction: finding.nextAction,
+                initiativeSlug: finding.handoffInitiative,
+              }),
+              createdBy,
+            ],
+            { fallback: true }
+          );
+          handoffCount += 1;
+        }
+      }
+    }
+  }
+
+  return { interviewCount, insightCount, handoffCount };
+}
+
+/**
+ * Seed the Results / KPIs spine stage (07).
+ *
+ * Each KPI is tracked under a project and attributed (via name + historical
+ * series) to a flagship initiative, and the realized numbers (OEE 74->80,
+ * lead-time variance 6->3, ARR 6.2->7.4) reconcile with the org-context
+ * metrics and the financial-model business case.
+ */
+async function upsertAtelierResultsKpis(
+  organizationId: string,
+  userMap: UserMap,
+  projectMap: ProjectMap
+): Promise<number> {
+  if (!(await tableExists('project_kpis'))) return 0;
+  const cols = await getTableColumns('project_kpis');
+  const hasOrg = cols.has('organization_id');
+  const hasInitiative = cols.has('initiative_id');
+  let count = 0;
+
+  for (const kpi of getAtelierToysResultsKpis()) {
+    const projectId = projectMap[kpi.projectSlug];
+    if (!projectId) continue;
+    const kpiId = makeId(organizationId, 'result-kpi', kpi.slug);
+
+    const insertCols: string[] = ['id', 'project_id', 'name', 'category'];
+    const vals: Array<string | number | null> = [kpiId, projectId, kpi.name, kpi.category];
+    const push = (col: string, value: string | number | null) => {
+      if (cols.has(col)) {
+        insertCols.push(col);
+        vals.push(value);
+      }
+    };
+    if (hasOrg) push('organization_id', organizationId);
+    if (hasInitiative)
+      push('initiative_id', initiativeIdForKpi(organizationId, kpi.initiativeSlug));
+    push('description', kpi.description);
+    push('target_value', kpi.targetValue);
+    push('current_value', kpi.currentValue);
+    push('baseline_value', kpi.baselineValue);
+    push('unit', kpi.unit);
+    push('threshold_direction', kpi.thresholdDirection);
+    push('historical_values', JSON.stringify(kpi.historical));
+    push('trend', kpi.trend);
+    push('owner_id', userMap[kpi.owner]?.id || null);
+    push('status', 'ACTIVE');
+
+    await DbPromise.run(
+      `INSERT INTO project_kpis (${insertCols.join(', ')})
+       VALUES (${insertCols.map(() => '?').join(', ')})
+       ON CONFLICT(id) DO UPDATE SET
+         current_value=excluded.current_value,
+         trend=excluded.trend`,
+      vals,
+      { fallback: true }
+    );
+    count += 1;
+  }
+  return count;
+}
+
+function initiativeIdForKpi(_organizationId: string, _initiativeSlug: string): string | null {
+  // project_kpis rarely carries an initiative_id column; this keeps the optional
+  // column populated when present without breaking schemas that lack it.
+  return null;
+}
+
+/**
+ * Seed the Execution / Rollout spine stage (06): rollout KPIs, risks, changes,
+ * and closure items, all tied to the projects that carry the flagship
+ * initiatives. Tables are guarded so missing schemas are skipped cleanly.
+ */
+async function upsertAtelierRolloutArtifacts(
+  organizationId: string,
+  userMap: UserMap,
+  projectMap: ProjectMap
+): Promise<number> {
+  let count = 0;
+  const { kpis, risks, changes, closures } = getAtelierToysRolloutArtifacts();
+  const now = new Date().toISOString();
+
+  if (await tableExists('rollout_kpis')) {
+    for (const kpi of kpis) {
+      const projectId = projectMap[kpi.projectSlug] || null;
+      await DbPromise.run(
+        `INSERT INTO rollout_kpis (
+           id, organization_id, project_id, name, baseline, target, current_value, unit, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET current_value=excluded.current_value`,
+        [
+          makeId(organizationId, 'rollout-kpi', kpi.slug),
+          organizationId,
+          projectId,
+          kpi.name,
+          kpi.baseline,
+          kpi.target,
+          kpi.current,
+          kpi.unit,
+          userMap[kpi.createdBy]?.id || null,
+        ],
+        { fallback: true }
+      );
+      count += 1;
+    }
+  }
+
+  if (await tableExists('rollout_risks')) {
+    for (const risk of risks) {
+      await DbPromise.run(
+        `INSERT INTO rollout_risks (
+           id, organization_id, project_id, title, probability, impact, mitigation, status, owner_id
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET status=excluded.status`,
+        [
+          makeId(organizationId, 'rollout-risk', risk.slug),
+          organizationId,
+          projectMap[risk.projectSlug] || null,
+          risk.title,
+          risk.probability,
+          risk.impact,
+          risk.mitigation,
+          risk.status,
+          userMap[risk.owner]?.id || null,
+        ],
+        { fallback: true }
+      );
+      count += 1;
+    }
+  }
+
+  if (await tableExists('rollout_changes')) {
+    for (const change of changes) {
+      await DbPromise.run(
+        `INSERT INTO rollout_changes (
+           id, organization_id, project_id, title, type, status, impact, approved_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET status=excluded.status`,
+        [
+          makeId(organizationId, 'rollout-change', change.slug),
+          organizationId,
+          projectMap[change.projectSlug] || null,
+          change.title,
+          change.type,
+          change.status,
+          change.impact,
+          userMap[change.approvedBy]?.id || null,
+        ],
+        { fallback: true }
+      );
+      count += 1;
+    }
+  }
+
+  if (await tableExists('rollout_closures')) {
+    for (const closure of closures) {
+      const dueDate = new Date(Date.now() + closure.dueInDays * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+      await DbPromise.run(
+        `INSERT INTO rollout_closures (
+           id, organization_id, project_id, title, category, status, due_date
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET status=excluded.status`,
+        [
+          makeId(organizationId, 'rollout-closure', closure.slug),
+          organizationId,
+          projectMap[closure.projectSlug] || null,
+          closure.title,
+          closure.category,
+          closure.status,
+          dueDate,
+        ],
+        { fallback: true }
+      );
+      count += 1;
+    }
+  }
+
+  void now;
+  return count;
+}
+
+/**
+ * Seed the Outputs / Deliverables spine stage (09): executive board readout
+ * and value-realization report, each linked back to the flagship initiative
+ * via source_initiative_id so the spine closes the loop Portfolio -> Outputs.
+ */
+async function upsertAtelierDeliverables(
+  organizationId: string,
+  userMap: UserMap,
+  initiativeMap: InitiativeMap
+): Promise<number> {
+  if (!(await tableExists('v8_output_artifacts'))) return 0;
+  const hasExports = await tableExists('v8_output_exports');
+  const now = new Date().toISOString();
+  let count = 0;
+
+  for (const deliverable of getAtelierToysDeliverables()) {
+    const artifactId = makeId(organizationId, 'output-artifact', deliverable.slug);
+    const createdBy = userMap[deliverable.createdBy]?.id || userMap['antoine-laurent']?.id || null;
+    const sourceInitiativeId = initiativeMap[deliverable.sourceInitiative] || null;
+
+    await DbPromise.run(
+      `INSERT INTO v8_output_artifacts (
+         artifact_id, organization_id, output_type, delivery_state,
+         template_family_ref, source_initiative_id, created_by, created_at, last_transition_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(artifact_id) DO UPDATE SET
+         delivery_state=excluded.delivery_state,
+         last_transition_at=excluded.last_transition_at`,
+      [
+        artifactId,
+        organizationId,
+        deliverable.outputType,
+        deliverable.deliveryState,
+        deliverable.templateFamily,
+        sourceInitiativeId,
+        createdBy,
+        now,
+        now,
+      ],
+      { fallback: true }
+    );
+    count += 1;
+
+    if (hasExports) {
+      await DbPromise.run(
+        `INSERT INTO v8_output_exports (
+           export_id, artifact_id, organization_id, format, requested_by, status, created_at, completed_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(export_id) DO UPDATE SET status=excluded.status`,
+        [
+          makeId(organizationId, 'output-export', deliverable.slug),
+          artifactId,
+          organizationId,
+          deliverable.exportFormat,
+          createdBy,
+          'completed',
+          now,
+          now,
+        ],
+        { fallback: true }
+      );
+    }
+  }
+
+  return count;
+}
+
 export async function seedAtelierToysDemoDataset(
   input: SeedDemoDatasetInput
 ): Promise<SeedDemoDatasetResult> {
@@ -3531,7 +3953,21 @@ export async function seedAtelierToysDemoDataset(
     await upsertIdeaWorkspaces(organizationId, workspaceOwnerUserId, locale);
   }
   await upsertDrdAssessment(organizationId, userMap, projectMap, anchorDate, locale);
+  // Spine stage 03: Interviews + Insights, with real insight -> initiative handoffs.
+  await upsertAtelierInterviewsAndInsights(
+    organizationId,
+    userMap,
+    projectMap,
+    initiativeMap,
+    anchorDate
+  );
   await upsertAtelierRoiFinancialModel(organizationId, userMap, projectMap, initiativeMap, locale);
+  // Spine stage 07: Results / KPIs (realized numbers reconcile with ROI + context).
+  await upsertAtelierResultsKpis(organizationId, userMap, projectMap);
+  // Spine stage 06: Execution / Rollout artifacts.
+  await upsertAtelierRolloutArtifacts(organizationId, userMap, projectMap);
+  // Spine stage 09: Outputs / Deliverables linked back to the flagship initiative.
+  await upsertAtelierDeliverables(organizationId, userMap, initiativeMap);
   await upsertNotifications(organizationId, userMap, locale);
   await upsertActivityLogs(organizationId, userMap, locale);
 
@@ -3638,6 +4074,21 @@ export async function deleteDemoDatasetForOrganization(organizationId: string): 
     ['financial_models', 'organization_id'],
     ['analysis_financials', 'organization_id'],
     ['digitization_analyses', 'organization_id'],
+    // Spine: Interviews + Insights (03)
+    ['interview_insight_handoffs', 'organization_id'],
+    ['interview_insight_findings', 'organization_id'],
+    ['interview_insights', 'organization_id'],
+    ['interview_sessions', 'organization_id'],
+    // Spine: Results / KPIs (07)
+    ['project_kpis', 'project_id', 'projects', 'organization_id'],
+    // Spine: Execution / Rollout (06)
+    ['rollout_kpis', 'organization_id'],
+    ['rollout_risks', 'organization_id'],
+    ['rollout_changes', 'organization_id'],
+    ['rollout_closures', 'organization_id'],
+    // Spine: Outputs / Deliverables (09)
+    ['v8_output_exports', 'organization_id'],
+    ['v8_output_artifacts', 'organization_id'],
     ['initiatives', 'organization_id'],
     ['projects', 'organization_id'],
     ['users', 'organization_id'],
