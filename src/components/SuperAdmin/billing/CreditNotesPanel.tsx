@@ -124,7 +124,7 @@ export const CreditNotesPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Summary Card */}
-      <div className="bg-gradient-to-br from-primary-500/20 to-fuchsia-500/10 border border-primary-500/20 rounded-xl p-4">
+      <div className="bg-gradient-to-br from-primary-500/20 to-crimson-700/10 border border-primary-500/20 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-primary-300">Total Credits Issued</p>

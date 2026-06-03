@@ -434,7 +434,7 @@ export function KnownToolDetailView(props: {
           ? 'Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem.'
           : 'The quality of the full session depends on the opening question. If the brief is vague, the matrix becomes only well-organized chaos.',
         accent: 'bg-primary-500',
-        tone: 'from-primary-500/12 to-fuchsia-500/5',
+        tone: 'from-primary-500/12 to-crimson-700/5',
       },
       {
         id: 2,

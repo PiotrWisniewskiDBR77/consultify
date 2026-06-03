@@ -251,7 +251,7 @@ export const SessionManagementPanel: React.FC = () => {
                 {/* User Header */}
                 <div className="flex items-center justify-between p-4 bg-slate-900/30">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 flex items-center justify-center text-white font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-crimson-700 flex items-center justify-center text-white font-semibold">
                       {firstSession.user_first_name?.[0] || firstSession.user_email?.[0] || 'U'}
                     </div>
                     <div>

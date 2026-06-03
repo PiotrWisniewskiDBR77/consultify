@@ -202,7 +202,7 @@ export function DynamicSwotLibraryGraphic({
       id: 1,
       title: labels.stage1,
       value: labels.stage1Value,
-      tone: 'from-primary-500/18 to-fuchsia-500/8',
+      tone: 'from-primary-500/18 to-crimson-700/8',
       accent: 'bg-primary-500',
       badge: null,
     },

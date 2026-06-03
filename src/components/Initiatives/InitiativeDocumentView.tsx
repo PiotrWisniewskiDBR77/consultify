@@ -6640,7 +6640,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             <div className="flex flex-col items-center justify-center py-16 space-y-5">
               {/* Fun accountant illustration */}
               <div className="relative">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-100 via-primary-50 to-fuchsia-100 dark:from-primary-500/15 dark:via-primary-500/10 dark:to-fuchsia-500/15 flex items-center justify-center shadow-lg shadow-primary-200/40 dark:shadow-primary-500/10">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-100 via-primary-50 to-crimson-200 dark:from-primary-500/15 dark:via-primary-500/10 dark:to-crimson-700/15 flex items-center justify-center shadow-lg shadow-primary-200/40 dark:shadow-primary-500/10">
                   <span className="text-5xl" role="img" aria-label="accountant">
                     🧮
                   </span>

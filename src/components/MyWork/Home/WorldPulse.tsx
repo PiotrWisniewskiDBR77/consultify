@@ -25,7 +25,7 @@ const CATEGORY_LABELS: Record<PulseCategory, { en: string; pl: string }> = {
 const CATEGORY_BADGE_STYLES: Record<string, string> = {
   ai_tech: 'bg-gradient-to-br from-indigo-500/20 to-blue-500/20',
   industry: 'bg-gradient-to-br from-emerald-500/20 to-amber-500/20',
-  consulting: 'bg-gradient-to-br from-primary-500/20 to-fuchsia-500/20',
+  consulting: 'bg-gradient-to-br from-primary-500/20 to-crimson-700/20',
   clients: 'bg-gradient-to-br from-rose-500/20 to-amber-500/20',
 };
 

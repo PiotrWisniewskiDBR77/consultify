@@ -277,7 +277,7 @@ export const SubscriptionsPanel: React.FC = () => {
             <div key={sub.id} className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-fuchsia-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-700 flex items-center justify-center">
                     <CreditCard size={24} className="text-white" />
                   </div>
                   <div>

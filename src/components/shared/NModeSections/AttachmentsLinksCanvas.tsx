@@ -1486,7 +1486,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     <button
                       onClick={handleAIGenerateLinkComment}
                       disabled={isGeneratingLinkComment}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gradient-to-r from-primary-500/10 to-fuchsia-500/10 text-primary-600 dark:text-primary-400 border border-primary-300/40 dark:border-primary-500/30 hover:from-primary-500/20 hover:to-fuchsia-500/20 hover:border-primary-400/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gradient-to-r from-primary-500/10 to-crimson-700/10 text-primary-600 dark:text-primary-400 border border-primary-300/40 dark:border-primary-500/30 hover:from-primary-500/20 hover:to-crimson-700/20 hover:border-primary-400/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       title={
                         isPolish
                           ? 'AI wygeneruje komentarz na podstawie wybranej relacji'
