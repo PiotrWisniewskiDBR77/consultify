@@ -22,7 +22,6 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  CircleHelp,
   ClipboardList,
   Clock,
   Columns3,
@@ -85,7 +84,6 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { getPriorityStyle, getStatusStyle, getTypeStyle } from '@/constants/statusColors';
-import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
@@ -554,11 +552,6 @@ export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
-  const {
-    setOpen: setHelpOpen,
-    setActiveTab: setHelpTab,
-    setKnowledgeModuleIdOverride,
-  } = useHelpSidePanel();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentProjectId,
@@ -8202,14 +8195,14 @@ Return ONLY the answer text (no markdown fences).`;
             type="button"
             onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
             className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
-            title={isPolish ? 'Filtr obszarów' : 'Area filter'}
+            title={isPolish ? 'Obszar pytań' : 'Question area'}
           >
             <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
               {templateAreaTagFilter.length > 0
-                ? `${isPolish ? 'Obszary' : 'Areas'} (${templateAreaTagFilter.length})`
+                ? `${isPolish ? 'Obszar' : 'Area'}: ${templateAreaTagFilter.length}`
                 : isPolish
-                  ? 'Wszystkie obszary'
-                  : 'All areas'}
+                  ? 'Obszar: wszystkie'
+                  : 'Area: all'}
             </span>
             <ChevronDown size={14} />
           </button>
@@ -8257,9 +8250,9 @@ Return ONLY the answer text (no markdown fences).`;
             value={templateSourceFilter}
             onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)}
             className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Filtr źródła' : 'Source filter'}
+            title={isPolish ? 'Źródło szablonu' : 'Template source'}
           >
-            <option value="all">{isPolish ? 'Wszystkie źródła' : 'All sources'}</option>
+            <option value="all">{isPolish ? 'Źródło: wszystkie' : 'Source: all'}</option>
             <option value="application">{isPolish ? 'Aplikacja' : 'Application'}</option>
             <option value="organization">{isPolish ? 'Organizacja' : 'Organization'}</option>
             <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
@@ -8465,7 +8458,6 @@ Return ONLY the answer text (no markdown fences).`;
           }
           className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
-          <Sparkles size={15} />
           <span>{isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}</span>
         </button>
       );
@@ -8516,12 +8508,6 @@ Return ONLY the answer text (no markdown fences).`;
     ]
   );
 
-  const openContextualHelp = useCallback(() => {
-    setKnowledgeModuleIdOverride('interview');
-    setHelpTab('knowledge');
-    setHelpOpen(true);
-  }, [setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
-
   return (
     <div className="h-full" data-testid="interview-hub">
       <ModuleHub
@@ -8542,18 +8528,6 @@ Return ONLY the answer text (no markdown fences).`;
         onClearFilters={handleClearFilters}
         rightControls={rightControls}
         primaryCta={primaryCta}
-        toolControl={
-          <button
-            type="button"
-            onClick={openContextualHelp}
-            className="inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-            data-testid="contextual-help-entry-interview"
-            title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
-          >
-            <CircleHelp size={16} />
-            <span>{t('help.entrypoint.contextual', 'Help')}</span>
-          </button>
-        }
         commandRowContent={commandRowContent}
         forceCommandRow={hasBulkSelection}
         availableViewModes={['table']}
