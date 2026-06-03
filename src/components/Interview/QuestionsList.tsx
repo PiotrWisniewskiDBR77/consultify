@@ -1,4 +1,3 @@
-import TeresaMark from '../shared/TeresaMark';
 /**
  * QuestionsList - Task-list style questions component
  *
@@ -9,8 +8,27 @@ import TeresaMark from '../shared/TeresaMark';
  * - Tags (risk, opportunity)
  * - Owner (who answered)
  */
-
-import { AlertTriangle, Check, CheckCircle, ChevronRight, Circle, Clock, Edit3, HelpCircle, Lightbulb, MessageSquare, Paperclip, Plus, RefreshCw, Send, Sparkles, Star, Tag, User, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle,
+  ChevronRight,
+  Circle,
+  Clock,
+  Edit3,
+  HelpCircle,
+  Lightbulb,
+  MessageSquare,
+  Paperclip,
+  Plus,
+  RefreshCw,
+  Send,
+  Sparkles,
+  Star,
+  Tag,
+  User,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -24,6 +42,7 @@ import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayo
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
 
+import TeresaMark from '../shared/TeresaMark';
 import type { InterviewCategory } from './CategorySidebar';
 
 // Types

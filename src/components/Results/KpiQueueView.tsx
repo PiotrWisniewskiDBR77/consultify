@@ -22,10 +22,9 @@ import {
 } from '../shared/ModuleHub/FilterableTable';
 import { type RowAction } from '../shared/RowActionsMenu';
 import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import TeresaMark from '../shared/TeresaMark';
 import { type KpiDrawerSection, type ResultsKPI } from './kpiDomain';
 import type { SignalSheetKpiItem, SignalSheetRecord } from './kpiSignalSheetTypes';
-
-import TeresaMark from '../shared/TeresaMark';
 interface KpiQueueViewProps {
   kpis: ResultsKPI[];
   activeFilters: FilterChip[];

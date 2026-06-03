@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Agent } from '@/services/ai/agent';
 
 import { useAppStore } from '../store/useAppStore';
-
 import TeresaMark from './shared/TeresaMark';
 interface AIInterviewModalProps {
   isOpen: boolean;

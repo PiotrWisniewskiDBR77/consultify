@@ -1,4 +1,20 @@
-import { ArrowRight, Bell, BookOpen, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ExternalLink, HelpCircle, Keyboard, Library, PlayCircle, Search, Sparkles, X } from 'lucide-react';
+import {
+  ArrowRight,
+  Bell,
+  BookOpen,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CircleHelp,
+  ExternalLink,
+  HelpCircle,
+  Keyboard,
+  Library,
+  PlayCircle,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,11 +35,10 @@ import { useConversationStore } from '../../store/useConversationStore';
 import { AppView } from '../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/workspace';
 import { KeyboardShortcutsHelp } from '../MyWork/shared/KeyboardShortcutsHelp';
+import TeresaMark from '../shared/TeresaMark';
 import { FeatureUpdatesPanel } from './FeatureUpdatesPanel';
 import { KnowledgeArticleView } from './KnowledgeArticleView';
 import { KnowledgeLibrary } from './KnowledgeLibrary';
-
-import TeresaMark from '../shared/TeresaMark';
 const HELP_CONFIG = getHelpConfig();
 
 const TABS: { id: Exclude<HelpTab, 'onboarding'>; icon: typeof BookOpen; label: string }[] = [

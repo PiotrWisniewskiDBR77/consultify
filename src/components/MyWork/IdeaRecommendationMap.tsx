@@ -1,7 +1,24 @@
 import 'reactflow/dist/style.css';
 import './mindmap/mindmap-effects.css';
 
-import { AlertTriangle, ChevronDown, ChevronRight, ExternalLink, FileText, Flower2, GitBranch, Lightbulb, Link2, Loader2, Paperclip, Pencil, Plus, Sparkles, StickyNote, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  Flower2,
+  GitBranch,
+  Lightbulb,
+  Link2,
+  Loader2,
+  Paperclip,
+  Pencil,
+  Plus,
+  Sparkles,
+  StickyNote,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +51,7 @@ import {
   getArtifactPath,
 } from '@/utils/artifactLinks';
 
+import TeresaMark from '../shared/TeresaMark';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
@@ -129,8 +147,6 @@ import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
-
-import TeresaMark from '../shared/TeresaMark';
 type IdeaNodeData = NodeDetailData & {
   _depth?: number;
 };
@@ -1083,14 +1099,11 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
 
   const labelRef = useRef(data.label);
   labelRef.current = data.label;
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setEditValue(String(labelRef.current || ''));
-      setEditing(true);
-    },
-    []
-  );
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditValue(String(labelRef.current || ''));
+    setEditing(true);
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -3084,8 +3097,7 @@ function MindMapInner({
       if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
         const t = e.target as HTMLElement | null;
         const typing =
-          !!t &&
-          (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
+          !!t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
         if (!typing) {
           e.preventDefault();
           try {
@@ -5088,11 +5100,12 @@ function MindMapInner({
               onNodeDragStop={onNodeDragStop}
               nodeTypes={reactFlowNodeTypes}
               edgeTypes={reactFlowEdgeTypes}
-              {...getIdeasToolInteractionProps('mindmap', { locked, connectMode: interactionMode === 'connect' })}
+              {...getIdeasToolInteractionProps('mindmap', {
+                locked,
+                connectMode: interactionMode === 'connect',
+              })}
               className={`bg-slate-50 dark:bg-navy-950 ${
-                interactionMode === 'connect'
-                  ? 'cursor-crosshair'
-                  : 'cursor-default'
+                interactionMode === 'connect' ? 'cursor-crosshair' : 'cursor-default'
               }`}
               aria-label={
                 isPolish

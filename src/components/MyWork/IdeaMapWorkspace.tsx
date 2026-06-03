@@ -1628,8 +1628,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const target = e.target as HTMLElement | null;
         const typing =
           !!target &&
-          (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
-            target.isContentEditable);
+          (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable);
         if (typing) return;
         const idx = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
         if (idx >= 0) {
@@ -2670,7 +2669,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               className="max-w-[14rem] truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200"
               title={title || (isPolish ? 'Bez tytułu' : 'Untitled')}
             >
-              {title || safeTitleFromSeed(seedText, isPolish) || (isPolish ? 'Bez tytułu' : 'Untitled')}
+              {title ||
+                safeTitleFromSeed(seedText, isPolish) ||
+                (isPolish ? 'Bez tytułu' : 'Untitled')}
             </span>
             <span className="text-[10px] text-slate-400" aria-hidden="true">
               ›

@@ -17,7 +17,6 @@ import type {
   AnnaLpSourceIntent,
 } from '../../services/publicAnnaAnalytics';
 import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
-
 import TeresaMark from '../shared/TeresaMark';
 type AnnaMessage = {
   id: string;

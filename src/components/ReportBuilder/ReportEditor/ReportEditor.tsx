@@ -1,4 +1,3 @@
-import TeresaMark from '../../shared/TeresaMark';
 /**
  * ReportEditor
  *
@@ -7,8 +6,35 @@ import TeresaMark from '../../shared/TeresaMark';
  * - Center: Block canvas for building report structure
  * - Blocks can be added, reordered, configured inline
  */
-
-import { BookTemplate, Check, ChevronDown, ChevronRight, Download, Eye, FileText, Globe, Grip, Image, Layers, Loader2, Monitor, MoreHorizontal, Palette, Plus, Presentation, RefreshCw, Save, Settings, Share2, Shield, Sparkles, Trash2, Type, X, Zap } from 'lucide-react';
+import {
+  BookTemplate,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Eye,
+  FileText,
+  Globe,
+  Grip,
+  Image,
+  Layers,
+  Loader2,
+  Monitor,
+  MoreHorizontal,
+  Palette,
+  Plus,
+  Presentation,
+  RefreshCw,
+  Save,
+  Settings,
+  Share2,
+  Shield,
+  Sparkles,
+  Trash2,
+  Type,
+  X,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +44,7 @@ import { EmbeddedView } from '@/components/shared/NModeBlocks';
 
 import { Api } from '../../../services/api';
 import { getSourceDisplayLabel } from '../../Initiatives/InitiativeSourceLink';
+import TeresaMark from '../../shared/TeresaMark';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
 import { QualityGatesPanel } from '../QualityGatesPanel';

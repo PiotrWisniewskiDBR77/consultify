@@ -24,9 +24,7 @@ export interface IdeaToolStatusPayload {
 export const IDEA_TOOL_STATUS_EVENT = 'idea-tool-status';
 
 export function emitIdeaToolStatus(payload: IdeaToolStatusPayload): void {
-  window.dispatchEvent(
-    new CustomEvent(IDEA_TOOL_STATUS_EVENT, { detail: payload })
-  );
+  window.dispatchEvent(new CustomEvent(IDEA_TOOL_STATUS_EVENT, { detail: payload }));
 }
 
 export interface UseIdeasTeresaBridgeOptions {
@@ -47,7 +45,11 @@ export function useIdeasTeresaBridge({
   onQuickAction,
 }: UseIdeasTeresaBridgeOptions) {
   const emitStatus = useCallback(
-    (action: string, status: IdeaToolStatusPayload['status'], extra?: { nodeId?: string; message?: string }) => {
+    (
+      action: string,
+      status: IdeaToolStatusPayload['status'],
+      extra?: { nodeId?: string; message?: string }
+    ) => {
       emitIdeaToolStatus({
         ideaId,
         toolType,

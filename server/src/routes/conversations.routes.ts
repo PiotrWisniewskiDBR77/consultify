@@ -1491,7 +1491,11 @@ router.post(
       // so for team conversations require the same permission as truncate/edit.
       const teamProject = await getTeamProjectForConversation(id);
       if (teamProject) {
-        const perm = await checkChatPermission(req.userId!, teamProject.organization_id, 'add_message');
+        const perm = await checkChatPermission(
+          req.userId!,
+          teamProject.organization_id,
+          'add_message'
+        );
         if (!perm.allowed) {
           return res.status(403).json({
             error: 'No permission to summarize this team conversation',

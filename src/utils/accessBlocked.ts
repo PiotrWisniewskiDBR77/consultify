@@ -37,7 +37,9 @@ const ACCESS_BLOCKED_CODE_SET = new Set<string>(DEFAULT_ACCESS_BLOCKED_CODES);
 
 export function getAccessBlockedCode(data: AccessBlockedPayload | null | undefined): string {
   const featureAccessDenied = data?.error === 'FEATURE_ACCESS_DENIED';
-  return String(featureAccessDenied ? 'FEATURE_ACCESS_DENIED' : data?.code || data?.errorCode || '');
+  return String(
+    featureAccessDenied ? 'FEATURE_ACCESS_DENIED' : data?.code || data?.errorCode || ''
+  );
 }
 
 export function isAccessBlockedCode(code: unknown): boolean {

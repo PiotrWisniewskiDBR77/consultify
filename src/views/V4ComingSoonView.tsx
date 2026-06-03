@@ -1,12 +1,34 @@
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import {
-  BarChart3, Bell, Brain, Calendar, Check, Cpu, ExternalLink, FileText, Globe, Handshake, Layout, Link2, Lock, PenTool, PieChart, Shield, ShoppingCart, Sparkles, Table2, Target, TrendingUp, Wand2, Zap } from 'lucide-react';
+  BarChart3,
+  Bell,
+  Brain,
+  Calendar,
+  Check,
+  Cpu,
+  ExternalLink,
+  FileText,
+  Globe,
+  Handshake,
+  Layout,
+  Link2,
+  Lock,
+  PenTool,
+  PieChart,
+  Shield,
+  ShoppingCart,
+  Sparkles,
+  Table2,
+  Target,
+  TrendingUp,
+  Wand2,
+  Zap,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { apiGet, apiPost } from '../services/api/baseClient';
-
 import TeresaMark from '../components/shared/TeresaMark';
+import { apiGet, apiPost } from '../services/api/baseClient';
 type ModuleKey = 'iris' | 'marketplace' | 'meeting' | 'wordy' | 'excele' | 'prezentacje';
 
 interface ModuleConfig {

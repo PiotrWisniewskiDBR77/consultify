@@ -78,7 +78,12 @@ export function useCanvasAIStream({
         editor.commands.insertContent('\n\n');
       } else if (mode === 'replace') {
         if (selFrom !== selTo) {
-          editor.chain().focus().setTextSelection({ from: selFrom, to: selTo }).setMark('aiRemoved').run();
+          editor
+            .chain()
+            .focus()
+            .setTextSelection({ from: selFrom, to: selTo })
+            .setMark('aiRemoved')
+            .run();
         }
       }
       insertPositionRef.current = editor.state.selection.to;
@@ -91,7 +96,7 @@ export function useCanvasAIStream({
           ? 'Rewrite ONLY the user-selected portion below. Return just the replacement prose — no preamble, no explanations, no markdown code fences.'
           : 'Continue and extend the document. Return ONLY the new prose to insert — no preamble, no explanations, no code fences, and do not repeat content already present.';
       const systemInstruction = [
-        'You are writing directly INTO the user\'s open Canvas document on their behalf.',
+        "You are writing directly INTO the user's open Canvas document on their behalf.",
         documentMarkdown
           ? `Current document (Markdown):\n"""\n${documentMarkdown.slice(0, 12000)}\n"""`
           : 'The document is currently empty.',
@@ -166,7 +171,12 @@ export function useCanvasAIStream({
               }
             } catch {
               // Non-JSON event, might be plain text chunk
-              if (dataStr && !dataStr.startsWith('{') && editor && !abortController.signal.aborted) {
+              if (
+                dataStr &&
+                !dataStr.startsWith('{') &&
+                editor &&
+                !abortController.signal.aborted
+              ) {
                 editor.commands.insertContent(dataStr);
               }
             }

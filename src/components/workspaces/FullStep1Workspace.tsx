@@ -1,4 +1,14 @@
-import { ArrowRight, BrainCircuit, Briefcase, CheckCircle2, Database, Lock, Settings, Smartphone, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  BrainCircuit,
+  Briefcase,
+  CheckCircle2,
+  Database,
+  Lock,
+  Settings,
+  Smartphone,
+  Users,
+} from 'lucide-react';
 import React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 import { AxisId, FullSession } from '../../types';
 import { AIInterviewModal } from '../AIInterviewModal';
 import { RadarChart } from '../RadarChart';
-
 import TeresaMark from '../shared/TeresaMark';
 interface FullStep1WorkspaceProps {
   fullSession: FullSession;

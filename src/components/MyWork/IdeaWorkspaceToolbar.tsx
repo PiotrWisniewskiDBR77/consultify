@@ -81,7 +81,10 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
           </button>
         )}
         {hasLeadingActions && (
-          <span className="mx-0.5 h-5 w-px bg-slate-200/70 dark:bg-navy-700/70" aria-hidden="true" />
+          <span
+            className="mx-0.5 h-5 w-px bg-slate-200/70 dark:bg-navy-700/70"
+            aria-hidden="true"
+          />
         )}
 
         {/* Canvas tool switcher */}

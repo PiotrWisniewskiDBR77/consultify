@@ -536,10 +536,13 @@ const recordsService = {
 
       if (expectedVersion != null) {
         if (!versionColumnEnabled) {
-          throw new ConflictError('Optimistic lock is unavailable because tp_records.version is missing', {
-            recordId,
-            expectedVersion,
-          });
+          throw new ConflictError(
+            'Optimistic lock is unavailable because tp_records.version is missing',
+            {
+              recordId,
+              expectedVersion,
+            }
+          );
         }
         const result = await db.query(
           `UPDATE tp_records

@@ -1,11 +1,19 @@
-import { BarChart3, Brain, Eye, FlaskConical, MessageSquare, Rocket, Sparkles, Users } from 'lucide-react';
+import {
+  BarChart3,
+  Brain,
+  Eye,
+  FlaskConical,
+  MessageSquare,
+  Rocket,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
+import TeresaMark from '../../../components/shared/TeresaMark';
 import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
 import { WorkerDetail } from './WorkerDetail';
 import { WorkersList } from './WorkersList';
-
-import TeresaMark from '../../../components/shared/TeresaMark';
 export interface VirtualWorkersModuleProps {
   initialTab?: string;
 }

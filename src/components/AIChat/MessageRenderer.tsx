@@ -34,6 +34,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
 import TeresaMark from '@/components/shared/TeresaMark';
 
 import { usePermissions } from '../../hooks/usePermissions';
@@ -44,11 +45,11 @@ import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
+import { ThinkingIndicator } from './Messages/InlineThinkingStream';
 import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
 import { TeresaProposalCard } from './TeresaProposalCard';
-import { ThinkingIndicator } from './Messages/InlineThinkingStream';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
 
@@ -1662,25 +1663,25 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         metadata?.trustBundle &&
         showCompactActions &&
         showSourcesDetails && (
-        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-col gap-1`}>
-          {/* Chat V9 / TRUST TS1 — post-send sources aggregate. Silent when
+          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-col gap-1`}>
+            {/* Chat V9 / TRUST TS1 — post-send sources aggregate. Silent when
               the bundle has no meaningful breakdown, so single-class turns
               still read exactly like pre-TS1 (TrustPanel primary pill
               carries the signal). */}
-          <SourcesStrip
-            bundle={metadata.trustBundle}
-            messageId={msg.id || null}
-            isCompact={isCompact}
-          />
-          <TrustPanel
-            bundle={metadata.trustBundle}
-            isCompact={isCompact}
-            isRtl={isRtlChatLanguage}
-            showOperatorDetail={showOperatorDetail}
-            messageId={msg.id || null}
-          />
-        </div>
-      )}
+            <SourcesStrip
+              bundle={metadata.trustBundle}
+              messageId={msg.id || null}
+              isCompact={isCompact}
+            />
+            <TrustPanel
+              bundle={metadata.trustBundle}
+              isCompact={isCompact}
+              isRtl={isRtlChatLanguage}
+              showOperatorDetail={showOperatorDetail}
+              messageId={msg.id || null}
+            />
+          </div>
+        )}
 
       {/* Unified Feedback Block (AI only): compact, opt-in actions panel */}
       {msg.role === 'ai' && !msg.isStreaming && (

@@ -266,10 +266,9 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         { ...newNode, selected: true, data: { ...newNode.data, _isNew: true } },
       ];
 
-      const layoutedNodes =
-        partialLayoutSubtree
-          ? partialLayoutSubtree(updatedNodes, updatedEdges, selected.id)
-          : updatedNodes;
+      const layoutedNodes = partialLayoutSubtree
+        ? partialLayoutSubtree(updatedNodes, updatedEdges, selected.id)
+        : updatedNodes;
 
       setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
       setEdges(updatedEdges);
@@ -377,10 +376,9 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         { ...newNode, selected: true, data: { ...newNode.data, _isNew: true } },
       ];
 
-      const layoutedNodes =
-        partialLayoutSubtree
-          ? partialLayoutSubtree(updatedNodes, updatedEdges, parentId)
-          : updatedNodes;
+      const layoutedNodes = partialLayoutSubtree
+        ? partialLayoutSubtree(updatedNodes, updatedEdges, parentId)
+        : updatedNodes;
 
       setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
       setEdges(updatedEdges);

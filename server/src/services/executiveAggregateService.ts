@@ -439,27 +439,35 @@ export class ExecutiveAggregateService {
       ).catch(() => []),
     ]);
 
-    const [nextMilestones, workstreams, unassigned, roiPortfolio, raidRisks, kpiHighlights] =
-      await Promise.all([
-        this.getNextMilestones(opts.organizationId, opts.projectId).catch(() => []),
-        this.getWorkstreamsWithStats(opts.projectId).catch(() => []),
-        DbPromise.get<{ c: number }>(
-          this.db,
-          `SELECT COUNT(*)::int as c FROM initiatives WHERE project_id = ? AND organization_id = ? AND (workstream_id IS NULL OR workstream_id = '')`,
-          [opts.projectId, opts.organizationId]
-        ).catch(() => ({ c: 0 })),
-        this.getRoiPortfolioSummary(opts.organizationId).catch(() => ({
-          summary: null,
-          items: [],
-        })),
-        this.getProjectRaidRisks(opts.organizationId, opts.projectId).catch(() => []),
-        this.getKpiHighlights(opts.organizationId, opts.projectId).catch(() => ({
-          highlights: [],
-          dataQuality: 'none' as const,
-        })),
-      ]);
+    const [
+      nextMilestones,
+      workstreams,
+      unassigned,
+      roiPortfolio,
+      raidRisks,
+      kpiHighlights,
+      rolloutKpiHighlights,
+    ] = await Promise.all([
+      this.getNextMilestones(opts.organizationId, opts.projectId).catch(() => []),
+      this.getWorkstreamsWithStats(opts.projectId).catch(() => []),
+      DbPromise.get<{ c: number }>(
+        this.db,
+        `SELECT COUNT(*)::int as c FROM initiatives WHERE project_id = ? AND organization_id = ? AND (workstream_id IS NULL OR workstream_id = '')`,
+        [opts.projectId, opts.organizationId]
+      ).catch(() => ({ c: 0 })),
+      this.getRoiPortfolioSummary(opts.organizationId).catch(() => ({
+        summary: null,
+        items: [],
+      })),
+      this.getProjectRaidRisks(opts.organizationId, opts.projectId).catch(() => []),
+      this.getKpiHighlights(opts.organizationId, opts.projectId).catch(() => ({
+        highlights: [],
+        dataQuality: 'none' as const,
+      })),
+      this.getRolloutKpiHighlights(opts.organizationId, opts.projectId).catch(() => []),
+    ]);
 
-    const effectiveKpis =
+    const baseKpis =
       (kpiHighlights?.highlights || []).length > 0
         ? kpiHighlights
         : {
@@ -469,6 +477,21 @@ export class ExecutiveAggregateService {
             ).catch(() => []),
             dataQuality: 'partial' as const,
           };
+
+    // Merge Module 06 rollout KPIs into the highlights additively. When there are
+    // no initiative KPIs, rollout KPIs become the source of data quality.
+    const mergedHighlights = [...baseKpis.highlights, ...(rolloutKpiHighlights || [])];
+    const effectiveKpis: ExecutiveAggregateSnapshot['kpis'] = {
+      highlights: mergedHighlights,
+      dataQuality:
+        mergedHighlights.length === 0
+          ? 'none'
+          : baseKpis.highlights.length === 0 && (rolloutKpiHighlights || []).length > 0
+            ? (rolloutKpiHighlights || []).some((h) => h.currentValue === null)
+              ? 'partial'
+              : 'good'
+            : baseKpis.dataQuality,
+    };
 
     const progressPercent = clampPercent(
       typeof project.progress_pct === 'number'
@@ -890,6 +913,39 @@ export class ExecutiveAggregateService {
           : 'good';
 
     return { highlights, dataQuality };
+  }
+
+  /**
+   * Module 06 Realizacja (Execution) rollout KPIs — surfaced in the executive
+   * snapshot so ExecutionHub shows Rollout-tab KPI tracking alongside the
+   * initiative KPIs. Scoped to the org and either the project or org-wide
+   * (project_id IS NULL) rollout KPIs. Backed by rollout_kpis
+   * (server/migrations/20260608_rollout_tables.sql).
+   */
+  private async getRolloutKpiHighlights(
+    orgId: string,
+    projectId: string
+  ): Promise<ExecutiveAggregateSnapshot['kpis']['highlights']> {
+    const rows = await DbPromise.all<any>(
+      this.db,
+      `
+      SELECT id, name, current_value, target, unit
+      FROM rollout_kpis
+      WHERE organization_id = ? AND (project_id = ? OR project_id IS NULL)
+      ORDER BY created_at ASC
+      LIMIT 4
+    `,
+      [orgId, projectId]
+    ).catch(() => []);
+
+    return (rows || []).map((r: any) => ({
+      id: `rollout_${String(r.id)}`,
+      name: String(r.name || ''),
+      currentValue:
+        r.current_value === null || r.current_value === undefined ? null : Number(r.current_value),
+      targetValue: r.target === null || r.target === undefined ? null : Number(r.target),
+      unit: r.unit ? String(r.unit) : null,
+    }));
   }
 
   private async getRoiPortfolioSummary(orgId: string): Promise<ExecutiveAggregateSnapshot['roi']> {

@@ -257,7 +257,8 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
       safeRead(() => (req as any).user?.organization_id, undefined);
     const isDemoOrg =
       normalizeOrgIdForDemoComparison(orgId) === normalizeOrgIdForDemoComparison(DEMO_ORG_ID);
-    const demoWritesEnabled = String(process.env.DEMO_WRITES_ENABLED || '').toLowerCase() === 'true';
+    const demoWritesEnabled =
+      String(process.env.DEMO_WRITES_ENABLED || '').toLowerCase() === 'true';
     const isValidatedInteractiveSession =
       demoWritesEnabled &&
       safeRead(() => (req as DemoRequest).demo?.sessionValidated === true, false) &&

@@ -5,14 +5,14 @@ import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   RadarDynamicContext,
   RadarImpactType,
-  RadarQuadrant,
-  RadarRing,
   RadarProcessedSignal,
+  RadarQuadrant,
   RadarRankedSignal,
   RadarRelevanceBreakdown,
+  RadarRing,
+  RadarSignalCard,
   RadarSignalStatus,
   RadarSignalType,
-  RadarSignalCard,
   UserRadarProfileRecord,
 } from './radarTypes.js';
 

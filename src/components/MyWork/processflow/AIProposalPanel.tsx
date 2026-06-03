@@ -1,4 +1,15 @@
-import { AlertTriangle, ArrowRight, Building2, Check, ChevronRight, Link2, Pencil, Plus, Trash2, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Building2,
+  Check,
+  ChevronRight,
+  Link2,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import TeresaMark from '../../shared/TeresaMark';

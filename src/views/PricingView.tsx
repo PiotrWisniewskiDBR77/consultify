@@ -1,6 +1,20 @@
 import { motion } from 'framer-motion';
 import {
-  ArrowRight, BarChart3, Building2, Calendar, Check, Cpu, HelpCircle, Key, Rocket, Server, Shield, Users, X, Zap } from 'lucide-react';
+  ArrowRight,
+  BarChart3,
+  Building2,
+  Calendar,
+  Check,
+  Cpu,
+  HelpCircle,
+  Key,
+  Rocket,
+  Server,
+  Shield,
+  Users,
+  X,
+  Zap,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +22,6 @@ import { useNavigate } from 'react-router-dom';
 import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
-
 import TeresaMark from '../components/shared/TeresaMark';
 const CALENDAR_URL =
   'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';

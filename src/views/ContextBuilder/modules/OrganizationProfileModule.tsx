@@ -1,4 +1,3 @@
-import TeresaMark from '../../../components/shared/TeresaMark';
 /**
  * OrganizationProfileModule — Unified canonical organization profile.
  * P30-D: Replaces split-brain CompanyProfileModule (localStorage) + OrganizationProfileForm (admin).
@@ -8,11 +7,35 @@ import TeresaMark from '../../../components/shared/TeresaMark';
  * Phase 2: Conditional sections per org type, manufacturing fields, taxonomy unification
  * Phase 3: Cross-validation, completeness coaching, downstream readiness, document extraction
  */
-import { AlertCircle, AlertTriangle, BarChart3, Briefcase, Building2, CheckCircle, ChevronDown, ChevronUp, Cpu, Factory, FileText, Globe, Loader2, MessageSquare, RefreshCw, Save, Shield, Sparkles, Target, TrendingUp, Upload, Users } from 'lucide-react';
+import {
+  AlertCircle,
+  AlertTriangle,
+  BarChart3,
+  Briefcase,
+  Building2,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  Factory,
+  FileText,
+  Globe,
+  Loader2,
+  MessageSquare,
+  RefreshCw,
+  Save,
+  Shield,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Upload,
+  Users,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import TeresaMark from '../../../components/shared/TeresaMark';
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 

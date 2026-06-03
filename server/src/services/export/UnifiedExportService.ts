@@ -68,7 +68,10 @@ class UnifiedExportService {
     return this.renderPdf((doc) => {
       doc.fontSize(18).text(src.title, { underline: true });
       doc.moveDown();
-      doc.fontSize(9).fillColor('#475569').text(src.sourceLabel || '');
+      doc
+        .fontSize(9)
+        .fillColor('#475569')
+        .text(src.sourceLabel || '');
       doc.text(`Lifecycle: ${src.lifecycle}`);
       doc.text(`Updated: ${src.updatedAt}`);
       doc.moveDown();
@@ -103,11 +106,9 @@ class UnifiedExportService {
     workbook.creator = src.author || 'Business Work Canvas';
     workbook.created = new Date();
     const sheet = workbook.addWorksheet('Canvas Export');
-    (src.csv || '')
-      .split('\n')
-      .forEach((line) => {
-        sheet.addRow(line.split(',').map((cell) => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
-      });
+    (src.csv || '').split('\n').forEach((line) => {
+      sheet.addRow(line.split(',').map((cell) => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
+    });
     sheet.addRow([]);
     sheet.addRow(['Source Canvas', src.sourceLabel]);
     sheet.addRow(['Lifecycle', src.lifecycle]);
@@ -138,28 +139,26 @@ class UnifiedExportService {
     return this.renderPptx((pptx) => {
       pptx.author = src.author || 'Business Work Canvas';
       const slides =
-      src.slides && src.slides.length
-        ? src.slides
-        : [{ title: src.title, body: src.markdown }];
-    slides.slice(0, 20).forEach((slide, index) => {
-      const page = pptx.addSlide();
-      page.addText(slide.title, { x: 0.5, y: 0.4, w: 9, h: 0.5, fontSize: 24, bold: true });
-      page.addText(slide.body || 'No slide body available.', {
-        x: 0.5,
-        y: 1.1,
-        w: 9,
-        h: 4.5,
-        fontSize: 13,
-        fit: 'shrink',
-      });
-      page.addText(`${src.sourceLabel} · Slide ${index + 1}`, {
-        x: 0.5,
-        y: 6.8,
-        w: 9,
-        h: 0.3,
-        fontSize: 8,
-        color: '64748B',
-      });
+        src.slides && src.slides.length ? src.slides : [{ title: src.title, body: src.markdown }];
+      slides.slice(0, 20).forEach((slide, index) => {
+        const page = pptx.addSlide();
+        page.addText(slide.title, { x: 0.5, y: 0.4, w: 9, h: 0.5, fontSize: 24, bold: true });
+        page.addText(slide.body || 'No slide body available.', {
+          x: 0.5,
+          y: 1.1,
+          w: 9,
+          h: 4.5,
+          fontSize: 13,
+          fit: 'shrink',
+        });
+        page.addText(`${src.sourceLabel} · Slide ${index + 1}`, {
+          x: 0.5,
+          y: 6.8,
+          w: 9,
+          h: 0.3,
+          fontSize: 8,
+          color: '64748B',
+        });
       });
     });
   }

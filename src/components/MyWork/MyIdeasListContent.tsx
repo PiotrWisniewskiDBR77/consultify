@@ -403,9 +403,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   // Seed local favorites from server-side `isFavorite` (cross-device). Union-merge
   // (see useFavoriteIdeas) so this is safe before the M2 migration is applied.
   useEffect(() => {
-    hydrateFromServer(
-      ideas.filter((i: any) => i?.isFavorite).map((i: any) => String(i.id))
-    );
+    hydrateFromServer(ideas.filter((i: any) => i?.isFavorite).map((i: any) => String(i.id)));
   }, [ideas, hydrateFromServer]);
 
   // Load folders. The endpoint 503s until the M2 migration lands; we only show
@@ -429,9 +427,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const handleMoveToFolder = useCallback(
     async (idea: MyIdea, folderId: string | null) => {
       // Optimistic local update, then persist.
-      setIdeas((prev) =>
-        prev.map((i) => (i.id === idea.id ? ({ ...i, folderId } as MyIdea) : i))
-      );
+      setIdeas((prev) => prev.map((i) => (i.id === idea.id ? ({ ...i, folderId } as MyIdea) : i)));
       try {
         await Api.setIdeaFolder(idea.id, folderId);
         toast.success(isPolish ? 'Przeniesiono' : 'Moved', { duration: 800 });

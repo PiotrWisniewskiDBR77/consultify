@@ -1,4 +1,29 @@
-import { Check, CheckCircle, ChevronDown, ChevronUp, Clock, Copy, FileCode, HelpCircle, Mic, MicOff, Pencil, RefreshCw, Send, Sparkles, Square, Square as StopIcon, ThumbsDown, ThumbsUp, Trash2, User, Volume2, VolumeX, Wrench, XCircle } from 'lucide-react';
+import {
+  Check,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Copy,
+  FileCode,
+  HelpCircle,
+  Mic,
+  MicOff,
+  Pencil,
+  RefreshCw,
+  Send,
+  Sparkles,
+  Square,
+  Square as StopIcon,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  User,
+  Volume2,
+  VolumeX,
+  Wrench,
+  XCircle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
@@ -21,7 +46,6 @@ import { EnhancedChatInput } from '../AIChat/EnhancedChatInput';
 import { InlineResponseFeedback } from '../AIChat/InlineResponseFeedback';
 import { ThinkingBlock } from '../AIChat/Messages/ThinkingBlock';
 import { AIFeedbackButton } from '../AIFeedbackButton';
-
 import TeresaMark from '../shared/TeresaMark';
 // Tool Call Card Component for displaying MCP tool executions
 const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {

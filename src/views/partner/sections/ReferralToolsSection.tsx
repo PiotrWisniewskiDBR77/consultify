@@ -222,6 +222,20 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
       const loadUsableTools = async (): Promise<ReferralTools | null> => {
         try {
+          const response = await V8PartnerApi.getReferralTools();
+          if (response?.tools) {
+            const normalized = normalizeTools(response.tools as V8PartnerReferralTools);
+            if (hasUsableReferralIdentity(normalized)) {
+              return normalized;
+            }
+          }
+        } catch (error) {
+          if (!shouldFallbackToLegacyPartner(error)) {
+            throw error;
+          }
+        }
+
+        try {
           const response = await Api.get('/api/partners/referral-tools');
           const legacyTools = unwrapApiData(response);
           if (response?.success && legacyTools) {
@@ -233,20 +247,6 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         } catch (legacyError) {
           if (!shouldFallbackToLegacyPartner(legacyError)) {
             throw legacyError;
-          }
-        }
-
-        try {
-          const response = await V8PartnerApi.getReferralTools();
-          if (response?.tools) {
-            const normalized = normalizeTools(response.tools as V8PartnerReferralTools);
-            if (hasUsableReferralIdentity(normalized)) {
-              return normalized;
-            }
-          }
-        } catch (error) {
-          if (!shouldFallbackToLegacyPartner(error)) {
-            throw error;
           }
         }
 
@@ -358,7 +358,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       setCreating(true);
       let response: any;
       try {
-        response = await Api.post('/api/partners/campaign-links', {
+        response = await V8PartnerApi.createCampaignLink({
           name: candidateName,
           utmSource: newCampaign.utmSource || undefined,
           utmMedium: newCampaign.utmMedium || undefined,
@@ -368,7 +368,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         if (!shouldFallbackToLegacyPartner(error)) {
           throw error;
         }
-        response = await V8PartnerApi.createCampaignLink({
+        response = await Api.post('/api/partners/campaign-links', {
           name: candidateName,
           utmSource: newCampaign.utmSource || undefined,
           utmMedium: newCampaign.utmMedium || undefined,
@@ -412,12 +412,12 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       setDeleting(campaignId);
       let response: any;
       try {
-        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
+        response = await V8PartnerApi.deleteCampaignLink(campaignId);
       } catch (error) {
         if (!shouldFallbackToLegacyPartner(error)) {
           throw error;
         }
-        response = await V8PartnerApi.deleteCampaignLink(campaignId);
+        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
       }
 
       if (response?.success || response?.deleted) {

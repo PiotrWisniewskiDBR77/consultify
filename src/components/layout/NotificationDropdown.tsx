@@ -1,4 +1,24 @@
-import { AlertCircle, AlertTriangle, ArrowRight, BookOpen, Check, CheckCircle, CheckSquare, Clock, CreditCard, Flag, Inbox, Info, Megaphone, MessageSquare, Scale, Sparkles, Target, Trash2, X } from 'lucide-react';
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  Check,
+  CheckCircle,
+  CheckSquare,
+  Clock,
+  CreditCard,
+  Flag,
+  Inbox,
+  Info,
+  Megaphone,
+  MessageSquare,
+  Scale,
+  Sparkles,
+  Target,
+  Trash2,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +36,6 @@ import {
 
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
-
 import TeresaMark from '../shared/TeresaMark';
 export const NotificationDropdown = () => {
   const { i18n } = useTranslation();

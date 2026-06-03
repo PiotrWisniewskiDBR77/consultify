@@ -6,7 +6,8 @@
 const PF_INTENT_PATTERNS: Array<{ pattern: RegExp; action: string }> = [
   // EN patterns
   {
-    pattern: /\b(create|build|map|design|draw|model)\s+(a\s+)?(process|workflow|flow|pipeline|procedure)\b/i,
+    pattern:
+      /\b(create|build|map|design|draw|model)\s+(a\s+)?(process|workflow|flow|pipeline|procedure)\b/i,
     action: 'pf_create',
   },
   {
@@ -31,7 +32,8 @@ const PF_INTENT_PATTERNS: Array<{ pattern: RegExp; action: string }> = [
   },
   // PL patterns
   {
-    pattern: /\b(stwórz|utwórz|zacznij|zmapuj|zaprojektuj|narysuj)\s+(proces|przepływ|workflow|procedur)\b/i,
+    pattern:
+      /\b(stwórz|utwórz|zacznij|zmapuj|zaprojektuj|narysuj)\s+(proces|przepływ|workflow|procedur)\b/i,
     action: 'pf_create',
   },
   {

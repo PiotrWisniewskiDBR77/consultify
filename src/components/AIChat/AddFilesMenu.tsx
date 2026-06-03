@@ -429,10 +429,16 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                       title={r.name}
                       onClick={() => {
                         onRecentSelect?.({ name: r.name });
-                        toast(t('aiChat.menu.recentNotReusable', 'Recent item cannot be reattached automatically yet.'), {
-                          icon: 'ℹ️',
-                          duration: 2500,
-                        });
+                        toast(
+                          t(
+                            'aiChat.menu.recentNotReusable',
+                            'Recent item cannot be reattached automatically yet.'
+                          ),
+                          {
+                            icon: 'ℹ️',
+                            duration: 2500,
+                          }
+                        );
                         setIsOpen(false);
                       }}
                     >

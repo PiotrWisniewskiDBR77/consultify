@@ -54,9 +54,7 @@ const Btn: React.FC<{
   </button>
 );
 
-const Divider: React.FC = () => (
-  <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />
-);
+const Divider: React.FC = () => <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />;
 
 export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor }) => {
   if (!editor) return null;

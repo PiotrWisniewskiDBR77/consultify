@@ -220,10 +220,10 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               }
               void Promise.resolve(
                 sessionRef.current?.sendRealtimeInput({
-                media: {
-                  mimeType: `audio/pcm;rate=${TERESA_VOICE_CONFIG.sampleRateInput}`,
-                  data: btoa(binary),
-                },
+                  media: {
+                    mimeType: `audio/pcm;rate=${TERESA_VOICE_CONFIG.sampleRateInput}`,
+                    data: btoa(binary),
+                  },
                 })
               ).catch(() => {
                 /* Realtime send failures are surfaced by the Live API error callback. */

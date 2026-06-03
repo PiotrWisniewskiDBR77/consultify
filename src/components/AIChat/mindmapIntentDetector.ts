@@ -6,11 +6,13 @@
 const MM_INTENT_PATTERNS: Array<{ pattern: RegExp; action: string }> = [
   // EN patterns
   {
-    pattern: /\b(create|start|build|make|open)\s+(a\s+)?(mind\s*map|idea\s*map|recommendation\s*map|concept\s*map)\b/i,
+    pattern:
+      /\b(create|start|build|make|open)\s+(a\s+)?(mind\s*map|idea\s*map|recommendation\s*map|concept\s*map)\b/i,
     action: 'mm_create',
   },
   {
-    pattern: /\b(expand|explore|branch|decompose|break\s*down)\s+(the\s+)?(idea|node|branch|topic|concept)\b/i,
+    pattern:
+      /\b(expand|explore|branch|decompose|break\s*down)\s+(the\s+)?(idea|node|branch|topic|concept)\b/i,
     action: 'mm_expand_branch',
   },
   {
@@ -31,7 +33,8 @@ const MM_INTENT_PATTERNS: Array<{ pattern: RegExp; action: string }> = [
   },
   // PL patterns
   {
-    pattern: /\b(stwórz|utwórz|zacznij|zbuduj|otwórz)\s+(mapę\s+(myśli|rekomendacji|pomysłów|koncepcji|idei))\b/i,
+    pattern:
+      /\b(stwórz|utwórz|zacznij|zbuduj|otwórz)\s+(mapę\s+(myśli|rekomendacji|pomysłów|koncepcji|idei))\b/i,
     action: 'mm_create',
   },
   {

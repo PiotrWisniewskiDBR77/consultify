@@ -22,7 +22,8 @@ export const AIAddedMark = Mark.create({
       'span',
       mergeAttributes(HTMLAttributes, {
         'data-ai-added': '',
-        class: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 rounded px-0.5',
+        class:
+          'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 rounded px-0.5',
       }),
       0,
     ];
@@ -45,7 +46,8 @@ export const AIRemovedMark = Mark.create({
       'span',
       mergeAttributes(HTMLAttributes, {
         'data-ai-removed': '',
-        class: 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 line-through opacity-60 rounded px-0.5',
+        class:
+          'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 line-through opacity-60 rounded px-0.5',
       }),
       0,
     ];

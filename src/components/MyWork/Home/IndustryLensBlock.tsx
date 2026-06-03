@@ -2,10 +2,9 @@ import { ArrowRight, Factory, Globe2, Scale } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import TeresaMark from '../../shared/TeresaMark';
 import { HomeBlockShell } from './HomeBlockShell';
 import type { HomeBlock, HomeScreenAction, HomeSignalCard } from './homeV2Types';
-
-import TeresaMark from '../../shared/TeresaMark';
 interface IndustryLensBlockProps {
   block: Extract<HomeBlock, { id: 'industryLens' }>;
   onAction: (action: HomeScreenAction) => void;

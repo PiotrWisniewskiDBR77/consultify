@@ -1,4 +1,18 @@
-import { CheckCircle, ChevronLeft, Download, FileText, Loader2, Maximize2, MessageSquare, Minimize2, RefreshCw, Save, Settings, Wand2, X } from 'lucide-react';
+import {
+  CheckCircle,
+  ChevronLeft,
+  Download,
+  FileText,
+  Loader2,
+  Maximize2,
+  MessageSquare,
+  Minimize2,
+  RefreshCw,
+  Save,
+  Settings,
+  Wand2,
+  X,
+} from 'lucide-react';
 import { Send, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,10 +20,9 @@ import { useTranslation } from 'react-i18next';
 import { Api, api } from '@/services/api';
 
 import { ReportBuilder } from '../components/Reports/ReportBuilder';
+import TeresaMark from '../components/shared/TeresaMark';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
-
-import TeresaMark from '../components/shared/TeresaMark';
 // Types
 interface ReportSection {
   id: string;

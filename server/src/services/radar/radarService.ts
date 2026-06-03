@@ -136,7 +136,8 @@ function toRadarMapSignal(card: RadarSignalCard, index: number) {
     id: card.signalId,
     name: card.title,
     icon: card.tags.domains[0] || 'signal',
-    ring: card.ring || (index < 4 ? 'NOW' : index < 8 ? 'PREPARE' : index < 12 ? 'LEARN' : 'OBSERVE'),
+    ring:
+      card.ring || (index < 4 ? 'NOW' : index < 8 ? 'PREPARE' : index < 12 ? 'LEARN' : 'OBSERVE'),
     quadrant:
       card.quadrant ||
       (index % 4 === 0
@@ -148,14 +149,22 @@ function toRadarMapSignal(card: RadarSignalCard, index: number) {
             : 'MY_ROLE'),
     status: card.status || (index < 3 ? 'new' : 'updated'),
     signalType: card.signalType || 'TREND',
-    importanceLevel: card.businessImpact === 'high' ? 'large' : card.businessImpact === 'medium' ? 'medium' : 'small',
-    fitLevel: card.actionability === 'high' ? 'high' : card.actionability === 'medium' ? 'medium' : 'low',
+    importanceLevel:
+      card.businessImpact === 'high'
+        ? 'large'
+        : card.businessImpact === 'medium'
+          ? 'medium'
+          : 'small',
+    fitLevel:
+      card.actionability === 'high' ? 'high' : card.actionability === 'medium' ? 'medium' : 'low',
     preview: {
       shortDescription: card.summary,
       whyItMatters: card.whyItMatters,
       whyItMattersForYou: card.whyYouSeeThis,
       howToThinkAboutIt: card.insightSummary,
-      goodFirstQuestion: card.preview?.goodFirstQuestion || `What does ${card.title} change in your current workflow?`,
+      goodFirstQuestion:
+        card.preview?.goodFirstQuestion ||
+        `What does ${card.title} change in your current workflow?`,
       suggestedNextStep: card.suggestedNextStep,
     },
   } as const;
@@ -212,8 +221,8 @@ class RadarService {
       processedSignals = await radarProcessingService.listSignals(80);
     }
 
-    const [profile, dynamicContext, actions30d, duplicateStats, watchlistItems] =
-      await Promise.all([
+    const [profile, dynamicContext, actions30d, duplicateStats, watchlistItems] = await Promise.all(
+      [
         radarRankingService.getOrCreateProfile({ userId, orgId, role, industry }),
         radarRankingService.buildDynamicContext(userId, orgId),
         queryHelpers
@@ -245,7 +254,8 @@ class RadarService {
            LIMIT 20`,
           [userId]
         ),
-      ]);
+      ]
+    );
 
     const ranked = await radarRankingService.rankSignals({
       userId,
