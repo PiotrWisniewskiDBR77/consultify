@@ -8644,7 +8644,18 @@
       "anomalyBelow": "{{count}} initiatives significantly below plan",
       "contributionsChart": "Initiative Contributions to ROI",
       "plannedRoi": "Planned ROI",
-      "realizedRoi": "Realized ROI"
+      "realizedRoi": "Realized ROI",
+      "approved": "Approved",
+      "approvedHint": "Assumptions approved — editing is restricted",
+      "locked": "Locked",
+      "lockedHint": "Assumptions are finalized and locked for editing",
+      "lockedActionHint": "Assumptions are finalized — editing is blocked",
+      "lockBanner": "{{locked}} locked · {{approved}} approved — finalized assumptions are read-only",
+      "errorTitle": "Could not load ROI analysis",
+      "errorMessage": "The ROI portfolio could not be loaded. Please try again.",
+      "columns": {
+        "lock": "Lock"
+      }
     },
     "roi": {
       "totalPlanned": "Total Planned ROI",
@@ -8704,6 +8715,13 @@
       "historyBy": "By",
       "historyDate": "Date",
       "noHistory": "No history yet"
+    },
+    "reportingSchedules": {
+      "approvalAuto": "Auto",
+      "approvalApproved": "Approved",
+      "approvalRejected": "Rejected",
+      "approvalPending": "Pending approval",
+      "approvalPendingHint": "Dispatch is blocked until this schedule is approved"
     }
   },
   "traceability": {

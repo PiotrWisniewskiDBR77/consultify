@@ -7,8 +7,10 @@
 import {
   AlertTriangle,
   BarChart3,
+  CheckCircle2,
   ChevronDown,
   DollarSign,
+  Lock,
   Maximize2,
   MoreVertical,
   Plus,
@@ -19,6 +21,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
@@ -93,6 +96,39 @@ function deriveROIStatus(item: ROIInitiativeItem): ROIStatus {
   if (pct > 10) return 'above';
   if (pct < -10) return 'below';
   return 'on-track';
+}
+
+/**
+ * ROI assumption lock state derived from the initiative lifecycle status.
+ * Once an initiative reaches a terminal lifecycle status its ROI assumptions are
+ * frozen as benefits-realization evidence — they must not be edited in place.
+ * `approved` reflects a formal sign-off; `locked` reflects a terminal/closed
+ * lifecycle. This mirrors the backend definition/target lock in resultsROIService.
+ */
+export type ROILockState = 'open' | 'locked' | 'approved';
+
+const ROI_APPROVED_STATUSES = new Set(['APPROVED', 'SIGNED_OFF', 'TRACKING', 'REALIZED']);
+const ROI_LOCKED_STATUSES = new Set([
+  'COMPLETED',
+  'DONE',
+  'CLOSED',
+  'ARCHIVED',
+  'CANCELLED',
+  'FINALIZED',
+  'LOCKED',
+]);
+
+export function deriveROILockState(status: string | null | undefined): ROILockState {
+  const normalized = String(status || '')
+    .trim()
+    .toUpperCase();
+  if (ROI_LOCKED_STATUSES.has(normalized)) return 'locked';
+  if (ROI_APPROVED_STATUSES.has(normalized)) return 'approved';
+  return 'open';
+}
+
+function isRoiEditable(lockState: ROILockState): boolean {
+  return lockState === 'open';
 }
 
 function formatCurrency(value: number): string {
@@ -191,11 +227,43 @@ const StatusBadge: React.FC<{ status: ROIStatus }> = ({ status }) => {
   );
 };
 
+const LockBadge: React.FC<{ lockState: ROILockState }> = ({ lockState }) => {
+  const { t } = useTranslation();
+  if (lockState === 'open') return null;
+  if (lockState === 'approved') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400"
+        title={t(
+          'results.roiAnalysis.approvedHint',
+          'Assumptions approved — editing is restricted'
+        )}
+      >
+        <CheckCircle2 size={12} />
+        {t('results.roiAnalysis.approved', 'Approved')}
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/15 text-slate-300"
+      title={t(
+        'results.roiAnalysis.lockedHint',
+        'Assumptions are finalized and locked for editing'
+      )}
+    >
+      <Lock size={12} />
+      {t('results.roiAnalysis.locked', 'Locked')}
+    </span>
+  );
+};
+
 export const ROIAnalysisView: React.FC = () => {
   const { t } = useTranslation();
   const [items, setItems] = useState<ROIInitiativeItem[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary['summary'] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [sortCol, setSortCol] = useState<string | null>('variance');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -204,6 +272,7 @@ export const ROIAnalysisView: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       let payload: {
         items: PortfolioSummary['items'];
@@ -230,6 +299,7 @@ export const ROIAnalysisView: React.FC = () => {
     } catch {
       setItems([]);
       setSummary(null);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -294,6 +364,11 @@ export const ROIAnalysisView: React.FC = () => {
     summary?.totalRealized ?? filteredItems.reduce((s, i) => s + i.realizedBenefit, 0);
   const totalVariance = summary?.totalVariance ?? filteredItems.reduce((s, i) => s + i.variance, 0);
   const variancePct = totalPlanned !== 0 ? (totalVariance / Math.abs(totalPlanned)) * 100 : 0;
+
+  const lockedCount = filteredItems.filter((i) => deriveROILockState(i.status) === 'locked').length;
+  const approvedCount = filteredItems.filter(
+    (i) => deriveROILockState(i.status) === 'approved'
+  ).length;
 
   const belowPlanCount = filteredItems.filter((i) => deriveROIStatus(i) === 'below').length;
   const anomalyMessage =
@@ -360,17 +435,42 @@ export const ROIAnalysisView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-slate-400">
-          <BarChart3 size={20} className="animate-pulse" />
-          <span className="text-sm">{t('common.loading', 'Loading...')}</span>
-        </div>
+      <div className="p-4">
+        <LoadingState variant="skeleton" rows={6} label={t('common.loading', 'Loading...')} />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-4">
+        <ErrorState
+          title={t('results.roiAnalysis.errorTitle', 'Could not load ROI analysis')}
+          message={t(
+            'results.roiAnalysis.errorMessage',
+            'The ROI portfolio could not be loaded. Please try again.'
+          )}
+          retry={fetchData}
+        />
       </div>
     );
   }
 
   return (
     <div className="p-4 space-y-4">
+      {/* Lock / approval governance banner */}
+      {(lockedCount > 0 || approvedCount > 0) && (
+        <div className="rounded-xl bg-navy-900 border border-navy-700 p-3 flex flex-wrap items-center gap-3">
+          <Lock size={16} className="text-slate-400 shrink-0" />
+          <span className="text-sm text-slate-300">
+            {t(
+              'results.roiAnalysis.lockBanner',
+              '{{locked}} locked · {{approved}} approved — finalized assumptions are read-only',
+              { locked: lockedCount, approved: approvedCount }
+            )}
+          </span>
+        </div>
+      )}
       {/* Portfolio summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
@@ -518,6 +618,9 @@ export const ROIAnalysisView: React.FC = () => {
                   </div>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
+                  {t('results.roiAnalysis.columns.lock', 'Lock')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
                   {t('results.roi.columns.owner', 'Owner')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
@@ -528,7 +631,7 @@ export const ROIAnalysisView: React.FC = () => {
             <tbody className="divide-y divide-navy-700/50">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-16 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-2">
                       <BarChart3 size={24} className="text-slate-400" />
                       <span>{t('results.roi.emptyState', 'No initiatives with ROI data')}</span>
@@ -538,6 +641,8 @@ export const ROIAnalysisView: React.FC = () => {
               ) : (
                 filteredItems.map((item) => {
                   const roiStatus = deriveROIStatus(item);
+                  const lockState = deriveROILockState(item.status);
+                  const editable = isRoiEditable(lockState);
                   const varPct =
                     item.projectedBenefit !== 0
                       ? ((item.realizedBenefit - item.projectedBenefit) /
@@ -574,6 +679,13 @@ export const ROIAnalysisView: React.FC = () => {
                       <td className="px-4 py-3">
                         <StatusBadge status={roiStatus} />
                       </td>
+                      <td className="px-4 py-3">
+                        {lockState === 'open' ? (
+                          <span className="text-xs text-slate-600">—</span>
+                        ) : (
+                          <LockBadge lockState={lockState} />
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-slate-500">{item.ownerName || '—'}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="relative">
@@ -606,13 +718,27 @@ export const ROIAnalysisView: React.FC = () => {
                                   {t('results.roi.actions.openDetail', 'Open detail')}
                                 </button>
                                 <button
+                                  disabled={!editable}
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    if (!editable) return;
                                     handleRowAction('record', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  title={
+                                    editable
+                                      ? undefined
+                                      : t(
+                                          'results.roiAnalysis.lockedActionHint',
+                                          'Assumptions are finalized — editing is blocked'
+                                        )
+                                  }
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
+                                    editable
+                                      ? 'text-slate-300 hover:bg-navy-700'
+                                      : 'text-slate-600 cursor-not-allowed'
+                                  }`}
                                 >
-                                  <Plus size={14} />
+                                  {editable ? <Plus size={14} /> : <Lock size={14} />}
                                   {t('results.roi.actions.recordActual', 'Record actual')}
                                 </button>
                                 <button
@@ -644,6 +770,9 @@ export const ROIAnalysisView: React.FC = () => {
           initiativeName={
             items.find((i) => i.initiativeId === drawerInitiativeId)?.initiativeName || ''
           }
+          lockState={deriveROILockState(
+            items.find((i) => i.initiativeId === drawerInitiativeId)?.status
+          )}
           onClose={() => setDrawerInitiativeId(null)}
           onSaved={fetchData}
         />

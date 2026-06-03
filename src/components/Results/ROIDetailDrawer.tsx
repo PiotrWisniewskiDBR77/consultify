@@ -4,7 +4,7 @@
  * Plan vs Realized chart, assumptions panel, realized entry form, history table
  */
 
-import { BarChart3, Calendar, DollarSign, Plus, TrendingUp, X } from 'lucide-react';
+import { BarChart3, Calendar, DollarSign, Lock, Plus, TrendingUp, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -15,6 +15,7 @@ import {
   type V8ResultsRoiInitiativeDetail,
 } from '@/services/api/v8/results';
 
+import type { ROILockState } from './ROIAnalysisView';
 import { ROIAssumptionEditor, ROIAssumptionsData } from './ROIAssumptionEditor';
 
 interface ROIDetailDrawerProps {
@@ -22,6 +23,8 @@ interface ROIDetailDrawerProps {
   initiativeName: string;
   onClose: () => void;
   onSaved?: () => void;
+  /** When `locked` or `approved`, assumptions and realized entries are read-only. */
+  lockState?: ROILockState;
 }
 
 interface VarianceData {
@@ -75,8 +78,10 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
   initiativeName,
   onClose,
   onSaved,
+  lockState = 'open',
 }) => {
   const { t } = useTranslation();
+  const readOnly = lockState !== 'open';
   const [varianceData, setVarianceData] = useState<VarianceData | null>(null);
   const [assumptions, setAssumptions] = useState<ROIAssumptionsData | null>(null);
   const [realized, setRealized] = useState<RealizedEntry[]>([]);
@@ -310,6 +315,22 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
             </div>
           ) : (
             <div className="p-5 space-y-6">
+              {readOnly && (
+                <div className="rounded-lg border border-navy-700 bg-navy-800 px-3 py-2 flex items-center gap-2 text-xs text-slate-300">
+                  <Lock size={14} className="text-slate-400 shrink-0" />
+                  <span>
+                    {lockState === 'approved'
+                      ? t(
+                          'results.roiAnalysis.approvedHint',
+                          'Assumptions approved — editing is restricted'
+                        )
+                      : t(
+                          'results.roiAnalysis.lockedHint',
+                          'Assumptions are finalized and locked for editing'
+                        )}
+                  </span>
+                </div>
+              )}
               {/* Comparison chart */}
               <div>
                 <h3 className="text-xs font-medium text-slate-500 uppercase mb-3 flex items-center gap-2">
@@ -355,62 +376,64 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
               <div>
                 <ROIAssumptionEditor
                   data={assumptions}
-                  onChange={setAssumptions}
-                  onSave={handleSaveAssumptions}
+                  onChange={readOnly ? () => {} : setAssumptions}
+                  onSave={readOnly ? async () => {} : handleSaveAssumptions}
                 />
               </div>
 
               {/* Realized entry form */}
-              <div>
-                <h3 className="text-xs font-medium text-slate-500 uppercase mb-3 flex items-center gap-2">
-                  <Plus size={14} />
-                  {t('results.roi.recordActual', 'Record Actual')}
-                </h3>
-                <form onSubmit={handleRecordRealized} className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">
-                        {t('results.roi.period', 'Period')}
-                      </label>
-                      <input
-                        className={inputCls}
-                        type="month"
-                        value={newPeriod}
-                        onChange={(e) => setNewPeriod(e.target.value)}
-                      />
+              {!readOnly && (
+                <div>
+                  <h3 className="text-xs font-medium text-slate-500 uppercase mb-3 flex items-center gap-2">
+                    <Plus size={14} />
+                    {t('results.roi.recordActual', 'Record Actual')}
+                  </h3>
+                  <form onSubmit={handleRecordRealized} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">
+                          {t('results.roi.period', 'Period')}
+                        </label>
+                        <input
+                          className={inputCls}
+                          type="month"
+                          value={newPeriod}
+                          onChange={(e) => setNewPeriod(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">
+                          {t('results.roi.amount', 'Amount')}
+                        </label>
+                        <input
+                          className={inputCls}
+                          type="number"
+                          step="any"
+                          value={newAmount}
+                          onChange={(e) => setNewAmount(e.target.value)}
+                          placeholder="0"
+                          required
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">
-                        {t('results.roi.amount', 'Amount')}
-                      </label>
-                      <input
-                        className={inputCls}
-                        type="number"
-                        step="any"
-                        value={newAmount}
-                        onChange={(e) => setNewAmount(e.target.value)}
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <input
-                    className={inputCls}
-                    value={newNotes}
-                    onChange={(e) => setNewNotes(e.target.value)}
-                    placeholder={t('results.roi.notesPlaceholder', 'Notes (optional)')}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newAmount || submitting}
-                    className="w-full h-9 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {submitting
-                      ? t('common.saving', 'Saving...')
-                      : t('results.roi.submit', 'Submit')}
-                  </button>
-                </form>
-              </div>
+                    <input
+                      className={inputCls}
+                      value={newNotes}
+                      onChange={(e) => setNewNotes(e.target.value)}
+                      placeholder={t('results.roi.notesPlaceholder', 'Notes (optional)')}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newAmount || submitting}
+                      className="w-full h-9 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {submitting
+                        ? t('common.saving', 'Saving...')
+                        : t('results.roi.submit', 'Submit')}
+                    </button>
+                  </form>
+                </div>
+              )}
 
               {/* History table */}
               <div>

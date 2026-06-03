@@ -9306,7 +9306,18 @@
       "anomalyBelow": "{{count}} inicjatyw znacznie poniżej planu",
       "contributionsChart": "Wkład inicjatyw w ROI",
       "plannedRoi": "Planowane ROI",
-      "realizedRoi": "Zrealizowane ROI"
+      "realizedRoi": "Zrealizowane ROI",
+      "approved": "Zatwierdzone",
+      "approvedHint": "Założenia zatwierdzone — edycja jest ograniczona",
+      "locked": "Zablokowane",
+      "lockedHint": "Założenia są sfinalizowane i zablokowane do edycji",
+      "lockedActionHint": "Założenia są sfinalizowane — edycja jest zablokowana",
+      "lockBanner": "{{locked}} zablokowanych · {{approved}} zatwierdzonych — sfinalizowane założenia są tylko do odczytu",
+      "errorTitle": "Nie udało się załadować analizy ROI",
+      "errorMessage": "Nie udało się załadować portfela ROI. Spróbuj ponownie.",
+      "columns": {
+        "lock": "Blokada"
+      }
     },
     "roi": {
       "totalPlanned": "Łączne planowane ROI",
@@ -9366,6 +9377,13 @@
       "historyBy": "Autor",
       "historyDate": "Data",
       "noHistory": "Brak historii"
+    },
+    "reportingSchedules": {
+      "approvalAuto": "Automatyczne",
+      "approvalApproved": "Zatwierdzone",
+      "approvalRejected": "Odrzucone",
+      "approvalPending": "Oczekuje na zatwierdzenie",
+      "approvalPendingHint": "Wysyłka jest zablokowana do czasu zatwierdzenia harmonogramu"
     }
   },
   "traceability": {

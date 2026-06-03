@@ -137,6 +137,87 @@ async function p04AssertKpiPermission(
   return true;
 }
 
+/**
+ * KPI lifecycle statuses that represent a finalized / locked KPI set.
+ * Mirrors the definition/target lock in `resultsROIService` (§8.1F): once a KPI
+ * has transitioned into benefits realization or formal review it is frozen and
+ * must not absorb new report snapshots without a status transition first.
+ */
+const RESULTS_LOCKED_KPI_STATUSES: readonly string[] = ['benefits_realization', 'review', 'locked'];
+
+/**
+ * Report snapshot statuses that mean the snapshot has been finalized. Creating a
+ * fresh report on top of a finalized snapshot for the same scope is a hidden
+ * finalization bypass and must be blocked.
+ */
+const RESULTS_FINALIZED_REPORT_STATUSES: readonly string[] = ['finalized', 'locked', 'approved'];
+
+/**
+ * Guards `POST /kpi-reports` against creating a report on a finalized/locked KPI
+ * set. Returns a structured violation when the selected KPIs (or, when no scope
+ * is given, any org KPI) are in a locked lifecycle status, OR when a finalized
+ * snapshot already exists for the requested period scope. Returns `null` when
+ * creation is allowed.
+ */
+export async function findKpiReportFinalizationViolation(params: {
+  organizationId: string;
+  kpiIds: string[] | null;
+}): Promise<{ code: string; error: string; detail: Record<string, unknown> } | null> {
+  const { organizationId, kpiIds } = params;
+
+  // 1) Block when any selected KPI is in a locked/finalized lifecycle status.
+  if (kpiIds && kpiIds.length) {
+    const placeholders = kpiIds.map(() => '?').join(', ');
+    const lockedRows = await dbAll<{ id: string; status: string | null }>(
+      `SELECT id, status FROM initiative_kpis
+       WHERE organization_id = ? AND id IN (${placeholders})`,
+      [organizationId, ...kpiIds],
+      { fallback: true }
+    ).catch(() => [] as { id: string; status: string | null }[]);
+
+    const locked = (lockedRows || []).filter((row) =>
+      RESULTS_LOCKED_KPI_STATUSES.includes(String(row.status || '').toLowerCase())
+    );
+    if (locked.length) {
+      return {
+        code: 'RESULTS_KPI_REPORT_SET_LOCKED',
+        error:
+          'Cannot create a report: one or more selected KPIs are in a finalized/locked status.',
+        detail: {
+          lockedKpiIds: locked.map((row) => row.id),
+          lockedStatuses: Array.from(
+            new Set(locked.map((row) => String(row.status || '').toLowerCase()))
+          ),
+        },
+      };
+    }
+  }
+
+  // 2) Block when a finalized snapshot already exists for the same KPI scope.
+  // A finalized snapshot is immutable evidence; a new snapshot would silently
+  // supersede it. The schema-tolerant query degrades to "no violation" when the
+  // status column is absent (older snapshot table variants).
+  const snapshotRows = await dbAll<{ id: string; status: string | null }>(
+    `SELECT id, status FROM results_kpi_report_snapshots WHERE organization_id = ?`,
+    [organizationId],
+    { fallback: true }
+  ).catch(() => [] as { id: string; status: string | null }[]);
+
+  const finalizedSnapshot = (snapshotRows || []).find((row) =>
+    RESULTS_FINALIZED_REPORT_STATUSES.includes(String(row.status || '').toLowerCase())
+  );
+  if (finalizedSnapshot) {
+    return {
+      code: 'RESULTS_KPI_REPORT_ALREADY_FINALIZED',
+      error:
+        'Cannot create a report: a finalized report snapshot already exists for this organization scope.',
+      detail: { finalizedSnapshotId: finalizedSnapshot.id },
+    };
+  }
+
+  return null;
+}
+
 function deriveKpiPeriodKey(
   periodStart?: string | null,
   measurementFrequency?: string | null
@@ -1288,6 +1369,22 @@ router.post(
     const selectedKpiIds: string[] | null = Array.isArray(kpiIds)
       ? (kpiIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)
       : null;
+
+    // Finalization/lock guard (beyond the role header check): block report
+    // creation when the targeted KPI set is finalized/locked, or when a
+    // finalized snapshot already exists for the scope. This closes the
+    // hidden-finalization bypass flagged by the Module 07 audit.
+    const finalizationViolation = await findKpiReportFinalizationViolation({
+      organizationId,
+      kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
+    });
+    if (finalizationViolation) {
+      return res.status(409).json({
+        error: finalizationViolation.error,
+        code: finalizationViolation.code,
+        detail: finalizationViolation.detail,
+      });
+    }
 
     const selectedGoalIds: string[] | null = Array.isArray(goalIds)
       ? (goalIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)

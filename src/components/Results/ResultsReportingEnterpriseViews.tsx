@@ -53,6 +53,54 @@ const formatDateTime = (value?: string | null) => {
   return d.toLocaleString();
 };
 
+/**
+ * Approval-state chip for scheduled reports. The backend blocks dispatch when
+ * `approval_required` is set and `approval_status !== 'approved'`
+ * (resultsEnterpriseService); this surfaces that gated/blocked state in the UI
+ * so users understand why a schedule is held.
+ */
+const ScheduleApprovalChip: React.FC<{ approval: string }> = ({ approval }) => {
+  const { t } = useTranslation();
+  const normalized = String(approval || '').toLowerCase();
+
+  if (normalized === 'auto' || !normalized) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+        {t('results.reportingSchedules.approvalAuto', 'Auto')}
+      </span>
+    );
+  }
+  if (normalized === 'approved') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        {t('results.reportingSchedules.approvalApproved', 'Approved')}
+      </span>
+    );
+  }
+  if (normalized === 'rejected') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+        {t('results.reportingSchedules.approvalRejected', 'Rejected')}
+      </span>
+    );
+  }
+  // pending (or any other non-approved state) — dispatch is blocked.
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400"
+      title={t(
+        'results.reportingSchedules.approvalPendingHint',
+        'Dispatch is blocked until this schedule is approved'
+      )}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+      {t('results.reportingSchedules.approvalPending', 'Pending approval')}
+    </span>
+  );
+};
+
 const WorkspaceStatCard: React.FC<{
   label: string;
   value: string | number;
@@ -299,7 +347,12 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
       },
       { id: 'cadence', label: t('common.period', 'Cadence'), width: '20%' },
       { id: 'audience', label: t('results.kpiReports.recipients', 'Audience'), width: '18%' },
-      { id: 'approval', label: t('results.kpiReports.approval', 'Approval'), width: '14%' },
+      {
+        id: 'approval',
+        label: t('results.kpiReports.approval', 'Approval'),
+        width: '14%',
+        render: (row) => <ScheduleApprovalChip approval={String(row.approval ?? 'auto')} />,
+      },
       {
         id: 'lastSentAt',
         label: t('results.kpiReports.lastSent', 'Last sent'),

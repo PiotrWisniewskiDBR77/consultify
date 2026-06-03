@@ -109,9 +109,6 @@ const AssessmentReportBuilderView = React.lazy(() =>
     default: m.AssessmentReportBuilderView,
   }))
 );
-const KpiOkrView = React.lazy(() =>
-  import('@/views/KpiOkrView').then((m) => ({ default: m.KpiOkrView }))
-);
 const BenefitsRealizationView = React.lazy(() =>
   import('@/views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView }))
 );
@@ -1916,21 +1913,12 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
-        <Route
-          path={ROUTES.KPI_OKR}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Results"
-              >
-                <RouteErrorBoundary>
-                  <KpiOkrView />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
-          }
-        />
+        {/*
+          /kpi-okr is a permanent alias for /benefits (Results). It redirects
+          directly rather than mounting a view, so the router manifest no longer
+          carries a dead view module. See Module 07 audit (route cleanup).
+        */}
+        <Route path={ROUTES.KPI_OKR} element={<Navigate to={ROUTES.BENEFITS} replace />} />
         <Route
           path={ROUTES.PRESENTATIONS}
           element={
