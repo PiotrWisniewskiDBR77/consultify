@@ -990,10 +990,11 @@ router.post('/payouts/request', async (req: Request, res: Response, next: NextFu
  */
 router.get('/payouts', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId;
-    if (!partnerOrgId) {
-      return res.status(403).json({ success: false, error: 'Partner organization required' });
-    }
+    // FIX (module 19 MVP): previously read `req.user?.partnerOrgId`, which the auth
+    // middleware never sets, so this route was broken (403) for every caller.
+    // Resolve the partner org from the DB like every other route in this file.
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
     const status = req.query.status as string | undefined;
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
@@ -2563,8 +2564,9 @@ superAdminPartnerRouter.get(
 superAdminPartnerRouter.post(
   '/program/:partnerOrgId/lifecycle',
   async (req: Request, res: Response, next: NextFunction) => {
+    // Hoisted so the catch block (lifecycle-error whatNext lookup) can reference it.
+    const partnerOrgId = String(req.params.partnerOrgId || '');
     try {
-      const partnerOrgId = String(req.params.partnerOrgId || '');
       const toPhase = req.body?.toPhase;
       if (!partnerOrgId || !toPhase) {
         return res.status(400).json({ success: false, error: 'partnerOrgId and toPhase required' });

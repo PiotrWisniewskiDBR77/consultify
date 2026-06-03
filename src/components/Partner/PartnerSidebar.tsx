@@ -4,7 +4,7 @@
  * Features:
  * - Collapsible groups (matching Admin/Settings pattern)
  * - Clean header without icon (consistent style)
- * - Active state indicators with violet accent
+ * - Active state indicators with Harvard Crimson accent + left stripe
  * - Badge support for counts (pending certs, active clients, etc.)
  * - Auto-expand group containing active section
  *
@@ -421,9 +421,9 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
                           key={item.id}
                           onClick={() => onSectionChange(item.id)}
                           className={cn(
-                            'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
+                            'relative w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
                             isActive
-                              ? 'bg-primary-100 dark:bg-primary-600/20 text-primary-700 dark:text-primary-300 font-medium'
+                              ? 'bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-300 font-medium before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-crimson-600 dark:before:bg-crimson-400'
                               : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/20 hover:text-slate-900 dark:hover:text-white'
                           )}
                         >
@@ -431,7 +431,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
                             className={cn(
                               'w-4 h-4 flex-shrink-0',
                               isActive
-                                ? 'text-primary-600 dark:text-primary-400'
+                                ? 'text-crimson-600 dark:text-crimson-400'
                                 : 'text-slate-500 dark:text-slate-400'
                             )}
                           />

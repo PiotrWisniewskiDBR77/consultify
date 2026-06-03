@@ -129,7 +129,6 @@ export const ClientAccessView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-  const [showAddTeamMember, setShowAddTeamMember] = useState(false);
   const [accessLink, setAccessLink] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [generatingLink, setGeneratingLink] = useState(false);
@@ -407,13 +406,7 @@ export const ClientAccessView: React.FC = () => {
                 "Manage your employees' client account access from one place"
               )}
             </p>
-            <button
-              onClick={() => setShowAddTeamMember(true)}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium flex items-center gap-2"
-            >
-              <UserPlus className="w-4 h-4" />
-              {t('partner.clientAccess.addTeamMember', 'Add new team member')}
-            </button>
+            {/* MVP: "Add team member" hidden — POST /api/partners/employees is a 503 stub (fast-follow). */}
           </div>
 
           {/* Employees Table */}

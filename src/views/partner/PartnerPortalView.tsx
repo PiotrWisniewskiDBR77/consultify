@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * PartnerPortalView - Main Partner Portal with Two-Column Layout
  *
@@ -776,7 +775,13 @@ const MetricsSection: React.FC = () => {
       ]
     : [];
 
-  const performanceBreakdown = metricsData?.performance?.breakdown || {};
+  const performanceBreakdown: MetricsData['performance']['breakdown'] = metricsData?.performance
+    ?.breakdown || {
+    clientAcquisition: 0,
+    projectDelivery: 0,
+    customerSatisfaction: 0,
+    certificationProgress: 0,
+  };
 
   return (
     <div className="space-y-6">
@@ -945,93 +950,6 @@ const MetricsSection: React.FC = () => {
 };
 
 // ============================================================================
-// PERFORMANCE SECTION
-// ============================================================================
-
-const PerformanceSection: React.FC = () => {
-  const { t } = useTranslation();
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {t('partner.performance.title', 'Performance Analytics')}
-        </h2>
-        <p className="text-slate-400">
-          {t('partner.performance.subtitle', 'Detailed performance analysis and reports')}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Performance Score */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Partner Performance Score
-          </h3>
-          <div className="flex items-center justify-center">
-            <div className="relative w-40 h-40">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="70"
-                  className="fill-none stroke-slate-200 dark:stroke-navy-700"
-                  strokeWidth="12"
-                />
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="70"
-                  className="fill-none stroke-primary-500"
-                  strokeWidth="12"
-                  strokeDasharray={`${85 * 4.4} 440`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-slate-900 dark:text-white">85</span>
-                <span className="text-sm text-slate-400">/ 100</span>
-              </div>
-            </div>
-          </div>
-          <p className="text-center text-sm text-slate-400 mt-4">
-            Excellent performance! Top 15% of partners.
-          </p>
-        </div>
-
-        {/* Performance Breakdown */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Score Breakdown
-          </h3>
-          <div className="space-y-4">
-            {[
-              { label: 'Client Acquisition', score: 90, color: 'bg-primary-500' },
-              { label: 'Project Delivery', score: 88, color: 'bg-emerald-500' },
-              { label: 'Customer Satisfaction', score: 92, color: 'bg-blue-500' },
-              { label: 'Certification Progress', score: 70, color: 'bg-amber-500' },
-            ].map((item, index) => (
-              <div key={index}>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-slate-400">{item.label}</span>
-                  <span className="font-medium text-slate-900 dark:text-white">{item.score}%</span>
-                </div>
-                <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
-                  <div
-                    className={cn('h-full rounded-full', item.color)}
-                    style={{ width: `${item.score}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
 // CLIENTS SECTION - Connected to API
 // ============================================================================
 
@@ -1084,8 +1002,9 @@ function normalizeClientOrganization(
 }
 
 function normalizeClientProject(
-  project: Partial<V8PartnerProject> | Record<string, any>
+  projectInput: Partial<V8PartnerProject> | Record<string, any>
 ): ClientProject {
+  const project = projectInput as Record<string, any>;
   return {
     id: String(project.id || 'project'),
     name: String(project.name || 'Project'),
@@ -1478,6 +1397,7 @@ const CertificationSection: React.FC<{
   subsection: 'learning-path' | 'exams' | 'certificates';
 }> = ({ subsection }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -2165,6 +2085,7 @@ const ResourcesSection: React.FC<{
   subsection: 'documentation' | 'marketing' | 'case-studies' | 'templates';
 }> = ({ subsection }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [resources, setResources] = useState<ResourcesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -2253,9 +2174,10 @@ const ResourcesSection: React.FC<{
     );
   }
 
-  // Map subsection to data key
-  const dataKey = subsection === 'case-studies' ? 'caseStudies' : subsection;
-  const items = resources?.[dataKey as keyof ResourcesData] || [];
+  // Map subsection to data key (always one of the Resource[] collections)
+  const dataKey: 'documentation' | 'marketing' | 'caseStudies' | 'templates' =
+    subsection === 'case-studies' ? 'caseStudies' : subsection;
+  const items: Resource[] = resources?.[dataKey] || [];
   const docsBridge = subsection === 'documentation' ? resources?.docsBridge || [] : [];
   const academyHighlights =
     subsection === 'documentation' ? resources?.academyHighlights || [] : [];
@@ -2378,304 +2300,6 @@ const ResourcesSection: React.FC<{
           ))}
         </div>
       )}
-    </div>
-  );
-};
-
-// ============================================================================
-// BILLING SECTION
-// ============================================================================
-
-const BillingSection: React.FC<{
-  subsection: 'licenses' | 'invoices' | 'discounts' | 'commissions';
-}> = ({ subsection }) => {
-  const { t } = useTranslation();
-
-  if (subsection === 'licenses') {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {t('partner.billing.licenses', 'License Management')}
-          </h2>
-          <p className="text-slate-400">
-            {t('partner.billing.licensesDesc', 'Manage licenses for your clients')}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="text-sm text-slate-400 mb-2">Total Licenses</div>
-            <div className="text-3xl font-bold text-slate-900 dark:text-white">150</div>
-            <div className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
-              +20 this month
-            </div>
-          </div>
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="text-sm text-slate-400 mb-2">Active</div>
-            <div className="text-3xl font-bold text-slate-900 dark:text-white">142</div>
-            <div className="text-sm text-slate-400 mt-1">95% utilization</div>
-          </div>
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="text-sm text-slate-400 mb-2">Available</div>
-            <div className="text-3xl font-bold text-slate-900 dark:text-white">8</div>
-            <button className="text-sm text-primary-600 dark:text-primary-400 mt-1 hover:underline">
-              Order more →
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (subsection === 'invoices') {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {t('partner.billing.invoices', 'Invoices')}
-          </h2>
-          <p className="text-slate-400">
-            {t('partner.billing.invoicesDesc', 'View and download your invoices')}
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-100 dark:bg-navy-700/50">
-              <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Invoice
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Date
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Amount
-                </th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
-              {[
-                { id: 'INV-2026-003', date: 'Jan 1, 2026', amount: '€8,500', status: 'pending' },
-                { id: 'INV-2025-012', date: 'Dec 1, 2025', amount: '€7,200', status: 'paid' },
-                { id: 'INV-2025-011', date: 'Nov 1, 2025', amount: '€6,800', status: 'paid' },
-              ].map((invoice, index) => (
-                <tr key={index} className="hover:bg-slate-100/50 dark:hover:bg-navy-700/30">
-                  <td className="px-4 py-4 font-medium text-slate-900 dark:text-white">
-                    {invoice.id}
-                  </td>
-                  <td className="px-4 py-4 text-slate-400">{invoice.date}</td>
-                  <td className="px-4 py-4 text-right font-medium text-slate-900 dark:text-white">
-                    {invoice.amount}
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <span
-                      className={cn(
-                        'px-2 py-1 text-xs font-medium rounded-full',
-                        invoice.status === 'paid' &&
-                          'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
-                        invoice.status === 'pending' && 'bg-amber-900/30 text-amber-600'
-                      )}
-                    >
-                      {invoice.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <button className="text-primary-600 dark:text-primary-400 hover:underline text-sm">
-                      Download
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  }
-
-  if (subsection === 'commissions') {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {t('partner.billing.commissions', 'Commission Earnings')}
-          </h2>
-          <p className="text-slate-400">
-            {t('partner.billing.commissionsDesc', 'Track your commission earnings')}
-          </p>
-        </div>
-
-        {/* Commission Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <span className="text-sm text-slate-400">Total Earned (YTD)</span>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">€18,450</p>
-            <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">+32% vs last year</p>
-          </div>
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
-                <TrendingUp className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              </div>
-              <span className="text-sm text-slate-400">This Month</span>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">€2,340</p>
-            <p className="text-sm text-slate-400 mt-1">From 8 referrals</p>
-          </div>
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <span className="text-sm text-slate-400">Pending</span>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">€1,200</p>
-            <p className="text-sm text-slate-400 mt-1">Next payout: Jan 15</p>
-          </div>
-        </div>
-
-        {/* Commission Table */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-100 dark:bg-navy-700/50">
-              <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Client
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Type
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Amount
-                </th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase">
-                  Date
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
-              {[
-                {
-                  client: 'Nordic Manufacturing AB',
-                  type: 'Referral',
-                  amount: '€850',
-                  status: 'paid',
-                  date: 'Jan 5, 2026',
-                },
-                {
-                  client: 'Baltic Energy Group',
-                  type: 'Renewal',
-                  amount: '€1,200',
-                  status: 'pending',
-                  date: 'Jan 8, 2026',
-                },
-                {
-                  client: 'TechVentures Sp. z o.o.',
-                  type: 'New License',
-                  amount: '€290',
-                  status: 'pending',
-                  date: 'Jan 7, 2026',
-                },
-              ].map((commission, index) => (
-                <tr key={index} className="hover:bg-slate-100/50 dark:hover:bg-navy-700/30">
-                  <td className="px-4 py-4 font-medium text-slate-900 dark:text-white">
-                    {commission.client}
-                  </td>
-                  <td className="px-4 py-4 text-sm text-slate-400">{commission.type}</td>
-                  <td className="px-4 py-4 text-right font-medium text-slate-900 dark:text-white">
-                    {commission.amount}
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <span
-                      className={cn(
-                        'px-2 py-1 text-xs font-medium rounded-full',
-                        commission.status === 'paid' &&
-                          'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
-                        commission.status === 'pending' && 'bg-amber-900/30 text-amber-600'
-                      )}
-                    >
-                      {commission.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-slate-400">{commission.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  }
-
-  // Discounts
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {t('partner.billing.discounts', 'Partner Discounts')}
-        </h2>
-        <p className="text-slate-400">
-          {t('partner.billing.discountsDesc', 'Your current discount tier and benefits')}
-        </p>
-      </div>
-
-      <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-4">
-          <Award className="w-8 h-8" />
-          <div>
-            <h3 className="text-xl font-bold">Certified Partner</h3>
-            <p className="text-primary-200">12% discount on all licenses</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-4 mt-6">
-          <div className="bg-white/10 rounded-lg p-3">
-            <div className="text-2xl font-bold">12%</div>
-            <div className="text-sm text-primary-200">License Discount</div>
-          </div>
-          <div className="bg-white/10 rounded-lg p-3">
-            <div className="text-2xl font-bold">Priority</div>
-            <div className="text-sm text-primary-200">Support Level</div>
-          </div>
-          <div className="bg-white/10 rounded-lg p-3">
-            <div className="text-2xl font-bold">Co-marketing</div>
-            <div className="text-sm text-primary-200">Included</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-        <h4 className="font-medium text-slate-900 dark:text-white mb-4">
-          Next Tier: Premier Partner
-        </h4>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <span className="text-slate-400">10+ active projects (8/10)</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <span className="text-slate-400">Published case study (1/1)</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
-            <span className="text-slate-400">All certifications complete (2/4)</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
@@ -3311,7 +2935,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
         toast(
           t(
             'partner.connect.requiredToNavigate',
-            'Najpierw podłącz profil partnera, aby przejść do innych sekcji.'
+            'Connect your partner profile first to access other sections.'
           )
         );
 
@@ -3527,25 +3151,25 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
         <div className="space-y-6">
           <div className="rounded-xl border border-primary-200 bg-primary-50 p-6 dark:border-primary-700/50 dark:bg-primary-900/20">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-              {t('partner.connect.title', 'Podłącz profil partnera')}
+              {t('partner.connect.title', 'Connect your partner profile')}
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               {t(
                 'partner.connect.desc',
-                'Aby korzystać z katalogu i ustawień profilu, podłącz swój profil partnerski do konta.'
+                'Connect your partner profile to your account to access the directory and profile settings.'
               )}
             </p>
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               <label className="block">
                 <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {t('partner.connect.companyName', 'Nazwa firmy')}
+                  {t('partner.connect.companyName', 'Company name')}
                 </span>
                 <input
                   type="text"
                   value={connectName}
                   onChange={(e) => setConnectName(e.target.value)}
-                  placeholder={t('partner.connect.companyNamePlaceholder', 'np. DBR77 Consulting')}
+                  placeholder={t('partner.connect.companyNamePlaceholder', 'e.g. DBR77 Consulting')}
                   className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                 />
               </label>
@@ -3558,8 +3182,8 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
                   className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
                 >
                   {connecting
-                    ? t('partner.connect.connecting', 'Łączenie…')
-                    : t('partner.connect.cta', 'Utwórz i podłącz profil')}
+                    ? t('partner.connect.connecting', 'Connecting…')
+                    : t('partner.connect.cta', 'Create and connect profile')}
                 </button>
               </div>
             </div>

@@ -270,10 +270,6 @@ const PartnerPortalViewNew = React.lazy(() =>
   import('@/views/partner/PartnerPortalView').then((m) => ({ default: m.PartnerPortalViewNew }))
 );
 
-// Partner Portal - Legacy (to be removed)
-const PartnerPortalView = React.lazy(() =>
-  import('@/views/PartnerPortalView').then((m) => ({ default: m.PartnerPortalView }))
-);
 const PartnerPricingView = React.lazy(() =>
   import('@/views/partner/PartnerPricingView').then((m) => ({ default: m.PartnerPricingView }))
 );
