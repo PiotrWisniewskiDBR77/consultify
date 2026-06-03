@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Assessment Hub Dashboard
  * Unified view of all assessment types (DRD, RapidLean, External Digital, Generic Reports)
@@ -75,7 +74,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
     return (
       <SplitLayout
         title={t('licensedTools.hubTitle', 'Licensed Tools Hub')}
-        currentView={AppView.ASSESSMENT}
+        currentView={AppView.ASSESSMENT_OVERVIEW}
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500 dark:text-gray-400">Loading assessment overview...</div>
@@ -87,7 +86,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
   // Show RapidLean Workspace if requested
   if (showRapidLeanWorkspace) {
     return (
-      <SplitLayout title="RapidLean Assessment" currentView={AppView.ASSESSMENT}>
+      <SplitLayout title="RapidLean Assessment" currentView={AppView.ASSESSMENT_OVERVIEW}>
         <div className="h-full">
           <div className="mb-4">
             <button
@@ -108,7 +107,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
     return (
       <SplitLayout
         title={t('licensedTools.hubTitle', 'Licensed Tools Hub')}
-        currentView={AppView.ASSESSMENT}
+        currentView={AppView.ASSESSMENT_OVERVIEW}
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500 dark:text-gray-400">No assessment data available</div>
@@ -123,7 +122,7 @@ export const AssessmentHubDashboard: React.FC<AssessmentHubProps> = ({
   return (
     <SplitLayout
       title={t('licensedTools.hubTitle', 'Licensed Tools Hub')}
-      currentView={AppView.ASSESSMENT}
+      currentView={AppView.ASSESSMENT_OVERVIEW}
     >
       <div className="p-6 max-w-7xl mx-auto overflow-y-auto h-full">
         {/* Header */}

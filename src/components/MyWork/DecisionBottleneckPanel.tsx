@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionBottleneckPanel - Alert panel for decision bottlenecks
  * Shows aging decisions, blocking decisions, and overloaded owners

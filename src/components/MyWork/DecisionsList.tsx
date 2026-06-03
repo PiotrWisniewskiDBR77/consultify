@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionsList - Minimalist decision management
  * Clean, clickable cards that open detail modal for actions

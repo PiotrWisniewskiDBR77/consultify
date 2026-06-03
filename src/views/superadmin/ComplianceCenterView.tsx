@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ComplianceCenterView - Super Admin Compliance Management
  *
@@ -886,9 +885,7 @@ export const ComplianceCenterView: React.FC = () => {
     const framework = selectedFramework ? frameworks.find((f) => f.id === selectedFramework) : null;
 
     if (framework) {
-      const requirements = Array.isArray((framework as any)?.requirements)
-        ? (framework as any).requirements
-        : [];
+      const requirements = Array.isArray(framework.requirements) ? framework.requirements : [];
       return (
         <div className="space-y-6">
           <div className="flex items-center gap-4">

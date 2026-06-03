@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SessionManagementPanel - Active Session Management
  *

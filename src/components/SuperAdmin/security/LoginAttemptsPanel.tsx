@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * LoginAttemptsPanel - Login Attempts History & Analysis
  *

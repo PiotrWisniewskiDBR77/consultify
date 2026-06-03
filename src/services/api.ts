@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @deprecated This monolithic API client (16k+ lines) is being migrated to typed
  * modules under ./api/ (e.g. api/tasks.api.ts, api/v8/client.ts).
@@ -6532,7 +6531,9 @@ export const Api = {
 
     try {
       const data = await V8AssessmentApi.getAssessment(assessmentId);
-      const assessment = data.assessment || {};
+      // The wire payload may carry either snake_case or camelCase variants depending on
+      // backend version, so read defensively through a loosely-typed view.
+      const assessment: Record<string, any> = data.assessment || {};
       return {
         ...assessment,
         type: assessment.assessment_type || assessment.assessmentType,
@@ -6638,9 +6639,9 @@ export const Api = {
         }
       }
 
-      if (!shouldFallbackToLegacy(lastV8Error)) {
-        throw lastV8Error;
-      }
+      // V8 failed with a fallback-eligible error: rethrow so the catch below runs
+      // the legacy fetch path (the only place the fallback request is issued).
+      throw lastV8Error;
     } catch (error) {
       if (!shouldFallbackToLegacy(error)) {
         throw error;
@@ -16090,7 +16091,7 @@ export const Api = {
         `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments`,
         {
           method: 'POST',
-          headers: getHeaders(true),
+          headers: getHeaders(),
           body: formData,
         }
       );

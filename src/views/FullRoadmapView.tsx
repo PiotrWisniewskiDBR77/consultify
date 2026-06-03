@@ -1,4 +1,3 @@
-// @ts-nocheck
 // DEAD — /roadmap is redirected to /portfolio (see src/routes/AppRoutes.tsx).
 // Do NOT import this view; it is no longer mounted on any route. Scheduled for
 // deletion in the Wave-2 cleanup once the redirect has proven stable.

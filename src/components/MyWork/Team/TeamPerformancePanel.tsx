@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * TeamPerformancePanel - Comprehensive team analytics dashboard
  * BCG/McKinsey style: Data-dense, multiple views, actionable insights

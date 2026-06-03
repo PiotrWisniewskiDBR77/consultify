@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Tax Settings Panel
  * Extended tax configuration with VAT validation, tax rates, and Stripe Tax integration

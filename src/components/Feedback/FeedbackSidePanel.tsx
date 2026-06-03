@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * FeedbackSidePanel - Enterprise SaaS Feedback System
  *

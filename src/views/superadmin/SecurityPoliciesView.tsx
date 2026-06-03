@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SecurityPoliciesView - Super Admin Security Policies Management
  *
@@ -137,8 +136,8 @@ export const SecurityPoliciesView: React.FC = () => {
         Api.get('/security-policies/all'),
       ]);
 
-      const policiesMap = new Map(
-        (policiesResult.policies || []).map((p: any) => [p.organization_id, p])
+      const policiesMap = new Map<string, any>(
+        (policiesResult.policies || []).map((p: any) => [p.organization_id, p] as [string, any])
       );
       setOrgPoliciesMap(policiesMap);
       const orgsWithPolicy = orgs.map((org: any) => ({

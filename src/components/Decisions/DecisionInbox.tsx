@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionInbox - Central inbox for all decisions across modules
  * Shows unified view of decisions from initiatives, tasks, assessments, tools, etc.

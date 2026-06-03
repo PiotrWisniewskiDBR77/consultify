@@ -57,6 +57,7 @@ export type {
   EmailTemplate,
   EmailTemplateStatus,
   EmergencyContact,
+  ExtendedContactInfo,
   ExtendedSocialLinks,
   FreeSession,
   FullInitiative,

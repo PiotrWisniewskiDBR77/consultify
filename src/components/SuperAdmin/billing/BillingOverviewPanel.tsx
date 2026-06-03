@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * BillingOverviewPanel - Billing Statistics & Overview
  *

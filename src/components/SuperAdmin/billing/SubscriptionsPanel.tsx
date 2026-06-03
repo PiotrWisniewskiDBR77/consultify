@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SubscriptionsPanel - Subscription Management
  *

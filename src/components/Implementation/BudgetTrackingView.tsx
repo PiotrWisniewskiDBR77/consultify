@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * BudgetTrackingView Component
  *

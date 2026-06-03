@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SSOConfigurationView - Super Admin SSO/SAML Configuration
  *

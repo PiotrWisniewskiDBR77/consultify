@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * WhitelabelStudioView - Super Admin White-label & Branding
  *
@@ -130,7 +129,10 @@ export const WhitelabelStudioView: React.FC = () => {
   const [uploadingLogo, setUploadingLogo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error' | 'warning';
+    text: string;
+  } | null>(null);
   const [brandingLoadError, setBrandingLoadError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {

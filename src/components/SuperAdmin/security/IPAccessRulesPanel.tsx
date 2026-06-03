@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * IPAccessRulesPanel - IP Allowlist/Blocklist Management
  *

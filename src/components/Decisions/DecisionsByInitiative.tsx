@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionsByInitiative - View decisions grouped by initiative/project
  * Shows a hierarchical view of decisions organized by their context

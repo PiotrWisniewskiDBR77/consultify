@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * BackupConfigPanel - Backup Configuration Management
  *

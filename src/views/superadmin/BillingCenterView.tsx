@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   Activity,
   ArrowUpRight,
@@ -262,7 +261,7 @@ const OverviewTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {overviewUnavailable ? (
-        <DegradedState title="Billing overview unavailable" description={warning} />
+        <DegradedState title="Billing overview unavailable" description={warning ?? undefined} />
       ) : (
         warning && <DegradedState title="Billing metrics degraded" description={warning} />
       )}
@@ -1256,6 +1255,14 @@ const TransactionsTab: React.FC = () => {
 
   const filteredTransactions =
     filter === 'all' ? transactions : transactions.filter((t) => t.type === filter);
+
+  const formatNumber = (num: unknown) => {
+    const value = safeNumber(num, Number.NaN);
+    if (!Number.isFinite(value)) return EMPTY_VALUE;
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+    return value.toString();
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {

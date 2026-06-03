@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * EscalationDashboard - Dashboard for escalation management
  * Shows aging decisions, blocking decisions, overloaded owners, and escalation metrics

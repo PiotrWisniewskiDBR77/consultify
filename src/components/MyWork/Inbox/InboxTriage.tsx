@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * InboxTriage - Inbox Zero methodology for task management
  * Part of My Work Module PMO Upgrade

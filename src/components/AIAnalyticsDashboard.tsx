@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * AI Analytics Dashboard
  * Step 18: Outcomes, ROI & Continuous Learning Loop

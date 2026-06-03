@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SecurityPoliciesPanel - Organization Security Policy Management
  *

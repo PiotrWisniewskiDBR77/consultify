@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * StatusTransitionDropdown
  *
@@ -28,15 +27,17 @@ import { Api } from '../../services/api';
 import { InitiativeStatus, StatusTransition } from '../../types';
 
 // Status colors and icons mapping
-const STATUS_CONFIG: Record<
-  InitiativeStatus,
-  {
-    color: string;
-    bgColor: string;
-    darkBgColor: string;
-    icon: React.ReactNode;
-    label: string;
-  }
+const STATUS_CONFIG: Partial<
+  Record<
+    InitiativeStatus,
+    {
+      color: string;
+      bgColor: string;
+      darkBgColor: string;
+      icon: React.ReactNode;
+      label: string;
+    }
+  >
 > = {
   [InitiativeStatus.DRAFT]: {
     color: 'text-slate-600 dark:text-slate-400',
@@ -136,7 +137,14 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
   const [reason, setReason] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const config = STATUS_CONFIG[currentStatus] || STATUS_CONFIG[InitiativeStatus.DRAFT];
+  const config = STATUS_CONFIG[currentStatus] ||
+    STATUS_CONFIG[InitiativeStatus.DRAFT] || {
+      color: 'text-slate-600 dark:text-slate-400',
+      bgColor: 'bg-slate-100',
+      darkBgColor: 'dark:bg-slate-800',
+      icon: <Clock size={14} />,
+      label: 'Draft',
+    };
 
   // Fetch allowed transitions
   useEffect(() => {

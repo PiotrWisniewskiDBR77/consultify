@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * EnterpriseAuditLog - Comprehensive Audit Log Management
  *
@@ -260,7 +259,7 @@ export const EnterpriseAuditLog: React.FC = () => {
       if (filters.startDate) queryFilters.startDate = filters.startDate;
       if (filters.endDate) queryFilters.endDate = filters.endDate;
 
-      const data = await Api.exportAuditLogs(queryFilters, format);
+      const data = await Api.exportAuditLogs({ ...queryFilters, format });
       if (data === null || data === undefined) {
         throw new Error('Audit log export response was empty');
       }

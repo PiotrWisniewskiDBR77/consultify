@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionCard - Reusable decision card component
  * Unified decision display for all modules
@@ -244,7 +243,9 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
   const { t } = useTranslation();
   const typeInfo = getTypeInfo(decision.decisionType);
 
-  const isOverdue = decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 7);
+  const isOverdue = Boolean(
+    decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 7)
+  );
   const daysOverdue = decision.daysOverdue || Math.max(0, (decision.daysWaiting || 0) - 7);
   const daysUntilDue =
     decision.daysUntilDue ??

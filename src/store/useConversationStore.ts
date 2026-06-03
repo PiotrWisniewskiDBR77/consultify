@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Conversation Store
  *
@@ -41,7 +40,7 @@ const FETCH_DEDUPE_WINDOW_MS = 1500;
 const FETCH_HARD_TIMEOUT_MS = 20000;
 let _inflightFetchConversations: Promise<void> | null = null;
 let _lastFetchConversationsAt = 0;
-const _inflightFetchConversationById: Record<string, Promise<void>> = {};
+const _inflightFetchConversationById: Record<string, Promise<void> | undefined> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
 const _conversationMessagesCache: Record<string, ConversationMessage[]> = {};
 const MISSING_CONVERSATIONS_STORAGE_KEY = 'consultify-missing-conversations';
@@ -317,6 +316,17 @@ export interface ConversationMessage {
       starterId?: string;
       cleanPrompt?: string;
     };
+    /** Attachment pointers carried on the message (§2.3.1) */
+    attachments?: Array<{
+      kind?: string;
+      filename?: string;
+      name?: string;
+      docId?: string;
+      sourceUrl?: string;
+      url?: string;
+      mimeType?: string;
+      size?: number;
+    }>;
     /**
      * Optional diagnostics for persisted AI/system messages.
      * Useful for debugging stream failures without polluting message content.
@@ -1508,9 +1518,9 @@ export const useConversationStore = create<ConversationState>()(
             .map(([projectId, messages]) => ({
               projectId: projectId === 'global' ? undefined : projectId,
               messages: (messages as ChatMessage[]).map((m) => ({
-                role: m.role,
+                role: String(m.role),
                 content: m.content,
-                timestamp: m.timestamp,
+                timestamp: m.timestamp ? new Date(m.timestamp) : undefined,
               })),
             }));
 
