@@ -1177,9 +1177,8 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors duration-150 active:scale-[0.97]"
+        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-150 active:scale-[0.97]"
       >
-        <Plus size={14} strokeWidth={2.5} />
         <span>{labels[currentKind] || labels.models}</span>
       </button>
     );
@@ -1513,9 +1512,12 @@ export const FinanceHub: React.FC = () => {
     );
   }, [allAnalyzeActions, showAnalyzeMenu, analyzeActionIcons, isPl, t]);
 
+  // commandRowRightContent — canonical right slot for Menu 3 actions.
+  // Rendered inside commandRowContent (justify-between) because ModuleNavBar does not
+  // currently render commandRowRightContent in the command-row path.
   const commandRowRightContent = useMemo(
     () => (
-      <>
+      <div className="flex shrink-0 items-center gap-2">
         {rightControls}
         <button
           type="button"
@@ -1541,7 +1543,7 @@ export const FinanceHub: React.FC = () => {
           <MessageCircle size={12} />
           <span>AI</span>
         </button>
-      </>
+      </div>
     ),
     [
       activeTab,
@@ -1627,82 +1629,90 @@ export const FinanceHub: React.FC = () => {
         dotClassName: 'bg-emerald-400',
       },
     ];
+    // Canonical Menu 3 layout: justify-between — presets left, actions right.
+    // commandRowRightContent is embedded here because ModuleNavBar's command-row
+    // path currently does not render the commandRowRightContent prop.
     return (
-      <div className={MENU_3_LEFT_CLASS}>
-        {chips.map((chip) => (
-          <button
-            key={chip.id}
-            onClick={() => {
-              if (chip.id === 'all') {
-                setActiveFilters((prev) => prev.filter((f) => f.column !== 'status'));
-                return;
-              }
-              const statusValue = chip.id;
-              if (chip.active) {
-                setActiveFilters((prev) =>
-                  prev.filter((f) => !(f.column === 'status' && f.value === statusValue))
-                );
-                return;
-              }
-              setActiveFilters((prev) => [
-                ...prev.filter((f) => f.column !== 'status'),
-                {
-                  id: `status-${statusValue}`,
-                  column: 'status',
-                  value: statusValue,
-                  label: chip.label,
-                },
-              ]);
-            }}
-            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-          >
-            <span
-              className={
-                chip.id === 'all'
-                  ? MENU_3_ALL_DOT_CLASS
-                  : `h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotColors[chip.id] || dotColors.all}`
-              }
+      <div className="flex items-center justify-between gap-2 w-full min-w-0">
+        {/* Left slot — preset filter chips */}
+        <div className={MENU_3_LEFT_CLASS}>
+          {chips.map((chip) => (
+            <button
+              key={chip.id}
+              onClick={() => {
+                if (chip.id === 'all') {
+                  setActiveFilters((prev) => prev.filter((f) => f.column !== 'status'));
+                  return;
+                }
+                const statusValue = chip.id;
+                if (chip.active) {
+                  setActiveFilters((prev) =>
+                    prev.filter((f) => !(f.column === 'status' && f.value === statusValue))
+                  );
+                  return;
+                }
+                setActiveFilters((prev) => [
+                  ...prev.filter((f) => f.column !== 'status'),
+                  {
+                    id: `status-${statusValue}`,
+                    column: 'status',
+                    value: statusValue,
+                    label: chip.label,
+                  },
+                ]);
+              }}
+              className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            >
+              <span
+                className={
+                  chip.id === 'all'
+                    ? MENU_3_ALL_DOT_CLASS
+                    : `h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotColors[chip.id] || dotColors.all}`
+                }
+              />
+              <span>{chip.label}</span>
+              <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                {chip.count}
+              </span>
+            </button>
+          ))}
+          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+          {runtimeChips.map((chip) => (
+            <div key={chip.label} className={MENU_3_CHIP_INACTIVE}>
+              <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
+              <span>{chip.label}</span>
+              <span className={MENU_3_BADGE_INACTIVE}>{chip.value}</span>
+            </div>
+          ))}
+          {isFinanceRuntimeV8 && v8Dashboard && (
+            <>
+              <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+              <div className={MENU_3_CHIP_INACTIVE}>
+                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-rose-400" />
+                <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
+                <span className={MENU_3_BADGE_INACTIVE}>
+                  {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
+                </span>
+              </div>
+              <div className={MENU_3_CHIP_INACTIVE}>
+                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-amber-400" />
+                <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
+                <span className={MENU_3_BADGE_INACTIVE}>
+                  {v8Dashboard.staleSourceRefreshesCount ?? 0}
+                </span>
+              </div>
+            </>
+          )}
+          {isFinanceRuntimeV8 && (
+            <FinanceLaneStrip
+              activeLaneRun={lane.activeLaneRun}
+              degradedAlerts={lane.degradedAlerts}
+              onOpenPanel={() => setLanePanelOpen(true)}
             />
-            <span>{chip.label}</span>
-            <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-              {chip.count}
-            </span>
-          </button>
-        ))}
-        <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-        {runtimeChips.map((chip) => (
-          <div key={chip.label} className={MENU_3_CHIP_INACTIVE}>
-            <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
-            <span>{chip.label}</span>
-            <span className={MENU_3_BADGE_INACTIVE}>{chip.value}</span>
-          </div>
-        ))}
-        {isFinanceRuntimeV8 && v8Dashboard && (
-          <>
-            <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-            <div className={MENU_3_CHIP_INACTIVE}>
-              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-rose-400" />
-              <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
-              <span className={MENU_3_BADGE_INACTIVE}>
-                {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
-              </span>
-            </div>
-            <div className={MENU_3_CHIP_INACTIVE}>
-              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-amber-400" />
-              <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
-              <span className={MENU_3_BADGE_INACTIVE}>
-                {v8Dashboard.staleSourceRefreshesCount ?? 0}
-              </span>
-            </div>
-          </>
-        )}
-        {isFinanceRuntimeV8 && (
-          <FinanceLaneStrip
-            activeLaneRun={lane.activeLaneRun}
-            degradedAlerts={lane.degradedAlerts}
-            onOpenPanel={() => setLanePanelOpen(true)}
-          />
-        )}
+          )}
+        </div>
+        {/* Right slot — contextual AI/action buttons (§3.4 MUST) */}
+        {commandRowRightContent}
       </div>
     );
   }, [
@@ -1715,6 +1725,7 @@ export const FinanceHub: React.FC = () => {
     lane.activeLaneRun,
     lane.degradedAlerts,
     isFinanceRuntimeV8,
+    commandRowRightContent,
   ]);
 
   const emptyMessage = useMemo(() => {
@@ -2138,7 +2149,6 @@ export const FinanceHub: React.FC = () => {
         availableViewModes={['table', 'grid']}
         primaryCta={primaryCta}
         commandRowContent={commandRowContent}
-        commandRowRightContent={commandRowRightContent}
       >
         {isFinanceRuntimeV8 && (
           <FinanceDegradedBanner

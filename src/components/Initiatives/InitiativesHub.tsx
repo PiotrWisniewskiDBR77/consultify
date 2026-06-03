@@ -1604,6 +1604,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
+  // Menu 3: show only statuses with count > 0, plus always include the currently active status
+  // filter so it doesn't disappear when data re-fetches. Standard §3.1: statuses with 0 are
+  // hidden to avoid crowding the right-side AI action slot.
+  const visibleStatusChips = useMemo(
+    () => ALLOWED_STATUSES.filter((s) => (statusCounts[s] ?? 0) > 0 || s === activeStatusFilter),
+    [statusCounts, activeStatusFilter]
+  );
+
   const commandRowContent = (
     <div className="flex items-center justify-between gap-2">
       <div className={MENU_3_LEFT_CLASS}>
@@ -1618,7 +1626,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             {statusCounts.all ?? 0}
           </span>
         </button>
-        {ALLOWED_STATUSES.map((s) => {
+        {visibleStatusChips.map((s) => {
           const meta = STATUS_METADATA[s];
           const isActive = activeStatusFilter === s;
           const count = statusCounts[s] ?? 0;
@@ -1708,8 +1716,28 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           </>
         )}
       </div>
-      {!isPilotParticipant && (
-        <div className={MENU_3_RIGHT_CLASS}>
+      <div className={MENU_3_RIGHT_CLASS}>
+        {/* AI: Analizuj zaznaczenie — disabled when nothing selected (standard §3.1b) */}
+        {viewMode === 'table' && !activeDocumentId && activeTab !== 'analysis' && (
+          <button
+            type="button"
+            disabled={selectedIds.size === 0}
+            onClick={() => setShowBulkModal(true)}
+            className={MENU_3_ACTION_NEUTRAL}
+            title={
+              selectedIds.size === 0
+                ? t('portfolio.ai.selectFirst', 'Zaznacz inicjatywy, aby analizować')
+                : t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')
+            }
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+            {selectedIds.size > 0 && (
+              <span className={MENU_3_BADGE_INACTIVE}>{selectedIds.size}</span>
+            )}
+          </button>
+        )}
+        {!isPilotParticipant && (
           <button
             type="button"
             onClick={() => setShowInitiativeWizard(true)}
@@ -1718,8 +1746,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <Sparkles className="h-3.5 w-3.5" />
             AI Initiative Wizard
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 
@@ -1741,8 +1769,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={isPilotParticipant ? undefined : () => setShowNewModal(true)}
-        newItemLabel={isPilotParticipant ? undefined : t('initiatives.form.newInitiative')}
+        primaryCta={
+          isPilotParticipant ? undefined : (
+            <button
+              type="button"
+              onClick={() => setShowNewModal(true)}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors duration-150"
+            >
+              <span>{t('initiatives.form.newInitiative')}</span>
+            </button>
+          )
+        }
         filterActions={filterActions}
         rightControls={rightControls}
         commandRowContent={activeTab === 'analysis' ? analysisCommandRow : commandRowContent}

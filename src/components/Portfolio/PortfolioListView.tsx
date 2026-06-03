@@ -12,7 +12,7 @@
  * - monochromatic chrome, color only for semantic data
  */
 
-import { ChevronDown, ChevronUp, Eye, Maximize2, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Eye, Maximize2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -226,22 +226,6 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 
   return (
     <div className={canvasClassName}>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          {t('portfolio.ai.selectionCount', '{{count}} selected', {
-            count: selectedInitiatives.length,
-          })}
-        </div>
-        <button
-          onClick={() => setAiOpen(true)}
-          disabled={selectedInitiatives.length === 0}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium transition-colors bg-hig-primary text-white hover:bg-hig-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Sparkles size={16} />
-          {t('portfolio.ai.analyzeSelection', 'AI: Analyze selection')}
-        </button>
-      </div>
-
       <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-x-auto">
         <table className="w-full table-fixed" style={{ minWidth: 1080 }}>
           <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
