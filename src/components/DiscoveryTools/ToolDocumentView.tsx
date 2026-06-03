@@ -5,7 +5,6 @@ import {
   ExternalLink,
   History,
   Lightbulb,
-  Loader2,
   MessageSquare,
   Send,
   Sparkles,
@@ -30,6 +29,8 @@ import {
 } from '@/store/useToolStore';
 import { AppView } from '@/types';
 import { exportToPDF } from '@/utils/pdfExport';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { EmbeddedView } from '../shared/NModeBlocks';
@@ -1936,10 +1937,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-          <p className="text-sm text-slate-500">{isPolish ? 'Ładowanie...' : 'Loading...'}</p>
-        </div>
+        <LoadingState variant="spinner" label={isPolish ? 'Ładowanie...' : 'Loading...'} />
       </div>
     );
   }

@@ -24,6 +24,9 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { EmptyState } from '../ui/composed/EmptyState';
+import { LoadingState } from '../ui/primitives';
+
 import { Api } from '../../services/api';
 
 interface Evidence {
@@ -208,24 +211,17 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="animate-spin text-slate-600 dark:text-slate-500" size={24} />
-          </div>
+          <LoadingState variant="spinner" className="py-12" />
         ) : (
           <div className="space-y-4">
             {/* Evidence list */}
             {evidence.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto bg-slate-100 dark:bg-navy-800 rounded-xl flex items-center justify-center mb-4">
-                  <Paperclip className="text-slate-600 dark:text-slate-500" size={28} />
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  No evidence attached
-                </p>
-                <p className="text-xs text-slate-600 dark:text-slate-500">
-                  Add evidence to support the assessment
-                </p>
-              </div>
+              <EmptyState
+                icon={<Paperclip />}
+                title="No evidence attached"
+                description="Add evidence to support the assessment"
+                compact
+              />
             ) : (
               evidence.map((item) => {
                 const Icon = getEvidenceIcon(item.evidence_type);

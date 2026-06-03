@@ -196,9 +196,14 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       contextData: {
         intent: 'generate_output',
         goal: t('rap.onboarding.body', 'Generate a report or deck with Teresa'),
+        // A11/D3: pre-fill the composer with a real opener so the empty-state
+        // CTA is not just "open chat" but "open chat ready to generate."
+        teresaPrompt: isPolish
+          ? 'Pomóż mi wygenerować pierwszy raport/prezentację dla tej organizacji. Zaproponuj typ outputu (raport zarządu, decyzyjny, analiza ROI, prezentacja inicjatyw), dobierz format (PDF/PPTX/XLSX) i strukturę sekcji opartą na danych organizacji.'
+          : 'Help me generate the first report/presentation for this organization. Propose the output type (board report, decision memo, ROI analysis, initiatives deck), pick the format (PDF/PPTX/XLSX), and outline sections grounded in the organization context.',
       },
     });
-  }, [openChatWithContext, t]);
+  }, [isPolish, openChatWithContext, t]);
 
   const resetLineage = useCallback(() => {
     setLineageLoading(false);

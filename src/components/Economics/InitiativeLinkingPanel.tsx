@@ -22,6 +22,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '../ui/primitives';
+
 import { Api } from '../../services/api';
 
 interface Initiative {
@@ -315,9 +317,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         {/* List */}
         <div className="max-h-80 overflow-y-auto space-y-2">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 size={24} className="animate-spin text-blue-500" />
-            </div>
+            <LoadingState variant="spinner" className="py-8" />
           ) : filteredInitiatives.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <AlertCircle size={24} className="mx-auto mb-2 opacity-50" />

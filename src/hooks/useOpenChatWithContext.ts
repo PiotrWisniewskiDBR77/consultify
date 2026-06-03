@@ -126,6 +126,30 @@ export function useOpenChatWithContext() {
         entityData: contextData || {},
       } as any);
 
+      // Module-level Teresa prompts (e.g. FinanceHub.buildFinanceTeresaPrompt) live in
+      // contextData.teresaPrompt. Stash them so the chat composer can pick them up as a
+      // pre-filled opener instead of dropping them on the floor.
+      try {
+        const teresaPrompt = (contextData as any)?.teresaPrompt;
+        if (teresaPrompt && typeof teresaPrompt === 'string' && typeof window !== 'undefined') {
+          window.sessionStorage.setItem(
+            'consultify.teresa.pendingPrompt',
+            JSON.stringify({
+              prompt: teresaPrompt,
+              entityType,
+              entityId,
+              entityName: entityName || null,
+              conversationId: conv.id,
+              ts: Date.now(),
+            })
+          );
+          // Notify any mounted composer to consume the pending prompt
+          window.dispatchEvent(new CustomEvent('consultify:teresa-pending-prompt'));
+        }
+      } catch {
+        // Non-critical
+      }
+
       return conv.id;
     },
     [

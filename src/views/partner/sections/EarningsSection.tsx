@@ -462,6 +462,53 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     );
   };
 
+  // Export commission statements to CSV (client-side, no server dependency).
+  const handleExportCsv = () => {
+    if (!transactions.length) {
+      toast.error(t('partner.earnings.noDataToExport', 'No transactions to export'));
+      return;
+    }
+    const escapeCsv = (val: unknown): string => {
+      const s = String(val ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const headers = [
+      'Customer',
+      'Type',
+      'Gross Amount',
+      'Currency',
+      'Commission Rate (%)',
+      'Commission Amount',
+      'Status',
+      'Date',
+    ];
+    const rows = transactions.map((tx) => [
+      tx.organizationName || tx.organizationId,
+      tx.transactionType,
+      tx.grossAmount ?? 0,
+      tx.currency || 'EUR',
+      tx.commissionRate ?? 0,
+      tx.commissionAmount ?? 0,
+      tx.status,
+      tx.transactionDate || tx.createdAt,
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map(escapeCsv).join(',')).join('\n');
+    // Prepend UTF-8 BOM so Excel reads accented characters correctly.
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const stamp = new Date().toISOString().slice(0, 10);
+    link.download = `consultify-commissions-${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(
+      t('partner.earnings.exported', 'Exported {{n}} transactions', { n: transactions.length })
+    );
+  };
+
   // Request payout via API
   const handleRequestPayout = async () => {
     if (!summary || summary.readyForPayout < 100) {
@@ -742,7 +789,11 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('partner.earnings.recentTransactions', 'Recent Commission Statements')}
               </h3>
-              <button className="flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300">
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                className="flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300"
+              >
                 <Download className="w-4 h-4" />
                 {t('common.exportCSV', 'Export CSV')}
               </button>

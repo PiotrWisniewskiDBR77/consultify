@@ -40,6 +40,8 @@ import {
   YAxis,
 } from 'recharts';
 
+import { LoadingState } from '../ui/primitives';
+
 import { Api } from '../../services/api';
 
 interface BenefitTrackingEntry {
@@ -227,11 +229,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 size={32} className="animate-spin text-emerald-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-20" />;
   }
 
   return (

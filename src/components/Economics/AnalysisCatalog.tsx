@@ -31,6 +31,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { LoadingState } from '../ui/primitives';
 import { AnalysisCatalogStats, AnalysisStatus, DigitizationAnalysis } from './types';
 
 const formatCurrencyValue = (value?: number | null) => {
@@ -379,9 +380,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full" />
-        </div>
+        <LoadingState variant="spinner" className="h-64" />
       ) : filteredAnalyses.length === 0 ? (
         <EmptyState onCreateNew={onCreateNew} onImport={onImport} />
       ) : viewMode === 'grid' ? (

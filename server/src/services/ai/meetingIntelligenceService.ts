@@ -46,9 +46,43 @@ export interface MeetingContext {
 
 class MeetingIntelligenceService {
   private llmClient: any = null;
+  private llmClientResolved = false;
 
   setLLMClient(client: any): void {
     this.llmClient = client;
+    this.llmClientResolved = true;
+  }
+
+  /**
+   * Lazy-resolve the LLM client when none has been explicitly injected.
+   * Tries OpenAI first (OPENAI_API_KEY) — required for the `chat.completions.create`
+   * shape used by `generateWithLLM`. Returns null if no provider is available;
+   * caller falls back to the heuristic path.
+   */
+  private async resolveLLMClient(): Promise<any | null> {
+    if (this.llmClientResolved && this.llmClient) return this.llmClient;
+    if (this.llmClientResolved && !this.llmClient) return null; // explicit-null injected
+    this.llmClientResolved = true;
+    try {
+      const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || '';
+      if (!apiKey) {
+        logger.debug('[MeetingIntel] No OPENAI_API_KEY — staying on heuristic fallback');
+        return null;
+      }
+      const openaiMod: any = await import('openai').catch(() => null);
+      if (!openaiMod) {
+        logger.warn('[MeetingIntel] openai package not available — heuristic fallback');
+        return null;
+      }
+      const OpenAI = openaiMod.default || openaiMod.OpenAI || openaiMod;
+      this.llmClient = new OpenAI({ apiKey });
+      logger.info('[MeetingIntel] LLM client lazy-initialized (OpenAI)');
+      return this.llmClient;
+    } catch (err: any) {
+      logger.warn(`[MeetingIntel] LLM client lazy-init failed: ${err?.message}`);
+      this.llmClient = null;
+      return null;
+    }
   }
 
   async generateMeetingNotes(input: {
@@ -58,7 +92,8 @@ class MeetingIntelligenceService {
   }): Promise<MeetingNote> {
     const { transcript, context, language = 'en' } = input;
 
-    if (this.llmClient && transcript.length > 100) {
+    const client = await this.resolveLLMClient();
+    if (client && transcript.length > 100) {
       return this.generateWithLLM(transcript, context, language);
     }
 

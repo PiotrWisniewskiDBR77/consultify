@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { MarkdownRenderer } from '@/components/AIChat/Artifacts/renderers/MarkdownRenderer';
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { hasStrategyToolDoc, loadStrategyToolDocMarkdown } from '@/toolCatalog/strategy/catalog';
 
@@ -105,10 +106,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
-          <Loader2 className="w-8 h-8 animate-spin" />
-          <span>Loading tool session...</span>
-        </div>
+        <LoadingState variant="spinner" label="Loading tool session..." />
       </div>
     );
   }

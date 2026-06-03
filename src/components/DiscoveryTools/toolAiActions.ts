@@ -45,11 +45,31 @@ const SUMMARY_STEP_IDS = new Set([
   'initiatives',
 ]);
 
+/**
+ * Tools that actually have an apply-handler wired in `useToolAI.ts`.
+ * For everything else we return an empty action list to avoid surfacing
+ * buttons whose streamed AI output is silently dropped (Teresa-as-illusion).
+ *
+ * To add a tool here, also extend the early-return guard in
+ * `src/hooks/discovery/useToolAI.ts` and ship the corresponding
+ * `applyXxxPendingAction` function in `src/utils/toolApply/`.
+ */
+const TOOLS_WITH_APPLY_HANDLER: ReadonlySet<ToolType> = new Set<ToolType>([
+  'dynamic-swot',
+  'market-forces',
+  'growth-paths',
+  'portfolio-priority',
+  'risk-uncertainty',
+]);
+
 export function getToolPhaseAiActions(
   toolType: ToolType,
   stepDefinition?: StepDefinition
 ): ToolPhaseAiActionDefinition[] {
   if (!stepDefinition) return [];
+  // Suppress AI action chips for tools without a working apply-handler.
+  // Better to show nothing than to surface a button that silently no-ops.
+  if (!TOOLS_WITH_APPLY_HANDLER.has(toolType)) return [];
 
   const buildCopy: Partial<
     Record<ToolType, { label: string; labelPl: string; title: string; titlePl: string }>

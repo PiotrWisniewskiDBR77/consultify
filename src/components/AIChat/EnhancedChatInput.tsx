@@ -192,6 +192,38 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const { activeConversationId, conversations, activeMessages } = useConversationStore();
   const [showMoveToProject, setShowMoveToProject] = useState(false);
 
+  // Consume Teresa pending prompt from sessionStorage (set by useOpenChatWithContext
+  // when a module like Finance/Initiatives opens chat with a module-specific opener).
+  useEffect(() => {
+    const consumePending = () => {
+      try {
+        if (typeof window === 'undefined') return;
+        const raw = window.sessionStorage.getItem('consultify.teresa.pendingPrompt');
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as { prompt?: string; ts?: number };
+        // Stale guard: ignore prompts older than 60s
+        if (!parsed?.prompt || (parsed.ts && Date.now() - parsed.ts > 60_000)) {
+          window.sessionStorage.removeItem('consultify.teresa.pendingPrompt');
+          return;
+        }
+        // Only prefill if input is empty (don't overwrite user-typed text)
+        if (!value || value.trim().length === 0) {
+          setValue(parsed.prompt);
+        }
+        window.sessionStorage.removeItem('consultify.teresa.pendingPrompt');
+      } catch {
+        // Non-critical
+      }
+    };
+    consumePending();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('consultify:teresa-pending-prompt', consumePending);
+      return () => window.removeEventListener('consultify:teresa-pending-prompt', consumePending);
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ========================================================================
   // Composer command system (slash `/` + `@`-mention palettes)
   // ========================================================================

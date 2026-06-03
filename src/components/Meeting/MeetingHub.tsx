@@ -34,6 +34,7 @@ import {
 } from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';
@@ -269,17 +270,14 @@ export const MeetingHub: React.FC = () => {
           },
         ],
         render: (row: MeetingItem) => (
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+          <StatusChip
+            tone={row.status === 'completed' ? 'success' : 'info'}
+            label={
               row.status === 'completed'
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-            }`}
-          >
-            {row.status === 'completed'
-              ? t('meeting.status.completed', 'Completed')
-              : t('meeting.status.scheduled', 'Scheduled')}
-          </span>
+                ? t('meeting.status.completed', 'Completed')
+                : t('meeting.status.scheduled', 'Scheduled')
+            }
+          />
         ),
       },
       {
@@ -593,9 +591,7 @@ export const MeetingHub: React.FC = () => {
         availableViewModes={['table', 'calendar']}
       >
         {loading ? (
-          <div className="flex h-full items-center justify-center">
-            <Loader2 size={24} className="animate-spin text-slate-600" />
-          </div>
+          <LoadingState variant="spinner" className="h-full" />
         ) : activeMeeting ? (
           <MeetingDetailView
             meeting={activeMeeting}
@@ -1079,21 +1075,18 @@ const MeetingDetailView: React.FC<{
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{item.owner}</div>
                     </div>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    <StatusChip
+                      tone={item.status === 'done' ? 'success' : 'warning'}
+                      label={
                         item.status === 'done'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                      }`}
-                    >
-                      {item.status === 'done'
-                        ? isPolish
-                          ? 'Zrobione'
-                          : 'Done'
-                        : isPolish
-                          ? 'Otwarte'
-                          : 'Open'}
-                    </span>
+                          ? isPolish
+                            ? 'Zrobione'
+                            : 'Done'
+                          : isPolish
+                            ? 'Otwarte'
+                            : 'Open'
+                      }
+                    />
                   </div>
                 </button>
               ))}

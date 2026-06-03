@@ -87,6 +87,22 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
       }
       toast.success(t('settings.integrations.connected', 'Calendar connected'));
     } catch (error: unknown) {
+      // Graceful handling for not-yet-implemented providers (server 501):
+      // show a clear "Coming soon" instead of a scary "Failed to connect".
+      const status =
+        (error as { status?: number; statusCode?: number })?.status ??
+        (error as { statusCode?: number })?.statusCode;
+      const rawMsg = String((error as { message?: string })?.message || '');
+      const isNotImplemented = status === 501 || /501|not implemented|coming soon/i.test(rawMsg);
+      if (isNotImplemented) {
+        const comingSoon = t(
+          'settings.integrations.comingSoon',
+          'This calendar integration is coming soon.'
+        );
+        setActionError(comingSoon);
+        toast(comingSoon, { icon: '🗓️' });
+        return;
+      }
       const message = normalizeApiErrorMessage(
         error,
         t('settings.integrations.connectError', 'Failed to connect calendar')

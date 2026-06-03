@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { ErrorState, LoadingState, MetaChip } from '../ui/primitives';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
@@ -79,12 +80,7 @@ export const OrganizationAdminPanel: React.FC<OrganizationAdminPanelProps> = ({ 
   }, [fetchOrgData]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
-        <span className="ml-2 text-sm text-slate-500">{t('common.loading', 'Loading…')}</span>
-      </div>
-    );
+    return <LoadingState variant="spinner" label={t('common.loading', 'Loading…')} />;
   }
 
   switch (section) {
@@ -238,9 +234,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
                   </td>
                   <td className="px-5 py-3 text-slate-600 dark:text-slate-400">{m.email}</td>
                   <td className="px-5 py-3">
-                    <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
-                      {m.role || 'Member'}
-                    </span>
+                    <MetaChip label={m.role || 'Member'} />
                   </td>
                   <td className="px-5 py-3">
                     <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
@@ -426,27 +420,16 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   ];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
-        <span className="ml-2 text-sm text-slate-500">{t('common.loading', 'Loading…')}</span>
-      </div>
-    );
+    return <LoadingState variant="spinner" label={t('common.loading', 'Loading…')} />;
   }
 
   if (error || !snapshot) {
     return (
-      <div className="max-w-4xl rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-8 text-center">
-        <p className="text-sm text-slate-500">
-          {t('organization.limits.loadFailed', 'Could not load plan limits.')}
-        </p>
-        <button
-          type="button"
-          onClick={() => void reload()}
-          className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
-        >
-          {t('common.retry', 'Try again')}
-        </button>
+      <div className="max-w-4xl rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40">
+        <ErrorState
+          message={t('organization.limits.loadFailed', 'Could not load plan limits.')}
+          retry={() => void reload()}
+        />
       </div>
     );
   }
