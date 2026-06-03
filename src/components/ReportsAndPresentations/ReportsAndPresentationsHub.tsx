@@ -7,7 +7,6 @@
 
 import {
   BookTemplate,
-  CircleHelp,
   FileText,
   Filter,
   Inbox,
@@ -22,7 +21,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
@@ -36,7 +34,9 @@ import {
   MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
+  MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
@@ -67,12 +67,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const location = useLocation();
   const openChatWithContext = useOpenChatWithContext();
   const isPolish = i18n.language?.startsWith('pl');
-  const {
-    setOpen: setHelpOpen,
-    setActiveTab: setHelpTab,
-    setKnowledgeModuleIdOverride,
-  } = useHelpSidePanel();
-
   const { initialTab, initialArtifactId } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
     const fromQuery = parseRapTabFromQuery(params.get('tab'));
@@ -103,12 +97,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     }
   }, [location.pathname, location.search, navigate]);
-
-  const openContextualHelp = useCallback(() => {
-    setKnowledgeModuleIdOverride(activeTab === 'templates' ? 'templates' : 'outputs');
-    setHelpTab('knowledge');
-    setHelpOpen(true);
-  }, [activeTab, setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('reports_presentations');
@@ -697,7 +685,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     );
   }, [activeFilters, activeTab, filtersOpen, setSinglePreset, t, toggleFilter]);
 
-  const commandRowContent = useMemo(() => {
+  const commandRowLeftSlot = useMemo(() => {
     const chipBase = '';
     const chipActive = MENU_3_CHIP_ACTIVE;
     const chipInactive = MENU_3_CHIP_INACTIVE;
@@ -907,7 +895,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // path to a blocked module view — no "coming soon" in the hub).
   const documentStudioAvailable = useMemo(() => !shouldHideNonCoreModulesInPublicProduction(), []);
 
-  const commandRowRightContent = useMemo(
+  const commandRowRightSlot = useMemo(
     () => (
       <>
         {documentStudioAvailable ? (
@@ -954,6 +942,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       t,
       viewMode,
     ]
+  );
+
+  // Canonical Menu 3: one row, flex items-center justify-between — left chips + right actions.
+  // ModuleNavBar voids commandRowRightContent, so we merge both sides into commandRowContent.
+  // commandRowLeftSlot already returns a <div className={MENU_3_LEFT_CLASS}> root element;
+  // commandRowRightSlot is a React fragment of button elements.
+  const commandRowContent = useMemo(
+    () => (
+      <div className={MENU_3_INNER_CLASS}>
+        {commandRowLeftSlot}
+        <div className={MENU_3_RIGHT_CLASS}>{commandRowRightSlot}</div>
+      </div>
+    ),
+    [commandRowLeftSlot, commandRowRightSlot]
   );
 
   const handleShowList = useCallback(() => {
@@ -1083,21 +1085,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onNewItem={activeTab === 'outputs_sheets' ? undefined : handleNewItem}
         newItemLabel={ctaLabels[activeTab]}
         availableViewModes={['table', 'grid']}
-        toolControl={
-          <button
-            type="button"
-            onClick={openContextualHelp}
-            className="inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-            data-testid="contextual-help-entry-outputs"
-            title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
-          >
-            <CircleHelp size={16} />
-            <span>{t('help.entrypoint.contextual', 'Help')}</span>
-          </button>
-        }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
-        commandRowRightContent={commandRowRightContent}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>
       </ModuleHub>

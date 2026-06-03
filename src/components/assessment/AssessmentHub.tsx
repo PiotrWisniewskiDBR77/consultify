@@ -31,7 +31,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -1348,29 +1347,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     [hubMenu3Actions, hubMenu3Chips]
   );
 
-  const hubCommandRowRightContent = useMemo(
-    () => (
-      <>
-        {hubMenu3Actions.map((action) => {
-          const Icon = action.icon;
-          return (
-            <button
-              key={action.id}
-              type="button"
-              onClick={action.onClick}
-              disabled={action.disabled}
-              className={getMenu3AiButtonClass(Boolean(action.active))}
-              title={action.label}
-            >
-              <Icon size={12} />
-              {action.label}
-            </button>
-          );
-        })}
-      </>
-    ),
-    [hubMenu3Actions]
-  );
+  // NOTE: right-side actions are rendered by AssessmentMenu3ActionBar (inside hubCommandRowContent)
+  // via MENU_3_INNER_CLASS (flex items-center justify-between). commandRowRightContent is intentionally
+  // not used — ModuleNavBar voids that prop; keep all Menu 3 content in commandRowContent.
 
   // Render content based on active document or list
   const renderContent = () => {
@@ -1684,7 +1663,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         newItemLabel={getNewItemLabel()}
         rightControls={statusDropdownControl}
         commandRowContent={hubCommandRowContent}
-        commandRowRightContent={hubCommandRowRightContent}
       >
         <div className="space-y-3">
           {loadWarning && (
