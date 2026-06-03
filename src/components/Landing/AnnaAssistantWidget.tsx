@@ -1498,7 +1498,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
           >
             <div className="flex items-start justify-between gap-3 border-b border-white/8 bg-white/[0.03] px-4 py-3">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white">
                   <TeresaMark size={18} />
                 </div>
                 <div>
@@ -1716,7 +1716,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         aria-label={copy.open}
         className="group inline-flex items-center gap-3 rounded-full border border-white/10 bg-[#140D31]/95 px-4 py-3 text-white shadow-[0_16px_32px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all hover:bg-[#19123A]"
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-fuchsia-500 text-white shadow-[0_0_30px_rgba(168,85,247,0.35)]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-[0_0_30px_rgba(165,28,48,0.35)]">
           {isOpen ? <X size={18} /> : <MessageCircle size={18} />}
         </div>
         <div className="hidden text-left sm:block">

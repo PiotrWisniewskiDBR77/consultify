@@ -23,9 +23,9 @@ const AppScreenshotFrame: React.FC = () => (
   <div
     className="rounded-2xl overflow-hidden select-none"
     style={{
-      border: '1px solid rgba(124,58,237,0.25)',
+      border: '1px solid rgba(165,28,48,0.25)',
       boxShadow:
-        '0 0 0 1px rgba(255,255,255,0.04), 0 0 80px -20px rgba(124,58,237,0.45), 0 40px 80px -20px rgba(0,0,0,0.70)',
+        '0 0 0 1px rgba(255,255,255,0.04), 0 0 80px -20px rgba(165,28,48,0.45), 0 40px 80px -20px rgba(0,0,0,0.70)',
     }}
   >
     <img
@@ -133,39 +133,39 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
     <section className="relative z-10 px-6 min-h-screen flex flex-col">
       {/* ── Ambient Background Layer ── */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        {/* Deep gradient base — light slate/violet wash in light mode */}
-        <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_42%,#f1f5f9_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+        {/* Deep gradient base — light neutral wash / navy in dark mode */}
+        <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#fdf2f3_42%,#f1f5f9_100%)] dark:bg-[linear-gradient(160deg,#0F172A_0%,#0A0F1E_45%,#151E32_100%)]" />
 
-        {/* Primary violet blob — top-left */}
+        {/* Crimson brand blob — top-left */}
         <motion.div
           aria-hidden
           className="absolute -top-[15%] -left-[10%] w-[65%] h-[65%] rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(109,40,217,0.35) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(165,28,48,0.32) 0%, transparent 65%)',
             filter: 'blur(80px)',
           }}
           animate={reduceMotion ? undefined : { x: [0, 40, 0], y: [0, 25, 0] }}
           transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
         />
 
-        {/* Cyan blob — bottom-right */}
+        {/* Navy structural blob — bottom-right */}
         <motion.div
           aria-hidden
           className="absolute -bottom-[20%] -right-[15%] w-[65%] h-[65%] rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(0,210,255,0.18) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(42,54,85,0.30) 0%, transparent 65%)',
             filter: 'blur(90px)',
           }}
           animate={reduceMotion ? undefined : { x: [0, -35, 0], y: [0, -20, 0] }}
           transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
         />
 
-        {/* Fuchsia accent blob — center */}
+        {/* Soft crimson accent blob — center */}
         <motion.div
           aria-hidden
           className="absolute top-[30%] right-[25%] w-[40%] h-[40%] rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(192,38,211,0.18) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(133,22,39,0.18) 0%, transparent 65%)',
             filter: 'blur(100px)',
           }}
           animate={reduceMotion ? undefined : { x: [0, 20, 0], y: [0, -15, 0] }}
@@ -237,7 +237,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               <span
                 className="block mt-1"
                 style={{
-                  background: 'linear-gradient(90deg, #a78bfa, #c084fc, #67e8f9)',
+                  background: 'linear-gradient(90deg, #E45868, #D42B3D, #EF8A94)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -279,16 +279,16 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full text-white font-semibold text-sm overflow-hidden
                   transition-all duration-300 active:scale-[0.98]"
                 style={{
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
-                  boxShadow: '0 0 50px -14px rgba(124,58,237,0.70), 0 3px 16px rgba(0,0,0,0.35)',
+                  background: 'linear-gradient(135deg, #A51C30 0%, #851627 50%, #651120 100%)',
+                  boxShadow: '0 0 50px -14px rgba(165,28,48,0.70), 0 3px 16px rgba(0,0,0,0.35)',
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                    '0 0 70px -10px rgba(124,58,237,0.85), 0 4px 20px rgba(0,0,0,0.4)';
+                    '0 0 70px -10px rgba(165,28,48,0.85), 0 4px 20px rgba(0,0,0,0.4)';
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                    '0 0 50px -14px rgba(124,58,237,0.70), 0 3px 16px rgba(0,0,0,0.35)';
+                    '0 0 50px -14px rgba(165,28,48,0.70), 0 3px 16px rgba(0,0,0,0.35)';
                 }}
               >
                 <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_60%)]" />
@@ -307,7 +307,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-slate-900 dark:text-white
                   transition-all duration-300 active:scale-[0.98]
                   bg-slate-100 dark:bg-white/[0.10] border border-slate-300 dark:border-white/[0.22]
-                  hover:bg-slate-200 hover:border-primary-400/45 dark:hover:bg-white/[0.14] dark:hover:border-[rgba(168,85,247,0.50)]"
+                  hover:bg-slate-200 hover:border-primary-400/45 dark:hover:bg-white/[0.14] dark:hover:border-[rgba(165,28,48,0.50)]"
               >
                 <Play size={14} className="text-slate-600 dark:text-white/70" fill="currentColor" />
                 <span>{t('landing.profitHero.ctaSecondary', 'Try demo')}</span>
@@ -360,10 +360,10 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               className="flex items-center gap-3 text-xs text-slate-500 dark:text-white/35"
             >
               <div className="flex -space-x-2">
-                {['#7c3aed', '#a855f7', '#3b82f6', '#10b981'].map((color, i) => (
+                {['#A51C30', '#851627', '#3b82f6', '#10b981'].map((color, i) => (
                   <div
                     key={i}
-                    className="w-6 h-6 rounded-full border-2 border-white dark:border-[#0A0A1F] flex items-center justify-center text-[7px] font-black text-white"
+                    className="w-6 h-6 rounded-full border-2 border-white dark:border-[#0A0F1E] flex items-center justify-center text-[7px] font-black text-white"
                     style={{ background: color }}
                   >
                     {['M', 'J', 'K', 'A'][i]}
@@ -389,7 +389,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                 aria-hidden
                 className="absolute inset-0 rounded-3xl blur-3xl"
                 style={{
-                  background: 'radial-gradient(ellipse, rgba(124,58,237,0.35) 0%, transparent 70%)',
+                  background: 'radial-gradient(ellipse, rgba(165,28,48,0.35) 0%, transparent 70%)',
                   transform: 'scale(1.15) translateY(5%)',
                 }}
               />

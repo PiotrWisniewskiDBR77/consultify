@@ -23,10 +23,10 @@ const FEATURE_KEYS = [
 ] as const;
 
 const FEATURE_VISUALS = [
-  { icon: Brain, accentColor: '#7c3aed', glowColor: 'rgba(124,58,237,0.25)' },
+  { icon: Brain, accentColor: '#A51C30', glowColor: 'rgba(165,28,48,0.25)' },
   { icon: BarChart3, accentColor: '#0891b2', glowColor: 'rgba(8,145,178,0.22)' },
   { icon: Layers, accentColor: '#059669', glowColor: 'rgba(5,150,105,0.22)' },
-  { icon: FileText, accentColor: '#c026d3', glowColor: 'rgba(192,38,211,0.22)' },
+  { icon: FileText, accentColor: '#651120', glowColor: 'rgba(133,22,39,0.22)' },
   { icon: MessageSquare, accentColor: '#d97706', glowColor: 'rgba(217,119,6,0.20)' },
   { icon: TrendingUp, accentColor: '#0d9488', glowColor: 'rgba(13,148,136,0.22)' },
 ];

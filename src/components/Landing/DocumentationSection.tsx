@@ -51,7 +51,7 @@ const DOC_CARDS = [
     descKey: 'resourcesDesc',
     icon: FileText,
     href: '/resources',
-    gradient: 'from-fuchsia-500 to-pink-600',
+    gradient: 'from-primary-500 to-primary-700',
     glow: 'rgba(217,70,239,0.25)',
   },
 ] as const;
@@ -92,8 +92,8 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
       className={`relative py-24 md:py-32 overflow-hidden ${className}`}
       onMouseEnter={handleSectionView}
     >
-      <div className="absolute inset-0 bg-[#0A0A1F]" />
-      <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.10)_0%,transparent_65%)] blur-[80px]" />
+      <div className="absolute inset-0 bg-[#0A0F1E]" />
+      <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(165,28,48,0.10)_0%,transparent_65%)] blur-[80px]" />
       <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.06)_0%,transparent_65%)] blur-[90px]" />
 
       <div className="relative max-w-6xl mx-auto px-6">
@@ -133,8 +133,8 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
             type="submit"
             className="h-[48px] px-6 rounded-xl text-sm font-semibold text-white transition-all flex items-center gap-2"
             style={{
-              background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-              boxShadow: '0 0 24px -6px rgba(124,58,237,0.50)',
+              background: 'linear-gradient(135deg, #A51C30 0%, #851627 100%)',
+              boxShadow: '0 0 24px -6px rgba(165,28,48,0.50)',
             }}
           >
             <Search size={14} />

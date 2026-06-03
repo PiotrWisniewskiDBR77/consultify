@@ -34,7 +34,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
               <br />
               {t('landing.profitHero.h1.line2', 'All the world’s business knowledge.')}
               <br />
-              <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
                 {t('landing.profitHero.h1.line3', 'Turned into your profits.')}
               </span>
             </motion.h1>

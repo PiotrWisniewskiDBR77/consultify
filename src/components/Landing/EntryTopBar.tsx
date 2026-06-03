@@ -310,7 +310,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                         setIsNavOpen(false);
                       }}
                       className="flex-1 py-1.5 rounded-full text-xs font-medium text-center text-white transition-all"
-                      style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+                      style={{ background: 'linear-gradient(135deg, #A51C30, #851627)' }}
                     >
                       {t('landing.topBar.trial', 'Start trial')}
                     </button>
@@ -370,12 +370,12 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       className="w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between"
                       style={{
                         color: languageMatches(lang.code)
-                          ? '#a855f7'
+                          ? '#851627'
                           : isDark
                             ? 'rgba(255,255,255,0.65)'
                             : 'rgba(0,0,0,0.65)',
                         background: languageMatches(lang.code)
-                          ? 'rgba(168,85,247,0.10)'
+                          ? 'rgba(165,28,48,0.10)'
                           : 'transparent',
                         fontWeight: languageMatches(lang.code) ? 700 : 400,
                       }}
@@ -456,8 +456,8 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
             onClick={onTrialClick}
             className="px-5 py-1.5 rounded-full text-sm font-semibold text-white transition-all duration-200 cursor-pointer"
             style={{
-              background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-              boxShadow: '0 0 20px -6px rgba(124,58,237,0.60)',
+              background: 'linear-gradient(135deg, #A51C30, #851627)',
+              boxShadow: '0 0 20px -6px rgba(165,28,48,0.60)',
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.opacity = '0.88';
@@ -580,7 +580,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full px-4 py-2.5 rounded-full text-sm font-semibold text-white text-center transition-all"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+                    style={{ background: 'linear-gradient(135deg, #A51C30, #851627)' }}
                   >
                     {t('landing.topBar.trial', 'Start trial')}
                   </button>
@@ -614,15 +614,15 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                         className="text-xs px-3 py-1 rounded-full border transition-colors font-medium"
                         style={{
                           background: languageMatches(lang.code)
-                            ? 'rgba(168,85,247,0.15)'
+                            ? 'rgba(165,28,48,0.15)'
                             : 'transparent',
                           borderColor: languageMatches(lang.code)
-                            ? 'rgba(168,85,247,0.40)'
+                            ? 'rgba(165,28,48,0.40)'
                             : isDark
                               ? 'rgba(255,255,255,0.12)'
                               : 'rgba(0,0,0,0.10)',
                           color: languageMatches(lang.code)
-                            ? '#a855f7'
+                            ? '#851627'
                             : isDark
                               ? 'rgba(255,255,255,0.50)'
                               : 'rgba(0,0,0,0.50)',

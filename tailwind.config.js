@@ -29,6 +29,32 @@ export default {
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+
+        // ========================================
+        // CANONICAL SEMANTIC PALETTE (`c.*` namespace)
+        // Single source of truth → CSS vars in src/index.css (:root / .dark).
+        // Spec: docs/audit/2026-06-03/_DESIGN_SYSTEM_STANDARDIZATION_PLAN.md §A
+        // Values are hex/rgba (not space-separated rgb), so consume directly:
+        //   bg-c-surface, text-c-text, border-c-border, bg-c-accent, etc.
+        // Apple/Google-class neutral surfaces + Harvard Crimson sole accent.
+        // ========================================
+        c: {
+          bg: 'var(--c-bg)',
+          surface: 'var(--c-surface)',
+          'surface-raised': 'var(--c-surface-raised)',
+          'border-subtle': 'var(--c-border-subtle)',
+          border: 'var(--c-border)',
+          text: 'var(--c-text)',
+          'text-secondary': 'var(--c-text-secondary)',
+          'text-muted': 'var(--c-text-muted)',
+          accent: 'var(--c-accent)',
+          'accent-soft': 'var(--c-accent-soft)',
+          focus: 'var(--c-focus)',
+          success: 'var(--c-success)',
+          warning: 'var(--c-warning)',
+          danger: 'var(--c-danger)',
+          info: 'var(--c-info)',
+        },
         // ========================================
         // DBR77 COLOR SYSTEM STANDARD
         // See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md
@@ -72,23 +98,28 @@ export default {
           50: '#F1F5F9', // Subtle bg
         },
 
-        // PRIMARY - Fiolet (główne akcje, linki, focus)
+        // PRIMARY — Harvard Crimson (CENTRAL RECOLOR LEVER)
+        // Was violet (#7C3AED). Re-pointed to crimson so all existing
+        // primary-* / bg-primary CTAs render the brand accent app-wide with
+        // ZERO call-site edits. Numeric stops mirror the `crimson` scale.
+        // Spec: _DESIGN_SYSTEM_STANDARDIZATION_PLAN.md §A "demote violet".
+        // Reversible: restore violet hexes here to revert.
         primary: {
-          DEFAULT: '#7C3AED',
-          hover: '#6D28D9',
-          light: '#8B5CF6',
-          surface: 'rgba(124, 58, 237, 0.1)',
-          50: '#F5F3FF',
-          100: '#EDE9FE',
-          200: '#DDD6FE',
-          300: '#C4B5FD',
-          400: '#A78BFA',
-          500: '#8B5CF6',
-          600: '#7C3AED',
-          700: '#6D28D9',
-          800: '#5B21B6',
-          900: '#4C1D95',
-          950: '#2E1065',
+          DEFAULT: '#A51C30', // was #7C3AED
+          hover: '#851627', // was #6D28D9
+          light: '#D42B3D', // was #8B5CF6
+          surface: 'rgba(165, 28, 48, 0.1)', // was rgba(124,58,237,.1)
+          50: '#FDF2F3',
+          100: '#FBDDE0',
+          200: '#F6B8BE',
+          300: '#EF8A94',
+          400: '#E45868',
+          500: '#D42B3D',
+          600: '#A51C30',
+          700: '#851627',
+          800: '#651120',
+          900: '#450C16',
+          950: '#2B070D',
         },
 
         // SECONDARY - Granatowy (akcje drugorzędne, nawigacja)
@@ -176,9 +207,9 @@ export default {
         japanese: ['Noto Sans JP', 'Inter', 'sans-serif'], // Japanese font with full character support
       },
       boxShadow: {
-        // Legacy shadows
-        glow: '0 0 20px -5px rgba(124, 58, 237, 0.3)',
-        'glow-lg': '0 0 40px -10px rgba(124, 58, 237, 0.5)',
+        // Legacy shadows — brand glow re-pointed violet → crimson
+        glow: '0 0 20px -5px rgba(165, 28, 48, 0.3)',
+        'glow-lg': '0 0 40px -10px rgba(165, 28, 48, 0.5)',
         glass: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         panel: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15)',
         'inner-light': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
@@ -203,8 +234,8 @@ export default {
         // Elevated card hover state
         'hig-hover': '0 8px 16px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.06)',
         'hig-hover-dark': '0 8px 16px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3)',
-        // Focus ring
-        'hig-focus': '0 0 0 3px rgba(124, 58, 237, 0.3)',
+        // Focus ring — crimson brand (was violet rgba(124,58,237,.3))
+        'hig-focus': '0 0 0 3px rgba(165, 28, 48, 0.3)',
         'hig-focus-danger': '0 0 0 3px rgba(220, 38, 38, 0.3)',
         // ----------------------------------------
         // Semantic shadow tokens — canonical names for shared primitives
@@ -246,9 +277,10 @@ export default {
           'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%)',
         'hig-skeleton-dark':
           'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%)',
-        // Accent gradients (for premium CTAs)
-        'hig-primary': 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%)',
-        'hig-primary-hover': 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%)',
+        // Accent CTAs — solid crimson (was violet→violet gradient).
+        // Demote violet → crimson sole accent; no gradient per brand spec.
+        'hig-primary': 'linear-gradient(135deg, #A51C30 0%, #A51C30 100%)',
+        'hig-primary-hover': 'linear-gradient(135deg, #851627 0%, #851627 100%)',
       },
       // ========================================
       // APPLE HIG SPACING SCALE

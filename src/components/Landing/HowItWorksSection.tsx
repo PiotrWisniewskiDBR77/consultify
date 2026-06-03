@@ -21,8 +21,8 @@ const STEP_KEYS = [
 ] as const;
 
 const STEP_VISUALS = [
-  { number: '01', icon: FileText, color: '#7c3aed', glow: 'rgba(124,58,237,0.30)' },
-  { number: '02', icon: Brain, color: '#a855f7', glow: 'rgba(168,85,247,0.28)' },
+  { number: '01', icon: FileText, color: '#A51C30', glow: 'rgba(165,28,48,0.30)' },
+  { number: '02', icon: Brain, color: '#851627', glow: 'rgba(165,28,48,0.28)' },
   { number: '03', icon: CheckCircle2, color: '#3b82f6', glow: 'rgba(6,182,212,0.25)' },
   { number: '04', icon: Zap, color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
   { number: '05', icon: TrendingUp, color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
@@ -38,7 +38,7 @@ export const HowItWorksSection: React.FC = () => {
       <div
         className="absolute top-0 left-0 right-0 h-px"
         style={{
-          background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.25), transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(165,28,48,0.25), transparent)',
         }}
       />
 
@@ -68,7 +68,7 @@ export const HowItWorksSection: React.FC = () => {
             <span
               className="block"
               style={{
-                background: 'linear-gradient(90deg, #a78bfa, #67e8f9)',
+                background: 'linear-gradient(90deg, #E45868, #EF8A94)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -164,7 +164,7 @@ export const HowItWorksSection: React.FC = () => {
             aria-hidden
             className="absolute top-0 right-0 w-72 h-72 rounded-full pointer-events-none"
             style={{
-              background: 'radial-gradient(circle, rgba(124,58,237,0.20) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(165,28,48,0.20) 0%, transparent 70%)',
               filter: 'blur(40px)',
               transform: 'translate(30%, -30%)',
             }}
@@ -206,7 +206,7 @@ export const HowItWorksSection: React.FC = () => {
                 {
                   labelKey: 'landing.howItWorks.tech.vector',
                   descKey: 'landing.howItWorks.tech.vectorDesc',
-                  color: '#7c3aed',
+                  color: '#A51C30',
                 },
                 {
                   labelKey: 'landing.howItWorks.tech.mcp',
@@ -216,7 +216,7 @@ export const HowItWorksSection: React.FC = () => {
                 {
                   labelKey: 'landing.howItWorks.tech.private',
                   descKey: 'landing.howItWorks.tech.privateDesc',
-                  color: '#a855f7',
+                  color: '#851627',
                 },
                 {
                   labelKey: 'landing.howItWorks.tech.engagements',

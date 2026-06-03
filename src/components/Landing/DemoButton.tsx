@@ -121,7 +121,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
                 `}
       >
         <span className="text-lg font-black text-white">{t('landing.demo.getA', 'Get a')}</span>
-        <span className="text-lg font-black bg-gradient-to-r from-primary-400 to-pink-400 bg-clip-text text-transparent">
+        <span className="text-lg font-black bg-gradient-to-r from-primary-400 to-primary-300 bg-clip-text text-transparent">
           {t('landing.demo.word', 'Demo')}
         </span>
         <ArrowRight
@@ -149,7 +149,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         <span className="text-xl font-black text-navy-950 dark:text-white">
           {t('landing.demo.getA', 'Get a')}
         </span>
-        <span className="text-xl font-black bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
+        <span className="text-xl font-black bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
           {t('landing.demo.word', 'Demo')}
         </span>
         <ArrowRight
@@ -178,7 +178,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
           <span className="text-2xl font-black text-navy-950 dark:text-white tracking-tight">
             {t('landing.demo.bookA', 'Book a')}
           </span>
-          <span className="text-2xl font-black bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent tracking-tight">
+          <span className="text-2xl font-black bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent tracking-tight">
             {t('landing.demo.word', 'Demo')}
           </span>
           <ArrowRight

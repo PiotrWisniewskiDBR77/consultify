@@ -46,7 +46,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       meta: t('landing.hero.cards.demo.meta', 'GUIDED EXPERIENCE'),
       cta: t('landing.hero.cards.demo.cta', 'Start Demo'),
       image: '/assets/landing/cinematic/demo_digital_twin.png',
-      color: 'purple',
+      color: 'crimson',
       onClick: onDemoClick,
       className: 'lg:col-span-1 lg:row-span-1',
     },
@@ -132,7 +132,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             className="text-xl lg:text-2xl text-white/90 leading-relaxed font-medium"
           >
             {t('landing.hero.subtitleLine1', 'Your')}{' '}
-            <span className="bg-gradient-to-r from-primary-400 to-pink-400 bg-clip-text text-transparent font-bold">
+            <span className="bg-gradient-to-r from-primary-400 to-primary-300 bg-clip-text text-transparent font-bold">
               {t('landing.hero.coThinker', 'AI Co-Thinker')}
             </span>{' '}
             {t('landing.hero.subtitleLine1End', 'for Enterprise Strategy.')}
@@ -150,7 +150,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             // Define border and glow colors for each card type
             const colorMap: Record<string, { border: string; glow: string; hoverBorder: string }> =
               {
-                purple: {
+                crimson: {
                   border: 'ring-primary-500/40',
                   glow: 'shadow-primary-500/20',
                   hoverBorder: 'group-hover:ring-primary-400/60',
@@ -181,7 +181,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   hoverBorder: 'group-hover:ring-blue-400/60',
                 },
               };
-            const colors = colorMap[card.color] || colorMap['purple'];
+            const colors = colorMap[card.color] || colorMap['crimson'];
 
             return (
               <motion.div
@@ -289,7 +289,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
                   {t('landing.hero.tagline.line1', 'AI consulting.')}
                 </p>
-                <p className="text-2xl lg:text-3xl font-black bg-gradient-to-r from-primary-400 to-pink-400 bg-clip-text text-transparent tracking-tight leading-tight">
+                <p className="text-2xl lg:text-3xl font-black bg-gradient-to-r from-primary-400 to-primary-300 bg-clip-text text-transparent tracking-tight leading-tight">
                   {t('landing.hero.tagline.line2', 'No slides.')}
                 </p>
                 <p className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
@@ -298,7 +298,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               </div>
 
               {/* Accent line */}
-              <div className="relative z-10 mt-4 h-1.5 w-20 ml-auto bg-gradient-to-r from-primary-600 to-pink-600 rounded-full"></div>
+              <div className="relative z-10 mt-4 h-1.5 w-20 ml-auto bg-gradient-to-r from-primary-600 to-primary-800 rounded-full"></div>
             </div>
           </motion.div>
         </div>

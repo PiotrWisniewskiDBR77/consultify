@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 const PERSONA_KEYS = ['founders', 'executives', 'consultingFirms', 'aiLeaders'] as const;
 
 const PERSONA_VISUALS = [
-  { icon: Rocket, color: '#7c3aed', glow: 'rgba(124,58,237,0.28)' },
+  { icon: Rocket, color: '#A51C30', glow: 'rgba(165,28,48,0.28)' },
   { icon: Users, color: '#0891b2', glow: 'rgba(8,145,178,0.25)' },
   { icon: Building2, color: '#059669', glow: 'rgba(5,150,105,0.25)' },
-  { icon: Brain, color: '#c026d3', glow: 'rgba(192,38,211,0.25)' },
+  { icon: Brain, color: '#651120', glow: 'rgba(133,22,39,0.25)' },
 ];
 
 export const ForWhomSection: React.FC = () => {
@@ -20,7 +20,7 @@ export const ForWhomSection: React.FC = () => {
       <div
         className="absolute top-0 left-0 right-0 h-px"
         style={{
-          background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.15), transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(165,28,48,0.15), transparent)',
         }}
       />
 

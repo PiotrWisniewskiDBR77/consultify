@@ -42,8 +42,8 @@ export const TrustStrip: React.FC = () => {
       icon: Server,
       label: t('landing.compliance.badges.dedicated', 'Dedicated API'),
       color: 'text-primary-600 dark:text-primary-400',
-      glowColor: 'rgba(168,85,247,0.18)',
-      borderColor: 'rgba(168,85,247,0.18)',
+      glowColor: 'rgba(165,28,48,0.18)',
+      borderColor: 'rgba(165,28,48,0.18)',
     },
     {
       icon: Building2,
@@ -60,7 +60,7 @@ export const TrustStrip: React.FC = () => {
         className="absolute top-0 left-0 right-0 h-px"
         style={{
           background:
-            'linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.35) 30%, rgba(0,210,255,0.25) 70%, transparent 100%)',
+            'linear-gradient(90deg, transparent 0%, rgba(165,28,48,0.35) 30%, rgba(42,54,85,0.25) 70%, transparent 100%)',
         }}
       />
 
