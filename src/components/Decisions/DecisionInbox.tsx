@@ -22,6 +22,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { StatusChip } from '@/components/ui/primitives/chips';
+
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import DecisionCard, { Decision } from './DecisionCard';
@@ -300,19 +302,23 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                 <h2 className="font-bold text-navy-900 dark:text-white">
                   {t('decisions.inbox', 'Decision Inbox')}
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {counts.total} {t('decisions.pending', 'pending')}
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <span>
+                    {counts.total} {t('decisions.pending', 'pending')}
+                  </span>
                   {counts.overdue > 0 && (
-                    <span className="text-rose-500 ml-1">
-                      • {counts.overdue} {t('decisions.overdue', 'overdue')}
-                    </span>
+                    <StatusChip
+                      tone="danger"
+                      label={`${counts.overdue} ${t('decisions.overdue', 'overdue')}`}
+                    />
                   )}
                   {counts.escalated > 0 && (
-                    <span className="text-amber-500 ml-1">
-                      • {counts.escalated} {t('decisions.escalated', 'escalated')}
-                    </span>
+                    <StatusChip
+                      tone="warning"
+                      label={`${counts.escalated} ${t('decisions.escalated', 'escalated')}`}
+                    />
                   )}
-                </p>
+                </div>
               </div>
             </div>
 

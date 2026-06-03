@@ -23,6 +23,7 @@ import {
 } from '@/components/shared/ModuleHub';
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
+import { Menu3Row } from '@/components/shared/ModuleHub/Menu3Row';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
@@ -30,9 +31,6 @@ import {
   MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
-  MENU_3_INNER_CLASS,
-  MENU_3_LEFT_CLASS,
-  MENU_3_RIGHT_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -341,27 +339,24 @@ export const MeetingHub: React.FC = () => {
 
     // Canonical Menu 3 layout: left preset chips + right AI action in one justify-between row.
     // NOTE: commandRowRightContent is voided by ModuleNavBar (line 188), so we embed both
-    // sides here inside MENU_3_INNER_CLASS (flex items-center justify-between) per canon
-    // (SSOT: src/components/Execution/ExecutionHub.tsx commandRowContent pattern).
+    // sides here via the canonical Menu3Row shell (left/right slots over MENU_3 tokens).
     return (
-      <div className={MENU_3_INNER_CLASS}>
-        <div className={MENU_3_LEFT_CLASS}>
-          {chips.map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={chip.onClick}
-              className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-            >
-              {chip.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
-              <span>{chip.label}</span>
-              <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-                {chip.count}
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className={MENU_3_RIGHT_CLASS}>
+      <Menu3Row
+        left={chips.map((chip) => (
+          <button
+            key={chip.id}
+            type="button"
+            onClick={chip.onClick}
+            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+          >
+            {chip.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
+            <span>{chip.label}</span>
+            <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+              {chip.count}
+            </span>
+          </button>
+        ))}
+        right={
           <button
             type="button"
             disabled={!briefingMeeting}
@@ -374,8 +369,8 @@ export const MeetingHub: React.FC = () => {
             <Sparkles size={12} />
             <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
           </button>
-        </div>
-      </div>
+        }
+      />
     );
   }, [activeDocumentId, activeFilters, briefingMeeting, counts, openMeetingDocument, t]);
 

@@ -161,3 +161,18 @@ export {
 export { ErrorState, type ErrorStateProps } from './ErrorState';
 export { LoadingState, type LoadingStateProps } from './LoadingState';
 export { OnboardingHint, type OnboardingHintProps } from './OnboardingHint';
+
+// Canonical chip system (replaces hand-rolled chip spans) — design-system pass 2026-06-03
+export * from './chips';
+
+// Form primitives (token-enforcing wrappers over shadcn) — design-system pass 2026-06-03
+// NOTE: exported as `SelectField` to avoid clashing with the legacy custom-styled
+// `Select` from ./Dropdown. SelectField is the canonical token-enforcing form field;
+// reconcile the two under the design-system enforcement pass.
+export {
+  Select as SelectField,
+  type SelectProps as SelectFieldProps,
+  type SelectOption,
+} from './Select';
+export { Switch, type SwitchProps } from './Switch';
+export { Toggle, type ToggleProps } from './Toggle';

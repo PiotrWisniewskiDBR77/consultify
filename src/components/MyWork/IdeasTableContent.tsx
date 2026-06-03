@@ -1,3 +1,4 @@
+import type { LucideIcon } from 'lucide-react';
 import {
   Bot,
   CheckCircle2,
@@ -35,6 +36,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import type {
   ColumnDef,
   ColumnWidths,
@@ -172,6 +174,8 @@ const TOOL_META: Record<
     icon: React.ElementType;
     badge: string;
     iconClass: string;
+    /** Canonical ToolChip icon color — semantic `c.*` var. */
+    iconColorVar: string;
   }
 > = {
   mindmap: {
@@ -181,6 +185,7 @@ const TOOL_META: Record<
     badge:
       'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
     iconClass: 'text-primary-600 dark:text-primary-300',
+    iconColorVar: 'var(--c-accent)',
   },
   table: {
     label: 'Table',
@@ -189,6 +194,7 @@ const TOOL_META: Record<
     badge:
       'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
     iconClass: 'text-sky-600 dark:text-sky-300',
+    iconColorVar: 'var(--c-info)',
   },
   process_flow: {
     label: 'Process Flow',
@@ -197,6 +203,7 @@ const TOOL_META: Record<
     badge:
       'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
     iconClass: 'text-emerald-600 dark:text-emerald-300',
+    iconColorVar: 'var(--c-success)',
   },
   whiteboard: {
     label: 'Whiteboard',
@@ -205,6 +212,7 @@ const TOOL_META: Record<
     badge:
       'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
     iconClass: 'text-amber-600 dark:text-amber-300',
+    iconColorVar: 'var(--c-warning)',
   },
 };
 
@@ -499,14 +507,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
   const renderToolBadge = (tool?: string | null) => {
     const meta = getToolMeta(tool);
-    const Icon = meta.icon;
+    // Canonical ToolChip: colored tool icon on a neutral (c-token) surface.
     return (
-      <span
-        className={`inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-[10px] font-semibold leading-none ${meta.badge}`}
-      >
-        <Icon size={11} className={meta.iconClass} />
-        {isPolish ? meta.labelPl : meta.label}
-      </span>
+      <ToolChip
+        icon={meta.icon as LucideIcon}
+        iconColor={meta.iconColorVar}
+        label={isPolish ? meta.labelPl : meta.label}
+      />
     );
   };
 
@@ -515,21 +522,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
       return <span className="text-[11px] text-slate-400">—</span>;
     }
 
+    // Canonical neutral metadata chips (MetaChip) — tags are never colored (§N).
     return (
       <div className="flex min-w-0 flex-nowrap items-center justify-center gap-1 overflow-hidden">
         {tags.slice(0, max).map((tag) => (
-          <span
-            key={tag}
-            className="inline-flex h-5 items-center whitespace-nowrap rounded-full border border-slate-300/80 bg-slate-100 px-2 text-[10px] font-medium leading-none text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200"
-          >
-            {tag}
-          </span>
+          <MetaChip key={tag} label={tag} />
         ))}
-        {tags.length > max ? (
-          <span className="inline-flex h-5 items-center rounded-full border border-slate-300/70 bg-white px-1.5 text-[10px] font-semibold leading-none text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-400">
-            +{tags.length - max}
-          </span>
-        ) : null}
+        {tags.length > max ? <MetaChip label={`+${tags.length - max}`} /> : null}
       </div>
     );
   };
