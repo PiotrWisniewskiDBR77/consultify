@@ -21,7 +21,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_AI_COACH: z.boolean().default(true),
   ENABLE_HELP_SYSTEM: z.boolean().default(true),
   ENABLE_TABLE_PLATFORM_METADATA_FIRST: z.boolean().default(false),
-  ENABLE_TABLE_PLATFORM_RECORDS_API: z.boolean().default(false),
+  ENABLE_TABLE_PLATFORM_RECORDS_API: z.boolean().default(true),
   ENABLE_RECORD_PROVENANCE: z.boolean().default(false),
   ENABLE_TABLE_AI_EDITOR: z.boolean().default(false),
   ENABLE_TABLE_QA_ENGINE: z.boolean().default(false),
@@ -64,7 +64,12 @@ export function loadFeatureFlags(): FeatureFlags {
       process.env.ENABLE_TABLE_PLATFORM_METADATA_FIRST === 'true',
 
     // Table Platform: Records API
-    ENABLE_TABLE_PLATFORM_RECORDS_API: process.env.ENABLE_TABLE_PLATFORM_RECORDS_API === 'true',
+    // Default ON. The table platform (My Work table builder + /tabele lane)
+    // is GA; the route layer still performs a live `tp_*` schema readiness
+    // check (returns 503 SCHEMA_NOT_READY until the date-prefixed migration
+    // runner has applied the 700-series DDL at boot). Set the env var to
+    // 'false' to hard-disable the authenticated table endpoints.
+    ENABLE_TABLE_PLATFORM_RECORDS_API: process.env.ENABLE_TABLE_PLATFORM_RECORDS_API !== 'false',
 
     // Block B (Record Provenance): per-record confidence + validation_status.
     // Gate sits inside ConfidenceScoringService.recompute() and the

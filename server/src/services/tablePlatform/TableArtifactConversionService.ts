@@ -385,40 +385,39 @@ async function captureLiveSnapshot(tableId: string, cap: number): Promise<Conver
   };
 }
 
-// ── Default materializer (stub) ──────────────────────────────────────────────
+// ── Default materializer ─────────────────────────────────────────────────────
 
 /**
- * No-op materializer that produces a deterministic placeholder run id. The
- * D-S1 deliverable ships with this stub so the conversion lifecycle is
- * testable end-to-end. D-S3 (lane UI) replaces this with the real
- * `artifactRegistryService.materializeArtifactRun` adapter once the lane
- * deep-link contract is finalised.
+ * The default production materializer (D-S3). Bridges a conversion into the
+ * canonical V8 artifact runtime via `registerArtifactOrigin` and returns a
+ * real `artifactRunId` (the canonical artifactId) + deep link into the
+ * Report Builder / Presentations editor.
+ *
+ * Loaded lazily on first use to avoid a static import cycle between this
+ * service and `conversionMaterializer` (which depends on this module's types).
  */
-const stubMaterializer: ArtifactMaterializer = {
+let defaultMaterializerPromise: Promise<ArtifactMaterializer> | null = null;
+
+const lazyDefaultMaterializer: ArtifactMaterializer = {
   async materialize(req) {
-    const placeholder = `stub-run-${req.conversionId}`;
-    logger.warn('[TableArtifactConversionService] stub materializer called', {
-      conversionId: req.conversionId,
-      target: req.target,
-      tableId: req.tableId,
-      hasSourcePack: req.sourcePackId !== null,
-      recordCount: req.snapshot.records.length,
-    });
-    return {
-      artifactRunId: placeholder,
-      artifactDeepLink: null,
-    };
+    if (!defaultMaterializerPromise) {
+      defaultMaterializerPromise = import('./conversionMaterializer.js').then(
+        (m) => m.realArtifactMaterializer
+      );
+    }
+    const real = await defaultMaterializerPromise;
+    return real.materialize(req);
   },
 };
 
-let activeMaterializer: ArtifactMaterializer = stubMaterializer;
+let activeMaterializer: ArtifactMaterializer = lazyDefaultMaterializer;
 
 /**
  * Replaces the active materializer. Tests use this to assert the request
- * envelope; D-S3 uses it to wire up the live artifact runtime.
+ * envelope; passing `null` restores the production default.
  */
 export function __setMaterializerForTesting(m: ArtifactMaterializer | null): void {
-  activeMaterializer = m ?? stubMaterializer;
+  activeMaterializer = m ?? lazyDefaultMaterializer;
 }
 
 // ── Persistence helpers ──────────────────────────────────────────────────────

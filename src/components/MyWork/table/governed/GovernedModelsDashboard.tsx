@@ -22,6 +22,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '@/components/ui';
 import * as Api from '@/services/api/tablePlatform.api';
 
 import { DataLineageView } from './DataLineageView';
@@ -699,6 +700,147 @@ function ModelCard({
 }
 
 /* ------------------------------------------------------------------ */
+/* Edit Model Modal                                                    */
+/* ------------------------------------------------------------------ */
+
+const TRUST_OPTIONS = ['draft', 'certified', 'deprecated'] as const;
+
+function EditModelModal({
+  model,
+  isPl,
+  onSaved,
+  onClose,
+}: {
+  model: GovernedModel;
+  isPl: boolean;
+  onSaved: () => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(model.name ?? '');
+  const [description, setDescription] = useState(model.description ?? '');
+  const [status, setStatus] = useState(model.status ?? 'draft');
+  const [saving, setSaving] = useState(false);
+
+  const inputCls =
+    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
+
+  const dirty =
+    name.trim() !== (model.name ?? '').trim() ||
+    description.trim() !== (model.description ?? '').trim() ||
+    status !== (model.status ?? 'draft');
+
+  const handleSave = useCallback(async () => {
+    if (!name.trim()) {
+      toast.error(isPl ? 'Nazwa jest wymagana' : 'Name is required');
+      return;
+    }
+    setSaving(true);
+    try {
+      await Api.updateGovernedModel(model.model_id, {
+        name: name.trim(),
+        description: description.trim() || undefined,
+        status,
+      });
+      toast.success(isPl ? 'Model zaktualizowany' : 'Model updated');
+      onSaved();
+    } catch {
+      toast.error(isPl ? 'Nie udało się zapisać' : 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  }, [name, description, status, model.model_id, isPl, onSaved]);
+
+  const trustLabel = (s: string) =>
+    isPl ? (TRUST_CONFIG[s]?.labelPl ?? s) : (TRUST_CONFIG[s]?.label ?? s);
+
+  return (
+    <div
+      className="fixed inset-0 z-[160] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-[480px] max-w-[95vw] max-h-[85vh] bg-white dark:bg-navy-950 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-navy-800">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+            {isPl ? 'Edytuj model' : 'Edit model'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            aria-label={isPl ? 'Zamknij' : 'Close'}
+          >
+            <X size={16} className="text-slate-400" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+              {isPl ? 'Nazwa modelu' : 'Model name'}
+            </label>
+            <input
+              className={inputCls}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+              {isPl ? 'Opis' : 'Description'}
+            </label>
+            <textarea
+              className={inputCls + ' min-h-[80px]'}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+              {isPl ? 'Poziom zaufania' : 'Trust level'}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {TRUST_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setStatus(opt)}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    status === opt
+                      ? 'border-crimson-500 bg-crimson-50 text-crimson-700 dark:bg-crimson-500/10 dark:text-crimson-300'
+                      : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                  }`}
+                >
+                  {TRUST_CONFIG[opt]?.icon}
+                  {trustLabel(opt)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 dark:border-navy-800">
+          <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>
+            {isPl ? 'Anuluj' : 'Cancel'}
+          </Button>
+          <Button
+            variant="brand"
+            size="sm"
+            onClick={handleSave}
+            disabled={saving || !dirty}
+            loading={saving}
+          >
+            {isPl ? 'Zapisz zmiany' : 'Save changes'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Main Dashboard                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -724,6 +866,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
   const [showLineage, setShowLineage] = useState(false);
   const [kpiValues, setKpiValues] = useState<Record<string, KpiValue>>({});
   const [selectedModel, setSelectedModel] = useState<GovernedModel | null>(null);
+  const [editModel, setEditModel] = useState<GovernedModel | null>(null);
 
   const loadModels = useCallback(async () => {
     setLoading(true);
@@ -856,9 +999,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
               model={m}
               isPl={isPl}
               kpiValues={kpiValues}
-              onEdit={() => {
-                toast(isPl ? 'Edycja — wkrótce' : 'Edit — coming soon');
-              }}
+              onEdit={() => setEditModel(m)}
               onDelete={() => handleDelete(m.model_id)}
               onSelect={() => setSelectedModel(m)}
             />
@@ -995,6 +1136,19 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
             loadModels();
           }}
           onClose={() => setShowWizard(false)}
+        />
+      )}
+
+      {/* Edit model modal */}
+      {editModel && (
+        <EditModelModal
+          model={editModel}
+          isPl={isPl}
+          onSaved={() => {
+            setEditModel(null);
+            loadModels();
+          }}
+          onClose={() => setEditModel(null)}
         />
       )}
     </div>

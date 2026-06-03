@@ -303,10 +303,15 @@ describe('TableAiEditorService.proposeEdit', () => {
 });
 
 describe('TableAiEditorService.applyProposal', () => {
-  it('7) applies pending proposal: flips status + audits', async () => {
+  it('7) applies pending proposal with empty operations: flips status + audits (handlerStatus live)', async () => {
     mockQuery.mockImplementation(async (sql: string) => {
-      if (String(sql).includes('SELECT id, workspace_id, status, level')) {
-        return { rows: [{ id: 'p-1', workspace_id: WS, status: 'pending', level: 'cell' }] };
+      if (String(sql).includes('SELECT id, workspace_id, status, level, operations')) {
+        return {
+          rows: [{ id: 'p-1', workspace_id: WS, status: 'pending', level: 'cell', operations: [] }],
+        };
+      }
+      if (String(sql).includes('SELECT organization_id FROM tp_bases')) {
+        return { rows: [{ organization_id: ORG }] };
       }
       return { rows: [] };
     });
@@ -314,11 +319,14 @@ describe('TableAiEditorService.applyProposal', () => {
     const result = await tableAiEditorService.applyProposal({
       proposalId: 'p-1',
       workspaceId: WS,
+      organizationId: ORG,
       actorUserId: ACTOR,
     });
 
     expect(result.applied).toBe(true);
-    expect(result.reason).toBe('stub_handler_no_op');
+    // No operations to apply → read-only no-op reason.
+    expect(result.reason).toBe('no_op_read_only');
+    expect(result.operationsApplied).toBe(0);
 
     const updateCall = mockQuery.mock.calls.find((c) =>
       String(c[0]).includes('UPDATE tp_schema_proposals')
@@ -331,7 +339,7 @@ describe('TableAiEditorService.applyProposal', () => {
       ACTOR,
       { status: 'pending' },
       { status: 'applied' },
-      expect.objectContaining({ level: 'cell', handlerStatus: 'stub' })
+      expect.objectContaining({ level: 'cell', handlerStatus: 'live', operationsApplied: 0 })
     );
   });
 
