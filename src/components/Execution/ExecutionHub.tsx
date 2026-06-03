@@ -34,6 +34,7 @@ import {
   LayoutDashboard,
   Loader2,
   MessageSquare,
+  RefreshCw,
   Rocket,
   Scale,
   Shield,
@@ -51,7 +52,13 @@ import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
-import { Api, API_URL, getHeaders } from '@/services/api';
+import {
+  Api,
+  API_URL,
+  clearGlobalTransportFailure,
+  getHeaders,
+  resetAuthLoopGuard,
+} from '@/services/api';
 import {
   shouldFallbackToLegacyExecutionControl,
   V8ExecutionControlApi,
@@ -1752,11 +1759,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.table.status'),
         width: '160px',
         filterable: true,
-        filterOptions: EXECUTION_STATUSES.map((status) => ({
-          value: status,
-          label: STATUS_METADATA[status].label,
-          color: STATUS_METADATA[status].dotColor,
-        })),
+        filterOptions: EXECUTION_STATUSES.map((status) => {
+          // Guard: EXECUTION_STATUSES is partly config-driven; never assume a
+          // metadata entry exists for every status (a missing one would throw
+          // synchronously during render and crash the whole module).
+          const meta = STATUS_METADATA[status];
+          return {
+            value: status,
+            label: meta?.label || String(status),
+            color: meta?.dotColor || 'bg-slate-400',
+          };
+        }),
         render: (row) => {
           const meta = STATUS_METADATA[row.status as InitiativeStatus];
           const actions = getStatusActions(row.status as InitiativeStatus);
@@ -4557,9 +4570,41 @@ Please return:
     }
 
     if (initiativesLoadError) {
+      // IMPACT-TR-002 / BUG-2: previously this rendered an infinite spinner on a
+      // load failure (the "stuck spinner" the user saw). Degrade gracefully with a
+      // localized error + a retry that also clears any latched transport/auth-loop
+      // guard so a transient block (429 storm, refresh race) can recover.
+      const isTransportBlock =
+        initiativesLoadErrorCode === 'CLIENT_AUTH_LOOP_GUARD_OPEN' ||
+        initiativesLoadErrorCode === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN' ||
+        /transport safeguard|auth loop guard/i.test(initiativesLoadError || '');
       return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+          <AlertTriangle className="mb-4 h-12 w-12 text-rose-500" />
+          <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+            {isTransportBlock
+              ? t('execution.hub.transportBlockedTitle', 'Requests temporarily blocked')
+              : t('execution.hub.loadErrorTitle', 'Failed to load implementation data')}
+          </h3>
+          <p className="mb-6 max-w-md text-sm text-slate-500 dark:text-slate-400">
+            {initiativesLoadError}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              clearGlobalTransportFailure();
+              resetAuthLoopGuard();
+              initRetryRef.current = 0;
+              setInitiativesLoadError(null);
+              setInitiativesLoadErrorCode(null);
+              setIsLoading(true);
+              queueExecutionTruthRefresh();
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {t('common.retry', 'Retry')}
+          </button>
         </div>
       );
     }

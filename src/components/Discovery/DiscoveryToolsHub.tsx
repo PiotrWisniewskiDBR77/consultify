@@ -55,7 +55,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
-import { Api } from '@/services/api';
+import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -3166,6 +3166,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">{loadError.message}</p>
           <button
             onClick={() => {
+              // IMPACT-TR-002: a user-initiated retry must clear any latched
+              // transport/auth-loop guard so the module can recover immediately.
+              clearGlobalTransportFailure();
+              resetAuthLoopGuard();
               setLoadError(null);
               setIsLoading(true);
               fetchData();
@@ -3328,6 +3332,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               <button
                 type="button"
                 onClick={() => {
+                  // IMPACT-TR-002: clear any latched guard before retrying.
+                  clearGlobalTransportFailure();
+                  resetAuthLoopGuard();
                   void fetchKnownTools();
                 }}
                 className="mt-4 inline-flex items-center justify-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.06] text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.1]"

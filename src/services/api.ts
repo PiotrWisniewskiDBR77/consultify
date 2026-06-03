@@ -87,8 +87,11 @@ const GLOBAL_TRANSPORT_FAILURE_THRESHOLD = 2;
 const GLOBAL_TRANSPORT_BLOCK_MS = 300000;
 const AUTH_LOOP_GUARD_STORAGE_KEY = 'consultify:authLoopGuard:v1';
 const AUTH_LOOP_GUARD_WINDOW_MS = 10000;
-const AUTH_LOOP_GUARD_THRESHOLD = 3;
-const AUTH_LOOP_GUARD_BLOCK_MS = 600000;
+// IMPACT-TR-002: Only a genuine 401 -> refresh -> 401 loop should trip the guard.
+// Require several consecutive post-refresh 401s before latching, and keep the
+// cooldown short so a transient race never blocks whole modules for minutes.
+const AUTH_LOOP_GUARD_THRESHOLD = 4;
+const AUTH_LOOP_GUARD_BLOCK_MS = 30000;
 
 let transportCircuitState: Record<string, TransportCircuitEntry> = (() => {
   try {
@@ -420,10 +423,14 @@ const clearTransportFailure = (path: string) => {
   logTransportStabilityMarker('transport_circuit_close', { key, path });
 };
 
+// IMPACT-TR-002: This is intentionally only fed by a TRUE auth-refresh loop signal
+// (a 401 that persists AFTER a token refresh was attempted). It must NOT be called
+// for generic failures, 429 rate-limiting, 5xx, or the first/pre-refresh 401 — those
+// are transient and must never latch a global block that kills unrelated modules.
 const recordAuthLoopSignal = (path: string, status: number) => {
   if (!path.startsWith('/api/')) return;
   if (shouldBypassAuthLoopGuard(path)) return;
-  if (![401, 429].includes(status)) return;
+  if (status !== 401) return;
 
   const now = Date.now();
   const withinWindow =
@@ -467,6 +474,23 @@ const clearAuthLoopSignal = (path: string) => {
     lastPath: '',
   };
   persistAuthLoopGuard();
+};
+
+/**
+ * IMPACT-TR-002: Hard reset of the auth-loop guard. Used by user-initiated retry
+ * UI so a module that got caught behind a (possibly stale) guard can recover
+ * immediately instead of waiting out the cooldown.
+ */
+export const resetAuthLoopGuard = () => {
+  authLoopGuardState = {
+    failures: 0,
+    windowStartedAt: 0,
+    blockedUntil: 0,
+    lastStatus: 0,
+    lastPath: '',
+  };
+  persistAuthLoopGuard();
+  logTransportStabilityMarker('auth_loop_guard_reset');
 };
 
 const shouldSuppressAuthRetry = (path: string): boolean =>
@@ -786,7 +810,9 @@ const fetchWithRetryInner = async (
     } else {
       recordTransportFailure(transportPath, res.status);
       recordGlobalTransportFailure(transportPath, res.status);
-      recordAuthLoopSignal(transportPath, res.status);
+      // IMPACT-TR-002: Do NOT feed the auth-loop guard from the FIRST response.
+      // A single pre-refresh 401 (or a generic 4xx/5xx) is transient — the guard
+      // is only fed below, AFTER a refresh attempt fails, to detect a true loop.
     }
   } catch (err: any) {
     if (controller && err?.name === 'AbortError') {
