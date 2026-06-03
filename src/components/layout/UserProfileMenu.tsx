@@ -12,6 +12,7 @@ import {
   LogOut,
   Monitor,
   Moon,
+  Sparkles,
   Sun,
   UserCircle,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ import { changeLanguage, normalizeLanguageCode, SUPPORTED_LANGUAGES } from '../.
 import { tokenService } from '../../services/tokenService';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, SessionMode } from '../../types';
+import { requestFirstRunRelaunch } from '../Onboarding/firstRunEvents';
 
 interface OrgItem {
   id: string;
@@ -510,6 +512,17 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
             >
               <Cpu size={16} />
               {t('settings.menu.aiConfig', 'AI Configuration')}
+            </button>
+
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                requestFirstRunRelaunch();
+              }}
+              className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 rounded-lg transition-colors"
+            >
+              <Sparkles size={16} />
+              {t('firstRun.relaunch.menu', 'Replay onboarding')}
             </button>
 
             <div className="my-1 border-t border-slate-100 dark:border-navy-700 opacity-50"></div>

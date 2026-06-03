@@ -24,6 +24,7 @@ import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
 import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
+import { FirstRunOnboarding } from '../components/Onboarding/FirstRunOnboarding';
 import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
@@ -210,6 +211,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Demo Session Manager - Handles banner, tour, prompts, exit intent */}
       <DemoSessionManager />
+
+      {/* First-run onboarding flow (new users; once, persisted to user_preferences) */}
+      <FirstRunOnboarding />
 
       {/* First-login onboarding CTA (dismissible) */}
       <OnboardingFirstLoginCTA />

@@ -10618,5 +10618,90 @@
       "title": "Jeszcze niedostępne",
       "description": "Ta funkcja rozliczeń nie jest jeszcze włączona. Pojawi się tutaj po włączeniu samoobsługowych rozliczeń."
     }
+  },
+  "firstRun": {
+    "welcome": {
+      "eyebrow": "Witaj w Consultify",
+      "title": "Poznaj Teresę — konsultantkę, która rozmawia",
+      "subtitle": "Teresa to Twój AI co-thinker. Opisz decyzję, ocenę dojrzałości lub pytanie zwykłym językiem, a ona uporządkuje myślenie razem z Tobą — bez ścian tekstu, po prostu rozmowa, która prowadzi do jasności.",
+      "point1": "Zapytaj o cokolwiek — Teresa odpowiada jak starszy konsultant, nie jak chatbot",
+      "point2": "Uruchamiaj oceny, wywiady i modele finansowe, gdy potrzebujesz rygoru",
+      "point3": "Wszystko zostaje w Twojej przestrzeni roboczej, w Twoim języku",
+      "cta": "Zacznijmy",
+      "skip": "Pomiń na razie"
+    },
+    "role": {
+      "title": "Co Cię tu sprowadza?",
+      "subtitle": "Wybierz swój główny cel, abyśmy otworzyli właściwe drzwi na początek. Kierunek możesz zmienić w każdej chwili.",
+      "back": "Wstecz",
+      "continue": "Kontynuuj",
+      "options": {
+        "chat": {
+          "title": "Przemyśl decyzję z Teresą",
+          "description": "Porozmawiaj ze swoim AI co-thinkerem i uporządkuj strategiczną decyzję lub otwarte pytanie."
+        },
+        "tools": {
+          "title": "Poznaj narzędzia odkrywcze",
+          "description": "Przestrzenie strategiczne, operacyjne, cyfrowe i automatyzacji procesów do uporządkowanej analizy."
+        },
+        "assessment": {
+          "title": "Przeprowadź ocenę dojrzałości",
+          "description": "DRD, SIRI, ADMA, CMMI lub Lean — oceń, gdzie organizacja jest dzisiaj."
+        },
+        "interview": {
+          "title": "Przeprowadź wywiad odkrywczy",
+          "description": "Zbierz perspektywy interesariuszy w prowadzonym wywiadzie wspieranym przez AI."
+        },
+        "financial": {
+          "title": "Zbuduj model finansowy",
+          "description": "Zamodeluj ekonomię inicjatywy — koszty, zwroty i scenariusze."
+        }
+      }
+    },
+    "sample": {
+      "title": "Zacząć od przykładu czy od czystej karty?",
+      "subtitle": "Nie wiesz, od czego zacząć? Poznaj przestrzeń demonstracyjną Atelier Toys — w pełni wypełniony przykład, po którym możesz bezpiecznie klikać.",
+      "back": "Wstecz",
+      "demo": {
+        "title": "Poznaj demo Atelier Toys",
+        "description": "Przykładowa przestrzeń tylko do odczytu z realistycznymi danymi, abyś zobaczył Consultify w akcji.",
+        "cta": "Otwórz demo"
+      },
+      "fresh": {
+        "title": "Zacznij od zera",
+        "description": "Przejdź prosto do własnej przestrzeni roboczej i zacznij od swojej prawdziwej pracy.",
+        "cta": "Zacznij od zera"
+      }
+    },
+    "relaunch": {
+      "menu": "Odtwórz wdrożenie",
+      "title": "Odtwórz przewodnik powitalny"
+    },
+    "common": {
+      "stepOf": "Krok {{current}} z {{total}}"
+    },
+    "goals": {
+      "title": "Co chcesz dziś osiągnąć?",
+      "subtitle": "Twój wybór pomoże nam dostosować doświadczenie i zaproponować najlepsze następne kroki.",
+      "skip": "Pomiń na razie",
+      "continue": "Kontynuuj",
+      "saving": "Zapisuję…",
+      "strategic": {
+        "title": "Zrozumieć kluczową decyzję",
+        "description": "Mam konkretną decyzję strategiczną do przeanalizowania i chcę ją ustrukturyzować."
+      },
+      "team": {
+        "title": "Ustrukturyzować wiedzę zespołu",
+        "description": "Chcę zebrać różne perspektywy mojego zespołu w jednym miejscu i wykryć rozbieżności."
+      },
+      "executive": {
+        "title": "Przygotować materiał dla zarządu",
+        "description": "Potrzebuję ustrukturyzowanej analizy do prezentacji decydentom."
+      },
+      "explore": {
+        "title": "Eksploruję możliwości",
+        "description": "Chcę zobaczyć jak system może pomóc mojej organizacji bez konkretnego celu."
+      }
+    }
   }
 }

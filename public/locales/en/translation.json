@@ -9481,5 +9481,90 @@
       "title": "Not available yet",
       "description": "This billing capability is not enabled yet. It will appear here once self-serve billing is turned on."
     }
+  },
+  "firstRun": {
+    "welcome": {
+      "eyebrow": "Welcome to Consultify",
+      "title": "Meet Teresa — a consultant that talks",
+      "subtitle": "Teresa is your AI co-thinker. Describe a decision, an assessment, or a question in plain language and she structures the thinking with you — no walls of text, just a conversation that gets you to clarity.",
+      "point1": "Ask anything — Teresa replies like a senior consultant, not a chatbot",
+      "point2": "Run assessments, interviews, and financial models when you need rigor",
+      "point3": "Everything stays in your workspace, in your language",
+      "cta": "Get started",
+      "skip": "Skip for now"
+    },
+    "role": {
+      "title": "What brings you here?",
+      "subtitle": "Pick your main goal so we can open the right door first. You can change direction anytime.",
+      "back": "Back",
+      "continue": "Continue",
+      "options": {
+        "chat": {
+          "title": "Think through a decision with Teresa",
+          "description": "Talk to your AI co-thinker and structure a strategic decision or open question."
+        },
+        "tools": {
+          "title": "Explore the discovery tools",
+          "description": "Strategic, operational, digital and process-automation workspaces for structured analysis."
+        },
+        "assessment": {
+          "title": "Run a maturity assessment",
+          "description": "DRD, SIRI, ADMA, CMMI or Lean — assess where the organization stands today."
+        },
+        "interview": {
+          "title": "Run a discovery interview",
+          "description": "Capture stakeholder perspectives with a guided, AI-assisted interview."
+        },
+        "financial": {
+          "title": "Build a financial model",
+          "description": "Model the economics of an initiative — costs, returns and scenarios."
+        }
+      }
+    },
+    "sample": {
+      "title": "Start with a sample or a clean slate?",
+      "subtitle": "Not sure where to begin? Explore the Atelier Toys demo workspace — a fully populated example you can click around safely.",
+      "back": "Back",
+      "demo": {
+        "title": "Explore the Atelier Toys demo",
+        "description": "A read-only sample workspace with realistic data so you can see Consultify in action.",
+        "cta": "Open the demo"
+      },
+      "fresh": {
+        "title": "Start fresh",
+        "description": "Go straight to your own workspace and begin with your real work.",
+        "cta": "Start fresh"
+      }
+    },
+    "relaunch": {
+      "menu": "Replay onboarding",
+      "title": "Replay the welcome tour"
+    },
+    "common": {
+      "stepOf": "Step {{current}} of {{total}}"
+    },
+    "goals": {
+      "title": "What do you want to achieve today?",
+      "subtitle": "Your choice helps us tailor the experience and suggest the best next steps.",
+      "skip": "Skip for now",
+      "continue": "Continue",
+      "saving": "Saving…",
+      "strategic": {
+        "title": "Understand a key decision",
+        "description": "I have a specific strategic decision to analyze and I want to structure it."
+      },
+      "team": {
+        "title": "Structure team knowledge",
+        "description": "I want to gather my team’s different perspectives in one place and surface divergences."
+      },
+      "executive": {
+        "title": "Prepare material for the board",
+        "description": "I need a structured analysis to present to decision-makers."
+      },
+      "explore": {
+        "title": "Exploring the possibilities",
+        "description": "I want to see how the system can help my organization without a specific goal."
+      }
+    }
   }
 }

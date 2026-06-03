@@ -1419,6 +1419,52 @@ export const Api = {
       });
       return handleResponse(res, 'Failed to complete onboarding');
     },
+
+    // --- First-run onboarding flow (X4 / D22) ---
+    // Persisted via the generic user_preferences store (GET/PUT /api/preferences).
+    // Keys: `onboarding_completed` (boolean) and `onboarding_role` (string).
+    getFirstRunState: async (): Promise<{
+      completed: boolean;
+      role: string | null;
+    }> => {
+      const res = await fetchWithRetry(`${API_URL}/preferences`, {
+        headers: getHeaders(),
+      });
+      const prefs = await handleResponse(res, 'Failed to fetch onboarding state');
+      return {
+        completed: Boolean((prefs as Record<string, unknown>)?.onboarding_completed),
+        role: ((prefs as Record<string, unknown>)?.onboarding_role as string | undefined) ?? null,
+      };
+    },
+
+    setFirstRunRole: async (role: string): Promise<void> => {
+      const res = await fetchWithRetry(`${API_URL}/preferences`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ onboarding_role: role }),
+      });
+      return handleResponse(res, 'Failed to save onboarding role');
+    },
+
+    markFirstRunComplete: async (role?: string): Promise<void> => {
+      const payload: Record<string, unknown> = { onboarding_completed: true };
+      if (role) payload.onboarding_role = role;
+      const res = await fetchWithRetry(`${API_URL}/preferences`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return handleResponse(res, 'Failed to mark onboarding complete');
+    },
+
+    resetFirstRun: async (): Promise<void> => {
+      const res = await fetchWithRetry(`${API_URL}/preferences`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ onboarding_completed: false }),
+      });
+      return handleResponse(res, 'Failed to reset onboarding');
+    },
   },
 
   // --- TOKEN USAGE ANALYTICS ---
