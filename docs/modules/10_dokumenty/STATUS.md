@@ -1,37 +1,66 @@
 ---
 module_id: MODULE_DOCUMENTS
 doc_kind: STATUS
-version: 1.0
+version: 2.0
 owner: user
 status: canonical
-last_updated: 2026-05-11
+last_updated: 2026-06-03
 ---
 
-# Status — Dokumenty / Wordy
+# Status — Dokumenty / Document Studio
 
 ## Shipping Status (As-Is)
 
-- Runtime class: `soon + code_gap`
-- Launch path is wired in sidebar + route config, then rendered through `AppRoutes`.
-- Current ownership decision: As-Is route is active in router and sidebar, but current runtime is placeholder (coming-soon).
-- Docs integration decision (`2026-05-11`): `APPROVED_FOR_DOCS`.
-- Runtime readiness decision (`2026-05-11`): `BLOCKED_P1` (pending runtime evidence rows).
-- Deep-audit decision (`2026-05-11`): `NEEDS_OWNER_DECISION` for `/wordy` runtime strategy vs active upstream chat/template handoffs.
-- Deep-RAW-audit decision (`2026-05-11`): `NEEDS_OWNER_DECISION` (hard-rule compliance is documented; runtime strategy remains unresolved).
-- Stage 1.5 decision (`2026-05-11`): `NEEDS_OWNER_DECISION` for `/wordy` mount strategy; chat/template handoff is rerouted to active Outputs runtime surfaces in Wave 1.
+- Runtime class: `mounted + real_runtime` (was `soon + code_gap`).
+- **Route-identity resolved (2026-06-03):** `/document-studio` (DocumentStudioView,
+  backed by `/api/document-studio`) is the **canonical Document module**. The
+  legacy `/wordy` KimiWorkspace report-builder surface (backed by
+  `/api/report-builder`) is **deprecated and redirect-only** — `/wordy` now
+  `Navigate`-redirects to `/document-studio` (mirrors `/excele` -> `/tabele`).
+- **Sidebar:** the "Documents" entry (`MODULE_DOCUMENT_STUDIO`) navigates to the
+  canonical route. `AppView.WORDY` resolves to `ROUTES.DOCUMENT_STUDIO` in
+  `routeConfig.ts`; both `/document-studio` and `/document-studio/:artifactId`
+  resolve back to the WORDY view so the entry highlights correctly.
+- **Production gate lifted:** `/document-studio` is reachable for every
+  authenticated user (wrapped in `ProtectedRoute`); the public-production
+  hide gate (`ProductionModuleGate` + `shouldHideNonCoreModulesInPublicProduction`)
+  no longer blocks it.
+- **Persistence:** editor proposals, the per-artifact audit ledger, and the
+  schema overlay are now durable. They were in-process `Map`s
+  (`proposalStore` / `auditStore` / `schemaOverlayStore`) lost on restart;
+  they are now write-through to Postgres via
+  `documentEditorStateRegistryDao.ts` (migration
+  `20260603_document_studio_editor_state.sql`) with lazy cold-start hydration.
+- **LLM block-level prose (D11):** `materializeDocumentArtifact` calls
+  `documentBlockProseGenerator.generateBlockProse` when `useLlm` is set,
+  filling deterministic placeholder prose with grounded consulting narrative
+  (Teresa via `aiService.generateChatResponse`). Best-effort: any LLM failure
+  falls back to the deterministic schema unchanged.
+- **PDF figure embedding:** `documentPdfRenderer` now embeds real figures from
+  `image` blocks that carry inline bytes (`dataBase64` + optional
+  `mimeType` / `widthCm`); blocks without bytes degrade to a numbered
+  `Figure N — caption` placeholder. Cover-logo + chart rasterization were
+  already wired.
 
 ## Current Risks
 
-- Route exists, but behavior can diverge if imports are present and not mounted.
-- Documentation must track mounted runtime, not planned/RAW target-state behavior.
-- `/wordy` remains placeholder as standalone lane; Teresa/chat and template-use runtime entry now targets active Outputs delivery surfaces, not `/wordy`.
+- LLM prose path depends on a configured LLM key; without it, generation
+  silently falls back to deterministic placeholders (no failure surfaced to
+  the user). OWNER action: provision / confirm the LLM key for production.
+- Schema `artifactId` carried inside the persisted schema body still reflects
+  the provisional pre-materialization id (pre-existing service behavior);
+  artifacts are resolved by the canonical wave5 id, so this is cosmetic.
 
 ## Next Contract Work (without changing scope)
 
-- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with mounted route/component truth.
-- Reclassify status only when `AppRoutes` mounts real runtime behavior on launch route.
+- Keep CODEMAP/BEHAVIOR/UI_UX/TESTS aligned with the mounted route/component
+  truth above.
+- Consolidate the remaining in-memory registry DAOs (share-link, approval,
+  audience, brand-voice) onto durable storage in follow-up slices.
 
 ## Function Coverage Status
 
-- Required functions documented: `2/2`.
-- Covered: `DOC_WORDY_PLACEHOLDER`, `DOC_STUDIO_RUNTIME_TARGET`.
+- Canonical route: `/document-studio` (+ `/document-studio/:artifactId`).
+- Legacy alias: `/wordy` -> redirect-only.
+- Persistence DAO: `documentEditorStateRegistryDao.ts`.
+- Migration: `server/migrations/20260603_document_studio_editor_state.sql`.
