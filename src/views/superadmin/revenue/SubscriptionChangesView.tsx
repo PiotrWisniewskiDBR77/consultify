@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
+import { BillingFeaturePending } from '../../../components/billing/BillingFeaturePending';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/BaseCard';
 import { Api } from '../../../services/api';
+import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 
 interface SubscriptionChange {
   id: string;
@@ -33,16 +35,23 @@ interface SubscriptionChangeStats {
 }
 
 export const SubscriptionChangesView: React.FC = () => {
+  // Decision D8: subscription-changes endpoints return 503 until built out.
+  const billingAnalyticsEnabled = isBillingSelfServeEnabled();
   const [changes, setChanges] = useState<SubscriptionChange[]>([]);
   const [stats, setStats] = useState<SubscriptionChangeStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(billingAnalyticsEnabled);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
   useEffect(() => {
+    if (!billingAnalyticsEnabled) return;
     fetchData();
-  }, [statusFilter, typeFilter]);
+  }, [statusFilter, typeFilter, billingAnalyticsEnabled]);
+
+  if (!billingAnalyticsEnabled) {
+    return <BillingFeaturePending />;
+  }
 
   const fetchData = async () => {
     try {

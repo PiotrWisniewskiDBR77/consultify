@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
+import { BillingFeaturePending } from '../../../components/billing/BillingFeaturePending';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/BaseCard';
 import { Api } from '../../../services/api';
+import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 
 interface RevenueRecognition {
   id: string;
@@ -37,9 +39,11 @@ interface RecognitionScheduleItem {
 }
 
 export const RevenueRecognitionView: React.FC = () => {
+  // Decision D8: revenue-recognition endpoints return 503 until built out.
+  const billingAnalyticsEnabled = isBillingSelfServeEnabled();
   const [recognitions, setRecognitions] = useState<RevenueRecognition[]>([]);
   const [stats, setStats] = useState<RevenueRecognitionStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(billingAnalyticsEnabled);
   const [error, setError] = useState<string | null>(null);
   const [selectedRecognition, setSelectedRecognition] = useState<RevenueRecognition | null>(null);
   const [schedule, setSchedule] = useState<RecognitionScheduleItem[]>([]);
@@ -55,8 +59,13 @@ export const RevenueRecognitionView: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!billingAnalyticsEnabled) return;
     fetchData();
-  }, []);
+  }, [billingAnalyticsEnabled]);
+
+  if (!billingAnalyticsEnabled) {
+    return <BillingFeaturePending />;
+  }
 
   const fetchData = async () => {
     try {

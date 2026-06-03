@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
+import { BillingFeaturePending } from '../../../components/billing/BillingFeaturePending';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/BaseCard';
 import { Api } from '../../../services/api';
+import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 
 interface RevenueForecast {
   id: string;
@@ -26,9 +28,11 @@ interface ForecastStats {
 }
 
 export const RevenueForecastView: React.FC = () => {
+  // Decision D8: revenue-forecast endpoints return 503 until built out.
+  const billingAnalyticsEnabled = isBillingSelfServeEnabled();
   const [forecasts, setForecasts] = useState<RevenueForecast[]>([]);
   const [stats, setStats] = useState<ForecastStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(billingAnalyticsEnabled);
   const [error, setError] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -40,8 +44,13 @@ export const RevenueForecastView: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!billingAnalyticsEnabled) return;
     fetchData();
-  }, []);
+  }, [billingAnalyticsEnabled]);
+
+  if (!billingAnalyticsEnabled) {
+    return <BillingFeaturePending />;
+  }
 
   const fetchData = async () => {
     try {

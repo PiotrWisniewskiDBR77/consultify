@@ -10589,5 +10589,34 @@
     "artifactRun": {
       "openInOutputs": "Zobacz w Outputs"
     }
+  },
+  "billing": {
+    "addCard": {
+      "title": "Metoda płatności",
+      "subtitle": "Jak działa rozliczanie Twojego konta",
+      "secureNote": "Płatności są przetwarzane w bezpieczny sposób.",
+      "checking": "Sprawdzanie konfiguracji płatności…",
+      "elementsPending": "Bezpieczne wprowadzanie karty jest finalizowane. Stripe jest podłączony, ale formularz karty w aplikacji nie jest jeszcze dostępny — skontaktuj się z nami, aby dokończyć konfigurację.",
+      "manual": {
+        "title": "Rozliczenia obsługiwane są ręcznie",
+        "body": "Samoobsługowe płatności kartą nie są jeszcze włączone dla Twojego konta. Twój plan i faktury są obsługiwane bezpośrednio przez nasz zespół — karta nie jest tutaj wymagana.",
+        "contactPrefix": "Pytania o rozliczenia? Skontaktuj się"
+      }
+    },
+    "paymentMethods": {
+      "add": "Dodaj kartę",
+      "manage": "Informacje o rozliczeniach",
+      "manualNote": "Rozliczenia są obecnie obsługiwane ręcznie przez nasz zespół. Karta nie jest wymagana.",
+      "emptyManual": "Rozliczenia obsługiwane są ręcznie",
+      "learnMore": "Dowiedz się więcej"
+    },
+    "analytics": {
+      "unavailableTitle": "Analityka przychodów wkrótce",
+      "unavailableBody": "Analityka MRR, churn, kohort i ekspansji nie jest jeszcze dostępna. Pojawi się tutaj po włączeniu samoobsługowych rozliczeń."
+    },
+    "pending": {
+      "title": "Jeszcze niedostępne",
+      "description": "Ta funkcja rozliczeń nie jest jeszcze włączona. Pojawi się tutaj po włączeniu samoobsługowych rozliczeń."
+    }
   }
 }

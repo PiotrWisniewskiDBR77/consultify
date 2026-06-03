@@ -9452,5 +9452,34 @@
     "artifactRun": {
       "openInOutputs": "View in Outputs"
     }
+  },
+  "billing": {
+    "addCard": {
+      "title": "Payment Method",
+      "subtitle": "How billing works for your account",
+      "secureNote": "Payments are processed securely.",
+      "checking": "Checking payment configuration…",
+      "elementsPending": "Secure card entry is being finalised. Stripe is connected, but the in-app card form is not available yet — please contact us to complete setup.",
+      "manual": {
+        "title": "Billing is handled manually",
+        "body": "Self-serve card payments are not enabled for your account yet. Your plan and invoices are managed directly with our team — no card is required here.",
+        "contactPrefix": "Questions about billing? Contact"
+      }
+    },
+    "paymentMethods": {
+      "add": "Add Card",
+      "manage": "Billing info",
+      "manualNote": "Billing is currently handled manually by our team. No card is required.",
+      "emptyManual": "Billing is handled manually",
+      "learnMore": "Learn more"
+    },
+    "analytics": {
+      "unavailableTitle": "Revenue analytics coming soon",
+      "unavailableBody": "MRR, churn, cohort and expansion analytics are not available yet. They will appear here once self-serve billing is enabled."
+    },
+    "pending": {
+      "title": "Not available yet",
+      "description": "This billing capability is not enabled yet. It will appear here once self-serve billing is turned on."
+    }
   }
 }
