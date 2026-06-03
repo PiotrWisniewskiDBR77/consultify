@@ -28,7 +28,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { LoadingState } from '@/components/ui/primitives';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
@@ -310,6 +310,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const persistedTableView = useMemo(() => loadIdeasTableViewState(), []);
   const [ideas, setIdeas] = useState<MyIdea[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   // activeTag is only used in the Tags (garden) view
   const [activeTag, setActiveTag] = useState<string>('all');
   const [convertIdea, setConvertIdea] = useState<MyIdea | null>(null);
@@ -332,6 +333,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const fetchIdeas = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getMyIdeas({ q: searchQuery || undefined, limit: 200 });
       const mapped = ((data || []) as any[]).map((raw) => ({
         ...raw,
@@ -357,6 +359,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       }
     } catch (err) {
       console.error('Failed to fetch ideas:', err);
+      setLoadError(t('myWork.errors.fetchFailed', 'Failed to load ideas'));
       toast.error(t('myWork.errors.fetchFailed', 'Failed to load ideas'));
     } finally {
       setLoading(false);
@@ -1183,6 +1186,16 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="w-full flex items-center justify-center" style={{ minHeight: 300 }}>
         <LoadingState variant="spinner" />
+      </div>
+    );
+  }
+
+  // Distinguish error from empty: on a failed load, show ErrorState with retry —
+  // NOT the empty "Idea Garden" CTA (which falsely implies the user has 0 ideas).
+  if (loadError) {
+    return (
+      <div className="w-full flex items-center justify-center" style={{ minHeight: 300 }}>
+        <ErrorState message={loadError} retry={fetchIdeas} />
       </div>
     );
   }
