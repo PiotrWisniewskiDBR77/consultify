@@ -7033,8 +7033,8 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <div className="h-full overflow-auto p-4">
           {renderDegradedBanner()}
-          <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
-            <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
+          <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
+            <table className="w-full table-fixed rounded-xl" style={{ minWidth: tableMinWidth }}>
               <thead>
                 <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
                   <th
