@@ -47,5 +47,15 @@ Each module was built by an opus subagent against its detailed plan, then **inde
 - A few pre-existing failing tests in untouched files (e.g. `ReferralToolsSection.v8-campaign-create`, `p14-processflow-service`) — flagged, spun off as background tasks.
 - Cross-cutting Week-2: full realtime/voice (X3), full multi-module Atelier demo dataset, X1 SplitLayout→ModuleHub migrations for non-Wave-1 views.
 
-## Next (Wave 2)
-Document Studio (10), Table Studio (11), Presentation Studio (12) to Gamma/Canva quality — the deliverable studios deferred from Wave 1. Plus fast-follow: full billing/Stripe (08), full Results (07), full Admin (17), full Settings (18).
+## Wave 2 + fast-follow — DONE (2026-06-03, same autonomous run)
+- **Tech-debt (safe):** repo-wide prettier/import-sort autofix → **CI lint green (317 errors → 0)**; initiative-generator schema-drift catch-up migration.
+- **Wave 2 studios → 98:** **10 Document Studio** (DB-persisted editor state, canonical route, LLM prose, PDF figures), **11 Table Studio** (records API ON, real AI mutations, artifact materializer), **12 Presentation Studio** (self-serve, server-persisted versions, MELS default, PNG verified).
+- **Fast-follow → 98:** **07 Rezultaty** (finalization guard, ROI lock UI, approval chips), **17 Admin** (5 sections mounted, manual plan/limit assignment, audit proof), **18 Ustawienia** (AI-settings graceful fallback, honest push, audit-log 2→14), **08 Billing** (no fake payments — honest manual state, 503 surfaces gated, dup route removed; live Stripe deferred per D8).
+- **Every unit:** subagent-built → independently gated (frontend tsc 0 / eslint 0 / tests) → committed. Frontend tsc held at 0 throughout.
+
+## Still deferred (deliberate)
+- **Module 13 Meeting** — "later" per decisions (own stack; north-star = Teresa-in-meeting).
+- **X1 visual consolidation** — SplitLayout/Kimi shell migrations (18+11 files), slate→navy sweep (45k), hex sweep (1450): **pure-visual, best done WITH the owner's eyes** in a joint visual-review session (doing it blind risks looking worse).
+- **X3 full realtime/voice (Phase 2), X4 full first-run onboarding flow, X2 demo E2E coherence** — partial; functional cross-cutting completion.
+- **Server `tsc`** ~4596 pre-existing errors (tolerated by `--noCheck`) — separate large initiative.
+- New OWNER actions from Wave 2/fast-follow: provision LLM key (Document Studio prose); flip `ENABLE_TABLE_ARTIFACT_CONVERSION` when a trigger UI ships; when Stripe keys arrive set `STRIPE_*_KEY` + `VITE_BILLING_SELF_SERVE=true` + build the 35 analytics tables.
