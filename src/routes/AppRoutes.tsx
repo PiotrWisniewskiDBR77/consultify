@@ -23,7 +23,6 @@ import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
-import { apiGet } from '@/services/api/baseClient';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
@@ -622,84 +621,6 @@ export const AppRoutes: React.FC = () => {
     []
   );
   const internalToolsEnabled = canUseInternalTools(currentUser);
-  const directKimiModuleAccess = React.useMemo(() => {
-    if (!currentUser?.isAuthenticated) return false;
-    if (isSuperAdminRole(currentUser?.role)) return true;
-
-    const email = String(currentUser?.email || '')
-      .trim()
-      .toLowerCase();
-    if (!email) return false;
-
-    const defaults = ['piotr.wisniewski@dbr77.com', 'piotrwisniewski@dbr77.com'];
-    const configured = String(
-      import.meta.env.VITE_DIRECT_KIMI_MODULE_ACCESS_EMAILS || 'piotr.wisniewski@dbr77.com'
-    )
-      .split(',')
-      .map((item) => item.trim().toLowerCase())
-      .filter(Boolean);
-    const allowlist = new Set([...defaults, ...configured]);
-    return allowlist.has(email);
-  }, [currentUser?.isAuthenticated, currentUser?.role, currentUser?.email]);
-
-  const KimiModuleGate: React.FC<{
-    moduleKey: 'wordy' | 'excele' | 'prezentacje';
-    children: React.ReactNode;
-  }> = ({ moduleKey, children }) => {
-    const [loading, setLoading] = React.useState(true);
-    const [allowed, setAllowed] = React.useState(false);
-    const MODULE_ACCESS_TIMEOUT_MS = 12000;
-
-    React.useEffect(() => {
-      let cancelled = false;
-      const run = async () => {
-        if (directKimiModuleAccess) {
-          if (!cancelled) {
-            setAllowed(true);
-            setLoading(false);
-          }
-          return;
-        }
-
-        const timeoutId = window.setTimeout(() => {
-          if (cancelled) return;
-          setAllowed(false);
-          setLoading(false);
-        }, MODULE_ACCESS_TIMEOUT_MS);
-
-        try {
-          const data = await apiGet<{ modules?: string[] }>('/module-access/my');
-          const modules = Array.isArray(data?.modules) ? data.modules : [];
-          if (!cancelled) {
-            setAllowed(modules.includes(moduleKey));
-          }
-        } catch {
-          if (!cancelled) {
-            setAllowed(false);
-          }
-        } finally {
-          window.clearTimeout(timeoutId);
-          if (!cancelled) {
-            setLoading(false);
-          }
-        }
-      };
-      void run();
-      return () => {
-        cancelled = true;
-      };
-    }, [moduleKey, directKimiModuleAccess]);
-
-    if (loading) {
-      return (
-        <div className="flex h-[40vh] items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-        </div>
-      );
-    }
-
-    return <>{allowed ? children : <V4ComingSoonView />}</>;
-  };
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
@@ -1409,16 +1330,19 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* KIMI Prezentacje — contact-required blocking page */}
+        {/*
+          KIMI Prezentacje — self-serve presentation generator lane.
+          The contact-required KimiModuleGate was removed (Module 12 audit gap #1):
+          the generator is real and backend-wired, so it must be reachable by every
+          authenticated user without ops intervention — mirroring Tabele/Document Studio.
+        */}
         <Route
           path={ROUTES.PREZENTACJE_GEN}
           element={
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
                 <RouteErrorBoundary>
-                  <KimiModuleGate moduleKey="prezentacje">
-                    <PrezentacjeView />
-                  </KimiModuleGate>
+                  <PrezentacjeView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>

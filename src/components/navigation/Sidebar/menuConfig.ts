@@ -134,13 +134,12 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       viewId: AppView.WORDY,
       badge: 'beta',
     },
-    // 11. Prezentacje — Gamma-style presentation generation (P20) — contact required
+    // 11. Prezentacje — Gamma-style presentation generation (P20) — self-serve
     {
       id: 'MODULE_PREZENTACJE_GEN',
       label: t('sidebar.prezentacje', 'Presentations'),
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PREZENTACJE_GEN,
-      badge: 'soon',
     },
     // 12. Tabele Studio — operational tables (single canonical tables module)
     {

@@ -24,7 +24,6 @@ import {
   fetchPresentationRuntimeEvents,
   type PresentationRuntimeEvent,
 } from '@/services/presentationRuntimeEvents';
-import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
 import type { WorkspaceContext } from '@/types/workspace';
 import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
@@ -49,7 +48,6 @@ import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
 import { ShareModal } from './ShareModal';
 import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
@@ -344,22 +342,9 @@ export const DeckBuilder: React.FC = () => {
   } | null>(null);
 
   const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
-    useVersionHistory(deck);
+    useVersionHistory(deck, deckId);
 
   const { isCardOutdated, refreshCard, refreshAllCards } = useDataRefresh(deck, updateCard);
-
-  const { currentUser: authUser } = useAppStore();
-  const currentUser = useMemo(
-    () => ({
-      userId: authUser?.id || 'current-user',
-      name:
-        `${authUser?.firstName || ''} ${authUser?.lastName || ''}`.trim() ||
-        authUser?.email ||
-        'You',
-    }),
-    [authUser]
-  );
-  const collab = useCollaboration(deckId, currentUser, false);
 
   const [brandKit, setBrandKit] = useState<BrandKit | null>(null);
   useEffect(() => {
@@ -628,10 +613,6 @@ export const DeckBuilder: React.FC = () => {
   }, [undo, redo]);
 
   useEffect(() => {
-    collab.updatePresence({ activeCardIndex });
-  }, [activeCardIndex, collab]);
-
-  useEffect(() => {
     const targetDeckId = String(deckId || deck?.deck_id || '').trim();
     if (!targetDeckId) return;
     setDeckBacklinksLoading(true);
@@ -770,11 +751,24 @@ export const DeckBuilder: React.FC = () => {
   );
 
   const handleRestoreVersion = useCallback(
-    (versionId: string) => {
-      const restored = restoreVersion(versionId);
-      if (restored) setDeck(restored);
+    async (versionId: string) => {
+      try {
+        const restored = await restoreVersion(versionId);
+        if (restored) {
+          setDeck(restored);
+          toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
+        } else {
+          toast.error(
+            isPolish ? 'Nie udało się przywrócić wersji' : 'Could not restore that version'
+          );
+        }
+      } catch {
+        toast.error(
+          isPolish ? 'Nie udało się przywrócić wersji' : 'Could not restore that version'
+        );
+      }
     },
-    [restoreVersion, setDeck]
+    [restoreVersion, setDeck, isPolish]
   );
 
   const handleAcceptAgentEdit = useCallback(async () => {
@@ -915,10 +909,11 @@ export const DeckBuilder: React.FC = () => {
     );
   }
 
-  // WS-A4: unified ExecutiveModuleShell rendering, behind a default-OFF flag.
-  // The shell adapter is presentational only — all deck state/handlers below
-  // are reused verbatim, so the legacy path stays the source of truth until
-  // the flag is enabled.
+  // WS-A4: unified ExecutiveModuleShell rendering — now the DEFAULT surface
+  // (flag default ON, Module 12 audit gap #4). The shell adapter is
+  // presentational only — all deck state/handlers below are reused verbatim,
+  // so the legacy 3-panel path remains available via an explicit `?ff_melsDeckBuilder=0`
+  // / localStorage override.
   if (isMelsDeckBuilderEnabled()) {
     const deckConfidentiality = ((deck as any)?.confidentiality ||
       (deck as any)?.meta?.confidentiality ||
@@ -1145,9 +1140,6 @@ export const DeckBuilder: React.FC = () => {
             onVersionHistory={() => setVersionHistoryOpen((v) => !v)}
             onToggleAnimations={() => setAnimationsEnabled((v) => !v)}
             animationsEnabled={animationsEnabled}
-            collaborators={collab.connectedUsers}
-            isConnected={collab.isConnected}
-            connectionStatus={collab.connectionStatus}
             onQualityGates={() => setQualityGatesOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
             onAuditLog={() => setAuditLogOpen(true)}

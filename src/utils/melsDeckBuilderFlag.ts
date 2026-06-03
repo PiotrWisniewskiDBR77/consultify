@@ -15,9 +15,11 @@
  *   1. URL query `?ff_melsDeckBuilder=0|1` — operator bypass for staging /
  *      visual-review smoke runs.
  *   2. `localStorage["ff.mels_deck_builder"]` — user / org override.
- *   3. `import.meta.env.VITE_MELS_DECK_BUILDER` — build-time default.
- *   4. Default: OFF. The MELS migration ships behind a closed flag until
- *      visual review + DBR77 hex scan pass.
+ *   3. `import.meta.env.VITE_MELS_DECK_BUILDER` — build-time override.
+ *   4. Default: ON (Module 12 audit gap #4). The EE ExecutiveModuleShell
+ *      adapter passed visual review, so it is now the default DeckBuilder
+ *      surface for shell consistency. Set any override to `0` to fall back
+ *      to the legacy 3-panel layout.
  */
 
 const LS_KEY = 'ff.mels_deck_builder';
@@ -33,12 +35,14 @@ function parseFlag(raw: string | null | undefined): boolean | null {
 }
 
 function readEnvFlag(): boolean {
+  // Default ON: when no build-time override is set, the MELS shell is the
+  // default DeckBuilder surface. An explicit `0`/`false` env value opts out.
   try {
     const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
-    return parsed === null ? false : parsed;
+    return parsed === null ? true : parsed;
   } catch {
-    return false;
+    return true;
   }
 }
 
