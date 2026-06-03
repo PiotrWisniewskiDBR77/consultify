@@ -108,6 +108,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const campaignNameInputRef = useRef<HTMLInputElement | null>(null);
 
   const normalizeTools = useCallback(
@@ -341,6 +342,42 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       }
     },
     [t]
+  );
+
+  // Generate a QR code for the referral link (lazy-import qrcode lib).
+  const handleGetQrCode = useCallback(
+    async (link?: string) => {
+      const url = link || tools?.referralLink || '';
+      if (!url) {
+        toast.error(t('partner.referrals.noLink', 'No referral link available yet'));
+        return;
+      }
+      try {
+        const QRCode = (await import('qrcode')).default;
+        const dataUrl = await QRCode.toDataURL(url, {
+          width: 320,
+          margin: 2,
+          color: { dark: '#0F172A', light: '#FFFFFF' },
+        });
+        setQrDataUrl(dataUrl);
+      } catch {
+        toast.error(t('partner.referrals.qrFailed', 'Could not generate QR code'));
+      }
+    },
+    [t, tools?.referralLink]
+  );
+
+  // Open the referral link in a new tab (preview the landing experience).
+  const handlePreview = useCallback(
+    (link?: string) => {
+      const url = link || tools?.referralLink || '';
+      if (!url) {
+        toast.error(t('partner.referrals.noLink', 'No referral link available yet'));
+        return;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+    },
+    [t, tools?.referralLink]
   );
 
   // Create new campaign link via API
@@ -711,11 +748,19 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </button>
           </div>
           <div className="flex items-center gap-4 mt-2">
-            <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handleGetQrCode()}
+              className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
+            >
               <QrCode className="w-3 h-3" />
               {t('partner.referrals.getQR', 'Get QR Code')}
             </button>
-            <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handlePreview()}
+              className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
+            >
               <ExternalLink className="w-3 h-3" />
               {t('partner.referrals.preview', 'Preview')}
             </button>
@@ -957,6 +1002,49 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
           </li>
         </ul>
       </div>
+
+      {/* QR Code modal */}
+      {qrDataUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setQrDataUrl(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white dark:bg-navy-800 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+              {t('partner.referrals.qrTitle', 'Referral QR Code')}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              {t('partner.referrals.qrHint', 'Scan to open your referral link')}
+            </p>
+            <img
+              src={qrDataUrl}
+              alt={t('partner.referrals.qrAlt', 'Referral QR code')}
+              className="w-full max-w-[240px] mx-auto rounded-lg border border-slate-200 dark:border-white/10"
+            />
+            <div className="flex items-center gap-2 mt-4">
+              <a
+                href={qrDataUrl}
+                download="consultify-referral-qr.png"
+                className="flex-1 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors"
+              >
+                {t('common.download', 'Download')}
+              </a>
+              <button
+                type="button"
+                onClick={() => setQrDataUrl(null)}
+                className="flex-1 px-4 py-2 rounded-lg bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
+              >
+                {t('common.close', 'Close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
