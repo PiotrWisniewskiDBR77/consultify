@@ -43,6 +43,7 @@ Each module was built by an opus subagent against its detailed plan, then **inde
 
 ## Known residuals (not blockers)
 - **Server `tsc`**: ~4596 pre-existing errors (Express overload pattern) tolerated by `--noCheck` — a separate large initiative, untouched.
+- **CI lint (`eslint . --quiet`)**: 75 pre-existing files have prettier/import-sort errors (was already red before this work). All files THIS branch changed are lint-clean (verified). Clearing the 75 is a one-shot `eslint --fix` cleanup (auto-fixable) — deliberately not done here to avoid a massive noisy diff in untouched files.
 - A few pre-existing failing tests in untouched files (e.g. `ReferralToolsSection.v8-campaign-create`, `p14-processflow-service`) — flagged, spun off as background tasks.
 - Cross-cutting Week-2: full realtime/voice (X3), full multi-module Atelier demo dataset, X1 SplitLayout→ModuleHub migrations for non-Wave-1 views.
 
