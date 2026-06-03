@@ -3368,7 +3368,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+      <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]">
         {/* Main Navigation Row */}
         <div className="flex items-center justify-between gap-4 px-4 py-3">
           {/* Left: Search + Main Tabs */}

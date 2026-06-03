@@ -45,6 +45,8 @@ interface DecisionInboxProps {
   onCreateDecision?: () => void;
   showHeader?: boolean;
   embedded?: boolean;
+  /** Optional callback fired whenever counts change — lets parent hubs update their Menu 3 badges */
+  onCountsChange?: (counts: DecisionCounts) => void;
 }
 
 export const DecisionInbox: React.FC<DecisionInboxProps> = ({
@@ -53,6 +55,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
   onCreateDecision,
   showHeader = true,
   embedded = false,
+  onCountsChange,
 }) => {
   const { t } = useTranslation();
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -127,6 +130,11 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
       escalated: pending.filter((d) => d.status === 'ESCALATED').length,
     };
   }, [decisions, currentUserId]);
+
+  // Fire onCountsChange whenever counts update (lets parent hubs update Menu 3 badges)
+  useEffect(() => {
+    onCountsChange?.(counts);
+  }, [counts, onCountsChange]);
 
   // Filter and sort decisions
   const filteredDecisions = useMemo(() => {
