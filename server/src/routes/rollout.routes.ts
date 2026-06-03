@@ -38,9 +38,7 @@ const requireOrg = (req: AuthRequest, res: Response): string | null => {
   return orgId;
 };
 
-const projectFilter = (
-  projectId: unknown
-): { clause: string; params: string[] } => {
+const projectFilter = (projectId: unknown): { clause: string; params: string[] } => {
   if (typeof projectId === 'string' && projectId.trim()) {
     return { clause: ' AND project_id = ?', params: [projectId.trim()] };
   }
@@ -269,10 +267,10 @@ router.patch(
     const orgId = requireOrg(req, res);
     if (!orgId) return;
     const b = req.body as z.infer<typeof RiskUpdateSchema>;
-    const existing = await dbGet(`SELECT id FROM rollout_risks WHERE id = ? AND organization_id = ?`, [
-      req.params.id,
-      orgId,
-    ]);
+    const existing = await dbGet(
+      `SELECT id FROM rollout_risks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    );
     if (!existing) return res.status(404).json({ error: 'Risk not found' });
     const rows = await dbAll(
       `UPDATE rollout_risks SET
