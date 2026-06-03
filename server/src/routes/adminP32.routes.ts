@@ -850,6 +850,134 @@ async function readBillingSummary(orgId: string) {
   };
 }
 
+/**
+ * Manual-billing plan assignment (decision D8: manual invoices first).
+ *
+ * Lets a tenant admin / superadmin assign a subscription plan plus credit (token),
+ * storage, seat, and expiry limits to an organization without going through Stripe
+ * self-service. Writes to the canonical sources read back by readBillingSummary:
+ *   - organization_billing      (plan id, status, current period end / expiry)
+ *   - organization_limits       (max_total_tokens, max_storage_mb, max_users, ai calls)
+ *   - organizations             (plan label, token_balance, trial_expires_at)
+ */
+async function assignBillingPlan(
+  orgId: string,
+  body: Record<string, unknown>
+): Promise<
+  | { ok: true; summary: Awaited<ReturnType<typeof readBillingSummary>> }
+  | { ok: false; validationErrors: string[] }
+> {
+  const validationErrors: string[] = [];
+
+  const planId = body.planId == null ? null : String(body.planId).trim() || null;
+  const planName = body.planName == null ? null : String(body.planName).trim() || null;
+  const status = String(body.status || 'active').trim();
+  const allowedStatuses = ['active', 'trialing', 'past_due', 'canceled', 'unpaid', 'paused'];
+  if (!allowedStatuses.includes(status)) {
+    validationErrors.push(`status must be one of: ${allowedStatuses.join(', ')}`);
+  }
+
+  const toNonNegativeInt = (value: unknown, field: string): number | null => {
+    if (value === undefined || value === null || value === '') return null;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
+      validationErrors.push(`${field} must be a non-negative integer`);
+      return null;
+    }
+    return parsed;
+  };
+
+  const tokenLimit = toNonNegativeInt(body.tokenLimit, 'tokenLimit');
+  const storageLimitMb = toNonNegativeInt(body.storageLimitMb, 'storageLimitMb');
+  const seats = toNonNegativeInt(body.seats, 'seats');
+  const aiCallsPerDay = toNonNegativeInt(body.aiCallsPerDay, 'aiCallsPerDay');
+  const tokenBalance = toNonNegativeInt(body.tokenBalance, 'tokenBalance');
+
+  let expiresAt: string | null = null;
+  if (body.expiresAt !== undefined && body.expiresAt !== null && body.expiresAt !== '') {
+    const ts = Date.parse(String(body.expiresAt));
+    if (Number.isNaN(ts)) {
+      validationErrors.push('expiresAt must be a valid ISO date');
+    } else {
+      expiresAt = new Date(ts).toISOString();
+    }
+  }
+
+  if (planId) {
+    const plan = await dbGet<{ id: string }>(
+      `SELECT id FROM subscription_plans WHERE id = ? LIMIT 1`,
+      [planId],
+      { fallback: true }
+    );
+    if (!plan) validationErrors.push('planId does not match a known subscription plan');
+  }
+
+  if (validationErrors.length > 0) {
+    return { ok: false, validationErrors };
+  }
+
+  // organization_billing (upsert by organization_id, which is UNIQUE)
+  const existingBilling = await dbGet<{ id: string }>(
+    `SELECT id FROM organization_billing WHERE organization_id = ? LIMIT 1`,
+    [orgId],
+    { fallback: true }
+  );
+  if (existingBilling?.id) {
+    await dbRun(
+      `UPDATE organization_billing
+       SET subscription_plan_id = COALESCE(?, subscription_plan_id),
+           status = ?,
+           current_period_end = COALESCE(?, current_period_end),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE organization_id = ?`,
+      [planId, status, expiresAt, orgId]
+    );
+  } else {
+    await dbRun(
+      `INSERT INTO organization_billing (id, organization_id, subscription_plan_id, status, current_period_end)
+       VALUES (?, ?, ?, ?, ?)`,
+      [uuidv4(), orgId, planId, status, expiresAt]
+    );
+  }
+
+  // organization_limits (upsert by organization_id, which is UNIQUE)
+  const existingLimits = await dbGet<{ id: string }>(
+    `SELECT id FROM organization_limits WHERE organization_id = ? LIMIT 1`,
+    [orgId],
+    { fallback: true }
+  );
+  if (existingLimits?.id) {
+    await dbRun(
+      `UPDATE organization_limits
+       SET max_total_tokens = COALESCE(?, max_total_tokens),
+           max_storage_mb = COALESCE(?, max_storage_mb),
+           max_users = COALESCE(?, max_users),
+           max_ai_calls_per_day = COALESCE(?, max_ai_calls_per_day)
+       WHERE organization_id = ?`,
+      [tokenLimit, storageLimitMb, seats, aiCallsPerDay, orgId]
+    );
+  } else {
+    await dbRun(
+      `INSERT INTO organization_limits (id, organization_id, max_total_tokens, max_storage_mb, max_users, max_ai_calls_per_day)
+       VALUES (?, ?, COALESCE(?, 100000), COALESCE(?, 100), COALESCE(?, 4), COALESCE(?, 50))`,
+      [uuidv4(), orgId, tokenLimit, storageLimitMb, seats, aiCallsPerDay]
+    );
+  }
+
+  // organizations (plan label, token credit balance, expiry mirror)
+  await dbRun(
+    `UPDATE organizations
+     SET plan = COALESCE(?, plan),
+         token_balance = COALESCE(?, token_balance),
+         trial_expires_at = COALESCE(?, trial_expires_at)
+     WHERE id = ?`,
+    [planName, tokenBalance, expiresAt, orgId]
+  );
+
+  const summary = await readBillingSummary(orgId);
+  return { ok: true, summary };
+}
+
 async function readAiSummary(orgId: string) {
   let governancePolicy: any = null;
   let governanceSummary: any = null;
@@ -1687,6 +1815,54 @@ router.get(
     if (!actor) return;
     const summary = await readBillingSummary(actor.orgId);
     return res.json({ organizationId: actor.orgId, summary });
+  })
+);
+
+router.get(
+  '/billing/plans',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:read']);
+    if (!actor) return;
+    const plans = await dbAll<Record<string, unknown>>(
+      `SELECT id, name, price_monthly, token_limit, storage_limit_gb
+       FROM subscription_plans
+       WHERE is_active = 1
+       ORDER BY sort_order ASC, price_monthly ASC`,
+      [],
+      { fallback: true }
+    );
+    return res.json({ plans: plans || [] });
+  })
+);
+
+router.put(
+  '/billing/plan',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:write']);
+    if (!actor) return;
+    const outcome = await assignBillingPlan(actor.orgId, req.body || {});
+    if (!outcome.ok) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        validationErrors: outcome.validationErrors,
+      });
+    }
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'update_billing',
+      details: {
+        orgId: actor.orgId,
+        isSensitive: true,
+        planId: (req.body || {}).planId ?? null,
+        planName: (req.body || {}).planName ?? null,
+        tokenLimit: (req.body || {}).tokenLimit ?? null,
+        storageLimitMb: (req.body || {}).storageLimitMb ?? null,
+        seats: (req.body || {}).seats ?? null,
+        expiresAt: (req.body || {}).expiresAt ?? null,
+      },
+    });
+    return res.json({ success: true, summary: outcome.summary });
   })
 );
 

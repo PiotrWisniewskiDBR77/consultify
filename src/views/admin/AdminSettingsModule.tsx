@@ -1,8 +1,13 @@
 import { Menu, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
+import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
+import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
+import { AdminSecurityIdentityPanel } from '../../components/Admin/AdminSecurityIdentityPanel';
 import {
   AdminSettingsSection,
   AdminSettingsSidebar,
@@ -19,20 +24,44 @@ interface AdminSettingsModuleProps {
   currentUser: User;
 }
 
-const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people'];
+const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people', 'billing', 'ai', 'security', 'audit'];
 
-const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
+const SECTION_META: Record<
+  AdminSettingsSection,
+  { titleKey: string; titleDefault: string; subtitleKey: string; subtitleDefault: string }
+> = {
   people: {
-    title: 'Team & Access',
-    subtitle: 'Membership operations, role changes, ownership transfer, and team invite codes.',
+    titleKey: 'admin.section.people.title',
+    titleDefault: 'Team & Access',
+    subtitleKey: 'admin.section.people.subtitle',
+    subtitleDefault:
+      'Membership operations, role changes, ownership transfer, and team invite codes.',
   },
   billing: {
-    title: 'Team & Access',
-    subtitle: 'Membership operations, role changes, ownership transfer, and team invite codes.',
+    titleKey: 'admin.section.billing.title',
+    titleDefault: 'Billing & Plans',
+    subtitleKey: 'admin.section.billing.subtitle',
+    subtitleDefault:
+      'Assign plans, credit and storage limits, seats, and expiry; manage invoices and budgets.',
   },
-  operations: {
-    title: 'Team & Access',
-    subtitle: 'Membership operations, role changes, ownership transfer, and team invite codes.',
+  ai: {
+    titleKey: 'admin.section.ai.title',
+    titleDefault: 'AI Controls',
+    subtitleKey: 'admin.section.ai.subtitle',
+    subtitleDefault: 'AI governance policy, model posture, context controls, and AI operations.',
+  },
+  security: {
+    titleKey: 'admin.section.security.title',
+    titleDefault: 'Security & Identity',
+    subtitleKey: 'admin.section.security.subtitle',
+    subtitleDefault:
+      'Authentication policy, collaboration controls, API access, delegated IAM, and SCIM lifecycle.',
+  },
+  audit: {
+    titleKey: 'admin.section.audit.title',
+    titleDefault: 'Audit Log',
+    subtitleKey: 'admin.section.audit.subtitle',
+    subtitleDefault: 'High-risk admin events, risk posture, and compliance evidence.',
   },
 };
 
@@ -43,18 +72,23 @@ const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
   users: 'people',
   people: 'people',
   access: 'people',
-  security: 'people',
-  billing: 'people',
-  ai: 'people',
-  integrations: 'people',
-  audit: 'people',
-  operations: 'people',
-  worker: 'operations',
-  workers: 'operations',
-  queue: 'operations',
   workspace: 'people',
   organization: 'people',
   feedback: 'people',
+  billing: 'billing',
+  plans: 'billing',
+  finops: 'billing',
+  ai: 'ai',
+  'ai-controls': 'ai',
+  governance: 'ai',
+  security: 'security',
+  identity: 'security',
+  scim: 'security',
+  iam: 'security',
+  integrations: 'security',
+  audit: 'audit',
+  'audit-log': 'audit',
+  compliance: 'audit',
 };
 
 function resolveAdminState(
@@ -81,6 +115,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   initialTab,
   currentUser,
 }) => {
+  const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -109,9 +144,13 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       case 'people':
         return <AdminMembersRolesPanel />;
       case 'billing':
-        return <AdminMembersRolesPanel />;
-      case 'operations':
-        return <AdminMembersRolesPanel />;
+        return <AdminBillingFinOpsPanel />;
+      case 'ai':
+        return <AdminAIControlCenterPanel />;
+      case 'security':
+        return <AdminSecurityIdentityPanel />;
+      case 'audit':
+        return <AdminAuditLogPanel />;
       default:
         return <AdminMembersRolesPanel />;
     }
@@ -157,8 +196,12 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         <ScrollArea className="flex-1">
           <div className="space-y-4 p-3 lg:p-4">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
-              <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{meta.title}</h1>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{meta.subtitle}</p>
+              <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+                {t(meta.titleKey, { defaultValue: meta.titleDefault })}
+              </h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {t(meta.subtitleKey, { defaultValue: meta.subtitleDefault })}
+              </p>
             </div>
             {content}
           </div>

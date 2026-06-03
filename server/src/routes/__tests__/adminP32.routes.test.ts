@@ -463,4 +463,77 @@ describe('adminP32Routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.overview.billing.plan.name).toBe('Global Enterprise');
   });
+
+  it('assigns a manual-billing plan + limits and audits the change', async () => {
+    dbGet
+      // getAdminActor membership lookup
+      .mockResolvedValueOnce({ role: 'ADMIN' })
+      // assignBillingPlan: plan id validation
+      .mockResolvedValueOnce({ id: 'plan-pro' })
+      // assignBillingPlan: existing organization_billing row
+      .mockResolvedValueOnce({ id: 'billing-1' })
+      // assignBillingPlan: existing organization_limits row
+      .mockResolvedValueOnce({ id: 'limits-1' })
+      // readBillingSummary: organization_billing join
+      .mockResolvedValueOnce({
+        subscription_plan_id: 'plan-pro',
+        status: 'active',
+        plan_name: 'Pro',
+        token_limit: 500000,
+        storage_limit_gb: 2,
+      })
+      // readBillingSummary: organizations row
+      .mockResolvedValueOnce({ token_balance: 100000, plan: 'Pro', trial_expires_at: null })
+      // readBillingSummary: billing_alerts row
+      .mockResolvedValueOnce(null);
+
+    const app = createApp();
+    const res = await request(app).put('/api/admin/billing/plan').send({
+      planId: 'plan-pro',
+      planName: 'Pro',
+      status: 'active',
+      tokenLimit: 500000,
+      storageLimitMb: 2048,
+      seats: 25,
+      aiCallsPerDay: 1000,
+      tokenBalance: 100000,
+      expiresAt: '2026-12-31T00:00:00.000Z',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    // organization_billing UPDATE + organization_limits UPDATE + organizations UPDATE
+    expect(dbRun).toHaveBeenCalledTimes(3);
+    expect(logAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionType: 'update_billing',
+        details: expect.objectContaining({
+          orgId: 'org-1',
+          planId: 'plan-pro',
+          tokenLimit: 500000,
+          seats: 25,
+        }),
+      })
+    );
+  });
+
+  it('rejects an invalid plan assignment payload with validation errors', async () => {
+    dbGet
+      .mockResolvedValueOnce({ role: 'ADMIN' })
+      // plan id validation: no matching plan
+      .mockResolvedValueOnce(null);
+
+    const app = createApp();
+    const res = await request(app).put('/api/admin/billing/plan').send({
+      planId: 'does-not-exist',
+      tokenLimit: -5,
+      status: 'bogus',
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('VALIDATION_ERROR');
+    expect(Array.isArray(res.body.validationErrors)).toBe(true);
+    expect(dbRun).not.toHaveBeenCalled();
+    expect(logAction).not.toHaveBeenCalled();
+  });
 });

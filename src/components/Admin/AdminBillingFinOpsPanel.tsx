@@ -1,18 +1,45 @@
 import { CreditCard, Gauge, Receipt, Wallet } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
+import { Button } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { cn } from '../../utils/cn';
 
-type TabId = 'summary' | 'payments' | 'invoices' | 'controls';
+type TabId = 'summary' | 'plan' | 'payments' | 'invoices' | 'controls';
 
-const tabs: Array<{ id: TabId; label: string }> = [
-  { id: 'summary', label: 'Summary' },
-  { id: 'payments', label: 'Payment methods' },
-  { id: 'invoices', label: 'Invoices' },
-  { id: 'controls', label: 'Budgets & tax' },
-];
+type PlanOption = {
+  id: string;
+  name: string;
+  price_monthly?: number;
+  token_limit?: number;
+  storage_limit_gb?: number;
+};
+
+type PlanAssignmentForm = {
+  planId: string;
+  planName: string;
+  status: string;
+  tokenLimit: string;
+  storageLimitMb: string;
+  seats: string;
+  aiCallsPerDay: string;
+  tokenBalance: string;
+  expiresAt: string;
+};
+
+const EMPTY_PLAN_FORM: PlanAssignmentForm = {
+  planId: '',
+  planName: '',
+  status: 'active',
+  tokenLimit: '',
+  storageLimitMb: '',
+  seats: '',
+  aiCallsPerDay: '',
+  tokenBalance: '',
+  expiresAt: '',
+};
 
 const DEFAULT_BILLING_ALERTS = [
   { id: 'default-tokens', type: 'tokens', threshold: 80, isActive: true },
@@ -20,11 +47,22 @@ const DEFAULT_BILLING_ALERTS = [
 ];
 
 export const AdminBillingFinOpsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const stripeEnabled = ['true', '1', 'yes'].includes(
     String(import.meta.env.VITE_STRIPE_ENABLED || '')
       .trim()
       .toLowerCase()
   );
+  const tabs: Array<{ id: TabId; label: string }> = [
+    { id: 'summary', label: t('admin.billing.tabs.summary', { defaultValue: 'Summary' }) },
+    { id: 'plan', label: t('admin.billing.tabs.plan', { defaultValue: 'Plan & limits' }) },
+    {
+      id: 'payments',
+      label: t('admin.billing.tabs.payments', { defaultValue: 'Payment methods' }),
+    },
+    { id: 'invoices', label: t('admin.billing.tabs.invoices', { defaultValue: 'Invoices' }) },
+    { id: 'controls', label: t('admin.billing.tabs.controls', { defaultValue: 'Budgets & tax' }) },
+  ];
   const [activeTab, setActiveTab] = useState<TabId>('summary');
   const [summary, setSummary] = useState<any>(null);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -33,19 +71,30 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   const [taxSettings, setTaxSettings] = useState<any>(null);
   const [usageDetails, setUsageDetails] = useState<any>(null);
   const [newPaymentMethodId, setNewPaymentMethodId] = useState('');
+  const [planOptions, setPlanOptions] = useState<PlanOption[]>([]);
+  const [planForm, setPlanForm] = useState<PlanAssignmentForm>(EMPTY_PLAN_FORM);
+  const [savingPlan, setSavingPlan] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [summaryResult, paymentResult, invoiceResult, alertResult, taxResult, usageResult] =
-          await Promise.all([
-            Api.getAdminBillingSummary(),
-            Api.getAdminBillingPaymentMethods(),
-            Api.getAdminBillingInvoices(),
-            Api.getAdminBillingAlerts(),
-            Api.getAdminBillingTaxSettings(),
-            Api.getAdminBillingUsageDetails(),
-          ]);
+        const [
+          summaryResult,
+          paymentResult,
+          invoiceResult,
+          alertResult,
+          taxResult,
+          usageResult,
+          plansResult,
+        ] = await Promise.all([
+          Api.getAdminBillingSummary(),
+          Api.getAdminBillingPaymentMethods(),
+          Api.getAdminBillingInvoices(),
+          Api.getAdminBillingAlerts(),
+          Api.getAdminBillingTaxSettings(),
+          Api.getAdminBillingUsageDetails(),
+          Api.getAdminBillingPlans().catch(() => ({ plans: [] })),
+        ]);
         setSummary(summaryResult);
         setPaymentMethods(paymentResult?.paymentMethods || []);
         setInvoices(invoiceResult?.invoices || []);
@@ -53,6 +102,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
         setAlerts(nextAlerts.length > 0 ? nextAlerts : DEFAULT_BILLING_ALERTS);
         setTaxSettings(taxResult?.settings || taxResult);
         setUsageDetails(usageResult?.summary || usageResult);
+        setPlanOptions(Array.isArray(plansResult?.plans) ? plansResult.plans : []);
       } catch (error: any) {
         toast.error(error?.message || 'Failed to load billing summary');
       }
@@ -61,9 +111,45 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
     void load();
   }, []);
 
+  const assignPlan = async () => {
+    try {
+      setSavingPlan(true);
+      const payload = {
+        planId: planForm.planId || null,
+        planName: planForm.planName.trim() || null,
+        status: planForm.status || 'active',
+        tokenLimit: planForm.tokenLimit === '' ? null : Number(planForm.tokenLimit),
+        storageLimitMb: planForm.storageLimitMb === '' ? null : Number(planForm.storageLimitMb),
+        seats: planForm.seats === '' ? null : Number(planForm.seats),
+        aiCallsPerDay: planForm.aiCallsPerDay === '' ? null : Number(planForm.aiCallsPerDay),
+        tokenBalance: planForm.tokenBalance === '' ? null : Number(planForm.tokenBalance),
+        expiresAt: planForm.expiresAt ? new Date(planForm.expiresAt).toISOString() : null,
+      };
+      const result = await Api.assignAdminBillingPlan(payload);
+      if (result?.summary) {
+        setSummary({ summary: result.summary });
+      } else {
+        const refreshed = await Api.getAdminBillingSummary();
+        setSummary(refreshed);
+      }
+      toast.success(t('admin.billing.plan.saved', { defaultValue: 'Plan and limits assigned' }));
+    } catch (error: any) {
+      const validationErrors = error?.validationErrors;
+      if (Array.isArray(validationErrors) && validationErrors.length > 0) {
+        toast.error(validationErrors.join('; '));
+      } else {
+        toast.error(error?.message || 'Failed to assign plan');
+      }
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
   const addPaymentMethod = async () => {
     if (!newPaymentMethodId.trim()) {
-      toast.error('Enter a payment method id, for example pm_demo_4242');
+      toast.error(
+        t('admin.billing.payments.idRequired', { defaultValue: 'Enter a payment method id.' })
+      );
       return;
     }
     try {
@@ -119,6 +205,204 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   };
 
   const renderTab = () => {
+    if (activeTab === 'plan') {
+      const inputClass =
+        'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white';
+      const labelClass =
+        'block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400';
+      return (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {t('admin.billing.plan.title', { defaultValue: 'Assign plan & limits' })}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              {t('admin.billing.plan.subtitle', {
+                defaultValue:
+                  'Manual billing: assign a plan, credit balance, storage, seats, and expiry. Leave a field blank to keep its current value.',
+              })}
+            </p>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div>
+                <label htmlFor="admin-billing-plan-select" className={labelClass}>
+                  {t('admin.billing.plan.planLabel', { defaultValue: 'Subscription plan' })}
+                </label>
+                <select
+                  id="admin-billing-plan-select"
+                  value={planForm.planId}
+                  onChange={(event) => {
+                    const planId = event.target.value;
+                    const matched = planOptions.find((plan) => plan.id === planId);
+                    setPlanForm((current) => ({
+                      ...current,
+                      planId,
+                      planName: matched?.name || current.planName,
+                    }));
+                  }}
+                  className={cn(inputClass, 'mt-1')}
+                >
+                  <option value="">
+                    {t('admin.billing.plan.keepCurrent', { defaultValue: 'Keep current plan' })}
+                  </option>
+                  {planOptions.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="admin-billing-plan-name" className={labelClass}>
+                  {t('admin.billing.plan.planName', { defaultValue: 'Plan label (override)' })}
+                </label>
+                <input
+                  id="admin-billing-plan-name"
+                  type="text"
+                  value={planForm.planName}
+                  onChange={(event) =>
+                    setPlanForm((current) => ({ ...current, planName: event.target.value }))
+                  }
+                  className={cn(inputClass, 'mt-1')}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-billing-status" className={labelClass}>
+                  {t('admin.billing.plan.status', { defaultValue: 'Billing status' })}
+                </label>
+                <select
+                  id="admin-billing-status"
+                  value={planForm.status}
+                  onChange={(event) =>
+                    setPlanForm((current) => ({ ...current, status: event.target.value }))
+                  }
+                  className={cn(inputClass, 'mt-1')}
+                >
+                  {['active', 'trialing', 'past_due', 'canceled', 'unpaid', 'paused'].map(
+                    (status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="admin-billing-expiry" className={labelClass}>
+                  {t('admin.billing.plan.expiry', { defaultValue: 'Expiry / period end' })}
+                </label>
+                <input
+                  id="admin-billing-expiry"
+                  type="date"
+                  value={planForm.expiresAt}
+                  onChange={(event) =>
+                    setPlanForm((current) => ({ ...current, expiresAt: event.target.value }))
+                  }
+                  className={cn(inputClass, 'mt-1')}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-billing-token-limit" className={labelClass}>
+                  {t('admin.billing.plan.tokenLimit', { defaultValue: 'Token / credit limit' })}
+                </label>
+                <input
+                  id="admin-billing-token-limit"
+                  type="number"
+                  min={0}
+                  value={planForm.tokenLimit}
+                  onChange={(event) =>
+                    setPlanForm((current) => ({ ...current, tokenLimit: event.target.value }))
+                  }
+                  className={cn(inputClass, 'mt-1')}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-billing-token-balance" className={labelClass}>
+                  {t('admin.billing.plan.tokenBalance', {
+                    defaultValue: 'Credit balance (tokens)',
+                  })}
+                </label>
+                <input
+                  id="admin-billing-token-balance"
+                  type="number"
+                  min={0}
+                  value={planForm.tokenBalance}
+                  onChange={(event) =>
+                    setPlanForm((current) => ({ ...current, tokenBalance: event.target.value }))
+                  }
+                  className={cn(inputClass, 'mt-1')}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-billing-storage" className={labelClass}>
+                  {t('admin.billing.plan.storageLimit', { defaultValue: 'Storage limit (MB)' })}
+                </label>
+                <input
+                  id="admin-billing-storage"
+                  type="number"
+                  min={0}
+                  value={planForm.storageLimitMb}
+                  onChange={(event) =>
+                    setPlanForm((current) => ({ ...current, storageLimitMb: event.target.value }))
+                  }
+                  className={cn(inputClass, 'mt-1')}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-billing-seats" className={labelClass}>
+                  {t('admin.billing.plan.seats', { defaultValue: 'Seats (max users)' })}
+                </label>
+                <input
+                  id="admin-billing-seats"
+                  type="number"
+                  min={0}
+                  value={planForm.seats}
+                  onChange={(event) =>
+                    setPlanForm((current) => ({ ...current, seats: event.target.value }))
+                  }
+                  className={cn(inputClass, 'mt-1')}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="admin-billing-ai-calls" className={labelClass}>
+                  {t('admin.billing.plan.aiCalls', { defaultValue: 'AI calls per day' })}
+                </label>
+                <input
+                  id="admin-billing-ai-calls"
+                  type="number"
+                  min={0}
+                  value={planForm.aiCallsPerDay}
+                  onChange={(event) =>
+                    setPlanForm((current) => ({ ...current, aiCallsPerDay: event.target.value }))
+                  }
+                  className={cn(inputClass, 'mt-1')}
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <Button
+                variant="brand"
+                onClick={() => void assignPlan()}
+                loading={savingPlan}
+                disabled={savingPlan}
+              >
+                {t('admin.billing.plan.save', { defaultValue: 'Assign plan & limits' })}
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (activeTab === 'payments') {
       return (
         <div className="space-y-4">
@@ -127,7 +411,9 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               type="text"
               value={newPaymentMethodId}
               onChange={(event) => setNewPaymentMethodId(event.target.value)}
-              placeholder="pm_demo_4242"
+              placeholder={t('admin.billing.payments.idPlaceholder', {
+                defaultValue: 'Payment method id',
+              })}
               className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
             />
             <button

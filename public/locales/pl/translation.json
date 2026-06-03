@@ -7349,6 +7349,83 @@
       "required": "Wymagane",
       "noColumnsFound": "Brak kolumn pasujących do wyszukiwania",
       "columnsTip": "Przeciągnij, aby zmienić kolejność; kliknij oko, aby pokazać/ukryć"
+    },
+    "nav": {
+      "people": {
+        "label": "Zespół i dostęp",
+        "description": "Członkowie, role, własność i kody zaproszeń"
+      },
+      "billing": {
+        "label": "Rozliczenia i plany",
+        "description": "Plan, limity kredytów i przestrzeni, miejsca, faktury"
+      },
+      "ai": {
+        "label": "Sterowanie AI",
+        "description": "Zarządzanie AI, modele i operacje"
+      },
+      "security": {
+        "label": "Bezpieczeństwo i tożsamość",
+        "description": "Polityka logowania, SCIM, IAM, dostęp API"
+      },
+      "audit": {
+        "label": "Dziennik audytu",
+        "description": "Działania administracyjne wysokiego ryzyka i dowody zgodności"
+      }
+    },
+    "shell": {
+      "title": "Administracja zespołu",
+      "subtitle": "Zarządzaj dostępem zespołu i ustawieniami komercyjnymi organizacji."
+    },
+    "section": {
+      "people": {
+        "title": "Zespół i dostęp",
+        "subtitle": "Zarządzanie członkostwem, zmiany ról, przekazanie własności i kody zaproszeń zespołu."
+      },
+      "billing": {
+        "title": "Rozliczenia i plany",
+        "subtitle": "Przydzielaj plany, limity kredytów i przestrzeni, miejsca oraz datę wygaśnięcia; zarządzaj fakturami i budżetami."
+      },
+      "ai": {
+        "title": "Sterowanie AI",
+        "subtitle": "Polityka zarządzania AI, modele, kontrola kontekstu i operacje AI."
+      },
+      "security": {
+        "title": "Bezpieczeństwo i tożsamość",
+        "subtitle": "Polityka uwierzytelniania, kontrola współpracy, dostęp API, delegowany IAM i cykl życia SCIM."
+      },
+      "audit": {
+        "title": "Dziennik audytu",
+        "subtitle": "Działania administracyjne wysokiego ryzyka, ocena ryzyka i dowody zgodności."
+      }
+    },
+    "billing": {
+      "tabs": {
+        "summary": "Podsumowanie",
+        "plan": "Plan i limity",
+        "payments": "Metody płatności",
+        "invoices": "Faktury",
+        "controls": "Budżety i podatki"
+      },
+      "payments": {
+        "idRequired": "Podaj identyfikator metody płatności.",
+        "idPlaceholder": "Identyfikator metody płatności"
+      },
+      "plan": {
+        "title": "Przydziel plan i limity",
+        "subtitle": "Rozliczenie ręczne: przydziel plan, saldo kredytów, przestrzeń, miejsca i datę wygaśnięcia. Pozostaw pole puste, aby zachować bieżącą wartość.",
+        "planLabel": "Plan subskrypcji",
+        "keepCurrent": "Zachowaj bieżący plan",
+        "planName": "Etykieta planu (nadpisanie)",
+        "status": "Status rozliczeń",
+        "expiry": "Wygaśnięcie / koniec okresu",
+        "tokenLimit": "Limit tokenów / kredytów",
+        "tokenBalance": "Saldo kredytów (tokeny)",
+        "storageLimit": "Limit przestrzeni (MB)",
+        "seats": "Miejsca (maks. użytkowników)",
+        "aiCalls": "Wywołania AI dziennie",
+        "save": "Przydziel plan i limity",
+        "saved": "Przydzielono plan i limity"
+      }
     }
   },
   "access": {

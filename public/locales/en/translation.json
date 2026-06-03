@@ -6798,6 +6798,83 @@
       "required": "Required",
       "noColumnsFound": "No columns match your search",
       "columnsTip": "Drag to reorder, click eye to toggle visibility"
+    },
+    "nav": {
+      "people": {
+        "label": "Team & Access",
+        "description": "Members, roles, ownership, and team invite codes"
+      },
+      "billing": {
+        "label": "Billing & Plans",
+        "description": "Plan, credit & storage limits, seats, invoices"
+      },
+      "ai": {
+        "label": "AI Controls",
+        "description": "AI governance, model posture, and operations"
+      },
+      "security": {
+        "label": "Security & Identity",
+        "description": "Auth policy, SCIM, delegated IAM, API access"
+      },
+      "audit": {
+        "label": "Audit Log",
+        "description": "High-risk admin events and compliance evidence"
+      }
+    },
+    "shell": {
+      "title": "Team Admin",
+      "subtitle": "Manage team access and commercial controls for your organization."
+    },
+    "section": {
+      "people": {
+        "title": "Team & Access",
+        "subtitle": "Membership operations, role changes, ownership transfer, and team invite codes."
+      },
+      "billing": {
+        "title": "Billing & Plans",
+        "subtitle": "Assign plans, credit and storage limits, seats, and expiry; manage invoices and budgets."
+      },
+      "ai": {
+        "title": "AI Controls",
+        "subtitle": "AI governance policy, model posture, context controls, and AI operations."
+      },
+      "security": {
+        "title": "Security & Identity",
+        "subtitle": "Authentication policy, collaboration controls, API access, delegated IAM, and SCIM lifecycle."
+      },
+      "audit": {
+        "title": "Audit Log",
+        "subtitle": "High-risk admin events, risk posture, and compliance evidence."
+      }
+    },
+    "billing": {
+      "tabs": {
+        "summary": "Summary",
+        "plan": "Plan & limits",
+        "payments": "Payment methods",
+        "invoices": "Invoices",
+        "controls": "Budgets & tax"
+      },
+      "payments": {
+        "idRequired": "Enter a payment method id.",
+        "idPlaceholder": "Payment method id"
+      },
+      "plan": {
+        "title": "Assign plan & limits",
+        "subtitle": "Manual billing: assign a plan, credit balance, storage, seats, and expiry. Leave a field blank to keep its current value.",
+        "planLabel": "Subscription plan",
+        "keepCurrent": "Keep current plan",
+        "planName": "Plan label (override)",
+        "status": "Billing status",
+        "expiry": "Expiry / period end",
+        "tokenLimit": "Token / credit limit",
+        "tokenBalance": "Credit balance (tokens)",
+        "storageLimit": "Storage limit (MB)",
+        "seats": "Seats (max users)",
+        "aiCalls": "AI calls per day",
+        "save": "Assign plan & limits",
+        "saved": "Plan and limits assigned"
+      }
     }
   },
   "access": {

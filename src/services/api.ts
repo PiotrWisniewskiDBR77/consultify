@@ -8254,6 +8254,30 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch admin billing summary');
   },
 
+  getAdminBillingPlans: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/plans`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing plans');
+  },
+
+  assignAdminBillingPlan: async (payload: {
+    planId?: string | null;
+    planName?: string | null;
+    status?: string;
+    tokenLimit?: number | null;
+    storageLimitMb?: number | null;
+    seats?: number | null;
+    aiCallsPerDay?: number | null;
+    tokenBalance?: number | null;
+    expiresAt?: string | null;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/plan`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to assign admin billing plan');
+  },
+
   getAdminAISummary: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/admin/ai/summary`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch admin AI summary');
