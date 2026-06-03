@@ -699,16 +699,11 @@ class KnownToolsService {
     const db = await this.getDb();
     const q = new QueryAdapter(db);
 
-    const countRow = await q.get<{ cnt: number | string }>(
-      `SELECT COUNT(*) as cnt FROM tools WHERE tool_type IS NOT NULL`
-    );
-    const existing = Number(countRow?.cnt ?? 0);
-
-    if (existing >= SQLITE_KNOWN_TOOLS_SEED.length) {
-      this.ensuredSqliteSeed = true;
-      return;
-    }
-
+    // NOTE: Always run the upsert loop once per process. The INSERT ... ON CONFLICT
+    // (name) DO UPDATE below is idempotent, so re-running it on an already-populated DB
+    // is safe and is required to propagate corrections (e.g. Wave 1 is_coming_soon flags)
+    // to existing production DBs that already have all rows. A count-guard here would skip
+    // those corrections whenever the row count already met the seed length.
     for (const seed of SQLITE_KNOWN_TOOLS_SEED) {
       const descTranslations = JSON.stringify({
         en: seed.descriptionEn,
