@@ -352,12 +352,23 @@ export const authRateLimiter = createLimiter({
 });
 
 /**
- * API routes (initiatives, tasks, tools, etc.): 1000 req / 15 min.
- * Keys by userId when authenticated, else IP. Use this for general authenticated API routes.
+ * API routes (initiatives, tasks, tools, etc.).
+ * Keys by userId when authenticated (see extractKey -> `u:<uid>`), else IP.
+ *
+ * FIX-1 (429 self-storm): the previous 1000/2000-per-15min bucket was too low
+ * for a single real SPA session. One My Work / Ideas screen load legitimately
+ * fans out across dozens of authenticated GETs (hub loaders, session-context,
+ * inbox, notebooks, tasks, polling) and was tripping its OWN per-user limit ->
+ * 429 death-spiral that made most screens "Failed to load". Because this bucket
+ * is per-authenticated-user, a high ceiling here does NOT weaken cross-user
+ * abuse protection — it only stops the app from rate-limiting itself. Kept
+ * generous-but-finite in prod so a single compromised session still can't run
+ * unbounded; non-prod is very high to make StrictMode double-fire + dev polling
+ * a non-issue.
  */
 export const apiAuthRateLimiter = createLimiter({
   windowMs: 15 * 60_000,
-  max: isProd ? 1000 : 2000,
+  max: isProd ? 12_000 : 60_000,
   prefix: 'api-auth',
   message: 'Too many requests, please try again later.',
 });

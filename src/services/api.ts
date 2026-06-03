@@ -683,7 +683,58 @@ export const getMapVersionFromPayload = (payload: unknown): number | null => {
 // Wrapper for fetch that handles 401 with automatic token refresh
 type FetchWithRetryOptions = RequestInit & { skipDefaultHeaders?: boolean };
 
+/**
+ * FIX-1 (429 self-storm): in-flight GET de-duplication.
+ *
+ * React StrictMode double-invokes effects in dev, so identical GETs fire twice
+ * and (a) double the per-user rate-limiter load and (b) surface duplicate
+ * "Failed to load" toasts. We coalesce concurrent identical GETs (same URL +
+ * auth token + org context) into a single network request; extra callers await
+ * the same promise and each receive an independent `clone()` of the resolved
+ * Response (bodies are single-use). The entry clears on settle, so only
+ * genuinely overlapping requests are shared.
+ */
+const inFlightGetRequests = new Map<string, Promise<Response>>();
+
+const isCoalesceableGet = (options: FetchWithRetryOptions): boolean => {
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET') return false;
+  // Don't share requests that carry a caller-owned abort signal — aborting one
+  // consumer must never abort the others.
+  if (options.signal) return false;
+  return true;
+};
+
+const buildInFlightGetKey = (url: string): string => {
+  const token = tokenService.getToken() || '';
+  const org = getStoredOrganizationContextId();
+  return `${url} ${token} ${org}`;
+};
+
 const fetchWithRetry = async (
+  url: string,
+  options: FetchWithRetryOptions = {}
+): Promise<Response> => {
+  if (isCoalesceableGet(options)) {
+    const key = buildInFlightGetKey(url);
+    const existing = inFlightGetRequests.get(key);
+    if (existing) {
+      const shared = await existing;
+      return shared.clone();
+    }
+    const promise = fetchWithRetryInner(url, options);
+    inFlightGetRequests.set(key, promise);
+    try {
+      const res = await promise;
+      return res.clone();
+    } finally {
+      inFlightGetRequests.delete(key);
+    }
+  }
+  return fetchWithRetryInner(url, options);
+};
+
+const fetchWithRetryInner = async (
   url: string,
   options: FetchWithRetryOptions = {}
 ): Promise<Response> => {
@@ -920,6 +971,18 @@ const handleResponse = async (res: Response, defaultError: string) => {
   err.url = res.url;
   err.data = data;
   if (parsed.kind === 'text') err.bodyText = parsed.text;
+  // FIX-1: surface Retry-After on 429 so callers can back off / show a clean
+  // state. We deliberately do NOT auto-retry 429 anywhere — retrying is what
+  // amplified the rate-limit storm.
+  if (res.status === 429) {
+    const retryAfterHeader = res.headers.get('Retry-After');
+    const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN;
+    if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+      err.retryAfter = retryAfterSeconds;
+    } else if (typeof (data as any)?.retryAfter === 'number') {
+      err.retryAfter = (data as any).retryAfter;
+    }
+  }
   throw err;
 };
 
@@ -6619,7 +6682,10 @@ export const Api = {
   }> => {
     const isTransientListError = (error: any) => {
       const status = Number(error?.status);
-      if ([429, 502, 503, 504].includes(status)) return true;
+      // FIX-1 (429 self-storm): do NOT treat 429 as retryable — retrying a
+      // rate-limited request only amplifies the storm. Retry only on 5xx
+      // gateway/availability errors and genuine network failures.
+      if ([502, 503, 504].includes(status)) return true;
       const msg = String(error?.message || '').toLowerCase();
       return (
         msg.includes('failed to fetch') ||

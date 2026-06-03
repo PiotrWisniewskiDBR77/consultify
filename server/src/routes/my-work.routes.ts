@@ -1410,8 +1410,11 @@ router.get(
     const nowIso = new Date().toISOString();
     const today = todayIsoDate();
 
-    const triagedRows =
-      (await queryHelpers.queryAll<{
+    // PERF (FIX-1 inbox N+1): these sources are independent — run them in
+    // parallel with Promise.all instead of ~8 sequential awaits so a single
+    // /inbox request issues one fan-out round-trip set, not a serial chain.
+    const triagedRowsPromise = queryHelpers
+      .queryAll<{
         item_key: string;
         action: string;
         params_json?: string;
@@ -1419,30 +1422,11 @@ router.get(
       }>(
         `SELECT item_key, action, params_json, triaged_at FROM my_work_inbox_triage WHERE user_id = ?`,
         [userId]
-      )) || [];
-    const triagedMap = new Map<
-      string,
-      { action: TriageAction; params?: Record<string, unknown>; triagedAt: string }
-    >();
-    for (const r of triagedRows) {
-      let params: Record<string, unknown> | undefined;
-      if (r.params_json) {
-        try {
-          params = JSON.parse(r.params_json);
-        } catch {
-          params = undefined;
-        }
-      }
-      triagedMap.set(r.item_key, {
-        action: r.action as TriageAction,
-        params,
-        triagedAt: r.triaged_at,
-      });
-    }
-
+      )
+      .then((rows) => rows || []);
     // 1) Overdue tasks (assigned)
-    const overdueTasks =
-      (await queryHelpers.queryAll<any>(
+    const overdueTasksPromise = queryHelpers
+      .queryAll<any>(
         `
         SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
                t.initiative_id as initiativeId, i.name as initiativeName,
@@ -1461,11 +1445,12 @@ router.get(
         LIMIT ?
       `,
         [orgId, userId, today, Math.min(25, limit)]
-      )) || [];
+      )
+      .then((rows) => rows || []);
 
     // 1b) Blocked tasks (assigned)
-    const blockedTasks =
-      (await queryHelpers.queryAll<any>(
+    const blockedTasksPromise = queryHelpers
+      .queryAll<any>(
         `
         SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
                t.initiative_id as initiativeId, i.name as initiativeName,
@@ -1490,11 +1475,12 @@ router.get(
         LIMIT ?
       `,
         [orgId, userId, Math.min(25, limit)]
-      )) || [];
+      )
+      .then((rows) => rows || []);
 
     // 1c) Assigned open tasks (non-overdue, non-blocked)
-    const assignedOpenTasks =
-      (await queryHelpers.queryAll<any>(
+    const assignedOpenTasksPromise = queryHelpers
+      .queryAll<any>(
         `
         SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
                t.initiative_id as initiativeId, i.name as initiativeName,
@@ -1518,16 +1504,18 @@ router.get(
         LIMIT ?
       `,
         [orgId, userId, today, Math.min(25, limit)]
-      )) || [];
+      )
+      .then((rows) => rows || []);
 
-    // 2) Pending decisions (owned)
-    const decisionCols = await getTableColumns('decisions');
-    const decisionPrioritySelect = decisionCols.has('priority')
-      ? 'd.priority'
-      : `'MEDIUM' as priority`;
-    const pendingDecisions =
-      (await queryHelpers.queryAll<any>(
-        `
+    // 2) Pending decisions (owned) — self-contained: schema probe + query
+    const pendingDecisionsPromise = (async () => {
+      const decisionCols = await getTableColumns('decisions');
+      const decisionPrioritySelect = decisionCols.has('priority')
+        ? 'd.priority'
+        : `'MEDIUM' as priority`;
+      return (
+        (await queryHelpers.queryAll<any>(
+          `
         SELECT d.id, d.title, d.description, d.type as decisionType, d.status, ${decisionPrioritySelect}, d.deadline as dueDate, d.created_at as createdAt,
                p.name as projectName
         FROM decisions d
@@ -1538,33 +1526,36 @@ router.get(
         ORDER BY d.created_at DESC
         LIMIT ?
       `,
-        [orgId, userId, Math.min(25, limit)]
-      )) || [];
+          [orgId, userId, Math.min(25, limit)]
+        )) || []
+      );
+    })();
 
-    // 3) Unread notifications (owned)
-    const notifCols = await getTableColumns('notifications');
-    const notifHasRead = notifCols.has('read');
-    const notifReadExpr = notifHasRead ? 'COALESCE(read, 0)' : '0';
-    const notifPrioritySelect = notifCols.has('priority') ? 'priority' : `'normal' as priority`;
-    const notifMessageSelect = notifCols.has('message')
-      ? 'message as body'
-      : notifCols.has('body')
-        ? 'body as body'
-        : `'' as body`;
-    const notifEntityTypeSelect = notifCols.has('entity_type')
-      ? 'entity_type as entityType'
-      : notifCols.has('entityType')
-        ? 'entityType as entityType'
-        : 'NULL as entityType';
-    const notifEntityIdSelect = notifCols.has('entity_id')
-      ? 'entity_id as entityId'
-      : notifCols.has('entityId')
-        ? 'entityId as entityId'
-        : 'NULL as entityId';
+    // 3) Unread notifications (owned) — self-contained: schema probe + query
+    const unreadNotificationsPromise = (async () => {
+      const notifCols = await getTableColumns('notifications');
+      const notifHasRead = notifCols.has('read');
+      const notifReadExpr = notifHasRead ? 'COALESCE(read, 0)' : '0';
+      const notifPrioritySelect = notifCols.has('priority') ? 'priority' : `'normal' as priority`;
+      const notifMessageSelect = notifCols.has('message')
+        ? 'message as body'
+        : notifCols.has('body')
+          ? 'body as body'
+          : `'' as body`;
+      const notifEntityTypeSelect = notifCols.has('entity_type')
+        ? 'entity_type as entityType'
+        : notifCols.has('entityType')
+          ? 'entityType as entityType'
+          : 'NULL as entityType';
+      const notifEntityIdSelect = notifCols.has('entity_id')
+        ? 'entity_id as entityId'
+        : notifCols.has('entityId')
+          ? 'entityId as entityId'
+          : 'NULL as entityId';
 
-    const unreadNotifications =
-      (await queryHelpers.queryAll<any>(
-        `
+      return (
+        (await queryHelpers.queryAll<any>(
+          `
         SELECT
           id,
           type,
@@ -1580,8 +1571,47 @@ router.get(
         ORDER BY created_at DESC
         LIMIT ?
       `,
-        [userId, Math.min(25, limit)]
-      )) || [];
+          [userId, Math.min(25, limit)]
+        )) || []
+      );
+    })();
+
+    // Resolve all independent inbox sources in parallel (FIX-1 inbox N+1).
+    const [
+      triagedRows,
+      overdueTasks,
+      blockedTasks,
+      assignedOpenTasks,
+      pendingDecisions,
+      unreadNotifications,
+    ] = await Promise.all([
+      triagedRowsPromise,
+      overdueTasksPromise,
+      blockedTasksPromise,
+      assignedOpenTasksPromise,
+      pendingDecisionsPromise,
+      unreadNotificationsPromise,
+    ]);
+
+    const triagedMap = new Map<
+      string,
+      { action: TriageAction; params?: Record<string, unknown>; triagedAt: string }
+    >();
+    for (const r of triagedRows) {
+      let params: Record<string, unknown> | undefined;
+      if (r.params_json) {
+        try {
+          params = JSON.parse(r.params_json);
+        } catch {
+          params = undefined;
+        }
+      }
+      triagedMap.set(r.item_key, {
+        action: r.action as TriageAction,
+        params,
+        triagedAt: r.triaged_at,
+      });
+    }
 
     // Anti-spam aggregation (best-effort): group notifications by (type, entityType, entityId) when possible
     const aggregatedNotifications: any[] = [];

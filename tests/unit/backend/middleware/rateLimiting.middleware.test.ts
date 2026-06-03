@@ -220,7 +220,7 @@ describe('rateLimiting.middleware (L1)', () => {
       const next1 = vi.fn();
       mod.apiAuthRateLimiter(req, res1 as any, next1 as any);
       expect(next1).toHaveBeenCalledTimes(1);
-      expect(res1.headers['x-ratelimit-limit']).toBe('1000');
+      expect(res1.headers['x-ratelimit-limit']).toBe('12000');
 
       const res2 = makeRes();
       const next2 = vi.fn();
@@ -481,7 +481,7 @@ describe('rateLimiting.middleware (L1)', () => {
       const next = vi.fn();
       mod.apiAuthRateLimiter(req, res as any, next as any);
       expect(next).toHaveBeenCalledTimes(1);
-      expect(res.headers['x-ratelimit-limit']).toBe('1000');
+      expect(res.headers['x-ratelimit-limit']).toBe('12000');
     } finally {
       process.env.NODE_ENV = prev;
     }
@@ -522,7 +522,7 @@ describe('rateLimiting.middleware (L1)', () => {
       mod.apiAuthRateLimiter(req, res as any, next as any);
 
       expect(next).toHaveBeenCalledTimes(1);
-      expect(res.headers['x-ratelimit-limit']).toBe('1000');
+      expect(res.headers['x-ratelimit-limit']).toBe('12000');
     } finally {
       process.env.NODE_ENV = prev;
     }
@@ -556,7 +556,7 @@ describe('rateLimiting.middleware (L1)', () => {
       mod.apiAuthRateLimiter(req, res as any, next as any);
 
       expect(next).toHaveBeenCalledTimes(1);
-      expect(res.headers['x-ratelimit-limit']).toBe('1000');
+      expect(res.headers['x-ratelimit-limit']).toBe('12000');
     } finally {
       process.env.NODE_ENV = prev;
     }
@@ -587,7 +587,7 @@ describe('rateLimiting.middleware (L1)', () => {
       mod.apiAuthRateLimiter(req, res as any, next as any);
 
       expect(next).toHaveBeenCalledTimes(1);
-      expect(res.headers['x-ratelimit-limit']).toBe('1000');
+      expect(res.headers['x-ratelimit-limit']).toBe('12000');
     } finally {
       process.env.NODE_ENV = prev;
     }
