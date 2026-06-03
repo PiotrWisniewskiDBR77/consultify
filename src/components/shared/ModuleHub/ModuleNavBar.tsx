@@ -492,12 +492,11 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               onClick={onNewItem}
               className="
                 inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium
-                bg-hig-primary text-white
-                hover:bg-hig-primary-hover
+                bg-purple-600 text-white
+                hover:bg-purple-700
                 transition-colors duration-150
               "
             >
-              <Plus size={16} />
               <span>{newItemLabel}</span>
             </button>
           ) : null}
