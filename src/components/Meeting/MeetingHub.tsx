@@ -30,7 +30,9 @@ import {
   MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
+  MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -337,43 +339,45 @@ export const MeetingHub: React.FC = () => {
       },
     ];
 
+    // Canonical Menu 3 layout: left preset chips + right AI action in one justify-between row.
+    // NOTE: commandRowRightContent is voided by ModuleNavBar (line 188), so we embed both
+    // sides here inside MENU_3_INNER_CLASS (flex items-center justify-between) per canon
+    // (SSOT: src/components/Execution/ExecutionHub.tsx commandRowContent pattern).
     return (
-      <div className={MENU_3_LEFT_CLASS}>
-        {chips.map((chip) => (
+      <div className={MENU_3_INNER_CLASS}>
+        <div className={MENU_3_LEFT_CLASS}>
+          {chips.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={chip.onClick}
+              className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            >
+              {chip.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
+              <span>{chip.label}</span>
+              <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                {chip.count}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className={MENU_3_RIGHT_CLASS}>
           <button
-            key={chip.id}
             type="button"
-            onClick={chip.onClick}
-            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            disabled={!briefingMeeting}
+            onClick={() => {
+              if (briefingMeeting) openMeetingDocument(briefingMeeting);
+            }}
+            className={getMenu3AiButtonClass(Boolean(briefingMeeting && activeDocumentId))}
+            title={t('meeting.actions.operatorBrief', 'Open operator brief')}
           >
-            {chip.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
-            <span>{chip.label}</span>
-            <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-              {chip.count}
-            </span>
+            <Sparkles size={12} />
+            <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
           </button>
-        ))}
+        </div>
       </div>
     );
-  }, [activeFilters, counts, t]);
-
-  const commandRowRightContent = useMemo(
-    () => (
-      <button
-        type="button"
-        disabled={!briefingMeeting}
-        onClick={() => {
-          if (briefingMeeting) openMeetingDocument(briefingMeeting);
-        }}
-        className={getMenu3AiButtonClass(Boolean(briefingMeeting && activeDocumentId))}
-        title={t('meeting.actions.operatorBrief', 'Open operator brief')}
-      >
-        <Sparkles size={12} />
-        <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
-      </button>
-    ),
-    [activeDocumentId, briefingMeeting, t]
-  );
+  }, [activeDocumentId, activeFilters, briefingMeeting, counts, openMeetingDocument, t]);
 
   const resetDraft = () => {
     setDraft({
@@ -591,7 +595,6 @@ export const MeetingHub: React.FC = () => {
           </div>
         }
         commandRowContent={commandRowContent}
-        commandRowRightContent={commandRowRightContent}
         availableViewModes={['table', 'calendar']}
       >
         {loading ? (

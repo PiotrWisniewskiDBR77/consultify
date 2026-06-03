@@ -160,8 +160,10 @@ const ColumnFilterDropdown: React.FC<{
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className={`h-9 px-2 rounded-lg border border-navy-600 hover:bg-navy-700 transition-colors flex items-center gap-1 ${
-          activeValues.length > 0 ? 'text-primary-400 border-primary-500/40' : 'text-slate-500'
+        className={`h-8 px-2 rounded-lg border transition-colors flex items-center gap-1 ${
+          activeValues.length > 0
+            ? 'text-primary-600 dark:text-primary-400 border-primary-500/40'
+            : 'text-slate-500 border-slate-200/60 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700'
         }`}
       >
         <ChevronDown size={14} />
@@ -169,32 +171,32 @@ const ColumnFilterDropdown: React.FC<{
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-navy-800 border border-navy-700 rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-800 border border-slate-200/70 dark:border-navy-700 rounded-lg shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {options.map((o) => (
                 <label
                   key={o.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-navy-700 cursor-pointer"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-navy-700 cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={selected.includes(o.value)}
                     onChange={() => toggle(o.value)}
-                    className="rounded border-navy-600 bg-navy-800 text-primary-500 focus:ring-primary-500"
+                    className="rounded border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-primary-500 focus:ring-primary-500"
                   />
                   {o.color && <span className={`w-2 h-2 rounded-full ${o.color}`} />}
-                  <span className="text-sm text-slate-300">{o.label}</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300">{o.label}</span>
                 </label>
               ))}
             </div>
-            <div className="flex items-center justify-between p-2 border-t border-navy-700">
+            <div className="flex items-center justify-between p-2 border-t border-slate-200/60 dark:border-navy-700">
               <button
                 onClick={() => {
                   setSelected([]);
                   onApply([]);
                   setOpen(false);
                 }}
-                className="text-xs text-slate-500 hover:text-white transition-colors"
+                className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 Clear
               </button>
@@ -203,7 +205,7 @@ const ColumnFilterDropdown: React.FC<{
                   onApply(selected);
                   setOpen(false);
                 }}
-                className="h-9 px-3 text-xs font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 transition-colors"
+                className="h-8 px-3 text-xs font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 transition-colors"
               >
                 Apply
               </button>
@@ -460,9 +462,9 @@ export const ROIAnalysisView: React.FC = () => {
     <div className="p-4 space-y-4">
       {/* Lock / approval governance banner */}
       {(lockedCount > 0 || approvedCount > 0) && (
-        <div className="rounded-xl bg-navy-900 border border-navy-700 p-3 flex flex-wrap items-center gap-3">
+        <div className="rounded-xl bg-slate-50 dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-3 flex flex-wrap items-center gap-3">
           <Lock size={16} className="text-slate-400 shrink-0" />
-          <span className="text-sm text-slate-300">
+          <span className="text-sm text-slate-600 dark:text-slate-300">
             {t(
               'results.roiAnalysis.lockBanner',
               '{{locked}} locked · {{approved}} approved — finalized assumptions are read-only',
@@ -473,25 +475,29 @@ export const ROIAnalysisView: React.FC = () => {
       )}
       {/* Portfolio summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
             <DollarSign size={16} className="text-slate-400" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roiAnalysis.totalPlanned', 'Total Planned Value')}
             </span>
           </div>
-          <p className="text-lg font-semibold text-white">{formatCurrency(totalPlanned)}</p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">
+            {formatCurrency(totalPlanned)}
+          </p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
             <Target size={16} className="text-slate-400" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roiAnalysis.totalRealized', 'Total Realized Value')}
             </span>
           </div>
-          <p className="text-lg font-semibold text-white">{formatCurrency(totalRealized)}</p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">
+            {formatCurrency(totalRealized)}
+          </p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
             {totalVariance >= 0 ? (
               <TrendingUp size={16} className="text-emerald-400" />
@@ -531,8 +537,8 @@ export const ROIAnalysisView: React.FC = () => {
 
       {/* Waterfall/bar chart - initiative contributions sorted by variance */}
       {filteredItems.length > 0 && (
-        <div className="rounded-xl bg-navy-900 border border-navy-700 p-4">
-          <h3 className="text-sm font-medium text-slate-300 mb-3">
+        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
             {t('results.roiAnalysis.contributionsChart', 'Initiative Contributions to ROI')}
           </h3>
           <div className="flex items-end gap-1 h-32">
@@ -566,15 +572,15 @@ export const ROIAnalysisView: React.FC = () => {
       )}
 
       {/* Initiative list table */}
-      <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-navy-900/50 border-b border-navy-700/50">
+              <tr className="bg-slate-50/80 dark:bg-navy-900/50 border-b border-slate-200/60 dark:border-navy-700/50">
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[20%]">
                   <button
                     onClick={() => handleSort('initiativeName')}
-                    className="hover:text-white transition-colors flex items-center gap-1"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1"
                   >
                     {t('results.roi.columns.initiative', 'Initiative')}
                     {sortCol === 'initiativeName' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
@@ -583,7 +589,7 @@ export const ROIAnalysisView: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
                   <button
                     onClick={() => handleSort('projectedBenefit')}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     {t('results.roiAnalysis.plannedRoi', 'Planned ROI')}
                     {sortCol === 'projectedBenefit' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
@@ -592,7 +598,7 @@ export const ROIAnalysisView: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
                   <button
                     onClick={() => handleSort('realizedBenefit')}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     {t('results.roiAnalysis.realizedRoi', 'Realized ROI')}
                     {sortCol === 'realizedBenefit' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
@@ -601,7 +607,7 @@ export const ROIAnalysisView: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
                   <button
                     onClick={() => handleSort('variance')}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     {t('results.roi.columns.variance', 'Variance')}
                     {sortCol === 'variance' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
@@ -623,12 +629,15 @@ export const ROIAnalysisView: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
                   {t('results.roi.columns.owner', 'Owner')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
-                  {t('common.actions', 'Actions')}
+                <th
+                  className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16"
+                  aria-label="Row actions"
+                >
+                  <span className="sr-only">{t('common.actions', 'Actions')}</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-navy-700/50">
+            <tbody className="divide-y divide-slate-200/60 dark:divide-navy-700/50">
               {filteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-16 text-center text-slate-500">
@@ -660,17 +669,17 @@ export const ROIAnalysisView: React.FC = () => {
                     <tr
                       key={item.initiativeId}
                       onClick={() => setDrawerInitiativeId(item.initiativeId)}
-                      className="group hover:bg-navy-800/50 cursor-pointer transition-colors"
+                      className="group hover:bg-slate-50/80 dark:hover:bg-navy-800/50 cursor-pointer transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <span className="text-sm font-medium text-white">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
                           {item.initiativeName || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                         {formatCurrency(item.projectedBenefit)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                         {formatCurrency(item.realizedBenefit)}
                       </td>
                       <td className={`px-4 py-3 text-sm font-medium ${varColor}`}>
@@ -696,7 +705,7 @@ export const ROIAnalysisView: React.FC = () => {
                                 menuRowId === item.initiativeId ? null : item.initiativeId
                               );
                             }}
-                            className="p-1.5 rounded hover:bg-navy-700 text-slate-500 hover:text-white transition-colors h-9"
+                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <MoreVertical size={14} />
                           </button>
@@ -706,13 +715,13 @@ export const ROIAnalysisView: React.FC = () => {
                                 className="fixed inset-0 z-40"
                                 onClick={() => setMenuRowId(null)}
                               />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-navy-800 border border-navy-700 rounded-lg shadow-xl overflow-hidden">
+                              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white dark:bg-navy-800 border border-slate-200/70 dark:border-navy-700 rounded-lg shadow-xl overflow-hidden">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleRowAction('open', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                                 >
                                   <Maximize2 size={14} />
                                   {t('results.roi.actions.openDetail', 'Open detail')}
@@ -734,8 +743,8 @@ export const ROIAnalysisView: React.FC = () => {
                                   }
                                   className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
                                     editable
-                                      ? 'text-slate-300 hover:bg-navy-700'
-                                      : 'text-slate-600 cursor-not-allowed'
+                                      ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
+                                      : 'text-slate-400 dark:text-slate-600 cursor-not-allowed'
                                   }`}
                                 >
                                   {editable ? <Plus size={14} /> : <Lock size={14} />}
@@ -746,7 +755,7 @@ export const ROIAnalysisView: React.FC = () => {
                                     e.stopPropagation();
                                     handleRowAction('history', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                                 >
                                   {t('results.roi.actions.viewHistory', 'View history')}
                                 </button>

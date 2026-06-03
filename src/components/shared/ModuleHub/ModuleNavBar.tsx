@@ -185,7 +185,6 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   aiControl,
   forceCommandRow = false,
 }) => {
-  void commandRowRightContent;
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -303,18 +302,23 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
       );
     }
 
-    if (!commandRowContent && activeFilters.length === 0) return null;
+    if (!commandRowContent && !commandRowRightContent && activeFilters.length === 0) return null;
 
     return (
       <div className="px-4 pb-3">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-          {commandRowContent ? <div className="flex-1 min-w-0">{commandRowContent}</div> : null}
-          {activeFilters.length > 0 ? (
-            <ActiveFilters
-              filters={activeFilters}
-              onRemoveFilter={onRemoveFilter}
-              onClearAll={onClearFilters}
-            />
+        <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {commandRowContent ? <div className="min-w-0">{commandRowContent}</div> : null}
+            {activeFilters.length > 0 ? (
+              <ActiveFilters
+                filters={activeFilters}
+                onRemoveFilter={onRemoveFilter}
+                onClearAll={onClearFilters}
+              />
+            ) : null}
+          </div>
+          {commandRowRightContent ? (
+            <div className="flex items-center gap-2 shrink-0">{commandRowRightContent}</div>
           ) : null}
         </div>
       </div>
