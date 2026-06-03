@@ -112,9 +112,6 @@ const AssessmentReportBuilderView = React.lazy(() =>
 const BenefitsRealizationView = React.lazy(() =>
   import('@/views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView }))
 );
-const V4ComingSoonView = React.lazy(() =>
-  import('@/views/V4ComingSoonView').then((m) => ({ default: m.V4ComingSoonView }))
-);
 const SharedPresentationView = React.lazy(() =>
   import('@/components/Presentations/SharedPresentationView').then((m) => ({
     default: m.SharedPresentationView,
@@ -1960,12 +1957,15 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.MEETING}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Meeting"
+              >
+                <RouteErrorBoundary>
+                  <MeetingHub />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />

@@ -3049,6 +3049,23 @@ export const Api = {
     return handleResponse(res, 'Failed to create meeting');
   },
 
+  updateMeeting: async (meetingId: string, data: any): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data || {}),
+    });
+    return handleResponse(res, 'Failed to update meeting');
+  },
+
+  deleteMeeting: async (meetingId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete meeting');
+  },
+
   updateMeetingStatus: async (
     meetingId: string,
     status: 'scheduled' | 'completed'

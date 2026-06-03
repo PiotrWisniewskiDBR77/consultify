@@ -153,7 +153,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.meeting', 'Meeting'),
       icon: React.createElement(Users, { size: 20 }),
       viewId: AppView.MEETING,
-      badge: 'soon',
     },
     // MCP IRIS (14) and MCP Marketplace (15) removed from navigation per decision
     // D7 (placeholder-only modules dropped). Their routes now redirect to /chat.

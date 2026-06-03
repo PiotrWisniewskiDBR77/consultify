@@ -1474,7 +1474,8 @@
     "documentStudio": "Document Studio",
     "excele": "Table Studio",
     "prezentacje": "Presentations",
-    "tabele": "Table Studio"
+    "tabele": "Table Studio",
+    "meeting": "Meeting"
   },
   "widgets": {
     "help": {
@@ -9565,6 +9566,103 @@
         "title": "Exploring the possibilities",
         "description": "I want to see how the system can help my organization without a specific goal."
       }
+    }
+  },
+  "meeting": {
+    "empty": "No meetings yet",
+    "tabs": {
+      "all": "Meetings"
+    },
+    "columns": {
+      "title": "Meeting",
+      "when": "When",
+      "attendees": "Attendees",
+      "status": "Status",
+      "followUps": "Follow-ups"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "completed": "Completed"
+    },
+    "counters": {
+      "all": "All",
+      "upcoming": "Upcoming",
+      "followUp": "Needs follow-up",
+      "completed": "Completed"
+    },
+    "sync": {
+      "loading": "Loading workspace",
+      "workspace": "Shared workspace"
+    },
+    "actions": {
+      "new": "New meeting",
+      "create": "Create meeting",
+      "save": "Save changes",
+      "operatorBrief": "Operator brief"
+    },
+    "fields": {
+      "title": "Title",
+      "location": "Location / link",
+      "start": "Start",
+      "end": "End",
+      "attendees": "Attendees, one per line",
+      "preRead": "Pre-read links, one per line",
+      "agenda": "Agenda items, one per line"
+    },
+    "modal": {
+      "title": "Create meeting",
+      "editTitle": "Edit meeting",
+      "subtitle": "Agenda + pre-read + follow-up workspace",
+      "note": "Meeting details are stored in the shared workspace."
+    },
+    "decisions": {
+      "title": "Add decision",
+      "fields": {
+        "value": "Decision"
+      },
+      "actions": {
+        "add": "Add decision"
+      },
+      "notifications": {
+        "created": "Decision added"
+      },
+      "errors": {
+        "createFailed": "Failed to add decision"
+      }
+    },
+    "followUp": {
+      "title": "Add follow-up",
+      "fields": {
+        "title": "Action item",
+        "owner": "Owner"
+      },
+      "actions": {
+        "add": "Add follow-up"
+      },
+      "notifications": {
+        "created": "Follow-up added"
+      },
+      "errors": {
+        "createFailed": "Failed to add follow-up",
+        "statusFailed": "Failed to update follow-up status"
+      }
+    },
+    "delete": {
+      "title": "Delete meeting",
+      "confirm": "This permanently removes the meeting, its decisions, and follow-ups. This cannot be undone.",
+      "action": "Delete meeting"
+    },
+    "notifications": {
+      "created": "Meeting created",
+      "updated": "Meeting updated",
+      "deleted": "Meeting deleted"
+    },
+    "errors": {
+      "loadFailed": "Failed to load meetings",
+      "createFailed": "Failed to create meeting",
+      "updateFailed": "Failed to update meeting",
+      "deleteFailed": "Failed to delete meeting",
+      "statusFailed": "Failed to update meeting status"
     }
   }
 }

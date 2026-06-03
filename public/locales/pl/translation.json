@@ -758,7 +758,8 @@
     "documentStudio": "Studio Dokumentów",
     "excele": "Tabele Studio",
     "prezentacje": "Prezentacje",
-    "tabele": "Tabele Studio"
+    "tabele": "Tabele Studio",
+    "meeting": "Spotkania"
   },
   "widgets": {
     "help": {
@@ -10702,6 +10703,103 @@
         "title": "Eksploruję możliwości",
         "description": "Chcę zobaczyć jak system może pomóc mojej organizacji bez konkretnego celu."
       }
+    }
+  },
+  "meeting": {
+    "empty": "Brak spotkań",
+    "tabs": {
+      "all": "Spotkania"
+    },
+    "columns": {
+      "title": "Spotkanie",
+      "when": "Termin",
+      "attendees": "Uczestnicy",
+      "status": "Status",
+      "followUps": "Follow-upy"
+    },
+    "status": {
+      "scheduled": "Zaplanowane",
+      "completed": "Zakończone"
+    },
+    "counters": {
+      "all": "Wszystkie",
+      "upcoming": "Nadchodzące",
+      "followUp": "Wymaga follow-upu",
+      "completed": "Zakończone"
+    },
+    "sync": {
+      "loading": "Ładowanie przestrzeni",
+      "workspace": "Wspólna przestrzeń"
+    },
+    "actions": {
+      "new": "Nowe spotkanie",
+      "create": "Utwórz spotkanie",
+      "save": "Zapisz zmiany",
+      "operatorBrief": "Brief operatora"
+    },
+    "fields": {
+      "title": "Tytuł",
+      "location": "Lokalizacja / link",
+      "start": "Początek",
+      "end": "Koniec",
+      "attendees": "Uczestnicy, jeden na linię",
+      "preRead": "Materiały do przeczytania, jeden link na linię",
+      "agenda": "Punkty agendy, jeden na linię"
+    },
+    "modal": {
+      "title": "Utwórz spotkanie",
+      "editTitle": "Edytuj spotkanie",
+      "subtitle": "Agenda + materiały + follow-upy",
+      "note": "Szczegóły spotkania są zapisywane we wspólnej przestrzeni."
+    },
+    "decisions": {
+      "title": "Dodaj decyzję",
+      "fields": {
+        "value": "Decyzja"
+      },
+      "actions": {
+        "add": "Dodaj decyzję"
+      },
+      "notifications": {
+        "created": "Dodano decyzję"
+      },
+      "errors": {
+        "createFailed": "Nie udało się dodać decyzji"
+      }
+    },
+    "followUp": {
+      "title": "Dodaj follow-up",
+      "fields": {
+        "title": "Zadanie",
+        "owner": "Właściciel"
+      },
+      "actions": {
+        "add": "Dodaj follow-up"
+      },
+      "notifications": {
+        "created": "Dodano follow-up"
+      },
+      "errors": {
+        "createFailed": "Nie udało się dodać follow-upu",
+        "statusFailed": "Nie udało się zaktualizować statusu follow-upu"
+      }
+    },
+    "delete": {
+      "title": "Usuń spotkanie",
+      "confirm": "To trwale usuwa spotkanie, jego decyzje i follow-upy. Tej operacji nie można cofnąć.",
+      "action": "Usuń spotkanie"
+    },
+    "notifications": {
+      "created": "Utworzono spotkanie",
+      "updated": "Zaktualizowano spotkanie",
+      "deleted": "Usunięto spotkanie"
+    },
+    "errors": {
+      "loadFailed": "Nie udało się załadować spotkań",
+      "createFailed": "Nie udało się utworzyć spotkania",
+      "updateFailed": "Nie udało się zaktualizować spotkania",
+      "deleteFailed": "Nie udało się usunąć spotkania",
+      "statusFailed": "Nie udało się zaktualizować statusu spotkania"
     }
   }
 }

@@ -5,8 +5,10 @@ import {
   addMeetingDecision,
   addMeetingFollowUp,
   createMeeting,
+  deleteMeeting,
   ensureMeetingTables,
   listMeetings,
+  updateMeeting,
   updateMeetingFollowUpStatus,
   updateMeetingStatus,
 } from '../services/meetingService.js';
@@ -72,6 +74,49 @@ router.post(
     });
 
     return res.status(201).json({ meeting });
+  })
+);
+
+router.put(
+  '/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (req.body?.title !== undefined && !String(req.body.title || '').trim()) {
+      return res.status(400).json({ error: 'title cannot be empty' });
+    }
+    if (req.body?.startAt !== undefined && !String(req.body.startAt || '').trim()) {
+      return res.status(400).json({ error: 'startAt cannot be empty' });
+    }
+
+    const meeting = await updateMeeting({
+      organizationId: orgId,
+      meetingId: String(req.params.id),
+      title: typeof req.body?.title === 'string' ? req.body.title : undefined,
+      startAt: typeof req.body?.startAt === 'string' ? req.body.startAt : undefined,
+      endAt: typeof req.body?.endAt === 'string' ? req.body.endAt : undefined,
+      location: req.body?.location,
+      attendees: Array.isArray(req.body?.attendees) ? req.body.attendees : undefined,
+      preRead: Array.isArray(req.body?.preRead) ? req.body.preRead : undefined,
+      agenda: Array.isArray(req.body?.agenda) ? req.body.agenda : undefined,
+    });
+    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    return res.json({ meeting });
+  })
+);
+
+router.delete(
+  '/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const deleted = await deleteMeeting({
+      organizationId: orgId,
+      meetingId: String(req.params.id),
+    });
+    if (!deleted) return res.status(404).json({ error: 'Meeting not found' });
+    return res.json({ success: true });
   })
 );
 
