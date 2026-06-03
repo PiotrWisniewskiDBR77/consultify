@@ -412,14 +412,17 @@ function deriveRadarSignals(
   changedSignals: RadarSignalCard[] | undefined
 ): RadarMapSignal[] {
   if (Array.isArray(mapSignals) && mapSignals.length > 0) {
-    return mapSignals.slice(0, 24).map((signal) => ({
-      ...signal,
-      name: shortenSignalName(signal.name),
-      preview: {
-        ...signal.preview,
-        shortDescription: clampText(signal.preview.shortDescription, 120),
-      },
-    }));
+    return mapSignals.slice(0, 24).map((signal) => {
+      const preview = signal.preview ?? ({} as RadarMapSignal['preview']);
+      return {
+        ...signal,
+        name: shortenSignalName(signal.name),
+        preview: {
+          ...preview,
+          shortDescription: clampText(preview.shortDescription, 120),
+        },
+      };
+    });
   }
 
   if (!changedSignals || changedSignals.length === 0) {
@@ -764,6 +767,16 @@ function RadarPreviewPanel({
   const statusMeta = STATUS_META[signal.status] ?? STATUS_META.new;
   const Icon = typeMeta.Icon;
 
+  const preview = signal.preview ?? ({} as RadarMapSignal['preview']);
+  // Some signals arrive without enriched copy (fallback ingestion / localization
+  // still pending). Provide sensible defaults so the panel never renders blank.
+  const shortDescription =
+    String(preview.shortDescription || '').trim() ||
+    `${signal.name} — ${quadrantTitle(signal.quadrant)} signal on your radar.`;
+  const whyItMattersForYou =
+    String(preview.whyItMattersForYou || '').trim() ||
+    `Flagged in your ${quadrantTitle(signal.quadrant)} quadrant at the ${signal.ring} ring.`;
+
   return (
     <motion.div
       key={signal.id}
@@ -788,9 +801,7 @@ function RadarPreviewPanel({
             <Badge>{quadrantTitle(signal.quadrant)}</Badge>
             <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
           </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-slate-300">
-            {signal.preview.shortDescription}
-          </p>
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-300">{shortDescription}</p>
         </div>
       </div>
 
@@ -798,18 +809,16 @@ function RadarPreviewPanel({
         <div className="text-[10px] font-semibold uppercase tracking-wider text-primary-200">
           Why this is on your radar
         </div>
-        <p className="mt-1 text-[12px] leading-relaxed text-primary-50/90">
-          {signal.preview.whyItMattersForYou}
-        </p>
+        <p className="mt-1 text-[12px] leading-relaxed text-primary-50/90">{whyItMattersForYou}</p>
       </div>
 
       <div className="mt-3 flex-1 space-y-2 overflow-auto rounded-xl border border-white/10 bg-white/[0.02] p-3">
-        <Section title="What it is" body={signal.preview.shortDescription} />
-        <Section title="Why it matters" body={signal.preview.whyItMatters} />
-        <Section title="Why it matters for you" body={signal.preview.whyItMattersForYou} />
-        <Section title="How to think about it" body={signal.preview.howToThinkAboutIt} />
-        <Section title="Good first question" body={signal.preview.goodFirstQuestion} />
-        <Section title="Suggested next step" body={signal.preview.suggestedNextStep} />
+        <Section title="What it is" body={shortDescription} />
+        <Section title="Why it matters" body={preview.whyItMatters} />
+        <Section title="Why it matters for you" body={preview.whyItMattersForYou} />
+        <Section title="How to think about it" body={preview.howToThinkAboutIt} />
+        <Section title="Good first question" body={preview.goodFirstQuestion} />
+        <Section title="Suggested next step" body={preview.suggestedNextStep} />
       </div>
 
       <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] p-2.5">
@@ -913,12 +922,16 @@ function Badge({ children, tone }: { children: React.ReactNode; tone?: string })
 }
 
 function Section({ title, body }: { title: string; body: string }) {
+  const text = clampText(body, 220);
+  // Skip empty rows so the panel never shows a labelled section with no content
+  // (the source signal may not have every preview field populated yet).
+  if (!text) return null;
   return (
     <div>
       <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
         {title}
       </div>
-      <p className="text-[12px] leading-relaxed text-slate-200">{clampText(body, 220)}</p>
+      <p className="text-[12px] leading-relaxed text-slate-200">{text}</p>
     </div>
   );
 }

@@ -441,7 +441,7 @@ function mapArtifactReport(raw: any): ReportItem {
   return {
     id: raw.originRecordId || raw.origin_record_id || raw.id,
     artifactId: raw.artifactId || raw.artifact_id,
-    title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+    title: resolveArtifactTitle(raw, 'Document'),
     reportType: raw.reportType || 'custom',
     status: reportStatus,
     owner: raw.ownerUserId || raw.createdBy || '—',
@@ -545,12 +545,70 @@ function mapDeck(raw: any): PresentationItem {
   };
 }
 
+const PRESENTATION_SOURCE_TYPES = new Set(['tool', 'assessment', 'finance', 'upload']);
+const UUID_LIKE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const GENERIC_TITLES = new Set([
+  '',
+  'untitled',
+  'untitled artifact',
+  'untitled presentation',
+  'untitled report',
+  'untitled deck',
+  'executive presentation draft',
+]);
+
+/**
+ * Resolve a presentation's SOURCE to one of the known human labels.
+ *
+ * The canonical artifact registry list does NOT expose a top-level
+ * `sourceType`; the real source kind lives in `originSummary.deckType` (e.g.
+ * `tool`, `assessment`, `finance`). Earlier code blindly read `raw.sourceType`
+ * (always undefined), and other call sites surfaced raw record IDs. Guard
+ * against UUID-like values so the SOURCE column never renders an ID.
+ */
+function resolvePresentationSourceType(raw: any): PresentationItem['sourceType'] {
+  const candidates = [
+    raw?.sourceType,
+    raw?.originSummary?.deckType,
+    raw?.originSummary?.sourceType,
+    raw?.deckType,
+  ];
+  for (const candidate of candidates) {
+    const value = String(candidate || '')
+      .trim()
+      .toLowerCase();
+    if (!value || UUID_LIKE.test(value)) continue;
+    if (PRESENTATION_SOURCE_TYPES.has(value)) return value as PresentationItem['sourceType'];
+  }
+  return 'tool';
+}
+
+/**
+ * Resolve a human title, falling back to "<Kind> · <date>" when the registry
+ * only has a generic/placeholder snapshot (never a raw UUID or a shared
+ * constant like "Executive presentation draft").
+ */
+function resolveArtifactTitle(raw: any, kindLabel: string): string {
+  const candidate = String(raw?.resolvedTitle || raw?.titleSnapshot || raw?.title || '').trim();
+  const normalized = candidate.toLowerCase();
+  if (candidate && !UUID_LIKE.test(candidate) && !GENERIC_TITLES.has(normalized)) {
+    return candidate;
+  }
+  const dateRaw = raw?.lastTransitionAt || raw?.updatedAt || raw?.createdAt;
+  const date = dateRaw ? new Date(dateRaw) : null;
+  const dateLabel =
+    date && !Number.isNaN(date.getTime())
+      ? date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+      : '';
+  return dateLabel ? `${kindLabel} · ${dateLabel}` : kindLabel;
+}
+
 function mapArtifactPresentation(raw: any): PresentationItem {
   return {
     id: raw.originRecordId || raw.origin_record_id || raw.id,
     artifactId: raw.artifactId || raw.artifact_id,
-    title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
-    sourceType: (raw.sourceType || 'tool') as PresentationItem['sourceType'],
+    title: resolveArtifactTitle(raw, 'Presentation'),
+    sourceType: resolvePresentationSourceType(raw),
     owner: raw.ownerUserId || raw.createdBy || '—',
     status: (
       raw.originStatus ||
@@ -617,7 +675,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       kind: 'document',
       originRecordId: String(originId),
       artifactId: raw.artifactId || raw.artifact_id,
-      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      title: resolveArtifactTitle(raw, 'Document template'),
       statusKey: delivery,
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
@@ -641,7 +699,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       kind: 'presentation',
       originRecordId: String(originId),
       artifactId: raw.artifactId || raw.artifact_id,
-      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      title: resolveArtifactTitle(raw, 'Presentation template'),
       statusKey: delivery,
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
@@ -661,7 +719,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       kind: 'sheet',
       originRecordId: String(originId),
       artifactId: raw.artifactId || raw.artifact_id,
-      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      title: resolveArtifactTitle(raw, 'Sheet'),
       statusKey: delivery,
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),

@@ -19,6 +19,7 @@ import {
   isAccessBlockedCode,
 } from '../utils/accessBlocked';
 import { normalizeApiErrorMessage } from '../utils/apiError';
+import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
@@ -1152,6 +1153,24 @@ const invalidateCachedApiByPrefix = (prefix: string): void => {
       cachedApiGets.delete(key);
     }
   }
+};
+
+/**
+ * Decode HTML-entity-encoded display fields on an idea row.
+ *
+ * Legacy rows were stored entity-encoded (some twice) by the server input
+ * sanitizer, which made titles render literally as `&quot;…` / `&amp;quot;…`.
+ * Decoding here yields plain text; React re-escapes safely on render.
+ */
+const normalizeIdeaDisplayFields = <T>(idea: T): T => {
+  if (!idea || typeof idea !== 'object') return idea;
+  const row = idea as Record<string, unknown>;
+  for (const field of ['title', 'body', 'description'] as const) {
+    if (typeof row[field] === 'string') {
+      row[field] = decodeHtmlEntities(row[field] as string);
+    }
+  }
+  return idea;
 };
 
 const getCachedJson = async <T = any>(
@@ -4311,7 +4330,8 @@ export const Api = {
     }
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch ideas');
-    return res.json();
+    const rows = await res.json();
+    return Array.isArray(rows) ? rows.map(normalizeIdeaDisplayFields) : rows;
   },
 
   // M2 home-shell: server-backed favorites / recents / folders.
@@ -4396,7 +4416,7 @@ export const Api = {
   getMyIdea: async (id: string): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/my-ideas/${id}`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch idea');
-    return res.json();
+    return normalizeIdeaDisplayFields(await res.json());
   },
 
   createMyIdea: async (idea: {

@@ -298,6 +298,53 @@ const parseTagsArray = (input: unknown): string[] => {
   return [];
 };
 
+/**
+ * Decode HTML entities back to plain text before persisting idea fields.
+ *
+ * The global inputSanitizationMiddleware HTML-encodes every request body
+ * (e.g. `"` -> `&quot;`). Persisting that encoded value is wrong for a React
+ * frontend (React escapes on render), and content that was already encoded
+ * once (e.g. an idea seeded from a sanitized chat message) gets encoded again
+ * (`&quot;` -> `&amp;quot;`). Decoding here stores PLAIN text, which React
+ * re-escapes safely at render time — no XSS hole is introduced.
+ */
+const IDEA_NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  '#x27': "'",
+  '#39': "'",
+  '#96': '`',
+  '#x60': '`',
+  nbsp: ' ',
+};
+const decodeIdeaText = (input: string): string => {
+  let current = input;
+  for (let i = 0; i < 5; i += 1) {
+    const next = current.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
+      const key = body.toLowerCase();
+      if (IDEA_NAMED_ENTITIES[key] !== undefined) return IDEA_NAMED_ENTITIES[key];
+      if (body[0] === '#') {
+        const isHex = body[1] === 'x' || body[1] === 'X';
+        const code = parseInt(isHex ? body.slice(2) : body.slice(1), isHex ? 16 : 10);
+        if (Number.isFinite(code) && code > 0 && code <= 0x10ffff) {
+          try {
+            return String.fromCodePoint(code);
+          } catch {
+            return match;
+          }
+        }
+      }
+      return match;
+    });
+    if (next === current) break;
+    current = next;
+  }
+  return current;
+};
+
 const parseJsonField = <T>(input: unknown, fallback: T): T => {
   if (input == null) return fallback;
   if (typeof input !== 'string') return input as T;
@@ -2497,13 +2544,13 @@ router.post(
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['my_ideas']))) return;
 
-    const title = String(req.body?.title || '').trim();
+    const title = decodeIdeaText(String(req.body?.title || '').trim());
     if (!title) {
       res.status(400).json({ error: 'title is required' });
       return;
     }
 
-    const body = typeof req.body?.body === 'string' ? req.body.body : null;
+    const body = typeof req.body?.body === 'string' ? decodeIdeaText(req.body.body) : null;
     const tags = parseTagsArray(req.body?.tags);
     const sourceType = req.body?.sourceType ? String(req.body.sourceType) : null;
     const sourceConversationId = req.body?.sourceConversationId
@@ -2712,8 +2759,9 @@ router.put(
       params.push(val);
     };
 
-    if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
-    if (typeof req.body?.body === 'string') set('body', req.body.body);
+    if (typeof req.body?.title === 'string')
+      set('title', decodeIdeaText(String(req.body.title).trim()));
+    if (typeof req.body?.body === 'string') set('body', decodeIdeaText(req.body.body));
     if (req.body?.tags !== undefined) set('tags', JSON.stringify(parseTagsArray(req.body.tags)));
     if (typeof req.body?.branch === 'string') set('branch', req.body.branch);
     if (typeof req.body?.area === 'string') set('area', req.body.area);
