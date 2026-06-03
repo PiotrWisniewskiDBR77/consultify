@@ -189,7 +189,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
       {/* Payment Methods List */}
       {paymentMethods.length === 0 ? (
         <div className="text-center py-8 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700">
-          <CreditCard className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <CreditCard className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
           <p className="text-slate-500 dark:text-slate-400 mb-4">
             {selfServeEnabled
               ? t('billing.paymentMethods.empty', 'No payment methods saved')
@@ -261,7 +261,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
                   <button
                     onClick={() => handleRemove(pm.id)}
                     disabled={removing === pm.id}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {removing === pm.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

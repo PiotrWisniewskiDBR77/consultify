@@ -619,7 +619,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   </div>
 
                   <h3 className="text-lg font-bold text-white mb-1">{tier.label}</h3>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mb-4 h-10">
+                  <p className="text-sm text-slate-600 dark:text-slate-500 mb-4 h-10">
                     {tier.desc}
                   </p>
 
@@ -647,7 +647,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   )}
                   <button
                     onClick={refreshCosts}
-                    className="text-xs text-slate-400 dark:text-slate-500 hover:text-white px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+                    className="text-xs text-slate-600 dark:text-slate-500 hover:text-white px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
                   >
                     Refresh
                   </button>
@@ -676,7 +676,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <div className="bg-black/30 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Zap size={16} className="text-blue-400" />
-                    <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
+                    <span className="text-xs text-slate-600 dark:text-slate-500 uppercase font-bold tracking-wider">
                       Requests
                     </span>
                   </div>
@@ -689,7 +689,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <div className="bg-black/30 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <FileText size={16} className="text-primary-400" />
-                    <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
+                    <span className="text-xs text-slate-600 dark:text-slate-500 uppercase font-bold tracking-wider">
                       Tokens
                     </span>
                   </div>
@@ -706,7 +706,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <div className="bg-black/30 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Gauge size={16} className="text-amber-400" />
-                    <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
+                    <span className="text-xs text-slate-600 dark:text-slate-500 uppercase font-bold tracking-wider">
                       Avg/Request
                     </span>
                   </div>
@@ -735,7 +735,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     { tier: 'Premium', requests: 7, cost: 0.67, color: 'purple', percent: 6 },
                   ].map((stat) => (
                     <div key={stat.tier} className="flex items-center gap-4">
-                      <div className="w-20 text-xs font-medium text-slate-400 dark:text-slate-500">
+                      <div className="w-20 text-xs font-medium text-slate-600 dark:text-slate-500">
                         {stat.tier}
                       </div>
                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
@@ -854,7 +854,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
                   <button
                     onClick={() => setShowAddProvider(false)}
-                    className="px-5 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+                    className="px-5 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
                   >
                     Cancel
                   </button>
@@ -890,7 +890,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-slate-400 dark:text-slate-500 capitalize bg-slate-50/30 dark:bg-navy-950/20 px-2 py-1 rounded border border-white/5">
+                        <span className="text-sm text-slate-600 dark:text-slate-500 capitalize bg-slate-50/30 dark:bg-navy-950/20 px-2 py-1 rounded border border-white/5">
                           {p.provider}
                         </span>
                       </td>
@@ -1023,7 +1023,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
                   <button
                     onClick={() => setShowAddProvider(false)}
-                    className="px-5 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+                    className="px-5 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
                   >
                     Cancel
                   </button>
@@ -1071,7 +1071,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-slate-400 dark:text-slate-500">
+                        <span className="text-sm text-slate-600 dark:text-slate-500">
                           Ollama / OpenAI Compatible
                         </span>
                       </td>
@@ -1137,7 +1137,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 </span>
               </label>
               <textarea
-                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm font-mono text-slate-300 focus:border-white/20 focus:ring-0 transition-colors h-32 resize-y"
+                className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-sm font-mono text-slate-600 focus:border-white/20 focus:ring-0 transition-colors h-32 resize-y"
                 placeholder="e.g. You are a senior solutions architect. Always prioritize security and scalability in your responses..."
                 value={preferences.systemInstructions || ''}
                 onChange={(e) =>
@@ -1318,7 +1318,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             {/* Fine-tune Length Sliders */}
             <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/5 mb-6">
               <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                <Settings size={16} className="text-slate-400 dark:text-slate-500" />
+                <Settings size={16} className="text-slate-600 dark:text-slate-500" />
                 Fine-tune Response Length
               </h4>
 
@@ -1326,7 +1326,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* Quick Mode Length */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-xs text-slate-400 dark:text-slate-500">Quick Mode</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-500">Quick Mode</span>
                     <span className="text-xs font-mono text-amber-400">
                       {preferences.responseLength?.quick || 'short'}
                     </span>
@@ -1363,7 +1363,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* Standard Mode Length */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       Standard Mode
                     </span>
                     <span className="text-xs font-mono text-blue-400">
@@ -1402,7 +1402,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 {/* Deep Study Length */}
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       Deep Study Mode
                     </span>
                     <span className="text-xs font-mono text-primary-400">
@@ -1483,7 +1483,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-3 rounded-lg border text-center text-xs transition-all ${
                   preferences.formatting?.preferBulletPoints
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/30'
+                    : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
                 }`}
               >
                 • Bullet Points
@@ -1504,7 +1504,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-3 rounded-lg border text-center text-xs transition-all ${
                   preferences.formatting?.preferTables
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/30'
+                    : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
                 }`}
               >
                 ⊞ Tables
@@ -1525,7 +1525,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-3 rounded-lg border text-center text-xs transition-all ${
                   preferences.formatting?.includeActionItems
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/30'
+                    : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
                 }`}
               >
                 ✓ Action Items
@@ -1546,7 +1546,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 className={`p-3 rounded-lg border text-center text-xs transition-all ${
                   preferences.formatting?.includeSources
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/30'
+                    : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
                 }`}
               >
                 📚 Sources
@@ -1621,10 +1621,10 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Pause size={18} className="text-slate-400 dark:text-slate-500" />
+                  <Pause size={18} className="text-slate-600 dark:text-slate-500" />
                   <h4 className="font-semibold text-white text-sm">Reactive Mode</h4>
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed">
                   AI remains silent until you explicitly ask. Perfect for experienced users who
                   prefer full control and only want help when requested.
                 </p>
@@ -1652,7 +1652,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   <Scale size={18} className="text-primary-400" />
                   <h4 className="font-semibold text-white text-sm">Balanced Mode</h4>
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed">
                   AI provides helpful suggestions when relevant, but waits for you to drive major
                   interactions. Recommended for most users.
                 </p>
@@ -1680,7 +1680,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   <Zap size={18} className="text-emerald-400" />
                   <h4 className="font-semibold text-white text-sm">Proactive Mode</h4>
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed">
                   AI actively monitors your work and proactively offers assistance, even starting
                   conversations about potential issues.
                 </p>
@@ -1748,7 +1748,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     }
                   />
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed border-t border-white/5 pt-4">
+                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed border-t border-white/5 pt-4">
                   Automatically detects and redacts emails, phone numbers, and credit card patterns
                   before sending to the model.
                 </p>
@@ -1775,7 +1775,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     }
                   />
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed border-t border-white/5 pt-4">
+                <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed border-t border-white/5 pt-4">
                   Enables the model to search the web for real-time information. May increase
                   latency.
                 </p>
@@ -1818,7 +1818,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all gap-3 ${
                       preferences.dataRetentionPolicy === policy.id
                         ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                        : 'bg-black/20 border-white/5 text-slate-400 dark:text-slate-500 hover:border-white/20'
+                        : 'bg-black/20 border-white/5 text-slate-600 dark:text-slate-500 hover:border-white/20'
                     }`}
                   >
                     {policy.icon}

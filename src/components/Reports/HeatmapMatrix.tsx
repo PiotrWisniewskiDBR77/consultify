@@ -309,7 +309,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
             <span className="text-slate-600 dark:text-slate-400">
               {isPolish ? priority.labelPl : priority.labelEn}
             </span>
-            <span className="text-slate-400 dark:text-slate-500 text-xs">
+            <span className="text-slate-600 dark:text-slate-500 text-xs">
               ({priority.description})
             </span>
           </div>
@@ -348,7 +348,7 @@ export const HeatmapMatrix: React.FC<HeatmapMatrixProps> = ({
                       </div>
                       <button
                         onClick={() => setSelectedCell(null)}
-                        className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
+                        className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
                       >
                         <X className="w-5 h-5" />
                       </button>

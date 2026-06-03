@@ -292,7 +292,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
         <div className="flex-1 relative">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -439,7 +439,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         {filteredRequests.length === 0 ? (
           <div className="text-center py-12">
-            <Archive size={48} className="mx-auto mb-4 text-slate-300 dark:text-navy-600" />
+            <Archive size={48} className="mx-auto mb-4 text-slate-600 dark:text-navy-600" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
               {t('admin.compliance.dataRequests.noRequests', 'No requests found')}
             </h3>
@@ -466,7 +466,7 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                   >
                     <div className="flex items-center gap-4">
                       {/* Expand Icon */}
-                      <span className="text-slate-400 dark:text-slate-500">
+                      <span className="text-slate-600 dark:text-slate-500">
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                       </span>
 

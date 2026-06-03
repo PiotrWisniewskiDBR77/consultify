@@ -174,7 +174,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
       >
         {/* Search input bar */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/40 dark:border-white/[0.06]">
-          <Search size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
+          <Search size={16} className="text-slate-600 dark:text-slate-500 shrink-0" />
           <input
             ref={inputRef}
             value={query}
@@ -183,7 +183,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
             className="flex-1 bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 outline-none"
           />
           {hits.length > 0 && (
-            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tabular-nums whitespace-nowrap">
+            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 tabular-nums whitespace-nowrap">
               {activeIndex + 1}/{hits.length}
             </span>
           )}
@@ -192,7 +192,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
               <button
                 type="button"
                 onClick={() => navigateToHit(Math.max(activeIndex - 1, 0))}
-                className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-400 transition-colors"
+                className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
                 aria-label="Previous"
               >
                 <ChevronUp size={14} />
@@ -200,7 +200,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
               <button
                 type="button"
                 onClick={() => navigateToHit(Math.min(activeIndex + 1, hits.length - 1))}
-                className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-400 transition-colors"
+                className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
                 aria-label="Next"
               >
                 <ChevronDown size={14} />
@@ -210,7 +210,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-400 transition-colors"
+            className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-600 transition-colors"
             aria-label="Close"
           >
             <X size={14} />
@@ -221,7 +221,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
         {query.trim().length >= 2 && (
           <div ref={listRef} className="max-h-[50vh] overflow-y-auto">
             {hits.length === 0 ? (
-              <div className="px-4 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+              <div className="px-4 py-6 text-center text-xs text-slate-600 dark:text-slate-500">
                 {isPl ? 'Brak wyników' : 'No results'}
               </div>
             ) : (
@@ -231,7 +231,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
                   type="button"
                   data-active={i === activeIndex}
                   onClick={() => navigateToHit(i)}
-                  className={`w-full text-left px-4 py-2.5 flex flex-col gap-0.5 transition-colors border-b border-slate-100/50 dark:border-white/[0.03] last:border-b-0 ${
+                  className={`w-full text-left px-4 py-2.5 flex flex-col gap-0.5 transition-colors border-b border-slate-200/50 dark:border-white/[0.03] last:border-b-0 ${
                     i === activeIndex
                       ? 'bg-amber-50/80 dark:bg-amber-500/10'
                       : 'hover:bg-slate-50/80 dark:hover:bg-white/[0.03]'
@@ -241,7 +241,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
                     <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
                       {highlightMatch(hit.label, query)}
                     </span>
-                    <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0">
+                    <span className="text-[9px] font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider shrink-0">
                       {fieldLabel[hit.field] || hit.field}
                     </span>
                   </div>

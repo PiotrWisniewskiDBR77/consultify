@@ -280,7 +280,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
         {/* Expand button */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded transition-colors"
+          className="p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 rounded transition-colors"
         >
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>

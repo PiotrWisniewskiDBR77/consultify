@@ -118,7 +118,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="rounded-2xl bg-slate-100 dark:bg-navy-800 p-4 mb-4">
-          <RefreshCw size={28} className="text-slate-400 dark:text-slate-500" />
+          <RefreshCw size={28} className="text-slate-600 dark:text-slate-500" />
         </div>
         <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           {isPl ? 'Brak skonfigurowanych konektorów' : 'No connectors configured'}
@@ -143,7 +143,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 size={20} className="animate-spin text-slate-400" />
+        <Loader2 size={20} className="animate-spin text-slate-600" />
       </div>
     );
   }
@@ -155,7 +155,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
           {isPl ? 'Konektory' : 'Connectors'}{' '}
-          <span className="text-slate-400 font-normal">({connectors.length})</span>
+          <span className="text-slate-600 font-normal">({connectors.length})</span>
         </h3>
         <button
           onClick={onAdd}
@@ -185,7 +185,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                 <span className="text-sm font-medium text-slate-800 dark:text-white truncate">
                   {c.name}
                 </span>
-                <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                <span className="text-[11px] text-slate-600 dark:text-slate-500">
                   {isPl ? meta.labelPl : meta.labelEn}
                 </span>
               </div>
@@ -209,7 +209,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => setMenuOpen(menuOpen === c.id ? null : c.id)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <MoreHorizontal size={16} />
               </button>
@@ -242,7 +242,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                         onEdit(c);
                       }}
                     />
-                    <div className="my-1 border-t border-slate-100 dark:border-navy-800" />
+                    <div className="my-1 border-t border-slate-200 dark:border-navy-800" />
                     <MenuBtn
                       icon={<Trash2 size={13} />}
                       label={isPl ? 'Usuń' : 'Delete'}

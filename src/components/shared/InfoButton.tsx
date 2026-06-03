@@ -213,7 +213,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                       >
                         <ChevronRight
                           size={14}
-                          className="text-slate-400 dark:text-slate-500 mt-0.5 shrink-0"
+                          className="text-slate-600 dark:text-slate-500 mt-0.5 shrink-0"
                         />
                         {feature}
                       </li>
@@ -287,7 +287,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                           </span>
                           <ExternalLink
                             size={14}
-                            className="text-slate-400 dark:text-slate-500 group-hover:text-blue-500 ml-auto"
+                            className="text-slate-600 dark:text-slate-500 group-hover:text-blue-500 ml-auto"
                           />
                         </a>
                       );

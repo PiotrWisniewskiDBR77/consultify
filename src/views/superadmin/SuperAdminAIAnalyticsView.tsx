@@ -116,7 +116,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
             <Zap className="text-primary-500" />
             AI Analytics Dashboard
           </h1>
-          <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+          <p className="text-slate-600 dark:text-slate-500 text-sm mt-1">
             Monitor AI usage, costs, and system health across all organizations
           </p>
         </div>
@@ -175,7 +175,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         {/* Tokens Today */}
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens Today</span>
+            <span className="text-slate-600 dark:text-slate-500 text-sm">Tokens Today</span>
             <Activity className="text-blue-400" size={20} />
           </div>
           <p className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -189,7 +189,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         {/* Tokens This Month */}
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens This Month</span>
+            <span className="text-slate-600 dark:text-slate-500 text-sm">Tokens This Month</span>
             <TrendingUp className="text-green-400" size={20} />
           </div>
           <p className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -203,7 +203,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         {/* Cache Hit Rate */}
         <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-sm">Cache Hit Rate</span>
+            <span className="text-slate-600 dark:text-slate-500 text-sm">Cache Hit Rate</span>
             <Database className="text-primary-400" size={20} />
           </div>
           <p className="text-3xl font-bold text-white">
@@ -218,7 +218,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         {/* Tokens Saved */}
         <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens Saved (Cache)</span>
+            <span className="text-slate-600 dark:text-slate-500 text-sm">Tokens Saved (Cache)</span>
             <DollarSign className="text-blue-400" size={20} />
           </div>
           <p className="text-3xl font-bold text-white">
@@ -250,7 +250,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                           ? 'bg-slate-400 text-black'
                           : idx === 2
                             ? 'bg-amber-700 text-white'
-                            : 'bg-navy-700 text-slate-400 dark:text-slate-500'
+                            : 'bg-navy-700 text-slate-600 dark:text-slate-500'
                     }`}
                   >
                     {idx + 1}
@@ -260,7 +260,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                       <span className="text-white font-medium text-sm truncate max-w-[200px]">
                         {org.organizationId.slice(0, 8)}...
                       </span>
-                      <span className="text-slate-400 dark:text-slate-500 text-sm">
+                      <span className="text-slate-600 dark:text-slate-500 text-sm">
                         {formatNumber(org.tokensMonth)} tokens
                       </span>
                     </div>

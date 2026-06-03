@@ -115,7 +115,7 @@ export const PaymentMethodsView: React.FC = () => {
     };
     const badge = badges[type] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
       icon: '💰',
     };
     return (
@@ -139,7 +139,7 @@ export const PaymentMethodsView: React.FC = () => {
     };
     const badge = badges[safe] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
     };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>

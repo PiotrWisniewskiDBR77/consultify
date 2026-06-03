@@ -145,7 +145,7 @@ export const InitiativePreview: React.FC<InitiativePreviewProps> = ({
     >
       <div className="space-y-3 text-sm">
         {truncatedDesc !== '—' && (
-          <p className="text-slate-300 dark:text-slate-300 line-clamp-4">{truncatedDesc}</p>
+          <p className="text-slate-600 dark:text-slate-300 line-clamp-4">{truncatedDesc}</p>
         )}
         <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
           <span className="text-slate-500 dark:text-slate-400">
@@ -156,29 +156,29 @@ export const InitiativePreview: React.FC<InitiativePreviewProps> = ({
           </span>
 
           <span className="text-slate-500 dark:text-slate-400">{t('preview.owner', 'Owner')}</span>
-          <span className="text-slate-300 dark:text-slate-300">{owner}</span>
+          <span className="text-slate-600 dark:text-slate-300">{owner}</span>
 
           <span className="text-slate-500 dark:text-slate-400">
             {t('preview.priority', 'Priority')}
           </span>
-          <span className="text-slate-300 dark:text-slate-300">{initiative.priority ?? '—'}</span>
+          <span className="text-slate-600 dark:text-slate-300">{initiative.priority ?? '—'}</span>
 
           <span className="text-slate-500 dark:text-slate-400">
             {t('preview.startDate', 'Start date')}
           </span>
-          <span className="text-slate-300 dark:text-slate-300">{startStr}</span>
+          <span className="text-slate-600 dark:text-slate-300">{startStr}</span>
 
           <span className="text-slate-500 dark:text-slate-400">
             {t('preview.targetDate', 'Target date')}
           </span>
-          <span className="text-slate-300 dark:text-slate-300">{targetStr}</span>
+          <span className="text-slate-600 dark:text-slate-300">{targetStr}</span>
 
           {initiative.toolSessionsCount != null && (
             <>
               <span className="text-slate-500 dark:text-slate-400">
                 {t('preview.toolSessions', 'Tool sessions')}
               </span>
-              <span className="text-slate-300 dark:text-slate-300">
+              <span className="text-slate-600 dark:text-slate-300">
                 {initiative.toolSessionsCount}
               </span>
             </>

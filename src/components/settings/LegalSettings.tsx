@@ -199,7 +199,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
       <div className="mt-6 p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Scale className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <Scale className="w-5 h-5 text-slate-600 dark:text-slate-500" />
             <div>
               <h4 className="font-medium text-slate-700 dark:text-slate-200">
                 {t('legal.centerTitle', 'Legal Center')}

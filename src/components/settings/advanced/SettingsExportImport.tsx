@@ -356,7 +356,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
         {!importFile ? (
           <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-colors">
-            <FileText size={48} className="text-slate-400 dark:text-slate-500 mb-3" />
+            <FileText size={48} className="text-slate-600 dark:text-slate-500 mb-3" />
             <p className="font-medium text-slate-700 dark:text-slate-300">
               {t('settings.importExport.dropFile', 'Drop settings file here or click to browse')}
             </p>
@@ -390,7 +390,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                   setImportFile(null);
                   setImportPreview(null);
                 }}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
               >
                 ×
               </button>

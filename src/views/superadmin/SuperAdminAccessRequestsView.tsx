@@ -181,7 +181,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
       case 'rejected':
         return <XCircle className="text-rose-600 dark:text-rose-400" size={20} />;
       default:
-        return <Clock className="text-slate-400" size={20} />;
+        return <Clock className="text-slate-600" size={20} />;
     }
   };
 
@@ -243,7 +243,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
         <div className="space-y-3">
           {visibleRequests.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
-              <UserPlus className="mx-auto text-slate-300 dark:text-slate-600 mb-3" size={48} />
+              <UserPlus className="mx-auto text-slate-600 dark:text-slate-600 mb-3" size={48} />
               <p className="text-slate-500 dark:text-slate-400">No {statusFilter} requests</p>
             </div>
           ) : (

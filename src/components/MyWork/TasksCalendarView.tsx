@@ -399,7 +399,7 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
                 >
                   <div className="p-2">
                     {list.length === 0 ? (
-                      <div className="text-[11px] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] text-slate-600 dark:text-slate-500">
                         {t('myWork.calendar.noTasks', 'No tasks')}
                       </div>
                     ) : (

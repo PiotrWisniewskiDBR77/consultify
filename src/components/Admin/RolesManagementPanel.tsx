@@ -576,11 +576,11 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{role.description}</p>
               <div className="flex items-center gap-4 mt-3">
-                <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                <span className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1">
                   <Users size={12} />
                   {role.userCount} {t('admin.roles.users', 'users')}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                <span className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1">
                   <Shield size={12} />
                   {role.permissions.length} {t('admin.roles.permissions', 'permissions')}
                 </span>
@@ -590,14 +590,14 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
           <div className="flex items-center gap-1">
             <button
               onClick={() => startEditing(role)}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title={t('admin.roles.edit', 'Edit')}
             >
               <Edit size={16} />
             </button>
             <button
               onClick={() => duplicateRole(role)}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
               title={t('admin.roles.duplicate', 'Duplicate')}
             >
               <Copy size={16} />
@@ -605,7 +605,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
             {!role.isSystem && (
               <button
                 onClick={() => deleteRole(role)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                 title={t('admin.roles.delete', 'Delete')}
               >
                 <Trash2 size={16} />
@@ -827,7 +827,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
           {/* Search */}
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               size={18}
             />
             <input
@@ -882,7 +882,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
                 </h3>
                 <button
                   onClick={cancelEditing}
-                  className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
+                  className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
                 >
                   <X size={18} />
                 </button>
@@ -908,7 +908,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
             </div>
           ) : (
             <div className="text-center py-12">
-              <Shield className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
+              <Shield className="mx-auto text-slate-600 dark:text-slate-600 mb-4" size={48} />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                 {t('admin.roles.selectToEdit', 'Select a Role')}
               </h3>

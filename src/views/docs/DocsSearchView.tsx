@@ -47,7 +47,7 @@ export const DocsSearchView: React.FC = () => {
       {/* Search Box */}
       <form onSubmit={handleSearch} className="mb-8">
         <div className="relative">
-          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             type="text"
             value={searchInput}
@@ -91,7 +91,7 @@ export const DocsSearchView: React.FC = () => {
           ))
         ) : !query ? (
           <div className="text-center py-12">
-            <Search size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <Search size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {t('docs.search.emptyPromptTitle', 'Enter a search query')}
             </h3>
@@ -101,7 +101,7 @@ export const DocsSearchView: React.FC = () => {
           </div>
         ) : results?.length === 0 ? (
           <div className="text-center py-12">
-            <Book size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <Book size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {t('docs.search.noResultsTitle', 'No results found')}
             </h3>
@@ -153,7 +153,7 @@ export const DocsSearchView: React.FC = () => {
                   </div>
                   <ChevronRight
                     size={20}
-                    className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
+                    className="text-slate-600 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
                   />
                 </div>
               </Link>

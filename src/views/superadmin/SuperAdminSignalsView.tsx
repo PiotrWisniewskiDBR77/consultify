@@ -90,7 +90,7 @@ export const SuperAdminSignalsView: React.FC = () => {
     }
 
     return (
-      <div className="divide-y divide-slate-100 dark:divide-white/[0.06]">
+      <div className="divide-y divide-slate-200 dark:divide-white/[0.06]">
         {list.slice(0, 50).map((s) => (
           <div key={s.id} className="py-3 flex items-start gap-3">
             <div className="min-w-0 flex-1">
@@ -113,7 +113,7 @@ export const SuperAdminSignalsView: React.FC = () => {
                   </span>
                   <button
                     onClick={() => dismiss(s.id)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-white dark:hover:bg-white/[0.06] transition-colors"
+                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-white dark:hover:bg-white/[0.06] transition-colors"
                     title="Dismiss"
                     aria-label="Dismiss"
                   >

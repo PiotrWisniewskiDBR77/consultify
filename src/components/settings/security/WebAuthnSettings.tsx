@@ -236,7 +236,7 @@ const WebAuthnSettings: React.FC = () => {
         return <Key className="text-amber-400" size={20} />;
       default:
         return (
-          <Smartphone className="text-gray-400 dark:text-gray-500 dark:text-gray-400" size={20} />
+          <Smartphone className="text-gray-600 dark:text-gray-500 dark:text-gray-400" size={20} />
         );
     }
   }
@@ -264,7 +264,7 @@ const WebAuthnSettings: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">Passkeys & Security Keys</h3>
-          <p className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-500 dark:text-gray-400 mt-1">
             Use biometrics or security keys for secure passwordless login
           </p>
         </div>
@@ -314,7 +314,7 @@ const WebAuthnSettings: React.FC = () => {
       ) : credentials.length === 0 ? (
         <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
           <Key className="mx-auto text-gray-500 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
             No passkeys registered
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -355,7 +355,7 @@ const WebAuthnSettings: React.FC = () => {
                             setEditingId(null);
                             setNewName('');
                           }}
-                          className="p-1 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-gray-300"
+                          className="p-1 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-300"
                         >
                           <X size={16} />
                         </button>
@@ -365,7 +365,7 @@ const WebAuthnSettings: React.FC = () => {
                         <h4 className="font-medium text-white">
                           {credential.deviceName || 'Unnamed Passkey'}
                         </h4>
-                        <div className="flex items-center gap-3 text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-500 dark:text-gray-400">
                           <span>Added {new Date(credential.createdAt).toLocaleDateString()}</span>
                           {credential.lastUsedAt && (
                             <span>
@@ -390,7 +390,7 @@ const WebAuthnSettings: React.FC = () => {
                           setEditingId(credential.id);
                           setNewName(credential.deviceName || '');
                         }}
-                        className="p-2 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
                       >
                         <Edit2 size={16} />
                       </button>
@@ -412,7 +412,7 @@ const WebAuthnSettings: React.FC = () => {
       {/* Security Tips */}
       <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
         <h4 className="font-medium text-white mb-3">Security Tips</h4>
-        <ul className="space-y-2 text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+        <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-500 dark:text-gray-400">
           <li className="flex items-start gap-2">
             <Shield className="text-green-400 flex-shrink-0 mt-0.5" size={16} />
             Register passkeys on multiple devices for backup access

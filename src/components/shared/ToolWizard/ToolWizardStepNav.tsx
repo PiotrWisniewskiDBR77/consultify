@@ -81,13 +81,13 @@ export const ToolWizardStepNav: React.FC<ToolWizardStepNavProps> = ({
                       ? 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                       : accessible
                         ? 'text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800'
-                        : 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
+                        : 'text-slate-600 dark:text-slate-600 cursor-not-allowed opacity-60'
                 }
               `}
             >
               <span className="shrink-0">
                 {locked && !completed ? (
-                  <Lock size={16} className="text-slate-400 dark:text-slate-600" />
+                  <Lock size={16} className="text-slate-600 dark:text-slate-600" />
                 ) : completed ? (
                   <Check size={16} className="text-emerald-500" />
                 ) : isCurrent ? (

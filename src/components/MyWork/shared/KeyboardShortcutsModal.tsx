@@ -58,10 +58,10 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         {parts.map((part: any, idx: number) => (
           <React.Fragment key={idx}>
             {idx > 0 && part !== 'then' && (
-              <span className="text-slate-400 dark:text-slate-500">+</span>
+              <span className="text-slate-600 dark:text-slate-500">+</span>
             )}
             {part === 'then' ? (
-              <span className="mx-1 text-slate-400 dark:text-slate-500">then</span>
+              <span className="mx-1 text-slate-600 dark:text-slate-500">then</span>
             ) : (
               <Key>{part}</Key>
             )}
@@ -89,7 +89,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
             className="bg-white dark:bg-navy-900 rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-navy-700">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-2">
                 <Keyboard size={20} className="text-brand" />
                 <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
@@ -129,7 +129,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
             </div>
 
             {/* Footer tip */}
-            <div className="p-4 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-white/5">
+            <div className="p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/5">
               <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
                 {t('myWork.shortcuts.tip', 'Press ? to open this help at any time')}
               </p>

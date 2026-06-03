@@ -187,7 +187,7 @@ export const InterviewContextBanner: React.FC<InterviewContextBannerProps> = ({
 
         <button
           onClick={() => setIsDismissed(true)}
-          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded transition-colors shrink-0"
+          className="p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 rounded transition-colors shrink-0"
         >
           <X size={16} />
         </button>

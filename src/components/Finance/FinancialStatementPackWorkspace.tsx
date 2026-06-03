@@ -549,7 +549,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   if (!detail || !packRow) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 p-8">
-        <FileText size={24} className="text-slate-400" />
+        <FileText size={24} className="text-slate-600" />
         <div className="text-sm text-slate-500 dark:text-slate-400">
           {t('finance.pack.notFound', 'Statement pack not found')}
         </div>
@@ -651,7 +651,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     ? 'bg-blue-600 text-white shadow-sm'
                     : hasDocument
                       ? 'text-slate-700 hover:bg-slate-100/70 dark:text-slate-200 dark:hover:bg-white/[0.05]'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-500'
                 }`}
               >
                 {tab}
@@ -709,7 +709,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
 
           {/* Aggregation control */}
           <div className="flex items-center gap-1">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               {isPl ? 'Agg' : 'Agg'}
             </span>
             <div className="inline-flex items-center rounded-md border border-slate-200/70 bg-slate-50/80 p-0.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
@@ -801,7 +801,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center gap-2 py-12">
-                  <FileText size={20} className="text-slate-400" />
+                  <FileText size={20} className="text-slate-600" />
                   <div className="text-sm text-slate-500 dark:text-slate-400">
                     {isPl
                       ? 'Nie udało się załadować tabeli dokumentu.'
@@ -862,7 +862,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 /* Source files list when no row selected */
                 <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/90">
                   <div className="flex-shrink-0 border-b border-slate-200/70 px-3 py-2.5 dark:border-white/[0.06]">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                       {isPl ? 'Pliki źródłowe' : 'Source files'}
                     </div>
                     <div className="mt-2 flex items-center gap-1.5">
@@ -956,7 +956,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
-                        <FileText size={20} className="text-slate-400 dark:text-slate-500" />
+                        <FileText size={20} className="text-slate-600 dark:text-slate-500" />
                         <div className="text-[12px] text-slate-500 dark:text-slate-400">
                           {isPl ? 'Brak plików źródłowych.' : 'No source files.'}
                         </div>
@@ -964,7 +964,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     )}
                   </div>
                   <div className="border-t border-slate-200/50 px-4 py-2 dark:border-white/[0.05]">
-                    <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <div className="text-[10px] text-slate-600 dark:text-slate-500">
                       {isPl
                         ? 'Kliknij wiersz w tabeli, aby zobaczyć szczegóły pozycji.'
                         : 'Click a table row to see line item details.'}
@@ -977,7 +977,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200/70 py-12 dark:border-white/[0.08]">
-          <FileText size={20} className="text-slate-400" />
+          <FileText size={20} className="text-slate-600" />
           <div className="text-sm text-slate-500 dark:text-slate-400">
             {isPl
               ? 'Brak wybranego dokumentu dla tej tabeli.'

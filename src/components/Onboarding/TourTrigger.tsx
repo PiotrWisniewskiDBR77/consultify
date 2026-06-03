@@ -78,7 +78,7 @@ export const TourTrigger: React.FC<TourTriggerProps> = ({
         <Play size={14} />
         <span>{label}</span>
         {completed && (
-          <span className="text-xs text-slate-400 dark:text-slate-500">(ukończony)</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">(ukończony)</span>
         )}
       </button>
     );

@@ -172,7 +172,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
         </div>
         <button
           onClick={fetchCalendars}
-          className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
           title={t('common.refresh', 'Refresh')}
         >
           <RefreshCw size={18} />
@@ -221,7 +221,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
                   </span>
                   <button
                     onClick={() => disconnectCalendar(cal.id)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded transition-colors"
+                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded transition-colors"
                     title={t('common.disconnect', 'Disconnect')}
                   >
                     <X size={16} />

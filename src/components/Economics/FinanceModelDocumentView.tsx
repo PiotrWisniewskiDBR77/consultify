@@ -120,10 +120,10 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
 
   if (!detail) {
     return (
-      <div className="flex h-full min-h-[520px] items-center justify-center bg-slate-950 text-slate-400">
+      <div className="flex h-full min-h-[520px] items-center justify-center bg-slate-950 text-slate-600">
         <div className="text-center">
           <div className="text-sm font-medium text-slate-200">{row.title}</div>
-          <div className="mt-2 text-xs text-slate-400">
+          <div className="mt-2 text-xs text-slate-600">
             {isPl
               ? 'Ładowanie układu modelu 3-letniej prognozy...'
               : 'Loading 3-year forecast model layout...'}
@@ -142,13 +142,13 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
               {isPl ? 'Model finansowy' : 'Financial model'}
             </div>
             <h2 className="mt-2 text-xl font-semibold text-slate-100">{row.title}</h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-600">
               {isPl
                 ? `Prognoza 3-letnia w układzie P&L / Bilans / Cash Flow. Dokument bazowy: ${detail.sourceDocumentTitle}.`
                 : `3-year forecast in P&L / Balance Sheet / Cash Flow layout. Source document: ${detail.sourceDocumentTitle}.`}
             </p>
           </div>
-          <div className="grid min-w-[280px] grid-cols-2 gap-3 text-xs text-slate-300">
+          <div className="grid min-w-[280px] grid-cols-2 gap-3 text-xs text-slate-600">
             <div className="rounded-xl bg-white/[0.03] px-3 py-2">
               <div className="text-[10px] uppercase tracking-wide text-slate-500">
                 {isPl ? 'Dokument' : 'Document'}
@@ -190,7 +190,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 activeVariant === variant
                   ? 'bg-blue-500 text-slate-950'
-                  : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
+                  : 'bg-white/[0.04] text-slate-600 hover:bg-white/[0.08]'
               }`}
             >
               {variantLabels[variant]}
@@ -214,7 +214,7 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                 selectedStatement === statement
                   ? 'bg-white text-slate-950'
-                  : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
+                  : 'bg-white/[0.04] text-slate-600 hover:bg-white/[0.08]'
               }`}
             >
               {statementLabels[statement]}

@@ -466,7 +466,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 <td className="px-4 py-2">
                   <button
                     onClick={() => handleToggleLock(line.id, line.isLocked)}
-                    className="text-slate-400 hover:text-slate-600"
+                    className="text-slate-600 hover:text-slate-600"
                   >
                     {line.isLocked ? <Lock size={14} /> : <Unlock size={14} />}
                   </button>
@@ -934,7 +934,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                           </h2>
                           <button
                             onClick={() => setShowLinkPicker(false)}
-                            className="text-slate-400 hover:text-slate-600"
+                            className="text-slate-600 hover:text-slate-600"
                           >
                             <X size={18} />
                           </button>
@@ -983,7 +983,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               </h2>
               <button
                 onClick={() => setShowCreate(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600"
               >
                 <X size={18} />
               </button>
@@ -1049,7 +1049,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   setShowDocImport(false);
                   setDocImportFile(null);
                 }}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600"
               >
                 <X size={18} />
               </button>
@@ -1064,13 +1064,13 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               onClick={() => document.getElementById('doc-import-input')?.click()}
               className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 transition-colors"
             >
-              <Upload size={32} className="mx-auto text-slate-400 mb-2" />
+              <Upload size={32} className="mx-auto text-slate-600 mb-2" />
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 {docImportFile
                   ? docImportFile.name
                   : t('finance.budget.dropOrBrowse', 'Click to browse or drop file')}
               </p>
-              <p className="text-xs text-slate-400 mt-1">PDF, XLSX, XLS, CSV</p>
+              <p className="text-xs text-slate-600 mt-1">PDF, XLSX, XLS, CSV</p>
               <input
                 id="doc-import-input"
                 type="file"

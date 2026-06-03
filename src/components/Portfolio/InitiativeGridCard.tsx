@@ -67,7 +67,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
         {/* Health */}
         <div className="flex items-center gap-1.5">
           <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">{health.label}</span>
+          <span className="text-[10px] text-slate-600 dark:text-slate-500">{health.label}</span>
         </div>
       </div>
 
@@ -92,13 +92,13 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
             <User size={12} /> Unassigned
           </div>
         )}
         {sponsor && (
           <>
-            <span className="text-slate-300 dark:text-slate-600 text-[10px]">/</span>
+            <span className="text-slate-600 dark:text-slate-600 text-[10px]">/</span>
             <div className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
                 {sponsor.avatarUrl ? (
@@ -123,15 +123,15 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
 
       {/* Next step */}
       {nextStep && (
-        <div className="pt-2.5 border-t border-slate-100/70 dark:border-white/[0.03]">
-          <div className="text-[10px] text-slate-400 dark:text-slate-500 mb-0.5 uppercase tracking-wider font-medium">
+        <div className="pt-2.5 border-t border-slate-200/70 dark:border-white/[0.03]">
+          <div className="text-[10px] text-slate-600 dark:text-slate-500 mb-0.5 uppercase tracking-wider font-medium">
             {t('initiatives.card.nextStep', 'Next step')}
           </div>
           <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">
             {nextStep.label}
           </div>
           {nextStep.role && (
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+            <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
               {nextStep.role}
             </div>
           )}

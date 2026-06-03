@@ -287,7 +287,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
                       </div>
                     ) : (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="animate-spin h-5 w-5 text-slate-400 dark:text-slate-500" />
+                        <Loader2 className="animate-spin h-5 w-5 text-slate-600 dark:text-slate-500" />
                       </div>
                     )}
                   </div>
@@ -322,7 +322,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
             className={`w-full py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
               allChecked() && !accepting
                 ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             {accepting ? (

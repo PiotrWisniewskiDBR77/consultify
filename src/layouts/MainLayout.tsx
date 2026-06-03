@@ -261,7 +261,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           />
           <AIFreezeBanner />
 
-          <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
+          <div className="h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -273,7 +273,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               </button>
               <nav
                 aria-label={t('layout.breadcrumb', 'Breadcrumb')}
-                className="flex items-center text-sm font-medium text-slate-400 dark:text-slate-500"
+                className="flex items-center text-sm font-medium text-slate-600 dark:text-slate-500"
               >
                 <span
                   className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"

@@ -18,7 +18,7 @@ export const CardHeader: React.FC<{ children: React.ReactNode; className?: strin
   className = '',
 }) => (
   <div
-    className={`px-6 p-4 border-b border-slate-100 dark:border-navy-700 bg-slate-50/30 dark:bg-white/[0.02] ${className}`}
+    className={`px-6 p-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/30 dark:bg-white/[0.02] ${className}`}
   >
     {children}
   </div>

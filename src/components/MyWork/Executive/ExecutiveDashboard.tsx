@@ -724,7 +724,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 dark:text-slate-500 mr-2">
+          <span className="text-xs text-slate-600 dark:text-slate-500 mr-2">
             {t('executive.lastUpdated', 'Updated')}:{' '}
             {lastUpdated.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
           </span>
@@ -887,7 +887,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             </div>
             <button
               onClick={() => onNavigate?.('notifications')}
-              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+              className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
             >
               {t('executive.signals.viewAll', 'View all')}
               <ArrowRight size={13} />
@@ -905,7 +905,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               ))
             ) : !loading ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Zap size={20} className="text-slate-300 dark:text-slate-600 mb-2" />
+                <Zap size={20} className="text-slate-600 dark:text-slate-600 mb-2" />
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('executive.signals.empty', 'No signals')}
                 </p>
@@ -945,7 +945,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             </div>
             <button
               onClick={() => onNavigate?.('initiatives')}
-              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+              className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
             >
               {t('executive.initiatives.viewAll', 'View all')}
               <ArrowRight size={13} />
@@ -965,7 +965,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Folder size={24} className="text-slate-300 dark:text-slate-600 mb-2" />
+                <Folder size={24} className="text-slate-600 dark:text-slate-600 mb-2" />
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('executive.initiatives.empty', 'No active initiatives')}
                 </p>

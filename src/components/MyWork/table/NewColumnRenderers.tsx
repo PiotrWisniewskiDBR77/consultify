@@ -134,7 +134,7 @@ export const RelationCell: React.FC<CellProps & { allNodes?: { id: string; label
 export const RollupCell: React.FC<CellProps> = ({ value }) => {
   return (
     <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300 font-mono">
-      <Sigma size={10} className="text-slate-400" />
+      <Sigma size={10} className="text-slate-600" />
       {value != null ? String(value) : '—'}
     </span>
   );
@@ -149,7 +149,7 @@ export const EmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         onClick={() => !locked && setShowPicker(!showPicker)}
         className="text-lg hover:scale-110 transition-transform"
       >
-        {value || <Smile size={14} className="text-slate-300" />}
+        {value || <Smile size={14} className="text-slate-600" />}
       </button>
       {showPicker && !locked && (
         <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-white dark:bg-navy-900 shadow-xl border border-slate-200 dark:border-navy-700 flex flex-wrap gap-1 w-[180px]">
@@ -220,7 +220,7 @@ export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) =
 export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   return (
     <div className="flex items-center gap-1">
-      <Phone size={10} className="text-slate-400 flex-shrink-0" />
+      <Phone size={10} className="text-slate-600 flex-shrink-0" />
       <input
         type="tel"
         value={String(value || '')}
@@ -236,7 +236,7 @@ export const PhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 export const EmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   return (
     <div className="flex items-center gap-1">
-      <Mail size={10} className="text-slate-400 flex-shrink-0" />
+      <Mail size={10} className="text-slate-600 flex-shrink-0" />
       <input
         type="email"
         value={String(value || '')}

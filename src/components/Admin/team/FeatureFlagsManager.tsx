@@ -163,7 +163,7 @@ export const FeatureFlagsManager: React.FC<FeatureFlagsManagerProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.features.total', 'Total Features')}
             </span>
-            <Flag size={16} className="text-slate-400 dark:text-slate-500" />
+            <Flag size={16} className="text-slate-600 dark:text-slate-500" />
           </div>
           <p className="text-2xl font-bold text-navy-900 dark:text-white">{stats.total}</p>
         </div>
@@ -206,7 +206,7 @@ export const FeatureFlagsManager: React.FC<FeatureFlagsManagerProps> = ({
         <div className="flex-1 relative">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -343,7 +343,7 @@ export const FeatureFlagsManager: React.FC<FeatureFlagsManagerProps> = ({
                         {/* Expand */}
                         <button
                           onClick={() => setExpandedFlag(isExpanded ? null : flag.id)}
-                          className="text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                          className="text-slate-600 hover:text-slate-600 dark:text-slate-400"
                         >
                           {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                         </button>
@@ -452,7 +452,7 @@ export const FeatureFlagsManager: React.FC<FeatureFlagsManagerProps> = ({
 
                             {/* Actions */}
                             <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
-                              <p className="text-xs text-slate-400 dark:text-slate-500">
+                              <p className="text-xs text-slate-600 dark:text-slate-500">
                                 {t('admin.features.lastUpdated', 'Last updated:')}{' '}
                                 {new Date(flag.updatedAt).toLocaleDateString()}
                               </p>
@@ -495,7 +495,7 @@ export const FeatureFlagsManager: React.FC<FeatureFlagsManagerProps> = ({
       {/* Empty State */}
       {filteredFlags.length === 0 && (
         <div className="p-8 text-center bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 border-dashed">
-          <Flag size={48} className="mx-auto mb-4 text-slate-300 dark:text-navy-600" />
+          <Flag size={48} className="mx-auto mb-4 text-slate-600 dark:text-navy-600" />
           <h4 className="font-medium text-navy-900 dark:text-white mb-2">
             {searchQuery || categoryFilter !== 'all' || statusFilter !== 'all'
               ? t('admin.features.noMatchingFeatures', 'No matching features')

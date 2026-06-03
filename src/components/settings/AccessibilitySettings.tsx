@@ -276,7 +276,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
         <div className="space-y-6">
           {/* Font Size */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-3">
+            <label className="block text-sm font-medium text-slate-600 mb-3">
               {t('settings.accessibility.fontSizeTitle', 'Font Size')}
             </label>
             <div className="grid grid-cols-4 gap-3">
@@ -299,7 +299,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <div
                       className={cn(
                         'font-semibold transition-colors',
-                        isSelected ? 'text-primary-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-600'
                       )}
                       style={{ fontSize: opt.size }}
                     >
@@ -323,7 +323,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
 
           {/* Font Family */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-3">
+            <label className="block text-sm font-medium text-slate-600 mb-3">
               {t('settings.accessibility.fontFamilyTitle', 'Font Family')}
             </label>
             <div className="grid grid-cols-4 gap-3">
@@ -343,7 +343,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <span
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-primary-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-600'
                       )}
                     >
                       {opt.label}
@@ -558,7 +558,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <div
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-primary-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-600'
                       )}
                     >
                       {t(opt.labelKey, opt.label)}
@@ -610,7 +610,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                     <span
                       className={cn(
                         'text-sm font-medium',
-                        isSelected ? 'text-primary-400' : 'text-slate-300'
+                        isSelected ? 'text-primary-400' : 'text-slate-600'
                       )}
                     >
                       {labels[style]}

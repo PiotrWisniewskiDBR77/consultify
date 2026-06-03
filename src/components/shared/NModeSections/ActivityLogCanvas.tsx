@@ -84,7 +84,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
               key={isPolish ? card.label.pl : card.label.en}
               className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 px-3 py-2"
             >
-              <p className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <p className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                 {isPolish ? card.label.pl : card.label.en}
               </p>
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -96,7 +96,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
 
         {/* Activity feed */}
         {entries.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+          <div className="rounded-2xl border border-dashed border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-6 text-center text-xs text-slate-600 dark:text-slate-500">
             {isPolish ? 'Brak wpisów w logu.' : 'No activity entries yet.'}
           </div>
         ) : (
@@ -118,7 +118,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
                       <p className="text-sm text-slate-700 dark:text-slate-200">
                         {entry.description}
                       </p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 dark:text-slate-500">
                         <span>{new Date(entry.timestamp).toLocaleString()}</span>
                         {entry.userName && <span>{`· ${entry.userName}`}</span>}
                         <span className="px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60">
@@ -133,7 +133,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
                         </div>
                       )}
                     </div>
-                    <span className="text-[10px] font-mono uppercase tracking-wide text-slate-300 dark:text-slate-600">
+                    <span className="text-[10px] font-mono uppercase tracking-wide text-slate-600 dark:text-slate-600">
                       {entry.type}
                     </span>
                   </div>

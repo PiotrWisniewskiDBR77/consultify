@@ -214,7 +214,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           {/* Selection Checkbox */}
           <button
             onClick={isAllSelected ? onDeselectAll : onSelectAll}
-            className="flex items-center gap-2 text-slate-400 dark:text-slate-500 hover:text-white"
+            className="flex items-center gap-2 text-slate-600 dark:text-slate-500 hover:text-white"
           >
             {isAllSelected ? (
               <CheckSquare size={20} className="text-primary-400" />
@@ -228,7 +228,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           {/* Selected Count */}
           <div className="flex items-center gap-2">
             <span className="text-white font-medium">{selectedCount}</span>
-            <span className="text-slate-400 dark:text-slate-500">of {totalCount} selected</span>
+            <span className="text-slate-600 dark:text-slate-500">of {totalCount} selected</span>
             <button
               onClick={onDeselectAll}
               className="text-slate-500 dark:text-slate-400 hover:text-white"
@@ -314,7 +314,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                           setActiveMode('removeTags');
                           setShowMoreActions(false);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-700/50"
                       >
                         <Tag size={14} />
                         Remove Tags
@@ -326,7 +326,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                           setActiveMode('archive');
                           setShowMoreActions(false);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-700/50"
                       >
                         <Archive size={14} />
                         Archive
@@ -440,7 +440,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                   setActiveMode(null);
                   setSelectedTagIds([]);
                 }}
-                className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+                className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
               >
                 Cancel
               </button>
@@ -502,7 +502,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                   setActiveMode(null);
                   setSelectedTagIds([]);
                 }}
-                className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+                className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
               >
                 Cancel
               </button>
@@ -554,7 +554,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                   setActiveMode(null);
                   setSelectedCategoryId('');
                 }}
-                className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+                className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
               >
                 Cancel
               </button>
@@ -594,7 +594,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   variant = 'default',
 }) => {
   const variantStyles = {
-    default: 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-700/50',
+    default: 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-700/50',
     success: 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10',
     danger: 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10',
     warning: 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10',
@@ -636,7 +636,7 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
       bg: 'bg-slate-800/50',
       border: 'border-slate-700/50',
       button: 'bg-primary-500 hover:bg-primary-600',
-      icon: <AlertTriangle size={16} className="text-slate-400 dark:text-slate-500" />,
+      icon: <AlertTriangle size={16} className="text-slate-600 dark:text-slate-500" />,
     },
     success: {
       bg: 'bg-emerald-900/20',
@@ -666,12 +666,12 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
         {styles.icon}
         <div className="flex-1">
           <h4 className="font-medium text-white mb-1">{title}</h4>
-          <p className="text-sm text-slate-400 dark:text-slate-500">{description}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">{description}</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+            className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
             disabled={isProcessing}
           >
             Cancel

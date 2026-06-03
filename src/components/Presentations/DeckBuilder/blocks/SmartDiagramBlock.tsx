@@ -55,7 +55,7 @@ const ProcessSteps: React.FC<{
             {item.label}
           </p>
         </div>
-        {i < items.length - 1 && <div className="text-slate-300 text-lg flex-shrink-0">&rarr;</div>}
+        {i < items.length - 1 && <div className="text-slate-600 text-lg flex-shrink-0">&rarr;</div>}
       </React.Fragment>
     ))}
   </div>

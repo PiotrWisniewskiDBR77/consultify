@@ -393,7 +393,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   const statusBadge = (status: string | null, isActive?: boolean) => {
     if (isActive === false) {
       return (
-        <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-700 text-slate-300">
+        <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-700 text-slate-600">
           {tp('paused')}
         </span>
       );
@@ -406,7 +406,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
     };
     return (
       <span
-        className={`px-2 py-0.5 text-xs font-medium rounded ${colors[status || ''] || 'bg-slate-600 text-slate-300'}`}
+        className={`px-2 py-0.5 text-xs font-medium rounded ${colors[status || ''] || 'bg-slate-600 text-slate-600'}`}
       >
         {status ? tp(`execution${status.charAt(0).toUpperCase() + status.slice(1)}`) : tp('active')}
       </span>
@@ -422,7 +422,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
       case 'hybrid':
         return <ScanSearch size={14} className="text-primary-400" />;
       default:
-        return <CalendarClock size={14} className="text-slate-400" />;
+        return <CalendarClock size={14} className="text-slate-600" />;
     }
   };
 
@@ -474,7 +474,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
           {schedules.length === 0 ? (
             <div className="px-4 py-8 text-center">
               <CalendarClock className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-400">{tp('noSchedules')}</p>
+              <p className="text-sm text-slate-600">{tp('noSchedules')}</p>
               <p className="text-xs text-slate-500 mt-1">{tp('noSchedulesHint')}</p>
             </div>
           ) : (
@@ -533,7 +533,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
             <CalendarClock className="w-16 h-16 text-slate-600 mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">{tp('title')}</h3>
-            <p className="text-sm text-slate-400 mb-6 max-w-md">{tp('noSchedulesHint')}</p>
+            <p className="text-sm text-slate-600 mb-6 max-w-md">{tp('noSchedulesHint')}</p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium transition-colors"
@@ -555,7 +555,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                     {statusBadge(selectedSchedule.lastRunStatus, selectedSchedule.isActive)}
                   </div>
                   {selectedSchedule.description && (
-                    <p className="text-sm text-slate-400 mt-1">{selectedSchedule.description}</p>
+                    <p className="text-sm text-slate-600 mt-1">{selectedSchedule.description}</p>
                   )}
                   <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                     <span>
@@ -604,7 +604,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleDelete(selectedSchedule.id)}
-                    className="p-2 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors"
+                    className="p-2 text-slate-600 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -619,7 +619,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 className={`px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === 'schedules'
                     ? 'text-primary-400 border-b-2 border-primary-400'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-600 hover:text-white'
                 }`}
               >
                 {tp('triggers')}
@@ -629,7 +629,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 className={`px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === 'history'
                     ? 'text-primary-400 border-b-2 border-primary-400'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-600 hover:text-white'
                 }`}
               >
                 {tp('history')}
@@ -706,7 +706,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                         className={`px-2 py-0.5 text-[10px] font-medium rounded ${
                           rule.isActive
                             ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-700 text-slate-300'
+                            : 'bg-slate-700 text-slate-600'
                         }`}
                       >
                         {rule.isActive ? tp('active') : tp('paused')}
@@ -728,7 +728,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
           {showAddTrigger && (
             <div className="mt-4 p-4 bg-navy-900/80 rounded-lg border border-white/10 space-y-3">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">{tp('triggerType')}</label>
+                <label className="block text-xs text-slate-600 mb-1">{tp('triggerType')}</label>
                 <select
                   value={triggerFormType}
                   onChange={(e) => setTriggerFormType(e.target.value)}
@@ -744,7 +744,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
               {triggerFormType === 'delay_threshold' && (
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">{tp('delayDays')}</label>
+                  <label className="block text-xs text-slate-600 mb-1">{tp('delayDays')}</label>
                   <input
                     type="number"
                     value={triggerFormDelayDays}
@@ -757,7 +757,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
               {triggerFormType === 'risk_high' && (
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">{tp('riskSeverity')}</label>
+                  <label className="block text-xs text-slate-600 mb-1">{tp('riskSeverity')}</label>
                   <select
                     value={triggerFormSeverity}
                     onChange={(e) => setTriggerFormSeverity(e.target.value)}
@@ -771,7 +771,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
               {triggerFormType === 'budget_threshold' && (
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">{tp('budgetPercent')}</label>
+                  <label className="block text-xs text-slate-600 mb-1">{tp('budgetPercent')}</label>
                   <input
                     type="number"
                     value={triggerFormBudgetPct}
@@ -784,7 +784,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">{tp('throttleHours')}</label>
+                <label className="block text-xs text-slate-600 mb-1">{tp('throttleHours')}</label>
                 <input
                   type="number"
                   value={triggerFormThrottleHours}
@@ -809,7 +809,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setShowAddTrigger(false)}
-                  className="px-4 py-2 text-slate-400 hover:text-white text-sm transition-colors"
+                  className="px-4 py-2 text-slate-600 hover:text-white text-sm transition-colors"
                 >
                   Cancel
                 </button>
@@ -826,7 +826,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
       return (
         <div className="text-center py-12">
           <Clock className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-400">{tp('noHistory')}</p>
+          <p className="text-sm text-slate-600">{tp('noHistory')}</p>
           <p className="text-xs text-slate-500 mt-1">{tp('noHistoryHint')}</p>
         </div>
       );
@@ -843,7 +843,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               <div className="flex items-center gap-2 mb-1">
                 {statusBadge(exec.status)}
                 {exec.triggerType && (
-                  <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-700 text-slate-300">
+                  <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-700 text-slate-600">
                     {exec.triggerType}
                   </span>
                 )}
@@ -852,7 +852,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 )}
               </div>
               {exec.triggerReason && (
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1">
                   {tp('triggerReason')}: {exec.triggerReason}
                 </p>
               )}
@@ -901,7 +901,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 setShowCreateModal(false);
                 resetForm();
               }}
-              className="p-1 text-slate-400 hover:text-white transition-colors"
+              className="p-1 text-slate-600 hover:text-white transition-colors"
             >
               <X size={18} />
             </button>
@@ -910,7 +910,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
           <div className="px-6 py-5 space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1">{tp('scheduleName')}</label>
+              <label className="block text-xs text-slate-600 mb-1">{tp('scheduleName')}</label>
               <input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
@@ -921,7 +921,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Description */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Description</label>
+              <label className="block text-xs text-slate-600 mb-1">Description</label>
               <input
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
@@ -931,7 +931,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Schedule type */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1">{tp('scheduleType')}</label>
+              <label className="block text-xs text-slate-600 mb-1">{tp('scheduleType')}</label>
               <select
                 value={formScheduleType}
                 onChange={(e) => setFormScheduleType(e.target.value)}
@@ -947,7 +947,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Deliverable type */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1">{tp('deliverableType')}</label>
+              <label className="block text-xs text-slate-600 mb-1">{tp('deliverableType')}</label>
               <select
                 value={formDeliverableType}
                 onChange={(e) => setFormDeliverableType(e.target.value)}
@@ -964,7 +964,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             {/* Frequency (for time-based) */}
             {formScheduleType !== 'event_triggered' && (
               <div>
-                <label className="block text-xs text-slate-400 mb-1">{tp('frequency')}</label>
+                <label className="block text-xs text-slate-600 mb-1">{tp('frequency')}</label>
                 <select
                   value={formFrequency}
                   onChange={(e) => setFormFrequency(e.target.value)}
@@ -982,7 +982,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             {/* Cron expression (for custom frequency) */}
             {formFrequency === 'custom' && formScheduleType !== 'event_triggered' && (
               <div>
-                <label className="block text-xs text-slate-400 mb-1">{tp('cronExpression')}</label>
+                <label className="block text-xs text-slate-600 mb-1">{tp('cronExpression')}</label>
                 <input
                   value={formCron}
                   onChange={(e) => setFormCron(e.target.value)}
@@ -994,7 +994,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Timezone */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1">{tp('timezone')}</label>
+              <label className="block text-xs text-slate-600 mb-1">{tp('timezone')}</label>
               <input
                 value={formTimezone}
                 onChange={(e) => setFormTimezone(e.target.value)}
@@ -1004,7 +1004,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Scope */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1">{tp('scope')}</label>
+              <label className="block text-xs text-slate-600 mb-1">{tp('scope')}</label>
               <select
                 value={formScopeType}
                 onChange={(e) => setFormScopeType(e.target.value)}
@@ -1020,7 +1020,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Recipients */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1">{tp('recipients')}</label>
+              <label className="block text-xs text-slate-600 mb-1">{tp('recipients')}</label>
               <input
                 value={formRecipients}
                 onChange={(e) => setFormRecipients(e.target.value)}
@@ -1031,10 +1031,10 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Delivery methods */}
             <div>
-              <label className="block text-xs text-slate-400 mb-1">{tp('delivery')}</label>
+              <label className="block text-xs text-slate-600 mb-1">{tp('delivery')}</label>
               <div className="flex items-center gap-4 mt-1">
                 {(['dashboard', 'email', 'webhook'] as const).map((method) => (
-                  <label key={method} className="flex items-center gap-1.5 text-sm text-slate-300">
+                  <label key={method} className="flex items-center gap-1.5 text-sm text-slate-600">
                     <input
                       type="checkbox"
                       checked={formDeliveryMethods.includes(method)}
@@ -1060,7 +1060,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 setShowCreateModal(false);
                 resetForm();
               }}
-              className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm text-slate-600 hover:text-white transition-colors"
             >
               Cancel
             </button>

@@ -406,17 +406,17 @@ const TimelineBar: React.FC<{
         >
           <div className="w-px h-2 bg-slate-300 dark:bg-navy-600 -translate-x-1/2" />
           <div className="absolute top-2 left-1/2 -translate-x-1/2">
-            <span className="text-[8px] text-slate-400">{m.label}</span>
+            <span className="text-[8px] text-slate-600">{m.label}</span>
           </div>
         </div>
       ))}
 
       {/* Start / End labels */}
       <div className="flex justify-between mt-3">
-        <span className="text-[9px] text-slate-400">
+        <span className="text-[9px] text-slate-600">
           {formatDate(startDate, isPolish ? 'pl' : 'en')}
         </span>
-        <span className="text-[9px] text-slate-400">
+        <span className="text-[9px] text-slate-600">
           {formatDate(endDate, isPolish ? 'pl' : 'en')}
         </span>
       </div>
@@ -442,7 +442,7 @@ const HealthIndicators: React.FC<{
         : `+${startVariance}d`;
   const spiColor =
     startVariance === null
-      ? 'text-slate-400'
+      ? 'text-slate-600'
       : startVariance <= 0
         ? 'text-emerald-500'
         : startVariance <= 7
@@ -1327,7 +1327,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               </div>
               <button
                 onClick={closeAIModal}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-2 rounded-xl text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 aria-label={isPolish ? 'Zamknij' : 'Close'}
               >
                 <X size={16} />
@@ -1398,7 +1398,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                     <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40 p-4">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-600">
                             {isPolish ? 'Fazy' : 'Phases'}
                           </span>
                           <span className="font-semibold text-slate-700 dark:text-white">
@@ -1406,7 +1406,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           </span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-600">
                             {isPolish ? 'Kamienie' : 'Milestones'}
                           </span>
                           <span className="font-semibold text-slate-700 dark:text-white">
@@ -1414,7 +1414,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           </span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-600">
                             {isPolish ? 'Wiersze' : 'Rows'}
                           </span>
                           <span className="font-semibold text-slate-700 dark:text-white">
@@ -1422,7 +1422,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           </span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-600">
                             {isPolish ? 'Zależności' : 'Dependencies'}
                           </span>
                           <span className="font-semibold text-slate-700 dark:text-white">
@@ -1860,7 +1860,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="flex items-center justify-between rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                  <Clock size={13} className="text-slate-400" />
+                  <Clock size={13} className="text-slate-600" />
                   <span className="text-xs text-slate-500">
                     {isPolish ? 'Czas trwania' : 'Duration'}
                   </span>
@@ -1918,7 +1918,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
           <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-5 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
-                <span className="text-[10px] text-slate-400 block mb-0.5">
+                <span className="text-[10px] text-slate-600 block mb-0.5">
                   {isPolish ? 'Data startu' : 'Start date'}
                 </span>
                 <span className="text-sm font-medium text-slate-700 dark:text-white">
@@ -1926,7 +1926,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 </span>
               </div>
               <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
-                <span className="text-[10px] text-slate-400 block mb-0.5">
+                <span className="text-[10px] text-slate-600 block mb-0.5">
                   {isPolish ? 'Data końca' : 'End date'}
                 </span>
                 <span className="text-sm font-medium text-slate-700 dark:text-white">
@@ -1979,7 +1979,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <div className="w-2 h-2 rounded-full bg-primary-500/60" />
                       <span className="text-xs text-slate-700 dark:text-slate-300">{ms.name}</span>
                     </div>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-600">
                       {formatDate(ms.date, isPolish ? 'pl' : 'en')}
                     </span>
                   </div>
@@ -2094,7 +2094,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                             ? 'text-rose-500'
                             : startVariance < 0
                               ? 'text-emerald-500'
-                              : 'text-slate-400'
+                              : 'text-slate-600'
                         }
                       >
                         {startVariance > 0 ? '+' : ''}
@@ -2123,7 +2123,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                             ? 'text-rose-500'
                             : endVariance < 0
                               ? 'text-emerald-500'
-                              : 'text-slate-400'
+                              : 'text-slate-600'
                         }
                       >
                         {endVariance > 0 ? '+' : ''}
@@ -2184,10 +2184,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 />
               </div>
               <div className="flex justify-between mt-1.5">
-                <span className="text-[9px] text-slate-400">
+                <span className="text-[9px] text-slate-600">
                   {formatDate(plannedStart, isPolish ? 'pl' : 'en')}
                 </span>
-                <span className="text-[9px] text-slate-400">
+                <span className="text-[9px] text-slate-600">
                   {formatDate(plannedEnd, isPolish ? 'pl' : 'en')}
                 </span>
               </div>
@@ -2221,13 +2221,13 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           {ms.status === 'completed' && <Check size={12} className="text-white" />}
                         </button>
                         <span
-                          className={`text-xs ${ms.status === 'completed' ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}
+                          className={`text-xs ${ms.status === 'completed' ? 'text-slate-600 line-through' : 'text-slate-700 dark:text-slate-300'}`}
                         >
                           {ms.name}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-600">
                           {formatDate(ms.date, isPolish ? 'pl' : 'en')}
                         </span>
                         {ms.actualDate && (
@@ -2237,7 +2237,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         )}
                         {msVariance !== null && (
                           <span
-                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-rose-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-400'}`}
+                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-rose-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-600'}`}
                           >
                             {msVariance > 0 ? '+' : ''}
                             {msVariance}d
@@ -2304,7 +2304,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                             ? 'text-rose-500'
                             : startVariance < 0
                               ? 'text-emerald-500'
-                              : 'text-slate-400'
+                              : 'text-slate-600'
                         }
                       >
                         {startVariance > 0 ? '+' : ''}
@@ -2329,7 +2329,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                             ? 'text-rose-500'
                             : endVariance < 0
                               ? 'text-emerald-500'
-                              : 'text-slate-400'
+                              : 'text-slate-600'
                         }
                       >
                         {endVariance > 0 ? '+' : ''}
@@ -2382,12 +2382,12 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-600">
                           {formatDate(ms.date, isPolish ? 'pl' : 'en')}
                         </span>
                         {ms.actualDate && (
                           <>
-                            <ChevronRight size={10} className="text-slate-400" />
+                            <ChevronRight size={10} className="text-slate-600" />
                             <span className="text-[10px] text-slate-500">
                               {formatDate(ms.actualDate, isPolish ? 'pl' : 'en')}
                             </span>
@@ -2395,7 +2395,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         )}
                         {msVariance !== null && (
                           <span
-                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-rose-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-400'}`}
+                            className={`text-[10px] font-medium ${msVariance > 0 ? 'text-rose-500' : msVariance < 0 ? 'text-emerald-500' : 'text-slate-600'}`}
                           >
                             {msVariance > 0 ? '+' : ''}
                             {msVariance}d

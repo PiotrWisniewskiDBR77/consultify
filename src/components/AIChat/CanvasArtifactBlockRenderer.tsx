@@ -299,7 +299,7 @@ export function CanvasArtifactBlockRenderer({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white dark:divide-white/10 dark:bg-navy-900">
+            <tbody className="divide-y divide-slate-200 bg-white dark:divide-white/10 dark:bg-navy-900">
               {filteredRows.map((entry) => (
                 <tr key={`${block.id}-${entry.key}`}>
                   <td className="px-3 py-3">

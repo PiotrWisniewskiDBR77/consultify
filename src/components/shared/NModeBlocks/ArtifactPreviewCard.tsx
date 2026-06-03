@@ -211,9 +211,9 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
             <span className={`text-[9px] font-bold uppercase tracking-wider ${accent.text}`}>
               {label}
             </span>
-            <span className="text-[8px] text-slate-400 dark:text-slate-500 font-mono">{code}</span>
+            <span className="text-[8px] text-slate-600 dark:text-slate-500 font-mono">{code}</span>
             {linkRole && (
-              <span className="text-[8px] text-slate-400 dark:text-slate-500 px-1 py-0.5 bg-slate-500/5 dark:bg-white/[0.04] rounded">
+              <span className="text-[8px] text-slate-600 dark:text-slate-500 px-1 py-0.5 bg-slate-500/5 dark:bg-white/[0.04] rounded">
                 {linkRole}
               </span>
             )}
@@ -271,7 +271,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
             <button
               type="button"
               onClick={onOpen}
-              className="p-1 rounded hover:bg-white/20 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="p-1 rounded hover:bg-white/20 dark:hover:bg-white/5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
               title={isPl ? 'Otwórz artefakt' : 'Open artifact'}
             >
               <ExternalLink size={10} />
@@ -281,7 +281,7 @@ export const ArtifactPreviewCard: React.FC<ArtifactPreviewCardProps> = ({
             <button
               type="button"
               onClick={onRemove}
-              className="p-1 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-500"
+              className="p-1 rounded hover:bg-rose-500/10 text-slate-600 hover:text-rose-500"
               title={isPl ? 'Usuń link' : 'Remove link'}
             >
               <X size={10} />

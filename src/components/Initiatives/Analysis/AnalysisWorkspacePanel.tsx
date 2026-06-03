@@ -27,12 +27,12 @@ export const AnalysisWorkspacePanel: React.FC<AnalysisWorkspacePanelProps> = ({
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{panel.title}</h2>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">{panel.subtitle}</p>
+          <p className="text-[10px] text-slate-600 dark:text-slate-500">{panel.subtitle}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+          className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
           aria-label="Close AI panel"
         >
           <X size={16} />

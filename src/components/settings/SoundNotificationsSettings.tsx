@@ -146,7 +146,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
           {soundEnabled ? (
             <Volume2 size={20} className="text-primary-600" />
           ) : (
-            <VolumeX size={20} className="text-slate-400 dark:text-slate-500" />
+            <VolumeX size={20} className="text-slate-600 dark:text-slate-500" />
           )}
           <div>
             <label className="text-sm font-medium text-slate-900 dark:text-white">

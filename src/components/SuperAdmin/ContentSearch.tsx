@@ -186,7 +186,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
               : 'border-slate-700/50 hover:border-slate-600'
           }`}
         >
-          <Search className="w-5 h-5 text-slate-400 dark:text-slate-500 ml-4" />
+          <Search className="w-5 h-5 text-slate-600 dark:text-slate-500 ml-4" />
           <input
             ref={inputRef}
             type="text"
@@ -271,7 +271,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
           {recentSearches.length > 0 && !query && (
             <div className="p-3 border-b border-slate-700/50">
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-500">
                   <Clock size={14} />
                   Recent searches
                 </div>
@@ -287,7 +287,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                   <button
                     key={idx}
                     onClick={() => handleSelectRecent(search)}
-                    className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-slate-300 hover:bg-slate-700/50 rounded-lg"
+                    className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-slate-600 hover:bg-slate-700/50 rounded-lg"
                   >
                     <Search size={12} className="text-slate-500 dark:text-slate-400" />
                     <span className="flex-1 truncate">{search.query}</span>
@@ -305,7 +305,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
           {/* Suggestions based on query */}
           {query && suggestions.length > 0 && (
             <div className="p-3">
-              <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500 mb-2">
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-500 mb-2">
                 <Sparkles size={14} />
                 Suggestions
               </div>
@@ -316,7 +316,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                     setQuery(suggestion);
                     onSearch(suggestion, filters);
                   }}
-                  className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-slate-300 hover:bg-slate-700/50 rounded-lg"
+                  className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-slate-600 hover:bg-slate-700/50 rounded-lg"
                 >
                   <FileText size={12} className="text-slate-500 dark:text-slate-400" />
                   {suggestion}
@@ -332,10 +332,10 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
                 Search for playbook templates, email templates, categories, or tags
               </p>
               <div className="flex justify-center gap-3 mt-3">
-                <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500">
                   <Hash size={12} /> Use #tag
                 </span>
-                <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500">
                   <FolderOpen size={12} /> Use :category
                 </span>
               </div>
@@ -369,7 +369,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Content Type */}
             <div>
-              <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-2">
                 Content Type
               </label>
               <select
@@ -385,7 +385,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-2">
                 Status
               </label>
               <select
@@ -404,7 +404,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
             {/* Sort By */}
             <div>
-              <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-2">
                 Sort By
               </label>
               <select
@@ -423,7 +423,7 @@ export const ContentSearch: React.FC<ContentSearchProps> = ({
 
             {/* Sort Order */}
             <div>
-              <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-2">
                 Order
               </label>
               <select

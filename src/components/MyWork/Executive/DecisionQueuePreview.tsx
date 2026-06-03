@@ -50,7 +50,7 @@ const priorityText: Record<string, string> = {
   critical: 'text-rose-500 dark:text-rose-400',
   high: 'text-amber-600 dark:text-amber-400',
   medium: 'text-slate-500 dark:text-slate-400',
-  low: 'text-slate-400 dark:text-slate-500',
+  low: 'text-slate-600 dark:text-slate-500',
 };
 
 const DecisionItem: React.FC<{
@@ -150,7 +150,7 @@ const DecisionItem: React.FC<{
               }
               onReject?.(decision.id);
             }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors duration-150"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-500 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors duration-150"
             title={t('executive.decisions.reject', 'Reject')}
           >
             <Minus size={15} />
@@ -164,7 +164,7 @@ const DecisionItem: React.FC<{
               }
               onDelegate?.(decision.id);
             }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors duration-150"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-500 hover:bg-slate-200/60 dark:hover:bg-white/[0.06] transition-colors duration-150"
             title={t('executive.decisions.delegate', 'Delegate')}
           >
             <UserPlus size={15} />
@@ -195,7 +195,7 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
         <div className="px-5 py-4">
           <div className="h-4 w-36 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
         </div>
-        <div className="divide-y divide-slate-100/50 dark:divide-white/[0.03]">
+        <div className="divide-y divide-slate-200/50 dark:divide-white/[0.03]">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="px-4 py-3.5 animate-pulse">
               <div className="h-3 w-3/4 bg-slate-200 dark:bg-white/10 rounded mb-2" />
@@ -239,7 +239,7 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
       {/* Decision List */}
       <div className="flex-1 overflow-y-auto">
         {displayDecisions.length > 0 ? (
-          <div className="divide-y divide-slate-100/50 dark:divide-white/[0.03]">
+          <div className="divide-y divide-slate-200/50 dark:divide-white/[0.03]">
             {displayDecisions.slice(0, 5).map((decision) => (
               <DecisionItem
                 key={decision.id}
@@ -266,7 +266,7 @@ export const DecisionQueuePreview: React.FC<DecisionQueuePreviewProps> = ({
         <div className="px-5 py-3 shrink-0">
           <button
             onClick={onViewAll}
-            className="w-full text-center text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center justify-center gap-1 transition-colors duration-150"
+            className="w-full text-center text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center justify-center gap-1 transition-colors duration-150"
           >
             {t('executive.decisions.viewAll', 'View all decisions')}
             <ArrowRight size={13} />

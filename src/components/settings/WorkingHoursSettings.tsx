@@ -416,7 +416,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     <div className="w-28">
                       <span
                         className={`font-medium ${
-                          daySchedule.enabled ? 'text-slate-900 dark:text-white' : 'text-slate-400'
+                          daySchedule.enabled ? 'text-slate-900 dark:text-white' : 'text-slate-600'
                         }`}
                       >
                         {t(`settings.workingHours.days.${day.key}.full`, day.label)}
@@ -468,7 +468,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         </span>
                       </div>
                     ) : (
-                      <div className="flex-1 text-slate-400 dark:text-slate-500 text-sm">
+                      <div className="flex-1 text-slate-600 dark:text-slate-500 text-sm">
                         {t('settings.workingHours.notWorking', 'Not working')}
                       </div>
                     )}

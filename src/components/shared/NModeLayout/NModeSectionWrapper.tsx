@@ -70,8 +70,8 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
       {/* Empty state or content */}
       {isEmpty && emptyState ? (
         <div className="text-center py-12">
-          <emptyState.icon size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm text-slate-400 dark:text-slate-500">
+          <emptyState.icon size={32} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
+          <p className="text-sm text-slate-600 dark:text-slate-500">
             {isPolish ? emptyState.message.pl : emptyState.message.en}
           </p>
         </div>

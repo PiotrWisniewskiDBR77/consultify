@@ -24,12 +24,12 @@ const statusColors = {
   GREEN: 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5',
   AMBER: 'text-amber-500 border-amber-500/20 bg-amber-500/5',
   RED: 'text-rose-500 border-rose-500/20 bg-rose-500/5',
-  GREY: 'text-slate-400 dark:text-slate-500 border-slate-400/20 bg-slate-400/5',
+  GREY: 'text-slate-600 dark:text-slate-500 border-slate-400/20 bg-slate-400/5',
 };
 
 const trendIcons = {
   IMPROVING: { icon: TrendingUp, color: 'text-emerald-500' },
-  STABLE: { icon: Minus, color: 'text-slate-400 dark:text-slate-500' },
+  STABLE: { icon: Minus, color: 'text-slate-600 dark:text-slate-500' },
   DECLINING: { icon: TrendingDown, color: 'text-rose-500' },
 };
 
@@ -67,7 +67,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       <div className="flex items-baseline gap-1">
         <span className={`font-bold ${styles.value} text-navy-900 dark:text-white`}>{value}</span>
-        {unit && <span className="text-slate-400 dark:text-slate-500 text-sm">{unit}</span>}
+        {unit && <span className="text-slate-600 dark:text-slate-500 text-sm">{unit}</span>}
       </div>
 
       {(target !== undefined || variance !== undefined) && (

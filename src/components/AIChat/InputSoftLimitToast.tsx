@@ -122,7 +122,7 @@ function defaultNotify(message: string, options: InputSoftLimitToastNotifyOption
               type="button"
               data-testid="chat-v9-input-soft-limit-toast-dismiss"
               onClick={() => toast.dismiss(t.id)}
-              className="text-[12px] font-medium text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+              className="text-[12px] font-medium text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
             >
               Dismiss
             </button>

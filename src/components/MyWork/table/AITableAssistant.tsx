@@ -299,7 +299,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
@@ -313,7 +313,7 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
 
         {!command && (
           <div className="px-4 py-2 border-t border-slate-200/30 dark:border-white/[0.04]">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
               {isPl ? 'Przykłady' : 'Examples'}
             </div>
             <div className="flex flex-wrap gap-1">

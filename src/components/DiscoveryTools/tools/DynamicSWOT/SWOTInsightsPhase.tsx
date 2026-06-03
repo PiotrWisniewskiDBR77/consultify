@@ -127,7 +127,7 @@ function SectionHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between border-b border-slate-100 px-6 pb-4 pt-5 dark:border-navy-800/60">
+    <div className="flex items-start justify-between border-b border-slate-200 px-6 pb-4 pt-5 dark:border-navy-800/60">
       <div className="flex-1">
         {children || (
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h2>
@@ -492,7 +492,7 @@ function QuadrantObservationsBlock({
       <div className="mb-4 flex items-center justify-between">
         <div className={`text-[11px] font-bold uppercase tracking-[0.16em] ${meta.label}`}>
           {isPolish ? meta.title.pl : meta.title.en}
-          <span className="ml-2 text-slate-400 dark:text-slate-500">
+          <span className="ml-2 text-slate-600 dark:text-slate-500">
             ({items.length} {isPolish ? 'czynników' : 'factors'})
           </span>
         </div>
@@ -633,7 +633,7 @@ function InternalSynthesisBlock({
       </SectionHeader>
       <div className="space-y-4 px-6 py-5">
         {!hasContent ? (
-          <div className="rounded-xl border-2 border-dashed border-slate-200 p-5 text-center text-sm text-slate-400 dark:border-navy-700 dark:text-slate-500">
+          <div className="rounded-xl border-2 border-dashed border-slate-200 p-5 text-center text-sm text-slate-600 dark:border-navy-700 dark:text-slate-500">
             {isPolish
               ? 'Uruchom analizę AI, aby wygenerować syntezę wewnętrzną. AI porówna mocne i słabe strony i wskaże, co naprawdę kształtuje pozycję firmy.'
               : 'Run AI analysis to generate internal synthesis. AI will compare strengths and weaknesses to reveal what truly shapes the company position.'}
@@ -784,7 +784,7 @@ function ExternalSynthesisBlock({
       </SectionHeader>
       <div className="space-y-4 px-6 py-5">
         {observations.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-slate-200 p-5 text-center text-sm text-slate-400 dark:border-navy-700 dark:text-slate-500">
+          <div className="rounded-xl border-2 border-dashed border-slate-200 p-5 text-center text-sm text-slate-600 dark:border-navy-700 dark:text-slate-500">
             {isPolish
               ? 'Uruchom analizę AI, aby wygenerować syntezę zewnętrzną. AI przeanalizuje szanse i zagrożenia w kontekście pozycji firmy.'
               : 'Run AI analysis to generate external synthesis. AI will analyze opportunities and threats in the context of the company position.'}
@@ -1195,8 +1195,8 @@ function RecommendationCard({
           </p>
 
           {expanded && (
-            <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3 dark:border-navy-700/40 dark:bg-navy-950/20">
-              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-navy-700/40 dark:bg-navy-950/20">
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Uzasadnienie' : 'Rationale'}
               </div>
               <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
@@ -1208,7 +1208,7 @@ function RecommendationCard({
           <div className="mt-4 flex items-center justify-between">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-xs font-medium text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+              className="text-xs font-medium text-slate-600 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
             >
               {expanded
                 ? isPolish
@@ -1365,7 +1365,7 @@ export function SWOTInsightsPhase({
                     </div>
                   ))}
                   {qItems.length === 0 && (
-                    <div className="text-sm text-slate-400">{isPolish ? 'Brak' : 'None'}</div>
+                    <div className="text-sm text-slate-600">{isPolish ? 'Brak' : 'None'}</div>
                   )}
                 </div>
               );
@@ -1515,7 +1515,7 @@ export function SWOTInsightsPhase({
                         >
                           {bucket.label}
                         </span>
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[11px] text-slate-600">
                           {isPolish ? bucket.title.pl : bucket.title.en}
                         </span>
                       </div>
@@ -1541,7 +1541,7 @@ export function SWOTInsightsPhase({
                                 </div>
                               )}
                               {(tension.linkedItemIds || []).length > 0 && (
-                                <div className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                                <div className="mt-1.5 text-[11px] text-slate-600 dark:text-slate-500">
                                   {(tension.linkedItemIds || [])
                                     .slice(0, 3)
                                     .map(getItemText)
@@ -1619,7 +1619,7 @@ export function SWOTInsightsPhase({
           {/* True empty state — no data at all */}
           {items.length === 0 && keyInsights.length === 0 && tensions.length === 0 && (
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
-              <Lightbulb className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <Lightbulb className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-600" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? 'Dodaj czynniki SWOT w poprzednich krokach, aby wygenerować wnioski strategiczne.'
@@ -1664,7 +1664,7 @@ export function SWOTInsightsPhase({
                         {idx + 1}
                       </span>
                       <CatIcon className={`h-4 w-4 ${catMeta?.color || 'text-slate-500'}`} />
-                      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
                         {isPolish ? catMeta?.label.pl : catMeta?.label.en}
                       </span>
                       <div className="ml-auto flex gap-2">
@@ -1797,7 +1797,7 @@ export function SWOTInsightsPhase({
           {/* True empty state */}
           {items.length === 0 && activeMoves.length === 0 && (
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
-              <ArrowRight className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <ArrowRight className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-600" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? 'Dodaj czynniki SWOT w poprzednich krokach, aby wygenerować rekomendacje.'

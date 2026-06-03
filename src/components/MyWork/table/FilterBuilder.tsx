@@ -211,7 +211,7 @@ const DateValueInput: React.FC<ValueInputProps> = ({ value, operator, onChange, 
   }
   return (
     <div className="flex items-center gap-1">
-      <Calendar size={11} className="text-slate-400 flex-shrink-0" />
+      <Calendar size={11} className="text-slate-600 flex-shrink-0" />
       <input
         type="date"
         value={value ? String(value).slice(0, 10) : ''}
@@ -308,7 +308,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         <span className="truncate">
           {selected.length > 0 ? selected.join(', ') : isPl ? 'Wybierz…' : 'Select…'}
         </span>
-        <ChevronDown size={10} className="text-slate-400 flex-shrink-0" />
+        <ChevronDown size={10} className="text-slate-600 flex-shrink-0" />
       </button>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-50 w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
@@ -461,7 +461,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             <button
               type="button"
               onClick={clearAll}
-              className="text-[10px] text-slate-400 hover:text-rose-500 transition-colors px-1"
+              className="text-[10px] text-slate-600 hover:text-rose-500 transition-colors px-1"
             >
               {isPl ? 'Wyczyść' : 'Clear all'}
             </button>
@@ -471,7 +471,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
       </div>
@@ -479,7 +479,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       {/* Rules */}
       <div className="px-4 py-3 space-y-2 max-h-[360px] overflow-auto">
         {filters.rules.length === 0 && (
-          <p className="text-[11px] text-slate-400 text-center py-4">
+          <p className="text-[11px] text-slate-600 text-center py-4">
             {isPl ? 'Brak filtrów. Dodaj pierwszy.' : 'No filters. Add one.'}
           </p>
         )}
@@ -494,7 +494,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             <div key={`${rule.fieldId}-${idx}`} className="flex items-start gap-1.5">
               {/* Logic label */}
               {idx > 0 ? (
-                <span className="text-[9px] font-bold text-slate-400 w-8 text-center flex-shrink-0 pt-2">
+                <span className="text-[9px] font-bold text-slate-600 w-8 text-center flex-shrink-0 pt-2">
                   {filters.logic === 'and' ? (isPl ? 'I' : 'AND') : isPl ? 'LUB' : 'OR'}
                 </span>
               ) : (
@@ -546,7 +546,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               <button
                 type="button"
                 onClick={() => removeRule(idx)}
-                className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex-shrink-0 mt-0.5"
+                className="p-1 rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex-shrink-0 mt-0.5"
               >
                 <Trash2 size={12} />
               </button>

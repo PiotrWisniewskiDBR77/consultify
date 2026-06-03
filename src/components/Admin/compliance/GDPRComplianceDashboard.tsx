@@ -175,7 +175,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                     'General Data Protection Regulation - EU data privacy standard'
                   )}
                 >
-                  <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+                  <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
                 </Tooltip>
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -346,7 +346,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : isActive
                           ? 'text-amber-600 dark:text-amber-400'
-                          : 'text-slate-400 dark:text-slate-500'
+                          : 'text-slate-600 dark:text-slate-500'
                     )}
                   />
                 </div>
@@ -390,7 +390,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
       {/* Info Card */}
       <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-3">
-          <Shield size={20} className="text-slate-400 dark:text-slate-500 flex-shrink-0 mt-0.5" />
+          <Shield size={20} className="text-slate-600 dark:text-slate-500 flex-shrink-0 mt-0.5" />
           <div>
             <h4 className="font-medium text-navy-900 dark:text-white mb-1">
               {t('admin.compliance.gdpr.learnMore', 'Learn more about GDPR')}

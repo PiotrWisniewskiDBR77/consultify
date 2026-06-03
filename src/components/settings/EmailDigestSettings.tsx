@@ -192,7 +192,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   const optionCardCls = (active: boolean) =>
     cn(
@@ -292,7 +292,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
 
               {/* Frequency */}
               <div className="mb-5">
-                <label className="text-xs font-medium text-slate-400 mb-2 block">
+                <label className="text-xs font-medium text-slate-600 mb-2 block">
                   {t('settings.emailDigest.frequency', 'Digest Frequency')}
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -305,7 +305,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          frequency === opt.value ? 'text-primary-300' : 'text-slate-400'
+                          frequency === opt.value ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {t(`settings.emailDigest.freq_${opt.value}`, opt.label)}
@@ -320,7 +320,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
 
               {/* Content */}
               <div className="mb-5">
-                <label className="text-xs font-medium text-slate-400 mb-2 block">
+                <label className="text-xs font-medium text-slate-600 mb-2 block">
                   {t('settings.emailDigest.content', 'Digest Content')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -333,7 +333,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          content === opt.value ? 'text-primary-300' : 'text-slate-400'
+                          content === opt.value ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {t(`settings.emailDigest.content_${opt.value}`, opt.label)}
@@ -348,7 +348,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
 
               {/* Format */}
               <div>
-                <label className="text-xs font-medium text-slate-400 mb-2 block">
+                <label className="text-xs font-medium text-slate-600 mb-2 block">
                   {t('settings.emailDigest.format', 'Email Format')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -361,7 +361,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          format === opt.value ? 'text-primary-300' : 'text-slate-400'
+                          format === opt.value ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {t(`settings.emailDigest.format_${opt.value}`, opt.label)}

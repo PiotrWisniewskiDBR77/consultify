@@ -453,7 +453,7 @@ export const KnownToolPreviewV3Body: React.FC<{
         <div className="space-y-3">
           {snippetRows.map((row) => (
             <div key={row.label} className={`flex items-start gap-2 ${row.minH}`}>
-              <span className="shrink-0 w-[56px] text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-0.5">
+              <span className="shrink-0 w-[56px] text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 pt-0.5">
                 {row.label}
               </span>
               <span className="text-xs leading-snug text-slate-700 dark:text-slate-200">

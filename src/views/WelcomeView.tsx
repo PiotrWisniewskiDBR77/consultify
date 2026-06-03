@@ -166,7 +166,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
                     </p>
                   </div>
                   <ArrowRight
-                    className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
+                    className="text-slate-600 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
                     size={20}
                   />
                 </div>

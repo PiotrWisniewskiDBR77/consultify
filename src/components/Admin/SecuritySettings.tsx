@@ -361,7 +361,7 @@ export const SecuritySettings: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-white">Require 2FA for All Users</h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
                   When enabled, all users must set up two-factor authentication to access the
                   system.
                 </p>
@@ -395,7 +395,7 @@ export const SecuritySettings: React.FC = () => {
                       <p className="text-white font-medium">
                         {user.firstName} {user.lastName}
                       </p>
-                      <p className="text-sm text-slate-400 dark:text-slate-500">{user.email}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-500">{user.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export const SecuritySettings: React.FC = () => {
 
             {/* Minimum Length */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 mb-2">
                 Minimum Password Length: {formData.passwordMinLength || 8} characters
               </label>
               <input
@@ -454,7 +454,7 @@ export const SecuritySettings: React.FC = () => {
                   }
                   className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
-                <span className="text-slate-300">Require uppercase letter (A-Z)</span>
+                <span className="text-slate-600">Require uppercase letter (A-Z)</span>
               </label>
 
               <label className="flex items-center gap-3 cursor-pointer">
@@ -466,7 +466,7 @@ export const SecuritySettings: React.FC = () => {
                   }
                   className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
-                <span className="text-slate-300">Require number (0-9)</span>
+                <span className="text-slate-600">Require number (0-9)</span>
               </label>
 
               <label className="flex items-center gap-3 cursor-pointer">
@@ -478,13 +478,13 @@ export const SecuritySettings: React.FC = () => {
                   }
                   className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-500 focus:ring-primary-500"
                 />
-                <span className="text-slate-300">Require special character (!@#$%^&*)</span>
+                <span className="text-slate-600">Require special character (!@#$%^&*)</span>
               </label>
             </div>
 
             {/* Password Expiry */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 mb-2">
                 Password Expiry (days, 0 = never)
               </label>
               <input
@@ -506,7 +506,7 @@ export const SecuritySettings: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Session Timeout (minutes)
                 </label>
                 <input
@@ -522,7 +522,7 @@ export const SecuritySettings: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Max Sessions Per User
                 </label>
                 <input
@@ -562,14 +562,14 @@ export const SecuritySettings: React.FC = () => {
               <h3 className="text-lg font-semibold text-white">Active Sessions</h3>
               <button
                 onClick={fetchSessions}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-600 dark:text-slate-500 hover:text-white"
               >
                 <RefreshCw size={16} />
               </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-navy-950 text-slate-300 uppercase text-xs">
+                <thead className="bg-navy-950 text-slate-600 uppercase text-xs">
                   <tr>
                     <th className="px-4 py-3 text-left">User</th>
                     <th className="px-4 py-3 text-left">Device</th>
@@ -594,25 +594,25 @@ export const SecuritySettings: React.FC = () => {
                         <td className="px-4 py-3">
                           <div>
                             <p className="text-white font-medium">{session.userName}</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500">
+                            <p className="text-xs text-slate-600 dark:text-slate-500">
                               {session.userEmail}
                             </p>
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2 text-slate-300">
+                          <div className="flex items-center gap-2 text-slate-600">
                             {getDeviceIcon(session.userAgent)}
                             <span className="text-xs">{session.deviceInfo || 'Unknown'}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-300">{session.ipAddress || 'N/A'}</td>
-                        <td className="px-4 py-3 text-slate-400 dark:text-slate-500 text-xs">
+                        <td className="px-4 py-3 text-slate-600">{session.ipAddress || 'N/A'}</td>
+                        <td className="px-4 py-3 text-slate-600 dark:text-slate-500 text-xs">
                           {session.lastActiveAt ? formatDate(session.lastActiveAt) : 'N/A'}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
                             onClick={() => handleTerminateSession(session.id)}
-                            className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
+                            className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-400"
                             title="Terminate session"
                           >
                             <LogOut size={16} />
@@ -635,14 +635,14 @@ export const SecuritySettings: React.FC = () => {
             <h3 className="text-lg font-semibold text-white">Login History</h3>
             <button
               onClick={fetchLoginHistory}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-600 dark:text-slate-500 hover:text-white"
             >
               <RefreshCw size={16} />
             </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-navy-950 text-slate-300 uppercase text-xs">
+              <thead className="bg-navy-950 text-slate-600 uppercase text-xs">
                 <tr>
                   <th className="px-4 py-3 text-left">User</th>
                   <th className="px-4 py-3 text-left">Status</th>
@@ -667,7 +667,7 @@ export const SecuritySettings: React.FC = () => {
                       <td className="px-4 py-3">
                         <div>
                           <p className="text-white font-medium">{item.userName || 'Unknown'}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
                             {item.userEmail}
                           </p>
                         </div>
@@ -688,11 +688,11 @@ export const SecuritySettings: React.FC = () => {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-slate-300">{item.ipAddress || 'N/A'}</td>
-                      <td className="px-4 py-3 text-slate-400 dark:text-slate-500">
+                      <td className="px-4 py-3 text-slate-600">{item.ipAddress || 'N/A'}</td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-500">
                         {item.location || 'Unknown'}
                       </td>
-                      <td className="px-4 py-3 text-slate-400 dark:text-slate-500 text-xs">
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-500 text-xs">
                         {formatDate(item.createdAt)}
                       </td>
                     </tr>

@@ -103,11 +103,11 @@ export const AIConnections: React.FC<AIConnectionsProps> = ({ entityType, entity
       {expanded && (
         <div className="px-4 pb-3 space-y-1">
           {loading ? (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-600">
               {isPolish ? 'Analizuję...' : 'Analyzing...'}
             </span>
           ) : items.length === 0 ? (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-600">
               {isPolish ? 'Brak powiązań' : 'No connections found'}
             </span>
           ) : (
@@ -122,7 +122,7 @@ export const AIConnections: React.FC<AIConnectionsProps> = ({ entityType, entity
                   <span className="text-xs text-slate-700 dark:text-slate-200 truncate block">
                     {item.title}
                   </span>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-slate-600">
                     {RELATIONSHIP_LABELS[item.relationship] || item.relationship}
                   </span>
                 </div>

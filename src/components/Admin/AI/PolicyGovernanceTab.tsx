@@ -36,7 +36,7 @@ const POLICY_LEVELS = [
     title: 'Advisory',
     description: 'AI can only explain and suggest. No modifications.',
     icon: MessageSquare,
-    color: 'text-slate-400 dark:text-slate-500',
+    color: 'text-slate-600 dark:text-slate-500',
     bgColor: 'from-slate-700 to-slate-800',
   },
   {
@@ -184,7 +184,7 @@ export const PolicyGovernanceTab: React.FC = () => {
             className={`flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all ${
               hasChanges
                 ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20'
-                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

@@ -26,7 +26,7 @@ const ImpactEffortBadge: React.FC<{ impact: string; effort: string }> = ({ impac
   return (
     <div className="flex items-center gap-2 text-[10px]">
       <span className={impactColors[impact as keyof typeof impactColors]}>Impact: {impact}</span>
-      <span className="text-slate-300">|</span>
+      <span className="text-slate-600">|</span>
       <span className={effortColors[effort as keyof typeof effortColors]}>Effort: {effort}</span>
     </div>
   );

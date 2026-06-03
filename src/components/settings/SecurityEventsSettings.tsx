@@ -453,7 +453,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
         </div>
       ) : (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
+          <div className="divide-y divide-slate-200 dark:divide-white/5">
             {filteredEvents.map((event) => (
               <div
                 key={event.id}

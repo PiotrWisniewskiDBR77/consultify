@@ -489,11 +489,11 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       >
         <Icon
           size={13}
-          className={`shrink-0 ${item.danger ? 'text-rose-500' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`shrink-0 ${item.danger ? 'text-rose-500' : 'text-slate-600 dark:text-slate-500'}`}
         />
         <span className="flex-1 truncate">{isPl ? item.labelPl : item.labelEn}</span>
         {item.shortcut && (
-          <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono ml-2 shrink-0">
+          <span className="text-[9px] text-slate-600 dark:text-slate-500 font-mono ml-2 shrink-0">
             {item.shortcut}
           </span>
         )}
@@ -513,7 +513,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         {groups.map((group, gi) => (
           <React.Fragment key={gi}>
             {group.titlePl && (
-              <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {isPl ? group.titlePl : group.titleEn}
               </div>
             )}
@@ -539,7 +539,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     >
       {mainItems.map((group, gi) => (
         <React.Fragment key={gi}>
-          <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
             {isPl ? group.titlePl : group.titleEn}
           </div>
           {group.items.map(renderItem)}
@@ -564,7 +564,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
             className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-md"
           >
             <span className="flex-1">{isPl ? group.titlePl : group.titleEn}</span>
-            <ChevronRight size={11} className="text-slate-400" />
+            <ChevronRight size={11} className="text-slate-600" />
           </button>
 
           {submenu === group.titleEn && (
@@ -577,7 +577,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
               }}
             >
-              <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {isPl ? group.titlePl : group.titleEn}
               </div>
               {group.items.map(renderItem)}

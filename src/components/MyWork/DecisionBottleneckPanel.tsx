@@ -102,9 +102,9 @@ const AlertSection: React.FC<{
           </span>
         </div>
         {isOpen ? (
-          <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+          <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
         ) : (
-          <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+          <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
         )}
       </button>
 
@@ -171,7 +171,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
 
   if (loading) {
     return (
-      <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-navy-700 animate-pulse">
+      <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700 animate-pulse">
         <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-32 mb-2" />
         <div className="h-3 bg-slate-200 dark:bg-white/10 rounded w-48" />
       </div>
@@ -191,7 +191,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
         <button
           onClick={() => fetchBottlenecks(true)}
           disabled={refreshing}
-          className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+          className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
         >
           <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
         </button>
@@ -219,7 +219,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
               </span>
             </div>
             {d.ownerName && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                 Owner: {d.ownerName}
               </span>
             )}
@@ -249,7 +249,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
               </span>
             </div>
             {d.ownerName && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                 Owner: {d.ownerName}
               </span>
             )}
@@ -278,7 +278,7 @@ export const DecisionBottleneckPanel: React.FC<DecisionBottleneckPanelProps> = (
                 {owner.pendingCount} pending
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">{owner.email}</span>
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">{owner.email}</span>
           </div>
         ))}
       </AlertSection>

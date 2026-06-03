@@ -115,7 +115,7 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                 'Configure how names are displayed across the workspace'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -307,7 +307,7 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
       {/* Enforcement Level */}
       <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
         <h4 className="font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-          <Shield size={18} className="text-slate-400 dark:text-slate-500" />
+          <Shield size={18} className="text-slate-600 dark:text-slate-500" />
           {t('admin.organization.displayName.enforcement', 'Enforcement Level')}
         </h4>
 

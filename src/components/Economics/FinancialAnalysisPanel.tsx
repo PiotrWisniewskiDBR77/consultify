@@ -463,9 +463,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         </div>
       </div>
       {expandedSections[section] ? (
-        <ChevronUp size={20} className="text-slate-400 dark:text-slate-500" />
+        <ChevronUp size={20} className="text-slate-600 dark:text-slate-500" />
       ) : (
-        <ChevronDown size={20} className="text-slate-400 dark:text-slate-500" />
+        <ChevronDown size={20} className="text-slate-600 dark:text-slate-500" />
       )}
     </button>
   );
@@ -561,7 +561,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
           badge="Costs i benefits"
         />
         {expandedSections.input && (
-          <div className="p-6 border-t border-slate-100 dark:border-navy-700">
+          <div className="p-6 border-t border-slate-200 dark:border-navy-700">
             <FinancialInputForm
               initialData={financialData || undefined}
               onSave={handleSaveFinancials}
@@ -586,7 +586,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             badge="NPV, IRR, ROI, Payback"
           />
           {expandedSections.metrics && (
-            <div className="p-6 border-t border-slate-100 dark:border-navy-700">
+            <div className="p-6 border-t border-slate-200 dark:border-navy-700">
               <FinancialMetricsPanel
                 metrics={calculatedMetrics}
                 currency={financialData?.currency}
@@ -911,7 +911,7 @@ const LinkedOutputsSection: React.FC<{
                 {row.kind} · {row.statusKey} · {row.governance?.visibilityScope || 'private'}
               </div>
             </div>
-            <ExternalLink size={14} className="flex-shrink-0 text-slate-400" />
+            <ExternalLink size={14} className="flex-shrink-0 text-slate-600" />
           </div>
         </button>
       ))}

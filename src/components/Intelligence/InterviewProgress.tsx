@@ -82,7 +82,7 @@ export function InterviewProgress({
                     className="text-primary-600 dark:text-primary-400 fill-current"
                   />
                 ) : (
-                  <Circle size={14} className="text-slate-400 dark:text-slate-500" />
+                  <Circle size={14} className="text-slate-600 dark:text-slate-500" />
                 )}
               </div>
 
@@ -96,7 +96,7 @@ export function InterviewProgress({
                       ? config.color
                       : status === 'current'
                         ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-slate-400 dark:text-slate-500'
+                        : 'text-slate-600 dark:text-slate-500'
                   }
                 `}
               />
@@ -109,7 +109,7 @@ export function InterviewProgress({
                     ? 'text-slate-700 dark:text-slate-300'
                     : status === 'current'
                       ? 'text-primary-700 dark:text-primary-300'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-500'
                 }
               `}
               >
@@ -126,7 +126,7 @@ export function InterviewProgress({
       </div>
 
       {/* Progress Stats */}
-      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-500 dark:text-slate-400">Progress</span>
           <span className="font-semibold text-slate-700 dark:text-slate-300">

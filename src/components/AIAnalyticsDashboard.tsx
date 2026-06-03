@@ -270,7 +270,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
 
       {/* ROI Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Hours Saved</p>
@@ -283,7 +283,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Cost Saved</p>
@@ -296,7 +296,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Actions Executed</p>
@@ -307,7 +307,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Playbooks Completed</p>
@@ -322,7 +322,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
 
       {/* Success Rates Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Execution Success Rate
@@ -339,7 +339,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
             ></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Playbook Completion Rate
@@ -356,7 +356,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
             ></div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Dead-Letter Rate
@@ -378,7 +378,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Approval Breakdown */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
             Approval Breakdown
           </h3>
@@ -428,7 +428,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
         </div>
 
         {/* Execution Status */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
             Execution Status
           </h3>
@@ -462,7 +462,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
 
       {/* Playbook Performance Table */}
       {playbookData.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
             Playbook Performance
           </h3>
@@ -488,7 +488,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
                 {playbookData.map((pb, idx) => (
                   <tr
                     key={idx}
-                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:bg-navy-800 dark:hover:bg-gray-700"
+                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:bg-navy-800 dark:hover:bg-gray-700"
                   >
                     <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
                       {pb.name}
@@ -512,7 +512,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
 
       {/* Time to Resolution */}
       {data.timeToResolution.sample_count > 0 && (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
             Time to Resolution
           </h3>

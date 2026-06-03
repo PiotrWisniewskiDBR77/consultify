@@ -35,7 +35,7 @@ export const SwimLaneNode: React.FC<NodeProps<SwimLaneData>> = memo(
       red: 'bg-rose-500/20 border-rose-500/50 text-rose-300',
       purple: 'bg-primary-500/20 border-primary-500/50 text-primary-300',
       cyan: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
-      slate: 'bg-slate-500/20 border-slate-500/50 text-slate-300',
+      slate: 'bg-slate-500/20 border-slate-500/50 text-slate-600',
     };
 
     const icons = {

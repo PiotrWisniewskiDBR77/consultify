@@ -245,7 +245,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
               </div>
               <button
                 onClick={() => setShowRemoveConfirm(true)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
+                className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-colors"
                 title={t('admin.billing.removePartner', 'Remove partner')}
               >
                 <X className="w-5 h-5" />
@@ -405,7 +405,7 @@ export const PartnerCodeInput: React.FC<PartnerCodeInputProps> = ({ className })
           {/* Info Box */}
           <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-0.5" />
+              <Shield className="w-5 h-5 text-slate-600 dark:text-slate-500 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-slate-600 dark:text-slate-400">
                 <p>
                   {t(

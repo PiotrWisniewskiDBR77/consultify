@@ -498,7 +498,7 @@ The assessment reveals a total gap of [X] points between current state and targe
 
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
             >
               <X size={20} />
             </button>
@@ -596,9 +596,9 @@ The assessment reveals a total gap of [X] points between current state and targe
                         {section.content && <CheckCircle2 size={14} className="text-green-500" />}
                       </div>
                       {section.isExpanded ? (
-                        <ChevronUp size={18} className="text-slate-400 dark:text-slate-500" />
+                        <ChevronUp size={18} className="text-slate-600 dark:text-slate-500" />
                       ) : (
-                        <ChevronDown size={18} className="text-slate-400 dark:text-slate-500" />
+                        <ChevronDown size={18} className="text-slate-600 dark:text-slate-500" />
                       )}
                     </button>
 
@@ -669,7 +669,7 @@ The assessment reveals a total gap of [X] points between current state and targe
                       }}
                     />
                   ) : (
-                    <div className="p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg text-slate-400 dark:text-slate-500 italic">
+                    <div className="p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg text-slate-600 dark:text-slate-500 italic">
                       {section.title} - No content yet
                     </div>
                   )}

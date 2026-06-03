@@ -202,7 +202,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
         aria-live="polite"
         aria-label="Loading security settings"
       >
-        <Clock className="w-8 h-8 text-slate-300 animate-spin" />
+        <Clock className="w-8 h-8 text-slate-600 animate-spin" />
         <span className="text-sm text-slate-500 dark:text-slate-400">
           {t('admin.security.loading', 'Loading security settings...')}
         </span>
@@ -430,7 +430,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                         {oauthStatus.google.configured ? (
                           <CheckCircle className="text-green-600 dark:text-green-400" size={18} />
                         ) : (
-                          <XCircle className="text-slate-400 dark:text-slate-500" size={18} />
+                          <XCircle className="text-slate-600 dark:text-slate-500" size={18} />
                         )}
                         <span className="font-medium text-slate-900 dark:text-white">Google</span>
                       </div>
@@ -451,7 +451,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                         {oauthStatus.microsoft?.configured ? (
                           <CheckCircle className="text-green-600 dark:text-green-400" size={18} />
                         ) : (
-                          <XCircle className="text-slate-400 dark:text-slate-500" size={18} />
+                          <XCircle className="text-slate-600 dark:text-slate-500" size={18} />
                         )}
                         <span className="font-medium text-slate-900 dark:text-white">
                           Microsoft
@@ -474,7 +474,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                         {oauthStatus.linkedin.configured ? (
                           <CheckCircle className="text-green-600 dark:text-green-400" size={18} />
                         ) : (
-                          <XCircle className="text-slate-400 dark:text-slate-500" size={18} />
+                          <XCircle className="text-slate-600 dark:text-slate-500" size={18} />
                         )}
                         <span className="font-medium text-slate-900 dark:text-white">LinkedIn</span>
                       </div>

@@ -249,7 +249,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
             className={`flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg transition-all ml-1 ${
               hasChanges
                 ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 cursor-not-allowed'
             }`}
             title={isPl ? 'Zapisz (Ctrl+S)' : 'Save (Ctrl+S)'}
           >
@@ -274,23 +274,23 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
 
       {/* Keyboard shortcuts hint */}
       <div className="flex items-center gap-3 mt-1 px-1">
-        <span className="text-[10px] text-slate-400">
+        <span className="text-[10px] text-slate-600">
           <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[9px]">
             Ctrl+S
           </kbd>{' '}
           {isPl ? 'zapisz' : 'save'}
         </span>
-        <span className="text-[10px] text-slate-400">
+        <span className="text-[10px] text-slate-600">
           <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[9px]">
             Ctrl+Z
           </kbd>{' '}
           {isPl ? 'cofnij' : 'undo'}
         </span>
-        <span className="text-[10px] text-slate-400">
+        <span className="text-[10px] text-slate-600">
           <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[9px]">Esc</kbd>{' '}
           {isPl ? 'anuluj' : 'cancel'}
         </span>
-        <span className="text-[10px] text-slate-400">
+        <span className="text-[10px] text-slate-600">
           {isPl ? 'Podwójne kliknięcie aby edytować' : 'Double-click to edit'}
         </span>
       </div>

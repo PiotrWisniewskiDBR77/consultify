@@ -284,13 +284,13 @@ export const ChallengeMapModule: React.FC = () => {
                                             `}
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-600 dark:text-slate-500">
                           {cb.type}
                         </span>
                         {isAdded ? (
                           <Check size={14} className="text-primary-500" />
                         ) : (
-                          <Plus size={14} className="text-slate-300 group-hover:text-primary-600" />
+                          <Plus size={14} className="text-slate-600 group-hover:text-primary-600" />
                         )}
                       </div>
                       <div className="font-bold text-xs text-navy-900 dark:text-white leading-tight">
@@ -304,7 +304,7 @@ export const ChallengeMapModule: React.FC = () => {
             {/* 2. Active Blockers List (Editable) */}
             <div className="space-y-4">
               <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                <Lock size={16} className="text-slate-400 dark:text-slate-500" />
+                <Lock size={16} className="text-slate-600 dark:text-slate-500" />
                 Active Blockers
                 <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full text-xs font-normal">
                   {activeBlockers.length}
@@ -312,7 +312,7 @@ export const ChallengeMapModule: React.FC = () => {
               </h4>
               {activeBlockers.length === 0 ? (
                 <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
                     No blockers identified yet. Add from suggestions or create a custom one.
                   </p>
                 </div>
@@ -327,7 +327,7 @@ export const ChallengeMapModule: React.FC = () => {
                       <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => removeBlocker(blocker.id)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                           title="Remove Blocker"
                         >
                           <Trash2 size={16} />

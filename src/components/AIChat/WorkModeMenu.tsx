@@ -209,7 +209,7 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
             animate-in fade-in-0 slide-in-from-bottom-2 duration-150
           "
         >
-          <div className="px-3.5 pt-1.5 pb-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          <div className="px-3.5 pt-1.5 pb-1 text-[11px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
             {t('aiChat.workMode.title', 'Jak Teresa ma teraz pracować')}
           </div>
 
@@ -229,7 +229,7 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
                 <Icon
                   size={15}
                   className={`mt-0.5 shrink-0 ${
-                    active ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+                    active ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'
                   }`}
                 />
                 <span className="flex-1">
@@ -259,7 +259,7 @@ export const WorkModeMenu: React.FC<WorkModeMenuProps> = ({ disabled = false }) 
                 {active ? (
                   <Check size={15} className="shrink-0 text-primary-500 mt-0.5" />
                 ) : (
-                  <ChevronRight size={13} className="shrink-0 text-slate-400 mt-0.5" />
+                  <ChevronRight size={13} className="shrink-0 text-slate-600 mt-0.5" />
                 )}
               </button>
             );

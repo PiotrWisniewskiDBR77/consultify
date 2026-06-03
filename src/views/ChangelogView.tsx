@@ -117,7 +117,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Filters */}
         <div className="flex items-center gap-2 mb-8">
-          <Filter size={18} className="text-slate-400 dark:text-slate-500" />
+          <Filter size={18} className="text-slate-600 dark:text-slate-500" />
           {(['all', 'major', 'minor', 'patch'] as ReleaseType[]).map((type) => (
             <button
               key={type}
@@ -195,12 +195,12 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                       {isExpanded ? (
                         <ChevronUp
                           size={20}
-                          className="text-slate-400 dark:text-slate-500 flex-shrink-0"
+                          className="text-slate-600 dark:text-slate-500 flex-shrink-0"
                         />
                       ) : (
                         <ChevronDown
                           size={20}
-                          className="text-slate-400 dark:text-slate-500 flex-shrink-0"
+                          className="text-slate-600 dark:text-slate-500 flex-shrink-0"
                         />
                       )}
                     </button>

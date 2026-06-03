@@ -484,7 +484,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
           <div className="relative">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -496,7 +496,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Filter size={16} className="text-slate-400 dark:text-slate-500" />
+          <Filter size={16} className="text-slate-600 dark:text-slate-500" />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -543,7 +543,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
         </div>
       ) : filteredFeedback.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-          <MessageSquare size={48} className="mx-auto text-slate-300 mb-4" />
+          <MessageSquare size={48} className="mx-auto text-slate-600 mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">
             {t('admin.feedback.noFeedback', 'Brak feedbacku')}
           </h3>
@@ -598,7 +598,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                       {item.message}
                     </p>
 
-                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-600 dark:text-slate-500">
                       <span className="flex items-center gap-1">
                         <Calendar size={12} />
                         {new Date(item.createdAt).toLocaleDateString('pl-PL')}
@@ -612,7 +612,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                               className={
                                 star <= item.rating!
                                   ? 'text-amber-400 fill-amber-400'
-                                  : 'text-slate-300'
+                                  : 'text-slate-600'
                               }
                             />
                           ))}
@@ -716,7 +716,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                           className={
                             star <= selectedFeedback.rating!
                               ? 'text-amber-400 fill-amber-400'
-                              : 'text-slate-300'
+                              : 'text-slate-600'
                           }
                         />
                       ))}
@@ -768,7 +768,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                   <label className="text-xs text-slate-500 dark:text-slate-400 mb-2 block flex items-center gap-2">
                     <Reply size={14} />
                     {t('admin.feedback.yourResponse', 'Twoja odpowiedź')}
-                    <span className="text-slate-400 dark:text-slate-500">
+                    <span className="text-slate-600 dark:text-slate-500">
                       ({new Date(selectedFeedback.respondedAt!).toLocaleDateString('pl-PL')})
                     </span>
                   </label>

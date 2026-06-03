@@ -129,7 +129,7 @@ const ForecastDay: React.FC<{
 
       {/* Bottleneck indicator */}
       {forecast.bottlenecks.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
+        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
           <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium truncate">
             {forecast.bottlenecks[0]}
           </p>
@@ -191,7 +191,7 @@ export const CapacityForecast: React.FC<CapacityForecastProps> = ({
       className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-100 dark:border-navy-700">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">

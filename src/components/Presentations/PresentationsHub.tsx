@@ -85,7 +85,7 @@ const SOURCE_TYPE_META: Record<
   },
   upload: {
     labelKey: 'presentations.sourceType.upload',
-    color: 'text-slate-400',
+    color: 'text-slate-600',
     bgColor: 'bg-slate-500/20',
   },
 };
@@ -242,7 +242,7 @@ export const PresentationsHub: React.FC = () => {
           const meta = SOURCE_TYPE_META[row.sourceType as PresentationDeck['sourceType']];
           return (
             <span
-              className={`px-2 py-0.5 text-xs font-medium rounded-full ${meta?.bgColor ?? 'bg-slate-500/20'} ${meta?.color ?? 'text-slate-400'}`}
+              className={`px-2 py-0.5 text-xs font-medium rounded-full ${meta?.bgColor ?? 'bg-slate-500/20'} ${meta?.color ?? 'text-slate-600'}`}
             >
               {String(t(meta?.labelKey ?? 'presentations.sourceType.unknown', row.sourceType))}
             </span>
@@ -627,7 +627,7 @@ export const PresentationsHub: React.FC = () => {
                 <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-8 text-center">
                   <Presentation
                     size={48}
-                    className="mx-auto text-slate-400 dark:text-slate-500 mb-4"
+                    className="mx-auto text-slate-600 dark:text-slate-500 mb-4"
                   />
                   <p className="text-slate-600 dark:text-slate-300 mb-4">
                     {t(

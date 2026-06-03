@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   Calendar,
   CalendarDays,
+  BarChart3,
   CheckCircle2,
   ChevronRight,
   ClipboardList,
@@ -1818,7 +1819,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             );
           return (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-400 dark:text-white">
+              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-600 dark:text-white">
                 {owner.firstName?.[0]}
                 {owner.lastName?.[0]}
               </div>
@@ -2113,17 +2114,30 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </button>
       ) : null;
 
+    const resultsLink = (
+      <button
+        type="button"
+        onClick={() => navigate(ROUTES.BENEFITS)}
+        className="h-9 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        title={t('execution.viewResults', 'View Results & ROI')}
+      >
+        <BarChart3 size={14} />
+        <span>{t('execution.viewResults', 'Results')}</span>
+      </button>
+    );
+
     if (!showScope) {
-      return <div className="flex items-center gap-2">{execChip}</div>;
+      return <div className="flex items-center gap-2">{execChip}{resultsLink}</div>;
     }
 
     return (
       <div className="flex items-center gap-2">
         {execChip}
+        {resultsLink}
         {scopeToggle}
       </div>
     );
-  }, [activeTab, currentProjectId, execSnapshotSource, execTopline, scopeToggle, t]);
+  }, [activeTab, currentProjectId, execSnapshotSource, execTopline, navigate, scopeToggle, t]);
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -2454,7 +2468,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {
           id: 'todo',
           label: t('execution.kanban.toDo'),
-          accent: 'text-slate-300',
+          accent: 'text-slate-600',
           icon: <ClipboardList size={14} />,
         },
         {
@@ -2520,7 +2534,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 </div>
               </div>
               {activeTask.initiativeName && (
-                <div className="text-xs text-slate-400 mb-2 ml-6">{activeTask.initiativeName}</div>
+                <div className="text-xs text-slate-600 mb-2 ml-6">{activeTask.initiativeName}</div>
               )}
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 ml-6">
                 <span className="capitalize">{activeTask.priority}</span>
@@ -3189,7 +3203,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           />
           <Bucket
             title={t('execution.decisionsBuckets.more', '30d+ / No date')}
-            accent="text-slate-400"
+            accent="text-slate-600"
             items={decisionBuckets.more}
           />
         </div>
@@ -4105,7 +4119,7 @@ Please return:
                 <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
                   {r.title}
                 </div>
-                <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                <div className="text-[10px] text-slate-600 dark:text-slate-500 truncate">
                   {r.audience}
                 </div>
               </div>
@@ -4178,7 +4192,7 @@ Please return:
               <RagIcon size={10} className="inline mr-1 -mt-0.5" />
               {ragConf.label}
             </div>
-            <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               {report.cadence}
             </span>
           </div>
@@ -4190,7 +4204,7 @@ Please return:
               <div className="text-sm font-semibold text-slate-900 dark:text-white">
                 {report.title}
               </div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500">
+              <div className="text-[10px] text-slate-600 dark:text-slate-500">
                 {report.audience}
               </div>
             </div>
@@ -4219,7 +4233,7 @@ Please return:
 
         {/* Scope */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
             Scope
           </div>
           <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -4229,7 +4243,7 @@ Please return:
 
         {/* Data sources */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
             Data Sources
           </div>
           <div className="flex flex-wrap gap-1">
@@ -4245,7 +4259,7 @@ Please return:
         </div>
 
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
             AI Executive Readout
           </div>
           <div className="space-y-1.5">
@@ -4262,7 +4276,7 @@ Please return:
 
         {/* Mandatory sections */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
             Mandatory Sections
           </div>
           <ol className="space-y-0.5 list-decimal list-inside">
@@ -4276,7 +4290,7 @@ Please return:
 
         {/* RAG logic */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
             RAG / Confidence Logic
           </div>
           <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -4286,7 +4300,7 @@ Please return:
 
         {/* Follow-up actions */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
             Expected Follow-up Actions
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -4302,7 +4316,7 @@ Please return:
         </div>
 
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
             Data Quality
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -4334,7 +4348,7 @@ Please return:
     (report: ReportDef) => {
       const rag = computeRAG(report);
       return (
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-200 dark:border-navy-800">
           <button
             type="button"
             onClick={() => handleGenerateReport(report)}
@@ -4501,11 +4515,11 @@ Please return:
                           {report.title}
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
                             {report.cadence}
                           </span>
-                          <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] text-slate-600 dark:text-slate-600">·</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-500">
                             {report.audience}
                           </span>
                         </div>
@@ -4513,7 +4527,7 @@ Please return:
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-primary-500"
+                      className="text-slate-600 dark:text-slate-600 transition-transform group-hover:text-primary-500"
                     />
                   </div>
 

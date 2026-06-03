@@ -110,7 +110,7 @@ const VersionItem: React.FC<{
                 {version.changeSummary}
               </p>
             )}
-            <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-4 mt-2 text-xs text-slate-600 dark:text-slate-500">
               <span className="flex items-center gap-1">
                 <User size={12} />
                 {version.createdByName}
@@ -131,7 +131,7 @@ const VersionItem: React.FC<{
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
             title="View version"
           >
-            <Eye size={16} className="text-slate-400 dark:text-slate-500" />
+            <Eye size={16} className="text-slate-600 dark:text-slate-500" />
           </button>
           {isComparing && (
             <button
@@ -165,7 +165,7 @@ const ComparisonView: React.FC<{
         </h4>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+          className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
         >
           ✕
         </button>
@@ -174,7 +174,7 @@ const ComparisonView: React.FC<{
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{comparison.summary}</p>
 
       {comparison.changes.length === 0 ? (
-        <p className="text-center text-slate-400 dark:text-slate-500 py-4">
+        <p className="text-center text-slate-600 dark:text-slate-500 py-4">
           No changes detected between versions
         </p>
       ) : (
@@ -295,18 +295,18 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <GitBranch size={18} className="text-slate-400 dark:text-slate-500" />
+          <GitBranch size={18} className="text-slate-600 dark:text-slate-500" />
           {expanded ? (
-            <ChevronUp size={20} className="text-slate-400 dark:text-slate-500" />
+            <ChevronUp size={20} className="text-slate-600 dark:text-slate-500" />
           ) : (
-            <ChevronDown size={20} className="text-slate-400 dark:text-slate-500" />
+            <ChevronDown size={20} className="text-slate-600 dark:text-slate-500" />
           )}
         </div>
       </button>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-slate-100 dark:border-navy-700">
+        <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700">
           {/* Actions bar */}
           <div className="flex items-center justify-between py-3">
             <div className="flex items-center gap-2">
@@ -353,7 +353,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
               <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full" />
             </div>
           ) : versions.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-8 text-slate-600 dark:text-slate-500">
               <FileText size={32} className="mx-auto mb-2 opacity-50" />
               <p>No versions yet</p>
             </div>

@@ -214,7 +214,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 text-slate-400 hover:text-white hover:bg-navy-800 rounded-lg transition-colors"
+          className="p-1.5 text-slate-600 hover:text-white hover:bg-navy-800 rounded-lg transition-colors"
         >
           <X size={16} />
         </button>
@@ -225,7 +225,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
         {messages.length === 0 && (
           <div className="text-center py-8">
             <TeresaMark className="mx-auto text-slate-600 mb-3" size={32} />
-            <p className="text-sm text-slate-400 mb-1">
+            <p className="text-sm text-slate-600 mb-1">
               {t('reports.agent.welcome', "I'm your report assistant")}
             </p>
             <p className="text-xs text-slate-500">
@@ -241,7 +241,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                   key={qa.label}
                   onClick={() => handleSend(qa.message)}
                   disabled={sending}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-primary-400 hover:bg-primary-500/5 rounded-lg border border-navy-700 hover:border-primary-500/30 transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:text-primary-400 hover:bg-primary-500/5 rounded-lg border border-navy-700 hover:border-primary-500/30 transition-colors text-left"
                 >
                   {qa.icon}
                   {qa.label}
@@ -263,7 +263,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                 className={`px-3 py-2 rounded-xl text-sm ${
                   msg.role === 'user'
                     ? 'bg-primary-600 text-white rounded-br-sm'
-                    : 'bg-navy-800 text-slate-300 rounded-bl-sm border border-navy-700'
+                    : 'bg-navy-800 text-slate-600 rounded-bl-sm border border-navy-700'
                 }`}
               >
                 <div className="whitespace-pre-wrap text-xs leading-relaxed">{msg.content}</div>
@@ -293,7 +293,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                           >
                             {c.type}
                           </span>
-                          <span className="text-slate-400 truncate">
+                          <span className="text-slate-600 truncate">
                             {c.after || c.before || c.sectionKey}
                           </span>
                         </div>
@@ -327,7 +327,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
             </div>
             {msg.role === 'user' && (
               <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center shrink-0 mt-1">
-                <User size={12} className="text-slate-400" />
+                <User size={12} className="text-slate-600" />
               </div>
             )}
           </div>

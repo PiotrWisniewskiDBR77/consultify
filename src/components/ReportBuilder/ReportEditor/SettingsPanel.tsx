@@ -210,13 +210,13 @@ const QuickPreviewBar: React.FC<QuickPreviewBarProps> = ({ intent, styling, isPl
   return (
     <div className="px-3 py-1.5 bg-slate-800/30 border-b border-slate-800/40">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-400 rounded border border-slate-700/40">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-600 rounded border border-slate-700/40">
           {audienceLabels[intent.audience] || intent.audience}
         </span>
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-400 rounded border border-slate-700/40">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-600 rounded border border-slate-700/40">
           {orientationLabel}
         </span>
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-400 rounded border border-slate-700/40">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-slate-800/80 text-slate-600 rounded border border-slate-700/40">
           {langLabel} {intent.language?.toUpperCase()}
         </span>
         <span
@@ -334,7 +334,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
               v{currentVersion || versions.length}
             </span>
             {reportStatus && (
-              <span className="ml-1.5 text-[8px] px-1.5 py-0.5 rounded bg-slate-700/60 text-slate-400 uppercase font-bold tracking-wider">
+              <span className="ml-1.5 text-[8px] px-1.5 py-0.5 rounded bg-slate-700/60 text-slate-600 uppercase font-bold tracking-wider">
                 {reportStatus}
               </span>
             )}
@@ -361,7 +361,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
             </button>
           ) : (
             <div className="p-3 space-y-2">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
                 {isPl ? 'Opis zmian (opcjonalnie)' : 'Change summary (optional)'}
               </label>
               <textarea
@@ -370,7 +370,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                 placeholder={
                   isPl ? 'Co zmieniłeś w tej wersji...' : 'What changed in this version...'
                 }
-                className="w-full px-2.5 py-2 text-[11px] bg-slate-800/60 border border-slate-700/50 rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-slate-300 placeholder:text-slate-600 leading-relaxed"
+                className="w-full px-2.5 py-2 text-[11px] bg-slate-800/60 border border-slate-700/50 rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-slate-600 placeholder:text-slate-600 leading-relaxed"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveVersion();
@@ -409,7 +409,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
             </div>
           </div>
           <div className="text-center py-1.5 px-1 rounded-md bg-slate-800/40 border border-slate-700/30">
-            <div className="text-[13px] font-bold text-slate-400 font-mono">{autoCount}</div>
+            <div className="text-[13px] font-bold text-slate-600 font-mono">{autoCount}</div>
             <div className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">
               Auto
             </div>
@@ -476,7 +476,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-[11px] font-bold font-mono ${isLatest ? 'text-indigo-300' : 'text-slate-300'}`}
+                          className={`text-[11px] font-bold font-mono ${isLatest ? 'text-indigo-300' : 'text-slate-600'}`}
                         >
                           v{v.versionNumber}
                         </span>
@@ -529,7 +529,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
 
                     {/* Summary */}
                     {v.changeSummary && (
-                      <p className="text-[10px] text-slate-400 mb-1 line-clamp-2 leading-snug">
+                      <p className="text-[10px] text-slate-600 mb-1 line-clamp-2 leading-snug">
                         {v.changeSummary}
                       </p>
                     )}
@@ -814,7 +814,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       <div className="flex-1 overflow-y-auto">
         {/* ========== CONTENT TAB ========== */}
         {activeSection === 'intent' && (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="divide-y divide-slate-200 dark:divide-slate-800">
             {/* Template Info (only in template mode) */}
             {isTemplateMode && templateMeta && onTemplateMetaChange && (
               <SectionCard
@@ -865,7 +865,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     </select>
                     {/* Show description of selected tool */}
                     {templateMeta.reportType && (
-                      <div className="mt-1 text-[10px] text-slate-400">
+                      <div className="mt-1 text-[10px] text-slate-600">
                         {
                           MODULE_TOOLS[templateMeta.sourceType || 'ASSESSMENT']?.find(
                             (t) => t.value === templateMeta.reportType
@@ -1077,7 +1077,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     }
                     className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-16"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">
+                  <p className="text-[10px] text-slate-600 mt-1">
                     {isPl
                       ? 'Ten wątek będzie podkreślany w każdej sekcji raportu'
                       : 'This thread will be emphasized across all report sections'}
@@ -1097,7 +1097,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     }
                     className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg resize-none h-16"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">
+                  <p className="text-[10px] text-slate-600 mt-1">
                     {isPl
                       ? 'AI będzie konsekwentnie używać tych terminów'
                       : 'AI will consistently use these terms throughout'}
@@ -1174,7 +1174,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {/* ========== DESIGN TAB ========== */}
         {activeSection === 'styling' && (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="divide-y divide-slate-200 dark:divide-slate-800">
             {/* Layout */}
             <SectionCard
               title={isPl ? 'Układ' : 'Layout'}
@@ -1193,7 +1193,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <Smartphone className="w-8 h-8 text-slate-500" />
                     <div className="text-center">
                       <div className="text-sm font-medium">{isPl ? 'Pionowy' : 'Portrait'}</div>
-                      <div className="text-[10px] text-slate-400">A4 / Letter</div>
+                      <div className="text-[10px] text-slate-600">A4 / Letter</div>
                     </div>
                   </button>
                   <button
@@ -1207,7 +1207,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <Monitor className="w-8 h-8 text-slate-500" />
                     <div className="text-center">
                       <div className="text-sm font-medium">{isPl ? 'Poziomy' : 'Landscape'}</div>
-                      <div className="text-[10px] text-slate-400">16:9 / Slides</div>
+                      <div className="text-[10px] text-slate-600">16:9 / Slides</div>
                     </div>
                   </button>
                 </div>
@@ -1287,7 +1287,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </div>
                 </div>
                 {/* Font size preview hint */}
-                <div className="text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
+                <div className="text-[10px] text-slate-600 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
                   {styling.fontSize === 'small' && (
                     <span>H1: 24px • H2: 18px • H3: 14px • Body: 12px</span>
                   )}
@@ -1319,7 +1319,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     />
                     <div>
                       <div className="text-xs text-slate-500">{isPl ? 'Główny' : 'Primary'}</div>
-                      <div className="text-[10px] font-mono text-slate-400">
+                      <div className="text-[10px] font-mono text-slate-600">
                         {styling.primaryColor}
                       </div>
                     </div>
@@ -1333,7 +1333,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     />
                     <div>
                       <div className="text-xs text-slate-500">{isPl ? 'Akcent' : 'Accent'}</div>
-                      <div className="text-[10px] font-mono text-slate-400">
+                      <div className="text-[10px] font-mono text-slate-600">
                         {styling.accentColor}
                       </div>
                     </div>
@@ -1428,7 +1428,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       <div className="text-sm text-slate-700 dark:text-slate-300">
                         {isPl ? '"Stworzono w Consultify"' : '"Created in Consultify"'}
                       </div>
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-slate-600">
                         {isPl ? 'Automatyczny napis w stopce' : 'Auto footer text'}
                       </div>
                     </div>

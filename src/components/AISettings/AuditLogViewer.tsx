@@ -117,7 +117,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       case 'user':
         return 'text-primary-400 bg-primary-500/10';
       default:
-        return 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10';
+        return 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10';
     }
   };
 
@@ -158,7 +158,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           {showExport && (
             <button
               onClick={exportToCSV}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
               title="Export CSV"
             >
               <Download className="w-4 h-4" />
@@ -167,7 +167,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           <button
             onClick={fetchAuditLog}
             disabled={loading}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -180,7 +180,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                 ${
                                   showFilterPanel
                                     ? 'bg-primary-500/20 text-primary-400'
-                                    : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                                    : 'text-slate-600 dark:text-slate-500 hover:text-white'
                                 }
                             `}
             >
@@ -268,7 +268,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       {!loading && !filteredEntries.length && (
         <div className="text-center py-8">
           <History className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-          <p className="text-slate-400 dark:text-slate-500">No audit entries found</p>
+          <p className="text-slate-600 dark:text-slate-500">No audit entries found</p>
         </div>
       )}
 

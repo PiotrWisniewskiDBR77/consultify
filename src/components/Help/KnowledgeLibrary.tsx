@@ -110,7 +110,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) => {
       </p>
 
       {/* Meta */}
-      <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
+      <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-500">
         <span className="flex items-center gap-1">
           <Clock size={10} />
           {article.reading_time_minutes} {t('help.knowledge.minRead', 'min read')}
@@ -154,7 +154,7 @@ const CategoryChip: React.FC<CategoryChipProps> = ({ category, isActive, onClick
   >
     <DynamicIcon name={category.icon} size={12} />
     {category.name}
-    <span className={`text-[10px] ${isActive ? 'text-primary-200' : 'text-slate-400'}`}>
+    <span className={`text-[10px] ${isActive ? 'text-primary-200' : 'text-slate-600'}`}>
       ({category.article_count})
     </span>
   </button>
@@ -183,8 +183,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onClick }) 
         {collection.featured && <Sparkles size={12} className="text-amber-500" />}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-slate-400">{collection.article_count}</span>
-        <ChevronRight size={14} className="text-slate-400 group-hover:text-primary-500" />
+        <span className="text-[10px] text-slate-600">{collection.article_count}</span>
+        <ChevronRight size={14} className="text-slate-600 group-hover:text-primary-500" />
       </div>
     </div>
     {collection.description && (
@@ -351,7 +351,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
       {/* Search Bar */}
       <div className="px-1 mb-3">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             type="text"
             value={searchQuery}
@@ -363,7 +363,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
           {searchQuery && (
             <button
               onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600"
             >
               <X size={14} />
             </button>
@@ -421,7 +421,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
       {/* P26-B: Collections (IA spine — primary browse) */}
       {!searchQuery && !activeCollection && collections.length > 0 && (
         <div className="px-1 mb-3">
-          <h3 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+          <h3 className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-2">
             {t('help.knowledge.collections', 'Collections')}
           </h3>
           <div className="grid gap-2">
@@ -441,7 +441,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
           >
             ← {t('help.knowledge.allCollections', 'All Collections')}
           </button>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-600">
             {collectionData?.collection?.title || activeCollection}
           </span>
         </div>
@@ -485,7 +485,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
           searchQuery.length >= 2 &&
           collections.length > 0 ? (
           <div>
-            <h3 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+            <h3 className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-2">
               {t('help.knowledge.browseFallback', 'Browse by collection instead')}
             </h3>
             <div className="grid gap-2">
@@ -502,7 +502,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
           </div>
         ) : (
           <div className="text-center py-12">
-            <BookOpen size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+            <BookOpen size={40} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {searchQuery
                 ? t('help.knowledge.noSearchResults', 'No articles found for your search.')

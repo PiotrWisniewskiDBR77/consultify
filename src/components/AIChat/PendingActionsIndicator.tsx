@@ -321,7 +321,7 @@ export const PendingActionsIndicator: React.FC<PendingActionsIndicatorProps> = (
                     <span className="text-[10px] text-slate-500 dark:text-slate-400">
                       {formatActionType(action.action_type)}
                     </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-0.5">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500 flex items-center gap-0.5">
                       <Clock size={8} />
                       {getTimeAgo(action.created_at)}
                     </span>

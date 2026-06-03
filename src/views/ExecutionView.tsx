@@ -151,7 +151,7 @@ export const ExecutionView: React.FC = () => {
           <BarChart3 size={18} className="text-blue-500" />
           Performance Trends
         </h4>
-        <div className="h-64 flex items-center justify-center text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-navy-700 rounded-lg">
+        <div className="h-64 flex items-center justify-center text-slate-600 dark:text-slate-500 border border-dashed border-slate-200 dark:border-navy-700 rounded-lg">
           <div className="text-center">
             <BarChart3 size={48} className="mx-auto mb-2 opacity-50" />
             <p>Monthly KPI trend charts</p>
@@ -196,7 +196,7 @@ export const ExecutionView: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-1 rounded">
+              <span className="text-xs text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-1 rounded">
                 ISO 21500 | PMBOK 7 | PRINCE2
               </span>
             </div>

@@ -173,7 +173,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className={`${buttonPadding} rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors`}
+        className={`${buttonPadding} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors`}
         title="Actions"
         aria-label="Row actions"
         aria-expanded={isOpen}
@@ -217,7 +217,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                       <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
                     )}
                     {section.label ? (
-                      <div className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      <div className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                         {section.label}
                       </div>
                     ) : null}
@@ -244,7 +244,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                             <span className="min-w-0 flex-1">
                               <span className="block truncate">{action.label}</span>
                               {action.description ? (
-                                <span className="mt-0.5 block truncate text-[10px] font-normal text-slate-400 dark:text-slate-500">
+                                <span className="mt-0.5 block truncate text-[10px] font-normal text-slate-600 dark:text-slate-500">
                                   {action.description}
                                 </span>
                               ) : null}

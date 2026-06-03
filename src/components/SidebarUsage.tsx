@@ -35,7 +35,7 @@ export const SidebarUsage: React.FC<SidebarUsageProps> = ({ showFull }) => {
     if (!showFull) return null; // Don't show loader in mini mode
     return (
       <div className="flex justify-center py-4">
-        <Loader2 className="w-5 h-5 text-slate-400 dark:text-slate-500 animate-spin" />
+        <Loader2 className="w-5 h-5 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }

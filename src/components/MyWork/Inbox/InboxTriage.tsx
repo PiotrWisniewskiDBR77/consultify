@@ -75,7 +75,7 @@ const urgencyConfig = {
     label: 'Niskie',
     className: 'inbox-low',
     icon: <Archive size={14} />,
-    color: 'text-slate-400 dark:text-slate-500',
+    color: 'text-slate-600 dark:text-slate-500',
   },
 };
 
@@ -181,7 +181,7 @@ const InboxItemCard: React.FC<{
           {isSelected ? (
             <CheckSquare size={18} className="text-brand" />
           ) : (
-            <Square size={18} className="text-slate-300 hover:text-brand transition-colors" />
+            <Square size={18} className="text-slate-600 hover:text-brand transition-colors" />
           )}
         </button>
 
@@ -195,7 +195,7 @@ const InboxItemCard: React.FC<{
                 {t(`myWork.inbox.type.${item.type}`, item.type.replace('_', ' '))}
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">
               {new Date(item.receivedAt).toLocaleTimeString('pl-PL', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -216,7 +216,7 @@ const InboxItemCard: React.FC<{
           )}
 
           {/* Source & Meta */}
-          <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-3 text-[10px] text-slate-600 dark:text-slate-500">
             {item.source.userName && (
               <span className="flex items-center gap-1">
                 {item.source.avatarUrl ? (

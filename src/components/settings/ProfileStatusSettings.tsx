@@ -111,7 +111,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
               >
                 <Icon
                   size={24}
-                  className={isSelected ? option.color : 'text-slate-400 dark:text-slate-500'}
+                  className={isSelected ? option.color : 'text-slate-600 dark:text-slate-500'}
                 />
                 <span
                   className={`text-sm font-medium ${
@@ -132,7 +132,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
       <div className="space-y-2">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('settings.profile.status.message', 'Status Message')}
-          <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -147,7 +147,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
           maxLength={100}
           className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
         />
-        <p className="text-xs text-slate-400 dark:text-slate-500">
+        <p className="text-xs text-slate-600 dark:text-slate-500">
           {statusMessage.length}/100 {t('common.characters', 'characters')}
         </p>
       </div>
@@ -166,7 +166,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
               </span>
               {statusMessage && (
                 <>
-                  <span className="text-slate-400 dark:text-slate-500">•</span>
+                  <span className="text-slate-600 dark:text-slate-500">•</span>
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     {statusMessage}
                   </span>

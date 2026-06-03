@@ -254,7 +254,7 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
           {getStatusText()}
         </span>
         {completeness < 60 && (
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+          <span className="text-[10px] text-slate-600 dark:text-slate-500">
             Min. 60% required for Review
           </span>
         )}
@@ -286,7 +286,7 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
           {/* Missing Optional Fields */}
           {missingOptional.length > 0 && showDetails && (
             <div>
-              <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 mb-1.5">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-600 dark:text-slate-500 mb-1.5">
                 Optional ({missingOptional.length})
               </div>
               <div className="space-y-1">
@@ -295,12 +295,12 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
                     key={field.field}
                     className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-navy-800/50 rounded text-xs text-slate-500 dark:text-slate-400"
                   >
-                    <Circle size={10} className="text-slate-300 dark:text-slate-600" />
+                    <Circle size={10} className="text-slate-600 dark:text-slate-600" />
                     <span>{field.label}</span>
                   </div>
                 ))}
                 {missingOptional.length > 4 && (
-                  <div className="text-[10px] text-slate-400 dark:text-slate-500 pl-2">
+                  <div className="text-[10px] text-slate-600 dark:text-slate-500 pl-2">
                     +{missingOptional.length - 4} more fields
                   </div>
                 )}

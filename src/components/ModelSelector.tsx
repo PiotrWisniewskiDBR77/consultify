@@ -266,14 +266,14 @@ export const ModelSelector: React.FC = () => {
         </div>
         <ChevronDown
           size={14}
-          className={`text-slate-400 dark:text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-600 dark:text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl overflow-hidden z-50">
-          <div className="p-2 border-b border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex justify-between items-center">
-            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2">
+          <div className="p-2 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex justify-between items-center">
+            <div className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider px-2">
               Active Provider
             </div>
             <button
@@ -281,7 +281,7 @@ export const ModelSelector: React.FC = () => {
                 setIsOpen(false);
                 setCurrentView('SETTINGS_PROFILE' as any);
               }}
-              className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-400 dark:text-slate-500"
+              className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded text-slate-600 dark:text-slate-500"
               title="Configure Keys"
             >
               <Settings size={12} />
@@ -290,11 +290,11 @@ export const ModelSelector: React.FC = () => {
 
           <div className="max-h-64 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-center text-xs text-slate-400 dark:text-slate-500">
+              <div className="p-4 text-center text-xs text-slate-600 dark:text-slate-500">
                 Loading options...
               </div>
             ) : options.length === 0 ? (
-              <div className="p-4 text-center text-xs text-slate-400 dark:text-slate-500">
+              <div className="p-4 text-center text-xs text-slate-600 dark:text-slate-500">
                 No models found. Check Settings.
               </div>
             ) : (

@@ -223,8 +223,8 @@ export const AddRemoveSeats: React.FC<AddRemoveSeatsProps> = ({
                 {t('admin.billing.seats.totalSeats', 'Total seats')}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 dark:text-slate-500">{plan.currentSeats}</span>
-                <span className="text-slate-400 dark:text-slate-500">→</span>
+                <span className="text-slate-600 dark:text-slate-500">{plan.currentSeats}</span>
+                <span className="text-slate-600 dark:text-slate-500">→</span>
                 <span
                   className={cn(
                     'font-medium',
@@ -283,7 +283,7 @@ export const AddRemoveSeats: React.FC<AddRemoveSeatsProps> = ({
                 { days: prorate.daysRemaining }
               )}
             >
-              <HelpCircle size={14} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={14} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </div>
 

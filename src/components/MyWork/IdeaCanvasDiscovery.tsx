@@ -278,7 +278,7 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
             <button
               type="button"
               onClick={() => onPanelChange(null)}
-              className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-navy-800 dark:hover:text-slate-100"
+              className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-navy-800 dark:hover:text-slate-100"
             >
               <X size={14} />
             </button>
@@ -294,7 +294,7 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
                 className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
               />
             </div>
-            <div className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">
+            <div className="mt-2 text-[10px] text-slate-600 dark:text-slate-500">
               {isPolish ? 'Aktywny system' : 'Active system'}:{' '}
               <span className="font-semibold">{activeTool}</span>
             </div>
@@ -354,7 +354,7 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
 };
 
 const SearchGlyph = () => (
-  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor">
+  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 text-slate-600" fill="none" stroke="currentColor">
     <circle cx="8.5" cy="8.5" r="5.5" strokeWidth="1.8" />
     <path d="M13 13l4 4" strokeWidth="1.8" strokeLinecap="round" />
   </svg>

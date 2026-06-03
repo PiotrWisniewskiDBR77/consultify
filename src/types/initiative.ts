@@ -420,7 +420,7 @@ export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = 
   [InitiativeStatus.ARCHIVED]: {
     label: 'Archived',
     labelPL: 'Zarchiwizowana',
-    color: 'text-slate-400',
+    color: 'text-slate-600',
     bgColor: 'bg-slate-400/10',
     dotColor: 'bg-slate-500',
     description: 'Archived for reference',

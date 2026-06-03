@@ -600,7 +600,7 @@ interface DeliveryColumnProps {
 
 const DeliveryColumn: React.FC<DeliveryColumnProps> = ({ label, agg }) => {
   return (
-    <div className="rounded-md border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </div>

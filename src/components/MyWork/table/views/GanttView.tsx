@@ -251,10 +251,10 @@ export const GanttView: React.FC<GanttViewProps> = ({
 
   if (!startDateCol || !endDateCol) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2 p-8">
+      <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-2 p-8">
         <Calendar size={32} />
         <span className="text-sm font-medium">{isPl ? 'Wykres Gantta' : 'Gantt Chart'}</span>
-        <span className="text-xs text-slate-400/70">
+        <span className="text-xs text-slate-600/70">
           {isPl
             ? 'Skonfiguruj pola daty początkowej i końcowej w ustawieniach widoku'
             : 'Configure start and end date fields in view settings'}
@@ -269,7 +269,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60">
         <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
           {isPl ? 'Wykres Gantta' : 'Gantt Chart'}
-          <span className="ml-2 text-[10px] font-normal text-slate-400">
+          <span className="ml-2 text-[10px] font-normal text-slate-600">
             {ganttRecords.length} {isPl ? 'zadań' : 'tasks'}
           </span>
         </span>
@@ -318,7 +318,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
               {isPl ? 'Zadanie' : 'Task'}
             </span>
             {config.progressFieldId && (
-              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-12 text-right">
+              <span className="text-[9px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider w-12 text-right">
                 %
               </span>
             )}
@@ -326,7 +326,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
           {ganttRecords.map((gr) => (
             <div
               key={gr.record.id}
-              className="flex items-center px-3 gap-2 border-b border-slate-100/60 dark:border-navy-800/40 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+              className="flex items-center px-3 gap-2 border-b border-slate-200/60 dark:border-navy-800/40 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
               style={{ height: ROW_HEIGHT }}
               onClick={() => onRecordClick?.(gr.record.id)}
             >
@@ -334,7 +334,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
                 {gr.title}
               </span>
               {config.progressFieldId && (
-                <span className="text-[9px] font-medium text-slate-400 w-12 text-right">
+                <span className="text-[9px] font-medium text-slate-600 w-12 text-right">
                   {gr.progress}%
                 </span>
               )}
@@ -352,10 +352,10 @@ export const GanttView: React.FC<GanttViewProps> = ({
             {slots.map((slot, i) => (
               <div
                 key={i}
-                className={`flex-shrink-0 flex items-center justify-center border-r border-slate-100/60 dark:border-navy-800/40 text-[9px] font-medium ${
+                className={`flex-shrink-0 flex items-center justify-center border-r border-slate-200/60 dark:border-navy-800/40 text-[9px] font-medium ${
                   slot.isToday
                     ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-500/5'
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-500'
                 }`}
                 style={{ width: colWidth }}
               >
@@ -370,7 +370,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
             {slots.map((_, i) => (
               <div
                 key={i}
-                className="absolute top-0 bottom-0 border-r border-slate-100/40 dark:border-navy-800/30"
+                className="absolute top-0 bottom-0 border-r border-slate-200/40 dark:border-navy-800/30"
                 style={{ left: i * colWidth }}
               />
             ))}

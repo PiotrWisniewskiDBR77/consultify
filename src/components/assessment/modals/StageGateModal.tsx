@@ -245,7 +245,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                       {c.isMet ? (
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                       ) : (
-                        <XCircle className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        <XCircle className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                       )}
                     </div>
                     <div className="flex-1">
@@ -313,7 +313,7 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                                 ${
                                   isGatePassed && !passing
                                     ? 'bg-green-600 hover:bg-green-500 text-white'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                 }
                             `}
             >

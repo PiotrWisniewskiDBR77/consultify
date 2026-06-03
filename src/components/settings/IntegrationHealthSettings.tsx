@@ -199,7 +199,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
         </div>
         <button
           onClick={fetchAllHealthStatuses}
-          className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
           title={t('common.refresh', 'Refresh')}
         >
           <RefreshCw size={18} />
@@ -208,7 +208,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
 
       {integrations.length === 0 ? (
         <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
-          <Activity className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <Activity className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
           <p className="text-slate-500 dark:text-slate-400">
             {t(
               'settings.health.noIntegrations',

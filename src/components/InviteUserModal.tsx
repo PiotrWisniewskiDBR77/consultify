@@ -216,7 +216,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"
+            className="text-gray-600 hover:text-gray-600 dark:text-gray-400 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -293,7 +293,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
               Email Address *
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
               <input
                 type="email"
                 id="email"

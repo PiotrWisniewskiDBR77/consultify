@@ -185,9 +185,9 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
   if (!explanation || !explanation.has_explanation) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-6 text-center">
-        <FileText className="w-10 h-10 mx-auto text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-3" />
+        <FileText className="w-10 h-10 mx-auto text-gray-600 dark:text-gray-500 dark:text-gray-400 mb-3" />
         <p className="text-gray-500 dark:text-gray-400">No evidence available for this item yet.</p>
-        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+        <p className="text-sm text-gray-600 dark:text-gray-500 mt-1">
           Evidence is generated when AI decisions are made.
         </p>
       </div>
@@ -290,19 +290,19 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({ entityType, entityId, tok
                         {evidence.source}
                       </span>
                       {evidence.weight < 1 && (
-                        <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400">
                           (weight: {Math.round(evidence.weight * 100)}%)
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400">
                         {formatDate(evidence.created_at)}
                       </span>
                       {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+                        <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+                        <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
                       )}
                     </div>
                   </div>

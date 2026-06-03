@@ -283,7 +283,7 @@ const WEBHOOK_MUTATION_UNAVAILABLE =
 const STATUS_CONFIG = {
   connected: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle },
   disconnected: {
-    color: 'text-slate-400 dark:text-slate-500',
+    color: 'text-slate-600 dark:text-slate-500',
     bg: 'bg-slate-500/20',
     icon: Unlink,
   },
@@ -512,7 +512,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
         </div>
       ) : (
         <>
@@ -540,7 +540,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                   />
                 </div>
               ) : integrations.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+                <div className="text-center py-12 text-slate-600 dark:text-slate-500">
                   <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No integrations connected</p>
                   <p className="text-sm mt-1">Browse the catalog to add your first integration</p>
@@ -600,14 +600,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                               className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                               title="Sync now"
                             >
-                              <RefreshCw className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                              <RefreshCw className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                             </button>
                             <button
                               disabled
                               className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                               title="Integration settings editing requires an audited configuration workflow"
                             >
-                              <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                              <Settings className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                             </button>
                             <button
                               onClick={() => handleDeleteIntegration(integration.type)}
@@ -653,7 +653,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                   />
 
                   {webhooks.length === 0 ? (
-                    <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+                    <div className="text-center py-12 text-slate-600 dark:text-slate-500">
                       <Webhook className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>No webhooks configured</p>
                       <p className="text-sm mt-1">
@@ -711,14 +711,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                                 title={WEBHOOK_MUTATION_UNAVAILABLE}
                               >
-                                <Play className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                                <Play className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                               </button>
                               <button
                                 onClick={() => handleViewDeliveries(webhook)}
                                 className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                                 title="View deliveries"
                               >
-                                <Activity className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                                <Activity className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                               </button>
                               <button
                                 disabled
@@ -798,7 +798,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 </span>
                               )}
                               {connector.status === 'coming_soon' && (
-                                <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-navy-800/20 text-slate-400 dark:text-slate-500 rounded">
+                                <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-navy-800/20 text-slate-600 dark:text-slate-500 rounded">
                                   Planned
                                 </span>
                               )}
@@ -876,7 +876,7 @@ const DeliveriesModal: React.FC<{
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">Webhook Deliveries</h3>
-          <p className="text-sm text-slate-400 dark:text-slate-500">
+          <p className="text-sm text-slate-600 dark:text-slate-500">
             {asText(webhook.name, 'Unnamed webhook')}
           </p>
         </div>
@@ -884,14 +884,14 @@ const DeliveriesModal: React.FC<{
           onClick={onClose}
           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
         >
-          <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+          <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
         </button>
       </div>
 
       {loadError ? (
         <DegradedState title="Webhook deliveries unavailable" description={loadError} />
       ) : deliveries.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+        <div className="text-center py-8 text-slate-600 dark:text-slate-500">
           <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No deliveries yet</p>
         </div>

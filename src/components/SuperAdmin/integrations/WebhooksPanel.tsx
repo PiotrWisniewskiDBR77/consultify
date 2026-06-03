@@ -232,7 +232,7 @@ export const WebhooksPanel: React.FC = () => {
   const getStatusBadge = (webhook: WebhookConfig) => {
     if (!webhook.is_active) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/300/20 text-slate-400 dark:text-slate-500">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-50 dark:bg-navy-800/300/20 text-slate-600 dark:text-slate-500">
           <XCircle size={14} />
           Disabled
         </span>
@@ -273,7 +273,7 @@ export const WebhooksPanel: React.FC = () => {
           <div className="relative">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -305,7 +305,7 @@ export const WebhooksPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
           <button
@@ -328,7 +328,7 @@ export const WebhooksPanel: React.FC = () => {
           <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredWebhooks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-600 dark:text-slate-500">
           <Webhook size={48} className="mb-4 opacity-50" />
           <p>No webhooks configured</p>
         </div>
@@ -346,7 +346,7 @@ export const WebhooksPanel: React.FC = () => {
                     {getStatusBadge(webhook)}
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500 mb-3">
+                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-500 mb-3">
                     <ExternalLink size={14} />
                     <code className="px-2 py-0.5 bg-slate-900/50 rounded font-mono text-xs break-all">
                       {webhook.url}
@@ -384,7 +384,7 @@ export const WebhooksPanel: React.FC = () => {
                     className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
                     title="View Deliveries"
                   >
-                    <Activity size={16} className="text-slate-400 dark:text-slate-500" />
+                    <Activity size={16} className="text-slate-600 dark:text-slate-500" />
                   </button>
                   <button
                     onClick={() => handleTestWebhook(webhook.id)}
@@ -414,7 +414,7 @@ export const WebhooksPanel: React.FC = () => {
                     className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
                     title="Edit"
                   >
-                    <Edit2 size={16} className="text-slate-400 dark:text-slate-500" />
+                    <Edit2 size={16} className="text-slate-600 dark:text-slate-500" />
                   </button>
                   <button
                     onClick={() => handleDeleteWebhook(webhook.id)}
@@ -445,7 +445,7 @@ export const WebhooksPanel: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Organization
                 </label>
                 <select
@@ -465,7 +465,7 @@ export const WebhooksPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+                <label className="block text-sm font-medium text-slate-600 mb-2">Name</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -476,7 +476,7 @@ export const WebhooksPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">URL</label>
+                <label className="block text-sm font-medium text-slate-600 mb-2">URL</label>
                 <input
                   type="url"
                   value={formData.url}
@@ -487,7 +487,7 @@ export const WebhooksPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Secret (optional)
                 </label>
                 <input
@@ -500,7 +500,7 @@ export const WebhooksPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Events</label>
+                <label className="block text-sm font-medium text-slate-600 mb-2">Events</label>
                 <div className="max-h-48 overflow-y-auto bg-slate-800/50 rounded-lg p-3 space-y-2">
                   {AVAILABLE_EVENTS.map((event) => (
                     <label key={event.id} className="flex items-center gap-3 cursor-pointer group">
@@ -522,7 +522,7 @@ export const WebhooksPanel: React.FC = () => {
                         }}
                         className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-primary-500"
                       />
-                      <span className="text-sm text-slate-300 group-hover:text-white">
+                      <span className="text-sm text-slate-600 group-hover:text-white">
                         {event.label}
                       </span>
                       <code className="text-xs text-slate-500 dark:text-slate-400 ml-auto">
@@ -535,7 +535,7 @@ export const WebhooksPanel: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-600 mb-2">
                     Retry Count
                   </label>
                   <input
@@ -550,7 +550,7 @@ export const WebhooksPanel: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-600 mb-2">
                     Timeout (ms)
                   </label>
                   <input
@@ -575,7 +575,7 @@ export const WebhooksPanel: React.FC = () => {
                   setEditingWebhook(null);
                   resetForm();
                 }}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
               >
                 Cancel
               </button>

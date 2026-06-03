@@ -150,8 +150,8 @@ interface StatusFilterOption {
 
 // Discovery tab: DRAFT, PENDING_REVIEW (work in progress)
 const DISCOVERY_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
-  { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
+  { id: 'draft', label: 'Draft', color: 'text-slate-600', bgColor: 'bg-slate-500' },
   {
     id: 'pending_review',
     label: 'Pending Review',
@@ -168,15 +168,15 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
 
 // Reports tab: APPROVED, COMPLETED (finished analyses)
 const REPORTS_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
   { id: 'approved', label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
   { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
 ];
 
 // Initiatives tab: DRAFT, PROPOSED, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED
 const INITIATIVES_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
-  { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
+  { id: 'draft', label: 'Draft', color: 'text-slate-600', bgColor: 'bg-slate-500' },
   { id: 'proposed', label: 'Proposed', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'planned', label: 'Planned', color: 'text-blue-400', bgColor: 'bg-blue-500' },
   { id: 'in_progress', label: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500' },
@@ -1530,7 +1530,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
               {meta?.name || row.category}
             </span>
           );
@@ -1633,7 +1633,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
               {meta?.name || row.category}
             </span>
           );
@@ -1688,7 +1688,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 className={`truncate text-sm font-medium ${
                   row.isActive
                     ? 'text-slate-900 dark:text-white'
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-500'
                 }`}
                 title={row.name}
               >
@@ -1716,7 +1716,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           const category = (row.libraryCategory || '') as ToolCategory;
           const meta = CATEGORY_META[category];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
               {meta?.name || row.libraryCategory || '-'}
             </span>
           );
@@ -1738,7 +1738,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </span>
             ))}
             {(row.tags || []).length > 3 ? (
-              <span className="shrink-0 text-[10px] text-slate-400">
+              <span className="shrink-0 text-[10px] text-slate-600">
                 +{(row.tags || []).length - 3}
               </span>
             ) : null}
@@ -1829,7 +1829,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           };
           return (
             <span
-              className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-slate-400'}`}
+              className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-slate-600'}`}
             >
               {row.category}
             </span>
@@ -1883,7 +1883,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const taskCount = row._fullData?.tasks?.length || 0;
           return (
-            <span className="text-xs text-slate-400 flex items-center gap-1">
+            <span className="text-xs text-slate-600 flex items-center gap-1">
               <ListTodo size={12} />
               {taskCount}
             </span>
@@ -1928,7 +1928,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           const c = cfg[kind] || {
             icon: <FileText size={14} />,
             label: isPolish ? 'Output' : 'Output',
-            color: 'text-slate-400',
+            color: 'text-slate-600',
           };
           return (
             <div className="flex items-center gap-2">
@@ -2753,7 +2753,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       case 'BLOCKED':
         return 'bg-rose-500/20 text-rose-400';
       default:
-        return 'bg-slate-500/20 text-slate-400';
+        return 'bg-slate-500/20 text-slate-600';
     }
   };
 
@@ -2766,7 +2766,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       case 'MEDIUM':
         return 'text-blue-400';
       default:
-        return 'text-slate-400';
+        return 'text-slate-600';
     }
   };
 
@@ -2835,7 +2835,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 >
                   <ChevronRight size={18} className="rotate-180" />
                 </button>
-                <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-500/20 text-slate-400">
+                <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-500/20 text-slate-600">
                   DRAFT
                 </span>
                 {selectedInitiative.axis && (
@@ -3354,7 +3354,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             className="max-w-xl rounded-2xl border border-slate-200/70 bg-slate-50/80 px-6 py-7 text-center text-sm text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300"
             data-testid="tools-library-search-empty-state"
           >
-            <Library className="mx-auto mb-3 h-8 w-8 text-slate-400 dark:text-slate-500" />
+            <Library className="mx-auto mb-3 h-8 w-8 text-slate-600 dark:text-slate-500" />
             <p className="font-medium text-slate-900 dark:text-white">{libraryEmptyMessage}</p>
             <button
               type="button"
@@ -4288,7 +4288,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   <button
                     type="button"
                     onClick={() => setAddMenuQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-700 dark:hover:text-slate-200"
                     aria-label={isPolish ? 'Wyczyść' : 'Clear'}
                   >
                     <X size={16} />
@@ -4388,7 +4388,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           </div>
                         ) : null}
                       </div>
-                      <span className="mt-0.5 text-slate-400">
+                      <span className="mt-0.5 text-slate-600">
                         <ArrowRight size={16} />
                       </span>
                     </button>
@@ -4419,7 +4419,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           }
         `}
       >
-        <Filter size={16} className="text-slate-400" />
+        <Filter size={16} className="text-slate-600" />
         <span className={`w-2 h-2 rounded-full ${selectedStatusOption.bgColor}`} />
         <span>
           {isPolish ? 'Status' : 'Status'}:{' '}
@@ -4427,7 +4427,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         </span>
         <ChevronDown
           size={16}
-          className={`text-slate-400 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-600 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
         />
       </button>
 

@@ -362,7 +362,7 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
 
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-800 space-y-2">
+                    <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-800 space-y-2">
                       {/* Description */}
                       {def && (
                         <p className="text-xs text-slate-600 dark:text-slate-300">

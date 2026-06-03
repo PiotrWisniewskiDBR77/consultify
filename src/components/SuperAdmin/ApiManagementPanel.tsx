@@ -47,7 +47,7 @@ export const ApiManagementPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -57,7 +57,7 @@ export const ApiManagementPanel: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">API Keys</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-500 text-sm">
             Manage API keys for machine-to-machine access
           </p>
         </div>
@@ -72,7 +72,7 @@ export const ApiManagementPanel: React.FC = () => {
 
       <div className="space-y-2">
         {apiKeys.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+          <div className="text-center py-12 text-slate-600 dark:text-slate-500">
             <Key size={48} className="mx-auto mb-4 opacity-50" />
             <p>No API keys configured</p>
           </div>

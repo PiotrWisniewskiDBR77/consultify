@@ -367,7 +367,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
         </div>
       ) : alerts.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-          <Bell className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <Bell className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">
             No Alerts Configured
           </h3>
@@ -408,7 +408,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                     >
                       <Icon
                         className={
-                          alert.isActive ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'
+                          alert.isActive ? 'text-primary-600' : 'text-slate-600 dark:text-slate-500'
                         }
                         size={20}
                       />
@@ -432,7 +432,7 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                         {alert.action === 'HARD_LIMIT' && ' Hard limit'}
                       </p>
                       <div className="flex items-center gap-1 mt-1">
-                        <Mail size={12} className="text-slate-400 dark:text-slate-500" />
+                        <Mail size={12} className="text-slate-600 dark:text-slate-500" />
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           {alert.notifyEmails.join(', ')}
                         </span>

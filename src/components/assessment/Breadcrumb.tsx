@@ -76,7 +76,7 @@ export const Breadcrumb: React.FC = () => {
       {breadcrumbs.map((crumb, index) => (
         <React.Fragment key={index}>
           {index > 0 && (
-            <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+            <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
           )}
           {crumb.viewId ? (
             <button

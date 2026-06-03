@@ -56,7 +56,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
             ? 'bg-green-100 border-green-200 text-green-600'
             : uploadStatus === 'error'
               ? 'bg-rose-100 border-rose-200 text-rose-600'
-              : 'bg-white dark:bg-navy-800 border-slate-100 dark:border-navy-700 text-primary-600'
+              : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-primary-600'
         }`}
       >
         {isUploading ? (
@@ -73,7 +73,7 @@ export const ContextDocUploader: React.FC<ContextDocUploaderProps> = ({ tabName,
       <div className="flex-1">
         <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
           Supporting Documents
-          <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-medium bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 font-medium bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
             For {tabName}
           </span>
         </h4>

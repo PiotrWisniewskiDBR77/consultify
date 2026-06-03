@@ -31,7 +31,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
         return <CalloutBlock block={block} onUpdate={onUpdate} />;
       default:
         return (
-          <div className="p-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 italic">
+          <div className="p-4 text-gray-600 dark:text-gray-500 dark:text-gray-400 italic">
             Unsupported block type: {block.type}
           </div>
         );
@@ -61,7 +61,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
         {/* Toggle Lock */}
         <button
           onClick={() => onUpdate({ locked: !block.locked })}
-          className={`p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 ${block.locked ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 ${block.locked ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}`}
           title={block.locked ? 'Unlock' : 'Lock'}
         >
           {block.locked ? <Lock size={14} /> : <Unlock size={14} />}
@@ -81,7 +81,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
             {/* Delete */}
             <button
               onClick={onDelete}
-              className="p-1.5 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+              className="p-1.5 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-600 dark:text-slate-500 hover:text-rose-500"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -94,7 +94,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       {!block.locked && (
         <div
           {...dragHandleProps}
-          className="absolute top-1/2 -translate-y-1/2 -left-3 p-1.5 text-slate-300 hover:text-slate-500 dark:text-slate-400 cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-1/2 -translate-y-1/2 -left-3 p-1.5 text-slate-600 hover:text-slate-500 dark:text-slate-400 cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <GripVertical size={16} />
         </div>

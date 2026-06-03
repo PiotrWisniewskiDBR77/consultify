@@ -116,7 +116,7 @@ const BottleneckItem: React.FC<{
       </div>
 
       {/* Arrow */}
-      <ChevronRight size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+      <ChevronRight size={16} className="shrink-0 text-slate-600 dark:text-slate-500" />
     </motion.div>
   );
 };
@@ -140,7 +140,7 @@ export const BottleneckAlerts: React.FC<
     return (
       <div className={`bg-white dark:bg-navy-900 rounded-xl p-6 ${className}`}>
         <div className="flex items-center justify-center py-8">
-          <Loader2 size={24} className="animate-spin text-slate-400 dark:text-slate-500" />
+          <Loader2 size={24} className="animate-spin text-slate-600 dark:text-slate-500" />
         </div>
       </div>
     );
@@ -151,7 +151,7 @@ export const BottleneckAlerts: React.FC<
       className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-navy-700">
+      <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <AlertTriangle size={18} className="text-amber-500" />
           <h3 className="font-semibold text-navy-900 dark:text-white">
@@ -168,7 +168,7 @@ export const BottleneckAlerts: React.FC<
       {/* Bottlenecks List */}
       <div className="p-4 space-y-3">
         {bottlenecks.length === 0 ? (
-          <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+          <div className="text-center py-6 text-slate-600 dark:text-slate-500">
             <AlertTriangle size={32} className="mx-auto mb-2 opacity-50" />
             <p className="text-sm">
               {t('myWork.dashboard.noBottlenecks', 'No bottlenecks detected')}

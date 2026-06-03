@@ -525,7 +525,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                             'w-5 h-5',
                             feature.enabled
                               ? 'text-primary-600 dark:text-primary-400'
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-600 dark:text-slate-500'
                           )}
                         />
                       </div>
@@ -540,7 +540,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                           {getBetaFeatureDescription(feature)}
                         </p>
                         {feature.releaseDate && (
-                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                          <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
                             {t('settings.beta.expectedRelease', 'Expected release: {{date}}', {
                               date: feature.releaseDate,
                             })}
@@ -626,7 +626,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                           flag.value ? (
                             <ToggleRight className="w-5 h-5 text-emerald-500" />
                           ) : (
-                            <ToggleLeft className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                            <ToggleLeft className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                           )
                         ) : (
                           <span className="text-sm font-mono text-slate-600 dark:text-slate-400">

@@ -320,7 +320,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
         <div className="flex-1 relative">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -562,7 +562,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
         {/* Empty State */}
         {filteredUsers.length === 0 && (
           <div className="py-12 text-center">
-            <Users size={48} className="mx-auto mb-4 text-slate-300 dark:text-navy-600" />
+            <Users size={48} className="mx-auto mb-4 text-slate-600 dark:text-navy-600" />
             <p className="text-slate-500 dark:text-slate-400">
               {t('admin.team.activity.noUsers', 'No users match your filters')}
             </p>

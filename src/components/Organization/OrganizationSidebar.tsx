@@ -201,7 +201,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
       </div>
 
       <div className="px-4 pb-4">
-        <div className="text-xs font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+        <div className="text-xs font-semibold tracking-wider text-slate-600 dark:text-slate-500">
           {t('organization.sidebar.title', 'Organization')}
         </div>
       </div>

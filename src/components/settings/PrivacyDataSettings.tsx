@@ -298,7 +298,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 {isSelected ? (
                   <Eye size={18} className="text-blue-500" />
                 ) : (
-                  <EyeOff size={18} className="text-slate-400 dark:text-slate-500" />
+                  <EyeOff size={18} className="text-slate-600 dark:text-slate-500" />
                 )}
               </label>
             );
@@ -341,7 +341,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           </div>
 
           {/* Activity Status */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.privacy.showActivityStatus', 'Show Activity Status')}
@@ -368,10 +368,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           </div>
 
           {/* Last Seen */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <Clock size={16} className="text-slate-400 dark:text-slate-500" />
+                <Clock size={16} className="text-slate-600 dark:text-slate-500" />
                 {t('settings.privacy.showLastSeen', 'Show Last Seen')}
               </label>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -426,7 +426,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           </div>
 
           {/* AI Improvement */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.privacy.improveAI', 'Help Improve AI')}
@@ -451,7 +451,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           </div>
 
           {/* Third Party Integrations */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <Globe size={16} className="text-blue-500" />
@@ -519,7 +519,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           </div>
 
           {/* Marketing Emails */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.privacy.marketingEmails', 'Marketing Emails')}
@@ -544,7 +544,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           </div>
 
           {/* Newsletter */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.privacy.newsletter', 'Newsletter')}

@@ -140,7 +140,7 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
                           {step.completed ? 'Done' : 'Open'}
                         </span>
                         {index < steps.length - 1 ? (
-                          <ArrowRight size={14} className="text-slate-300 dark:text-slate-600" />
+                          <ArrowRight size={14} className="text-slate-600 dark:text-slate-600" />
                         ) : null}
                       </div>
                     </div>

@@ -192,7 +192,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                   );
                 })}
                 {fullSession.initiatives.length === 0 && (
-                  <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-4">
+                  <p className="text-slate-600 dark:text-slate-500 text-sm text-center py-4">
                     No initiatives yet
                   </p>
                 )}
@@ -244,7 +244,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                       <p className="text-sm font-medium text-navy-900 dark:text-white leading-tight">
                         {init.name}
                       </p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1">
                         {String(init.status).replace('_', ' ')} • {timeAgo}
                       </p>
                     </div>
@@ -252,7 +252,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                 );
               })}
               {fullSession.initiatives.length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500">No recent activity</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">No recent activity</p>
               )}
             </div>
           </div>

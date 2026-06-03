@@ -1403,12 +1403,12 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 </div>
                 <div className="min-w-0 flex-1">
                   <div
-                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-400 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
+                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
                   >
                     {data.label || (isPl ? 'Kliknij, aby wpisać…' : 'Click to type…')}
                   </div>
                   {data.nodeType && (
-                    <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
+                    <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
                       {String(data.nodeType).replace(/_/g, ' ')}
                     </div>
                   )}
@@ -1433,7 +1433,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                           </span>
                         ))}
                       {Array.isArray(data.tags) && data.tags.length > 2 && (
-                        <span className="rounded-full bg-slate-200/80 dark:bg-white/[0.06] px-1.5 py-0.5 text-[7px] font-bold text-slate-400 dark:text-slate-500">
+                        <span className="rounded-full bg-slate-200/80 dark:bg-white/[0.06] px-1.5 py-0.5 text-[7px] font-bold text-slate-600 dark:text-slate-500">
                           +{data.tags.length - 2}
                         </span>
                       )}
@@ -1457,7 +1457,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                       new CustomEvent('mm-toggle-collapse', { detail: { nodeId: id } })
                     );
                   }}
-                  className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
+                  className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-600 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
                   title={
                     data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : isPl ? 'Zwiń' : 'Collapse'
                   }
@@ -1470,7 +1470,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               )}
               {/* Depth context snippet */}
               {(data.context || data.goal) && (
-                <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1 italic">
+                <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5 line-clamp-1 italic">
                   {data.goal ? `🎯 ${data.goal}` : data.context}
                 </div>
               )}
@@ -1510,7 +1510,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 )}
                 {depth > 0 && (
                   <div
-                    className="text-[8px] text-slate-400 dark:text-slate-500 ml-auto"
+                    className="text-[8px] text-slate-600 dark:text-slate-500 ml-auto"
                     title={`Depth ${depth}`}
                   >
                     L{depth}
@@ -5029,7 +5029,7 @@ function MindMapInner({
           {showClose && (
             <button
               onClick={onClose}
-              className="p-0.5 rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
+              className="p-0.5 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
               title={isPolish ? 'Zamknij mapę' : 'Close map'}
             >
               <X size={12} />
@@ -5041,7 +5041,7 @@ function MindMapInner({
           <span className="hidden sm:inline-flex rounded-full border border-slate-200/80 dark:border-navy-700 px-2 py-0.5 text-[9px] text-slate-500 dark:text-slate-400 shrink-0">
             {interactionModeLabel}
           </span>
-          <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0">
+          <span className="text-[9px] text-slate-600 dark:text-slate-500 shrink-0">
             {savedLabel}
           </span>
         </div>
@@ -6038,7 +6038,7 @@ function MindMapInner({
             className="w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl dark:border-navy-700 dark:bg-navy-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-600">
               {isPolish ? 'Format eksportu' : 'Export format'}
             </div>
             {[
@@ -6252,7 +6252,7 @@ function MindMapInner({
                 </button>
               </div>
             </div>
-            <div className="mt-2 space-y-1 text-[9px] text-slate-300">
+            <div className="mt-2 space-y-1 text-[9px] text-slate-600">
               <div>last input: {lastInputSummaryRef.current}</div>
               <div>last handler: {lastHandlerSummaryRef.current}</div>
               {debugPaused && (
@@ -6264,7 +6264,7 @@ function MindMapInner({
           {debugOverlayExpanded && (
             <div className="max-h-[38vh] overflow-y-auto px-2 py-2">
               {debugEntries.length === 0 ? (
-                <div className="px-2 py-3 text-slate-400">No events yet.</div>
+                <div className="px-2 py-3 text-slate-600">No events yet.</div>
               ) : (
                 debugEntries.map((entry) => {
                   const lineClass =
@@ -6296,7 +6296,7 @@ function MindMapInner({
                         <span className="break-words">{entry.message}</span>
                       </div>
                       {entry.detail && (
-                        <div className="mt-0.5 pl-[88px] text-slate-400 break-words">
+                        <div className="mt-0.5 pl-[88px] text-slate-600 break-words">
                           {entry.detail}
                         </div>
                       )}

@@ -244,7 +244,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                       className={
                         settings.sidebarPosition === pos.id
                           ? 'text-blue-600 mx-auto'
-                          : 'text-slate-400 dark:text-slate-500 mx-auto'
+                          : 'text-slate-600 dark:text-slate-500 mx-auto'
                       }
                     />
                     <p className="font-medium text-slate-900 dark:text-white mt-2">{pos.label}</p>
@@ -294,7 +294,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                 className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
               >
                 <div className="flex items-center gap-3">
-                  <Icon size={18} className="text-slate-400 dark:text-slate-500" />
+                  <Icon size={18} className="text-slate-600 dark:text-slate-500" />
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">{item.label}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{item.desc}</p>

@@ -140,7 +140,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
     HIGH: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
     MEDIUM: 'bg-primary-500/20 text-primary-400 border-primary-500/30',
     LOW: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    NONE: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+    NONE: 'bg-slate-500/20 text-slate-600 border-slate-500/30',
   };
 
   return (
@@ -225,14 +225,14 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                     {!locked && (
                       <td className="px-2 py-1.5">
                         <div className="flex items-center gap-0.5">
-                          <GripVertical size={14} className="text-slate-400 shrink-0" />
+                          <GripVertical size={14} className="text-slate-600 shrink-0" />
                           <button
                             onClick={() => handleMoveUp(step.id)}
                             disabled={idx === 0}
                             className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-30 disabled:cursor-not-allowed"
                             title={lang === 'pl' ? 'Przesuń w górę' : 'Move up'}
                           >
-                            <ChevronUp size={14} className="text-slate-400" />
+                            <ChevronUp size={14} className="text-slate-600" />
                           </button>
                           <button
                             onClick={() => handleMoveDown(step.id)}
@@ -240,7 +240,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                             className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-30 disabled:cursor-not-allowed"
                             title={lang === 'pl' ? 'Przesuń w dół' : 'Move down'}
                           >
-                            <ChevronDown size={14} className="text-slate-400" />
+                            <ChevronDown size={14} className="text-slate-600" />
                           </button>
                         </div>
                       </td>
@@ -339,7 +339,7 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                       <td className="px-2 py-1.5">
                         <button
                           onClick={() => handleRemoveStep(step.id)}
-                          className="p-1.5 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                          className="p-1.5 rounded text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
                           title={lang === 'pl' ? 'Usuń' : 'Remove'}
                         >
                           <Trash2 size={14} />
@@ -376,13 +376,13 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                 {lang === 'pl' ? 'Start' : 'Start'}
               </div>
               <div className="flex flex-col items-center py-1">
-                <ArrowDown size={16} className="text-slate-400" />
+                <ArrowDown size={16} className="text-slate-600" />
               </div>
               {sortedSteps.map((step, idx) => (
                 <React.Fragment key={step.id}>
                   <div
                     className={`w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-800 dark:text-slate-200 ${
-                      step.name ? '' : 'italic text-slate-400'
+                      step.name ? '' : 'italic text-slate-600'
                     }`}
                   >
                     <div className="font-medium truncate">
@@ -401,13 +401,13 @@ export const ProcessMapWorkSurface: React.FC<ProcessMapWorkSurfaceProps> = ({
                   </div>
                   {idx < sortedSteps.length - 1 && (
                     <div className="flex flex-col items-center py-1">
-                      <ArrowDown size={16} className="text-slate-400" />
+                      <ArrowDown size={16} className="text-slate-600" />
                     </div>
                   )}
                 </React.Fragment>
               ))}
               <div className="flex flex-col items-center py-1">
-                <ArrowDown size={16} className="text-slate-400" />
+                <ArrowDown size={16} className="text-slate-600" />
               </div>
               {/* End */}
               <div className="w-full px-3 py-2 rounded-lg border-2 border-dashed border-slate-400 dark:border-navy-500 bg-slate-100 dark:bg-navy-800/50 text-xs font-medium text-slate-600 dark:text-slate-400 text-center">

@@ -247,13 +247,13 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                             "
             >
               <div className="flex items-center gap-3">
-                <History size={18} className="text-slate-400 dark:text-slate-500" />
+                <History size={18} className="text-slate-600 dark:text-slate-500" />
                 <span>{t('aiChat.history', 'Historia rozmów')}</span>
               </div>
               {historyExpanded ? (
-                <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
               ) : (
-                <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+                <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
               )}
             </button>
 
@@ -261,14 +261,14 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
             {historyExpanded && (
               <div className="max-h-64 overflow-y-auto px-2">
                 {visibleGroups.length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 px-4 py-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 px-4 py-2">
                     {t('aiChat.noConversations', 'Brak rozmów')}
                   </p>
                 ) : (
                   <>
                     {visibleGroups.map(([groupKey, items]) => (
                       <div key={groupKey} className="mb-2">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 py-1">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 px-3 py-1">
                           {t(`aiChat.groups.${groupKey}`, groupKey)}
                         </p>
                         {(items as Conversation[]).slice(0, 5).map((conv) => (
@@ -321,13 +321,13 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                             "
             >
               <div className="flex items-center gap-3">
-                <Star size={18} className="text-slate-400 dark:text-slate-500" />
+                <Star size={18} className="text-slate-600 dark:text-slate-500" />
                 <span>{t('aiChat.pinnedPrompts', 'Przypięte prompty')}</span>
               </div>
               {pinnedExpanded ? (
-                <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
               ) : (
-                <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+                <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
               )}
             </button>
 
@@ -339,7 +339,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                     <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : pinnedPrompts.length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 italic px-2 py-1">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 italic px-2 py-1">
                     {t('aiChat.noPinnedPrompts', 'Brak przypiętych promptów')}
                   </p>
                 ) : (
@@ -376,12 +376,12 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                             ${
                               activeConversationId
                                 ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
-                                : 'text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                                : 'text-slate-600 dark:text-slate-600 cursor-not-allowed'
                             }
                             transition-colors
                         `}
           >
-            <Download size={18} className="text-slate-400 dark:text-slate-500" />
+            <Download size={18} className="text-slate-600 dark:text-slate-500" />
             {t('aiChat.exportChat', 'Eksportuj rozmowę')}
           </button>
           {/* AI Settings moved to main Settings */}

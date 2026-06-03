@@ -53,7 +53,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
             setRating('positive');
             setShowModal(true);
           }}
-          className="p-1 hover:bg-green-500/10 rounded text-slate-400 dark:text-slate-500 hover:text-green-500 transition-colors"
+          className="p-1 hover:bg-green-500/10 rounded text-slate-600 dark:text-slate-500 hover:text-green-500 transition-colors"
           title="Helpful"
         >
           <ThumbsUp size={14} />
@@ -63,7 +63,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
             setRating('negative');
             setShowModal(true);
           }}
-          className="p-1 hover:bg-rose-500/10 rounded text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
+          className="p-1 hover:bg-rose-500/10 rounded text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-colors"
           title="Not Helpful"
         >
           <ThumbsDown size={14} />
@@ -80,7 +80,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 dark:text-slate-500 hover:text-white"
+                className="text-slate-600 dark:text-slate-500 hover:text-white"
               >
                 <X size={18} />
               </button>
@@ -92,7 +92,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
                 className={`p-3 rounded-xl border transition-all ${
                   rating === 'positive'
                     ? 'bg-green-500/20 border-green-500 text-green-400'
-                    : 'bg-navy-950 border-white/5 text-slate-400 dark:text-slate-500 hover:border-green-500/50'
+                    : 'bg-navy-950 border-white/5 text-slate-600 dark:text-slate-500 hover:border-green-500/50'
                 }`}
               >
                 <ThumbsUp size={24} />
@@ -102,7 +102,7 @@ export const AIFeedbackButton: React.FC<AIFeedbackButtonProps> = ({
                 className={`p-3 rounded-xl border transition-all ${
                   rating === 'negative'
                     ? 'bg-rose-500/20 border-rose-500 text-rose-400'
-                    : 'bg-navy-950 border-white/5 text-slate-400 dark:text-slate-500 hover:border-rose-500/50'
+                    : 'bg-navy-950 border-white/5 text-slate-600 dark:text-slate-500 hover:border-rose-500/50'
                 }`}
               >
                 <ThumbsDown size={24} />

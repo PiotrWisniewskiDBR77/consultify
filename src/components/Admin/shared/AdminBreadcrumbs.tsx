@@ -80,7 +80,7 @@ export const AdminBreadcrumbs: React.FC<AdminBreadcrumbsProps> = ({
 
         {/* Separator after home */}
         {items.length > 0 && (
-          <li className="text-slate-300 dark:text-navy-600">
+          <li className="text-slate-600 dark:text-navy-600">
             <ChevronRight size={14} />
           </li>
         )}
@@ -92,7 +92,7 @@ export const AdminBreadcrumbs: React.FC<AdminBreadcrumbsProps> = ({
             <li>
               <BreadcrumbButton item={displayItems.items[0]} />
             </li>
-            <li className="text-slate-300 dark:text-navy-600">
+            <li className="text-slate-600 dark:text-navy-600">
               <ChevronRight size={14} />
             </li>
 
@@ -117,7 +117,7 @@ export const AdminBreadcrumbs: React.FC<AdminBreadcrumbsProps> = ({
                 </div>
               </div>
             </li>
-            <li className="text-slate-300 dark:text-navy-600">
+            <li className="text-slate-600 dark:text-navy-600">
               <ChevronRight size={14} />
             </li>
 
@@ -128,7 +128,7 @@ export const AdminBreadcrumbs: React.FC<AdminBreadcrumbsProps> = ({
                   <BreadcrumbButton item={item} isLast={index === displayItems.items.length - 2} />
                 </li>
                 {index < displayItems.items.length - 2 && (
-                  <li className="text-slate-300 dark:text-navy-600">
+                  <li className="text-slate-600 dark:text-navy-600">
                     <ChevronRight size={14} />
                   </li>
                 )}
@@ -145,7 +145,7 @@ export const AdminBreadcrumbs: React.FC<AdminBreadcrumbsProps> = ({
                 <BreadcrumbButton item={item} isLast={index === displayItems.items.length - 1} />
               </li>
               {index < displayItems.items.length - 1 && (
-                <li className="text-slate-300 dark:text-navy-600">
+                <li className="text-slate-600 dark:text-navy-600">
                   <ChevronRight size={14} />
                 </li>
               )}

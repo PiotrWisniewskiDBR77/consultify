@@ -6026,7 +6026,7 @@ Return ONLY the final comment text.`;
                                   {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
                                 </span>
                               </button>
-                              <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                              <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
                               {availableInitiatives.map((init) => (
                                 <button
                                   key={init.id}

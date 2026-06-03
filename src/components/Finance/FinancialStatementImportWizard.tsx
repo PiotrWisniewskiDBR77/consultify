@@ -589,7 +589,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                       ? 'bg-emerald-500 text-white shadow-sm'
                       : isCurrent
                         ? 'bg-blue-600 text-white shadow-sm ring-4 ring-blue-100 dark:ring-blue-500/20'
-                        : 'border-2 border-slate-200 text-slate-400 dark:border-white/[0.1] dark:text-slate-500'
+                        : 'border-2 border-slate-200 text-slate-600 dark:border-white/[0.1] dark:text-slate-500'
                   }`}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
@@ -601,7 +601,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                       ? 'text-emerald-600 dark:text-emerald-400'
                       : isCurrent
                         ? 'text-slate-900 dark:text-white'
-                        : 'text-slate-400 dark:text-slate-500'
+                        : 'text-slate-600 dark:text-slate-500'
                   } hidden sm:inline`}
                 >
                   {stepLabels[i]}
@@ -655,13 +655,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100/80 transition-colors group-hover:bg-blue-100/60 dark:bg-white/[0.05] dark:group-hover:bg-blue-500/10">
               <Upload
                 size={28}
-                className="text-slate-400 transition-colors group-hover:text-blue-500"
+                className="text-slate-600 transition-colors group-hover:text-blue-500"
               />
             </div>
             <p className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
               {t('finance.importWizard.dropOrClick', 'Drop file here or click to browse')}
             </p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               {t(
                 'finance.importWizard.supportedFormats',
                 'Supported: PDF, Excel (XLSX/XLS), CSV financial statements'
@@ -695,7 +695,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                   {file.name}
                 </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-slate-600 dark:text-slate-500">
                   {(file.size / 1024).toFixed(1)} KB
                   {file.type && (
                     <span className="ml-2">{file.type.split('/').pop()?.toUpperCase()}</span>
@@ -710,7 +710,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
                 aria-label={isPl ? 'Usuń plik' : 'Remove file'}
               >
-                <X size={14} className="text-slate-400" />
+                <X size={14} className="text-slate-600" />
               </button>
             </div>
           )}
@@ -866,7 +866,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-slate-600">
               <Info size={12} />
               <span>
                 {t('finance.importWizard.scaleDetected', 'Scale detected')}:{' '}
@@ -964,7 +964,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           />
 
           {mappedValues.length === 0 && (
-            <div className="text-center py-12 text-slate-400">
+            <div className="text-center py-12 text-slate-600">
               <AlertTriangle size={32} className="mx-auto mb-3" />
               <p>
                 {t(
@@ -1186,7 +1186,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                       <div className="min-w-0 flex-1">
                         <span className="text-slate-700 dark:text-slate-300">{msg.message}</span>
                         {msg.details && (
-                          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-500">
                             {msg.details}
                           </p>
                         )}

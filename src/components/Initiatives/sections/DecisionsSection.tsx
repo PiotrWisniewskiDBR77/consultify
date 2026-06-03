@@ -1471,7 +1471,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                           </button>
                           {!readonly && (
                             <>
-                              <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                              <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                               <button
                                 onClick={() => {
                                   closeMenu();
@@ -1499,9 +1499,9 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                   colSpan={7}
                   className="py-8 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
-                  <Scale size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                  <Scale size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-600" />
                   <p>{isPolish ? 'Brak decyzji' : 'No decisions yet'}</p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-600 mt-1">
                     {isPolish
                       ? 'Dodaj decyzje bramkowe lub operacyjne'
                       : 'Add gate or operational decisions'}

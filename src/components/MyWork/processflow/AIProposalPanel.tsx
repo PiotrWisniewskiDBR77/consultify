@@ -209,13 +209,13 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-lg border border-slate-200/70 bg-white/90 p-2 dark:border-navy-700 dark:bg-navy-900/50">
-                <div className="mb-1 text-[9px] font-bold uppercase text-slate-400">{t.before}</div>
+                <div className="mb-1 text-[9px] font-bold uppercase text-slate-600">{t.before}</div>
                 <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-slate-700 dark:text-slate-200">
                   {proposal.readback_before}
                 </pre>
               </div>
               <div className="rounded-lg border border-slate-200/70 bg-white/90 p-2 dark:border-navy-700 dark:bg-navy-900/50">
-                <div className="mb-1 text-[9px] font-bold uppercase text-slate-400">{t.after}</div>
+                <div className="mb-1 text-[9px] font-bold uppercase text-slate-600">{t.after}</div>
                 <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-slate-700 dark:text-slate-200">
                   {proposal.readback_after}
                 </pre>
@@ -228,7 +228,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             <span className="font-medium text-slate-800 dark:text-slate-100">
               {t.issues(proposal.validation_before.issue_count)}
             </span>
-            <span className="text-slate-400">→</span>
+            <span className="text-slate-600">→</span>
             <span
               className={`font-semibold ${
                 improved

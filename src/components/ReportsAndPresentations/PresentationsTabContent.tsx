@@ -317,7 +317,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={24} className="animate-spin text-slate-400" />
+        <Loader2 size={24} className="animate-spin text-slate-600" />
       </div>
     );
   }

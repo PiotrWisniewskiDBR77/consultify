@@ -55,7 +55,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                 isActive
                   ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                  : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-600 dark:hover:text-slate-300'
+                  : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
               <Icon size={18} />
@@ -102,7 +102,7 @@ const PanelButton: React.FC<{
     }`}
   >
     <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{label}</p>
-    {description && <p className="text-[10px] text-slate-400 mt-0.5">{description}</p>}
+    {description && <p className="text-[10px] text-slate-600 mt-0.5">{description}</p>}
   </button>
 );
 
@@ -230,7 +230,7 @@ const SearchPanel: React.FC = () => (
       placeholder="Search deck content..."
       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm"
     />
-    <p className="text-[10px] text-slate-400 mt-2">Type to search across all cards</p>
+    <p className="text-[10px] text-slate-600 mt-2">Type to search across all cards</p>
   </div>
 );
 

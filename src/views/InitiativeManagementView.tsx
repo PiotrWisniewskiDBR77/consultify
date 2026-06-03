@@ -309,7 +309,7 @@ export const InitiativeManagementView: React.FC = () => {
 
           <div className="relative w-64">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               size={16}
             />
             <input
@@ -323,7 +323,7 @@ export const InitiativeManagementView: React.FC = () => {
 
           <button
             onClick={fetchInitiatives}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
           >
             <RefreshCw size={16} />
           </button>
@@ -340,9 +340,9 @@ export const InitiativeManagementView: React.FC = () => {
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 flex items-center justify-center mb-4">
               {activeTab === 'review' ? (
-                <Send className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                <Send className="w-8 h-8 text-slate-600 dark:text-slate-500" />
               ) : (
-                <CheckCircle2 className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                <CheckCircle2 className="w-8 h-8 text-slate-600 dark:text-slate-500" />
               )}
             </div>
             <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -381,7 +381,7 @@ export const InitiativeManagementView: React.FC = () => {
                             {initiative.summary}
                           </p>
                         )}
-                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-600 dark:text-slate-500">
                           <span>{initiative.axis}</span>
                           {initiative.projectName && (
                             <>
@@ -419,7 +419,7 @@ export const InitiativeManagementView: React.FC = () => {
                     </div>
 
                     {/* Metrics Row */}
-                    <div className="flex items-center gap-6 mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+                    <div className="flex items-center gap-6 mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
                       {/* Owner */}
                       <div className="flex items-center gap-2">
                         {initiative.ownerBusiness ? (
@@ -441,7 +441,7 @@ export const InitiativeManagementView: React.FC = () => {
                             </span>
                           </>
                         ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                          <span className="text-xs text-slate-600 dark:text-slate-500 italic">
                             No owner
                           </span>
                         )}

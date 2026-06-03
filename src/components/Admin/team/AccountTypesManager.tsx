@@ -220,7 +220,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                 'Different account types have different levels of access and permissions'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -283,7 +283,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
               {/* User Count */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users size={14} className="text-slate-400 dark:text-slate-500" />
+                  <Users size={14} className="text-slate-600 dark:text-slate-500" />
                   <span className="text-sm font-medium text-navy-900 dark:text-white">
                     {type.userCount}
                   </span>
@@ -359,7 +359,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                     {category.permissions.map((permission) => (
                       <tr
                         key={permission.id}
-                        className="border-t border-slate-100 dark:border-navy-700"
+                        className="border-t border-slate-200 dark:border-navy-700"
                       >
                         <td className="px-4 py-3">
                           <span className="text-sm text-navy-900 dark:text-white">
@@ -400,7 +400,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                               ) : (
                                 <X
                                   size={16}
-                                  className="mx-auto text-slate-300 dark:text-navy-600"
+                                  className="mx-auto text-slate-600 dark:text-navy-600"
                                 />
                               )}
                             </td>

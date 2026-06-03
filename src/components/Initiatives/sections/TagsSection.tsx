@@ -39,12 +39,12 @@ export const TagsSection: React.FC<InitiativeSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {tags.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
               {tags.length}
             </span>
           )}
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-600" />
           </motion.div>
         </div>
       </motion.button>

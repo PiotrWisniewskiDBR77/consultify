@@ -382,7 +382,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                           className={`p-2 rounded-lg text-sm ${
                             impact.isBlocker
                               ? 'bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30'
-                              : 'bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-navy-700'
+                              : 'bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700'
                           }`}
                         >
                           <div className="flex items-center gap-2">

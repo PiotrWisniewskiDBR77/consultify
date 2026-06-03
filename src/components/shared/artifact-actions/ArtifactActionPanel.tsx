@@ -735,7 +735,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 <div className="text-sm font-semibold text-white">
                   {isPolish ? 'Generator dokumentu' : 'Document generator'}
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-slate-600">
                   {isPolish
                     ? 'Wybierz, czy AI ma użyć template, czy ułożyć dokument od zera. Kontekst insightu zostanie przekazany dalej.'
                     : 'Choose whether AI should use a template or compose from scratch. The insight context will be passed forward.'}
@@ -747,7 +747,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setComposerTarget(null);
                   setComposerConfirmed(false);
                 }}
-                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08]"
+                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white/[0.08]"
               >
                 {isPolish ? 'Zamknij' : 'Close'}
               </button>
@@ -758,7 +758,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 {isPolish ? 'Kontekst' : 'Context'}
               </div>
               <div className="mt-2 text-sm font-medium text-white">{source.title}</div>
-              <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-400">
+              <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-600">
                 <div>
                   {isPolish ? 'Dowody' : 'Evidence'}: {source.evidenceCount ?? 0}
                 </div>
@@ -784,7 +784,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             </div>
 
             <div className="mt-4">
-              <label className="block text-xs font-semibold text-slate-400">
+              <label className="block text-xs font-semibold text-slate-600">
                 {isPolish ? 'Template' : 'Template'}
               </label>
               <select
@@ -809,7 +809,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               </select>
             </div>
 
-            <label className="mt-4 flex items-start gap-2 text-xs text-slate-300">
+            <label className="mt-4 flex items-start gap-2 text-xs text-slate-600">
               <input
                 type="checkbox"
                 checked={composerConfirmed}
@@ -830,7 +830,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setComposerTarget(null);
                   setComposerConfirmed(false);
                 }}
-                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
+                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-white/[0.06]"
               >
                 {isPolish ? 'Anuluj' : 'Cancel'}
               </button>
@@ -863,7 +863,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 <div className="text-sm font-semibold text-white">
                   {isPolish ? 'Potwierdzenie działania' : 'Action confirmation'}
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-slate-600">
                   {isPolish
                     ? 'To jest mutacja biznesowa. Sprawdź proposal i read-back przed utworzeniem artefaktu.'
                     : 'This is a business mutation. Review the proposal and read-back before creating the artifact.'}
@@ -875,7 +875,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setProposalTarget(null);
                   setProposalConfirmed(false);
                 }}
-                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08]"
+                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white/[0.08]"
               >
                 {isPolish ? 'Zamknij' : 'Close'}
               </button>
@@ -888,7 +888,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 </div>
                 <div className="mt-1 font-medium text-white">{source.title}</div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs text-slate-400">
+              <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
                 <div>
                   {isPolish ? 'Cel' : 'Target'}:{' '}
                   {isPolish
@@ -920,10 +920,10 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   </ul>
                 </div>
               )}
-              <div className="rounded-xl border border-white/[0.08] bg-black/20 p-3 text-xs text-slate-300">
+              <div className="rounded-xl border border-white/[0.08] bg-black/20 p-3 text-xs text-slate-600">
                 {buildGovernanceProposal(source, proposalTarget, isPolish).readBackText as string}
               </div>
-              <label className="flex items-start gap-2 text-xs text-slate-300">
+              <label className="flex items-start gap-2 text-xs text-slate-600">
                 <input
                   type="checkbox"
                   checked={proposalConfirmed}
@@ -945,7 +945,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setProposalTarget(null);
                   setProposalConfirmed(false);
                 }}
-                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
+                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-white/[0.06]"
               >
                 {isPolish ? 'Anuluj' : 'Cancel'}
               </button>

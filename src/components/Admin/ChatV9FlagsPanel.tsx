@@ -480,7 +480,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
               className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400"
               aria-label="Keyboard shortcuts on focused flag rows: o turns the flag on, f turns it off, d clears the override"
             >
-              <span className="uppercase tracking-wide text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="uppercase tracking-wide text-[10px] text-slate-600 dark:text-slate-500">
                 Shortcuts
               </span>
               <span className="inline-flex items-center gap-1">
@@ -489,7 +489,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                 </kbd>
                 <span>ON</span>
               </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-navy-600">
+              <span aria-hidden="true" className="text-slate-600 dark:text-navy-600">
                 ·
               </span>
               <span className="inline-flex items-center gap-1">
@@ -498,7 +498,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                 </kbd>
                 <span>OFF</span>
               </span>
-              <span aria-hidden="true" className="text-slate-300 dark:text-navy-600">
+              <span aria-hidden="true" className="text-slate-600 dark:text-navy-600">
                 ·
               </span>
               <span className="inline-flex items-center gap-1">
@@ -616,9 +616,9 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
       {filterEnabled && CHAT_V9_FLAGS.length > 0 && (
         <div
           data-testid="chat-v9-flags-filter-row"
-          className="px-4 py-2 border-b border-slate-100 dark:border-navy-800 bg-slate-50/60 dark:bg-navy-900/40 flex items-center gap-2"
+          className="px-4 py-2 border-b border-slate-200 dark:border-navy-800 bg-slate-50/60 dark:bg-navy-900/40 flex items-center gap-2"
         >
-          <Search size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
+          <Search size={13} className="text-slate-600 dark:text-slate-500 shrink-0" />
           <input
             type="text"
             data-testid="chat-v9-flags-filter-input"
@@ -637,14 +637,14 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
               data-testid="chat-v9-flags-filter-clear"
               onClick={() => setFilterQuery('')}
               aria-label="Clear filter"
-              className="inline-flex items-center justify-center w-5 h-5 rounded-md text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+              className="inline-flex items-center justify-center w-5 h-5 rounded-md text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
             >
               <X size={12} />
             </button>
           )}
           <span
             data-testid="chat-v9-flags-filter-count"
-            className="text-[10px] uppercase tracking-wide font-semibold text-slate-400 dark:text-slate-500 shrink-0"
+            className="text-[10px] uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-500 shrink-0"
           >
             {visibleFlags.length}/{CHAT_V9_FLAGS.length}
           </span>
@@ -686,7 +686,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                 key={group.block}
                 data-testid={`chat-v9-flags-group-${group.block}`}
                 data-collapsed={isCollapsed}
-                className="border-b border-slate-100 dark:border-navy-800 last:border-b-0"
+                className="border-b border-slate-200 dark:border-navy-800 last:border-b-0"
               >
                 <button
                   type="button"
@@ -707,12 +707,12 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                   {isCollapsed ? (
                     <ChevronRight
                       size={13}
-                      className="text-slate-400 dark:text-slate-500 shrink-0"
+                      className="text-slate-600 dark:text-slate-500 shrink-0"
                     />
                   ) : (
                     <ChevronDown
                       size={13}
-                      className="text-slate-400 dark:text-slate-500 shrink-0"
+                      className="text-slate-600 dark:text-slate-500 shrink-0"
                     />
                   )}
                   <span className="text-[11px] uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
@@ -720,7 +720,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                   </span>
                   <span
                     data-testid={`chat-v9-flags-group-count-${group.block}`}
-                    className="text-[10px] uppercase tracking-wide font-semibold text-slate-400 dark:text-slate-500"
+                    className="text-[10px] uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-500"
                   >
                     {filterActive
                       ? `${group.visibleFlags.length}/${group.totalFlags}`
@@ -739,7 +739,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                 {!isCollapsed && group.visibleFlags.length > 0 && (
                   <ul
                     id={`chat-v9-flags-group-body-${group.block}`}
-                    className="divide-y divide-slate-100 dark:divide-navy-800"
+                    className="divide-y divide-slate-200 dark:divide-navy-800"
                   >
                     {group.visibleFlags.map((flag) => renderFlagRow(flag))}
                   </ul>
@@ -748,7 +748,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
             );
           })
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-navy-800">
+          <ul className="divide-y divide-slate-200 dark:divide-navy-800">
             {visibleFlags.map((flag) => renderFlagRow(flag))}
           </ul>
         )}
@@ -777,7 +777,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
             <span className="font-medium text-slate-900 dark:text-white truncate">
               {flag.title}
             </span>
-            <span className="text-[10px] uppercase tracking-wide font-semibold text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-500">
               {flag.ticket}
             </span>
             <span
@@ -833,7 +833,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
               </>
             );
           })()}
-          <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 font-mono truncate">
+          <p className="mt-1 text-[10px] text-slate-600 dark:text-slate-500 font-mono truncate">
             {flag.keys.localStorage}
           </p>
           {docLinksEnabled &&
@@ -843,7 +843,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                 return (
                   <p
                     data-testid={`chat-v9-flag-docs-empty-${flag.id}`}
-                    className="mt-1 text-[10px] italic text-slate-300 dark:text-slate-600"
+                    className="mt-1 text-[10px] italic text-slate-600 dark:text-slate-600"
                   >
                     — no spec docs
                   </p>
@@ -852,17 +852,17 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
               return (
                 <p
                   data-testid={`chat-v9-flag-docs-${flag.id}`}
-                  className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 font-mono truncate select-text"
+                  className="mt-1 text-[10px] text-slate-600 dark:text-slate-500 font-mono truncate select-text"
                   title={summary.tooltip}
                 >
-                  <span className="text-slate-400 dark:text-slate-500">docs:</span>{' '}
+                  <span className="text-slate-600 dark:text-slate-500">docs:</span>{' '}
                   <span data-testid={`chat-v9-flag-docs-primary-${flag.id}`}>
                     {summary.primary}
                   </span>
                   {summary.extraCount > 0 && (
                     <span
                       data-testid={`chat-v9-flag-docs-more-${flag.id}`}
-                      className="ml-1 text-slate-400 dark:text-slate-500"
+                      className="ml-1 text-slate-600 dark:text-slate-500"
                     >
                       (+{summary.extraCount} more)
                     </span>

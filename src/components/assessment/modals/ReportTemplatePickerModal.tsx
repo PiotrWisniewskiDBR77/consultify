@@ -219,7 +219,7 @@ export function ReportTemplatePickerModal(props: {
         </div>
 
         {/* Toolbar */}
-        <div className="px-5 py-3 border-b border-slate-100 dark:border-navy-800 flex flex-wrap items-center justify-between gap-3">
+        <div className="px-5 py-3 border-b border-slate-200 dark:border-navy-800 flex flex-wrap items-center justify-between gap-3">
           {/* Source filter tabs */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-navy-800">
             {[
@@ -421,7 +421,7 @@ export function ReportTemplatePickerModal(props: {
                       {tpl.description || 'No description'}
                     </div>
                     {/* Subtle metadata row */}
-                    <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-800 flex items-center gap-2">
+                    <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-800 flex items-center gap-2">
                       <span
                         className={cn(
                           'text-[9px] px-1 py-0.5 rounded font-medium',
@@ -499,7 +499,7 @@ export function ReportTemplatePickerModal(props: {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-navy-800">
+                <tbody className="divide-y divide-slate-200 dark:divide-navy-800">
                   {filtered.map((tpl) => {
                     const isSelected = tpl.id === selectedId;
                     const framework = detectFramework(tpl);

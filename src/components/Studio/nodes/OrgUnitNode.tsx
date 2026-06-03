@@ -79,7 +79,7 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm text-white truncate">{label || 'Name'}</div>
             {role && (
-              <div className="text-xs text-slate-400 dark:text-slate-500 truncate">{role}</div>
+              <div className="text-xs text-slate-600 dark:text-slate-500 truncate">{role}</div>
             )}
           </div>
         </div>
@@ -94,7 +94,7 @@ export const OrgUnitNode: React.FC<NodeProps<OrgUnitData>> = memo(
               </div>
             )}
             {reportCount !== undefined && reportCount > 0 && (
-              <div className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500">
                 <Users size={10} />
                 <span>{reportCount}</span>
               </div>

@@ -230,7 +230,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                         {axis.name}
                       </span>
                       {confidence > 0 && (
-                        <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+                        <span className="ml-2 text-xs text-slate-600 dark:text-slate-500">
                           ({Math.round(confidence * 100)}% confidence)
                         </span>
                       )}
@@ -256,13 +256,13 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                           className={`text-sm font-medium ${
                             score > 0
                               ? 'text-primary-600 dark:text-primary-400'
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-600 dark:text-slate-500'
                           }`}
                         >
                           {score > 0 ? score.toFixed(1) : '-'}
                         </span>
                       )}
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                      <span className="text-xs text-slate-600 dark:text-slate-500">
                         / {axis.maxLevel}
                       </span>
                     </div>
@@ -315,7 +315,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
             </div>
           ) : (
             <div className="flex flex-col items-center">
-              <Upload className="w-12 h-12 text-slate-400 dark:text-slate-500 mb-3" />
+              <Upload className="w-12 h-12 text-slate-600 dark:text-slate-500 mb-3" />
               <p className="font-medium text-navy-900 dark:text-white mb-1">
                 Drop your report here
               </p>
@@ -374,7 +374,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -413,7 +413,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({
                                       (step === 'upload' && file && !uploading) ||
                                       step === 'mapping'
                                         ? 'bg-primary-600 hover:bg-primary-500 text-white'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}
               >

@@ -467,7 +467,7 @@ export function V8ArtifactRunControl({
             </div>
             <button
               type="button"
-              className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+              className="rounded-md p-1 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
               onClick={() => setIsOpen(false)}
               aria-label={t('common.close', 'Close')}
             >

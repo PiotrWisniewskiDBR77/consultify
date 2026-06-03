@@ -58,7 +58,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
   return (
     <HomeBlockShell block={block}>
       <div className="grid gap-2">
-        <p className="text-[11px] leading-relaxed text-slate-300/80">{payload.headline}</p>
+        <p className="text-[11px] leading-relaxed text-slate-600/80">{payload.headline}</p>
         <div className="space-y-1.5">
           {payload.streams.map((stream) => {
             const openTarget =
@@ -85,7 +85,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-white">{stream.label}</div>
-                  <div className="mt-1 text-xs text-slate-300/70">{stream.progressLabel}</div>
+                  <div className="mt-1 text-xs text-slate-600/70">{stream.progressLabel}</div>
                 </div>
                 <ArrowRight size={16} className="text-white/30" />
               </button>
@@ -147,7 +147,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                         </span>
                       ) : null}
                     </div>
-                    <div className="mt-1 text-xs text-slate-300/70">
+                    <div className="mt-1 text-xs text-slate-600/70">
                       {artifact.originRuntime === 'presentation'
                         ? `${t('myWork.radar.artifactType.presentation')} · ${artifact.deliveryState}`
                         : artifact.originRuntime === 'sheet'
@@ -155,7 +155,7 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({
                           : `${t('myWork.radar.artifactType.report')} · ${artifact.deliveryState}`}
                     </div>
                     {artifact.publishState ? (
-                      <div className="mt-1 text-[11px] text-slate-400">
+                      <div className="mt-1 text-[11px] text-slate-600">
                         {t('myWork.radar.outputsLibraryNote')}
                       </div>
                     ) : null}

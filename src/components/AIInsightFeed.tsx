@@ -70,7 +70,7 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
 
   return (
     <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col h-full">
-      <div className="p-4 border-b border-slate-100 dark:border-navy-700 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
+      <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
         <div className="flex items-center gap-2">
           <Sparkles size={16} className="text-indigo-600 dark:text-indigo-400" />
           <h3 className="font-bold text-navy-900 dark:text-white">AI Strategy Watch</h3>
@@ -110,7 +110,7 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
         )}
 
         {!loading && insights.length === 0 && (
-          <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm">
+          <div className="text-center py-8 text-slate-600 dark:text-slate-500 text-sm">
             No critical alerts at this time.
           </div>
         )}

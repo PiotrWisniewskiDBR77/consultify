@@ -221,7 +221,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss, isTop }) => {
       {toast.dismissible && (
         <button
           onClick={onDismiss}
-          className="flex-shrink-0 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
+          className="flex-shrink-0 p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
         >
           <X size={16} />
         </button>

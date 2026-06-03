@@ -139,7 +139,7 @@ export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({ cont
 
   if (!data || !data.items || data.items.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 text-slate-400">
+      <div className="flex items-center justify-center py-8 text-slate-600">
         <p className="text-sm">No prioritization data available</p>
       </div>
     );
@@ -156,7 +156,7 @@ export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({ cont
 
       <div className="relative">
         {/* Y-axis label */}
-        <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+        <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-medium text-slate-600 uppercase tracking-wider whitespace-nowrap">
           {yLabel} →
         </div>
 
@@ -253,7 +253,7 @@ export const PrioritizationMatrix: React.FC<PrioritizationMatrixProps> = ({ cont
           </div>
 
           {/* X-axis label */}
-          <div className="text-center mt-2 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+          <div className="text-center mt-2 text-[10px] font-medium text-slate-600 uppercase tracking-wider">
             {xLabel} →
           </div>
         </div>

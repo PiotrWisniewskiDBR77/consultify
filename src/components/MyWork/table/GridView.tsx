@@ -40,10 +40,10 @@ const GROUP_ROW_HEIGHT_PX = 32;
 const VIRTUAL_BUFFER = 10;
 
 const headerCell =
-  'bg-slate-50 dark:bg-navy-800/50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100 dark:border-navy-800 font-semibold text-left whitespace-nowrap select-none';
+  'bg-slate-50 dark:bg-navy-800/50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-navy-800 font-semibold text-left whitespace-nowrap select-none';
 
 const bodyCell =
-  'border-b border-slate-100 dark:border-navy-800 h-9 px-3 align-middle text-sm text-slate-800 dark:text-slate-200';
+  'border-b border-slate-200 dark:border-navy-800 h-9 px-3 align-middle text-sm text-slate-800 dark:text-slate-200';
 
 const stickyTop = 'sticky top-0 z-10';
 
@@ -460,7 +460,7 @@ const DataGrid: React.FC<DataGridProps> = ({
 
   if (processedRows.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-slate-400 dark:text-slate-500">
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-slate-600 dark:text-slate-500">
         <Image size={32} />
         <span className="text-sm font-medium">{isPl ? 'Brak elementów' : 'No items'}</span>
       </div>
@@ -481,7 +481,7 @@ const DataGrid: React.FC<DataGridProps> = ({
             <tr>
               <th
                 style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
-                className={`${headerCell} sticky left-0 z-20 border-r border-slate-100 dark:border-navy-800 px-2 py-2`}
+                className={`${headerCell} sticky left-0 z-20 border-r border-slate-200 dark:border-navy-800 px-2 py-2`}
               >
                 <input
                   type="checkbox"
@@ -545,7 +545,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                       maxWidth: w,
                       ...(isPrimary ? { left: stickyPrimaryLeft } : {}),
                     }}
-                    className={`${headerCell} relative border-r border-slate-100 dark:border-navy-800 px-3 py-2 ${
+                    className={`${headerCell} relative border-r border-slate-200 dark:border-navy-800 px-3 py-2 ${
                       isPrimary
                         ? `sticky z-[15] border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50`
                         : ''
@@ -576,7 +576,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                   <tr key={`g-${item.label}-${i}`} className="bg-slate-100/90 dark:bg-navy-900/80">
                     <td
                       colSpan={colSpan}
-                      className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-navy-800"
+                      className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-navy-800"
                     >
                       {item.label}
                     </td>
@@ -607,7 +607,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                 >
                   <td
                     style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
-                    className={`${bodyCell} sticky left-0 z-[8] border-r border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-950 ${
+                    className={`${bodyCell} sticky left-0 z-[8] border-r border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950 ${
                       selected ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                     } text-center relative`}
                     onClick={(e) => e.stopPropagation()}
@@ -646,7 +646,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                           missing
                             ? 'bg-amber-50/50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-800/50 px-3 py-2 text-xs text-amber-500 dark:text-amber-400 italic h-9 align-middle'
                             : bodyCell,
-                          !missing && 'border-r border-slate-100 dark:border-navy-800 min-w-0',
+                          !missing && 'border-r border-slate-200 dark:border-navy-800 min-w-0',
                           missing && 'border-r border-amber-100 dark:border-amber-800/50 min-w-0',
                           isPrimary &&
                             !missing &&
@@ -695,7 +695,7 @@ const DataGrid: React.FC<DataGridProps> = ({
             <tr>
               <td
                 style={{ width: CHECK_COL_PX, minWidth: CHECK_COL_PX }}
-                className="sticky left-0 z-[8] border-r border-slate-100 dark:border-navy-800 bg-slate-50/90 dark:bg-navy-900/60 px-3 py-2 font-semibold uppercase tracking-wider text-slate-500"
+                className="sticky left-0 z-[8] border-r border-slate-200 dark:border-navy-800 bg-slate-50/90 dark:bg-navy-900/60 px-3 py-2 font-semibold uppercase tracking-wider text-slate-500"
               >
                 {isPl ? 'Podsum.' : 'Totals'}
               </td>
@@ -720,7 +720,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                     className={`${
                       missing
                         ? 'border-r border-amber-100 dark:border-amber-800/40 bg-amber-50/40 dark:bg-amber-900/10 px-3 py-2 text-xs text-amber-400/80'
-                        : 'border-r border-slate-100 dark:border-navy-800 px-3 py-2 tabular-nums'
+                        : 'border-r border-slate-200 dark:border-navy-800 px-3 py-2 tabular-nums'
                     } ${
                       isPrimary
                         ? missing

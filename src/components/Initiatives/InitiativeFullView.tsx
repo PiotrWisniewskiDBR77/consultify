@@ -127,7 +127,7 @@ const STATUS_META: Record<
   },
   CANCELLED: {
     label: 'Cancelled',
-    color: 'text-gray-400',
+    color: 'text-gray-600',
     bgColor: 'bg-gray-500/20',
     icon: <XCircle size={14} />,
   },

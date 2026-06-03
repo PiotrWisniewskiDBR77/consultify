@@ -163,7 +163,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
       <div className="flex items-center gap-3 px-6 py-3 bg-slate-900/80 border-b border-white/5">
         <button
           onClick={onClose}
-          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="p-2 rounded-lg text-slate-600 hover:text-white hover:bg-white/10 transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
@@ -175,7 +175,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
         <div className="flex-1" />
         <button
           onClick={resetView}
-          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="p-2 rounded-lg text-slate-600 hover:text-white hover:bg-white/10 transition-colors"
           title="Reset view"
         >
           <RotateCcw size={14} />

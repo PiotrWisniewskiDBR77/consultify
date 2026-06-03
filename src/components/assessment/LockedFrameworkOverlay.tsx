@@ -35,7 +35,7 @@ const LockedFrameworkOverlay: React.FC<LockedFrameworkOverlayProps> = ({
     <div className="flex items-center justify-center min-h-[60vh] p-8">
       <div className="max-w-md w-full text-center">
         <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center mx-auto mb-6">
-          <Lock className="w-10 h-10 text-slate-400 dark:text-slate-500" />
+          <Lock className="w-10 h-10 text-slate-600 dark:text-slate-500" />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
           {config?.fullName || frameworkId}

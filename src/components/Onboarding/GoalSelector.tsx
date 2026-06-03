@@ -221,7 +221,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               >
                 <Icon
                   size={24}
-                  className={isSelected ? colors.text : 'text-slate-400 dark:text-slate-500'}
+                  className={isSelected ? colors.text : 'text-slate-600 dark:text-slate-500'}
                 />
               </div>
 
@@ -239,7 +239,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               </p>
 
               {/* Time estimate */}
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500">
                 <Clock size={12} />
                 <span>{goal.estimatedTime}</span>
               </div>
@@ -267,7 +267,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                         ${
                           selectedGoalId
                             ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-900/20'
-                            : 'bg-slate-100 dark:bg-navy-900 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                            : 'bg-slate-100 dark:bg-navy-900 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                         }
                     `}
         >

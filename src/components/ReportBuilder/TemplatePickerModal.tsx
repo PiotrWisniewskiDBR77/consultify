@@ -434,7 +434,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 {systemTemplates.length === 0 && orgTemplates.length === 0 && (
                   <div className="text-center py-12">
                     <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-3">
-                      <FileText size={32} className="text-slate-400" />
+                      <FileText size={32} className="text-slate-600" />
                     </div>
                     <p className="text-sm font-medium text-slate-900 dark:text-white">
                       No templates available
@@ -486,7 +486,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 ${
                   selectedTemplateId && !creating
                     ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                    : 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-not-allowed'
+                    : 'bg-slate-200 dark:bg-navy-700 text-slate-600 cursor-not-allowed'
                 }
               `}
             >

@@ -157,7 +157,7 @@ export const UserIntegrations: React.FC<UserIntegrationsProps> = ({ className = 
           </div>
           <button
             onClick={refresh}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand transition-colors"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand transition-colors"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={20} />

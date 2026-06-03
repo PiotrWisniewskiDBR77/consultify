@@ -940,7 +940,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
             {t('auth.accessCode')}{' '}
-            <span className="text-slate-400 dark:text-slate-500 font-normal">
+            <span className="text-slate-600 dark:text-slate-500 font-normal">
               ({t('auth.optional')})
             </span>
           </label>
@@ -1234,21 +1234,21 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="text-center pt-3 border-t border-slate-200 dark:border-navy-700">
         <a
           href={ROUTES.LEGAL.PRIVACY}
-          className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="text-xs text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           {t('auth.privacyLink', 'Polityka prywatności')}
         </a>
-        <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
+        <span className="text-slate-600 dark:text-slate-600 mx-2">•</span>
         <a
           href={ROUTES.LEGAL.TERMS}
-          className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="text-xs text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           {t('auth.termsLink', 'Regulamin')}
         </a>
-        <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
+        <span className="text-slate-600 dark:text-slate-600 mx-2">•</span>
         <a
           href={ROUTES.LEGAL.CENTER}
-          className="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="text-xs text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           {t('auth.legalCenterLink', 'Legal Center')}
         </a>
@@ -1335,7 +1335,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 aria-label={t('auth.quickAccessPinAria', 'Four-digit quick access PIN')}
                 className="w-24 px-3 py-1.5 text-center text-lg tracking-widest font-mono bg-slate-100 dark:bg-navy-950 border border-slate-300 dark:border-white/20 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
               />
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 max-w-[14rem] text-center leading-tight">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500 max-w-[14rem] text-center leading-tight">
                 {t(
                   'auth.quickAccessFooter',
                   'Enter your PIN. To hide this field, double-click the logo or press Ctrl+Shift+K.'
@@ -1348,7 +1348,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {/* Close/Back Button */}
         <button
           onClick={onBack}
-          className="absolute top-4 right-4 text-slate-400 hover:text-navy-900 dark:text-slate-500 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5"
+          className="absolute top-4 right-4 text-slate-600 hover:text-navy-900 dark:text-slate-500 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5"
         >
           <X size={20} />
         </button>

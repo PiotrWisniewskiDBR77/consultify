@@ -123,7 +123,7 @@ export const DynamicTabBar: React.FC<DynamicTabBarProps> = ({
             ${
               isCollectionActive
                 ? 'bg-navy-800 text-white border-b-2 border-primary-400 -mb-px'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                : 'text-slate-600 hover:text-slate-200 hover:bg-white/5'
             }
           `}
         >
@@ -160,7 +160,7 @@ export const DynamicTabBar: React.FC<DynamicTabBarProps> = ({
                 ${
                   isActive
                     ? 'bg-navy-800 text-white border-b-2 border-primary-400 -mb-px'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                    : 'text-slate-600 hover:text-slate-200 hover:bg-white/5'
                 }
               `}
             >
@@ -177,7 +177,7 @@ export const DynamicTabBar: React.FC<DynamicTabBarProps> = ({
                   e.stopPropagation();
                   handleCloseWithConfirm(doc);
                 }}
-                className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-slate-400 hover:text-white hover:bg-white/10 transition-opacity"
+                className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-slate-600 hover:text-white hover:bg-white/10 transition-opacity"
                 aria-label={t('dynamicTabBar.closeTab', 'Close tab')}
               >
                 <X size={14} />

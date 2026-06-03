@@ -241,7 +241,7 @@ export const RiskRadar: React.FC<RiskRadarProps> = ({
         cy={center}
         r={3}
         fill="currentColor"
-        className="text-slate-300 dark:text-white/30"
+        className="text-slate-600 dark:text-white/30"
       />
 
       {/* Level labels */}

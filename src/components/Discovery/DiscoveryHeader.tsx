@@ -37,7 +37,7 @@ const PhaseIndicator: React.FC<{ currentPhase: DiscoveryPhase }> = ({ currentPha
                                 flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-all
                                 ${isActive ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : ''}
                                 ${isPast ? 'text-green-600 dark:text-green-400' : ''}
-                                ${isFuture ? 'text-slate-400 dark:text-slate-500' : ''}
+                                ${isFuture ? 'text-slate-600 dark:text-slate-500' : ''}
                             `}
               title={config?.description}
             >
@@ -49,7 +49,7 @@ const PhaseIndicator: React.FC<{ currentPhase: DiscoveryPhase }> = ({ currentPha
               <span className="md:hidden">{index + 1}</span>
             </div>
             {index < mainPhases.length - 1 && (
-              <ChevronRight size={14} className="text-slate-300 dark:text-slate-600" />
+              <ChevronRight size={14} className="text-slate-600 dark:text-slate-600" />
             )}
           </React.Fragment>
         );
@@ -71,7 +71,7 @@ const ClientBadge: React.FC = () => {
     <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
       {clientContext.companyName && (
         <div className="flex items-center gap-1.5">
-          <Building2 size={14} className="text-slate-400 dark:text-slate-500" />
+          <Building2 size={14} className="text-slate-600 dark:text-slate-500" />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {clientContext.companyName}
           </span>

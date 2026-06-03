@@ -225,7 +225,7 @@ const GuideCard: React.FC<{
           {description}
         </div>
       </div>
-      <ChevronRight size={14} className="text-slate-400 mt-1" />
+      <ChevronRight size={14} className="text-slate-600 mt-1" />
     </div>
   </button>
 );
@@ -561,7 +561,7 @@ export const HelpSidePanel: React.FC = () => {
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary-700 dark:group-hover:text-primary-300">
                     {t('help.sidePanel.overview.keyboardShortcuts', 'Keyboard Shortcuts')}
                   </span>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">
                     {t('help.sidePanel.overview.keyboardShortcutsHint', 'Press ? anytime to view')}
                   </p>
                 </div>
@@ -676,7 +676,7 @@ export const HelpSidePanel: React.FC = () => {
               <div className="relative">
                 <Search
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
                 />
                 <input
                   type="text"
@@ -702,7 +702,7 @@ export const HelpSidePanel: React.FC = () => {
                 <div className="text-center py-8">
                   <HelpCircle
                     size={32}
-                    className="mx-auto text-slate-300 dark:text-slate-600 mb-3"
+                    className="mx-auto text-slate-600 dark:text-slate-600 mb-3"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {searchQuery

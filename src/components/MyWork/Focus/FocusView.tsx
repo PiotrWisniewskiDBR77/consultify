@@ -278,7 +278,7 @@ const SmartSnoozePopover: React.FC<{
       exit={{ opacity: 0, scale: 0.95 }}
       className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[160px]"
     >
-      <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+      <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
         {t('myWork.focus.snooze.moveTo', 'Move to')}
       </div>
       {filtered.map((opt) => (
@@ -387,7 +387,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           onClick={(e) => e.stopPropagation()}
           className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
-          <GripVertical size={14} className="text-slate-400 dark:text-slate-600" />
+          <GripVertical size={14} className="text-slate-600 dark:text-slate-600" />
         </div>
 
         {/* Type Badge & Completion Toggle */}
@@ -440,7 +440,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
               <h4
                 className={`text-sm font-semibold leading-snug ${
                   item.isCompleted
-                    ? 'text-slate-400 dark:text-slate-500 line-through'
+                    ? 'text-slate-600 dark:text-slate-500 line-through'
                     : 'text-navy-900 dark:text-white'
                 }`}
               >
@@ -785,7 +785,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                     </span>
                   </div>
                   {aiLoading ? (
-                    <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
+                    <div className="flex items-center gap-2 text-xs text-slate-600 py-2">
                       <Loader2 size={12} className="animate-spin" />
                       {t('myWork.focus.delegate.analyzing', 'Analyzing team...')}
                     </div>
@@ -837,7 +837,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
               {users.filter((u) => !suggestedIds.has(u.id)).length > 0 && (
                 <div>
                   {aiSuggestions.length > 0 && (
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
                       {t('myWork.focus.delegate.allMembers', 'All Team Members')}
                     </span>
                   )}
@@ -1917,7 +1917,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                           />
                         </div>
                       ) : (
-                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 italic">
+                        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 italic">
                           {t('myWork.focus.noDue', 'No due date')}
                         </span>
                       )}

@@ -189,7 +189,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
                 'A fiscal year is a 12-month period used for financial reporting. It may or may not align with the calendar year.'
               )}
             >
-              <button className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+              <button className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
                 <HelpCircle size={16} />
               </button>
             </Tooltip>

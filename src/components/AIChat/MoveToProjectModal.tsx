@@ -159,7 +159,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             title={t('common.close', 'Close')}
           >
             <X size={16} />
@@ -170,7 +170,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
         <div className="p-5">
           {/* Current */}
           <div className="mb-4">
-            <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
               {t('aiChat.currentFolder', 'Current')}
             </div>
             <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
@@ -178,7 +178,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Folder size={14} style={{ color: currentProject.color }} />
                   <span className="truncate">{currentProject.name}</span>
-                  <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-500 uppercase">
+                  <span className="ml-auto text-[10px] text-slate-600 dark:text-slate-500 uppercase">
                     {currentProject.scope === 'team'
                       ? t('aiChat.teamFolder', 'Team')
                       : t('aiChat.personalFolder', 'Personal')}
@@ -206,7 +206,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
           <div className="relative mb-4">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               value={query}
@@ -246,7 +246,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                   />
                   <button
                     onClick={() => setShowCreate(false)}
-                    className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                    className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                     title={t('common.cancel', 'Cancel')}
                   >
                     <X size={16} />
@@ -372,11 +372,11 @@ const Section: React.FC<{
   return (
     <div>
       <div className="flex items-center gap-2 mb-2 px-1">
-        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
           {icon}
           {title}
         </div>
-        <div className="ml-auto text-[10px] text-slate-300 dark:text-slate-600">{items.length}</div>
+        <div className="ml-auto text-[10px] text-slate-600 dark:text-slate-600">{items.length}</div>
       </div>
       <div className="space-y-1">
         {visibleItems.map((p) => {
@@ -396,7 +396,7 @@ const Section: React.FC<{
               <Folder size={14} style={{ color: p.color || '#6366f1' }} />
               <span className="truncate flex-1">{p.name}</span>
               {typeof p.conversationCount === 'number' && (
-                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                <span className="text-[10px] text-slate-600 dark:text-slate-500">
                   {p.conversationCount}
                 </span>
               )}

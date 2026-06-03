@@ -190,7 +190,7 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
             onClick={onClose}
             className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <X size={11} className="text-slate-400" />
+            <X size={11} className="text-slate-600" />
           </button>
         </div>
         <div className="max-h-[360px] overflow-auto p-1.5">
@@ -212,7 +212,7 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
                   <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                     {isPl ? tpl.labelPl : tpl.labelEn}
                   </div>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500 truncate">
+                  <div className="text-[9px] text-slate-600 dark:text-slate-500 truncate">
                     {isPl ? tpl.descPl : tpl.descEn}
                   </div>
                 </div>

@@ -1992,7 +1992,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               type="button"
               onClick={() => setShowCoach(false)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
             >
               <X size={14} />
             </button>
@@ -2117,7 +2117,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               type="button"
               onClick={() => setShowSummary(false)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
             >
               <X size={14} />
             </button>
@@ -2204,7 +2204,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       {/* Canvas */}
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="animate-spin text-slate-400" size={24} />
+          <Loader2 className="animate-spin text-slate-600" size={24} />
         </div>
       ) : (
         <div ref={flowContainerRef} className="flex-1 relative">
@@ -2231,7 +2231,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
                   {isPl ? 'Pusty przepływ' : 'Empty process flow'}
                 </div>
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-3 max-w-[220px]">
+                <div className="text-[11px] text-slate-600 dark:text-slate-500 mb-3 max-w-[220px]">
                   {isPl
                     ? 'Dodaj kroki z paska narzędzi lub naciśnij Enter'
                     : 'Add steps from the toolbar or press Enter'}
@@ -2383,7 +2383,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onClick={() => setShowValidationPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ValidationResultsPanel
@@ -2409,7 +2409,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onClick={() => setShowAIPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <AIProposalPanel
@@ -2439,7 +2439,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onClick={() => setShowReadbackPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ReadbackPanel
@@ -2464,7 +2464,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onClick={() => setShowPropertiesPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ProcessFlowPropertiesPanel
@@ -2590,7 +2590,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               <button
                 type="button"
                 onClick={() => setMetricsEditorNodeId(null)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-navy-800 dark:hover:text-slate-200"
+                className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-navy-800 dark:hover:text-slate-200"
               >
                 <X size={14} />
               </button>

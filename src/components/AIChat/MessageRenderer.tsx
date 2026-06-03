@@ -150,7 +150,7 @@ function renderNodesWithCitations(
           parts.push(
             <span
               key={`${path}-cite-${i}`}
-              className="inline-flex items-center justify-center w-4 h-4 text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded align-super mx-0.5"
+              className="inline-flex items-center justify-center w-4 h-4 text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 rounded align-super mx-0.5"
               title="Citation reference (source not available)"
             >
               {num}
@@ -619,7 +619,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                 {it.label}
                               </div>
                               {it.rationale ? (
-                                <div className="text-slate-400 dark:text-slate-500 truncate">
+                                <div className="text-slate-600 dark:text-slate-500 truncate">
                                   {it.rationale}
                                 </div>
                               ) : null}
@@ -842,7 +842,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                       {label}
                                     </div>
                                     {why ? (
-                                      <div className="text-slate-400 dark:text-slate-500 truncate">
+                                      <div className="text-slate-600 dark:text-slate-500 truncate">
                                         {why}
                                       </div>
                                     ) : null}
@@ -1392,7 +1392,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 {/* Cost-per-analysis estimate badge */}
                 {userVisibleContent && userVisibleContent.length > 50 && (
                   <span
-                    className="text-slate-400 dark:text-slate-500"
+                    className="text-slate-600 dark:text-slate-500"
                     title={t(
                       'stream.costEstimateTooltip',
                       'Estimated AI cost for this response based on token usage'

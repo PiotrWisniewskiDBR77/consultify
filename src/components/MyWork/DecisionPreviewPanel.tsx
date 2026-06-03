@@ -265,7 +265,7 @@ export const DecisionPreviewBody: React.FC<{
       {formatShortDate(decision.dueDate) || ''}
     </span>
   ) : (
-    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 italic">
+    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 italic">
       {isPolish ? 'Bez terminu' : 'No due date'}
     </span>
   );

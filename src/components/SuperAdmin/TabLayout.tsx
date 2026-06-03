@@ -38,7 +38,7 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header with title and tabs */}
-      <div className="shrink-0 bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border-b border-slate-100 dark:border-navy-800 relative z-10">
+      <div className="shrink-0 bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-navy-800 relative z-10">
         {/* Title + tabs on one row when possible */}
         <div className="px-5 pt-4 pb-0 flex items-end justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4 min-w-0">
@@ -72,7 +72,7 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
                   activeTab === tab.id
                     ? 'text-slate-900 dark:text-slate-100 border-primary-500 bg-slate-100/80 dark:bg-white/5'
                     : tab.disabled
-                      ? 'text-slate-400 dark:text-slate-600 border-transparent cursor-not-allowed'
+                      ? 'text-slate-600 dark:text-slate-600 border-transparent cursor-not-allowed'
                       : 'text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
                 }
               `}

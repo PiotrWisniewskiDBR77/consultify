@@ -152,9 +152,9 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
         </span>
         <div className="flex-1" />
         {expanded ? (
-          <ChevronDown size={12} className="text-slate-400" />
+          <ChevronDown size={12} className="text-slate-600" />
         ) : (
-          <ChevronUp size={12} className="text-slate-400" />
+          <ChevronUp size={12} className="text-slate-600" />
         )}
       </button>
 
@@ -201,7 +201,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                 >
                   <div className="flex items-center gap-1.5 mb-1">
                     <Icon size={11} style={{ color: stat.color }} />
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600">
                       {stat.label}
                     </span>
                   </div>
@@ -215,7 +215,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
 
           {/* Completeness gauge */}
           <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/40 dark:border-navy-700/40 p-3">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2 block">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-2 block">
               {isPl ? 'Kompletność danych' : 'Data completeness'}
             </span>
             <div className="h-2.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
@@ -251,7 +251,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                   key={column.key}
                   className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/40 dark:border-navy-700/40 p-3"
                 >
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2 block">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-2 block">
                     {column.header}
                   </span>
                   <div className="space-y-1.5">
@@ -269,7 +269,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                             }}
                           />
                         </div>
-                        <span className="text-[9px] text-slate-400 w-6 text-right">{d.count}</span>
+                        <span className="text-[9px] text-slate-600 w-6 text-right">{d.count}</span>
                       </div>
                     ))}
                   </div>
@@ -286,7 +286,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                   key={column.key}
                   className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/40 dark:border-navy-700/40 p-3"
                 >
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1 block">
                     {column.header}
                   </span>
                   <div className="grid grid-cols-2 gap-1 text-[10px]">

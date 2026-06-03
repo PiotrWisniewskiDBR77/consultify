@@ -316,7 +316,7 @@ export const VectorPage: React.FC = () => {
                     <span className="text-xs font-black text-primary-500 bg-primary-100 dark:bg-primary-900/30 rounded-lg px-2.5 py-1">
                       {step.num}
                     </span>
-                    <Icon size={18} className="text-slate-400 dark:text-slate-500" />
+                    <Icon size={18} className="text-slate-600 dark:text-slate-500" />
                   </div>
                   <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">
                     {t(`vector.pipeline.steps.${step.num}.title`, step.title)}

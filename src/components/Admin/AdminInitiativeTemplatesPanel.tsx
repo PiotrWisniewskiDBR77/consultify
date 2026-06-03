@@ -286,11 +286,11 @@ const getSourceBadgeConfig = (source: string) => {
     case 'tool':
       return { color: 'text-amber-400', bg: 'bg-amber-500/15' };
     case 'manual':
-      return { color: 'text-slate-400', bg: 'bg-slate-500/15' };
+      return { color: 'text-slate-600', bg: 'bg-slate-500/15' };
     case 'ai':
       return { color: 'text-emerald-400', bg: 'bg-emerald-500/15' };
     default:
-      return { color: 'text-slate-400', bg: 'bg-slate-500/15' };
+      return { color: 'text-slate-600', bg: 'bg-slate-500/15' };
   }
 };
 
@@ -927,7 +927,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                 );
                               })}
                               {template.sourceTypes.length > 3 && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/15 text-slate-400">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/15 text-slate-600">
                                   +{template.sourceTypes.length - 3}
                                 </span>
                               )}
@@ -967,7 +967,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                           {/* Updated */}
                           <td className="px-3 py-2.5" style={{ width: columnWidths.updatedAt }}>
                             <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
-                              <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+                              <Calendar size={12} className="text-slate-600 dark:text-slate-500" />
                               {formatDate(template.updatedAt || template.createdAt)}
                             </div>
                           </td>
@@ -1047,7 +1047,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                             className={`w-2 h-2 rounded-full ${visible ? 'bg-emerald-400' : 'bg-slate-600'}`}
                                           />
                                           <span
-                                            className={`text-xs ${visible ? 'text-slate-300' : 'text-slate-600'}`}
+                                            className={`text-xs ${visible ? 'text-slate-600' : 'text-slate-600'}`}
                                           >
                                             {key
                                               .replace(/([A-Z])/g, ' $1')
@@ -1068,7 +1068,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                     {template.suggestedTasks.map((task: any, i: number) => (
                                       <div key={i} className="flex items-start gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
-                                        <span className="text-xs text-slate-400 line-clamp-1">
+                                        <span className="text-xs text-slate-600 line-clamp-1">
                                           {task.title}
                                         </span>
                                       </div>
@@ -1093,7 +1093,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                           className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${m.isGate ? 'bg-amber-400' : 'bg-slate-500'}`}
                                         />
                                         <span
-                                          className={`text-xs ${m.isGate ? 'text-amber-300 font-medium' : 'text-slate-400'}`}
+                                          className={`text-xs ${m.isGate ? 'text-amber-300 font-medium' : 'text-slate-600'}`}
                                         >
                                           {m.name} {m.isGate && '⦿'}
                                         </span>
@@ -1156,7 +1156,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                                       {template.suggestedDecisions.map((d: any, i: number) => (
                                         <div key={i} className="flex items-start gap-2">
                                           <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 flex-shrink-0" />
-                                          <span className="text-xs text-slate-400">{d.title}</span>
+                                          <span className="text-xs text-slate-600">{d.title}</span>
                                         </div>
                                       ))}
                                       {template.suggestedDecisions.length === 0 && (

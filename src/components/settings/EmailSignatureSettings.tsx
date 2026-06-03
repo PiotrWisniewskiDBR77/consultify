@@ -290,7 +290,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
       {/* Signatures List */}
       {signatures.length === 0 && !isCreating ? (
         <div className={cardClass + ' p-8 text-center'}>
-          <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <FileText className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             No signatures yet
           </h3>
@@ -310,7 +310,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
           {signatures.map((signature) => (
             <div key={signature.id} className={cardClass + ' overflow-hidden'}>
               {/* Header */}
-              <div className="p-4 flex items-center justify-between border-b border-slate-100 dark:border-navy-700">
+              <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-navy-700">
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-slate-900 dark:text-white">
                     {signature.name}
@@ -325,14 +325,14 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPreviewId(previewId === signature.id ? null : signature.id)}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                     title="Preview"
                   >
                     <Eye size={16} />
                   </button>
                   <button
                     onClick={() => handleCopy(signature.content)}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                     title="Copy"
                   >
                     <Copy size={16} />
@@ -340,7 +340,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   {!signature.isDefault && (
                     <button
                       onClick={() => handleSetDefault(signature.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-lg transition-colors"
+                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-lg transition-colors"
                       title="Set as default"
                     >
                       <Star size={16} />
@@ -348,14 +348,14 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   )}
                   <button
                     onClick={() => handleEdit(signature)}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
+                    className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
                     title="Edit"
                   >
                     <Edit2 size={16} />
                   </button>
                   <button
                     onClick={() => handleDelete(signature.id)}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

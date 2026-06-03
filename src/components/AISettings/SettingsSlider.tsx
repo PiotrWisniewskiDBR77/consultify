@@ -32,7 +32,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
   label,
   description,
   icon: Icon,
-  iconColor = 'text-slate-400 dark:text-slate-500',
+  iconColor = 'text-slate-600 dark:text-slate-500',
   value,
   onChange,
   min,
@@ -76,7 +76,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
                     className="
                                         absolute left-1/2 -translate-x-1/2 bottom-full mb-2
                                         px-2 py-1 rounded bg-slate-800 border border-slate-700
-                                        text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap
+                                        text-xs text-slate-600 dark:text-slate-500 whitespace-nowrap
                                         opacity-0 invisible group-hover:opacity-100 group-hover:visible
                                         transition-all duration-200 z-50
                                     "
@@ -112,7 +112,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
 
           {description && (
             <p
-              className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400'}`}
+              className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-600 dark:text-slate-400' : 'text-slate-600'}`}
             >
               {description}
             </p>

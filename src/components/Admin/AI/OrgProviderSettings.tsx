@@ -173,7 +173,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       case 'unhealthy':
         return <XCircle size={14} className="text-rose-400" />;
       default:
-        return <Server size={14} className="text-slate-400 dark:text-slate-500" />;
+        return <Server size={14} className="text-slate-600 dark:text-slate-500" />;
     }
   };
 
@@ -194,14 +194,14 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">LLM Provider Settings</h3>
-          <p className="text-sm text-slate-400 dark:text-slate-500">
+          <p className="text-sm text-slate-600 dark:text-slate-500">
             Enable or disable AI providers for your organization. Only enabled providers will be
             available to users.
           </p>
         </div>
         <button
           onClick={loadData}
-          className="flex items-center gap-2 px-3 py-2 text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
         >
           <RefreshCw size={16} />
           Refresh
@@ -214,7 +214,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
           <Info size={20} className="text-blue-400 mt-0.5" />
           <div>
             <h4 className="text-blue-300 font-medium">How Provider Selection Works</h4>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               When you disable a provider, its models will no longer be available in any tier. The
               system will automatically use remaining enabled providers with round-robin selection.
             </p>
@@ -240,7 +240,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                   {getHealthIcon(provider.health_status)}
                   <div>
                     <div className="text-white font-medium">{provider.name}</div>
-                    <div className="text-sm text-slate-400 dark:text-slate-500">
+                    <div className="text-sm text-slate-600 dark:text-slate-500">
                       {provider.provider} • {provider.model_id}
                     </div>
                   </div>
@@ -277,7 +277,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
             {showDisabled ? <Eye size={18} /> : <EyeOff size={18} />}
             Disabled Providers ({disabledProviders.length})
           </h4>
-          <span className="text-slate-400 dark:text-slate-500 text-sm">
+          <span className="text-slate-600 dark:text-slate-500 text-sm">
             {showDisabled ? 'Hide' : 'Show'}
           </span>
         </button>
@@ -292,7 +292,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                 <div className="flex items-center gap-3">
                   {getHealthIcon(provider.health_status)}
                   <div>
-                    <div className="text-slate-300 font-medium">{provider.name}</div>
+                    <div className="text-slate-600 font-medium">{provider.name}</div>
                     <div className="text-sm text-slate-500 dark:text-slate-400">
                       {provider.provider} • {provider.model_id}
                     </div>
@@ -301,7 +301,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                 <button
                   onClick={() => toggleProvider(provider.id, false)}
                   disabled={savingProvider === provider.id}
-                  className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-navy-800/300/20 hover:bg-emerald-500/20 text-slate-400 dark:text-slate-500 hover:text-emerald-400 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-navy-800/300/20 hover:bg-emerald-500/20 text-slate-600 dark:text-slate-500 hover:text-emerald-400 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {savingProvider === provider.id ? (
                     <RefreshCw size={16} className="animate-spin" />
@@ -319,7 +319,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       {/* Available Models Preview */}
       <div className="bg-white/5 rounded-xl border border-white/10 p-6">
         <h4 className="text-white font-medium mb-4">Available Models per Tier</h4>
-        <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+        <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
           These are the models currently available to your users based on enabled providers.
         </p>
 
@@ -343,7 +343,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                     {models.map((model, idx) => (
                       <div key={idx} className="flex items-center gap-2 text-sm">
                         {getHealthIcon(model.health_status)}
-                        <span className="text-slate-300">{model.name}</span>
+                        <span className="text-slate-600">{model.name}</span>
                       </div>
                     ))}
                   </div>

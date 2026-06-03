@@ -268,7 +268,7 @@ function highlightFormula(
       : []),
     { pattern: funcPattern, cls: 'text-blue-600 dark:text-blue-400 font-semibold' },
     { pattern: numberPattern, cls: 'text-primary-600 dark:text-primary-400' },
-    { pattern: operatorPattern, cls: 'text-slate-400 dark:text-zinc-500' },
+    { pattern: operatorPattern, cls: 'text-slate-600 dark:text-zinc-500' },
   ];
 
   // Build a combined match list
@@ -626,7 +626,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                         {item.label}
                       </div>
                       {item.detail && (
-                        <div className="truncate text-[10px] text-slate-400 dark:text-zinc-500">
+                        <div className="truncate text-[10px] text-slate-600 dark:text-zinc-500">
                           {item.detail}
                         </div>
                       )}
@@ -641,7 +641,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
         {/* Validation status */}
         <div className="flex items-center gap-3">
           {validating ? (
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               {isPl ? 'Walidacja...' : 'Validating...'}
             </div>
@@ -666,7 +666,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
 
           {/* Dependencies */}
           {validation?.valid && validation.dependencies && validation.dependencies.length > 0 && (
-            <div className="flex items-center gap-1 text-[10px] text-slate-400">
+            <div className="flex items-center gap-1 text-[10px] text-slate-600">
               <span>{isPl ? 'Zależy od:' : 'Depends on:'}</span>
               {validation.dependencies.map((dep) => (
                 <span
@@ -682,19 +682,19 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
 
         {/* Preview */}
         {validation?.valid && (
-          <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/50">
-            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-500">
               <Sparkles className="h-3 w-3" />
               {isPl ? 'Podgląd wyniku' : 'Result preview'}
             </div>
             {previewLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-600" />
             ) : preview != null ? (
               <span className="font-mono text-xs font-semibold text-slate-700 dark:text-zinc-200">
                 {preview}
               </span>
             ) : (
-              <span className="text-[10px] italic text-slate-400">
+              <span className="text-[10px] italic text-slate-600">
                 {isPl ? 'Brak danych do podglądu' : 'No preview data available'}
               </span>
             )}
@@ -707,18 +707,18 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
             onClick={() => setShowFuncRef(!showFuncRef)}
             className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800/50"
           >
-            <BookOpen className="h-3.5 w-3.5 text-slate-400" />
+            <BookOpen className="h-3.5 w-3.5 text-slate-600" />
             <span className="flex-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
               {isPl ? 'Dostępne funkcje' : 'Available functions'}
             </span>
             {showFuncRef ? (
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              <ChevronDown className="h-3.5 w-3.5 text-slate-600" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+              <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
             )}
           </button>
           {showFuncRef && (
-            <div className="border-t border-slate-100 px-2 py-2 dark:border-zinc-800">
+            <div className="border-t border-slate-200 px-2 py-2 dark:border-zinc-800">
               {FUNCTION_CATEGORIES.map((cat) => {
                 const funcs = FORMULA_FUNCTIONS.filter((f) => f.category === cat.key);
                 const isExpanded = expandedCategory === cat.key;
@@ -761,7 +761,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                               <div className="font-mono text-[10px] font-semibold text-slate-700 dark:text-zinc-200">
                                 {fn.signature}
                               </div>
-                              <div className="text-[9px] text-slate-400 dark:text-zinc-500">
+                              <div className="text-[9px] text-slate-600 dark:text-zinc-500">
                                 {isPl ? fn.description.pl : fn.description.en}
                               </div>
                             </div>

@@ -41,7 +41,7 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
 
   return (
     <div className="py-1">
-      <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-slate-500">
+      <div className="flex items-center gap-1.5 mb-2 text-slate-600 dark:text-slate-500">
         <Clock size={12} />
         <span className="text-[10px] font-medium uppercase tracking-wider">
           {isPolish ? 'Aktywność' : 'Activity'}
@@ -59,7 +59,7 @@ export const PreviewActivityStrip: React.FC<PreviewActivityStripProps> = ({
                 {event.userName ? <span className="font-medium">{event.userName} </span> : null}
                 {event.description}
               </div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+              <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                 {formatRelative(event.timestamp, isPolish)}
               </div>
             </div>

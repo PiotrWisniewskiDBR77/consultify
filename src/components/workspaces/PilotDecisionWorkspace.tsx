@@ -118,7 +118,7 @@ export const PilotDecisionWorkspace: React.FC<PilotDecisionWorkspaceProps> = ({
                     <th className="p-4 text-slate-500 dark:text-slate-400">Big Bang Rollout</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                   <tr>
                     <td className="p-4 font-medium text-navy-900 dark:text-white">Time to Value</td>
                     <td className="p-4 text-green-600">Fast (4-8 weeks)</td>

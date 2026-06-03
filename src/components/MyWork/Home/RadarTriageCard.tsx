@@ -42,11 +42,11 @@ const DEGRADED_META: Record<
     bannerClass: 'border-rose-400/25 bg-rose-500/10 text-rose-100',
   },
   degraded_stale: {
-    icon: <Clock className="size-3.5 shrink-0 text-slate-300" aria-hidden />,
+    icon: <Clock className="size-3.5 shrink-0 text-slate-600" aria-hidden />,
     bannerClass: 'border-slate-400/25 bg-slate-500/12 text-slate-200',
   },
   blocked_permission: {
-    icon: <Lock className="size-3.5 shrink-0 text-slate-300" aria-hidden />,
+    icon: <Lock className="size-3.5 shrink-0 text-slate-600" aria-hidden />,
     bannerClass: 'border-primary-400/25 bg-primary-500/10 text-primary-100',
   },
 };
@@ -130,11 +130,11 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
           </div>
           <p className="text-xs leading-relaxed text-slate-200">{signal.whyNow.rationaleText}</p>
           <div className="flex flex-wrap gap-1">
-            <span className="inline-flex items-center gap-1 rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
+            <span className="inline-flex items-center gap-1 rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-600">
               <Clock className="size-3 opacity-70" aria-hidden />
               {t(`${TK}.timeWindow.${signal.whyNow.timeWindow}`)}
             </span>
-            <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
+            <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-600">
               {t(`${TK}.driver.${signal.whyNow.primaryDriver}`)}
             </span>
           </div>
@@ -157,7 +157,7 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
                 : t(`${TK}.evidencePartial`)}
             </span>
           </div>
-          <ul className="mt-1 space-y-0.5 text-[11px] text-slate-300">
+          <ul className="mt-1 space-y-0.5 text-[11px] text-slate-600">
             {signal.evidence.evidencePointers.map((p, i) => (
               <li key={`${p.ref}-${i}`} className="flex gap-1.5 leading-snug">
                 <span className="shrink-0 text-slate-500">{p.type}</span>
@@ -175,10 +175,10 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
             </div>
             {u.missingInputs.length > 0 && (
               <div className="mt-1">
-                <div className="text-[10px] font-semibold text-slate-400">
+                <div className="text-[10px] font-semibold text-slate-600">
                   {t(`${TK}.missingInputs`)}
                 </div>
-                <ul className="mt-0.5 list-inside list-disc text-[11px] text-slate-300">
+                <ul className="mt-0.5 list-inside list-disc text-[11px] text-slate-600">
                   {u.missingInputs.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -187,10 +187,10 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
             )}
             {u.conflicts.length > 0 && (
               <div className="mt-1">
-                <div className="text-[10px] font-semibold text-slate-400">
+                <div className="text-[10px] font-semibold text-slate-600">
                   {t(`${TK}.conflicts`)}
                 </div>
-                <ul className="mt-0.5 list-inside list-disc text-[11px] text-slate-300">
+                <ul className="mt-0.5 list-inside list-disc text-[11px] text-slate-600">
                   {u.conflicts.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -199,10 +199,10 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
             )}
             {u.whatWouldChangeRanking.length > 0 && (
               <div className="mt-1">
-                <div className="text-[10px] font-semibold text-slate-400">
+                <div className="text-[10px] font-semibold text-slate-600">
                   {t(`${TK}.wouldChange`)}
                 </div>
-                <ul className="mt-0.5 list-inside list-disc text-[11px] text-slate-300">
+                <ul className="mt-0.5 list-inside list-disc text-[11px] text-slate-600">
                   {u.whatWouldChangeRanking.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -213,9 +213,9 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
         )}
 
         <div className="mt-2 border-t border-white/[0.08] pt-2">
-          <div className="text-[10px] text-slate-400">
+          <div className="text-[10px] text-slate-600">
             <span className="font-semibold text-slate-500">{t(`${TK}.owner`)}</span>
-            <span className="text-slate-300"> · {signal.ownership.ownerRole}</span>
+            <span className="text-slate-600"> · {signal.ownership.ownerRole}</span>
           </div>
           <div className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
             {t(`${TK}.nextAction`)}

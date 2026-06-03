@@ -330,11 +330,11 @@ export const ApprovalPatternManager: React.FC = () => {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <RefreshCw size={24} className="animate-spin text-slate-400 dark:text-slate-500" />
+            <RefreshCw size={24} className="animate-spin text-slate-600 dark:text-slate-500" />
           </div>
         ) : patterns.length === 0 ? (
           <div className="text-center py-12 bg-slate-50 dark:bg-navy-900/30 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
-            <Brain size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+            <Brain size={40} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
             <p className="text-slate-500 dark:text-slate-400">
               {language === 'pl'
                 ? 'Brak nauczonych wzorców. Zatwierdzaj lub odrzucaj propozycje AI, aby system się uczył.'
@@ -402,7 +402,7 @@ export const ApprovalPatternManager: React.FC = () => {
                         handleDeletePattern(pattern.id);
                       }}
                       disabled={deletingPatterns.has(pattern.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-50"
                     >
                       {deletingPatterns.has(pattern.id) ? (
                         <RefreshCw size={16} className="animate-spin" />
@@ -413,16 +413,16 @@ export const ApprovalPatternManager: React.FC = () => {
 
                     {/* Expand/collapse */}
                     {expandedPatterns.has(pattern.id) ? (
-                      <ChevronUp size={18} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronUp size={18} className="text-slate-600 dark:text-slate-500" />
                     ) : (
-                      <ChevronDown size={18} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronDown size={18} className="text-slate-600 dark:text-slate-500" />
                     )}
                   </div>
                 </div>
 
                 {/* Expanded Details */}
                 {expandedPatterns.has(pattern.id) && (
-                  <div className="px-4 pb-4 border-t border-slate-100 dark:border-navy-700 pt-3">
+                  <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700 pt-3">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-slate-500 dark:text-slate-400 text-xs">

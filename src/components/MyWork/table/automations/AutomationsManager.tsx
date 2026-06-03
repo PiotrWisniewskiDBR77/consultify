@@ -258,7 +258,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
             }}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <ChevronLeft size={16} className="text-slate-400" />
+            <ChevronLeft size={16} className="text-slate-600" />
           </button>
           <Zap size={16} className="text-amber-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
@@ -314,21 +314,21 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
             }}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <ChevronLeft size={16} className="text-slate-400" />
+            <ChevronLeft size={16} className="text-slate-600" />
           </button>
           <Clock size={16} className="text-blue-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Historia uruchomień' : 'Run History'}
-            <span className="ml-1 font-normal text-slate-400">— {historyTarget.name}</span>
+            <span className="ml-1 font-normal text-slate-600">— {historyTarget.name}</span>
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {runsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 size={20} className="animate-spin text-slate-400" />
+              <Loader2 size={20} className="animate-spin text-slate-600" />
             </div>
           ) : runs.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-400">
+            <div className="py-12 text-center text-xs text-slate-600">
               {isPl ? 'Brak historii uruchomień.' : 'No run history yet.'}
             </div>
           ) : (
@@ -363,7 +363,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                               : 'Running'}
                       </span>
                       {run.duration_ms != null && (
-                        <span className="text-[10px] text-slate-400">{run.duration_ms}ms</span>
+                        <span className="text-[10px] text-slate-600">{run.duration_ms}ms</span>
                       )}
                     </div>
                     <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -395,13 +395,13 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
             onClick={onClose}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <ChevronLeft size={16} className="text-slate-400" />
+            <ChevronLeft size={16} className="text-slate-600" />
           </button>
           <Zap size={18} className="text-amber-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Automatyzacje' : 'Automations'}
             {automations.length > 0 && (
-              <span className="ml-1 font-normal text-slate-400">({automations.length})</span>
+              <span className="ml-1 font-normal text-slate-600">({automations.length})</span>
             )}
           </h3>
         </div>
@@ -418,12 +418,12 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
       <div className="flex-1 overflow-y-auto p-5">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-400" />
+            <Loader2 size={20} className="animate-spin text-slate-600" />
           </div>
         ) : automations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-4 rounded-2xl bg-slate-100 p-4 dark:bg-navy-800">
-              <Zap size={28} className="text-slate-400 dark:text-slate-500" />
+              <Zap size={28} className="text-slate-600 dark:text-slate-500" />
             </div>
             <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
               {isPl ? 'Brak automatyzacji' : 'No automations yet'}
@@ -464,14 +464,14 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                       {auto.name}
                     </span>
                     {!auto.enabled && (
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400 dark:bg-navy-800">
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 dark:bg-navy-800">
                         {isPl ? 'Wstrzymana' : 'Paused'}
                       </span>
                     )}
                   </div>
                   <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                     {triggerDescription(auto, !!isPl)}
-                    <span className="ml-2 text-slate-400">
+                    <span className="ml-2 text-slate-600">
                       → {auto.actions.length} {isPl ? 'akcji' : 'action(s)'}
                     </span>
                   </div>
@@ -496,7 +496,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                 <div className="relative flex-shrink-0">
                   <button
                     onClick={() => setMenuOpen(menuOpen === auto.id ? null : auto.id)}
-                    className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-navy-800 dark:hover:text-slate-300"
+                    className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-navy-800 dark:hover:text-slate-300"
                   >
                     <MoreHorizontal size={16} />
                   </button>
@@ -530,7 +530,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                             setView('edit');
                           }}
                         />
-                        <div className="my-1 border-t border-slate-100 dark:border-navy-800" />
+                        <div className="my-1 border-t border-slate-200 dark:border-navy-800" />
                         <MenuBtn
                           icon={<Trash2 size={13} />}
                           label={isPl ? 'Usuń' : 'Delete'}

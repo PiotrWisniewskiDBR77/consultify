@@ -933,7 +933,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 </span>
                 <button
                   onClick={onClose}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                  className="text-slate-600 hover:text-slate-600 transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -953,7 +953,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           {isPolish ? at.labelPl : at.label}
                         </div>
-                        <div className="text-[9px] text-slate-400 mt-0.5">
+                        <div className="text-[9px] text-slate-600 mt-0.5">
                           {isPolish ? at.descPl : at.desc}
                         </div>
                       </div>
@@ -971,7 +971,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setStep(1)}
-                    className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-[10px] text-slate-600 hover:text-slate-600 transition-colors"
                   >
                     ← {isPolish ? 'Wróć' : 'Back'}
                   </button>
@@ -983,7 +983,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 </div>
                 <button
                   onClick={onClose}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                  className="text-slate-600 hover:text-slate-600 transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -1298,7 +1298,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       />
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-slate-600">
                     {isPolish
                       ? 'Okres wpływa na harmonogram i datę końca inicjatywy. Effort służy do heatmapy obciążenia zespołu.'
                       : 'Calendar window affects schedule/end date. Effort is used for team workload heatmaps.'}
@@ -1921,7 +1921,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       }
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
-                    <p className="mt-1 text-[10px] text-slate-400">
+                    <p className="mt-1 text-[10px] text-slate-600">
                       {isPolish
                         ? 'Wyjaśnij przyczynę postoju. Ta informacja będzie widoczna w harmonogramie i pomoże ocenić wpływ na kolejne kroki.'
                         : 'Explain why execution is paused. This note is shown in the timeline and helps evaluate impact on next steps.'}
@@ -2256,7 +2256,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-slate-600 hover:text-slate-600 transition-colors"
           >
             <X size={14} />
           </button>
@@ -2546,7 +2546,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 />
               </div>
             </div>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-slate-600">
               {isPolish
                 ? 'Okres wpływa na harmonogram i datę końca inicjatywy. Effort służy do heatmapy obciążenia zespołu.'
                 : 'Calendar window affects schedule/end date. Effort is used for team workload heatmaps.'}
@@ -3121,7 +3121,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 placeholder={isPolish ? 'np. freeze wdrożeniowy' : 'e.g. deployment freeze'}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
-              <p className="mt-1 text-[10px] text-slate-400">
+              <p className="mt-1 text-[10px] text-slate-600">
                 {isPolish
                   ? 'Wyjaśnij przyczynę postoju. Ta informacja będzie widoczna w harmonogramie i pomoże ocenić wpływ na kolejne kroki.'
                   : 'Explain why execution is paused. This note is shown in the timeline and helps evaluate impact on next steps.'}
@@ -3335,12 +3335,12 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               {canEdit ? (
                 <GripVertical
                   size={11}
-                  className="text-slate-400 cursor-grab active:cursor-grabbing"
+                  className="text-slate-600 cursor-grab active:cursor-grabbing"
                 />
               ) : (
                 <span className="w-[11px]" />
               )}
-              <span className="text-[10px] text-slate-400">{idx + 1}</span>
+              <span className="text-[10px] text-slate-600">{idx + 1}</span>
             </div>
 
             {/* Type icon */}
@@ -3399,7 +3399,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       ? 'font-semibold text-slate-700 dark:text-slate-200'
                       : row.name
                         ? 'text-slate-700 dark:text-slate-300'
-                        : 'text-slate-400 italic'
+                        : 'text-slate-600 italic'
                   } ${canEdit ? 'cursor-text' : ''}`}
                   onClick={() => startNameEdit(row)}
                 >
@@ -3590,7 +3590,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-slate-300 dark:hover:border-navy-600 focus:border-blue-500 text-slate-600 dark:text-slate-400 focus:outline-none"
                   />
                 ) : row.schedulingMode === 'after_previous' && row.dependsOnId ? (
-                  <span className="text-[10px] text-slate-400 italic">
+                  <span className="text-[10px] text-slate-600 italic">
                     {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
                   </span>
                 ) : editable && canEdit ? (
@@ -3611,7 +3611,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       setMenuOpenId(null);
                       setStartMenuOpenId((curr) => (curr === row.id ? null : row.id));
                     }}
-                    className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     aria-label={isPolish ? 'Ustawienia startu' : 'Start settings'}
                   >
                     <MoreVertical size={10} />
@@ -3742,7 +3742,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             {/* End date */}
             <div className="px-0.5 py-1.5 text-center">
               {isPointType(row.type) || isStart ? (
-                <span className="text-[10px] text-slate-400">—</span>
+                <span className="text-[10px] text-slate-600">—</span>
               ) : isFinish ? (
                 <span className="text-[10px] text-slate-500">
                   {fmtDate(row.startDate, isPolish ? 'pl' : 'en')}
@@ -3777,7 +3777,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   placeholder="—"
                 />
               ) : (
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-slate-600">
                   {hasDuration(row.type) && (row.durationDays || days)
                     ? row.durationDays || days
                     : '—'}
@@ -3802,7 +3802,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   placeholder="—"
                 />
               ) : (
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-slate-600">
                   {row.estimatedHours ? `${row.estimatedHours}h` : '—'}
                 </span>
               )}
@@ -3831,7 +3831,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     ))}
                 </select>
               ) : (
-                <span className="text-[10px] text-slate-400">{depLabel || '—'}</span>
+                <span className="text-[10px] text-slate-600">{depLabel || '—'}</span>
               )}
             </div>
 
@@ -3847,7 +3847,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       setStartMenuOpenId(null);
                       setMenuOpenId((curr) => (curr === row.id ? null : row.id));
                     }}
-                    className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     aria-label={isPolish ? 'Opcje wiersza' : 'Row options'}
                   >
                     <MoreVertical size={13} />
@@ -3888,7 +3888,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   )}
                 </>
               ) : (
-                <span className="text-[10px] text-slate-300">—</span>
+                <span className="text-[10px] text-slate-600">—</span>
               )}
             </div>
           </div>
@@ -4026,7 +4026,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                 style={{ left: `${m.pct}%` }}
               >
                 <div className="w-px h-full bg-slate-200/40 dark:bg-navy-700/40" />
-                <span className="text-[8px] text-slate-400 pl-1 whitespace-nowrap">{m.label}</span>
+                <span className="text-[8px] text-slate-600 pl-1 whitespace-nowrap">{m.label}</span>
               </div>
             ))}
           </div>
@@ -4357,7 +4357,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
       </AnimatePresence>
 
       {/* Budget summary bar */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-1 text-[10px] text-slate-400">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-1 text-[10px] text-slate-600">
         <span className="flex items-center gap-1">
           <Play size={10} className="text-blue-500" />
           {stats.tasks} {isPolish ? 'zadań' : 'tasks'}
@@ -4394,7 +4394,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
         )}
         {stats.totalHours > 0 && (
           <span className="flex items-center gap-1">
-            <Clock size={10} className="text-slate-400" />
+            <Clock size={10} className="text-slate-600" />
             {stats.totalHours}h {isPolish ? 'planowane' : 'planned'}
           </span>
         )}

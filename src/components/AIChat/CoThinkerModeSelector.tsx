@@ -104,7 +104,7 @@ export const CoThinkerModeSelector: React.FC<CoThinkerModeSelectorProps> = ({ cl
           </span>
           <button
             onClick={handleClear}
-            className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1"
+            className="text-xs text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1"
           >
             <X size={12} />
             {t('chat.coThinker.clear', 'Clear')}

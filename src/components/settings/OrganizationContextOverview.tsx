@@ -199,7 +199,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
                 key={item.label}
                 className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/50 dark:bg-navy-900/30 px-3 py-2"
               >
-                <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <div className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                   {item.label}
                 </div>
                 <div className="mt-1 text-lg font-semibold text-slate-700 dark:text-slate-200">
@@ -246,7 +246,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
               render: (row) => (
                 <div>
                   <div className="text-sm text-slate-700 dark:text-slate-200">{row.claimPath}</div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">
+                  <div className="text-xs text-slate-600 dark:text-slate-500">
                     {row.sourceLabel || row.sourceType}
                   </div>
                 </div>
@@ -295,7 +295,7 @@ export const OrganizationContextOverview: React.FC<OrganizationContextOverviewPr
               render: (row) => (
                 <div>
                   <div className="text-sm text-slate-700 dark:text-slate-200">{row.summary}</div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">{row.sourceType}</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-500">{row.sourceType}</div>
                 </div>
               ),
             },

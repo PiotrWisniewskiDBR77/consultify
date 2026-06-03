@@ -59,7 +59,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
                 ? `$${(initiative.costCapex || initiative.cost_capex).toLocaleString()}`
                 : '-'}
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 mt-1">
               {isPolish ? 'Nakłady inwestycyjne' : 'Capital expenditure'}
             </p>
           </div>
@@ -73,7 +73,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
                 ? `$${(initiative.costOpex || initiative.cost_opex).toLocaleString()}`
                 : '-'}
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 mt-1">
               {isPolish ? 'Koszty operacyjne' : 'Operating expenditure'}
             </p>
           </div>

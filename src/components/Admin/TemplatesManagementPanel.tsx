@@ -478,15 +478,15 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                 {template.description}
               </p>
               <div className="flex items-center gap-4 mt-3">
-                <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                <span className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1">
                   <ListTodo size={12} />
                   {template.taskCount} tasks
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                <span className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1">
                   <Calendar size={12} />
                   {template.milestoneCount} milestones
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                <span className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1">
                   <Eye size={12} />
                   {template.usageCount} uses
                 </span>
@@ -506,21 +506,21 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => startEditing(template)}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title={t('common.edit', 'Edit')}
             >
               <Edit size={16} />
             </button>
             <button
               onClick={() => duplicateTemplate(template)}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
               title={t('common.duplicate', 'Duplicate')}
             >
               <Copy size={16} />
             </button>
             <button
               onClick={() => exportTemplate(template)}
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
               title={t('common.export', 'Export')}
             >
               <Download size={16} />
@@ -528,7 +528,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             {!template.isDefault && (
               <button
                 onClick={() => deleteTemplate(template)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                 title={t('common.delete', 'Delete')}
               >
                 <Trash2 size={16} />
@@ -610,7 +610,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                 <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-navy-800">
                   <button
                     onClick={() => togglePhase(phase.id)}
-                    className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                    className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                   >
                     {expandedPhases.includes(phase.id) ? (
                       <ChevronDown size={16} />
@@ -630,7 +630,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                   />
                   <button
                     onClick={() => removePhase(phase.id)}
-                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                    className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500"
                   >
                     <X size={16} />
                   </button>
@@ -712,7 +712,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                 size={18}
               />
               <input
@@ -776,7 +776,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
                 </h3>
                 <button
                   onClick={cancelEditing}
-                  className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
+                  className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
                 >
                   <X size={18} />
                 </button>
@@ -802,7 +802,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             </div>
           ) : (
             <div className="text-center py-12">
-              <Layout className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
+              <Layout className="mx-auto text-slate-600 dark:text-slate-600 mb-4" size={48} />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                 {t('admin.templates.selectToEdit', 'Select a Template')}
               </h3>

@@ -266,7 +266,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
         {loading ? (
-          <div className="text-center text-slate-400 dark:text-slate-500 py-16">
+          <div className="text-center text-slate-600 dark:text-slate-500 py-16">
             {pl ? 'Ładowanie…' : 'Loading…'}
           </div>
         ) : error ? (
@@ -284,7 +284,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
           </div>
         ) : rows.length === 0 ? (
           <div className="text-center py-16">
-            <BookOpen size={40} className="mx-auto text-slate-300 dark:text-navy-700 mb-3" />
+            <BookOpen size={40} className="mx-auto text-slate-600 dark:text-navy-700 mb-3" />
             <p className="text-slate-600 dark:text-slate-300 font-medium">
               {searchQuery || scopeFilter !== 'all' || Object.keys(tableFilters).length
                 ? pl
@@ -311,7 +311,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                   if (e.key === 'Enter') onOpenNotebook(nb);
                 }}
                 tabIndex={0}
-                className="group border-b border-slate-100 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors outline-none"
+                className="group border-b border-slate-200 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors outline-none"
               >
                 <td style={{ width: columnWidths.title }} className="px-3 py-2.5">
                   <div className="flex items-center gap-2 min-w-0">
@@ -341,7 +341,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                       {pl ? 'Kontekst org' : 'Org context'}
                     </span>
                   ) : (
-                    <span className="text-slate-300 dark:text-navy-600">—</span>
+                    <span className="text-slate-600 dark:text-navy-600">—</span>
                   )}
                 </td>
                 <td
@@ -352,7 +352,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                 </td>
                 <td
                   style={{ width: columnWidths.date }}
-                  className="px-3 py-2.5 text-center text-xs text-slate-400 dark:text-slate-500"
+                  className="px-3 py-2.5 text-center text-xs text-slate-600 dark:text-slate-500"
                 >
                   {formatRelative(nb.updatedAt, pl)}
                 </td>
@@ -533,7 +533,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
                 ))}
               </select>
             ) : (
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-600">
                 {pl ? 'Brak dostępnych zespołów' : 'No teams available'}
               </p>
             )}
@@ -551,7 +551,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             {pl
               ? 'Udostępnij treść do kontekstu AI organizacji'
               : 'Share content with organization AI context'}
-            <span className="block text-xs text-slate-400">
+            <span className="block text-xs text-slate-600">
               {pl
                 ? 'Domyślnie wyłączone. Treść może zasilać pamięć/AI org po zatwierdzeniu.'
                 : 'Off by default. Content may feed org memory/AI after approval.'}

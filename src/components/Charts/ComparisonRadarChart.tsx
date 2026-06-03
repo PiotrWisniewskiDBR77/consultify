@@ -86,7 +86,7 @@ const CustomTooltip = ({
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ backgroundColor: analysis.color }}
                 />
-                <span className="text-slate-400 dark:text-slate-500 text-xs truncate max-w-[120px]">
+                <span className="text-slate-600 dark:text-slate-500 text-xs truncate max-w-[120px]">
                   {analysis.name}
                 </span>
               </div>
@@ -169,7 +169,7 @@ export const ComparisonRadarChart: React.FC<ComparisonRadarChartProps> = ({
             className="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-1.5"
           >
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-            <span className="text-slate-400 dark:text-slate-500 text-sm truncate max-w-[100px]">
+            <span className="text-slate-600 dark:text-slate-500 text-sm truncate max-w-[100px]">
               {item.name}
             </span>
             <span className="font-semibold text-sm" style={{ color: item.color }}>

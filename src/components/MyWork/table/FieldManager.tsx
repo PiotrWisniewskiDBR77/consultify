@@ -259,7 +259,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
               onClick={onClose}
               className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
-              <X size={16} className="text-slate-400" />
+              <X size={16} className="text-slate-600" />
             </button>
           </div>
         </div>
@@ -269,7 +269,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
           <div className="relative">
             <Search
               size={12}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600"
             />
             <input
               value={searchQuery}
@@ -309,7 +309,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                   {!locked && !searchQuery && (
                     <GripVertical
                       size={12}
-                      className="text-slate-300 dark:text-slate-600 cursor-grab flex-shrink-0"
+                      className="text-slate-600 dark:text-slate-600 cursor-grab flex-shrink-0"
                     />
                   )}
                   <div className="w-6 h-6 rounded-md flex items-center justify-center bg-slate-100 dark:bg-navy-800 flex-shrink-0">
@@ -326,13 +326,13 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                         </span>
                       )}
                     </div>
-                    <span className="text-[9px] text-slate-400 dark:text-slate-500">
+                    <span className="text-[9px] text-slate-600 dark:text-slate-500">
                       {isPl ? label?.pl : label?.en}
                     </span>
                   </div>
                   <ChevronRight
                     size={12}
-                    className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`text-slate-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                   />
                 </div>
 
@@ -371,7 +371,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
           })}
 
           {sortedFields.length === 0 && (
-            <div className="text-center py-8 text-[11px] text-slate-400">
+            <div className="text-center py-8 text-[11px] text-slate-600">
               {isPl ? 'Brak pól' : 'No fields'}
             </div>
           )}
@@ -385,7 +385,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
               >
                 <ChevronRight
                   size={12}
-                  className={`text-slate-400 transition-transform ${dateDepsExpanded ? 'rotate-90' : ''}`}
+                  className={`text-slate-600 transition-transform ${dateDepsExpanded ? 'rotate-90' : ''}`}
                 />
                 <Calendar size={12} className="text-slate-500" />
                 <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
@@ -477,7 +477,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
     <div className="px-3 pb-3 space-y-2">
       {/* Name */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
           {isPl ? 'Nazwa' : 'Name'}
         </label>
         <input
@@ -490,7 +490,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
 
       {/* Description */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
           {isPl ? 'Opis' : 'Description'}
         </label>
         <textarea
@@ -540,7 +540,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           </>
         )}
         {isPrimary && (
-          <span className="text-[9px] text-slate-400 italic">
+          <span className="text-[9px] text-slate-600 italic">
             {isPl ? 'Pole główne nie może być usunięte' : 'Primary field cannot be deleted'}
           </span>
         )}
@@ -619,7 +619,7 @@ const FieldOptionsDisplay: React.FC<{ field: TablePlatformField; isPl: boolean }
     <div className="rounded-lg bg-slate-50 dark:bg-navy-900/50 p-2 space-y-1">
       {items.map((item, i) => (
         <div key={i} className="flex items-start gap-2">
-          <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">
+          <span className="text-[9px] font-bold text-slate-600 whitespace-nowrap">
             {item.label}:
           </span>
           <span className="text-[9px] text-slate-600 dark:text-slate-400 break-all">
@@ -699,7 +699,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-slate-600" />
           </button>
         </div>
 

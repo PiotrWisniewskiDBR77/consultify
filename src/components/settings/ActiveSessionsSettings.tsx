@@ -95,7 +95,7 @@ export const ActiveSessionsSettings: React.FC<ActiveSessionsSettingsProps> = ({
         </div>
         <button
           onClick={fetchSessions}
-          className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+          className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
         >
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
         </button>

@@ -123,7 +123,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
-            <X size={20} className="text-slate-400 dark:text-slate-500" />
+            <X size={20} className="text-slate-600 dark:text-slate-500" />
           </button>
         </div>
 
@@ -183,7 +183,7 @@ export const PDFExportModal: React.FC<PDFExportModalProps> = ({ analysis, onClos
                       className={
                         template === t.id
                           ? 'text-emerald-500'
-                          : 'text-slate-400 dark:text-slate-500'
+                          : 'text-slate-600 dark:text-slate-500'
                       }
                     />
                     <div>

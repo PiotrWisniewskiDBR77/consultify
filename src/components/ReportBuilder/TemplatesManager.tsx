@@ -253,7 +253,7 @@ const getSourceTypeBadgeConfig = (sourceType: string) => {
     case 'INITIATIVE':
       return { color: 'text-pink-400', bg: 'bg-pink-500/20' };
     default:
-      return { color: 'text-slate-400', bg: 'bg-slate-500/20' };
+      return { color: 'text-slate-600', bg: 'bg-slate-500/20' };
   }
 };
 
@@ -271,7 +271,7 @@ const getAudienceBadgeConfig = (audience?: string) => {
     case 'external':
       return { color: 'text-rose-400', bg: 'bg-rose-500/20', label: 'External' };
     default:
-      return { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'General' };
+      return { color: 'text-slate-600', bg: 'bg-slate-500/20', label: 'General' };
   }
 };
 
@@ -1006,7 +1006,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                         {/* User */}
                         <td className="px-3 py-2.5" style={{ width: columnWidths.createdBy }}>
                           <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
-                            <User size={13} className="text-slate-400 dark:text-slate-500" />
+                            <User size={13} className="text-slate-600 dark:text-slate-500" />
                             <span className="truncate">
                               {template.createdByName || (template.isSystem ? 'System' : '—')}
                             </span>
@@ -1026,7 +1026,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                         {/* Updated */}
                         <td className="px-3 py-2.5" style={{ width: columnWidths.updatedAt }}>
                           <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
-                            <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+                            <Calendar size={12} className="text-slate-600 dark:text-slate-500" />
                             {formatDate(template.updatedAt || template.createdAt)}
                           </div>
                         </td>

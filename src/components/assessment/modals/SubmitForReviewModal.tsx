@@ -186,7 +186,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-8">
-              <Users className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+              <Users className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-slate-500 dark:text-slate-400">
                 Brak użytkowników z uprawnieniami do recenzji
               </p>
@@ -295,7 +295,7 @@ export const SubmitForReviewModal: React.FC<SubmitForReviewModalProps> = ({
                                     ${
                                       selectedReviewers.length > 0 && !submitting
                                         ? 'bg-primary-600 hover:bg-primary-500 text-white'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}
               >

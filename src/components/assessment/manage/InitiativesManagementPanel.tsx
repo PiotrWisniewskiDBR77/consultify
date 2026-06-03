@@ -583,7 +583,7 @@ const InitiativeRow: FC<{
             </div>
           </div>
         ) : (
-          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
         )}
       </td>
 
@@ -599,7 +599,7 @@ const InitiativeRow: FC<{
             </span>
           </div>
         ) : (
-          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
         )}
       </td>
 
@@ -1116,7 +1116,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     transition={{ duration: 0.12 }}
                     className="absolute left-0 mt-2 w-[320px] rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 shadow-2xl overflow-hidden z-20"
                   >
-                    <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-800 flex items-center justify-between">
+                    <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between">
                       <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                         Filter by status
                       </div>
@@ -1315,7 +1315,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       {batch.methodologyId} • {batch.initiativesCount} items
                     </span>
                     {batch.provenance?.assessmentRunId ? (
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-500">
                         run {batch.provenance.assessmentRunId}
                         {batch.provenance.workbenchRunState
                           ? ` • ${String(batch.provenance.workbenchRunState).replace(/_/g, ' ')}`
@@ -1323,7 +1323,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       </span>
                     ) : null}
                   </div>
-                  <span className="text-slate-400 dark:text-slate-500">
+                  <span className="text-slate-600 dark:text-slate-500">
                     {new Date(batch.createdAt).toLocaleDateString('pl-PL')}
                   </span>
                 </div>

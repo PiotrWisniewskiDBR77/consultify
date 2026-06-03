@@ -228,7 +228,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   className={
                     settings.theme === theme.id
                       ? 'text-primary-600 mx-auto'
-                      : 'text-slate-400 dark:text-slate-500 mx-auto'
+                      : 'text-slate-600 dark:text-slate-500 mx-auto'
                   }
                 />
                 <p className="font-medium text-slate-900 dark:text-white mt-2">{theme.label}</p>
@@ -387,7 +387,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   className={
                     settings.density === density.id
                       ? 'text-green-600 mx-auto'
-                      : 'text-slate-400 dark:text-slate-500 mx-auto'
+                      : 'text-slate-600 dark:text-slate-500 mx-auto'
                   }
                 />
                 <p className="font-medium text-slate-900 dark:text-white mt-2">{density.label}</p>

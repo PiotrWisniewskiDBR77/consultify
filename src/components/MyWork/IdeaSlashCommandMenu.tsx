@@ -312,7 +312,7 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
       <div className="flex-1 overflow-y-auto py-1">
         {Object.entries(grouped).map(([cat, cmds]) => (
           <div key={cat}>
-            <div className="px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <div className="px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               {isPl ? CATEGORY_LABELS[cat]?.pl : CATEGORY_LABELS[cat]?.en}
             </div>
             {cmds.map((cmd) => {
@@ -331,12 +331,12 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
                       : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]'
                   }`}
                 >
-                  <Icon size={14} className={isSelected ? 'text-primary-500' : 'text-slate-400'} />
+                  <Icon size={14} className={isSelected ? 'text-primary-500' : 'text-slate-600'} />
                   <div className="flex-1 min-w-0">
                     <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200">
                       {isPl ? cmd.labelPl : cmd.labelEn}
                     </div>
-                    <div className="text-[9px] text-slate-400 dark:text-slate-500">
+                    <div className="text-[9px] text-slate-600 dark:text-slate-500">
                       {isPl ? cmd.descPl : cmd.descEn}
                     </div>
                   </div>
@@ -346,7 +346,7 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="px-3 py-4 text-center text-[11px] text-slate-400">
+          <div className="px-3 py-4 text-center text-[11px] text-slate-600">
             {isPl ? 'Brak wyników' : 'No results'}
           </div>
         )}

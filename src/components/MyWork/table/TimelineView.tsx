@@ -197,10 +197,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-sm text-slate-400 mb-1">
+          <p className="text-sm text-slate-600 mb-1">
             {isPl ? 'Brak dat do wyświetlenia' : 'No dates to display'}
           </p>
-          <p className="text-[10px] text-slate-400">
+          <p className="text-[10px] text-slate-600">
             {isPl
               ? 'Dodaj kolumny typu "date" aby zobaczyć timeline'
               : 'Add "date" type columns to see the timeline'}
@@ -228,7 +228,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             <button
               key={z}
               onClick={() => setZoom(z)}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${zoom === z ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${zoom === z ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600'}`}
             >
               {z === 'day'
                 ? isPl
@@ -246,13 +246,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         </div>
         <button
           onClick={() => setZoom(zoom === 'day' ? 'week' : zoom === 'week' ? 'month' : 'month')}
-          className="p-1 rounded text-slate-400 hover:text-slate-600"
+          className="p-1 rounded text-slate-600 hover:text-slate-600"
         >
           <ZoomOut size={12} />
         </button>
         <button
           onClick={() => setZoom(zoom === 'month' ? 'week' : zoom === 'week' ? 'day' : 'day')}
-          className="p-1 rounded text-slate-400 hover:text-slate-600"
+          className="p-1 rounded text-slate-600 hover:text-slate-600"
         >
           <ZoomIn size={12} />
         </button>
@@ -292,7 +292,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               {headerCells.map((cell, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-center text-[9px] font-bold border-r border-slate-200/30 dark:border-navy-700/30 flex-shrink-0 ${cell.isToday ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400'}`}
+                  className={`flex items-center justify-center text-[9px] font-bold border-r border-slate-200/30 dark:border-navy-700/30 flex-shrink-0 ${cell.isToday ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600'}`}
                   style={{ width: cell.width }}
                 >
                   {cell.label}

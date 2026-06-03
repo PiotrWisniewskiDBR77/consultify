@@ -98,7 +98,7 @@ export const AppIntroView: React.FC = () => {
                       className="text-primary-600 dark:text-primary-300"
                     />
                   </div>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
                     {String(index + 1).padStart(2, '0')}
                   </div>
                 </div>

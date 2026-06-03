@@ -572,7 +572,7 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
         {/* Generate prompt */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="max-w-lg text-center">
-            <FileText className="w-16 h-16 mx-auto mb-6 text-slate-300 dark:text-slate-600" />
+            <FileText className="w-16 h-16 mx-auto mb-6 text-slate-600 dark:text-slate-600" />
             <h2 className="text-2xl font-bold mb-4 text-navy-900 dark:text-white">
               {t('reports.emptyReport', 'Report is empty')}
             </h2>

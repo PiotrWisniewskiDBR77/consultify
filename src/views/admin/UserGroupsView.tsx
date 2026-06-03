@@ -426,7 +426,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
       {/* Search */}
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           size={18}
         />
         <input
@@ -446,7 +446,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         </div>
       ) : filteredGroups.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-          <UsersRound className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <UsersRound className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Teams</h3>
           <p className="text-slate-500 dark:text-slate-400 mt-1 mb-4">
             Create your first team to quickly assign groups of users to projects
@@ -766,7 +766,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                   className={`w-6 h-6 rounded ${
                                     hasPermission(resource.id, action)
                                       ? 'bg-primary-600 text-white'
-                                      : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
+                                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500'
                                   }`}
                                 >
                                   {hasPermission(resource.id, action) && (

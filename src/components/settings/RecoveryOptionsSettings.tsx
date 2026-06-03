@@ -441,7 +441,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                   : t('settings.recovery.noCodes', 'No backup codes generated')}
               </span>
               {recoveryOptions.lastBackupCodesGenerated && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                   {t('settings.recovery.lastGenerated', 'Last generated: {{date}}', {
                     date: new Date(recoveryOptions.lastBackupCodesGenerated).toLocaleDateString(),
                   })}

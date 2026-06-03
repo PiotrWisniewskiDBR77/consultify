@@ -1130,9 +1130,15 @@ export const ResultsHub: React.FC = () => {
       );
     }
 
-    if (!scopedExecutionButton) return null;
-    return <div className={MENU_3_RIGHT_CLASS}>{scopedExecutionButton}</div>;
-  }, [activeTab, kpiWorkspaceMode, openScopedExecutionLane, scopedInitiativeId, t]);
+    const viewInOutputsButton = activeTab === 'results_reports' ? (
+      <button type="button" onClick={() => navigate('/outputs')} className={MENU_3_ACTION_NEUTRAL}>
+        <span>{t('results.actions.viewInOutputs', 'View in Outputs')}</span>
+      </button>
+    ) : null;
+
+    if (!scopedExecutionButton && !viewInOutputsButton) return null;
+    return <div className={MENU_3_RIGHT_CLASS}>{scopedExecutionButton}{viewInOutputsButton}</div>;
+  }, [activeTab, kpiWorkspaceMode, navigate, openScopedExecutionLane, scopedInitiativeId, t]);
 
   const commandRowContent = useMemo(() => {
     const actionButton = (label: string, onClick: () => void, active = false) => (
@@ -1389,7 +1395,7 @@ export const ResultsHub: React.FC = () => {
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-24">
-                <div className="flex items-center gap-3 text-slate-400">
+                <div className="flex items-center gap-3 text-slate-600">
                   <BarChart3 size={20} className="animate-pulse" />
                   <span className="text-sm text-slate-500 dark:text-slate-300">
                     {t('common.loading', 'Loading...')}
@@ -1483,7 +1489,7 @@ export const ResultsHub: React.FC = () => {
           <ROITrackingView refreshNonce={roiRefreshNonce} />
         ) : loading ? (
           <div className="flex items-center justify-center py-24">
-            <div className="flex items-center gap-3 text-slate-400">
+            <div className="flex items-center gap-3 text-slate-600">
               <BarChart3 size={20} className="animate-pulse" />
               <span className="text-sm text-slate-500 dark:text-slate-300">
                 {t('common.loading', 'Loading...')}

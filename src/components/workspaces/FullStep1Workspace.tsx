@@ -134,7 +134,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 relative overflow-hidden shadow-sm dark:shadow-none transition-colors duration-300">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-50"></div>
-              <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 text-center">
+              <h3 className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest mb-4 text-center">
                 Maturity Profile
               </h3>
               <div className="flex justify-center -ml-4">
@@ -196,7 +196,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                     </p>
 
                     {/* Footer of Card */}
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-navy-700">
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-navy-700">
                       {isCompleted ? (
                         <div className="flex flex-col">
                           <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">
@@ -204,7 +204,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                           </span>
                           <span className={`text-lg font-bold ${getScoreColor(data?.actual ?? 0)}`}>
                             {data?.actual?.toFixed(1) || '0.0'}{' '}
-                            <span className="text-xs text-slate-400 dark:text-slate-600 font-normal">
+                            <span className="text-xs text-slate-600 dark:text-slate-600 font-normal">
                               / 7.0
                             </span>
                           </span>
@@ -245,7 +245,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                                 ${
                                   allCompleted
                                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/20 dark:shadow-blue-900/20'
-                                    : 'bg-slate-100 dark:bg-navy-800/50 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-navy-700'
+                                    : 'bg-slate-100 dark:bg-navy-800/50 text-slate-600 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-navy-700'
                                 }
                             `}
               >

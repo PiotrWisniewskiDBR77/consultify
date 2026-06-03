@@ -459,7 +459,7 @@ export function PromptManagementUI() {
           <div className="relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -513,14 +513,14 @@ export function PromptManagementUI() {
                     <span className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
                       <span>{category.icon}</span>
                       {category.name}
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                      <span className="text-xs text-slate-600 dark:text-slate-500">
                         ({category.prompts.length})
                       </span>
                     </span>
                     {expandedCategories.has(category.id) ? (
-                      <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
                     ) : (
-                      <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
                     )}
                   </button>
                   {expandedCategories.has(category.id) && (
@@ -867,7 +867,7 @@ export function PromptManagementUI() {
                             className={`font-medium flex items-center gap-2 ${
                               selectedPrompt.is_active
                                 ? 'text-green-600'
-                                : 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-600 dark:text-slate-500'
                             }`}
                           >
                             {selectedPrompt.is_active ? (

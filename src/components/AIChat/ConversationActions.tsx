@@ -141,7 +141,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
         }}
         className="
                     p-1.5 rounded-md
-                    text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300
+                    text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300
                     hover:bg-slate-200 dark:hover:bg-navy-700
                     transition-colors
                 "

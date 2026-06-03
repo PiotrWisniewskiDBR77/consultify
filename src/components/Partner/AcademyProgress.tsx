@@ -185,7 +185,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
       {/* Certifications */}
       {certifications.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white/90 p-6 dark:border-navy-700 dark:bg-navy-900/60">
-          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
             Your Certifications
           </h4>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -239,7 +239,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
                   </p>
                 </div>
               </div>
-              <div className="text-xs text-slate-400 dark:text-slate-500">
+              <div className="text-xs text-slate-600 dark:text-slate-500">
                 {categoryModules.reduce((sum, m) => {
                   const min = parseInt(m.duration.replace(' min', ''));
                   return sum + (isNaN(min) ? 0 : min);
@@ -294,7 +294,7 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ icon, label, value }) => (
   <div className="rounded-xl bg-white/80 p-3 shadow-sm dark:bg-navy-900/60">
-    <div className="mb-1 flex items-center gap-2 text-slate-400 dark:text-slate-500">{icon}</div>
+    <div className="mb-1 flex items-center gap-2 text-slate-600 dark:text-slate-500">{icon}</div>
     <div className="text-lg font-bold text-navy-900 dark:text-white">{value}</div>
     <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
   </div>
@@ -313,7 +313,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
       className={`flex items-center justify-between rounded-xl border p-4 transition ${
         isCompleted
           ? 'border-emerald-100 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5'
-          : 'border-slate-100 bg-slate-50/50 hover:border-brand/30 dark:border-navy-700 dark:bg-navy-950/20'
+          : 'border-slate-200 bg-slate-50/50 hover:border-brand/30 dark:border-navy-700 dark:bg-navy-950/20'
       }`}
     >
       <div className="flex items-center gap-4">
@@ -351,7 +351,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
             <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
               {module.score}%
             </div>
-            <div className="text-xs text-slate-400 dark:text-slate-500">Score</div>
+            <div className="text-xs text-slate-600 dark:text-slate-500">Score</div>
           </div>
         )}
         <div className="text-right">

@@ -221,7 +221,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
           {/* Expand toggle */}
           <button
             onClick={() => toggleExpand(category.id)}
-            className={`p-1 text-slate-400 dark:text-slate-500 hover:text-white ${!hasChildren ? 'opacity-0' : ''}`}
+            className={`p-1 text-slate-600 dark:text-slate-500 hover:text-white ${!hasChildren ? 'opacity-0' : ''}`}
             disabled={!hasChildren}
           >
             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -258,7 +258,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
               </button>
               <button
                 onClick={() => setEditingId(null)}
-                className="p-1 text-slate-400 dark:text-slate-500 hover:text-white"
+                className="p-1 text-slate-600 dark:text-slate-500 hover:text-white"
               >
                 <X size={16} />
               </button>
@@ -286,7 +286,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen(menuOpen === category.id ? null : category.id)}
-                  className="p-1 text-slate-400 dark:text-slate-500 hover:text-white rounded"
+                  className="p-1 text-slate-600 dark:text-slate-500 hover:text-white rounded"
                 >
                   <MoreVertical size={16} />
                 </button>
@@ -295,14 +295,14 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                   <div className="absolute right-0 top-full mt-1 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 py-1">
                     <button
                       onClick={() => startEdit(category)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-700/50"
                     >
                       <Edit size={14} />
                       Edit
                     </button>
                     <button
                       onClick={() => startNewChild(category.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700/50"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-700/50"
                     >
                       <Plus size={14} />
                       Add Subcategory
@@ -335,7 +335,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <RefreshCw className="w-6 h-6 text-slate-400 dark:text-slate-500 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -347,7 +347,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
         <div className="flex items-center gap-2">
           <FolderOpen className="w-5 h-5 text-primary-400" />
           <h3 className="font-semibold text-white">Categories</h3>
-          <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
+          <span className="px-2 py-0.5 bg-slate-700 text-slate-600 text-xs rounded-full">
             {categories.length}
           </span>
         </div>
@@ -374,7 +374,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Name</label>
               <input
                 type="text"
                 value={formData.name}
@@ -384,7 +384,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Description</label>
               <input
                 type="text"
                 value={formData.description}
@@ -396,7 +396,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Color</label>
+            <label className="block text-sm font-medium text-slate-600 mb-2">Color</label>
             <div className="flex gap-2">
               {PRESET_COLORS.map((color) => (
                 <button
@@ -416,7 +416,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setShowNewForm(false)}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
             >
               Cancel
             </button>
@@ -436,7 +436,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
       {categories.length === 0 ? (
         <div className="text-center py-8">
           <FolderOpen className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-          <p className="text-slate-400 dark:text-slate-500">No categories yet</p>
+          <p className="text-slate-600 dark:text-slate-500">No categories yet</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Create your first category to organize content
           </p>

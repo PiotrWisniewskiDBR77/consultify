@@ -159,7 +159,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
             )}
           </div>
 
-          <div className="text-center text-[10px] text-slate-400 mb-4">
+          <div className="text-center text-[10px] text-slate-600 mb-4">
             {listening
               ? isPl
                 ? '🔴 Nagrywam... Mów swoje pomysły'
@@ -172,7 +172,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           {/* Transcript */}
           {transcript && (
             <div className="mb-4">
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
                 {isPl ? 'Transkrypcja' : 'Transcript'}
               </div>
               <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30 text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed">
@@ -184,7 +184,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           {/* Parsed nodes */}
           {parsedNodes.length > 0 && (
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
                 {isPl ? 'Rozpoznane pomysły' : 'Detected ideas'} ({parsedNodes.length})
               </div>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">

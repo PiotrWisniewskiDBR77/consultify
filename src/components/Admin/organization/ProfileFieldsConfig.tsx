@@ -193,7 +193,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                 'Configure which fields appear on user profiles'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -232,7 +232,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
               >
                 <div className="flex items-center gap-3 p-3">
                   {/* Drag Handle */}
-                  <div className="cursor-grab text-slate-400 hover:text-slate-600 dark:text-slate-400">
+                  <div className="cursor-grab text-slate-600 hover:text-slate-600 dark:text-slate-400">
                     <GripVertical size={18} />
                   </div>
 
@@ -241,14 +241,14 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                     <button
                       onClick={() => moveField(index, 'up')}
                       disabled={index === 0}
-                      className="p-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
+                      className="p-0.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
                     >
                       <ChevronUp size={14} />
                     </button>
                     <button
                       onClick={() => moveField(index, 'down')}
                       disabled={index === fields.length - 1}
-                      className="p-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
+                      className="p-0.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
                     >
                       <ChevronDown size={14} />
                     </button>
@@ -493,7 +493,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
       {/* Empty State */}
       {fields.length === 0 && !newField && (
         <div className="text-center py-12 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 border-dashed">
-          <Text size={48} className="mx-auto mb-4 text-slate-300 dark:text-navy-600" />
+          <Text size={48} className="mx-auto mb-4 text-slate-600 dark:text-navy-600" />
           <h4 className="font-medium text-navy-900 dark:text-white mb-2">
             {t('admin.organization.profileFields.noFields', 'No custom fields yet')}
           </h4>

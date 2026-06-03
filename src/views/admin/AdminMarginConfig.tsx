@@ -144,7 +144,7 @@ export const AdminMarginConfig = () => {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 cursor-pointer select-none">
+                <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500 cursor-pointer select-none">
                   <div
                     className={`w-8 h-4 rounded-full relative transition-colors ${margin.is_active ? 'bg-emerald-500/30' : 'bg-slate-700'}`}
                   >
@@ -177,7 +177,7 @@ export const AdminMarginConfig = () => {
               {margin.source_type === 'platform' && (
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <label className="text-slate-400 dark:text-slate-500">Base Cost / 1k</label>
+                    <label className="text-slate-600 dark:text-slate-500">Base Cost / 1k</label>
                     <span className="text-slate-500 dark:text-slate-400 font-mono">
                       ${parseFloat(margin.base_cost_per_1k).toFixed(4)}
                     </span>
@@ -201,7 +201,7 @@ export const AdminMarginConfig = () => {
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <label className="text-slate-400 dark:text-slate-500">Margin Markup</label>
+                  <label className="text-slate-600 dark:text-slate-500">Margin Markup</label>
                   <span className="text-emerald-400 font-bold">{margin.margin_percent}%</span>
                 </div>
                 <div className="relative">

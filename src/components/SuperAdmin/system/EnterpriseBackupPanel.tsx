@@ -117,16 +117,16 @@ const BACKUP_TYPE_CONFIG = {
 };
 
 const STATUS_CONFIG = {
-  pending: { color: 'bg-slate-500', text: 'text-slate-400 dark:text-slate-500', icon: Clock },
+  pending: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Clock },
   in_progress: { color: 'bg-amber-500', text: 'text-amber-400', icon: RefreshCw },
   completed: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
   failed: { color: 'bg-rose-500', text: 'text-rose-400', icon: XCircle },
 };
 
-const fallbackBackupTypeConfig = { color: 'bg-slate-500/20 text-slate-400', label: 'Unknown' };
+const fallbackBackupTypeConfig = { color: 'bg-slate-500/20 text-slate-600', label: 'Unknown' };
 const fallbackStatusConfig = {
   color: 'bg-slate-500',
-  text: 'text-slate-400 dark:text-slate-500',
+  text: 'text-slate-600 dark:text-slate-500',
   icon: Clock,
 };
 
@@ -368,7 +368,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
         </div>
       ) : (
         <>
@@ -438,14 +438,14 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                 className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                                 title={destructiveBackupActionReason}
                               >
-                                <Upload className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                                <Upload className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                               </button>
                               <button
                                 disabled
                                 className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                                 title={destructiveBackupActionReason}
                               >
-                                <Download className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                                <Download className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                               </button>
                             </>
                           )}
@@ -543,7 +543,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               schedule.enabled
                                 ? 'bg-emerald-500/20 text-emerald-400'
-                                : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+                                : 'bg-slate-700 text-slate-600 dark:text-slate-500'
                             }`}
                           >
                             {schedule.enabled ? 'Enabled' : 'Disabled'}
@@ -553,7 +553,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             title="Schedule editing requires an audited schedule editor workflow."
                             className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                           >
-                            <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <Settings className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                           </button>
                         </div>
                       </div>
@@ -717,7 +717,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">
                       Disaster Recovery Testing
                     </h3>
-                    <p className="text-slate-400 dark:text-slate-500 mb-4">
+                    <p className="text-slate-600 dark:text-slate-500 mb-4">
                       Regularly test your backup and recovery procedures to ensure business
                       continuity. DR tests run in an isolated environment and do not affect
                       production data.
@@ -756,7 +756,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
               Create Backup
             </h3>
             <div className="space-y-4">
-              <p className="text-sm text-slate-400 dark:text-slate-500">Select backup type:</p>
+              <p className="text-sm text-slate-600 dark:text-slate-500">Select backup type:</p>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleCreateBackup('full')}

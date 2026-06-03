@@ -350,14 +350,14 @@ const DimensionCard: React.FC<DimensionCardProps> = ({ dim, gammaTarget }) => {
       </dl>
 
       <div
-        className="mt-3 rounded border border-slate-100 bg-slate-50/50 p-1 dark:border-slate-800 dark:bg-slate-900/40"
+        className="mt-3 rounded border border-slate-200 bg-slate-50/50 p-1 dark:border-slate-800 dark:bg-slate-900/40"
         aria-hidden={dim.points.length === 0 ? 'true' : 'false'}
       >
         <DimensionSparkline trend={dim} gammaTarget={gammaTarget} />
       </div>
 
       {dim.points.length === 0 && (
-        <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">
+        <p className="mt-2 text-[10px] text-slate-600 dark:text-slate-500">
           No history yet — only the Gamma reference line is rendered.
         </p>
       )}
@@ -456,7 +456,7 @@ const PresentationBenchmarkTrendView: React.FC = () => {
             Monthly DBR77/VTS regression trend — visible movement toward Gamma-level by dimension.
           </p>
           {data && (
-            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+            <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
               Generated {new Date(data.generatedAt).toLocaleString()} · spanning {data.windowMonths}{' '}
               month
               {data.windowMonths === 1 ? '' : 's'} of history

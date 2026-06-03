@@ -115,7 +115,7 @@ const WorkspaceStatCard: React.FC<{
         </div>
         <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{value}</div>
       </div>
-      <div className="text-slate-400 dark:text-slate-300">{icon}</div>
+      <div className="text-slate-600 dark:text-slate-300">{icon}</div>
     </div>
     <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{helper}</div>
   </div>

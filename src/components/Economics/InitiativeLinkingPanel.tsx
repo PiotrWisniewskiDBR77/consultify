@@ -172,7 +172,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
       case 'low':
         return 'text-green-500';
       default:
-        return 'text-slate-400 dark:text-slate-500';
+        return 'text-slate-600 dark:text-slate-500';
     }
   };
 
@@ -289,7 +289,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
           </h3>
           <button
             onClick={() => setShowSelector(false)}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
             <X size={20} />
           </button>
@@ -299,7 +299,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         <div className="relative mb-4">
           <Search
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -386,7 +386,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
 
       <div className="text-center py-8">
         <div className="w-16 h-16 mx-auto rounded-xl bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-700 flex items-center justify-center mb-4">
-          <Link2 size={32} className="text-slate-400 dark:text-slate-500" />
+          <Link2 size={32} className="text-slate-600 dark:text-slate-500" />
         </div>
         <h4 className="font-medium text-navy-900 dark:text-white mb-2">No linked initiative</h4>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">

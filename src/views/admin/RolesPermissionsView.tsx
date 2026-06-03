@@ -462,7 +462,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                       Capabilities
                     </p>
                     <ul className="space-y-1.5">
@@ -523,7 +523,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 
             return (
               <div key={level} className="space-y-3">
-                <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
                   <span className="w-5 h-5 rounded bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[10px] font-bold">
                     {level}
                   </span>
@@ -569,7 +569,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                 {role.description}
                               </p>
                               <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                <span className="text-[10px] text-slate-600 dark:text-slate-500">
                                   {role.defaultPermissions?.length || 0} permissions
                                 </span>
                               </div>
@@ -583,7 +583,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   openEditModal(role);
                                 }}
                                 disabled
-                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-navy-700 rounded text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-navy-700 rounded text-slate-600 hover:text-slate-600 dark:text-slate-400"
                               >
                                 <Edit size={14} />
                               </button>
@@ -593,7 +593,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   handleDeleteRole(role.id);
                                 }}
                                 disabled
-                                className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded text-slate-400 dark:text-slate-500 hover:text-rose-600"
+                                className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded text-slate-600 dark:text-slate-500 hover:text-rose-600"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -630,7 +630,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {PROJECT_PERMISSIONS.map((category) => (
                   <div key={category.category}>
-                    <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-2">
                       {category.category}
                     </p>
                     <div className="space-y-1.5">
@@ -643,7 +643,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                               className={`w-5 h-5 rounded flex items-center justify-center ${
                                 hasPermission
                                   ? 'bg-green-500 text-white'
-                                  : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
+                                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500'
                               }`}
                             >
                               {hasPermission ? <Check size={12} /> : <X size={12} />}
@@ -652,7 +652,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                               className={
                                 hasPermission
                                   ? 'text-slate-900 dark:text-white'
-                                  : 'text-slate-400 dark:text-slate-500'
+                                  : 'text-slate-600 dark:text-slate-500'
                               }
                             >
                               {perm.label}

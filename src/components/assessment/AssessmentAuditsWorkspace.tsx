@@ -70,7 +70,7 @@ export const AssessmentAuditsWorkspace: React.FC<AssessmentAuditsWorkspaceProps>
               </div>
             </div>
 
-            <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 rounded px-3 py-2 mb-2 border border-slate-100 dark:border-transparent">
+            <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 rounded px-3 py-2 mb-2 border border-slate-200 dark:border-transparent">
               <span className="text-xs text-slate-500 dark:text-slate-400">Score</span>
               <span className="font-mono font-bold text-primary-600 dark:text-primary-300">
                 {audit.score}

@@ -61,7 +61,7 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
       case 'conclusion_readout':
         return <FileText size={16} className="text-primary-400" />;
       default:
-        return <ExternalLink size={16} className="text-slate-400" />;
+        return <ExternalLink size={16} className="text-slate-600" />;
     }
   };
 
@@ -93,13 +93,13 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
     <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
       <div className="flex items-center gap-2 mb-2">
         {getSourceIcon()}
-        <span className="text-xs font-semibold text-slate-400 uppercase">
+        <span className="text-xs font-semibold text-slate-600 uppercase">
           {isPolish ? 'Źródło' : 'Source'} {getSourceLabel()}
         </span>
       </div>
       <button
         onClick={handleNavigate}
-        className="flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-colors group"
+        className="flex items-center gap-2 text-sm text-slate-600 hover:text-white transition-colors group"
       >
         <span className="font-mono text-xs">{sourceId}</span>
         <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />

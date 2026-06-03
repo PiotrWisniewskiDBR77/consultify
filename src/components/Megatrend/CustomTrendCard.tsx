@@ -57,7 +57,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
 
       {/* AI Suggestion Banner */}
       <div className="bg-slate-50 dark:bg-navy-800 p-4 rounded-lg border border-slate-200 dark:border-navy-700 flex items-start gap-3">
-        <AlertCircle className="text-slate-400 dark:text-slate-500 mt-1" size={18} />
+        <AlertCircle className="text-slate-600 dark:text-slate-500 mt-1" size={18} />
         <div>
           <h4 className="font-bold text-sm text-navy-900 dark:text-white">AI Radar Watch</h4>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -73,7 +73,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
       {/* List */}
       <div className="space-y-3">
         {trends.length === 0 && !isAdding && (
-          <div className="text-center py-8 text-gray-400 dark:text-gray-500 italic">
+          <div className="text-center py-8 text-gray-600 dark:text-gray-500 italic">
             No custom trends added yet.
           </div>
         )}
@@ -106,7 +106,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
             </div>
             <button
               onClick={() => onDelete(trend.id)}
-              className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500 transition p-1"
+              className="text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500 transition p-1"
             >
               <Trash2 size={16} />
             </button>

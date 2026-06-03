@@ -246,7 +246,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
             >
               <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-2 flex-shrink-0">
                 {isPl ? q.labelPl : q.labelEn}
-                <span className="ml-1 text-slate-400">({nodesByQuadrant[idx].length})</span>
+                <span className="ml-1 text-slate-600">({nodesByQuadrant[idx].length})</span>
               </div>
               <div className="flex-1 min-h-[100px] relative">
                 {nodesByQuadrant[idx].map((node) => (
@@ -271,17 +271,17 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                     {!locked && onFieldChange && (
                       <GripVertical
                         size={10}
-                        className="absolute left-1 top-1/2 -translate-y-1/2 text-slate-300 dark:text-navy-600 cursor-grab"
+                        className="absolute left-1 top-1/2 -translate-y-1/2 text-slate-600 dark:text-navy-600 cursor-grab"
                       />
                     )}
                     <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
                       {node.data?.label || node.id}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[9px] text-slate-400">
+                      <span className="text-[9px] text-slate-600">
                         {xAxis.header}: {node.data?.[xAxis.key] ?? '—'}
                       </span>
-                      <span className="text-[9px] text-slate-400">
+                      <span className="text-[9px] text-slate-600">
                         {yAxis.header}: {node.data?.[yAxis.key] ?? '—'}
                       </span>
                     </div>
@@ -289,7 +289,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                 ))}
                 {nodesByQuadrant[idx].length === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-600">
                       {isPl ? 'Brak elementów' : 'No items'}
                     </span>
                   </div>

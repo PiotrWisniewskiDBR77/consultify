@@ -246,7 +246,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
           <h2 className="text-lg font-semibold text-white">
             {t('admin.initiativeCreator.title', 'Kreator inicjatyw')}
           </h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600">
             {t('admin.initiativeCreator.subtitle', 'Generuj inicjatywy transformacyjne z ocen')}
           </p>
         </div>
@@ -297,13 +297,13 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            <h3 className="text-sm font-medium text-slate-300">
+            <h3 className="text-sm font-medium text-slate-600">
               {t('admin.initiativeCreator.selectAssessment', 'Wybierz ocenę')}
             </h3>
 
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
               <input
                 type="text"
                 placeholder={t('admin.initiativeCreator.searchPlaceholder', 'Szukaj oceny...')}
@@ -326,7 +326,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 >
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-white/5">
-                      <Building2 className="w-4 h-4 text-slate-400" />
+                      <Building2 className="w-4 h-4 text-slate-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-white truncate">{assessment.name}</p>
@@ -335,7 +335,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                       )}
                       <div className="flex items-center gap-2 mt-2">
                         {assessment.type && (
-                          <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-slate-400">
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 text-slate-600">
                             {assessment.type}
                           </span>
                         )}
@@ -382,7 +382,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
 
             {/* Methodology */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-3">
+              <label className="block text-sm font-medium text-slate-600 mb-3">
                 <Brain className="w-4 h-4 inline mr-2" />
                 {t('admin.initiativeCreator.methodology', 'Metodologia')}
               </label>
@@ -410,7 +410,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
 
             {/* Count */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 mb-2">
                 {t('admin.initiativeCreator.count', 'Liczba inicjatyw')}
               </label>
               <input
@@ -432,7 +432,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                   onChange={(e) => setIncludeChatContext(e.target.checked)}
                   className="w-4 h-4 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500"
                 />
-                <span className="text-sm text-slate-300">
+                <span className="text-sm text-slate-600">
                   {t('admin.initiativeCreator.includeContext', 'Uwzględnij kontekst z czatu')}
                 </span>
               </label>
@@ -440,7 +440,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
 
             {/* Consultant Brief */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 mb-2">
                 {t('admin.initiativeCreator.consultantBrief', 'Dodatkowe wskazówki (opcjonalne)')}
               </label>
               <textarea
@@ -459,7 +459,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => setStep('select')}
-                className="px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors"
+                className="px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-slate-600 hover:bg-white/10 transition-colors"
               >
                 {t('common.back', 'Wstecz')}
               </button>
@@ -532,7 +532,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             <h3 className="text-lg font-medium text-white mb-2">
               {t('admin.initiativeCreator.completed', 'Generowanie zakończone!')}
             </h3>
-            <p className="text-slate-400 mb-6">
+            <p className="text-slate-600 mb-6">
               {t('admin.initiativeCreator.completedDesc', 'Wygenerowano {{count}} inicjatyw', {
                 count: progress.generatedCount,
               })}

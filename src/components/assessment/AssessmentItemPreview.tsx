@@ -117,25 +117,25 @@ export const AssessmentItemPreview: React.FC<AssessmentItemPreviewProps> = ({
           <span className="text-slate-500 dark:text-slate-400">
             {t('preview.currentScore', 'Current score')}
           </span>
-          <span className="text-slate-300 dark:text-slate-300">{item.currentScore ?? '—'}</span>
+          <span className="text-slate-600 dark:text-slate-300">{item.currentScore ?? '—'}</span>
 
           <span className="text-slate-500 dark:text-slate-400">
             {t('preview.targetScore', 'Target score')}
           </span>
-          <span className="text-slate-300 dark:text-slate-300">{item.targetScore ?? '—'}</span>
+          <span className="text-slate-600 dark:text-slate-300">{item.targetScore ?? '—'}</span>
 
           <span className="text-slate-500 dark:text-slate-400">{t('preview.gap', 'Gap')}</span>
-          <span className="text-slate-300 dark:text-slate-300">{gap != null ? gap : '—'}</span>
+          <span className="text-slate-600 dark:text-slate-300">{gap != null ? gap : '—'}</span>
 
           <span className="text-slate-500 dark:text-slate-400">
             {t('preview.evidenceCount', 'Evidence')}
           </span>
-          <span className="text-slate-300 dark:text-slate-300">{item.evidenceCount ?? '—'}</span>
+          <span className="text-slate-600 dark:text-slate-300">{item.evidenceCount ?? '—'}</span>
 
           <span className="text-slate-500 dark:text-slate-400">
             {t('preview.recommendationsCount', 'Recommendations')}
           </span>
-          <span className="text-slate-300 dark:text-slate-300">
+          <span className="text-slate-600 dark:text-slate-300">
             {item.recommendationsCount ?? '—'}
           </span>
         </div>

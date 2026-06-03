@@ -177,7 +177,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                 Context Quality
               </div>
               <div
@@ -222,7 +222,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
           Gatekeeper
         </h3>
         <div className="flex-1 space-y-6">
-          <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-100 dark:border-navy-700">
+          <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
             <h4 className="font-semibold text-sm mb-3">Missing Context</h4>
             {sufficiency.gaps.length > 0 ? (
               <ul className="space-y-2">
@@ -255,7 +255,7 @@ export const Module1ContextView: React.FC<Module1ContextViewProps> = ({
           className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
             sufficiency.isReady
               ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-green-500/30 cursor-pointer transform hover:-translate-y-0.5'
-              : 'bg-slate-200 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              : 'bg-slate-200 dark:bg-navy-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
           }`}
         >
           {sufficiency.isReady ? (

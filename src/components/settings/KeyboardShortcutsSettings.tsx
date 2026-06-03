@@ -215,7 +215,7 @@ const KeyBadge = ({ keys }: { keys: string }) => (
     {keys.split('+').map((key, i) => (
       <React.Fragment key={i}>
         {i > 0 && <span className="text-slate-500 text-xs">+</span>}
-        <kbd className="px-2 py-1 text-xs font-mono bg-navy-900/80 border border-white/10 rounded text-slate-300">
+        <kbd className="px-2 py-1 text-xs font-mono bg-navy-900/80 border border-white/10 rounded text-slate-600">
           {key === 'Cmd' ? <Command size={12} className="inline" /> : key}
         </kbd>
       </React.Fragment>
@@ -359,7 +359,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
   const resetAction = (
     <button
       onClick={resetToDefault}
-      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
     >
       <RotateCcw size={13} />
       {t('settings.shortcuts.reset', 'Reset')}
@@ -429,7 +429,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
 
               {/* Preset Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-3">
+                <label className="block text-sm font-medium text-slate-600 mb-3">
                   <Settings size={14} className="inline mr-1.5 text-primary-400" />
                   {t('settings.shortcuts.preset', 'Shortcut Preset')}
                 </label>
@@ -491,7 +491,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
               className="bg-navy-800/50 border border-white/5 rounded-xl overflow-hidden"
             >
               <div className="px-6 py-3 border-b border-white/5">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   {t(
                     `settings.shortcuts.categories.${category}`,
                     CATEGORY_LABELS[category as ShortcutCategory]
@@ -589,7 +589,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
               <p className="text-sm font-medium text-primary-300">
                 {t('settings.shortcuts.tip', 'Tip')}
               </p>
-              <p className="text-sm text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-600 mt-0.5">
                 {t(
                   'settings.shortcuts.tipText',
                   'Press "?" anywhere in the app to see available shortcuts. Sequences like "g h" mean press g, release, then press h.'

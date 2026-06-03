@@ -289,7 +289,7 @@ export default function FormBuilder({
           {onDelete && (
             <button
               onClick={onDelete}
-              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
+              className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
               title={t('formBuilder.delete', 'Delete form')}
             >
               <Trash2 className="h-4 w-4" />
@@ -464,7 +464,7 @@ function FieldListPanel({
                     onMoveUp(idx);
                   }}
                   disabled={idx === 0}
-                  className="rounded p-0.5 text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300"
+                  className="rounded p-0.5 text-gray-600 transition-colors hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300"
                   title={t('formBuilder.moveUp', 'Move up')}
                 >
                   <ChevronUp className="h-3 w-3" />
@@ -475,20 +475,20 @@ function FieldListPanel({
                     onMoveDown(idx);
                   }}
                   disabled={idx === fieldConfigs.length - 1}
-                  className="rounded p-0.5 text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300"
+                  className="rounded p-0.5 text-gray-600 transition-colors hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300"
                   title={t('formBuilder.moveDown', 'Move down')}
                 >
                   <ChevronDown className="h-3 w-3" />
                 </button>
               </div>
-              <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-gray-400" />
+              <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-gray-600" />
               <span className="shrink-0 text-gray-500 dark:text-gray-400">
                 {FIELD_TYPE_ICON[field.fieldType] ?? <Type className="h-4 w-4" />}
               </span>
               <span
                 className={`flex-1 text-sm font-medium ${
                   fc.hidden
-                    ? 'text-gray-400 line-through dark:text-gray-500'
+                    ? 'text-gray-600 line-through dark:text-gray-500'
                     : 'text-gray-900 dark:text-white'
                 }`}
               >
@@ -513,7 +513,7 @@ function FieldListPanel({
               {/* Visibility toggle */}
               <button
                 onClick={() => onUpdate(fc.fieldId, { hidden: !fc.hidden })}
-                className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+                className="rounded p-1 text-gray-600 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
                 title={
                   fc.hidden
                     ? t('formBuilder.showField', 'Show field')
@@ -526,7 +526,7 @@ function FieldListPanel({
               {/* Expand/collapse */}
               <button
                 onClick={() => setExpandedId(isExpanded ? null : fc.fieldId)}
-                className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+                className="rounded p-1 text-gray-600 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
               >
                 {isExpanded ? (
                   <ChevronUp className="h-4 w-4" />
@@ -538,7 +538,7 @@ function FieldListPanel({
 
             {/* Expanded config */}
             {isExpanded && (
-              <div className="border-t border-gray-100 px-4 py-3 dark:border-navy-700">
+              <div className="border-t border-gray-200 px-4 py-3 dark:border-navy-700">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -608,7 +608,7 @@ function FieldListPanel({
                     />
                   </label>
                   {fc.conditionalVisibility && (
-                    <div className="mt-2 grid grid-cols-3 gap-2 rounded-lg border border-gray-100 bg-gray-50 p-2 dark:border-navy-700 dark:bg-navy-900">
+                    <div className="mt-2 grid grid-cols-3 gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-navy-700 dark:bg-navy-900">
                       <select
                         value={fc.conditionalVisibility.fieldId}
                         onChange={(e) =>
@@ -812,7 +812,7 @@ function SettingsPanel({
           placeholder="notify@example.com"
           className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
         />
-        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+        <p className="mt-1 text-xs text-gray-600 dark:text-gray-500">
           {t(
             'formBuilder.notificationEmailHint',
             'Receive an email when a new response is submitted'
@@ -921,7 +921,7 @@ function PreviewField({ field, config }: { field: TablePlatformField; config: Fo
         {label}
         {config.required && <span className="ml-1 text-rose-500">*</span>}
       </label>
-      {config.helpText && <p className="mb-1 text-xs text-gray-400">{config.helpText}</p>}
+      {config.helpText && <p className="mb-1 text-xs text-gray-600">{config.helpText}</p>}
       {renderPreviewInput(field.fieldType)}
     </div>
   );

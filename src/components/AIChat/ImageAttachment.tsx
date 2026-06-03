@@ -164,7 +164,7 @@ export const ImageAttachment: React.FC<ImageAttachmentProps> = ({
       {/* Image Preview */}
       {attachment.isProcessing ? (
         <div className="w-full h-full flex items-center justify-center">
-          <Loader2 size={20} className="animate-spin text-slate-400" />
+          <Loader2 size={20} className="animate-spin text-slate-600" />
         </div>
       ) : attachment.error ? (
         <div className="w-full h-full flex items-center justify-center">

@@ -61,7 +61,7 @@ export const DemoConversionCTA: React.FC<DemoConversionCTAProps> = ({
             <div className="p-4">
               <button
                 onClick={onDismiss}
-                className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                className="absolute top-3 right-3 text-slate-600 hover:text-slate-600 dark:hover:text-white transition-colors"
                 aria-label="Dismiss"
               >
                 <X size={14} />

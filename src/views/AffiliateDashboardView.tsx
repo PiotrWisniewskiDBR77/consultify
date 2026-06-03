@@ -131,7 +131,7 @@ export const AffiliateDashboardView: React.FC = () => {
                 <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
                   <Share2 size={20} />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest">
                   Aktywne Kody
                 </span>
               </div>
@@ -148,7 +148,7 @@ export const AffiliateDashboardView: React.FC = () => {
                 <div className="p-2 rounded-lg bg-brand-500/10 text-brand-500">
                   <Users size={20} />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest">
                   Użycia
                 </span>
               </div>
@@ -167,7 +167,7 @@ export const AffiliateDashboardView: React.FC = () => {
                 <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
                   <CheckCircle2 size={20} />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest">
                   Konwersje
                 </span>
               </div>
@@ -189,7 +189,7 @@ export const AffiliateDashboardView: React.FC = () => {
                 <div className="p-2 rounded-lg bg-primary-500/10 text-primary-500">
                   <TrendingUp size={20} />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest">
                   Wskaźnik Wpływu
                 </span>
               </div>
@@ -254,13 +254,13 @@ export const AffiliateDashboardView: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => copyToClipboard(ref.code)}
-                        className="p-2 rounded-lg hover:bg-brand-500/10 text-slate-400 dark:text-slate-500 hover:text-brand-500 transition-all"
+                        className="p-2 rounded-lg hover:bg-brand-500/10 text-slate-600 dark:text-slate-500 hover:text-brand-500 transition-all"
                         title="Kopiuj kod"
                       >
                         <Copy size={18} />
                       </button>
                       <button
-                        className="p-2 rounded-lg hover:bg-brand-500/10 text-slate-400 dark:text-slate-500 hover:text-brand-500 transition-all"
+                        className="p-2 rounded-lg hover:bg-brand-500/10 text-slate-600 dark:text-slate-500 hover:text-brand-500 transition-all"
                         title="Udostępnij"
                       >
                         <Share2 size={18} />
@@ -272,7 +272,7 @@ export const AffiliateDashboardView: React.FC = () => {
                 {referrals.length === 0 && (
                   <div className="text-center py-12 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-dashed border-white/10">
                     <div className="p-4 rounded-full bg-slate-100 dark:bg-white/5 inline-block mb-4">
-                      <TrendingUp size={32} className="text-slate-400 dark:text-slate-500" />
+                      <TrendingUp size={32} className="text-slate-600 dark:text-slate-500" />
                     </div>
                     <h3 className="font-bold">Brak wygenerowanych kodów</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
@@ -303,7 +303,7 @@ export const AffiliateDashboardView: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-500">
                       <span>Moc Polecenia</span>
                       <span>
                         {referrals.length > 0

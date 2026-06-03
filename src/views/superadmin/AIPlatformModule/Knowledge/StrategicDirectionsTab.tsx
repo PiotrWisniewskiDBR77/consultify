@@ -318,7 +318,7 @@ export const StrategicDirectionsTab: React.FC = () => {
       {/* Strategies Grid */}
       {strategies.length === 0 ? (
         <div className="text-center py-16 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
-          <Target size={48} className="mx-auto text-slate-300 mb-4" />
+          <Target size={48} className="mx-auto text-slate-600 mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
             No Strategic Directions
           </h3>
@@ -344,7 +344,7 @@ export const StrategicDirectionsTab: React.FC = () => {
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 rounded-lg bg-slate-100 dark:bg-navy-900/60">
                   <Target
-                    className={s.is_active ? 'text-indigo-500' : 'text-slate-400'}
+                    className={s.is_active ? 'text-indigo-500' : 'text-slate-600'}
                     size={24}
                   />
                 </div>
@@ -458,7 +458,7 @@ export const StrategicDirectionsTab: React.FC = () => {
                   setEditingStrategy(null);
                   resetForm();
                 }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X size={20} />
               </button>

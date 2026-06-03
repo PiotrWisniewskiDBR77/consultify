@@ -291,7 +291,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           return (
             <div className="flex items-center gap-2">
               <span className={meta.color}>{meta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-300">{meta.shortLabel}</span>
+              <span className="font-mono text-xs font-bold text-slate-600">{meta.shortLabel}</span>
             </div>
           );
         },
@@ -302,7 +302,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportHistoryItem) => (
           <div>
             <span className="text-sm text-slate-900 dark:text-white font-medium">{row.title}</span>
-            {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
+            {row.projectName && <p className="text-xs text-slate-600 mt-0.5">{row.projectName}</p>}
           </div>
         ),
       },
@@ -311,7 +311,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Ver.',
         width: '60px',
         render: (row: ReportHistoryItem) => (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono font-medium bg-white/5 text-slate-300 rounded">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono font-medium bg-white/5 text-slate-600 rounded">
             v{row.versionLabel || row.versionNumber || '1.0'}
           </span>
         ),
@@ -344,7 +344,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           return (
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-              <span className="text-sm text-slate-300">{meta.label}</span>
+              <span className="text-sm text-slate-600">{meta.label}</span>
             </div>
           );
         },
@@ -356,7 +356,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         sortable: true,
         render: (row: ReportHistoryItem) => (
           <div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
               <Calendar size={14} className="text-slate-500" />
               {new Date(row.createdAt).toLocaleDateString()}
             </div>
@@ -420,7 +420,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           return (
             <div className="flex items-center gap-2">
               <span className={meta.color}>{meta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-300">{meta.shortLabel}</span>
+              <span className="font-mono text-xs font-bold text-slate-600">{meta.shortLabel}</span>
             </div>
           );
         },
@@ -431,7 +431,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportTemplate) => (
           <div>
             <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
-            {row.description && <p className="text-xs text-slate-400 mt-0.5">{row.description}</p>}
+            {row.description && <p className="text-xs text-slate-600 mt-0.5">{row.description}</p>}
           </div>
         ),
       },
@@ -440,7 +440,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Sections',
         width: '100px',
         render: (row: ReportTemplate) => (
-          <span className="text-sm text-slate-300">{row.sections.length} sections</span>
+          <span className="text-sm text-slate-600">{row.sections.length} sections</span>
         ),
       },
       {
@@ -449,7 +449,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         width: '140px',
         render: (row: ReportTemplate) => (
           <div>
-            <div className="text-sm text-slate-300">
+            <div className="text-sm text-slate-600">
               {new Date(row.createdAt).toLocaleDateString()}
             </div>
             {row.createdByName && <p className="text-xs text-slate-500">{row.createdByName}</p>}
@@ -472,7 +472,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           return (
             <div className="flex items-center gap-2">
               <span className={meta.color}>{meta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-300">{meta.shortLabel}</span>
+              <span className="font-mono text-xs font-bold text-slate-600">{meta.shortLabel}</span>
             </div>
           );
         },
@@ -493,7 +493,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Frequency',
         width: '120px',
         render: (row: ReportSchedule) => (
-          <span className="text-sm text-slate-300">{row.frequency}</span>
+          <span className="text-sm text-slate-600">{row.frequency}</span>
         ),
       },
       {
@@ -501,7 +501,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         label: 'Schedule',
         width: '140px',
         render: (row: ReportSchedule) => (
-          <div className="text-sm text-slate-300">
+          <div className="text-sm text-slate-600">
             {row.timeOfDay} {row.timezone}
           </div>
         ),
@@ -513,7 +513,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportSchedule) => (
           <div>
             {row.nextScheduledAt ? (
-              <div className="text-sm text-slate-300">
+              <div className="text-sm text-slate-600">
                 {new Date(row.nextScheduledAt).toLocaleDateString()}
               </div>
             ) : (
@@ -529,7 +529,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportSchedule) => (
           <span
             className={`px-2 py-1 text-xs font-medium rounded ${
-              row.isActive ? 'bg-emerald-600 text-white' : 'bg-slate-600 text-slate-300'
+              row.isActive ? 'bg-emerald-600 text-white' : 'bg-slate-600 text-slate-600'
             }`}
           >
             {row.isActive ? 'Active' : 'Paused'}
@@ -706,7 +706,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       case 'RAID':
         return <RaidReport report={currentReport} />;
       default:
-        return <div className="p-6 text-slate-400">Unknown report type</div>;
+        return <div className="p-6 text-slate-600">Unknown report type</div>;
     }
   };
 

@@ -1734,7 +1734,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                 <span className="truncate">Assessment</span>
-                <span className="text-slate-300 dark:text-navy-700">/</span>
+                <span className="text-slate-600 dark:text-navy-700">/</span>
                 <span className="truncate">{framework?.toUpperCase()}</span>
               </div>
 
@@ -2097,7 +2097,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                                 ? 'bg-amber-500/20 text-amber-300'
                                 : String(status).toUpperCase() === 'REJECTED'
                                   ? 'bg-rose-500/20 text-rose-300'
-                                  : 'bg-slate-500/20 text-slate-300'
+                                  : 'bg-slate-500/20 text-slate-600'
                         }`}
                       >
                         <span
@@ -2351,7 +2351,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
                                   {String(c?.last_message_preview || '')}
                                 </div>
                               </div>
-                              <div className="shrink-0 text-[11px] text-slate-400">
+                              <div className="shrink-0 text-[11px] text-slate-600">
                                 {c?.message_count ? `${c.message_count} msgs` : ''}
                               </div>
                             </div>

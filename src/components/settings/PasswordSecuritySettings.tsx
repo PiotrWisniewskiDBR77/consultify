@@ -372,7 +372,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.password && (
-          <div className="p-6 border-t border-slate-100 dark:border-navy-700 space-y-4">
+          <div className="p-6 border-t border-slate-200 dark:border-navy-700 space-y-4">
             {/* Current Password */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -575,7 +575,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.mfa && (
-          <div className="p-6 border-t border-slate-100 dark:border-navy-700">
+          <div className="p-6 border-t border-slate-200 dark:border-navy-700">
             <MFASetup
               isEnabled={!!currentUser.mfaEnabled}
               onUpdate={() => window.location.reload()}
@@ -608,9 +608,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.sessions && (
-          <div className="border-t border-slate-100 dark:border-navy-700">
+          <div className="border-t border-slate-200 dark:border-navy-700">
             {sessions.length > 1 && (
-              <div className="p-4 border-b border-slate-100 dark:border-navy-700 flex justify-end">
+              <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex justify-end">
                 <button
                   onClick={handleRevokeAllSessions}
                   className="px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors flex items-center gap-2"
@@ -620,7 +620,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 </button>
               </div>
             )}
-            <div className="divide-y divide-slate-100 dark:divide-white/5">
+            <div className="divide-y divide-slate-200 dark:divide-white/5">
               {isLoadingSessions ? (
                 <div className="p-8 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
@@ -710,7 +710,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.recovery && (
-          <div className="p-6 border-t border-slate-100 dark:border-navy-700 space-y-4">
+          <div className="p-6 border-t border-slate-200 dark:border-navy-700 space-y-4">
             {recoveryLoadError ? (
               <div
                 role="alert"
@@ -873,7 +873,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.events && (
-          <div className="border-t border-slate-100 dark:border-navy-700">
+          <div className="border-t border-slate-200 dark:border-navy-700">
             {loadingEvents ? (
               <div className="p-8 flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
@@ -883,7 +883,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 No recent security events
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-white/5">
+              <div className="divide-y divide-slate-200 dark:divide-white/5">
                 {securityEvents.map((event) => (
                   <div key={event.id} className="p-4 flex items-start gap-4">
                     <div

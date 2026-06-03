@@ -198,7 +198,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                         <p className="text-sm text-slate-600 dark:text-slate-300">
                           {connectionInfo.email || connectionInfo.displayName}
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                        <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">
                           {t('settings.connectedAccounts.connectedOn', 'Connected')}{' '}
                           {new Date(connectionInfo.connectedAt).toLocaleDateString()}
                         </p>
@@ -259,7 +259,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
         })}
       </div>
 
-      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-navy-700">
+      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-3">
           <Shield size={18} className="text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
           <div>

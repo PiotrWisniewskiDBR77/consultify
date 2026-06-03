@@ -405,7 +405,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                           <span className="text-slate-500 dark:text-slate-400">
                             {formatNumber(stat.tokens)} tokens
                           </span>
-                          <span className="text-slate-400 dark:text-slate-500">•</span>
+                          <span className="text-slate-600 dark:text-slate-500">•</span>
                           <span className="text-slate-500 dark:text-slate-400">
                             {stat.count} requests
                           </span>
@@ -479,7 +479,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
               })}
             </div>
           )}
-          <div className="flex justify-between mt-2 text-xs text-slate-400 dark:text-slate-500">
+          <div className="flex justify-between mt-2 text-xs text-slate-600 dark:text-slate-500">
             <span>{dailyUsage[0]?.date}</span>
             <span>{dailyUsage[dailyUsage.length - 1]?.date}</span>
           </div>

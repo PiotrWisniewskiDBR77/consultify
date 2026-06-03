@@ -538,7 +538,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                       {canEdit && (
                         <button
                           onClick={() => openEditModal(user)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-600 dark:text-slate-500 hover:text-white"
                           title="Edit user"
                         >
                           <Edit size={16} />
@@ -551,8 +551,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                           onClick={() => handleDeactivateUser(user)}
                           className={`p-2 rounded-lg ${
                             user.status === 'active'
-                              ? 'hover:bg-yellow-500/20 text-slate-400 dark:text-slate-500 hover:text-yellow-400'
-                              : 'hover:bg-green-500/20 text-slate-400 dark:text-slate-500 hover:text-green-400'
+                              ? 'hover:bg-yellow-500/20 text-slate-600 dark:text-slate-500 hover:text-yellow-400'
+                              : 'hover:bg-green-500/20 text-slate-600 dark:text-slate-500 hover:text-green-400'
                           }`}
                           title={user.status === 'active' ? 'Deactivate user' : 'Reactivate user'}
                         >
@@ -568,7 +568,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                           className={`p-2 rounded-lg ${
                             user.isOwner || user.role === 'OWNER'
                               ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
-                              : 'hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400'
+                              : 'hover:bg-rose-500/20 text-slate-600 dark:text-slate-500 hover:text-rose-400'
                           }`}
                           title={
                             user.isOwner || user.role === 'OWNER'
@@ -605,7 +605,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               </h2>
               <button
                 onClick={() => setShowAddUserModal(false)}
-                className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white"
+                className="text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -705,7 +705,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               </h2>
               <button
                 onClick={() => setShowTransferModal(false)}
-                className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white"
+                className="text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -721,7 +721,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Select New Owner
                 </label>
                 <select
@@ -744,7 +744,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Reason (optional)
                 </label>
                 <textarea

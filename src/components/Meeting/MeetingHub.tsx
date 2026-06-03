@@ -594,7 +594,7 @@ export const MeetingHub: React.FC = () => {
       >
         {loading ? (
           <div className="flex h-full items-center justify-center">
-            <Loader2 size={24} className="animate-spin text-slate-400" />
+            <Loader2 size={24} className="animate-spin text-slate-600" />
           </div>
         ) : activeMeeting ? (
           <MeetingDetailView
@@ -1099,7 +1099,7 @@ const MeetingDetailView: React.FC<{
               ))}
             </div>
           ) : (
-            <div className="text-sm text-slate-400">
+            <div className="text-sm text-slate-600">
               {isPolish ? 'Brak follow-upów' : 'No follow-ups yet'}
             </div>
           )}
@@ -1242,7 +1242,7 @@ const PreviewSection: React.FC<{
         ))}
       </div>
     ) : (
-      <div className="text-sm text-slate-400">{emptyLabel}</div>
+      <div className="text-sm text-slate-600">{emptyLabel}</div>
     )}
   </div>
 );
@@ -1343,7 +1343,7 @@ const MeetingCalendarView: React.FC<{
         {weekdayLabels.map((label) => (
           <div
             key={label}
-            className="px-2 py-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500"
+            className="px-2 py-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500"
           >
             {label}
           </div>
@@ -1370,7 +1370,7 @@ const MeetingCalendarView: React.FC<{
                       ? 'bg-primary-600 font-semibold text-white'
                       : inMonth
                         ? 'text-slate-600 dark:text-slate-300'
-                        : 'text-slate-300 dark:text-slate-600'
+                        : 'text-slate-600 dark:text-slate-600'
                   }`}
                 >
                   {date.getDate()}
@@ -1397,7 +1397,7 @@ const MeetingCalendarView: React.FC<{
                   </button>
                 ))}
                 {dayMeetings.length > 3 ? (
-                  <div className="px-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+                  <div className="px-1.5 text-[10px] text-slate-600 dark:text-slate-500">
                     +{dayMeetings.length - 3} {isPolish ? 'więcej' : 'more'}
                   </div>
                 ) : null}

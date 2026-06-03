@@ -320,7 +320,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
         </div>
       ) : filteredTemplates.length === 0 ? (
         <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 p-12 text-center">
-          <FileText className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-400 mb-4" />
+          <FileText className="mx-auto h-12 w-12 text-slate-600 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
             {t('superadmin.playbookTemplates.empty.title')}
           </h3>
@@ -474,7 +474,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                className="text-slate-600 hover:text-slate-600 dark:hover:text-white"
               >
                 <X size={20} />
               </button>

@@ -196,7 +196,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
     if (status === 'ok') return <CheckCircle2 size={14} className="text-emerald-500" />;
     if (status === 'warn') return <AlertTriangle size={14} className="text-amber-500" />;
     if (status === 'critical') return <XCircle size={14} className="text-rose-500" />;
-    return <Minus size={14} className="text-slate-300" />;
+    return <Minus size={14} className="text-slate-600" />;
   };
 
   const statusBg = (status: string) => {
@@ -240,7 +240,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
             style={{ left: `${position}%` }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+        <div className="flex justify-between text-[10px] text-slate-600 mt-1">
           {bm.p25 !== undefined && <span>P25: {bm.p25}</span>}
           {bm.median !== undefined && <span>Med: {bm.median}</span>}
           {bm.p75 !== undefined && <span>P75: {bm.p75}</span>}
@@ -265,7 +265,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
               onClick={() => setShowFormula(showFormula === ratio.code ? null : ratio.code)}
               className="p-0.5 hover:bg-slate-200 dark:hover:bg-navy-600 rounded"
             >
-              <HelpCircle size={12} className="text-slate-400" />
+              <HelpCircle size={12} className="text-slate-600" />
             </button>
           </div>
           <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
@@ -280,7 +280,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
             </div>
           )}
           {ratio.missingLines.length > 0 && ratio.status === 'na' && (
-            <div className="mt-1 text-[10px] text-slate-400">
+            <div className="mt-1 text-[10px] text-slate-600">
               {t('finance.ratios.missing', 'Missing')}: {ratio.missingLines.join(', ')}
             </div>
           )}
@@ -288,7 +288,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
       </div>
 
       {showFormula === ratio.code && (
-        <div className="mt-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-100 dark:border-navy-700 text-xs space-y-1">
+        <div className="mt-3 p-3 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 text-xs space-y-1">
           <div className="font-mono text-blue-600 dark:text-blue-400">{ratio.formula}</div>
           <div className="text-slate-500">
             {isPl ? ratio.formulaDescriptionPl : ratio.formulaDescription}
@@ -419,7 +419,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
                   <span className="font-semibold text-slate-900 dark:text-white">
                     {isPl ? config.labelPl : config.label}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-600">
                     {ratios.length} {t('finance.ratios.ratios', 'ratios')}
                   </span>
                 </div>
@@ -435,9 +435,9 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
                     </span>
                   )}
                   {isExpanded ? (
-                    <ChevronDown size={16} className="text-slate-400" />
+                    <ChevronDown size={16} className="text-slate-600" />
                   ) : (
-                    <ChevronRight size={16} className="text-slate-400" />
+                    <ChevronRight size={16} className="text-slate-600" />
                   )}
                 </div>
               </button>
@@ -452,7 +452,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
         })}
 
       {!result && !loading && (
-        <div className="text-center py-16 text-slate-400">
+        <div className="text-center py-16 text-slate-600">
           <BarChart3 size={40} className="mx-auto mb-3 opacity-40" />
           <p className="text-lg">
             {t('finance.ratios.noData', 'No confirmed financial statements yet')}

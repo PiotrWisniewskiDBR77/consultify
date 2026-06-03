@@ -220,7 +220,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
               className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
             >
               <div className="flex items-center gap-3">
-                <Smartphone className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                <Smartphone className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-slate-900 dark:text-white">{device.name}</p>
@@ -239,7 +239,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                 <button
                   disabled
                   title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-                  className="p-2 text-slate-300 dark:text-slate-600 rounded-lg disabled:cursor-not-allowed"
+                  className="p-2 text-slate-600 dark:text-slate-600 rounded-lg disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

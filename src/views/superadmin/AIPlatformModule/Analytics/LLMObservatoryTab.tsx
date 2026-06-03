@@ -370,7 +370,7 @@ export const LLMObservatoryTab: React.FC = () => {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-full">
-        <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
+        <RefreshCw className="w-6 h-6 animate-spin text-slate-600" />
       </div>
     );
   }
@@ -696,7 +696,7 @@ export const LLMObservatoryTab: React.FC = () => {
                     {providers.map((provider) => (
                       <tr
                         key={provider.provider}
-                        className={`border-b border-slate-100 dark:border-white/5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] ${
+                        className={`border-b border-slate-200 dark:border-white/5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.03] ${
                           selectedProvider === provider.provider
                             ? 'bg-indigo-50/60 dark:bg-indigo-500/10'
                             : ''
@@ -721,7 +721,7 @@ export const LLMObservatoryTab: React.FC = () => {
                           >
                             {provider.currentStatus || 'unknown'}
                           </div>
-                          <div className="text-[11px] text-slate-400 dark:text-slate-500">
+                          <div className="text-[11px] text-slate-600 dark:text-slate-500">
                             {formatRelativeDate(provider.lastHealthCheck)}
                           </div>
                         </td>

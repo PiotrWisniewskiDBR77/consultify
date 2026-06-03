@@ -121,7 +121,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
       />
       <button
         onClick={() => onRemove(idx)}
-        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
       >
         <Trash2 size={12} />
       </button>
@@ -138,7 +138,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
       onToggle={onToggle}
       badge={
         inScope.length + outScope.length > 0 ? (
-          <span className="text-xs text-slate-400">{inScope.length + outScope.length}</span>
+          <span className="text-xs text-slate-600">{inScope.length + outScope.length}</span>
         ) : undefined
       }
       actions={
@@ -182,7 +182,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                     {isPolish ? 'W zakresie' : 'In Scope'}
                   </label>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                     {isPolish
                       ? 'Elementy, procesy i obszary objęte inicjatywą'
                       : 'Elements, processes and areas included in this initiative'}
@@ -191,7 +191,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
               </div>
               <button
                 onClick={addInScope}
-                className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               >
                 <Plus size={14} />
                 {isPolish ? 'Dodaj' : 'Add item'}
@@ -210,7 +210,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 )
               )}
               {inScope.length === 0 && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                   {isPolish ? 'Brak elementów' : 'No items yet'}
                 </p>
               )}
@@ -229,7 +229,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                     {isPolish ? 'Poza zakresem' : 'Out of Scope'}
                   </label>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                     {isPolish
                       ? 'Wykluczenia i ograniczenia poza zakresem'
                       : 'Exclusions and boundaries not covered'}
@@ -238,7 +238,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
               </div>
               <button
                 onClick={addOutScope}
-                className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
+                className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
               >
                 <Plus size={14} />
                 {isPolish ? 'Dodaj' : 'Add item'}
@@ -257,7 +257,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 )
               )}
               {outScope.length === 0 && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                   {isPolish ? 'Brak elementów' : 'No items yet'}
                 </p>
               )}
@@ -277,7 +277,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                   {isPolish ? 'Kryteria rezygnacji (Kill Criteria)' : 'Kill Criteria'}
                 </label>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                   {isPolish
                     ? 'Warunki, których spełnienie oznacza natychmiastowe zatrzymanie inicjatywy'
                     : 'Conditions that trigger immediate initiative termination'}
@@ -286,7 +286,7 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
             </div>
             <button
               onClick={addKill}
-              className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+              className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             >
               <Plus size={14} />
               {isPolish ? 'Dodaj' : 'Add item'}
@@ -317,14 +317,14 @@ export const ScopeSection: React.FC<InitiativeSectionProps> = ({
                 />
                 <button
                   onClick={() => removeKill(i)}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
                 >
                   <Trash2 size={12} />
                 </button>
               </div>
             ))}
             {killCriteria.length === 0 && (
-              <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+              <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                 {isPolish ? 'Brak kryteriów' : 'No criteria yet'}
               </p>
             )}

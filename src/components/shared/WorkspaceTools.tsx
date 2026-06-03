@@ -42,7 +42,7 @@ export interface WorkspaceContext {
 /* ------------------------------------------------------------------ */
 
 export const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400/80 dark:text-slate-500/80 mb-2">
+  <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600/80 dark:text-slate-500/80 mb-2">
     {children}
   </div>
 );
@@ -94,7 +94,7 @@ export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
             <div className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
               {title}
             </div>
-            <div className="text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            <div className="text-[9px] font-medium text-slate-600 dark:text-slate-500 uppercase tracking-widest">
               {subtitle}
             </div>
           </div>
@@ -103,7 +103,7 @@ export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
           {actions}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-600 dark:hover:text-slate-300 transition-all"
+            className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-600 dark:hover:text-slate-300 transition-all"
           >
             <X size={14} />
           </button>
@@ -145,7 +145,7 @@ export const AIQuickActions: React.FC<AIQuickActionsProps> = ({
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
                 {isPl ? 'Polecenie' : 'Command'}
               </span>
-              <span className="text-[8px] text-slate-400 dark:text-slate-500 font-medium">⌘⇧A</span>
+              <span className="text-[8px] text-slate-600 dark:text-slate-500 font-medium">⌘⇧A</span>
             </div>
           </button>
         )}
@@ -285,7 +285,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
             <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
               {isPl ? 'Przetłumacz' : 'Translate'}
             </div>
-            <div className="text-[9px] text-slate-400 dark:text-slate-500">
+            <div className="text-[9px] text-slate-600 dark:text-slate-500">
               {isPl ? '→ English' : '→ Polski'}
             </div>
           </div>
@@ -303,13 +303,13 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
               <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
                 {isPl ? 'Zmień styl' : 'Change style'}
               </div>
-              <div className="text-[9px] text-slate-400 dark:text-slate-500">
+              <div className="text-[9px] text-slate-600 dark:text-slate-500">
                 {isPl ? 'Formalny, swobodny, zwięzły…' : 'Formal, casual, concise…'}
               </div>
             </div>
             <ChevronDown
               size={12}
-              className={`text-slate-400 transition-transform ${styleMenuOpen ? 'rotate-180' : ''}`}
+              className={`text-slate-600 transition-transform ${styleMenuOpen ? 'rotate-180' : ''}`}
             />
           </button>
           {styleMenuOpen && (
@@ -371,7 +371,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
             <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
               {isPl ? 'Popraw całość' : 'Polish & improve'}
             </div>
-            <div className="text-[9px] text-slate-400 dark:text-slate-500">
+            <div className="text-[9px] text-slate-600 dark:text-slate-500">
               {isPl ? 'Styl, gramatyka, struktura' : 'Style, grammar, structure'}
             </div>
           </div>
@@ -415,7 +415,7 @@ export const ShareSection: React.FC<ShareSectionProps> = ({ isPl, context }) => 
           <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
             {isPl ? 'Wyślij mailem' : 'Send via email'}
           </div>
-          <div className="text-[9px] text-slate-400 dark:text-slate-500">
+          <div className="text-[9px] text-slate-600 dark:text-slate-500">
             {isPl ? 'Otwiera klienta email z treścią' : 'Opens email client with content'}
           </div>
         </div>

@@ -434,7 +434,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                         <Clock
                           size={16}
                           className={
-                            isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+                            isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'
                           }
                         />
                         <span

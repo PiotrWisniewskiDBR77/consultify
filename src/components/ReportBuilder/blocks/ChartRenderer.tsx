@@ -149,7 +149,7 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({
 
   if (!config || !config.data || config.data.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 text-slate-400">
+      <div className="flex items-center justify-center py-8 text-slate-600">
         <p className="text-sm">No chart data available</p>
       </div>
     );
@@ -340,7 +340,7 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({
 
   // Fallback
   return (
-    <div className="flex items-center justify-center py-8 text-slate-400">
+    <div className="flex items-center justify-center py-8 text-slate-600">
       <p className="text-sm">Unsupported chart type: {config.type}</p>
     </div>
   );

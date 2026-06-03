@@ -151,7 +151,7 @@ const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   AI_RECOMMENDATION: { icon: Info, color: 'text-primary-400' },
   AI_OVERLOAD_DETECTED: { icon: AlertTriangle, color: 'text-rose-400' },
   AI_DEPENDENCY_CONFLICT: { icon: AlertCircle, color: 'text-amber-400' },
-  SYSTEM_ALERT: { icon: Bell, color: 'text-slate-400' },
+  SYSTEM_ALERT: { icon: Bell, color: 'text-slate-600' },
   // App / billing comms
   PAYMENT_FAILED: { icon: CreditCard, color: 'text-rose-400' },
   USAGE_ALERT: { icon: AlertTriangle, color: 'text-amber-400' },
@@ -995,7 +995,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       case 'GATE':
         return <Flag size={14} className="text-amber-400" />;
       default:
-        return <Bell size={14} className="text-slate-400" />;
+        return <Bell size={14} className="text-slate-600" />;
     }
   };
 
@@ -1125,8 +1125,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const SeverityIcon = severityConfig.icon;
   const typeKey = (notification?.type || '').toUpperCase();
   const typeConfig = notification
-    ? TYPE_ICONS[typeKey] || { icon: Bell, color: 'text-slate-400' }
-    : { icon: Bell, color: 'text-slate-400' };
+    ? TYPE_ICONS[typeKey] || { icon: Bell, color: 'text-slate-600' }
+    : { icon: Bell, color: 'text-slate-600' };
   const TypeIcon = typeConfig.icon;
   const contract = notification ? buildNotificationContent(notification as any, isPolish) : null;
   const aiAnalysis = generateAIAnalysis();
@@ -1430,7 +1430,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
               {/* 1) Related to — source entity, project, context (clickable) */}
               <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                   {isPolish ? 'Wynika z' : 'Related to'}
                 </label>
                 {relatedNotifItems.length === 0 ? (
@@ -1495,7 +1495,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* 2) Description — click-to-edit with AI enhancer */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Opis' : 'Description'}
                   </label>
                   <AIFieldEnhancer
@@ -1528,7 +1528,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* 3) Why it matters — with AI enhancer */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Dlaczego to ważne' : 'Why it matters'}
                   </label>
                   <AIFieldEnhancer
@@ -1561,7 +1561,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* 4) What is blocked — compact */}
               {blockedDraft.trim() && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Co jest blokowane' : 'What is blocked'}
                   </label>
                   <textarea
@@ -1678,9 +1678,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 <div className="py-10 text-center">
                   <TeresaMark
                     size={28}
-                    className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-600 dark:text-slate-600"
                   />
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Brak danych do analizy' : 'No data for analysis'}
                   </p>
                 </div>
@@ -1705,7 +1705,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* Expected action text — label + AI right-aligned */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Co należy zrobić' : 'What needs to be done'}
                   </label>
                   <AIFieldEnhancer
@@ -1735,7 +1735,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* Checklist — label + AI right-aligned, count below */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <label className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Lista kontrolna' : 'Checklist'}
                   </label>
                   <AIFieldEnhancer
@@ -1765,7 +1765,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         }}
                       />
                     </div>
-                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 tabular-nums shrink-0">
+                    <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 tabular-nums shrink-0">
                       {completedCount}/{totalCount}
                     </span>
                   </div>
@@ -1776,9 +1776,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <div className="py-8 text-center">
                     <CheckSquare
                       size={24}
-                      className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                      className="mx-auto mb-2 text-slate-600 dark:text-slate-600"
                     />
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                    <p className="text-xs text-slate-600 dark:text-slate-500">
                       {isPolish
                         ? 'Brak kroków — kliknij AI, aby wygenerować checklistę'
                         : 'No steps — click AI to generate a checklist'}
@@ -1802,7 +1802,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           : urgency === 'optional' && !done
                             ? 'text-slate-500 dark:text-slate-400'
                             : done
-                              ? 'line-through text-slate-400 dark:text-slate-500'
+                              ? 'line-through text-slate-600 dark:text-slate-500'
                               : 'text-slate-700 dark:text-slate-300';
 
                       return (
@@ -1837,7 +1837,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             )}
                           </button>
                           <span
-                            className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${done ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400 dark:text-slate-500'}`}
+                            className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${done ? 'text-slate-600 dark:text-slate-600' : 'text-slate-600 dark:text-slate-500'}`}
                           >
                             {idx + 1}.
                           </span>
@@ -1916,15 +1916,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* Comments list */}
               {commentsLoading ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 size={20} className="animate-spin text-slate-400" />
+                  <Loader2 size={20} className="animate-spin text-slate-600" />
                 </div>
               ) : comments.length === 0 ? (
                 <div className="py-10 text-center">
                   <MessageCircle
                     size={28}
-                    className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-600 dark:text-slate-600"
                   />
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+                  <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
                     {isPolish ? 'Brak komentarzy' : 'No comments yet'}
                   </p>
                   <button
@@ -1954,7 +1954,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                                 {comment.user?.firstName} {comment.user?.lastName}
                               </span>
-                              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                                 {formatDate(comment.createdAt)}
                               </span>
                             </div>
@@ -2003,7 +2003,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
             },
           };
           const defaultIcon = {
-            icon: <Bell size={14} className="text-slate-400" />,
+            icon: <Bell size={14} className="text-slate-600" />,
             bg: 'bg-slate-100 dark:bg-navy-800',
           };
 
@@ -2027,7 +2027,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               id: 'created',
               description: isPolish ? 'Powiadomienie utworzone' : 'Notification created',
               timestamp: notification.createdAt,
-              icon: <Bell size={14} className="text-slate-400" />,
+              icon: <Bell size={14} className="text-slate-600" />,
               iconBg: 'bg-slate-100 dark:bg-navy-800',
             });
             if (notification.readAt) {
@@ -2116,12 +2116,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
               {/* Activity feed */}
               {activityLogLoading ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 size={20} className="animate-spin text-slate-400" />
+                  <Loader2 size={20} className="animate-spin text-slate-600" />
                 </div>
               ) : allEntries.length === 0 ? (
                 <div className="py-10 text-center">
-                  <History size={28} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <History size={28} className="mx-auto mb-2 text-slate-600 dark:text-slate-600" />
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Brak aktywności' : 'No activity yet'}
                   </p>
                 </div>
@@ -2138,7 +2138,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <p className="text-sm text-slate-700 dark:text-slate-300">
                           {entry.description}
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                        <p className="text-xs text-slate-600 dark:text-slate-500">
                           {formatDate(entry.timestamp)}
                         </p>
                       </div>
@@ -2455,7 +2455,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         ))}
                         {isSnoozed && snoozedUntil && (
                           <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/40">
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                            <p className="text-[10px] text-slate-600 dark:text-slate-500">
                               {isPolish ? 'Odłożono do' : 'Snoozed until'}:{' '}
                               {new Date(snoozedUntil).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
                             </p>
@@ -2485,7 +2485,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                         >
-                          <BellOff size={12} className="text-slate-400 shrink-0" />
+                          <BellOff size={12} className="text-slate-600 shrink-0" />
                           {isPolish ? 'Wycisz to' : 'Mute this'}
                         </button>
                         <button
@@ -2495,7 +2495,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                         >
-                          <BellOff size={12} className="text-slate-400 shrink-0" />
+                          <BellOff size={12} className="text-slate-600 shrink-0" />
                           {isPolish ? 'Wycisz podobne (typ)' : 'Mute similar (type)'}
                         </button>
                       </div>
@@ -2584,7 +2584,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <motion.div
                           animate={{ rotate: expandedSections.has('whats-happening') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-400" />
+                          <ChevronDown size={18} className="text-slate-600" />
                         </motion.div>
                       </div>
                     </button>
@@ -2601,7 +2601,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               {contract.what}
                             </div>
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1">
+                              <div className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-1">
                                 {isPolish ? 'Dlaczego to ważne' : 'Why it matters'}
                               </div>
                               <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -2609,7 +2609,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1">
+                              <div className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-1">
                                 {isPolish ? 'Co jest blokowane' : 'What is blocked'}
                               </div>
                               <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -2649,7 +2649,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <motion.div
                           animate={{ rotate: expandedSections.has('ai-analysis') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-400" />
+                          <ChevronDown size={18} className="text-slate-600" />
                         </motion.div>
                       </div>
                     </button>
@@ -2735,7 +2735,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <motion.div
                           animate={{ rotate: expandedSections.has('expected-action') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-400" />
+                          <ChevronDown size={18} className="text-slate-600" />
                         </motion.div>
                       </div>
                     </button>
@@ -2781,7 +2781,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 {isPolish ? 'Lista kontrolna' : 'Checklist'}
                               </label>
                               <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 tabular-nums">
                                   {actionChecklist.filter((i) => i.completed).length}/
                                   {actionChecklist.length}
                                 </span>
@@ -2854,7 +2854,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <motion.div
                           animate={{ rotate: expandedSections.has('comments') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-400" />
+                          <ChevronDown size={18} className="text-slate-600" />
                         </motion.div>
                       </div>
                     </button>
@@ -2909,7 +2909,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <motion.div
                           animate={{ rotate: expandedSections.has('activity-log') ? 180 : 0 }}
                         >
-                          <ChevronDown size={18} className="text-slate-400" />
+                          <ChevronDown size={18} className="text-slate-600" />
                         </motion.div>
                       </div>
                     </button>
@@ -2924,7 +2924,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <div className="p-5 space-y-3">
                             <div className="flex items-start gap-3">
                               <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center shrink-0">
-                                <Bell size={14} className="text-slate-400" />
+                                <Bell size={14} className="text-slate-600" />
                               </div>
                               <div>
                                 <p className="text-sm text-slate-700 dark:text-slate-300">
@@ -2979,11 +2979,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
+                        <span className="text-[10px] font-mono text-slate-600 dark:text-slate-500 bg-slate-100/80 dark:bg-navy-800/80 px-2 py-0.5 rounded-lg">
                           #notif-{notificationId.slice(0, 8)}
                         </span>
                         <motion.div animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}>
-                          <ChevronDown size={18} className="text-slate-400" />
+                          <ChevronDown size={18} className="text-slate-600" />
                         </motion.div>
                       </div>
                     </button>
@@ -3050,7 +3050,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                 {isPolish ? 'Utworzono' : 'Created'}
                               </label>
                               <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600">
-                                <Clock size={14} className="text-slate-400" />
+                                <Clock size={14} className="text-slate-600" />
                                 <span className="text-sm text-slate-700 dark:text-slate-300">
                                   {formatDate(notification.createdAt)}
                                 </span>
@@ -3102,7 +3102,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       <motion.div
                         animate={{ rotate: expandedSections.has('stakeholders') ? 180 : 0 }}
                       >
-                        <ChevronDown size={18} className="text-slate-400" />
+                        <ChevronDown size={18} className="text-slate-600" />
                       </motion.div>
                     </button>
                     <AnimatePresence>

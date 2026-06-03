@@ -218,7 +218,7 @@ const RiskRegisterRenderer: React.FC<{ data: any }> = ({ data }) => {
       case 'closed':
         return <CheckCircle2 size={14} className="text-green-500" />;
       default:
-        return <Clock size={14} className="text-slate-400 dark:text-slate-500" />;
+        return <Clock size={14} className="text-slate-600 dark:text-slate-500" />;
     }
   };
 
@@ -352,7 +352,7 @@ const StatusReportRenderer: React.FC<{ data: any }> = ({ data }) => {
         ].map((metric, idx) => (
           <div key={idx} className="bg-slate-50 dark:bg-navy-800/50 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <metric.icon size={16} className="text-slate-400 dark:text-slate-500" />
+              <metric.icon size={16} className="text-slate-600 dark:text-slate-500" />
               <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
                 {metric.label}
               </span>

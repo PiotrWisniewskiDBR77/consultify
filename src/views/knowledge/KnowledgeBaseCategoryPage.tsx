@@ -204,7 +204,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
                     </div>
                     <ChevronRight
                       size={16}
-                      className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all dark:text-white/20 dark:group-hover:text-primary-400"
+                      className="text-slate-600 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all dark:text-white/20 dark:group-hover:text-primary-400"
                     />
                   </Link>
                 ))}
@@ -254,7 +254,7 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
         </div>
       ) : (
         <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0D0828] dark:to-[#12082E]">
-          <BookOpen size={32} className="text-slate-300 dark:text-white/15" />
+          <BookOpen size={32} className="text-slate-600 dark:text-white/15" />
         </div>
       )}
 

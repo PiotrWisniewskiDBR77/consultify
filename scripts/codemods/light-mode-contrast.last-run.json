@@ -1,0 +1,5777 @@
+{
+  "dryRun": false,
+  "totalEdits": 7579,
+  "perRule": {
+    "border-slate-100": 616,
+    "divide-slate-100": 119,
+    "text-slate-400": 5732,
+    "border-gray-100": 38,
+    "text-slate-300": 802,
+    "text-gray-400": 235,
+    "text-gray-300": 27,
+    "text-zinc-400": 9,
+    "text-zinc-300": 1
+  },
+  "perFile": [
+    {
+      "file": "src/components/Admin/UnifiedSyncHub.tsx",
+      "count": 70
+    },
+    {
+      "file": "src/views/partner/PartnerPortalView.tsx",
+      "count": 64
+    },
+    {
+      "file": "src/components/Interview/InsightViewer.tsx",
+      "count": 60
+    },
+    {
+      "file": "src/components/MyWork/IdeaTableTool.tsx",
+      "count": 45
+    },
+    {
+      "file": "src/components/MyWork/NotificationDetailView.tsx",
+      "count": 44
+    },
+    {
+      "file": "src/components/shared/NModeSections/AttachmentsLinksCanvas.tsx",
+      "count": 42
+    },
+    {
+      "file": "src/views/superadmin/revenue/PartnerSettlementsView.tsx",
+      "count": 39
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseApiManagement.tsx",
+      "count": 38
+    },
+    {
+      "file": "src/views/partner/sections/EarningsSection.tsx",
+      "count": 34
+    },
+    {
+      "file": "src/views/superadmin/AIConfigurationView.tsx",
+      "count": 33
+    },
+    {
+      "file": "src/views/superadmin/partners/PartnerProgramConfig.tsx",
+      "count": 32
+    },
+    {
+      "file": "src/components/Reports/Management/ReportingAutomationWorkspace.tsx",
+      "count": 32
+    },
+    {
+      "file": "src/components/InitiativeDetailModal.tsx",
+      "count": 29
+    },
+    {
+      "file": "src/components/Initiatives/InitiativeDocumentView.tsx",
+      "count": 29
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/BlockCard.tsx",
+      "count": 28
+    },
+    {
+      "file": "src/components/MyWork/table/governed/GovernedModelsDashboard.tsx",
+      "count": 28
+    },
+    {
+      "file": "src/components/SuperAdmin/EmailTemplateEditor.tsx",
+      "count": 27
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseFeatureFlags.tsx",
+      "count": 27
+    },
+    {
+      "file": "src/components/SuperAdmin/billing/InvoicesPanel.tsx",
+      "count": 27
+    },
+    {
+      "file": "src/components/shared/NModeSections/RaidCanvas.tsx",
+      "count": 26
+    },
+    {
+      "file": "src/components/settings/AISettings.tsx",
+      "count": 26
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseAuditLog.tsx",
+      "count": 26
+    },
+    {
+      "file": "src/components/MyWork/table/RowDetailPanel.tsx",
+      "count": 25
+    },
+    {
+      "file": "src/components/Initiatives/sections/TimelineSection.tsx",
+      "count": 25
+    },
+    {
+      "file": "src/components/Admin/InitiativeTemplateEditor.tsx",
+      "count": 25
+    },
+    {
+      "file": "src/views/admin/AdminLLMView.tsx",
+      "count": 24
+    },
+    {
+      "file": "src/views/ContextBuilder/modules/SynthesisSummary.tsx",
+      "count": 24
+    },
+    {
+      "file": "src/components/MyWork/IdeaNodeDetailDrawer.tsx",
+      "count": 24
+    },
+    {
+      "file": "src/views/partner/sections/ReferralToolsSection.tsx",
+      "count": 23
+    },
+    {
+      "file": "src/components/Initiatives/sections/TimelinePlanner.tsx",
+      "count": 23
+    },
+    {
+      "file": "src/components/settings/ProfileSettings.tsx",
+      "count": 22
+    },
+    {
+      "file": "src/components/SuperAdmin/FeatureFlagsPanel.tsx",
+      "count": 22
+    },
+    {
+      "file": "src/components/Admin/SecuritySettings.tsx",
+      "count": 22
+    },
+    {
+      "file": "src/components/Discovery/DiscoveryToolsHub.tsx",
+      "count": 21
+    },
+    {
+      "file": "src/views/admin/AdminBillingManagement.tsx",
+      "count": 20
+    },
+    {
+      "file": "src/components/SuperAdmin/security/LoginAttemptsPanel.tsx",
+      "count": 20
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/SettingsPanel.tsx",
+      "count": 20
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AIGovernancePanel.tsx",
+      "count": 20
+    },
+    {
+      "file": "src/components/AIChat/ToolsMenu.tsx",
+      "count": 20
+    },
+    {
+      "file": "src/components/SuperAdmin/EmailConfigurationPanel.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/components/SuperAdmin/PlaybookTemplateReviews.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/components/SuperAdmin/SuperAdminStatusIndicators.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/components/SuperAdmin/security/SecurityPoliciesPanel.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/components/SuperAdmin/billing/SubscriptionsPanel.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/components/Interview/InterviewSingleQuestionRuntime.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/components/Execution/ExecutionHub.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/components/Economics/AnalysisCatalog.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/components/Admin/ChatV9FlagsPanel.tsx",
+      "count": 19
+    },
+    {
+      "file": "src/views/superadmin/ComplianceCenterView.tsx",
+      "count": 18
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminDashboard.tsx",
+      "count": 18
+    },
+    {
+      "file": "src/components/MyWork/TaskInbox.tsx",
+      "count": 18
+    },
+    {
+      "file": "src/components/MyWork/table/PlatformCellRenderer.tsx",
+      "count": 18
+    },
+    {
+      "file": "src/components/MyWork/mindmap/NodeDetailDrawer.tsx",
+      "count": 18
+    },
+    {
+      "file": "src/components/Initiatives/sections/ResourcesSection.tsx",
+      "count": 18
+    },
+    {
+      "file": "src/views/superadmin/iam/SecurityIncidentsView.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/settings/SecurityOverviewSettings.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/SuperAdmin/PlaybookTemplateAnalytics.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/SuperAdmin/billing/CreditNotesPanel.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/ReportEditor.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/Organization/OrganizationAdminPanel.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/MyWork/IdeaContextPanel.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/MyWork/NotebookContent.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/MyWork/Home/HomeView.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/Finance/StatementExplainPanel.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/Admin/AI/AccessLimitsTab.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/components/AIChat/ChatHistorySidebar.tsx",
+      "count": 17
+    },
+    {
+      "file": "src/views/superadmin/BillingCenterView.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/views/superadmin/iam/ThreatIntelligenceView.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/shared/UserManagementCore.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/SuperAdmin/PlaybookTemplateVersionHistory.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/SuperAdmin/integrations/WebhooksPanel.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/Portfolio/InitiativeSidePanel.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/PMO/AuditTrailViewer.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/MyWork/table/TableToolbar.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/Execution/ReportDocumentView.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/DiscoveryTools/ToolDocumentView.tsx",
+      "count": 16
+    },
+    {
+      "file": "src/components/InitiativeCard.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/SuperAdmin/ContentAnalyticsDashboard.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseConfigurationPanel.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/SuperAdmin/security/IPAccessRulesPanel.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/SuperAdmin/integrations/WebhookDeliveriesModal.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/Reports/Management/ReportsHub.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/ChapterNavigation.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/MyWork/table/CrossTableRelations.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/Interview/CompanyFactsPanel.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/DiscoveryTools/KnownToolDetailView.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/components/Admin/AI/ModelsProvidersTab.tsx",
+      "count": 15
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminOrgDetailsModal.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/views/admin/AdminProjectManagement.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/components/MyWork/table/automations/AutomationsManager.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/components/Interview/InterviewHub.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/components/Help/GlobalHelpSearch.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/components/Execution/RolloutTab.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/components/CV/CandidateProfileView.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/components/Benefits/FinancialMappingPanel.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/components/Admin/IntegrationsManagementPanel.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/components/Admin/AI/CustomComplianceTemplateEditor.tsx",
+      "count": 14
+    },
+    {
+      "file": "src/views/PublicMiniAssessmentView.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/views/superadmin/InvoiceCenterView.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/views/superadmin/iam/ApprovalWorkflowsView.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/views/superadmin/iam/AuditEventsViewer.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/views/superadmin/iam/DLPView.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/shared/ViewLayouts/ClickUpListView.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/shared/NModeSections/GovernanceCanvas.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/layout/NotificationDropdown.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/assessment/drd/DRDAssessmentEditor.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/SuperAdmin/SecurityPanel.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/Results/ROITrackingView.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/MyWork/DecisionsPanel.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/MyWork/table/FormulaEditor.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/MyWork/table/RecordTemplateManager.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/MyWork/table/sync/SyncManager.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/MyWork/shared/DependenciesSection.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/MyWork/Home/RadarTriageCard.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/Interview/InsightPackView.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/DynamicSWOT/SWOTInsightsPhase.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/Admin/AdminInitiativeSectionTypesPanel.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/components/AIChat/WorkCanvasDocumentPanel.tsx",
+      "count": 13
+    },
+    {
+      "file": "src/views/superadmin/OrganizationsView.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/views/ContextBuilder/modules/CompanyProfileModule.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/AIAnalyticsDashboard.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/shared/artifact-actions/ArtifactActionPanel.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/layout/UserProfileMenu.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/SuperAdmin/ContentCategoriesManager.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/SuperAdmin/security/SessionManagementPanel.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/Profile/MFASetup.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/MyWork/IdeaRecommendationMap.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/MyWork/MyIdeasListContent.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/MyWork/table/FieldManager.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/MyWork/table/integration/ConsultifyLinkPanel.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/MyWork/shared/StakeholdersSection.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/Knowledge/MediaUploader.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/Interview/QuestionsList.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/Initiatives/sections/ScopeSection.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/Finance/FinancialModelWorkspace.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/Execution/ReportCompactPanel.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/Execution/Manager/ProblemTable.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/Admin/TemplatesManagementPanel.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/AIChat/OrganizationMemoryPanel.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/KimiWorkspaceShell.tsx",
+      "count": 12
+    },
+    {
+      "file": "src/views/superadmin/PresentationGovernanceWatchlistView.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/shared/NModeSections/RiskCanvas.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/settings/SecuritySettings.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/assessment/ImportedReportDetailView.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/SuperAdmin/BulkActions.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/SuperAdmin/ContentSearch.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/SuperAdmin/SuperAdminAISettings.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseHealthMonitor.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/SuperAdmin/data/BackupConfigPanel.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/SuperAdmin/billing/BillingOverviewPanel.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/Results/OperationalAnalysisView.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/Reports/Management/ReportHistoryTable.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/MyWork/RelatedObjectPreview.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/MyWork/table/AuditTrailPanel.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/MyWork/table/FormBuilder.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/MyWork/table/LinkedRecordPicker.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/MyWork/table/distribution/DistributionManager.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/MyWork/shared/AlternativesSection.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/Initiatives/Analysis/LogicAnalysis.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/Finance/FinancialStatementMappingEditor.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/Admin/AdminInitiativeCreatorPanel.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/Admin/AI/AuditComplianceTab.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/AIChat/ChatMenu.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/AIChat/ResearchProgress.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/components/AIChat/Artifacts/renderers/DecisionTimelineRenderer.tsx",
+      "count": 11
+    },
+    {
+      "file": "src/views/reports/PublicReportBuilderView.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/views/admin/AdminSettingsConsultants.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/views/admin/OrgAISettingsView.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/RoadmapGantt.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Results/ROIAnalysisView.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/MyWork/table/CalendarView.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/MyWork/table/CellRenderer.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/MyWork/table/GridView.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/MyWork/table/connectors/WebhookRelayPanel.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/MyWork/Dashboard/ExecutionScoreCard.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Interview/InterviewWorkspace.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Interview/SummaryView.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Initiatives/InitiativeConflictsPanel.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Implementation/ExecutiveDashboard.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Help/KnowledgeLibrary.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Execution/ExecutionWorkloadView.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Execution/Manager/ProblemPreview.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Economics/AIRecommendationsPanel.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Economics/EvidencePanel.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Economics/FinancialInputForm.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/DiscoveryTools/steps/SummaryStep.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Benefits/ROIAnalysisView.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/Admin/AI/OrgProviderSettings.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/components/AIChat/AddFilesMenu.tsx",
+      "count": 10
+    },
+    {
+      "file": "src/views/ExecutiveView.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/views/partner/ClientAccessView.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/views/admin/AdminTokenPackages.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/views/ContextBuilder/modules/StrategicSynthesisModule.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/shared/WorkspaceTools.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/shared/NModeBlocks/ArtifactAttachPopover.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/settings/ConnectedAppsSettings.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/settings/DataControlsSettings.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/settings/WorkPreferencesSettings.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/assessment/NewAssessmentModal.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/SuperAdmin/ContentTagsManager.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/SuperAdmin/PlaybookTemplateComments.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Results/KPITimeSeriesDrawer.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Reports/EmbeddedMatrix.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Reports/ReportSection.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Reports/Management/ApprovalWorkflow.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Reports/Management/VersionHistory.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportBuilderHub.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/CommandPalette.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/FocusCockpit.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/IdeaAISuggestionsPanel.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/IdeaProcessFlowTool.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/IdeaWorkspaceTools.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/table/ConditionalFormatting.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/table/ViewSwitcher.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/table/views/GanttView.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/mindmap/ActivityFeed.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/MyWork/Focus/FocusBoard.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Initiatives/InitiativeNotionView.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Initiatives/sections/SkillsGapSection.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Finance/FinancialRatioPanel.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Finance/FinancialStatementImportWizard.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Finance/FinancialStatementWorkspace.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Execution/BudgetControlPanel.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Economics/DigitizationToolTab.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Economics/EconomicsHub.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/DiscoveryTools/ProcessAutomation/ProcessMapWorkSurface.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/components/Discovery/InsightDetailView.tsx",
+      "count": 9
+    },
+    {
+      "file": "src/views/AffiliateDashboardView.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/AuthView.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/ProjectIntelligenceView.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/superadmin/analytics/SavedReportsView.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Security/ComplianceTab.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/docs/DocsSecurityView.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/admin/AdminUserManagement.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/admin/HelpAnalyticsDashboard.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/admin/RolesPermissionsView.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/ContextBuilder/shared/DynamicList.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/ui/composed/CommandPalette.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/settings/DesktopSoundsSettings.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/settings/PasswordSecuritySettings.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/settings/PrivacyDataSettings.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/settings/security/AuthenticationAccessPage.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/settings/integrations/MappingDriftPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/layout/DemoModeBanner.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/documents/DocumentSidePanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/assessment/AssessmentModuleHub.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/assessment/InitiativesTable.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/ai/ActionProposalDetail.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Survey/SurveyShell.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/SuperAdmin/ContentFilters.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/SuperAdmin/data/DataExportPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Results/ROIDetailDrawer.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Results/ResultsKPITable.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Reports/ReportBuilder.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Reports/ReportCommentPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Reports/Management/ReportTemplatesView.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportBuilderCommentPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/ReportBuilder/blocks/InitiativeCards.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/EntityLinksPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/DeckQualityGatesPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/ShareModal.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/ThemeSwitcher.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/VersionHistoryPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Portfolio/PortfolioListView.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Organization/CompetencyCatalog.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/CommandPalette.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/IdeaScenesManager.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/IdeaUnifiedSearch.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/InboxContent.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/WorkSidebar.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/table/AICategorizeTool.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/table/AITableProposal.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/table/CellExpandPopover.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/table/SchemaDiffPreview.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/table/connectors/ConnectorWizard.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/notebook/AIChatInlinePanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/mindmap/BranchComparison.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/MyWork/Dashboard/WorkloadHeatmap.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Initiatives/InitiativeCompactPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Initiatives/Analysis/TimelineAnalysis.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Finance/FinancialStatementPackWorkspace.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Execution/DelayDetectionPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Execution/Manager/AiRecommendationPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Economics/BenefitsTrackingDashboard.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Economics/VersionHistoryPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/DiscoveryTools/ToolContextPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Admin/AdminInitiativeTemplatesPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Admin/RolesManagementPanel.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/Admin/AI/FeaturesPrivacyTab.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/components/AIChat/MoveToProjectModal.tsx",
+      "count": 8
+    },
+    {
+      "file": "src/views/InitiativeManagementView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/StudioView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminAIAnalyticsView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/superadmin/SystemSettings.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/superadmin/customers/CustomerLifecycleView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/admin/AIHubView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/admin/AdminAnalyticsView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/admin/AdminFeedbackView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/admin/OrganizationProfileView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/admin/UsageDashboardView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/shared/ViewLayouts/NotionListView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/shared/ModuleHub/StatusDropdown.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/settings/EmailDigestSettings.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/settings/EmailSignatureSettings.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/settings/ProfileSurveyNudge.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/settings/security/SecurityOverviewPage.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/settings/security/WebAuthnSettings.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/layout/Sidebar.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/SuperAdmin/ConfigurationPanel.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Studio/StudioExportModal.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Reports/RiskMatrix.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Reports/StickyNavigation.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Reports/Premium/Editor/Extensions/RecommendationCard.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportBuilderWizard.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/ReportBuilder/steps/ConfigureStructureStep.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/ReportBuilder/blocks/RoadmapTimeline.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/DeckAuditLogModal.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/ShareAnalyticsPanel.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/SlideSorter.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Organization/KnowledgeGraphExplorer.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/DecisionBottleneckPanel.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/IdeaDrawingLayer.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/MyTasksList.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/NotebookLibraryContent.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/DateDependencyConfig.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/FilterBuilder.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/RecordExpandModal.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/SchemaProposalCard.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/SnapshotManager.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/StickyNoteView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/TableSummaryDashboard.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/TemplateGallery.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/VoiceImageInput.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/views/CalendarView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/views/TimelineView.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/sharing/SharingManager.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/forms/FormsIndex.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/table/connectors/RunHistoryPanel.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/mindmap/PresentationMode.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/MyWork/Notifications/NotificationCenter.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Interview/NewSessionModal.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Initiatives/sections/InitiativeGatesWorkflowTable.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Initiatives/Analysis/ResourcesAnalysis.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Implementation/StatusReportBuilder.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Feedback/FeedbackSidePanel.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Execution/PeopleChangeWorkspace.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/DiscoveryTools/steps/ContextStep.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Benefits/ROITrackingPanel.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Admin/AuditLogViewer.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Admin/ComplianceDashboard.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Admin/team/WorkingHoursEditor.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/Admin/shared/ColumnSelector.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/AIChat/CitationList.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabeleShell/aiEditor/ProposalDiffCard.tsx",
+      "count": 7
+    },
+    {
+      "file": "src/views/AppPricingView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/views/OnboardingWizard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/views/PricingView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/views/TrialEntryView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/views/superadmin/WhitelabelStudioView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/views/admin/AdminKnowledgeView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/views/admin/BillingSettingsView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/views/admin/BulkOperationsView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/InitiativeIntelligenceTab.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/ModelSelector.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/OrgSwitcher.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/workspaces/FullStep3Workspace.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/shared/NModeBlocks/ChecklistBlock.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/shared/NModeBlocks/EmbeddedView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/shared/DynamicTabBar/DynamicTabBarOverflow.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/settings/APIAccessSettings.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/settings/AccessibilitySettings.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/settings/AdvancedSettings.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/settings/ApprovalPatternManager.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/settings/CloudDataSettings.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/settings/NotificationRulesBuilder.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/settings/ProfileBioSettings.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/settings/advanced/KeyboardShortcutsEditor.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/dashboard/LiveDashboard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/assessment/manage/WorkflowStagesTable.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/ai/EvidencePanel.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Results/ResultsSummaryView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Reports/ImportReportModal.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Reports/SponsorReportView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Reports/Management/ReportComments.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportAgentChat.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/ReportBuilder/steps/UploadChaosStep.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Presentations/wizard/OutlineStep.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Portfolio/InitiativeGridCard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Portfolio/PortfolioKanbanView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Portfolio/PortfolioTimelineView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Partner/TrustProgressionIndicator.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/PMO/PMOStatusBar.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/PMO/ProjectTeamPanel.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/DecisionsList.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/DecisionsTimelineView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/IdeaPinnedCard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/TodayDashboard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/ActivityFeed.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/ChatToSchemaPanel.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/EmbeddedAnalytics.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/IdeaPipeline.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/KanbanView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/MiniCanvas.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/TimelineView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/views/KanbanView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/extensions/ExtensionMarketplace.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/connectors/ConnectorList.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/connectors/ProvenanceBadge.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/table/automations/AutomationBuilder.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AIPriorityRecommender.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AIProposalDiffModal.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/mindmap/MindmapCommandPalette.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/mindmap/NodeCommentThread.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/mindmap/NodeContextMenu.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/mindmap/SnapshotHistory.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/Focus/FocusView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/Executive/DecisionQueuePreview.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/MyWork/Dashboard/VelocityChart.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Meeting/MeetingHub.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Interview/EvidencePanel.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Interview/TemplateBuilder.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Initiatives/InitiativeDetailCard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Initiatives/InitiativePreview.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Initiatives/sections/GateReadinessSection.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Initiatives/sections/ProblemDefinitionSection.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Initiatives/Analysis/FeasibilityAnalysis.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Implementation/CapacityView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Implementation/DecisionBoard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Execution/ExecutionInitiativesKanbanView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Economics/ExcelImportWizard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Economics/FinanceModelDocumentView.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Decisions/DecisionsByInitiative.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Decisions/EscalationDashboard.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Charts/RadarChart.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Benefits/BudgetWorkspace.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Benefits/FinancialAnalysisWorkspace.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Benefits/KPIAttributionPanel.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Admin/PromptBlockBuilder.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Admin/team/TeamRoutingRules.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Admin/shared/EnhancedDataTable.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/Admin/shared/PermissionMatrix.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/AIChat/BranchSelector.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/AIChat/ConversationList.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/components/AIChat/ResponseQualityIndicator.tsx",
+      "count": 6
+    },
+    {
+      "file": "src/views/LegalDocumentView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/V10RuntimeWorkspaceView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/superadmin/ModuleWaitlistView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/superadmin/SCIMProvisioningView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/superadmin/SSOConfigurationView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminFeedbackView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminStorageDetailModal.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/partner/CommissionView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/partner/PartnerPricingView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/consultant/ConsultantInviteView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/consultant/ConsultantPanelView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/admin/AIQualityDashboardView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/ContextBuilder/modules/ChallengeMapModule.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/contexts/FeatureFlagsContext.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIFeedbackButton.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/InitiativeTasksTab.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/RebalanceModal.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/SystemHealth.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/TaskDropdown.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/workspaces/FullStep2Workspace.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/ui/composed/SearchInput.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/shared/BillingCore.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/shared/NModeSections/CommentsCanvas.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/settings/AvailabilitySettings.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/settings/DashboardPreferencesSettings.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/settings/IntegrationSettings.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/settings/KeyboardShortcutsSettings.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/settings/PermissionRequestSection.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/settings/shared/SettingsSection.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/settings/modules/PersonalAutomationSettings.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/settings/advanced/SettingsSearch.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/governance/AuditLogViewer.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/demo/DemoWelcomeTour.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/dashboard/DashboardOverview.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/assessment/AssessmentItemPreview.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/assessment/ReportsTable.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/assessment/tools/ADMAForm.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/assessment/manage/InitiativesManagementPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/SuperAdmin/AnalyticsPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/SuperAdmin/BackupPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/SuperAdmin/OperationsHealthDrilldownPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/SuperAdmin/UsageStatsPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/SuperAdmin/ModelRegistry/ModelAuditLog.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/SuperAdmin/ModelRegistry/PurposeAssignmentsEditor.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Studio/StudioCanvas.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Strategy/DeepDivePanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Reports/ExecutiveReport.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Reports/GanttChart.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Reports/Management/RaidReport.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Reports/Management/ReportGeneratorDrawer.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Reports/Management/ReportScheduleView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/ReportBuilder/blocks/KPICards.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/InlineEditor.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Presentations/wizard/SetupStep.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/EditCardPopup.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/MediaLibraryBrowser.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Partner/AcademyProgress.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Partner/CommissionIntelligence.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/PMO/WorkstreamBoard.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/IdeaMetricNodes.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/IdeaProposalReview.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/IdeaVotingMode.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/IdeasTableContent.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/table/FilterPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/table/IdeaScoringModel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/table/IdeaStartupTemplates.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/table/LinkedRecordDisplay.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/table/MatrixView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/table/RefineDialog.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/table/SmartSuggestionsBar.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/table/views/GalleryView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/shared/AttachmentsSection.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/shared/BulkEditPopovers.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/shared/QuickActions.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/shared/SavedViewsMenu.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/shared/TaskTemplates.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/shared/TaskTimer.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/notebook/NotebookContextPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AIDependencyDetector.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/mindmap/ImportExternalMap.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/mindmap/MindmapInspector.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/mindmap/TimeHeatmap.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/mindmap/TimelineView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/mindmap/WebhookSettings.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/mindmap/toolbar-popovers/ImportExportPopover.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/mindmap/floating-toolbar/ColorPickerPopover.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/Tasks/TaskFiltersBar.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/Notifications/NotificationDetailPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/Notifications/NotificationPreferences.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/Home/IndustryLensBlock.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/Home/SparkField.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/Focus/AIPlanView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/MyWork/Executive/ExecutiveDashboard.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Interview/NotesPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Initiatives/sections/CompetencyRequirementsSection.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Initiatives/sections/ControlSection.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Initiatives/sections/PilotSection.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Initiatives/sections/TargetStateSection.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Import/UnifiedImportWizard.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Implementation/BudgetTrackingView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Help/HelpChatbot.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Help/OnboardingPlaybooksPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Execution/ExecutionTimelineView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Execution/RiskSignalsPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Economics/AnalysisCreateModal.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Economics/FinancialAnalysisPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/DynamicSWOT/SWOTInputExplorationPhase.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/DiscoveryTools/shared/StrategicCanvasVisuals.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Decisions/DecisionCard.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Benefits/ValuationWorkspace.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Admin/AdminSidebar.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Admin/PromptManagementUI.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Admin/team/FeatureFlagsManager.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Admin/team/MainExtraTeams.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Admin/shared/AdminBreadcrumbs.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Admin/organization/ProfileFieldsConfig.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/Admin/billing/SeatAllocationView.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AISettings/AuditLogViewer.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIChat/CloudFilePicker.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIChat/CoThinkerMenu.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIChat/ContextBadge.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIChat/InlineResponseFeedback.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIChat/TrustBadge.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIChat/UnifiedChatPanel.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIChat/VoiceConversationOverlay.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/components/AIChat/WorkCanvas/WorkCanvasShell.tsx",
+      "count": 5
+    },
+    {
+      "file": "src/views/StatusPageView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/superadmin/ModuleAccessControlView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminFeedbackBacklogView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminMetricsView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminRevenueView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/superadmin/analytics/DashboardBuilderView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/superadmin/VirtualWorkersModule/InsightsPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/superadmin/VirtualWorkersModule/KnowledgeAssignmentPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Development/ModelRegistryTab.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/knowledge/KnowledgeBaseHomePage.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/docs/DocsSearchView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/admin/AdminSecuritySettings.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/admin/ProjectDetailsView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/views/ContextBuilder/modules/OrganizationProfileModule.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/workspaces/FullStep1Workspace.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/workspaces/FullStep4Workspace.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/workspaces/FullStep5Workspace.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/workspaces/FullStep6Workspace.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/shared/AIConfigCore.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/shared/NModeSections/ActivityLogCanvas.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/shared/NModeBlocks/ArtifactPreviewCard.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/settings/EmailCommunicationSettings.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/settings/NotificationSettings.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/settings/OrganizationSettings.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/settings/ProfileCompleteness.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/settings/ProfileStatusSettings.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/settings/security/AdvancedSecuritySettings.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/settings/modules/BillingSubscriptionModule.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/settings/NotificationSettingsV2/WatchingTab.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/navigation/Sidebar/FloatingSubmenu.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/layout/DemoBanner.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/governance/GovernanceDashboard.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/governance/GovernanceRules.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/governance/PermissionManager.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/billing/SubscriptionManager.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/assessment/AssessmentHub.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/assessment/AssessmentTable.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/assessment/RapidLeanWorkspace.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/assessment/ReportEditorModal.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/assessment/modals/GenerateInitiativesModal.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/SuperAdmin/IntegrationsPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/SuperAdmin/SubscriberTokenManagementPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/SuperAdmin/ModelRegistry/ModelCatalogTable.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Strategy/ScenarioCard.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Results/ROIAssumptionEditor.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Results/ResultsKpisTableV3.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Reports/TableOfContents.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Reports/Management/ReportTypeSelector.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Reports/Management/SteeringCommitteeReport.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Reports/Management/shared/ReportHeader.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Reports/Management/shared/TaskListSection.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/BlockRenderer.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/BlockTypesManager.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/ExportSharePanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/TemplatesManager.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/steps/ReviewEditStep.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/blocks/MatrixHeatmap.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/blocks/TableBlock.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/BlockAIActions.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/BlockSettingsPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/ReviewPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Presentations/DeckTemplateGallery.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Presentations/wizard/PresentationModeSelector.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/PresentMode.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Partner/EcosystemAnalytics.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Partner/PartnerSidebar.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/PMO/InitiativeCompletenessChecker.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/IdeaMapWorkspace.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/IdeaSlashCommandMenu.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/MyProjects.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/TaskDetailModal.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/table/AddColumnDialog.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/table/DistributionBuilder.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/table/NewColumnRenderers.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/table/WorkflowDashboard.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/table/views/FormView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/table/provenance/SourcePopover.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/table/interfaces/InterfacesIndex.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/table/governed/DataLineageView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/shared/KeyboardShortcutsModal.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AIBlindSpotsDetector.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/mindmap/InterviewToMap.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/mindmap/toolbar-popovers/AddNodePopover.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/mindmap/toolbar-popovers/KnowledgePopover.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/mindmap/toolbar-popovers/MoreToolsPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/mindmap/toolbar-popovers/TemplatesPopover.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/mindmap/floating-toolbar/SemanticControlsPopover.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/Inbox/InboxTriage.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/Home/ExecutionCurrentBlock.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/Executive/ActionRequiredStrip.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/MyWork/Dashboard/BottleneckAlerts.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Intelligence/InterviewProgress.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Initiatives/sections/HistorySection.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Help/HelpSidePanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Finance/CanonicalStatementTable.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/EmptyStates/EmptyStateWithActions.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Economics/AnalysisCompareView.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Economics/InitiativeFinancialIntegration.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Economics/InitiativeLinkingPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/DiscoveryTools/DynamicSwotLibraryGraphic.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/DiscoveryTools/visualizations/SWOTMatrix.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/RiskUncertainty/RiskUncertaintyPhases.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/PortfolioPriority/PortfolioPriorityPhases.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/MarketForces/MarketForcesPhases.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/ABTestingDashboard.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/LLMHealthPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/ProjectGovernance.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/PromptTestBench.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/SLADashboard.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/workspace/CustomStatusesManager.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/team/AccountTypesManager.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/shared/ExportMembersDialog.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/compliance/CookieSettingsManager.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/Admin/billing/SeatTypesManager.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/AISettings/SettingsToggle.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/AIChat/ChatOverlay.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/AIChat/MessageRenderer.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/AIChat/composer/CommandPalette.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/AIChat/Artifacts/renderers/CodeRenderer.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/components/AIChat/AgentAudit/AgentAuditVerdictPanel.tsx",
+      "count": 4
+    },
+    {
+      "file": "src/index.css",
+      "count": 3
+    },
+    {
+      "file": "src/views/AssessmentSessionEditorView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/BusinessCasesPage.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/ChangelogView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/ExecutiveSummaryView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/FullROIView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/Module1ContextView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/SystemHealthDashboard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/AIBudgetsView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/AIIntelligenceView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/APIManagementView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/CustomRolesBuilder.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/PresentationBenchmarkTrendView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/PresentationGovernanceAlertSubscriptionsView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/PresentationTelemetryView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/SecurityPoliciesView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/support/SupportTicketsView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/revenue/RevenueRecognitionView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/revenue/SubscriptionChangesView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/iam/AdminSessionsView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/VirtualWorkersModule/ConversationBrowser.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/VirtualWorkersModule/WorkersList.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Knowledge/StrategicDirectionsTab.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Analytics/LLMObservatoryTab.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/partner/ProviderHomeView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/knowledge/KnowledgeBaseArticlePage.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/docs/DocsCategoryView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/admin/AdminMarginConfig.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/admin/AdminMetricsDashboardView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/admin/AuditLogView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/admin/CostAllocationView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/admin/InvoicesView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/admin/PlaybookRunsView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/admin/SpendingAlertsView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/admin/UserGroupsView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIUsageIndicator.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AiInsightModal.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/FullReportDocument.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/LLMSelector.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MaturityMatrix.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/RoadmapKanban.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/TaskDetailModal.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/workspaces/FullExecutionDashboardWorkspace.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ui/primitives/Input.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/RowActionsMenu.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/SourceMetadataBlock.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/ToolWizard/ToolWizardShell.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/NModeLayout/NModeHeader.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/NModeLayout/NModeLeftNav.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/NModeBlocks/ArtifactLinkIndicator.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/NModeBlocks/EmptyStateInline.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/NModeBlocks/InlineTable.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/ModuleHub/GridView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/shared/DynamicTabBar/DynamicTabBar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/AIModelParametersSettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/BioAboutSection.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/DeveloperSettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/IntegrationAnalyticsSettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/OrganizationContextOverview.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/PerformanceSettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/PrivacySettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/ProfileSocialSettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/PushNotificationsSettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/ThemeSettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/integrations/IntegrationHealthDashboard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/advanced/SettingsHistory.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/advanced/SettingsTemplates.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/UserIntegrations/IntegrationCard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/settings/NotificationSettingsV2/DigestsTab.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/layout/ChatPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/layout/HelpPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/demo/SmartDemoBanner.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/billing/CreditNotesPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/billing/SubscriptionAnalytics.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/assessment/GenericReportsWorkspace.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/assessment/MultiFwBenchmarkComparison.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/assessment/RapidLeanObservationForm.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/assessment/modals/ReportTemplatePickerModal.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/assessment/maps/DBR77LeanMap.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/assessment/manage/ReportsManagementPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/assessment/manage/TeamManagementPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ai/ActionAuditTrail.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ai/ActionProposalList.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ai/DiffView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ai/ProactiveNudgeDisplay.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/SuperAdmin/ApiManagementPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/SuperAdmin/SuperAdminSignalCenter.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Subscriber/SubscriberDispatchTable.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Studio/StudioChat.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Studio/StudioSidebar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Studio/StudioToolbar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ReportsAndPresentations/ReportsTabContent.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ReportsAndPresentations/TrustStatePreviewSection.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Reports/ReadingModeToggle.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Reports/Premium/Editor/Toolbar/BlockInsertMenu.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Reports/Premium/Editor/Extensions/GapHeatmap.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Reports/Premium/Editor/Extensions/MaturityRadar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Reports/Management/PortfolioHealthReport.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Reports/Management/shared/DecisionsRequiredSection.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Reports/Management/shared/MetricCard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ReportBuilder/QualityGatesPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ReportBuilder/steps/GenerateStep.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ReportBuilder/steps/OutlineProposalStep.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ReportBuilder/blocks/PrioritizationMatrix.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/BlockPalette.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/CreateInitiativeModal.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Projects/PMORoleSelector.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Presentations/PresentationsHub.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Presentations/SharedPresentationView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/BlockToolbar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/CardCanvas.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/EditableBlock.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/PMO/CharterBuilder.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/PMO/PMOHealthSection.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Onboarding/FirstRunOnboarding.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Onboarding/GoalSelector.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/IdeaCanvasDiscovery.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/IdeaSummaryCardNode.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/MyTasksListContent.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/NotificationsHub.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/PersonalExecutionBar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/ProgressView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/QuickFilterBar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/AICopilotMode.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/CellEditor.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/ExecutionProgress.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/FrameworkGenerator.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/InterfaceDesigner.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/PublicFormView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/RowColoringConfig.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/StatusBar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/views/ViewConfigPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/provenance/AddSourceDialog.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/forms/PublicFormFieldInput.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/forms/PublicFormPage.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/forms/PublicJwtFormPage.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/table/extensions/ExtensionHost.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/shared/AIConnections.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/shared/ColumnConfigMenu.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/shared/DueDateIndicator.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/shared/RelatedContext.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/processflow/AIProposalPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/processflow/LaneSystem.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/notebook/ActionItemsPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AIAutoClustering.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/BatchConvertModal.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/DocumentToMap.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/EmbedInReports.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/ExportDiagramCode.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/IdeaFunnelAnalytics.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/MapHealthScore.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/VoiceToNode.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/toolbar-popovers/AIActionsPopover.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/toolbar-popovers/StructurePickerPopover.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/floating-toolbar/ArtifactLinksPopover.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/mindmap/floating-toolbar/QuickEditPopovers.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/Team/VelocityTrend.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/Notifications/NotificationQuickActions.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/Home/AIPulseCore.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/Home/CommandDock.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/Home/MomentumBlock.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/Home/TeamSignalBlock.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/Executive/TeamPerformancePreview.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/MyWork/Calendar/CalendarSidebar.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Megatrend/AIInsightsCard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Megatrend/CustomTrendCard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Megatrend/TrendDetailCard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Interview/InterviewTemplatePreview.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Initiatives/InitiativeSourceLink.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Initiatives/sections/DecisionsSection.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Initiatives/sections/KpisSection.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Initiatives/Analysis/CompletenessAnalysis.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Implementation/InitiativeKanban.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Help/DocumentationRenderer.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Help/KnowledgeArticleView.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Gamification/AchievementsList.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Economics/BusinessCaseGenerator.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Economics/FinanceLanePanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/DiscoveryTools/ToolReviewPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/MarketForces/ForceStep.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/GrowthPaths/GrowthPathsPhases.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/DynamicSWOT/SWOTBuildPhase.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/DynamicSWOT/SWOTCorrelationsStep.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Discovery/DiscoveryHeader.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Discovery/RecommendationPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Benefits/BenefitsHub.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Benefits/KPICreateModal.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Benefits/LessonsLearnedPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/AuditExportPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/BrandingSettingsPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/DataGovernancePanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/NotificationSettingsAdmin.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/PromptAssistantPanel.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/team/ManagerSelector.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/team/MembershipStatsCard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/organization/ApprovedDomainsSettings.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/compliance/DataRequestManager.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/compliance/GDPRComplianceDashboard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/billing/AddRemoveSeats.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/Admin/AI/HealthMonitoringTab.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AISettings/ProactivitySelector.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AISettings/SettingsSlider.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/EnhancedChatInput.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/WorkModeMenu.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/Messages/InlineThinkingStream.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/Messages/MessageBubble.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateLifecycleActions.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabeleShell/qa/QaAxisCard.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/CodeInterpreter/CodeExecutionBlock.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/components/AIChat/Artifacts/renderers/TableRenderer.tsx",
+      "count": 3
+    },
+    {
+      "file": "src/views/AIConsultantView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/ActionProposalView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/AssessmentView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/ExecutionView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/LegalIndexView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/PlaybookTemplatesListView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/PresentationOperationsHealthView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/PresentationTemplateGovernanceView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminAccessRequestsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/SuperAdminSignalsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/revenue/PaymentMethodsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/revenue/RevenueForecastView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/customers/CustomerAnalyticsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/analytics/BusinessMetricsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/analytics/DemoTrialAnalyticsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/analytics/PredictiveAnalyticsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Analytics/PerformanceMetricsTab.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/settings/ProfileModule.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/reports/PublicReportView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/partner/PartnerDashboardView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/knowledge/KnowledgeBaseCategoryPage.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/docs/DocsChangelogView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/discovery-tools/DigitalToolsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/discovery-tools/OperationalToolsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/discovery-tools/ProcessAutomationView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/discovery-tools/StrategicToolsView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/admin/AdminDashboard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/admin/InvitationsManagement.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/admin/TokenBillingManagementView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/ContextBuilder/ContextBuilderView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/ContextBuilder/shared/ContextDocUploader.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/ContextBuilder/modules/TransformationScenarios.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/layouts/MainLayout.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIInsightFeed.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ErrorBoundary.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/FullPilotWorkspace.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/InviteUserModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/TaskCard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/WorkloadChart.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/workspaces/FullROIWorkspace.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ui/primitives/Dropdown.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ui/primitives/OptimizedImage.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/InfoButton.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/ToolWizard/ToolWizardHeader.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/ToolWizard/ToolWizardStepNav.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/PreviewPane/PreviewAIHintStrip.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/PreviewPane/PreviewActivityStrip.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/PreviewPane/PreviewBatchPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/PreviewPane/PreviewDetailsSection.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/PreviewPane/editors/OwnerPillEditor.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/NModeLayout/NModeSectionWrapper.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/NModeBlocks/ToggleBlock.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/shared/ModuleHub/FilterableTable.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/AIBehaviorSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/AIPromptLibrarySettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/AIUsageDashboard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/AccountRecoverySettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/BillingSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/CalendarSyncSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/ConnectedAccounts.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/IntegrationHealthSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/LoginHistorySettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/PasswordSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/QuickProfileCard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/QuietHoursSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/SessionsActivitySettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/WorkingHoursSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/security/DataControlsExtended.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/appearance/LayoutPreferencesSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/appearance/VisualCustomizationSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/ai/AIBehaviorSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/ai/AIContextSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/settings/advanced/SettingsExportImport.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/legal/LegalAcceptanceModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/layout/AdminSidebar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/layout/SettingsSidebar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/layout/SplitLayout.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/layout/SuperAdminSidebar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/governance/GovernanceSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/demo/DemoUpgradePrompt.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/dashboard/OnboardingDashboard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/billing/PaymentMethodsPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/billing/PlanCard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/billing/TaxSettingsPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/ActivityLogPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/AssessmentReportsWorkspace.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/ContextReadinessGate.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/LevelNavigator.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/MyAssessmentsList.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/reports/templates/ADMAReportTemplate.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/modals/NewReportModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/modals/StageGateModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/assessment/modals/SubmitForReviewModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ai/ActionDecisionDialog.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ai/PlaybookStepEvidence.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Trial/TrialTransitionConfirmation.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Team/MultiPerspectiveView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/SuperAdmin/AlertPlaygroundTester.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/SuperAdmin/TabLayout.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/SuperAdmin/ModelRegistry/PricingPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/SuperAdmin/ModelRegistry/types.ts",
+      "count": 2
+    },
+    {
+      "file": "src/components/Studio/StudioLinkModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Studio/nodes/OrgUnitNode.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Studio/nodes/ProcessStepNode.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Results/ROIOpenModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Results/ResultsHub.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Results/ResultsInitiativesView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ReportsAndPresentations/TemplatesTabContent.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/FinancialImpact.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/HeatmapMatrix.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/InitiativesReportSection.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/ReportHeader.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/RichTextEditor.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/Premium/Editor/PremiumReportEditor.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/Premium/Editor/Toolbar/AIAssistantPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/Premium/Editor/Extensions/MetricCard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/Management/TeamMeetingReport.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/Management/shared/RAGIndicator.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Reports/Management/shared/ReportFooter.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ReportBuilder/TemplatePickerModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ReportBuilder/steps/SourceSelectStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ReportBuilder/blocks/ChartRenderer.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/NarrativeEngineMetadata.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Projects/ProjectTeamBoard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/AgentActivityPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/DeckGovernanceCardModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/SourceTraceability.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Portfolio/PortfolioGridView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/PMO/PMODashboard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/PMO/PhaseIndicator.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Organization/OrgContextSummaryBanner.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Onboarding/EnterpriseOnboardingWizard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Onboarding/QuestionExplanation.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Onboarding/Tooltip.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/ConvertToOutputMenu.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/IdeaExportMenu.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/IdeaWorkspaceToolbar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/NotificationSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/ProcessKPIDashboard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/whiteboard/WhiteboardEmptyState.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/whiteboard/WhiteboardPhaseBar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/whiteboard/nodes/LinkNode.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/table/AITableAssistant.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/table/CollaborationPresence.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/table/ExportToPresentation.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/table/KeyboardShortcutsPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/table/RowTemplatePicker.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/table/ViewRouter.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/table/forms/IntakeJwtPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/shared/ConfirmDialog.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/shared/EmptyState.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/shared/KeyboardShortcutsHelp.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/shared/PostDecisionFollowUp.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/processflow/ExportDialog.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/processflow/ProcessFlowHealthScore.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/processflow/ProcessFlowPropertiesPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/notebook/AIInlineResponse.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/notebook/ConvertChecklistModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/notebook/InsertMenu.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/notebook/KnowledgePulse.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/notebook/PulseItemPickerModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AIBranchBalancer.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AICompetitiveLandscape.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AISentimentOverlay.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AIWhatIfScenarios.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AssignPersonModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/ExportPowerPoint.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/FloatingNodeToolbar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/MindMap3DView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/PaneContextMenu.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/mindmap/floating-toolbar/SemanticTypeDropdown.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/Team/CapacityForecast.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/Home/DecisionTemperatureBlock.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/Executive/KPIGrid.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/MyWork/Calendar/CalendarCreateEventModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Megatrend/IndustryBaselineCard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Journey/JourneyProgressBar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Journey/MilestoneBadge.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Interview/ConversationalPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Interview/InsightCreatorModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Intelligence/InsightDetectionCard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Initiatives/templates/InitiativeLevelSelector.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Initiatives/sections/FinancialAnalysisSection.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Initiatives/sections/TagsSection.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Initiatives/Wizard/InitiativeWizardModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Initiatives/Analysis/AnalysisWorkspacePanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Help/FeatureUpdatesPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Execution/ExecutionManagementView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Execution/WhyRedChain.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Economics/FinancePreviewPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Economics/FinanceVersionTimeline.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Economics/PDFExportModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Economics/modals/CreateAnalysisModal.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/MarketForcesLibraryGraphic.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/ToolActionBar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/ToolHeader.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/visualizations/PorterRadar.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/RiskUncertainty/AssumptionsStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/RiskUncertainty/RisksStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/RiskUncertainty/ScenariosStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/PortfolioPriority/PortfolioItemsStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/A3CountermeasuresStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/A3RootCauseStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/DMSEscalationStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/DMSKPIsStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/InventoryClassificationStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/InventoryReplenishmentStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/OperationalSectionStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/SMEDImprovementsStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/SMEDStepsStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/SOPChecklistsStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Operational/SOPStandardsStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/GrowthPaths/GrowthPathQuadrantStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/Digital/GenericDomainStep.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Discovery/DiscoveryFooterActions.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Decisions/DecisionInbox.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Charts/ComparisonRadarChart.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Audit/AuditHistoryView.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/PartnerCodeInput.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/WorkspaceDefaultsPanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/team/BulkUserImport.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/team/LastActiveTracker.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/shared/AdminTable.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/shared/AdvancedFilters.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/organization/DataHostingSettings.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/organization/DisplayNameGuidelines.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/AI/ChatTracesViewer.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/Admin/AI/PolicyGovernanceTab.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AISettings/SettingsCard.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/ActionCenter.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/ConversationItem.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/ConversationSearch.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/ExecutionProposalMessage.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/InputHintStrip.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/ResearchSessionsDock.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/ThinkingStatusLine.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/Wave5ArtifactRuntimePanel.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/templateLifecycle/TemplateGovernanceDrawer.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/Input/FocusModeSelector.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/Artifacts/ArtifactViewer.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/Artifacts/renderers/PMODocumentRenderer.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/components/AIChat/Actions/InlineActionsList.tsx",
+      "count": 2
+    },
+    {
+      "file": "src/views/AcceptInvitationView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/AppIntroView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/AuditsShowcasePage.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/DRDAuditReportView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/KnowledgeBaseView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/LeadershipDashboardView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/MyApprovalsView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/OrgSetupWizard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/VectorPage.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/WelcomeView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/FeatureUpdatesAdminView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/security/DeviceManagementView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/customers/CustomerAutomationView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/customers/CustomerComplianceView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/VirtualWorkersModule/EvaluationsPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/VirtualWorkersModule/ReleasePanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/AIPlatformModule.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Configuration/AIGovernanceTab.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/superadmin/AIPlatformModule/Analytics/PricingRegistryTab.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/subscriber/SubscriberDashboardPage.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/reports/InitiativeExecutionReport.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/reports/OrganizationOverviewReport.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/docs/DocsArticleView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/docs/DocsHomeView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/admin/AdminLLMMultipliers.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/views/admin/ApiKeysManagementView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/types/initiative.ts",
+      "count": 1
+    },
+    {
+      "file": "src/services/initiativeLifecycle.ts",
+      "count": 1
+    },
+    {
+      "file": "src/layouts/DocsLayout.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/hooks/useAssessmentCollaboration.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/constants/statusColors.ts",
+      "count": 1
+    },
+    {
+      "file": "src/config/portfolioColors.ts",
+      "count": 1
+    },
+    {
+      "file": "src/components/ConversionModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/CookieConsentBanner.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/InitiativeTaskBoard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/OnboardingTour.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ROIPaybackChart.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/RuntimeDiagnosticPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/SidebarUsage.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/workspaces/PilotDecisionWorkspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/workspaces/Step1Workspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/workspaces/Step2Workspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/workspaces/Step3Workspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ui/BaseCard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ui/select.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ui/primitives/Toast.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ui/composed/DataTable.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ui/composed/EmptyState.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ui/composed/MetricCard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/ArtifactPermalinkButton.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/CommunicationSurfaceModelPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/EasySyncSetupShellPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/MicroVideoPrompt.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/ViewLayouts/StatusBadge.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/PreviewPane/PreviewRelations.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/NModeLayout/NModePropertiesStrip.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/NModeCompleteness/AIFillDialog.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/NModeCompleteness/MissingItemsList.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/ModuleHub/HubWorkAreaLoading.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/ExecutiveModuleShell/ShortcutHelpModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/shared/DiagramNodes/ProcessStepNode.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/AIInstructionsSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/AIMemorySettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/AIModelSelectionSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/AISecuritySettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/ActiveSessionsSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/AvatarUploader.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/ChatHistorySettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/DataPrivacySettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/EmailSignaturesSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/ExportDataSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/LegalSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/NotificationScheduleSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/ProfessionalProfileSection.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/ProfileVisibilitySettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/RecoveryOptionsSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/RegionalSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/SecurityEventsSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/SettingsSidebar.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/SoundNotificationsSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/VoiceSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/notifications/NotificationRulesBuilder.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/modules/QuickActionsSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/UserIntegrations/index.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/NotificationSettingsV2/CategoriesTab.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/NotificationSettingsV2/OverviewTab.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/settings/NotificationSettingsV2/ScheduleTab.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/navigation/BottomNavigation.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/navigation/WorkspaceBreadcrumb.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/layout/DemoTopbarStatus.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/documents/ContextAssetSelector.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/documents/DocumentToggleButton.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/demo/DemoConversionCTA.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/demo/DemoSessionManager.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/demo/DemoSignupModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/dashboard/DashboardExecutionSnapshot.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/billing/InvoiceTemplateEditor.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/billing/UsageAlertsConfig.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/AssessmentAuditsWorkspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/AssessmentAxisWorkspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/AssessmentModuleLayout.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/AssessmentSessionPreviewV3.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/AssessmentV8CanonPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/Breadcrumb.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/ExternalDigitalWorkspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/InitiativesGenerationWizardModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/LevelDetailCard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/LockedFrameworkOverlay.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/RapidLeanWizard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/ReportBuilderWorkspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/SubAreaNavigator.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/tools/CMPracticeForm.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/tools/DRDForm.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/tools/SIRIForm.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/reports/templates/CMMIReportTemplate.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/reports/templates/SIRIReportTemplate.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/permissions/RequestAccessModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/modals/TransferToRoadmapModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/maps/ADMAAssessmentMap.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/maps/CMPracticeMap.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/maps/SIRIAssessmentMap.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/assessment/import/PDFImportWizard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ai/DraftReviewPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ai/FeedbackButtons.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ai/MAXModeToggle.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/SuperAdmin/IncidentRunbooksCard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/SuperAdmin/LegalPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/SuperAdmin/SignalNode.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Studio/nodes/RACICell.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Studio/nodes/SwimLaneNode.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Results/ResultsKpiReportsView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Results/ResultsReportingEnterpriseViews.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ReportsAndPresentations/PresentationsTabContent.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ReportsAndPresentations/types.ts",
+      "count": 1
+    },
+    {
+      "file": "src/components/Reports/KeyTakeaways.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Reports/RadarChart.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Reports/Premium/PremiumReportWorkspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Reports/Management/shared/TrendIndicator.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportsComposer.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ReportBuilder/ScheduleReportModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ReportBuilder/steps/IntentStep.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ReportBuilder/blocks/TextBlock.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/ReportBuilder/ReportEditor/EscalationBanner.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Presentations/wizard/ImageStyleSelector.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Presentations/wizard/WizardShell.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/DeckBuilder.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/DeckBuilderTopBar.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/blocks/KpiWidgetBlock.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Presentations/DeckBuilder/blocks/SmartDiagramBlock.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Portfolio/PortfolioMatrixView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/PlaybookEditor/PlaybookPropertiesPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Partner/PartnerLayout.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Partner/PartnerLifecycleCanonPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/PMO/GateStatus.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/PMO/PMOSystemMessages.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/PMO/RACIMatrix.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/PMO/StatusTransitionDropdown.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Organization/OrganizationSidebar.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Onboarding/TourTrigger.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/ConvertToDialog.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/DecisionDetailModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/DecisionPreviewPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/DecisionReviewNext.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/DecisionsPanelContent.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/IdeaAINudgeStrip.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/LocationFilter.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/TaskDetailView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/TaskRow.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/TasksCalendarView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/VSMTimelineBar.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/WorkCenter.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/WorkloadView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/whiteboard/WhiteboardSessionPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/whiteboard/WhiteboardToolbarPrimitives.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/whiteboard/nodes/FrameNode.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/whiteboard/nodes/ImageNode.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/PublicViewPage.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/TableTabStrip.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/provenance/ValidationBadge.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/charts/ChartConfigPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/cells/AiClassificationCell.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/cells/AiSummaryCell.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/cells/PriorityCell.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/cells/RiskScoreCell.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/table/cells/SourceReferenceCell.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/shared/DraggableTaskRow.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/shared/PMOPriorityBadge.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/processflow/ReadbackPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/processflow/ValidationResultsPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/processflow/nodes/PoolNode.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/notebook/AITopicsPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/notebook/NewPageModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/notebook/SlashMenu.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AddEvidenceModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/AttachArtifactModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/CanvasLeftToolbar.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/EdgeContextMenu.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/ImageUrlModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/NodeEnhancements.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/SubMapBreadcrumb.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/contextMenuTypes.ts",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/floating-toolbar/BranchThemeDropdown.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/mindmap/floating-toolbar/QuickTaskPopover.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/Team/BottleneckMap.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/Team/TeamPerformancePanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/Home/HomeBlockShell.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/Focus/NudgeStrip.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/Executive/PortfolioHealthScore.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/Charts/GaugeChart.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/MyWork/Charts/RiskRadar.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Megatrend/MegatrendsWorkspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Interview/CategorySidebar.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Interview/InterviewContextBanner.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Interview/InterviewSummary.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Interview/SufficiencyIndicator.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Intelligence/CategoryIcon.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Initiatives/InitiativeFullView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Initiatives/sections/CollapsibleSection.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Initiatives/sections/FinancialImpactSection.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Initiatives/sections/OverviewSection.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Initiatives/sections/RaidSection.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Initiatives/sections/TasksMilestonesSection.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Initiatives/sections/types.ts",
+      "count": 1
+    },
+    {
+      "file": "src/components/InAppNudges/SmartNudge.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Implementation/ExportControls.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Help/HelpFeedbackWidget.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Help/MicroVideoHelpModal.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Gamification/UserLevelBadge.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Execution/CorrectiveActions.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/EmptyStates/TeamEmptyState.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Economics/AnalysisResultsPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Economics/CashFlowChart.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Economics/FinanceHub.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DocumentStudio/DocumentStudioOutlinePanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DocumentStudio/DocumentStudioQaPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/KnownToolPreviewV3.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/ToolCanvas.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/ToolWorkspace.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/tools/DynamicSWOT/SWOTQuadrantStep.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/steps/ImpactHypothesisStep.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/steps/PrepareStep.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/steps/ReasoningStep.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/steps/ResultsStep.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/DiscoveryTools/shared/ToolPhaseAiActions.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Discovery/DiscoveryCanvas.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Discovery/ToolsV8CanonPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Discovery/nodes/InitiativeNode.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Discovery/nodes/QuoteNode.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/AICostDashboard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/AIMissionControl.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/AdminAuditLogPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/AdminBillingFinOpsPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/AdminLayout.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/AdminMembersRolesPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/WorkModeSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/team/OrganizationChart.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/shared/PageHeader.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/organization/DefaultAssignments.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/Admin/organization/FiscalYearSettings.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/AIActionCard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/AIOSHub.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/AIOSWave0GateReport.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/CanvasArtifactBlockRenderer.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/CanvasMarkdownRenderer.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/CoThinkerModeSelector.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/ConversationActions.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/ImageAttachment.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/InputSoftLimitToast.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/PendingActionsIndicator.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/PiiHeuristicToast.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/PrivateModeDetails.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/ResearchClarification.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/V8ArtifactRunControl.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/VoiceModeLegend.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/templateLifecycle/TabeleTemplatesGrid.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabeleShell/sourcePack/SourceCandidateCard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabeleShell/sourcePack/TabeleSourcePackPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabeleShell/qa/QaHealthBar.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabeleShell/qa/QaSuggestionList.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabelePreview/TabelePreviewLayout.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabelePreview/TabeleProvenanceColumn.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/KimiWorkspace/tabelePreview/TabeleRelationChip.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/Artifacts/ArtifactEditor.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/Artifacts/ArtifactsPanel.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/Artifacts/renderers/ComparisonMatrixRenderer.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/AgentAudit/AgentSuggestionCard.tsx",
+      "count": 1
+    },
+    {
+      "file": "src/components/AIChat/Actions/AIActionCard.tsx",
+      "count": 1
+    }
+  ]
+}

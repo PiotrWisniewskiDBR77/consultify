@@ -137,10 +137,10 @@ const Section: React.FC<{
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
       >
-        <span className="text-slate-400 dark:text-slate-500 shrink-0">
+        <span className="text-slate-600 dark:text-slate-500 shrink-0">
           {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </span>
-        <span className="text-slate-400 dark:text-slate-500 shrink-0">{icon}</span>
+        <span className="text-slate-600 dark:text-slate-500 shrink-0">{icon}</span>
         <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex-1">
           {title}
         </span>
@@ -427,7 +427,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
         <div className="space-y-3">
           {/* Stage selector */}
           <div>
-            <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+            <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500 mb-1.5">
               {isPl ? 'Etap' : 'Stage'}
             </div>
             <div className="relative">
@@ -483,11 +483,11 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
           {/* Save status + evidence */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">
               {draftSavedLabel}
             </span>
             {evidenceCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500">
                 <FileText size={10} />
                 {evidenceCount} {isPl ? 'dowodów' : 'evidence'}
               </span>
@@ -558,7 +558,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   <div className={`text-[11px] font-semibold ${textColor}`}>
                     {isPl ? labelPl : labelEn}
                   </div>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500">
+                  <div className="text-[9px] text-slate-600 dark:text-slate-500">
                     {isPl ? descPl : descEn}
                   </div>
                 </div>
@@ -588,7 +588,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               onClick={() => setBranchEditing(true)}
               className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
             >
-              <GitBranch size={11} className="text-slate-400 shrink-0" />
+              <GitBranch size={11} className="text-slate-600 shrink-0" />
               {branch || (isPl ? 'Gałąź' : 'Branch')}
             </button>
           )}
@@ -731,14 +731,14 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   {whiteboardOutcomes.slice(0, 8).map((o, i) => (
                     <div key={i} className="flex items-center gap-1.5">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                      <span className="text-[9px] font-bold uppercase text-slate-400 w-14 shrink-0">
+                      <span className="text-[9px] font-bold uppercase text-slate-600 w-14 shrink-0">
                         {o.type}
                       </span>
                       <span className="text-slate-600 dark:text-slate-300 truncate">{o.label}</span>
                     </div>
                   ))}
                   {whiteboardOutcomes.length > 8 && (
-                    <div className="text-[9px] text-slate-400">
+                    <div className="text-[9px] text-slate-600">
                       +{whiteboardOutcomes.length - 8} {isPl ? 'więcej' : 'more'}
                     </div>
                   )}

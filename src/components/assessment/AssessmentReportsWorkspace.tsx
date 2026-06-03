@@ -283,7 +283,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                     </div>
                   </div>
                   {data.justification && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
+                    <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
                       <p className="text-xs text-slate-600 dark:text-slate-300">
                         {data.justification}
                       </p>
@@ -466,7 +466,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                   </div>
                 </div>
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-navy-700">
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

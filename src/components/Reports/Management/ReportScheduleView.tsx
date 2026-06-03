@@ -267,10 +267,10 @@ export const ReportScheduleView: React.FC = () => {
       </div>
 
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">Active schedules</h3>
         </div>
-        <div className="divide-y divide-slate-100 dark:divide-navy-700">
+        <div className="divide-y divide-slate-200 dark:divide-navy-700">
           {loading ? (
             <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">Loading...</div>
           ) : schedules.length === 0 ? (
@@ -287,18 +287,18 @@ export const ReportScheduleView: React.FC = () => {
                       ? `Project: ${schedule.projectName || schedule.projectId}`
                       : 'Portfolio scope'}
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                     {schedule.frequency} • {schedule.timeOfDay} {schedule.timezone}
                   </p>
                   {schedule.nextScheduledAt && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                       Next: {new Date(schedule.nextScheduledAt).toLocaleString()}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => handleDelete(schedule.id)}
-                  className="text-slate-400 hover:text-rose-500"
+                  className="text-slate-600 hover:text-rose-500"
                 >
                   <Trash2 size={16} />
                 </button>

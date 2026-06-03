@@ -421,7 +421,7 @@ export function DocsChangelogView() {
               <GitBranch className="text-primary-400" size={32} />
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">Changelog</h1>
-            <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
+            <p className="text-xl text-zinc-600 max-w-2xl mx-auto mb-8">
               Track all updates, new features, and improvements to the Consultify platform.
             </p>
 
@@ -445,7 +445,7 @@ export function DocsChangelogView() {
               size="sm"
               variant={filter === f ? 'primary' : 'ghost'}
               onClick={() => setFilter(f)}
-              className={cn(filter === f ? 'bg-zinc-700' : 'text-zinc-400')}
+              className={cn(filter === f ? 'bg-zinc-700' : 'text-zinc-600')}
             >
               {f === 'all' && 'All Releases'}
               {f === 'major' && 'Major Only'}

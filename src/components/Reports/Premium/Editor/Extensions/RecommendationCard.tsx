@@ -105,13 +105,13 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={handleCancel}
-                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500"
               >
                 <X className="w-4 h-4" />
               </button>
               <button
                 onClick={handleSave}
-                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-green-500"
+                className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-green-500"
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -267,13 +267,13 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
               </span>
               <button
                 onClick={() => setIsEditing(true)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded"
+                className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded"
               >
                 <Edit3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded"
+                className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded"
               >
                 {isExpanded ? (
                   <ChevronUp className="w-4 h-4" />
@@ -294,21 +294,21 @@ const RecommendationCardComponent: React.FC<NodeViewProps> = ({
               {/* Metrics */}
               <div className="rec-metrics grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-slate-400 dark:text-slate-500 mb-1">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-slate-500 mb-1">
                     <TrendingUp className="w-4 h-4" />
                     <span className="text-xs">Wpływ</span>
                   </div>
                   <span className={`font-semibold ${impactStyle.color}`}>{impactStyle.label}</span>
                 </div>
                 <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-slate-400 dark:text-slate-500 mb-1">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-slate-500 mb-1">
                     <Clock className="w-4 h-4" />
                     <span className="text-xs">Nakład</span>
                   </div>
                   <span className={`font-semibold ${effortStyle.color}`}>{effortStyle.label}</span>
                 </div>
                 <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-slate-400 dark:text-slate-500 mb-1">
+                  <div className="flex items-center justify-center gap-1 text-slate-600 dark:text-slate-500 mb-1">
                     <DollarSign className="w-4 h-4" />
                     <span className="text-xs">ROI</span>
                   </div>

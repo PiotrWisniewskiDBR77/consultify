@@ -107,7 +107,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
               return (
                 <div key={layer}>
                   <div className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    <ChevronRight size={14} className="text-slate-400" aria-hidden />
+                    <ChevronRight size={14} className="text-slate-600" aria-hidden />
                     {LAYER_LABEL[layer][isPl ? 'pl' : 'en']}
                   </div>
                   <ul className="space-y-1">

@@ -298,16 +298,16 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
             }
             className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <ChevronLeft size={12} className="text-slate-400" />
+            <ChevronLeft size={12} className="text-slate-600" />
           </button>
-          <span className="text-[8px] text-slate-400 w-8 text-center">
+          <span className="text-[8px] text-slate-600 w-8 text-center">
             {currentIdx + 1}/{activeSuggestions.length}
           </span>
           <button
             onClick={() => setCurrentIdx((currentIdx + 1) % activeSuggestions.length)}
             className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <ChevronRight size={12} className="text-slate-400" />
+            <ChevronRight size={12} className="text-slate-600" />
           </button>
         </div>
       )}
@@ -317,7 +317,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
         onClick={() => handleDismissSuggestion(current.id)}
         className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex-shrink-0"
       >
-        <X size={11} className="text-slate-400" />
+        <X size={11} className="text-slate-600" />
       </button>
 
       {/* Dismiss all */}
@@ -326,7 +326,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
         className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex-shrink-0"
         title={isPl ? 'Zamknij pasek' : 'Close bar'}
       >
-        <CheckCircle2 size={11} className="text-slate-400" />
+        <CheckCircle2 size={11} className="text-slate-600" />
       </button>
     </div>
   );

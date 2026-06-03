@@ -2613,7 +2613,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             </button>
             {drillDownStack.map((item, i) => (
               <React.Fragment key={item.nodeId}>
-                <span className="text-[10px] text-slate-400 mx-0.5">/</span>
+                <span className="text-[10px] text-slate-600 mx-0.5">/</span>
                 <button
                   onClick={() => handleDrillUp(i + 1)}
                   className={`text-[10px] font-medium truncate max-w-[120px] ${
@@ -2662,7 +2662,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             >
               {isPolish ? 'Idee' : 'Ideas'}
             </button>
-            <span className="text-[10px] text-slate-400" aria-hidden="true">
+            <span className="text-[10px] text-slate-600" aria-hidden="true">
               ›
             </span>
             <span
@@ -2673,7 +2673,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 safeTitleFromSeed(seedText, isPolish) ||
                 (isPolish ? 'Bez tytułu' : 'Untitled')}
             </span>
-            <span className="text-[10px] text-slate-400" aria-hidden="true">
+            <span className="text-[10px] text-slate-600" aria-hidden="true">
               ›
             </span>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
@@ -2692,7 +2692,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 </span>
               );
             })()}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">
               {draftSavedLabel}
             </span>
           </div>

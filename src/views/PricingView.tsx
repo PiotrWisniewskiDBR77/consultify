@@ -396,7 +396,7 @@ export const PricingView: React.FC = () => {
                             className={`flex-shrink-0 ${
                               tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-300 dark:text-slate-600'
+                                : 'text-slate-600 dark:text-slate-600'
                             }`}
                           />
                         )}
@@ -408,7 +408,7 @@ export const PricingView: React.FC = () => {
                                 : 'text-slate-600 dark:text-slate-300'
                               : tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-600 dark:text-slate-500'
                           }`}
                         >
                           {feature.name}
@@ -492,11 +492,11 @@ export const PricingView: React.FC = () => {
                 providers.
               </p>
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">Growth overage</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.05/credit</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">Scale overage</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.04/credit</span>
                 </div>
@@ -532,13 +532,13 @@ export const PricingView: React.FC = () => {
                 orchestration fee.
               </p>
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     Scale orchestration
                   </span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.015/credit</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     Enterprise orchestration
                   </span>

@@ -385,7 +385,7 @@ export const DocumentsRAGTab: React.FC = () => {
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             type="text"
             value={searchTerm}
@@ -415,7 +415,7 @@ export const DocumentsRAGTab: React.FC = () => {
         </h3>
 
         {filteredDocuments.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
+          <div className="text-center py-12 text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
             {searchTerm || categoryFilter
               ? 'No matching documents found.'
               : 'No documents indexed yet.'}
@@ -476,13 +476,13 @@ export const DocumentsRAGTab: React.FC = () => {
                         setEditDocVisibility(doc.ai_visibility || 'allowed');
                         setEditDocSensitivity(doc.sensitivity || 'internal');
                       }}
-                      className="p-1.5 text-slate-400 hover:text-indigo-500 transition-colors"
+                      className="p-1.5 text-slate-600 hover:text-indigo-500 transition-colors"
                       title="Edit"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
-                      className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
+                      className="p-1.5 text-slate-600 hover:text-rose-500 transition-colors"
                       title="Delete"
                     >
                       <Trash2 size={16} />
@@ -507,7 +507,7 @@ export const DocumentsRAGTab: React.FC = () => {
                   setEditDocCategory('');
                   setEditDocTags('');
                 }}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X size={20} />
               </button>

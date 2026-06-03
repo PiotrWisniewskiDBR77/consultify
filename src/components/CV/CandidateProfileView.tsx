@@ -296,7 +296,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
       <nav className="w-full lg:w-72 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
             <input
               type="text"
               value={searchQuery}
@@ -335,7 +335,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                   <User className="w-4 h-4 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="font-medium truncate">{c.display_name}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-600">
                       {c.document_count} {t('cv.docs', 'docs')} · {c.approved_signals}{' '}
                       {t('cv.skills', 'skills')}
                     </p>
@@ -345,7 +345,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
             </li>
           ))}
           {filteredCandidates.length === 0 && (
-            <p className="text-xs text-gray-400 text-center py-4">
+            <p className="text-xs text-gray-600 text-center py-4">
               {t('cv.noCandidates', 'No candidates yet')}
             </p>
           )}
@@ -356,7 +356,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
       <main className="flex-1 p-6 lg:p-8 overflow-auto">
         {!selectedId ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <User className="w-12 h-12 text-gray-300 mb-4" />
+            <User className="w-12 h-12 text-gray-600 mb-4" />
             <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
               {t('cv.selectCandidate', 'Select a Candidate')}
             </h3>
@@ -449,7 +449,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                   </div>
 
                   {documents.length === 0 ? (
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-600">
                       {t('cv.noDocuments', 'No documents uploaded yet.')}
                     </p>
                   ) : (
@@ -460,12 +460,12 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                           className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                         >
                           <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-gray-400" />
+                            <FileText className="w-4 h-4 text-gray-600" />
                             <div>
                               <p className="text-sm text-gray-700 dark:text-gray-300">
                                 {doc.original_filename}
                               </p>
-                              <p className="text-xs text-gray-400">
+                              <p className="text-xs text-gray-600">
                                 {(doc.file_size_bytes / 1024).toFixed(0)} KB ·{' '}
                                 <span
                                   className={`px-1.5 py-0.5 rounded text-xs ${statusBadge(doc.status)}`}
@@ -515,7 +515,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                   {t('cv.mappedCompetencies', 'Mapped Competencies')}
                 </h3>
                 {signals.length === 0 ? (
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-600">
                     {t('cv.noSignals', 'No competencies mapped yet. Upload a CV and run mapping.')}
                   </p>
                 ) : (
@@ -542,7 +542,7 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
                                 {sig.capability_name || sig.capability_id}
                               </span>
                               {sig.capability_domain && (
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-gray-600">
                                   ({sig.capability_domain})
                                 </span>
                               )}
@@ -698,17 +698,17 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
         {candidate && (
           <div className="space-y-3 text-sm">
             <div>
-              <span className="text-gray-400 text-xs">{t('cv.type', 'Type')}</span>
+              <span className="text-gray-600 text-xs">{t('cv.type', 'Type')}</span>
               <p className="font-medium text-gray-700 dark:text-gray-300 capitalize">
                 {candidate.candidate_type}
               </p>
             </div>
             <div>
-              <span className="text-gray-400 text-xs">{t('cv.documentsCount', 'Documents')}</span>
+              <span className="text-gray-600 text-xs">{t('cv.documentsCount', 'Documents')}</span>
               <p className="font-medium text-gray-700 dark:text-gray-300">{documents.length}</p>
             </div>
             <div>
-              <span className="text-gray-400 text-xs">
+              <span className="text-gray-600 text-xs">
                 {t('cv.approvedSkills', 'Approved Skills')}
               </span>
               <p className="font-medium text-gray-700 dark:text-gray-300">
@@ -730,8 +730,8 @@ export const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({
 
             <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-start gap-1">
-                <Shield className="w-3 h-3 text-gray-400 mt-0.5" />
-                <p className="text-xs text-gray-400">
+                <Shield className="w-3 h-3 text-gray-600 mt-0.5" />
+                <p className="text-xs text-gray-600">
                   {t(
                     'cv.privacyNote',
                     'PII is redacted from AI processing. CV data subject to retention policy.'

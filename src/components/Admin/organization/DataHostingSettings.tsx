@@ -201,7 +201,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                 'Your data is stored and processed in this region. Changing regions may affect latency and compliance requirements.'
               )}
             >
-              <button className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+              <button className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
                 <HelpCircle size={16} />
               </button>
             </Tooltip>
@@ -342,7 +342,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
       {/* Security Info Card */}
       <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex items-start gap-3">
-          <Lock size={20} className="text-slate-400 dark:text-slate-500 flex-shrink-0 mt-0.5" />
+          <Lock size={20} className="text-slate-600 dark:text-slate-500 flex-shrink-0 mt-0.5" />
           <div>
             <h4 className="font-medium text-navy-900 dark:text-white mb-1">
               {t('admin.org.dataHosting.securityTitle', 'Data Security')}

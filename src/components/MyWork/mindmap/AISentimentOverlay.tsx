@@ -111,7 +111,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -120,7 +120,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {results.length === 0 && !loading && (
             <div className="text-center py-8">
-              <SmilePlus size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <SmilePlus size={36} className="text-slate-600 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'AI oceni sentyment pomysłów na podstawie danych firmy.'

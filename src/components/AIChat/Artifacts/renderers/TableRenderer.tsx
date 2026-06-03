@@ -142,7 +142,7 @@ export const TableRenderer: React.FC<TableRendererProps> = ({ content, className
 
   const getSortIcon = (columnIndex: number) => {
     if (sortColumn !== columnIndex) {
-      return <ArrowUpDown size={14} className="text-slate-400 dark:text-slate-500" />;
+      return <ArrowUpDown size={14} className="text-slate-600 dark:text-slate-500" />;
     }
     return sortDirection === 'asc' ? (
       <ArrowUp size={14} className="text-brand" />
@@ -170,7 +170,7 @@ export const TableRenderer: React.FC<TableRendererProps> = ({ content, className
         <div className="relative flex-1 max-w-xs">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -242,7 +242,7 @@ export const TableRenderer: React.FC<TableRendererProps> = ({ content, className
                       key={cellIndex}
                       className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap"
                     >
-                      {cell || <span className="text-slate-400 dark:text-slate-500 italic">—</span>}
+                      {cell || <span className="text-slate-600 dark:text-slate-500 italic">—</span>}
                     </td>
                   ))}
                 </tr>

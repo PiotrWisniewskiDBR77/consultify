@@ -85,14 +85,14 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
             {t('presentations.analytics.title', 'Share Analytics')}
           </h3>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-sm">
+        <button onClick={onClose} className="text-slate-600 hover:text-slate-600 text-sm">
           ✕
         </button>
       </div>
 
       {/* Summary Cards */}
       {data && (
-        <div className="grid grid-cols-2 gap-2 px-4 py-3 border-b border-slate-100 dark:border-navy-800">
+        <div className="grid grid-cols-2 gap-2 px-4 py-3 border-b border-slate-200 dark:border-navy-800">
           <div className="p-3 rounded-lg bg-primary-500/5">
             <div className="flex items-center gap-1.5">
               <Eye size={12} className="text-primary-500" />
@@ -142,7 +142,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
 
                   return (
                     <div key={i} className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400 w-5 text-right">{i + 1}</span>
+                      <span className="text-[10px] text-slate-600 w-5 text-right">{i + 1}</span>
                       <div className="flex-1 h-3 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary-500 rounded-full transition-all"
@@ -151,7 +151,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
                       </div>
                       <span className="text-[10px] text-slate-500 w-10 text-right">{views}</span>
                       {avgDur > 0 && (
-                        <span className="text-[9px] text-slate-400 w-12 text-right">
+                        <span className="text-[9px] text-slate-600 w-12 text-right">
                           {(avgDur / 1000).toFixed(1)}s
                         </span>
                       )}
@@ -184,8 +184,8 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
             {/* No data */}
             {data.summary.total_views === 0 && (
               <div className="flex flex-col items-center justify-center py-6 text-center">
-                <Eye size={28} className="text-slate-300 dark:text-slate-600 mb-2" />
-                <p className="text-xs text-slate-400">
+                <Eye size={28} className="text-slate-600 dark:text-slate-600 mb-2" />
+                <p className="text-xs text-slate-600">
                   {t(
                     'presentations.analytics.noViews',
                     'No views yet. Share your deck to start tracking engagement.'
@@ -198,7 +198,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 border-t border-slate-100 dark:border-navy-800">
+      <div className="px-4 py-2 border-t border-slate-200 dark:border-navy-800">
         <button
           onClick={loadAnalytics}
           disabled={loading}

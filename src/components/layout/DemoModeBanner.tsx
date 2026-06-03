@@ -57,7 +57,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
   const buttonBaseClass =
     'flex items-center gap-1.5 text-xs font-medium rounded-lg px-3 py-1.5 transition-colors';
   const buttonPrimaryClass = `${buttonBaseClass} bg-navy-800/60 hover:bg-navy-800 border border-white/10 text-slate-200 hover:text-slate-100`;
-  const buttonSecondaryClass = `${buttonBaseClass} bg-navy-800/40 hover:bg-navy-800/60 border border-white/5 text-slate-300 hover:text-slate-200`;
+  const buttonSecondaryClass = `${buttonBaseClass} bg-navy-800/40 hover:bg-navy-800/60 border border-white/5 text-slate-600 hover:text-slate-200`;
 
   return (
     <AnimatePresence>
@@ -103,10 +103,10 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
               <div className="hidden md:flex items-center gap-2 text-xs">
                 {demoStats && (
                   <>
-                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-400 border border-white/5">
+                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-600 border border-white/5">
                       {demoStats.projects ?? 0} {t('demo.banner.projects', 'projects')}
                     </span>
-                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-400 border border-white/5">
+                    <span className="bg-navy-800/50 rounded-lg px-3 py-1.5 text-slate-600 border border-white/5">
                       {demoStats.initiatives ?? 0} {t('demo.banner.initiatives', 'initiatives')}
                     </span>
                   </>
@@ -116,7 +116,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                     className={`rounded-lg px-3 py-1.5 border ${
                       approachingAi
                         ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                        : 'bg-navy-800/50 text-slate-400 border-white/5'
+                        : 'bg-navy-800/50 text-slate-600 border-white/5'
                     }`}
                     title={t('demo.banner.aiUsageTooltip', 'AI calls used today / daily limit')}
                   >
@@ -138,7 +138,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                       className={`rounded-lg px-3 py-1.5 border ${
                         approachingTokens
                           ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                          : 'bg-navy-800/50 text-slate-400 border-white/5'
+                          : 'bg-navy-800/50 text-slate-600 border-white/5'
                       }`}
                       title={t('demo.banner.tokenUsageTooltip', 'Tokens used today / daily limit')}
                     >
@@ -216,7 +216,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                           <p className="font-medium text-slate-200">
                             {t('demo.banner.readOnlyTitle', 'Read-only mode')}
                           </p>
-                          <p className="text-slate-400 text-xs">
+                          <p className="text-slate-600 text-xs">
                             {t(
                               'demo.banner.readOnlyDesc',
                               'Changes are not saved and the sample can be explored safely'
@@ -232,7 +232,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                           <p className="font-medium text-slate-200">
                             {t('demo.banner.exploreTitle', 'Understand the workflow')}
                           </p>
-                          <p className="text-slate-400 text-xs">
+                          <p className="text-slate-600 text-xs">
                             {t(
                               'demo.banner.exploreDesc',
                               'See how dashboards, initiatives, and AI fit together'
@@ -248,7 +248,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                           <p className="font-medium text-slate-200">
                             {t('demo.banner.hintTitle', 'What to review next')}
                           </p>
-                          <p className="text-slate-400 text-xs">
+                          <p className="text-slate-600 text-xs">
                             {demoHints?.[0] ||
                               t(
                                 'demo.banner.defaultHint',

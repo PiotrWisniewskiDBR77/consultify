@@ -231,7 +231,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex-1 relative w-full md:w-auto">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             size={18}
           />
           <input
@@ -259,7 +259,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
               <option value="APPROVED">Completed</option>
             </select>
             <ChevronDown
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
               size={16}
             />
           </div>
@@ -268,13 +268,13 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
           <div className="flex bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-1">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
+              className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:text-slate-600 dark:text-slate-400'}`}
             >
               <Grid size={16} />
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
+              className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:text-slate-600 dark:text-slate-400'}`}
             >
               <List size={16} />
             </button>
@@ -368,7 +368,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({
           <div className="flex-1" />
           <button
             onClick={clearSelection}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300
                             hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             title="Clear selection"
           >
@@ -501,7 +501,7 @@ const AnalysisCard: React.FC<{
   const [showMenu, setShowMenu] = useState(false);
 
   const statusColors: Record<string, string> = {
-    DRAFT: 'bg-slate-500/10 text-slate-400 dark:text-slate-500',
+    DRAFT: 'bg-slate-500/10 text-slate-600 dark:text-slate-500',
     REVIEW: 'bg-yellow-500/10 text-yellow-500',
     APPROVED: 'bg-green-500/10 text-green-500',
   };
@@ -542,7 +542,7 @@ const AnalysisCard: React.FC<{
           }}
           className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
         >
-          <MoreVertical size={16} className="text-slate-400 dark:text-slate-500" />
+          <MoreVertical size={16} className="text-slate-600 dark:text-slate-500" />
         </button>
         {showMenu && (
           <div
@@ -579,7 +579,7 @@ const AnalysisCard: React.FC<{
             >
               <Copy size={14} /> Duplicate
             </button>
-            <hr className="my-1 border-slate-100 dark:border-navy-700" />
+            <hr className="my-1 border-slate-200 dark:border-navy-700" />
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -604,7 +604,7 @@ const AnalysisCard: React.FC<{
             <h3 className="font-semibold text-navy-900 dark:text-white truncate">
               {analysis.name}
             </h3>
-            <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+            <p className="text-xs text-slate-600 dark:text-slate-500 truncate">
               {analysis.initiativeName || analysis.projectName || 'No initiative'}
             </p>
           </div>
@@ -638,7 +638,7 @@ const AnalysisCard: React.FC<{
           <div className="text-right">
             {analysis.analysisType === 'financial' ? (
               <>
-                <span className="text-xs text-slate-400 dark:text-slate-500">NPV / ROI</span>
+                <span className="text-xs text-slate-600 dark:text-slate-500">NPV / ROI</span>
                 <div className="text-sm font-semibold text-emerald-500">
                   {formatCurrencyValue(analysis.npv)} •{' '}
                   {analysis.roi !== null && analysis.roi !== undefined
@@ -648,7 +648,7 @@ const AnalysisCard: React.FC<{
               </>
             ) : (
               <>
-                <span className="text-xs text-slate-400 dark:text-slate-500">Wynik</span>
+                <span className="text-xs text-slate-600 dark:text-slate-500">Wynik</span>
                 <div className="text-xl font-bold text-emerald-500">
                   {analysis.overallScore?.toFixed(1) || '-'}/7
                 </div>
@@ -658,7 +658,7 @@ const AnalysisCard: React.FC<{
         </div>
 
         {/* Meta */}
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100 dark:border-navy-700 text-xs text-slate-400 dark:text-slate-500">
+        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 text-xs text-slate-600 dark:text-slate-500">
           <span className="flex items-center gap-1">
             <User size={12} /> {analysis.createdByName || 'Nieznany'}
           </span>
@@ -739,7 +739,7 @@ const AnalysisTable: React.FC<{
             <th className="w-20 px-4 py-3"></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+        <tbody className="divide-y divide-slate-200 dark:divide-white/5">
           {analyses.map((analysis) => (
             <tr
               key={analysis.id}
@@ -775,7 +775,7 @@ const AnalysisTable: React.FC<{
                       ? 'bg-green-500/10 text-green-500'
                       : analysis.status === 'REVIEW'
                         ? 'bg-yellow-500/10 text-yellow-500'
-                        : 'bg-slate-500/10 text-slate-400 dark:text-slate-500'
+                        : 'bg-slate-500/10 text-slate-600 dark:text-slate-500'
                   }`}
                 >
                   {analysis.analysisType === 'financial'
@@ -800,7 +800,7 @@ const AnalysisTable: React.FC<{
                 <span className="font-bold text-emerald-500">
                   {analysis.overallScore?.toFixed(1) || '-'}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">/7</span>
+                <span className="text-xs text-slate-600 dark:text-slate-500">/7</span>
               </td>
               <td className="px-4 py-3 text-center text-sm text-slate-500 dark:text-slate-400">
                 {analysis.analysisType === 'financial' ? (
@@ -821,21 +821,21 @@ const AnalysisTable: React.FC<{
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => onExport(analysis.id)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
                     title="Eksportuj"
                   >
                     <FileSpreadsheet size={16} />
                   </button>
                   <button
                     onClick={() => onDuplicate(analysis)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
                     title="Duplicate"
                   >
                     <Copy size={16} />
                   </button>
                   <button
                     onClick={() => onDelete(analysis.id)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />

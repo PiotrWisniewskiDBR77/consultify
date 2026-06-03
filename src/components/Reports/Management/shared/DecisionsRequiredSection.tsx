@@ -218,7 +218,7 @@ const DecisionCard: React.FC<{
           </span>
         )}
         {decision.daysWaiting !== undefined && decision.daysWaiting > 0 && (
-          <span className="text-slate-400 dark:text-slate-500">
+          <span className="text-slate-600 dark:text-slate-500">
             Waiting: {decision.daysWaiting}d
           </span>
         )}
@@ -226,7 +226,7 @@ const DecisionCard: React.FC<{
 
       {/* Click indicator */}
       {onClick && (
-        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-end">
           <span className="text-xs text-primary-500 dark:text-primary-400 flex items-center gap-1">
             View details <ChevronRight size={12} />
           </span>
@@ -363,7 +363,7 @@ export const DecisionsRequiredSection: React.FC<DecisionsRequiredSectionProps> =
       </div>
 
       {hasMore && (
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700 text-center">
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 text-center">
           <span className="text-sm text-slate-500 dark:text-slate-400">
             + {filteredDecisions.length - maxItems} more decisions
           </span>

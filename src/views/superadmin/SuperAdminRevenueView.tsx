@@ -288,7 +288,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                   <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     {formatNumber(usageStats?.totalTokensThisMonth)}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">This month</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">This month</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
@@ -298,7 +298,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                       ? `${safeNumber(usageStats?.totalStorageGB).toFixed(2)} GB`
                       : EMPTY_VALUE}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Across all orgs</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">Across all orgs</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
@@ -306,7 +306,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                   <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     {formatNumber(usageStats?.activeOrganizations)}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">With usage</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">With usage</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
@@ -322,7 +322,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                         )
                       : EMPTY_VALUE}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Tokens/org</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">Tokens/org</p>
                 </div>
               </div>
             </div>

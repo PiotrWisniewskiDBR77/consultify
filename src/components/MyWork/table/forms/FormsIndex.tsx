@@ -221,7 +221,7 @@ export function FormsIndex({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
       </div>
     );
   }
@@ -290,7 +290,7 @@ export function FormsIndex({
                 <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${status.color}`}>
                   {status.label}
                 </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
+                <span className="text-xs text-gray-600 dark:text-gray-500">
                   {form.submit_count} {t('formsIndex.responses', 'responses')}
                 </span>
               </div>
@@ -307,7 +307,7 @@ export function FormsIndex({
 
               {/* Created date */}
               {form.created_at && (
-                <p className="mb-4 text-xs text-gray-400 dark:text-gray-500">
+                <p className="mb-4 text-xs text-gray-600 dark:text-gray-500">
                   {t('formsIndex.created', 'Created')}{' '}
                   {new Date(form.created_at).toLocaleDateString()}
                 </p>
@@ -336,7 +336,7 @@ export function FormsIndex({
                 <div className="relative">
                   <button
                     onClick={() => setShareMenuId(shareMenuId === form.id ? null : form.id)}
-                    className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
+                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
                     title={t('formsIndex.sharing', 'Sharing')}
                   >
                     {shareMode === 'public' && <Globe className="h-3.5 w-3.5" />}
@@ -387,7 +387,7 @@ export function FormsIndex({
                     href={`${baseUrl}/forms/${form.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
+                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
                     title={t('formsIndex.preview', 'Preview')}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -398,7 +398,7 @@ export function FormsIndex({
                 {intakeEnabled && (
                   <button
                     onClick={() => setIntakeFormId(form.id)}
-                    className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
+                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
                     title={t('formsIndex.manageIntake', 'Manage intake (private link)')}
                     data-testid={`forms-index-manage-intake-${form.id}`}
                   >
@@ -437,7 +437,7 @@ export function FormsIndex({
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(form.id)}
-                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
+                        className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
                         title={t('formsIndex.delete', 'Delete')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

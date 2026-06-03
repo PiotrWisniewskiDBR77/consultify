@@ -184,28 +184,28 @@ function ModuleLinkSection({
           </span>
         )}
         {expanded ? (
-          <ChevronUp size={14} className="text-slate-400" />
+          <ChevronUp size={14} className="text-slate-600" />
         ) : (
-          <ChevronDown size={14} className="text-slate-400" />
+          <ChevronDown size={14} className="text-slate-600" />
         )}
       </button>
 
       {/* Status bar */}
       {status && (
-        <div className="flex items-center gap-4 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-100 dark:border-navy-800">
+        <div className="flex items-center gap-4 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-navy-800">
           <span className="text-[10px] text-slate-500">
             {status.linked ? (
               <span className="text-emerald-600">{isPl ? 'Aktywne' : 'Active'}</span>
             ) : (
-              <span className="text-slate-400">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
+              <span className="text-slate-600">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
             )}
           </span>
           {status.lastSync && (
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-600">
               {isPl ? 'Ost. sync' : 'Last sync'}: {formatTimeAgo(status.lastSync)}
             </span>
           )}
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-slate-600">
             {status.recordCount} {isPl ? 'rek.' : 'rec.'}
           </span>
           {status.errors.length > 0 && (
@@ -218,7 +218,7 @@ function ModuleLinkSection({
 
       {/* Expanded mapping UI */}
       {expanded && (
-        <div className="px-4 py-3 space-y-3 border-t border-slate-100 dark:border-navy-800">
+        <div className="px-4 py-3 space-y-3 border-t border-slate-200 dark:border-navy-800">
           {/* Select table */}
           <div>
             <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -251,7 +251,7 @@ function ModuleLinkSection({
                 {targetFields.map((tf) => (
                   <div key={tf} className="flex items-center gap-2">
                     <span className="text-[11px] text-slate-500 w-24 truncate">{tf}</span>
-                    <ArrowRight size={10} className="text-slate-300 flex-shrink-0" />
+                    <ArrowRight size={10} className="text-slate-600 flex-shrink-0" />
                     <select
                       className={inputCls}
                       value={fieldMappings[tf] ?? ''}
@@ -368,12 +368,12 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
           </p>
         </div>
         <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
-          <X size={16} className="text-slate-400" />
+          <X size={16} className="text-slate-600" />
         </button>
       </div>
 
       {/* Model selector */}
-      <div className="px-5 py-3 border-b border-slate-100 dark:border-navy-800">
+      <div className="px-5 py-3 border-b border-slate-200 dark:border-navy-800">
         <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
           {isPl ? 'Model danych' : 'Data Model'}
         </label>
@@ -390,7 +390,7 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
           ))}
         </select>
         {models.length === 0 && !loading && (
-          <p className="text-[11px] text-slate-400 mt-1 italic">
+          <p className="text-[11px] text-slate-600 mt-1 italic">
             {isPl
               ? 'Utwórz model danych w zakładce Modele'
               : 'Create a data model in the Models tab first'}
@@ -402,7 +402,7 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="animate-spin text-slate-400" size={20} />
+            <Loader2 className="animate-spin text-slate-600" size={20} />
           </div>
         ) : (
           (['results', 'finance', 'execution', 'initiatives'] as ModuleKey[]).map((mk) => (

@@ -470,7 +470,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     return (
       <div key={categoryKey} className="mb-2">
-        <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+        <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
           {title}
         </div>
         {items.map((item, idx) => {
@@ -530,7 +530,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <ArrowRight
                 size={14}
                 className={`shrink-0 ${
-                  isSelected ? 'text-primary-500' : 'text-slate-300 dark:text-slate-600'
+                  isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-600'
                 }`}
               />
             </motion.button>
@@ -565,7 +565,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
               {/* Search Input */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-navy-700">
-                <Search size={20} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                <Search size={20} className="text-slate-600 dark:text-slate-500 shrink-0" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -607,11 +607,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   </>
                 ) : (
                   <div className="py-8 text-center">
-                    <Search size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                    <Search size={32} className="mx-auto mb-2 text-slate-600 dark:text-slate-600" />
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                       {t('command.noResults', 'No results found')}
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                       {t('command.tryDifferent', 'Try a different search term')}
                     </p>
                   </div>
@@ -619,8 +619,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-white/5">
-                <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center justify-between px-4 py-2 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/5">
+                <div className="flex items-center gap-3 text-[10px] text-slate-600 dark:text-slate-500">
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-white/10 rounded">↑↓</kbd>
                     {t('command.hint.navigate', 'Navigate')}
@@ -634,7 +634,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     {t('command.hint.close', 'Close')}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500">
                   <Zap size={10} />
                   {t('command.hint.powered', 'Quick Actions')}
                 </div>

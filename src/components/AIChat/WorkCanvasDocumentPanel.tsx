@@ -1153,9 +1153,11 @@ export function WorkCanvasDocumentPanel({
       await Api.workCanvasExportDraft(draft.draftId, 'markdown');
       setStatusFeedback('Saved to Outputs Library. Opening…');
       // SPA navigation to the Outputs Library (canonical route).
+      // Fixed: was navigating to /presentations (wrong module + full reload).
+      // /outputs is the correct Outputs/EE hub.
       if (typeof window !== 'undefined') {
         window.setTimeout(() => {
-          window.location.assign('/presentations');
+          window.location.assign('/outputs');
         }, 600);
       }
     } catch (error) {
@@ -2092,7 +2094,7 @@ export function WorkCanvasDocumentPanel({
         title={title}
         className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
           isUnavailable
-            ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300'
+            ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300'
             : isDirtySaveAction
               ? 'text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 dark:text-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-300'
               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
@@ -2201,7 +2203,7 @@ export function WorkCanvasDocumentPanel({
             className={
               selectionEditDraft.trim()
                 ? 'rounded-full bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-700'
-                : 'cursor-not-allowed rounded-full bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                : 'cursor-not-allowed rounded-full bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
             }
           >
             Preview edit
@@ -2483,7 +2485,7 @@ export function WorkCanvasDocumentPanel({
                         disabled={Boolean(hint.disabled)}
                         className={
                           hint.disabled
-                            ? 'mt-2 rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                            ? 'mt-2 rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
                             : 'mt-2 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/20'
                         }
                       >
@@ -2937,7 +2939,7 @@ export function WorkCanvasDocumentPanel({
                       disabled={isStartingWorkflow}
                       className={
                         isStartingWorkflow
-                          ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                          ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
                           : 'inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2.5 py-1 font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-primary-100'
                       }
                     >
@@ -2962,7 +2964,7 @@ export function WorkCanvasDocumentPanel({
                         disabled={isFinalizingResearchReport}
                         className={
                           isFinalizingResearchReport
-                            ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                            ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
                             : 'inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-100'
                         }
                       >
@@ -3039,7 +3041,7 @@ export function WorkCanvasDocumentPanel({
                                   disabled={executionBlocked}
                                   className={
                                     executionBlocked
-                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
                                       : 'rounded-full bg-primary-600 px-2 py-0.5 font-semibold text-white hover:bg-primary-700'
                                   }
                                 >
@@ -3054,7 +3056,7 @@ export function WorkCanvasDocumentPanel({
                                   disabled={isWorkflowResuming}
                                   className={
                                     isWorkflowResuming
-                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
                                       : 'rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white'
                                   }
                                 >
@@ -3075,7 +3077,7 @@ export function WorkCanvasDocumentPanel({
                             </ol>
                             {workflow.events?.length ? (
                               <div className="mt-3 rounded-lg bg-white/70 p-2 dark:bg-white/[0.04]">
-                                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                                   Timeline
                                 </div>
                                 <ul className="mt-1 space-y-1 text-slate-500 dark:text-slate-300">
@@ -3135,7 +3137,7 @@ export function WorkCanvasDocumentPanel({
                                   aria-label={`Reviewer for ${workflow.title}`}
                                   className={
                                     isWorkflowReviewUpdating
-                                      ? 'min-w-[160px] cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-400 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
+                                      ? 'min-w-[160px] cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-600 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
                                       : 'min-w-[160px] rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100'
                                   }
                                 />
@@ -3147,7 +3149,7 @@ export function WorkCanvasDocumentPanel({
                                   disabled={isSendToReviewBlocked}
                                   className={
                                     isSendToReviewBlocked
-                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
                                       : 'rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800 hover:bg-amber-200 dark:bg-amber-400/20 dark:text-amber-100'
                                   }
                                 >
@@ -3161,7 +3163,7 @@ export function WorkCanvasDocumentPanel({
                                   disabled={isMarkApprovedBlocked}
                                   className={
                                     isMarkApprovedBlocked
-                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
                                       : 'rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-400/20 dark:text-emerald-100'
                                   }
                                 >
@@ -3182,7 +3184,7 @@ export function WorkCanvasDocumentPanel({
                                   aria-label={`Comment for ${workflow.title}`}
                                   className={
                                     isWorkflowCommentAdding
-                                      ? 'min-w-[220px] flex-1 cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-400 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
+                                      ? 'min-w-[220px] flex-1 cursor-not-allowed rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] text-slate-600 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-500'
                                       : 'min-w-[220px] flex-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 outline-none dark:border-white/10 dark:bg-white/10 dark:text-slate-100'
                                   }
                                 />
@@ -3192,7 +3194,7 @@ export function WorkCanvasDocumentPanel({
                                   disabled={isWorkflowCommentBlocked}
                                   className={
                                     isWorkflowCommentBlocked
-                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-400 dark:bg-white/10 dark:text-slate-500'
+                                      ? 'cursor-not-allowed rounded-full bg-slate-200 px-2 py-0.5 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
                                       : 'rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white'
                                   }
                                 >

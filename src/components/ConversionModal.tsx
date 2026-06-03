@@ -96,7 +96,7 @@ const ConversionModal: React.FC<ConversionModalProps> = ({
 
           <button
             onClick={onClose}
-            className="mt-6 text-sm text-slate-400 hover:text-slate-500 dark:text-slate-400 underline"
+            className="mt-6 text-sm text-slate-600 hover:text-slate-500 dark:text-slate-400 underline"
           >
             Continue Exploring Demo
           </button>

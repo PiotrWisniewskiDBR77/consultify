@@ -413,7 +413,7 @@ export const AppPricingView: React.FC = () => {
                             className={`mt-0.5 flex-shrink-0 ${
                               tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-300 dark:text-slate-600'
+                                : 'text-slate-600 dark:text-slate-600'
                             }`}
                           />
                         )}
@@ -425,7 +425,7 @@ export const AppPricingView: React.FC = () => {
                                 : 'text-slate-700 dark:text-slate-300'
                               : tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-600 dark:text-slate-500'
                           }`}
                         >
                           {feature.name}
@@ -515,7 +515,7 @@ export const AppPricingView: React.FC = () => {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 dark:border-navy-700"
+                    className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0 dark:border-navy-700"
                   >
                     <span className="text-sm text-slate-600 dark:text-slate-400">{item.label}</span>
                     <span className="text-sm font-bold text-navy-950 dark:text-white">
@@ -555,7 +555,7 @@ export const AppPricingView: React.FC = () => {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 dark:border-navy-700"
+                    className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0 dark:border-navy-700"
                   >
                     <span className="text-sm text-slate-600 dark:text-slate-400">{item.label}</span>
                     <span className="text-sm font-bold text-navy-950 dark:text-white">
@@ -625,7 +625,7 @@ export const AppPricingView: React.FC = () => {
                   >
                     <ArrowRight
                       size={16}
-                      className="flex-shrink-0 rotate-90 text-slate-400 dark:text-slate-500"
+                      className="flex-shrink-0 rotate-90 text-slate-600 dark:text-slate-500"
                     />
                   </motion.div>
                 </button>
@@ -633,7 +633,7 @@ export const AppPricingView: React.FC = () => {
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
-                    className="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-navy-700"
+                    className="border-t border-slate-200 px-4 pb-4 pt-3 dark:border-navy-700"
                   >
                     <p className="pl-7 text-sm text-slate-600 dark:text-slate-400">{faq.answer}</p>
                   </motion.div>

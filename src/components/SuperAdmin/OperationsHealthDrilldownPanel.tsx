@@ -140,7 +140,7 @@ const Sparkline: React.FC<SparklineProps> = ({ trend, sloId }) => {
   );
   if (trend.length === 0) {
     return (
-      <div className="flex h-[60px] w-full items-center justify-center text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="flex h-[60px] w-full items-center justify-center text-[11px] text-slate-600 dark:text-slate-500">
         No trend data.
       </div>
     );
@@ -261,7 +261,7 @@ const TrendTable: React.FC<TrendTableProps> = ({ trend, sloId }) => {
     return <p className="text-[11px] text-slate-500 dark:text-slate-400">No recent buckets.</p>;
   }
   return (
-    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+    <ul className="divide-y divide-slate-200 dark:divide-slate-800">
       {recent.map((point) => (
         <li
           key={`${point.bucketStart}-${point.bucketEnd}`}
@@ -272,7 +272,7 @@ const TrendTable: React.FC<TrendTableProps> = ({ trend, sloId }) => {
           </span>
           <span className="text-slate-700 dark:text-slate-200 tabular-nums">
             {formatObserved(sloId, point.observedNumeric)}{' '}
-            <span className="text-slate-400 dark:text-slate-500">(n={point.sampleSize})</span>
+            <span className="text-slate-600 dark:text-slate-500">(n={point.sampleSize})</span>
           </span>
           <span
             className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_TONE[point.status]}`}
@@ -303,7 +303,7 @@ const TopDecksList: React.FC<TopDecksListProps> = ({ decks, sloId }) => {
       {decks.map((deck) => (
         <li
           key={deck.deckId}
-          className="flex items-center justify-between gap-2 rounded border border-slate-100 bg-slate-50/60 px-2 py-1.5 text-[11px] dark:border-slate-800 dark:bg-slate-900/40"
+          className="flex items-center justify-between gap-2 rounded border border-slate-200 bg-slate-50/60 px-2 py-1.5 text-[11px] dark:border-slate-800 dark:bg-slate-900/40"
         >
           <span
             className="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200"
@@ -548,7 +548,7 @@ const OperationsHealthDrilldownPanel: React.FC<OperationsHealthDrilldownPanelPro
               {loading ? 'Loading…' : 'Refresh'}
             </button>
           </div>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">
+          <p className="text-[10px] text-slate-600 dark:text-slate-500">
             Last refreshed: {formatClock(lastRefreshAt)}
           </p>
         </header>

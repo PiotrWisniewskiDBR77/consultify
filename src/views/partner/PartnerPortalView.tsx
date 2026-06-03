@@ -334,14 +334,14 @@ const DashboardSection: React.FC = () => {
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
             {t('partner.dashboard.welcome', 'Welcome back, Partner')}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.dashboard.subtitle', "Here's your partnership overview")}
           </p>
         </div>
         <button
           onClick={fetchDashboard}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
           {t('common.refresh', 'Refresh')}
@@ -359,7 +359,7 @@ const DashboardSection: React.FC = () => {
               <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
                 <stat.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
-              <span className="text-sm text-slate-400">{stat.label}</span>
+              <span className="text-sm text-slate-600">{stat.label}</span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
             <p
@@ -367,7 +367,7 @@ const DashboardSection: React.FC = () => {
                 'text-sm mt-1',
                 stat.changeType === 'positive' && 'text-emerald-600 dark:text-emerald-400',
                 stat.changeType === 'negative' && 'text-rose-400',
-                stat.changeType === 'neutral' && 'text-slate-400'
+                stat.changeType === 'neutral' && 'text-slate-600'
               )}
             >
               {stat.change}
@@ -387,7 +387,7 @@ const DashboardSection: React.FC = () => {
               key={index}
               className="flex flex-col items-center gap-2 p-4 rounded-lg bg-slate-100 dark:bg-navy-700/50 hover:bg-primary-900/20 transition-colors group"
             >
-              <action.icon className="w-6 h-6 text-slate-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+              <action.icon className="w-6 h-6 text-slate-600 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
               <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary-600 dark:group-hover:text-primary-400">
                 {action.label}
               </span>
@@ -419,12 +419,12 @@ const DashboardSection: React.FC = () => {
                   <div className="w-2 h-2 rounded-full bg-primary-500" />
                   <div className="flex-1">
                     <p className="text-sm text-slate-900 dark:text-white">{activity.text}</p>
-                    <p className="text-xs text-slate-400">{activity.time}</p>
+                    <p className="text-xs text-slate-600">{activity.time}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-400 text-center py-4">
+              <p className="text-sm text-slate-600 text-center py-4">
                 {t('partner.dashboard.noActivity', 'No recent activity')}
               </p>
             )}
@@ -475,7 +475,7 @@ const DashboardSection: React.FC = () => {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-400 text-center py-4">
+              <p className="text-sm text-slate-600 text-center py-4">
                 {t('partner.dashboard.noCertifications', 'No certifications available')}
               </p>
             )}
@@ -792,14 +792,14 @@ const MetricsSection: React.FC = () => {
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.metrics.title', 'Partnership Metrics')}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.metrics.subtitle', 'Key performance indicators for your partnership')}
           </p>
         </div>
         <button
           onClick={fetchMetrics}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
           {t('common.refresh', 'Refresh')}
@@ -812,7 +812,7 @@ const MetricsSection: React.FC = () => {
             key={index}
             className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
           >
-            <p className="text-sm text-slate-400 mb-2">{metric.label}</p>
+            <p className="text-sm text-slate-600 mb-2">{metric.label}</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{metric.value}</p>
             <div className="flex items-center gap-2 mt-2">
               <span
@@ -860,11 +860,11 @@ const MetricsSection: React.FC = () => {
                 <span className="text-3xl font-bold text-slate-900 dark:text-white">
                   {metricsData?.performance?.score || 0}
                 </span>
-                <span className="text-sm text-slate-400">/ 100</span>
+                <span className="text-sm text-slate-600">/ 100</span>
               </div>
             </div>
           </div>
-          <p className="text-center text-sm text-slate-400 mt-4">
+          <p className="text-center text-sm text-slate-600 mt-4">
             {metricsData?.performance?.ranking || 'Calculating...'}
           </p>
         </div>
@@ -899,7 +899,7 @@ const MetricsSection: React.FC = () => {
             ].map((item, index) => (
               <div key={index}>
                 <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-slate-400">{item.label}</span>
+                  <span className="text-slate-600">{item.label}</span>
                   <span className="font-medium text-slate-900 dark:text-white">{item.score}%</span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
@@ -938,7 +938,7 @@ const MetricsSection: React.FC = () => {
           <div className="flex items-center justify-center h-40">
             <div className="text-center">
               <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400">
+              <p className="text-slate-600">
                 {t('partner.metrics.noRevenueData', 'No revenue data available yet')}
               </p>
             </div>
@@ -1118,7 +1118,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.clients.organizations', 'Client Organizations')}
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               {t(
                 'partner.clients.organizationsDesc',
                 'Manage organizations under your partnership'
@@ -1128,7 +1128,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           <div className="flex gap-2">
             <button
               onClick={fetchData}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -1141,7 +1141,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
         {organizations.length === 0 ? (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
             <Building2 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               {t('partner.clients.noOrganizations', 'No client organizations yet')}
             </p>
           </div>
@@ -1150,22 +1150,22 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             <table className="w-full">
               <thead className="bg-slate-100 dark:bg-navy-700/50">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
                     Organization
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
                     Industry
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
                     Users
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
                     Projects
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
                     Assessment
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-4 py-3"></th>
@@ -1184,9 +1184,9 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-400">{org.industry}</td>
-                    <td className="px-4 py-4 text-sm text-center text-slate-400">{org.users}</td>
-                    <td className="px-4 py-4 text-sm text-center text-slate-400">{org.projects}</td>
+                    <td className="px-4 py-4 text-sm text-slate-600">{org.industry}</td>
+                    <td className="px-4 py-4 text-sm text-center text-slate-600">{org.users}</td>
+                    <td className="px-4 py-4 text-sm text-center text-slate-600">{org.projects}</td>
                     <td className="px-4 py-4 text-center">
                       <span className="px-2 py-1 text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded">
                         {org.assessmentScore}/5
@@ -1199,7 +1199,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                           org.status === 'active' &&
                             'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
                           org.status === 'onboarding' && 'bg-amber-900/30 text-amber-400',
-                          org.status === 'inactive' && 'bg-slate-900/30 text-slate-400'
+                          org.status === 'inactive' && 'bg-slate-900/30 text-slate-600'
                         )}
                       >
                         {org.status}
@@ -1231,13 +1231,13 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.clients.projects', 'Active Projects')}
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               {t('partner.clients.projectsDesc', 'Transformation projects in progress')}
             </p>
           </div>
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             {t('common.refresh', 'Refresh')}
@@ -1247,7 +1247,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
         {projects.length === 0 ? (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
             <FolderKanban className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               {t('partner.clients.noProjects', 'No active projects yet')}
             </p>
           </div>
@@ -1261,7 +1261,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-white">{project.name}</h4>
-                    <p className="text-sm text-slate-400">{project.clientName}</p>
+                    <p className="text-sm text-slate-600">{project.clientName}</p>
                   </div>
                   <span className="px-2 py-1 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded">
                     {project.framework}
@@ -1269,7 +1269,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 </div>
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-slate-400">Progress</span>
+                    <span className="text-slate-600">Progress</span>
                     <span className="font-medium text-slate-900 dark:text-white">
                       {project.progress}%
                     </span>
@@ -1305,7 +1305,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.clients.users', 'User Management')}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.clients.usersDesc', 'Manage users across client organizations')}
           </p>
         </div>
@@ -1313,7 +1313,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
       {organizations.length === 0 ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
           <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.clients.usersEmpty', 'Select an organization to manage users')}
           </p>
         </div>
@@ -1330,7 +1330,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 </div>
                 <div>
                   <span className="font-medium text-slate-900 dark:text-white">{org.name}</span>
-                  <p className="text-sm text-slate-400">{org.users} users</p>
+                  <p className="text-sm text-slate-600">{org.users} users</p>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-slate-500" />
@@ -1594,7 +1594,7 @@ const CertificationSection: React.FC<{
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.certification.learningPath', 'Learning Path')}
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               {t(
                 'partner.certification.learningPathDesc',
                 'Complete courses to earn certifications'
@@ -1603,7 +1603,7 @@ const CertificationSection: React.FC<{
           </div>
           <button
             onClick={fetchCertifications}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             {t('common.refresh', 'Refresh')}
@@ -1613,7 +1613,7 @@ const CertificationSection: React.FC<{
         {certifications.length === 0 ? (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
             <GraduationCap className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               {t('partner.certification.noCourses', 'No courses available yet')}
             </p>
           </div>
@@ -1667,11 +1667,11 @@ const CertificationSection: React.FC<{
                           {getDisplayStatus(course.status)}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 mt-1">
+                      <p className="text-sm text-slate-600 mt-1">
                         {course.track} / {course.level}{' '}
                         {course.targetTier ? `• ${course.targetTier}` : ''}
                       </p>
-                      <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
+                      <div className="flex items-center gap-4 mt-3 text-sm text-slate-600">
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           {course.duration}
@@ -1701,7 +1701,7 @@ const CertificationSection: React.FC<{
                       {status !== 'locked' && (
                         <div className="mt-3">
                           <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-slate-400">Progress</span>
+                            <span className="text-slate-600">Progress</span>
                             <span className="font-medium text-slate-900 dark:text-white">
                               {course.progress}%
                             </span>
@@ -1756,7 +1756,7 @@ const CertificationSection: React.FC<{
                                       </p>
                                     )}
                                   </div>
-                                  <span className="text-xs text-slate-400">
+                                  <span className="text-xs text-slate-600">
                                     {module.minutes ? `${module.minutes} min` : module.moduleKind}
                                   </span>
                                 </div>
@@ -1813,7 +1813,7 @@ const CertificationSection: React.FC<{
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.certification.exams', 'Certification Exams')}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.certification.examsDesc', 'Take exams to earn official certifications')}
           </p>
         </div>
@@ -1833,7 +1833,7 @@ const CertificationSection: React.FC<{
                       <h4 className="font-medium text-slate-900 dark:text-white">
                         {course.name} Exam
                       </h4>
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-slate-600">
                         {course.certificateId
                           ? 'Passed'
                           : course.examEligible
@@ -1865,7 +1865,7 @@ const CertificationSection: React.FC<{
         ) : (
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
             <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               {t('partner.certification.examsEmpty', 'Complete learning path to unlock exams')}
             </p>
           </div>
@@ -1974,13 +1974,13 @@ const CertificationSection: React.FC<{
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.certification.certificates', 'Your Certificates')}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.certification.certificatesDesc', 'Download and share your certifications')}
           </p>
         </div>
         <button
           onClick={fetchCertifications}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
@@ -1988,7 +1988,7 @@ const CertificationSection: React.FC<{
       {completedWithCerts.length === 0 ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
           <Award className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t(
               'partner.certification.noCertificates',
               'Complete courses and pass exams to earn certificates'
@@ -2008,7 +2008,7 @@ const CertificationSection: React.FC<{
                 </div>
                 <div className="flex-1">
                   <h4 className="font-medium text-slate-900 dark:text-white">{cert.name}</h4>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-600">
                     Issued:{' '}
                     {cert.completedAt ? new Date(cert.completedAt).toLocaleDateString() : 'N/A'}
                   </p>
@@ -2188,13 +2188,13 @@ const ResourcesSection: React.FC<{
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {titles[subsection]}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.resources.desc', 'Download resources for your partnership')}
           </p>
         </div>
         <button
           onClick={fetchResources}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
@@ -2217,7 +2217,7 @@ const ResourcesSection: React.FC<{
                     <span className="text-sm font-medium text-slate-900 dark:text-white">
                       {doc.title}
                     </span>
-                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                    <ExternalLink className="w-4 h-4 text-slate-600" />
                   </button>
                 ))}
               </div>
@@ -2241,7 +2241,7 @@ const ResourcesSection: React.FC<{
                         <div className="text-sm font-medium text-slate-900 dark:text-white">
                           {item.track} / {item.level}
                         </div>
-                        <div className="text-xs text-slate-400">{item.progress}%</div>
+                        <div className="text-xs text-slate-600">{item.progress}%</div>
                       </div>
                       <div className="mt-1 text-xs text-slate-500">
                         {item.status}
@@ -2267,7 +2267,7 @@ const ResourcesSection: React.FC<{
       {items.length === 0 ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
           <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.resources.empty', 'No resources available in this category')}
           </p>
         </div>
@@ -2286,7 +2286,7 @@ const ResourcesSection: React.FC<{
                 <h4 className="font-medium text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">
                   {item.title}
                 </h4>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-600">
                   {item.type} • {item.size}
                 </p>
               </div>
@@ -2571,13 +2571,13 @@ const ProfileSection: React.FC<{
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               {t('partner.profile.companyInfo', 'Company Information')}
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-600">
               {t('partner.profile.companyInfoDesc', 'Manage your company details')}
             </p>
           </div>
           <button
             onClick={fetchOrganization}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -2664,7 +2664,7 @@ const ProfileSection: React.FC<{
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.profile.specializations', 'Specializations')}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.profile.specializationsDesc', 'Select frameworks you specialize in')}
           </p>
         </div>
@@ -2691,7 +2691,7 @@ const ProfileSection: React.FC<{
                 <span
                   className={cn(
                     'font-medium',
-                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-slate-400'
+                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-slate-600'
                   )}
                 >
                   {fw}
@@ -2721,7 +2721,7 @@ const ProfileSection: React.FC<{
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('partner.profile.regions', 'Operating Regions')}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             {t('partner.profile.regionsDesc', 'Select regions where you operate')}
           </p>
         </div>
@@ -2765,7 +2765,7 @@ const ProfileSection: React.FC<{
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
           {t('partner.profile.publicListing', 'Public Listing')}
         </h2>
-        <p className="text-slate-400">
+        <p className="text-slate-600">
           {t('partner.profile.publicListingDesc', 'Manage your visibility in partner directory')}
         </p>
       </div>
@@ -2774,7 +2774,7 @@ const ProfileSection: React.FC<{
         <div className="flex items-center justify-between mb-6">
           <div>
             <h4 className="font-medium text-slate-900 dark:text-white">Directory Visibility</h4>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-600">
               Show your profile in the public partner directory
             </p>
           </div>
@@ -2807,7 +2807,7 @@ const ProfileSection: React.FC<{
                 <h5 className="font-semibold text-slate-900 dark:text-white">
                   {organization?.name || 'Your Company'}
                 </h5>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-600">
                   {organization?.tier || 'Partner'} •{' '}
                   {selectedRegions.join(', ') || 'No regions selected'}
                 </p>

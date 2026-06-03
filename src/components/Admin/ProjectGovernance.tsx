@@ -234,7 +234,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
       </div>
 
       {/* Settings List */}
-      <div className="divide-y divide-slate-100 dark:divide-white/5">
+      <div className="divide-y divide-slate-200 dark:divide-white/5">
         {settingsConfig.map((config) => (
           <div
             key={config.key}
@@ -300,7 +300,7 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
         </div>
 
         {/* AI Roles Model: AI Governance Role Selector */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-navy-700">
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-primary-500/10 text-primary-500">
               <Shield size={18} />
@@ -358,14 +358,14 @@ export const ProjectGovernance: React.FC<ProjectGovernanceProps> = ({ projectId,
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-2 text-xs text-slate-600 dark:text-slate-500">
             ⚠️ Changing AI role affects what AI can do: Advisor (read-only) → Manager (drafts) →
             Operator (execute)
           </p>
         </div>
 
         {/* Regulatory Mode: Strict Compliance Toggle */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-navy-700 bg-amber-500/5">
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-amber-500/5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-amber-500/20 text-amber-500">

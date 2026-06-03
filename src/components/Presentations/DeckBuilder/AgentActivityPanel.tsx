@@ -36,7 +36,7 @@ const PanelShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     className="w-72 flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col"
   >
     <div className="m-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-sm flex flex-col overflow-hidden">
-      <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-800">
+      <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-800">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-white">AI Activity</h3>
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-2">{children}</div>
@@ -79,7 +79,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
 
   return (
     <PanelShell>
-      <ul className="divide-y divide-slate-100 dark:divide-navy-800">
+      <ul className="divide-y divide-slate-200 dark:divide-navy-800">
         {recent.map((evt) => (
           <li key={evt.id} className="py-2 first:pt-0 last:pb-0 flex items-start gap-2">
             <span

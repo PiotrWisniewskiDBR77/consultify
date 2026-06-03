@@ -271,7 +271,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               key={s.label}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60"
             >
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
                 {s.label}
               </span>
               <span className="text-sm font-bold text-slate-800 dark:text-white">{s.value}</span>
@@ -296,7 +296,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
       {/* Search bar */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-md">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -360,7 +360,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
+              <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-3">
                 <Network size={48} className="opacity-30" />
                 <p className="text-sm font-medium">
                   {isPl
@@ -416,14 +416,14 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                 }}
                 className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
               >
-                <X size={12} className="text-slate-400" />
+                <X size={12} className="text-slate-600" />
               </button>
             </div>
 
             <div className="p-4 space-y-4">
               {/* Properties */}
               <div className="space-y-2">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
                   {isPl ? 'Właściwości' : 'Properties'}
                 </h4>
                 {[
@@ -478,7 +478,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               {/* Provenance */}
               {provenance && (
                 <div className="space-y-2">
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
                     {isPl ? 'Proweniencja' : 'Provenance'}
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -486,7 +486,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                   </p>
                   {provenance.sourceArtifacts.length > 0 && (
                     <div className="space-y-1">
-                      <span className="text-[9px] font-bold uppercase text-slate-400">
+                      <span className="text-[9px] font-bold uppercase text-slate-600">
                         {isPl ? 'Źródła' : 'Sources'}
                       </span>
                       {provenance.sourceArtifacts.map((sa, i) => (

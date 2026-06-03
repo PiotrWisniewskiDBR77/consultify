@@ -82,11 +82,11 @@ export const RelatedContext: React.FC<RelatedContextProps> = ({
       {expanded && (
         <div className="px-4 pb-3 space-y-1">
           {loading ? (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-600">
               {isPolish ? 'Szukam...' : 'Searching...'}
             </span>
           ) : items.length === 0 ? (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-600">
               {isPolish ? 'Brak powiązań' : 'No related items found'}
             </span>
           ) : (
@@ -100,7 +100,7 @@ export const RelatedContext: React.FC<RelatedContextProps> = ({
                 <span className="text-xs text-slate-700 dark:text-slate-200 truncate">
                   {item.title}
                 </span>
-                <span className="text-[10px] text-slate-400 shrink-0">{item.type}</span>
+                <span className="text-[10px] text-slate-600 shrink-0">{item.type}</span>
               </button>
             ))
           )}

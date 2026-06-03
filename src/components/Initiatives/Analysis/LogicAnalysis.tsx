@@ -105,7 +105,7 @@ interface LogicAnalysisProps {
 /* ------------------------------------------------------------------ */
 
 const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col, cur, dir }) => {
-  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-300 dark:text-slate-600" />;
+  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-600" />;
   return dir === 'asc' ? (
     <ArrowUp size={11} className="text-primary-500" />
   ) : (
@@ -798,7 +798,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                     {step.name}
                   </div>
                   {step.startDate && step.endDate && (
-                    <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {new Date(step.startDate).toLocaleDateString()} —{' '}
                       {new Date(step.endDate).toLocaleDateString()}
                       <span className="ml-1 text-amber-500">
@@ -888,7 +888,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                     >
                       {init.name}
                     </button>
-                    <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                    <span className="text-xs text-slate-600 dark:text-slate-500 truncate">
                       {init.reason}
                     </span>
                   </div>
@@ -1128,7 +1128,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                   </div>
                   {idx < sequenceSteps.length - 1 && (
                     <div className="flex items-center px-1">
-                      <ArrowRight size={18} className="text-slate-300 dark:text-slate-600" />
+                      <ArrowRight size={18} className="text-slate-600 dark:text-slate-600" />
                     </div>
                   )}
                 </React.Fragment>
@@ -1375,7 +1375,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                         {step.name}
                       </div>
                       {step.startDate && step.endDate && (
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                           {new Date(step.startDate).toLocaleDateString()} —{' '}
                           {new Date(step.endDate).toLocaleDateString()}
                           <span className="ml-1 text-amber-500">
@@ -1416,7 +1416,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                         count: b.dependentCount,
                       })}
                     </span>
-                    <div className="text-xs text-slate-400 dark:text-slate-500 max-w-[200px] truncate">
+                    <div className="text-xs text-slate-600 dark:text-slate-500 max-w-[200px] truncate">
                       {b.dependentNames.join(', ')}
                     </div>
                   </div>
@@ -1479,7 +1479,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                         >
                           {init.name}
                         </button>
-                        <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                        <span className="text-xs text-slate-600 dark:text-slate-500 truncate">
                           {init.reason}
                         </span>
                       </div>
@@ -1549,12 +1549,12 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 return (
                   <React.Fragment key={depKey}>
                     <tr
-                      className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
+                      className={`border-b border-slate-200 dark:border-navy-800/50 cursor-pointer
                         hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
                         ${d.hasTimingConflict ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
                       onClick={() => setExpandedDep(isExpanded ? null : depKey)}
                     >
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="px-4 py-3 text-slate-600">
                         {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                       </td>
                       <td className="px-4 py-3">
@@ -1571,7 +1571,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       <td className="text-center">
                         <ArrowRight
                           size={14}
-                          className={d.hasTimingConflict ? 'text-rose-400' : 'text-slate-400'}
+                          className={d.hasTimingConflict ? 'text-rose-400' : 'text-slate-600'}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1700,7 +1700,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             <p className="text-sm font-medium mb-1">
               {t('initiatives.analysis.logic.noData', 'No dependency data available.')}
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+            <p className="text-xs text-slate-600 dark:text-slate-500 mb-4">
               {t(
                 'initiatives.analysis.logic.emptyHint',
                 'Click "AI Discover Dependencies" to let AI analyze your initiatives and suggest connections.'

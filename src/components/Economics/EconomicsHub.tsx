@@ -200,7 +200,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           return (
             <div className="flex items-center gap-2">
               <Calculator size={14} className="text-emerald-400" />
-              <span className="font-mono text-xs font-bold text-slate-300">{code}</span>
+              <span className="font-mono text-xs font-bold text-slate-600">{code}</span>
             </div>
           );
         },
@@ -211,7 +211,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
         render: (row: DigitizationAnalysis) => (
           <div>
             <span className="text-sm text-white font-medium">{row.name}</span>
-            {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
+            {row.projectName && <p className="text-xs text-slate-600 mt-0.5">{row.projectName}</p>}
           </div>
         ),
       },
@@ -230,7 +230,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           return (
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-              <span className="text-sm text-slate-300">{meta.label}</span>
+              <span className="text-sm text-slate-600">{meta.label}</span>
             </div>
           );
         },
@@ -251,7 +251,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
                   style={{ width: `${(score / 7) * 100}%` }}
                 />
               </div>
-              <span className="text-xs text-slate-400">{score.toFixed(1)}/7</span>
+              <span className="text-xs text-slate-600">{score.toFixed(1)}/7</span>
             </div>
           );
         },
@@ -390,7 +390,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
             </div>
             <div>
               <h3 className="text-sm font-semibold text-white">{selectedAnalysis.name}</h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 {selectedAnalysis.projectName
                   ? t('economics.detail.project', 'Project: {{name}}', {
                       name: selectedAnalysis.projectName,
@@ -406,7 +406,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowVersionHistory(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
               title="Version History"
             >
               <History size={14} />
@@ -414,7 +414,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
             </button>
             <button
               onClick={handleExcelExport}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
               title="Export Excel"
             >
               <Download size={14} />
@@ -422,7 +422,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
             </button>
             <button
               onClick={() => setShowPDFExport(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-white hover:bg-navy-800/40 rounded-lg transition-colors"
               title="Export PDF"
             >
               <FileText size={14} />
@@ -519,7 +519,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
             <h3 className="text-lg font-semibold text-white mb-2">
               {t('economics.empty.noCompleted', 'No completed analyses')}
             </h3>
-            <p className="text-sm text-slate-400 mb-6">
+            <p className="text-sm text-slate-600 mb-6">
               {t(
                 'economics.empty.completeToSee',
                 'Complete analyses to see results and recommendations.'

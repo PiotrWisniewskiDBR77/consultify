@@ -55,22 +55,22 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Stats Cards */}
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-navy-700">
+          <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700">
             <div className="text-sm text-slate-500 dark:text-slate-400">Overdue</div>
             <div className="text-2xl font-bold text-rose-600">{data?.overdueCount || 0}</div>
           </div>
-          <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-navy-700">
+          <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700">
             <div className="text-sm text-slate-500 dark:text-slate-400">Due This Week</div>
             <div className="text-2xl font-bold text-navy-900 dark:text-white">
               {data?.dueThisWeekCount || 0}
             </div>
           </div>
-          <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-navy-700">
+          <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700">
             <div className="text-sm text-slate-500 dark:text-slate-400">Blocked</div>
             <div className="text-2xl font-bold text-amber-600">{data?.blockedCount || 0}</div>
           </div>
           {/* PMO Blocking Count - New card */}
-          <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-navy-700">
+          <div className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700">
             <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
               <AlertCircle size={12} />
               {t('pmo.blockingProgress', 'Blocking Progress')}
@@ -95,7 +95,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                 <div
                   key={task.id}
                   onClick={() => onEditTask(task.id)}
-                  className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-navy-700 hover:border-blue-500 cursor-pointer transition-colors"
+                  className="bg-white dark:bg-navy-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700 hover:border-blue-500 cursor-pointer transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -123,7 +123,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
             </div>
           ) : (
             <div className="bg-white dark:bg-navy-800 p-8 rounded-xl text-center border border-dashed border-slate-300 dark:border-navy-700">
-              <div className="text-slate-400 dark:text-slate-500 mb-2">
+              <div className="text-slate-600 dark:text-slate-500 mb-2">
                 No tasks prioritized for today
               </div>
               <button

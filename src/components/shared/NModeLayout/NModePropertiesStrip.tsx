@@ -50,7 +50,7 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
             field.colSpan === 2 ? ' col-span-2' : field.colSpan === 3 ? ' col-span-3' : '';
           return (
             <div key={field.id} className={`space-y-1${spanClass}`}>
-              <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <label className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {isPolish ? field.label.pl : field.label.en}
               </label>
 

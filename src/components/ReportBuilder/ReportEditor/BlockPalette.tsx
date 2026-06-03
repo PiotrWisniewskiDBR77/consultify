@@ -510,7 +510,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
             </h2>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+              className="p-2 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
             >
               <X className="w-5 h-5" />
             </button>
@@ -518,7 +518,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
             <input
               type="text"
               value={search}
@@ -609,7 +609,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
           )}
 
           {!libraryLoaded && (
-            <div className="text-center pt-6 text-xs text-slate-400">
+            <div className="text-center pt-6 text-xs text-slate-600">
               {isPl ? 'Ładowanie biblioteki bloków…' : 'Loading block library…'}
             </div>
           )}

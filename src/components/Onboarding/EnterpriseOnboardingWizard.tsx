@@ -495,9 +495,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
           {/* Placeholder for Stripe Elements */}
           <div className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-12 mb-8 text-center">
-            <CreditCard className="w-16 h-16 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+            <CreditCard className="w-16 h-16 text-slate-600 dark:text-slate-500 mx-auto mb-4" />
             <p className="text-slate-500 dark:text-slate-400 mb-2">Payout and billing setup</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               (Automated payout setup can be expanded in the next rollout)
             </p>
           </div>

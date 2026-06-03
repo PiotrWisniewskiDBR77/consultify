@@ -61,7 +61,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -70,7 +70,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
     return (
       <div className="text-center py-12">
         <BarChart2 className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
-        <p className="text-slate-400 dark:text-slate-500">Failed to load analytics data</p>
+        <p className="text-slate-600 dark:text-slate-500">Failed to load analytics data</p>
         <button
           onClick={loadDashboard}
           className="mt-4 px-4 py-2 text-primary-400 hover:text-primary-300"
@@ -91,7 +91,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Content Analytics</h2>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Overview of your content module performance
             </p>
           </div>
@@ -109,7 +109,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           </select>
           <button
             onClick={loadDashboard}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white bg-slate-800 border border-slate-700 rounded-lg"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-white bg-slate-800 border border-slate-700 rounded-lg"
           >
             <RefreshCw size={16} />
           </button>
@@ -125,7 +125,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <span className="text-sm font-medium text-blue-300">Playbooks</span>
           </div>
           <div className="text-3xl font-bold text-white mb-1">{data.totalPlaybookTemplates}</div>
-          <div className="text-sm text-slate-400 dark:text-slate-500">
+          <div className="text-sm text-slate-600 dark:text-slate-500">
             <span className="text-emerald-400">{data.publishedPlaybooks}</span> published
           </div>
         </div>
@@ -137,7 +137,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <span className="text-sm font-medium text-pink-300">Email Templates</span>
           </div>
           <div className="text-3xl font-bold text-white mb-1">{data.totalEmailTemplates}</div>
-          <div className="text-sm text-slate-400 dark:text-slate-500">
+          <div className="text-sm text-slate-600 dark:text-slate-500">
             <span className="text-emerald-400">{data.publishedEmails}</span> published
           </div>
         </div>
@@ -149,7 +149,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <span className="text-sm font-medium text-primary-300">Categories</span>
           </div>
           <div className="text-3xl font-bold text-white mb-1">{data.totalCategories}</div>
-          <div className="text-sm text-slate-400 dark:text-slate-500">Content organization</div>
+          <div className="text-sm text-slate-600 dark:text-slate-500">Content organization</div>
         </div>
 
         {/* Tags */}
@@ -159,7 +159,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <span className="text-sm font-medium text-emerald-300">Tags</span>
           </div>
           <div className="text-3xl font-bold text-white mb-1">{data.totalTags}</div>
-          <div className="text-sm text-slate-400 dark:text-slate-500">Content labels</div>
+          <div className="text-sm text-slate-600 dark:text-slate-500">Content labels</div>
         </div>
       </div>
 
@@ -176,7 +176,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400 dark:text-slate-500">Success Rate</span>
+              <span className="text-slate-600 dark:text-slate-500">Success Rate</span>
               <span
                 className={`font-medium ${
                   data.avgPlaybookSuccessRate >= 70
@@ -215,11 +215,11 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm text-slate-400 dark:text-slate-500 mb-1">Open Rate</div>
+              <div className="text-sm text-slate-600 dark:text-slate-500 mb-1">Open Rate</div>
               <div className="text-lg font-semibold text-emerald-400">{data.avgEmailOpenRate}%</div>
             </div>
             <div>
-              <div className="text-sm text-slate-400 dark:text-slate-500 mb-1">Click Rate</div>
+              <div className="text-sm text-slate-600 dark:text-slate-500 mb-1">Click Rate</div>
               <div className="text-lg font-semibold text-blue-400">{data.avgEmailClickRate}%</div>
             </div>
           </div>
@@ -236,7 +236,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
               href="/superadmin/playbook-templates"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-700/50 transition-colors group"
             >
-              <span className="text-slate-300 group-hover:text-white">Manage Playbooks</span>
+              <span className="text-slate-600 group-hover:text-white">Manage Playbooks</span>
               <TrendingUp
                 size={14}
                 className="text-slate-500 dark:text-slate-400 group-hover:text-primary-400"
@@ -246,7 +246,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
               href="/superadmin/email-templates"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-700/50 transition-colors group"
             >
-              <span className="text-slate-300 group-hover:text-white">Email Templates</span>
+              <span className="text-slate-600 group-hover:text-white">Email Templates</span>
               <TrendingUp
                 size={14}
                 className="text-slate-500 dark:text-slate-400 group-hover:text-pink-400"
@@ -256,7 +256,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
               href="/superadmin/content/categories"
               className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-700/50 transition-colors group"
             >
-              <span className="text-slate-300 group-hover:text-white">Manage Categories</span>
+              <span className="text-slate-600 group-hover:text-white">Manage Categories</span>
               <TrendingUp
                 size={14}
                 className="text-slate-500 dark:text-slate-400 group-hover:text-emerald-400"
@@ -360,7 +360,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     <span className="text-pink-400 ml-1">{cat.emailCount}</span>
                   </div>
                 </div>
-                <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                <div className="mt-2 text-xs text-slate-600 dark:text-slate-500">
                   {cat.usageCount} total uses
                 </div>
               </div>

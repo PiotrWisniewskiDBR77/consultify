@@ -84,7 +84,7 @@ const ActionItemCard: React.FC<{
     >
       {/* Header row */}
       <div className="flex items-center gap-2 mb-2.5">
-        <Icon size={15} className="text-slate-400 dark:text-slate-500 shrink-0" />
+        <Icon size={15} className="text-slate-600 dark:text-slate-500 shrink-0" />
         <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {item.type === 'decision'
             ? t('executive.action.decision', 'Decision')
@@ -167,7 +167,7 @@ const ActionItemCard: React.FC<{
 
       {/* Non-decision CTA */}
       {item.type !== 'decision' && (
-        <div className="flex items-center justify-end text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
+        <div className="flex items-center justify-end text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
           {t('executive.action.view', 'View details')}
           <ChevronRight size={14} />
         </div>
@@ -261,7 +261,7 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
                 </span>
               )}
               {criticalCount > 0 && highCount > 0 && (
-                <span className="text-slate-300 dark:text-slate-600"> · </span>
+                <span className="text-slate-600 dark:text-slate-600"> · </span>
               )}
               {highCount > 0 && (
                 <span className="text-amber-600 dark:text-amber-400 font-medium">
@@ -275,7 +275,7 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
         {onViewAll && (
           <button
             onClick={onViewAll}
-            className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+            className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
           >
             {t('executive.action.viewAll', 'View all')}
             <ArrowRight size={13} />

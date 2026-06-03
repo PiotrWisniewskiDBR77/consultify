@@ -284,7 +284,7 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
                 >
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-white dark:bg-navy-700 rounded-lg shadow-sm">
-                      <FileArchive className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                      <FileArchive className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">

@@ -235,7 +235,7 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
                       <ArrowRight size={16} />
                     </button>
                   ) : (
-                    <span className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-sm">
+                    <span className="flex items-center gap-2 text-slate-600 dark:text-slate-500 text-sm">
                       <Clock size={16} />
                       {isPolish ? 'W przygotowaniu' : 'In Development'}
                     </span>
@@ -253,7 +253,7 @@ export const AssessmentView: React.FC<AssessmentViewProps> = ({
           </h2>
           <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
             <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+              <FileText className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-4" />
               <p className="text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? 'Twoje ostatnie oceny pojawią się tutaj'

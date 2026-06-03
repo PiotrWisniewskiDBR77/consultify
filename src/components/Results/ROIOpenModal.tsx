@@ -67,7 +67,7 @@ export const ROIOpenModal: React.FC<ROIOpenModalProps> = ({ onClose, onSelect, t
 
         <div className="p-6 space-y-4">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
               className={inputCls}
               value={query}
@@ -79,7 +79,7 @@ export const ROIOpenModal: React.FC<ROIOpenModalProps> = ({ onClose, onSelect, t
               <button
                 type="button"
                 onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-700 dark:hover:text-white transition-colors"
                 title={t('common.clear', 'Clear')}
               >
                 <X size={16} />

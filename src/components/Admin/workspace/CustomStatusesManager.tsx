@@ -210,7 +210,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
         )}
       >
         {/* Drag Handle */}
-        <div className="cursor-grab text-slate-400 hover:text-slate-600 dark:text-slate-400">
+        <div className="cursor-grab text-slate-600 hover:text-slate-600 dark:text-slate-400">
           <GripVertical size={16} />
         </div>
 
@@ -219,14 +219,14 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
           <button
             onClick={() => moveStatus(status.id, 'up')}
             disabled={statusIndex === 0}
-            className="p-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
+            className="p-0.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
           >
             <ChevronUp size={12} />
           </button>
           <button
             onClick={() => moveStatus(status.id, 'down')}
             disabled={statusIndex === categoryStatuses.length - 1}
-            className="p-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
+            className="p-0.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
           >
             <ChevronDown size={12} />
           </button>
@@ -342,7 +342,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
             <Tooltip
               content={t('admin.workspace.statuses.tooltip', 'Configure task workflow statuses')}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">

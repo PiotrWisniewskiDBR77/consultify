@@ -132,7 +132,7 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
                 canRequestReview
                   ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-400 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 cursor-not-allowed'
               } text-sm font-medium transition-colors`}
             >
               <Check className="w-4 h-4" />
@@ -180,7 +180,7 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
                     ? `bg-${toolMeta.color}-100 dark:bg-${toolMeta.color}-900/30 text-${toolMeta.color}-700 dark:text-${toolMeta.color}-300 font-medium`
                     : isCompleted
                       ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-500'
                 }
                 ${canClick ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed'}
               `}

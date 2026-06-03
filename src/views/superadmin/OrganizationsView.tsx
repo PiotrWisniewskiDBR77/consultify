@@ -619,7 +619,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   <th className="p-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -761,7 +761,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                               {onViewUsers && (
                                 <button
                                   onClick={() => onViewUsers(org.id)}
-                                  className="p-1.5 hover:bg-indigo-500/20 text-slate-400 dark:text-slate-500 hover:text-indigo-400 rounded transition-colors"
+                                  className="p-1.5 hover:bg-indigo-500/20 text-slate-600 dark:text-slate-500 hover:text-indigo-400 rounded transition-colors"
                                   title="View Users"
                                 >
                                   <Users size={16} />
@@ -769,14 +769,14 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                               )}
                               <button
                                 onClick={() => setSelectedOrg(org)}
-                                className="p-1.5 hover:bg-blue-500/20 text-slate-400 dark:text-slate-500 hover:text-blue-400 rounded transition-colors"
+                                className="p-1.5 hover:bg-blue-500/20 text-slate-600 dark:text-slate-500 hover:text-blue-400 rounded transition-colors"
                                 title="View Details"
                               >
                                 <Eye size={16} />
                               </button>
                               <button
                                 onClick={() => startInlineEdit(org)}
-                                className="p-1.5 hover:bg-yellow-500/20 text-slate-400 dark:text-slate-500 hover:text-yellow-400 rounded transition-colors"
+                                className="p-1.5 hover:bg-yellow-500/20 text-slate-600 dark:text-slate-500 hover:text-yellow-400 rounded transition-colors"
                                 title="Quick Edit"
                               >
                                 <Edit2 size={16} />
@@ -784,7 +784,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                               <button
                                 onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
                                 disabled={processingId === org.id}
-                                className="p-1.5 hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors disabled:opacity-60"
+                                className="p-1.5 hover:bg-rose-500/20 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors disabled:opacity-60"
                                 title="Delete"
                               >
                                 <Trash2 size={16} />
@@ -805,7 +805,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       {/* Pending Requests Tab */}
       {activeTab === 'pending' && (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
+          <div className="p-4 border-b border-slate-200 dark:border-white/5 flex justify-between items-center">
             <h3 className="font-semibold text-slate-900 dark:text-white">
               Pending Organization Requests
             </h3>
@@ -820,7 +820,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -933,7 +933,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   <th className="p-4 font-medium text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -1047,7 +1047,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
 
             <form onSubmit={handleGenerateCode} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                   Custom Code (Optional)
                 </label>
                 <input
@@ -1063,7 +1063,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                     Max Uses
                   </label>
                   <input
@@ -1077,7 +1077,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                     Role
                   </label>
                   <select
@@ -1093,7 +1093,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                   Expires At (Optional)
                 </label>
                 <input

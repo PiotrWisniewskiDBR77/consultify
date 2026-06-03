@@ -642,7 +642,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
       />
 
       {base && table && (
-        <nav className="flex items-center gap-1.5 px-4 py-2 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-navy-800/60 shrink-0">
+        <nav className="flex items-center gap-1.5 px-4 py-2 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-navy-800/60 shrink-0">
           <span
             className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[120px]"
             title={base.name}
@@ -690,7 +690,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           className="md:hidden fixed inset-x-2 z-[45] rounded-xl border border-slate-200/80 bg-white/95 p-2 shadow-xl backdrop-blur-sm dark:border-navy-700/80 dark:bg-navy-900/95"
           style={{ bottom: 'calc(3.75rem + env(safe-area-inset-bottom, 0px))' }}
         >
-          <div className="mb-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+          <div className="mb-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-600">
             {isPl ? 'Układ widoku' : 'View layout'}
           </div>
           <div className="flex flex-wrap justify-center gap-1">

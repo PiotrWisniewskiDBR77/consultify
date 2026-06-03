@@ -263,7 +263,7 @@ export const AuditsShowcasePage: React.FC = () => {
       </div>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-40 pb-24 px-6 text-center border-b border-slate-100 dark:border-navy-900">
+      <section className="relative z-10 pt-40 pb-24 px-6 text-center border-b border-slate-200 dark:border-navy-900">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

@@ -130,7 +130,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
   const bgColor = theme === 'dark' ? 'bg-navy-900' : 'bg-white';
   const borderColor =
     theme === 'dark' ? 'border-white/10' : 'border-slate-200 dark:border-navy-700';
-  const textColor = theme === 'dark' ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400';
+  const textColor = theme === 'dark' ? 'text-slate-600' : 'text-slate-600 dark:text-slate-400';
   const hoverBg =
     theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-slate-50 dark:hover:bg-navy-800/20';
   const hoverText = theme === 'dark' ? 'hover:text-white' : 'hover:text-navy-900';
@@ -154,7 +154,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
       <div className="flex flex-col">
         {title && (
           <div
-            className={`px-4 py-3 text-sm font-bold ${hasItems ? 'border-b mb-1' : ''} ${theme === 'dark' ? 'border-white/10 text-white' : 'border-slate-100 dark:border-navy-700 text-slate-800 dark:text-slate-200'}`}
+            className={`px-4 py-3 text-sm font-bold ${hasItems ? 'border-b mb-1' : ''} ${theme === 'dark' ? 'border-white/10 text-white' : 'border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200'}`}
           >
             {title}
           </div>
@@ -709,7 +709,7 @@ export const Sidebar: React.FC = () => {
           >
             {item.icon && (
               <span
-                className={`transition-colors ${isActive || isParentActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+                className={`transition-colors ${isActive || isParentActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
               >
                 {React.cloneElement(item.icon as React.ReactElement<{ size: number }>, {
                   size: 20,
@@ -738,10 +738,10 @@ export const Sidebar: React.FC = () => {
                 </span>
               )}
               {isCompleted && !isActive && <CheckCircle2 size={14} className="text-green-500/80" />}
-              {isLocked && <Lock size={12} className="text-slate-400 dark:text-slate-500" />}
+              {isLocked && <Lock size={12} className="text-slate-600 dark:text-slate-500" />}
               {hasSubItems && (
                 <span
-                  className={`text-slate-400 dark:text-slate-600 transition-transform ${activeFloating?.id === item.id ? 'translate-x-1' : ''}`}
+                  className={`text-slate-600 dark:text-slate-600 transition-transform ${activeFloating?.id === item.id ? 'translate-x-1' : ''}`}
                 >
                   <div className="rtl:rotate-180">
                     <ChevronRight size={14} />
@@ -814,7 +814,7 @@ export const Sidebar: React.FC = () => {
                 onClick={toggleSidebarCollapse}
                 className={`
                   p-2 rounded-lg transition-colors
-                  text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
+                  text-slate-600 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
                   dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
                 `}
                 title={t('sidebar.collapse', 'Collapse')}
@@ -831,7 +831,7 @@ export const Sidebar: React.FC = () => {
                 onClick={toggleSidebarCollapse}
                 className={`
                   p-2 rounded-lg transition-colors flex justify-center items-center
-                  text-slate-400 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
+                  text-slate-600 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
                   dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
                 `}
                 title={t('sidebar.expand', 'Expand')}

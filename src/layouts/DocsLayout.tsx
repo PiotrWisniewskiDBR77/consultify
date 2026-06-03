@@ -151,7 +151,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                 <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
                   <form onSubmit={handleSearch}>
                     <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-navy-700">
-                      <Search size={20} className="text-slate-400" />
+                      <Search size={20} className="text-slate-600" />
                       <input
                         type="text"
                         value={searchQuery}

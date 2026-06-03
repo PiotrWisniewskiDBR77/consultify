@@ -117,9 +117,9 @@ const CategoryRow: React.FC<{
   if (!config) return null;
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
       <div className="flex items-center gap-3">
-        <div className="text-slate-400 dark:text-slate-500">{config.icon}</div>
+        <div className="text-slate-600 dark:text-slate-500">{config.icon}</div>
         <div>
           <h4 className="text-sm font-medium text-navy-900 dark:text-white">{config.label}</h4>
           <p className="text-xs text-slate-500 dark:text-slate-400">{config.description}</p>
@@ -228,7 +228,7 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Moon size={18} className="text-slate-400 dark:text-slate-500" />
+            <Moon size={18} className="text-slate-600 dark:text-slate-500" />
             <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
               {t('myWork.notifications.quietHours', 'Quiet Hours')}
             </h3>
@@ -279,7 +279,7 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
       {/* Digest Settings */}
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Calendar size={18} className="text-slate-400 dark:text-slate-500" />
+          <Calendar size={18} className="text-slate-600 dark:text-slate-500" />
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
             {t('myWork.notifications.digest', 'Email Digest')}
           </h3>
@@ -287,7 +287,7 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
 
         <div className="space-y-4">
           {/* Daily Digest */}
-          <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700">
             <div>
               <h4 className="text-sm font-medium text-navy-900 dark:text-white">
                 {t('myWork.notifications.dailyDigest', 'Daily Digest')}

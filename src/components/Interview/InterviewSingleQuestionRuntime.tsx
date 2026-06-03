@@ -918,7 +918,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             disabled={readOnly}
             className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <span className={answerDraft ? '' : 'text-slate-400 dark:text-slate-500'}>
+            <span className={answerDraft ? '' : 'text-slate-600 dark:text-slate-500'}>
               {answerDraft || (isPolish ? 'Wybierz opcję...' : 'Select an option...')}
             </span>
             <ChevronDown
@@ -955,7 +955,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     if (QUESTION_INPUT_TYPES.date.has(normalizedType)) {
       return (
         <div className="flex items-center gap-3">
-          <Calendar size={18} className="text-slate-400 dark:text-slate-500 shrink-0" />
+          <Calendar size={18} className="text-slate-600 dark:text-slate-500 shrink-0" />
           <input
             type="date"
             value={answerDraft}
@@ -1045,7 +1045,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     return (
       <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 p-8 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
-          <FileText size={24} className="text-slate-400" />
+          <FileText size={24} className="text-slate-600" />
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {isPolish ? 'Brak pytań w tej sekcji.' : 'No questions are available in this section.'}
@@ -1171,7 +1171,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         <Check size={12} className="text-emerald-500" />
                       )}
                     </div>
-                    <div className="divide-y divide-slate-100 dark:divide-navy-800">
+                    <div className="divide-y divide-slate-200 dark:divide-navy-800">
                       {catQs.map((q) => {
                         const answered = q.status === 'answered';
                         const snippet = q.answerText
@@ -1357,7 +1357,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           </div>
 
           {/* Bottom actions */}
-          <div className="shrink-0 border-t border-slate-100 dark:border-navy-800 px-3 py-2.5 space-y-0.5">
+          <div className="shrink-0 border-t border-slate-200 dark:border-navy-800 px-3 py-2.5 space-y-0.5">
             <button
               type="button"
               onClick={() => {
@@ -1424,7 +1424,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               </button>
             );
           })}
-          <div className="!mt-auto border-t border-slate-100 dark:border-navy-800 pt-3">
+          <div className="!mt-auto border-t border-slate-200 dark:border-navy-800 pt-3">
             <button
               type="button"
               onClick={() => {
@@ -1569,7 +1569,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
                               immersive
-                                ? 'bg-white/[0.04] text-slate-400 ring-1 ring-white/[0.06]'
+                                ? 'bg-white/[0.04] text-slate-600 ring-1 ring-white/[0.06]'
                                 : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                             }`}
                           >
@@ -1787,7 +1787,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           isRecording
                             ? 'border-rose-500/40 bg-rose-500/15 text-rose-500 animate-pulse'
                             : immersive
-                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
+                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -1808,7 +1808,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   ? 'border-primary-500/20 bg-primary-500/10 text-primary-400'
                                   : 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
                                 : immersive
-                                  ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-primary-300'
+                                  ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-primary-300'
                                   : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                             }`}
                           >
@@ -1874,7 +1874,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   onClick={() => handleAiImprove(item.mode)}
                                   className={`w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
                                     immersive
-                                      ? 'text-slate-300 hover:bg-white/[0.06] hover:text-white'
+                                      ? 'text-slate-600 hover:bg-white/[0.06] hover:text-white'
                                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                                   }`}
                                 >
@@ -1933,7 +1933,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           onClick={() => setAiImproveResult(null)}
                           className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                             immersive
-                              ? 'border-white/[0.08] text-slate-400 hover:text-slate-200'
+                              ? 'border-white/[0.08] text-slate-600 hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
                           }`}
                         >
@@ -1977,7 +1977,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           }}
                           className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
                             immersive
-                              ? 'border-white/[0.08] text-slate-400 hover:text-slate-200'
+                              ? 'border-white/[0.08] text-slate-600 hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
                           }`}
                         >
@@ -2024,7 +2024,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       : 'border-slate-200/40 dark:border-navy-700/40'
                   }`}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Dodatkowy kontekst' : 'Additional context'}
                   </p>
 
@@ -2060,7 +2060,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         onClick={() => fileInputRef.current?.click()}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
                           immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
+                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2075,7 +2075,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           showLinkForm
                             ? 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
                             : immersive
-                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
+                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2088,7 +2088,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         onClick={() => setArtifactPopoverOpen(true)}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
                           immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-primary-300'
+                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-primary-300'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2203,8 +2203,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   {isPolish ? 'Zapisano' : 'Saved'}
                 </>
               )}
-              <span className="text-slate-300 dark:text-navy-700 mx-1">|</span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              <span className="text-slate-600 dark:text-navy-700 mx-1">|</span>
+              <span className="text-[11px] text-slate-600 dark:text-slate-500">
                 Esc={isPolish ? 'zapisz' : 'save'} · Enter={isPolish ? 'dalej' : 'next'}
               </span>
             </div>
@@ -2217,7 +2217,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 aria-label={isPolish ? 'Poprzednie pytanie' : 'Previous question'}
                 className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${
                   immersive
-                    ? 'border-white/[0.08] text-slate-400 hover:text-slate-200 hover:border-white/[0.15]'
+                    ? 'border-white/[0.08] text-slate-600 hover:text-slate-200 hover:border-white/[0.15]'
                     : 'border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200'
                 }`}
               >

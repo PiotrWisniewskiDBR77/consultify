@@ -164,7 +164,7 @@ const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
                   className={cn(
                     isActive
                       ? 'text-primary-600 dark:text-primary-400'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-500'
                   )}
                 />
                 <span className="truncate">{item.label}</span>
@@ -251,7 +251,7 @@ export const ContextBuilderView: React.FC<ContextBuilderProps> = ({ initialTab =
       default:
         return (
           <div className="mt-8 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-12 text-center">
-            <Layout className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <Layout className="w-12 h-12 text-slate-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white">
               Module Under Construction
             </h3>

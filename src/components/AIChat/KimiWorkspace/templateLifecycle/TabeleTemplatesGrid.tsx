@@ -116,7 +116,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
                 </p>
               )}
               {(tpl.usage_count > 0 || tpl.is_featured) && (
-                <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">
+                <p className="mt-2 text-[10px] text-slate-600 dark:text-slate-500 tabular-nums">
                   {tpl.is_featured && (isPl ? '⭐ Wyróżniony · ' : '⭐ Featured · ')}
                   {isPl ? 'Użyć' : 'Used'}: {tpl.usage_count}
                 </p>

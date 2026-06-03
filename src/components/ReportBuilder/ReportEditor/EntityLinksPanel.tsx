@@ -45,9 +45,9 @@ interface EntityLinksPanelProps {
 // ==========================================
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
-  DRAFT: 'bg-gray-500/20 text-gray-400',
-  draft: 'bg-gray-500/20 text-gray-400',
-  step3: 'bg-gray-500/20 text-gray-400',
+  DRAFT: 'bg-gray-500/20 text-gray-600',
+  draft: 'bg-gray-500/20 text-gray-600',
+  step3: 'bg-gray-500/20 text-gray-600',
   ACTIVE: 'bg-blue-500/20 text-blue-400',
   active: 'bg-blue-500/20 text-blue-400',
   IN_PROGRESS: 'bg-blue-500/20 text-blue-400',
@@ -62,7 +62,7 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
 };
 
 function getStatusBadgeClass(status: string): string {
-  return STATUS_BADGE_COLORS[status] || 'bg-gray-500/20 text-gray-400';
+  return STATUS_BADGE_COLORS[status] || 'bg-gray-500/20 text-gray-600';
 }
 
 // ==========================================
@@ -109,7 +109,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8 text-gray-400">
+      <div className="flex items-center justify-center py-8 text-gray-600">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
         <span className="text-sm">{isPl ? 'Ładowanie…' : 'Loading…'}</span>
       </div>
@@ -185,7 +185,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
           <div key={section.key}>
             <button
               onClick={() => toggleSection(section.key)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 rounded-lg transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-white/5 rounded-lg transition-colors"
             >
               {isExpanded ? (
                 <ChevronDown className="h-3.5 w-3.5 text-gray-500 shrink-0" />
@@ -195,7 +195,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
               <Icon className={`h-4 w-4 ${section.iconColor} shrink-0`} />
               <span className="flex-1 text-left">{section.label}</span>
               {count > 0 && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full bg-white/10 text-gray-400">
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-white/10 text-gray-600">
                   {count}
                 </span>
               )}
@@ -207,7 +207,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
                   <button
                     key={item.id}
                     onClick={() => onNavigateToEntity?.(section.key, item.id)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 rounded-md transition-colors group"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-gray-600 hover:text-gray-200 hover:bg-white/5 rounded-md transition-colors group"
                   >
                     <span className="flex-1 text-left truncate">{item.title}</span>
                     <span

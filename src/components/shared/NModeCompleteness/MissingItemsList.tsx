@@ -100,7 +100,7 @@ export const MissingItemsList: React.FC<MissingItemsListProps> = ({
                       )}
                       <ChevronRight
                         size={14}
-                        className="shrink-0 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="shrink-0 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       />
                     </button>
                     {onAIFill && (

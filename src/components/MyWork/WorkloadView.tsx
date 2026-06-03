@@ -308,7 +308,7 @@ export const WorkloadView: React.FC = () => {
       </div>
 
       {/* Team Summary Footer */}
-      <div className="px-5 py-4 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50 rounded-b-2xl">
+      <div className="px-5 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50 rounded-b-2xl">
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-500 dark:text-slate-400">
             {t('workload.teamAverage', 'Team Average')}:

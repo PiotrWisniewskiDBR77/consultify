@@ -87,7 +87,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-500">
                 {initiative.ownerExecution?.firstName?.[0] || '?'}
               </span>
             )}
@@ -110,7 +110,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
 
             {/* New Strategic Role Badge */}
             {initiative.strategicRole && (
-              <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-700 text-slate-300">
+              <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-700 text-slate-600">
                 {initiative.strategicRole.substring(0, 3)}
               </span>
             )}
@@ -269,7 +269,7 @@ export const RoadmapKanban: React.FC<Props> = ({
               className="min-w-[280px] w-[280px] bg-navy-950/50 rounded-xl border border-white/5 flex flex-col max-h-full shrink-0"
             >
               <div className="p-3 border-b border-white/5 flex justify-between items-center sticky top-0 bg-navy-950/80 backdrop-blur z-10 rounded-t-xl group">
-                <span className="font-bold text-sm text-slate-300">{quarter}</span>
+                <span className="font-bold text-sm text-slate-600">{quarter}</span>
                 <span className="text-xs bg-navy-800 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 group-hover:text-white transition-colors">
                   {containers[quarter]?.length || 0}
                 </span>

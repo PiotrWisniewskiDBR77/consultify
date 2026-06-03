@@ -631,7 +631,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
               const importStatusConfig: Record<string, { label: string; color: string }> = {
                 pending: {
                   label: 'Uploaded',
-                  color: 'bg-slate-500/15 text-slate-400 border-slate-500/20',
+                  color: 'bg-slate-500/15 text-slate-600 border-slate-500/20',
                 },
                 detecting: {
                   label: 'Detecting...',
@@ -1763,7 +1763,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     setSlideOverBuilderReportId(null);
                   }, 300);
                 }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -2157,7 +2157,7 @@ const ReportSlideOverContent: React.FC<{
                     ) : (
                       <Download
                         size={14}
-                        className="text-slate-400 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
+                        className="text-slate-600 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
                       />
                     )}
                   </div>
@@ -2215,7 +2215,7 @@ const ReportSlideOverContent: React.FC<{
             </div>
             <ArrowRight
               size={14}
-              className="text-slate-400 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors shrink-0"
+              className="text-slate-600 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors shrink-0"
             />
           </button>
         </div>

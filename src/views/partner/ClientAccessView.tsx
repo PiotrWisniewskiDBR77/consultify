@@ -386,11 +386,11 @@ export const ClientAccessView: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <Users className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+              <Users className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <p className="text-slate-500 font-medium">
                 {t('partner.clientAccess.noClients', 'Nobody here')}
               </p>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-slate-600 mt-1">
                 {t('partner.clientAccess.noClientsDesc', "You don't have any client access.")}
               </p>
             </div>
@@ -439,7 +439,7 @@ export const ClientAccessView: React.FC = () => {
                               'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
                               employee.status === 'ACTIVE'
                                 ? 'bg-primary-500/20 text-primary-400'
-                                : 'bg-slate-700 text-slate-400'
+                                : 'bg-slate-700 text-slate-600'
                             )}
                           >
                             {employee.employeeName.substring(0, 2).toUpperCase()}
@@ -454,7 +454,7 @@ export const ClientAccessView: React.FC = () => {
                                 )}
                               />
                             </p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-600">
                               {employee.status === 'ACTIVE' ? 'Active' : 'Deactivated'} |{' '}
                               {employee.email}
                             </p>
@@ -485,11 +485,11 @@ export const ClientAccessView: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <UserPlus className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+              <UserPlus className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <p className="text-slate-500 font-medium">
                 {t('partner.clientAccess.noEmployees', 'No team members yet')}
               </p>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-slate-600 mt-1">
                 {t(
                   'partner.clientAccess.noEmployeesDesc',
                   'Add team members to manage client access.'
@@ -545,18 +545,18 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
           <div className="font-medium text-slate-900 dark:text-white">
             {client.clientName || client.organizationName}
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-slate-600">
             {client.region && (
               <>
                 <MapPin className="w-3 h-3" />
                 {client.region}
-                <span className="text-slate-400">·</span>
+                <span className="text-slate-600">·</span>
               </>
             )}
             {client.plan && <span>{client.plan}</span>}
             {client.userCount !== undefined && (
               <>
-                <span className="text-slate-400">·</span>
+                <span className="text-slate-600">·</span>
                 <span>{client.userCount} users</span>
               </>
             )}

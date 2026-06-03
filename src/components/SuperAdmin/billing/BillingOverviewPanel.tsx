@@ -108,7 +108,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   period === p
                     ? 'bg-primary-600 text-white'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                    : 'text-slate-600 dark:text-slate-500 hover:text-white'
                 }`}
               >
                 {p}d
@@ -121,7 +121,7 @@ export const BillingOverviewPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
         </div>
@@ -142,7 +142,7 @@ export const BillingOverviewPanel: React.FC = () => {
 
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-slate-400 dark:text-slate-500">Revenue ({period}d)</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Revenue ({period}d)</span>
             <TrendingUp size={20} className="text-blue-400" />
           </div>
           <div className="flex items-baseline gap-2">
@@ -157,7 +157,7 @@ export const BillingOverviewPanel: React.FC = () => {
 
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-slate-400 dark:text-slate-500">Active Subscriptions</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Active Subscriptions</span>
             <Users size={20} className="text-primary-400" />
           </div>
           <div className="flex items-baseline gap-2">
@@ -180,7 +180,7 @@ export const BillingOverviewPanel: React.FC = () => {
         >
           <div className="flex items-center justify-between mb-3">
             <span
-              className={`text-sm ${(stats?.unpaidInvoices.count || 0) > 0 ? 'text-amber-400' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`text-sm ${(stats?.unpaidInvoices.count || 0) > 0 ? 'text-amber-400' : 'text-slate-600 dark:text-slate-500'}`}
             >
               Unpaid Invoices
             </span>
@@ -189,7 +189,7 @@ export const BillingOverviewPanel: React.FC = () => {
               className={
                 (stats?.unpaidInvoices.count || 0) > 0
                   ? 'text-amber-400'
-                  : 'text-slate-400 dark:text-slate-500'
+                  : 'text-slate-600 dark:text-slate-500'
               }
             />
           </div>
@@ -215,7 +215,7 @@ export const BillingOverviewPanel: React.FC = () => {
             </div>
             <div>
               <h3 className="font-semibold text-white">Plan Distribution</h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Subscribers by plan</p>
+              <p className="text-sm text-slate-600 dark:text-slate-500">Subscribers by plan</p>
             </div>
           </div>
 
@@ -238,7 +238,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 <div key={plan.plan_name} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-white">{plan.plan_name}</span>
-                    <span className="text-slate-400 dark:text-slate-500">
+                    <span className="text-slate-600 dark:text-slate-500">
                       {plan.subscriber_count} ({percentage.toFixed(1)}%)
                     </span>
                   </div>
@@ -267,7 +267,7 @@ export const BillingOverviewPanel: React.FC = () => {
             </div>
             <div>
               <h3 className="font-semibold text-white">Subscription Trends</h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 New vs churned ({period} days)
               </p>
             </div>
@@ -279,7 +279,7 @@ export const BillingOverviewPanel: React.FC = () => {
                 key={day.date}
                 className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0"
               >
-                <span className="text-sm text-slate-400 dark:text-slate-500">
+                <span className="text-sm text-slate-600 dark:text-slate-500">
                   {new Date(day.date).toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
@@ -316,7 +316,7 @@ export const BillingOverviewPanel: React.FC = () => {
           </div>
           <div>
             <h3 className="font-semibold text-white">Plans Revenue Breakdown</h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500">Monthly revenue by plan</p>
+            <p className="text-sm text-slate-600 dark:text-slate-500">Monthly revenue by plan</p>
           </div>
         </div>
 

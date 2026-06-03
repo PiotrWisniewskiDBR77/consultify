@@ -132,7 +132,7 @@ export const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 dark:text-slate-500">
+          <span className="text-slate-600 dark:text-slate-500">
             {ARTIFACT_ICONS[activeArtifact?.type || 'markdown']}
           </span>
           <h3 className="font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">

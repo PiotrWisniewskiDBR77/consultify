@@ -178,10 +178,10 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
           </div>
           <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">{nodeLabel}</div>
         </div>
-        <span className="text-[10px] text-slate-400 font-medium">{comments.length}</span>
+        <span className="text-[10px] text-slate-600 font-medium">{comments.length}</span>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
           <X size={14} />
         </button>
@@ -196,7 +196,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
         )}
 
         {!loading && comments.length === 0 && (
-          <div className="text-center py-8 text-[11px] text-slate-400">
+          <div className="text-center py-8 text-[11px] text-slate-600">
             {isPl ? 'Brak komentarzy. Napisz pierwszy!' : 'No comments yet. Write the first one!'}
           </div>
         )}
@@ -213,11 +213,11 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                     <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
                       {c.author}
                     </span>
-                    <span className="text-[8px] text-slate-400">{formatTime(c.createdAt)}</span>
+                    <span className="text-[8px] text-slate-600">{formatTime(c.createdAt)}</span>
                     {c.author === currentUser && (
                       <button
                         onClick={() => handleDelete(c.id)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-rose-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-600 hover:text-rose-500 transition-all"
                       >
                         <Trash2 size={10} />
                       </button>
@@ -256,7 +256,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                 }
                 className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
               />
-              <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-slate-300" />
+              <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-slate-600" />
             </div>
             <button
               onClick={handleSubmit}

@@ -1031,7 +1031,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                     >
                       {t('common.selectAll', 'Select all')}
                     </button>
-                    <span className="text-slate-300 dark:text-navy-600">|</span>
+                    <span className="text-slate-600 dark:text-navy-600">|</span>
                     <button
                       type="button"
                       onClick={() => setSelectedKpiIds([])}

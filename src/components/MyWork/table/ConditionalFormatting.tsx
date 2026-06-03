@@ -190,7 +190,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Paintbrush size={12} className="text-slate-400" />
+          <Paintbrush size={12} className="text-slate-600" />
           <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             {isPl ? 'Formatowanie warunkowe' : 'Conditional formatting'}
           </span>
@@ -205,7 +205,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
       </div>
 
       {rules.length === 0 && (
-        <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-3">
+        <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center py-3">
           {isPl ? 'Brak reguł formatowania' : 'No formatting rules'}
         </div>
       )}
@@ -249,7 +249,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
 
               <button
                 onClick={() => removeRule(rule.id)}
-                className="p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors"
+                className="p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 hover:text-rose-500 transition-colors"
               >
                 <Trash2 size={12} />
               </button>
@@ -267,7 +267,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 />
                 {isBetween && (
                   <>
-                    <span className="text-[9px] text-slate-400">&</span>
+                    <span className="text-[9px] text-slate-600">&</span>
                     <input
                       type="text"
                       value={rule.value2 != null ? String(rule.value2) : ''}
@@ -284,7 +284,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
             <div className="flex items-center gap-3 flex-wrap">
               {/* Background color */}
               <div className="flex items-center gap-1">
-                <span className="text-[8px] text-slate-400 uppercase tracking-wider">
+                <span className="text-[8px] text-slate-600 uppercase tracking-wider">
                   {isPl ? 'Tło' : 'BG'}
                 </span>
                 {PRESET_BG_COLORS.slice(0, 5).map((c) => (
@@ -309,7 +309,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
 
               {/* Text color */}
               <div className="flex items-center gap-1">
-                <span className="text-[8px] text-slate-400 uppercase tracking-wider">
+                <span className="text-[8px] text-slate-600 uppercase tracking-wider">
                   {isPl ? 'Tekst' : 'Text'}
                 </span>
                 {PRESET_TEXT_COLORS.slice(0, 4).map((c) => (
@@ -336,7 +336,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors ${
                   rule.style.fontWeight === 'bold'
                     ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
-                    : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                    : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
                 B
@@ -352,7 +352,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 className={`px-1.5 py-0.5 rounded text-[9px] italic transition-colors ${
                   rule.style.fontStyle === 'italic'
                     ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
-                    : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                    : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
                 I
@@ -361,7 +361,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
 
             {/* Preview */}
             <div
-              className="px-2 py-1 rounded-lg text-[10px] border border-slate-100 dark:border-navy-800"
+              className="px-2 py-1 rounded-lg text-[10px] border border-slate-200 dark:border-navy-800"
               style={rule.style as React.CSSProperties}
             >
               {isPl ? 'Podgląd formatowania' : 'Formatting preview'}

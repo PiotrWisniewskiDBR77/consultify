@@ -642,7 +642,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             data-testid="initiative-wizard-empty-candidates"
             className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-white/[0.1] dark:bg-navy-900/50"
           >
-            <Sparkles className="h-8 w-8 text-slate-400" />
+            <Sparkles className="h-8 w-8 text-slate-600" />
             <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">
               Brak kandydatów do triage
             </p>
@@ -939,7 +939,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
             Audyt sesji – proposal → approval → execution → audit
           </div>
-          {auditLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+          {auditLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-600" />}
         </div>
         {auditError && (
           <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">

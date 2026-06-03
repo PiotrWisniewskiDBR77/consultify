@@ -180,11 +180,11 @@ export const RevenueRecognitionView: React.FC = () => {
       pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
       in_progress: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
       completed: { bg: 'bg-green-500/20', text: 'text-green-400' },
-      on_hold: { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-400' },
+      on_hold: { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-600' },
     };
     const badge = badges[status] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
     };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
@@ -376,7 +376,7 @@ export const RevenueRecognitionView: React.FC = () => {
               ))}
 
               {recognitions.length === 0 && (
-                <div className="text-center py-8 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-gray-600 dark:text-gray-500 dark:text-gray-400">
                   No revenue recognition items found
                 </div>
               )}

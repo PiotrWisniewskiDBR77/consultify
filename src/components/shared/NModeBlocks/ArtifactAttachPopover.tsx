@@ -123,7 +123,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400"
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600"
           >
             <X size={12} />
           </button>
@@ -132,7 +132,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
         {/* Search */}
         <div className="px-3 py-2">
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200/40 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
-            <Search size={12} className="text-slate-400" />
+            <Search size={12} className="text-slate-600" />
             <input
               ref={inputRef}
               value={query}
@@ -169,7 +169,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
             className={`px-2 py-0.5 rounded text-[9px] font-medium transition-colors ${
               !filterType
                 ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
             {isPl ? 'Wszystkie' : 'All'}
@@ -182,7 +182,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
               className={`px-2 py-0.5 rounded text-[9px] font-medium transition-colors ${
                 filterType === t
                   ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
               {getArtifactLabel(t, isPl ? 'pl' : 'en')}
@@ -192,7 +192,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
 
         {/* Role selector */}
         <div className="px-3 pb-1.5 flex items-center gap-1">
-          <span className="text-[9px] text-slate-400 mr-1">{isPl ? 'Rola:' : 'Role:'}</span>
+          <span className="text-[9px] text-slate-600 mr-1">{isPl ? 'Rola:' : 'Role:'}</span>
           {ROLE_OPTIONS.map((r) => (
             <button
               key={r.value}
@@ -201,7 +201,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
               className={`px-1.5 py-0.5 rounded text-[8px] font-medium transition-colors ${
                 selectedRole === r.value
                   ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
-                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
               {isPl ? r.labelPl : r.labelEn}
@@ -212,12 +212,12 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
         {/* Results */}
         <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1">
           {filteredResults.length === 0 && query.length > 0 && (
-            <div className="text-[10px] text-slate-400 text-center py-4">
+            <div className="text-[10px] text-slate-600 text-center py-4">
               {isPl ? 'Brak wyników' : 'No results'}
             </div>
           )}
           {filteredResults.length === 0 && query.length === 0 && (
-            <div className="text-[10px] text-slate-400 text-center py-4">
+            <div className="text-[10px] text-slate-600 text-center py-4">
               {isPl
                 ? 'Wpisz nazwę, indeks lub wklej ref artefaktu'
                 : 'Type a name, index, or paste an artifact ref'}
@@ -244,7 +244,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
                   <div className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 truncate">
                     {result.title}
                   </div>
-                  <div className="text-[8px] text-slate-400">
+                  <div className="text-[8px] text-slate-600">
                     {getArtifactLabel(result.type, isPl ? 'pl' : 'en')} ·{' '}
                     {buildArtifactCode(result.type, result.id)}
                     {result.status ? ` · ${result.status}` : ''}

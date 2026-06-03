@@ -224,7 +224,7 @@ export const REPORT_TYPE_META: Record<
     color: 'text-amber-400',
     dotColor: 'bg-amber-400',
   },
-  custom: { label: 'Custom', labelPl: 'Własny', color: 'text-slate-400', dotColor: 'bg-slate-400' },
+  custom: { label: 'Custom', labelPl: 'Własny', color: 'text-slate-600', dotColor: 'bg-slate-400' },
 };
 
 export const REPORT_STATUS_META: Record<

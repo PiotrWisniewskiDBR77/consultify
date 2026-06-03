@@ -295,21 +295,21 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
           </div>
 
           <div className="flex-1" />
-          <span className="text-[9px] text-slate-400">
+          <span className="text-[9px] text-slate-600">
             {nodes.length} {isPl ? 'pomysłów' : 'ideas'}
           </span>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
         {/* Quick actions */}
         {messages.length === 0 && (
           <div className="px-4 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-2">
               {isPl ? 'Szybkie akcje' : 'Quick actions'}
             </p>
             <div className="flex flex-wrap gap-1.5">

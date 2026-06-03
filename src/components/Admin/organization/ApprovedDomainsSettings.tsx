@@ -169,7 +169,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                 'Users with email addresses from approved domains can sign up without an invitation'
               )}
             >
-              <button className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+              <button className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
                 <HelpCircle size={16} />
               </button>
             </Tooltip>
@@ -194,7 +194,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
         {/* Domains List */}
         {domains.length === 0 ? (
           <div className="p-8 text-center bg-slate-50 dark:bg-navy-900 rounded-lg border border-dashed border-slate-300 dark:border-navy-600">
-            <Globe size={40} className="mx-auto mb-3 text-slate-400 dark:text-slate-500" />
+            <Globe size={40} className="mx-auto mb-3 text-slate-600 dark:text-slate-500" />
             <h4 className="text-sm font-medium text-navy-900 dark:text-white mb-1">
               {t('admin.org.domains.empty.title', 'No approved domains')}
             </h4>
@@ -302,7 +302,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                     )}
                     <button
                       onClick={() => setShowDeleteModal(domain.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                     >
                       <Trash2 size={16} />
                     </button>

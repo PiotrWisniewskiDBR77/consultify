@@ -325,7 +325,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
 
       {items.length === 0 ? (
         <div className="text-center py-10">
-          <Bell size={28} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+          <Bell size={28} className="mx-auto text-slate-600 dark:text-slate-600 mb-2" />
           <div className="text-sm text-slate-600 dark:text-slate-300">
             {t('help.updates.empty', 'No updates yet.')}
           </div>
@@ -369,7 +369,7 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
                     )}
                   </div>
                 </div>
-                <Bell size={16} className="text-slate-300 dark:text-slate-600 flex-shrink-0 mt-1" />
+                <Bell size={16} className="text-slate-600 dark:text-slate-600 flex-shrink-0 mt-1" />
               </div>
             </button>
           ))}

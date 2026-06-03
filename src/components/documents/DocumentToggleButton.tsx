@@ -38,7 +38,7 @@ export const DocumentToggleButton: React.FC = () => {
       <FileText
         size={16}
         strokeWidth={1.75}
-        className="relative z-10 text-slate-400 group-hover:text-slate-300 transition-colors"
+        className="relative z-10 text-slate-600 group-hover:text-slate-300 transition-colors"
       />
 
       <div

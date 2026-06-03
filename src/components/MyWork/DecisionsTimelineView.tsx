@@ -87,7 +87,7 @@ const getStatusBadge = (status?: string) => {
     case 'ESCALATED':
       return { label: 'Escalated', cls: 'bg-amber-500/20 text-amber-400' };
     default:
-      return { label: 'Pending', cls: 'bg-slate-500/20 text-slate-400' };
+      return { label: 'Pending', cls: 'bg-slate-500/20 text-slate-600' };
   }
 };
 
@@ -216,7 +216,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                 className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                   zoomLevel === opt.id
                     ? 'bg-navy-700/80 text-slate-100'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'
+                    : 'text-slate-600 hover:text-slate-200 hover:bg-white/[0.03]'
                 }`}
               >
                 {opt.label}
@@ -228,7 +228,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
           <div className="relative">
             <button
               onClick={() => setPriorityDropdownOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-lg border border-navy-700/60 bg-navy-800/40 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.03] transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-navy-700/60 bg-navy-800/40 px-3 py-1.5 text-xs text-slate-600 hover:bg-white/[0.03] transition-colors"
             >
               <GanttChart size={14} />
               {t('myWork.decisions.timeline.priorityFilter', 'Priority')}
@@ -257,7 +257,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                         onChange={() => togglePriority(opt.id)}
                         className="rounded border-navy-600 bg-navy-800 text-primary-500 focus:ring-primary-500/50"
                       />
-                      <span className="text-sm text-slate-300">{opt.label}</span>
+                      <span className="text-sm text-slate-600">{opt.label}</span>
                     </label>
                   ))}
                 </div>
@@ -319,7 +319,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                       style={{ height: rowHeight }}
                     >
                       <div
-                        className="w-32 shrink-0 text-xs text-slate-400 truncate"
+                        className="w-32 shrink-0 text-xs text-slate-600 truncate"
                         title={item.title}
                       >
                         {item.title.slice(0, 20)}
@@ -451,7 +451,7 @@ export const DecisionsTimelineContainer: React.FC<DecisionsTimelineContainerProp
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center h-64 bg-navy-950">
-        <Loader2 className="animate-spin text-slate-400" size={32} />
+        <Loader2 className="animate-spin text-slate-600" size={32} />
       </div>
     );
   }

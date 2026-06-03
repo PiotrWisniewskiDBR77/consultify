@@ -117,11 +117,11 @@ const FileIcon: React.FC<{ name: string }> = ({ name }) => {
     png: 'text-primary-400',
     jpg: 'text-primary-400',
     jpeg: 'text-primary-400',
-    txt: 'text-slate-400',
-    md: 'text-slate-400',
+    txt: 'text-slate-600',
+    md: 'text-slate-600',
     json: 'text-amber-400',
   };
-  const color = colorMap[ext] || 'text-slate-400';
+  const color = colorMap[ext] || 'text-slate-600';
 
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className={`shrink-0 ${color}`}>
@@ -307,7 +307,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       <button
         onClick={() => setIsOpen((v) => !v)}
         disabled={disabled}
-        className={`p-2 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        className={`p-2 rounded-lg transition-colors text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         title={t('aiChat.menu.addFiles', 'Add files')}
       >
         <Plus size={20} />
@@ -357,7 +357,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
 
           {isCloudImplemented && connectedCloudProviders.length > 0 ? (
             <>
-              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
               {connectedCloudProviders.map((p) => (
                 <CloudMenuItem
                   key={p.id}
@@ -369,7 +369,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
             </>
           ) : (
             <>
-              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
               <div className="px-3.5 py-2">
                 <p className="text-[12px] leading-5 text-slate-500 dark:text-slate-400">
                   {t(
@@ -389,7 +389,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
           )}
 
           {/* Divider */}
-          <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+          <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
 
           {/* Recent — flyout to the right */}
           <div
@@ -402,7 +402,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
               className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-slate-500 dark:text-slate-400 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors rounded-lg mx-0"
             >
               <span className="flex-1 text-left">{t('aiChat.menu.recent', 'Recent')}</span>
-              <ChevronRight size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+              <ChevronRight size={13} className="shrink-0 text-slate-600 dark:text-slate-500" />
             </button>
 
             {/* Flyout submenu */}
@@ -417,7 +417,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                 onMouseLeave={handleRecentLeave}
               >
                 {recentItems.length === 0 ? (
-                  <p className="px-3.5 py-2.5 text-[12px] text-slate-400 dark:text-slate-500">
+                  <p className="px-3.5 py-2.5 text-[12px] text-slate-600 dark:text-slate-500">
                     {t('aiChat.menu.recentEmpty', 'No recent attachments')}
                   </p>
                 ) : (
@@ -530,7 +530,7 @@ const CloudMenuItem: React.FC<{
       className={`shrink-0 transition-all duration-150 ${
         connected
           ? 'text-emerald-500 dark:text-emerald-400 opacity-100'
-          : 'text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100'
+          : 'text-slate-600 dark:text-slate-600 opacity-0 group-hover:opacity-100'
       }`}
     />
   </button>

@@ -50,7 +50,7 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
     <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white dark:bg-navy-900 w-full max-w-3xl rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 border-b border-slate-100 dark:border-navy-700 flex justify-between items-center bg-slate-50 dark:bg-navy-950">
+        <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex justify-between items-center bg-slate-50 dark:bg-navy-950">
           <div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
               <Sliders size={20} className="text-blue-500" />
@@ -62,7 +62,7 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white"
+            className="text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white"
           >
             <X size={24} />
           </button>
@@ -102,8 +102,8 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
                   </p>
 
                   {/* Mini Visualization Placeholder */}
-                  <div className="space-y-1 mt-auto pt-4 border-t border-slate-100 dark:border-navy-700">
-                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase">
+                  <div className="space-y-1 mt-auto pt-4 border-t border-slate-200 dark:border-navy-700">
+                    <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-500 font-semibold uppercase">
                       <span>Load Variance</span>
                       <span
                         className={
@@ -127,7 +127,7 @@ export const RebalanceModal: React.FC<RebalanceModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex justify-end gap-3">
+        <div className="p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex justify-end gap-3">
           <button
             onClick={onClose}
             className="px-5 py-2.5 rounded-lg text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-navy-900 border border-transparent hover:bg-slate-200 dark:hover:bg-navy-700/50 dark:hover:text-white transition-colors"

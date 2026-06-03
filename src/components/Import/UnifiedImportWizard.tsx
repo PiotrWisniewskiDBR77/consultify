@@ -312,7 +312,7 @@ const UploadStep: React.FC<{
           }`}
         >
           <Upload
-            className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'}`}
+            className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-slate-600 dark:text-slate-500'}`}
           />
           <p className="text-slate-600 dark:text-slate-400">
             {isPolish ? (
@@ -326,7 +326,7 @@ const UploadStep: React.FC<{
               </>
             )}
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+          <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
             {isPolish ? 'Maksymalny rozmiar: 50MB' : 'Maximum size: 50MB'}
           </p>
           <input
@@ -403,7 +403,7 @@ const DetectionStep: React.FC<{
         <p className="text-slate-600 dark:text-slate-400">
           {isPolish ? 'AI analizuje dokument...' : 'AI is analyzing document...'}
         </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+        <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
           {isPolish
             ? 'Wykrywanie frameworka i ekstrakcja danych'
             : 'Detecting framework and extracting data'}
@@ -457,7 +457,7 @@ const DetectionStep: React.FC<{
             >
               <div className="font-bold text-navy-900 dark:text-white">{info.name}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{info.fullName}</div>
-              <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              <div className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                 {info.description}
               </div>
             </button>
@@ -568,7 +568,7 @@ const ReviewStep: React.FC<{
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {scores.map((score) => (
                   <tr
                     key={score.id}

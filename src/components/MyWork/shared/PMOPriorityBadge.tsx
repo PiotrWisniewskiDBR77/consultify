@@ -96,7 +96,7 @@ export const PMO_CATEGORY_CONFIG: Record<PMOCategory, PMOCategoryConfig> = {
       border: 'border-slate-200 dark:border-slate-700',
       bg: 'bg-slate-50 dark:bg-navy-800/40',
       text: 'text-slate-600 dark:text-slate-400',
-      icon: 'text-slate-400 dark:text-slate-500',
+      icon: 'text-slate-600 dark:text-slate-500',
     },
     priority: 6,
   },

@@ -94,7 +94,7 @@ interface CompletenessAnalysisProps {
 /* ------------------------------------------------------------------ */
 
 const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col, cur, dir }) => {
-  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-300 dark:text-slate-600" />;
+  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-600" />;
   return dir === 'asc' ? (
     <ArrowUp size={11} className="text-primary-500" />
   ) : (
@@ -962,12 +962,12 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 return (
                   <React.Fragment key={row.initiativeId}>
                     <tr
-                      className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
+                      className={`border-b border-slate-200 dark:border-navy-800/50 cursor-pointer
                         hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
                         ${!row.gateReady ? 'bg-amber-500/5 dark:bg-amber-500/10' : ''}`}
                       onClick={() => setExpandedId(isExpanded ? null : row.initiativeId)}
                     >
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="px-4 py-3 text-slate-600">
                         {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">

@@ -279,7 +279,7 @@ export const PartnerPricingView: React.FC = () => {
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
                         <Icon size={18} />
                       </div>
-                      <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-600">
                         0{idx + 1}
                       </span>
                     </div>
@@ -602,7 +602,7 @@ export const PartnerPricingView: React.FC = () => {
                               className={`mt-0.5 flex-shrink-0 ${
                                 tier.highlight
                                   ? 'text-primary-300/50'
-                                  : 'text-slate-300 dark:text-slate-600'
+                                  : 'text-slate-600 dark:text-slate-600'
                               }`}
                             />
                           )}
@@ -614,7 +614,7 @@ export const PartnerPricingView: React.FC = () => {
                                   : 'text-slate-700 dark:text-slate-300'
                                 : tier.highlight
                                   ? 'text-primary-300/50'
-                                  : 'text-slate-400 dark:text-slate-500'
+                                  : 'text-slate-600 dark:text-slate-500'
                             } ${feature.highlight ? 'font-semibold' : ''}`}
                           >
                             {feature.name}
@@ -730,13 +730,13 @@ export const PartnerPricingView: React.FC = () => {
                     </div>
                     <ChevronDown
                       size={20}
-                      className={`flex-shrink-0 text-slate-400 dark:text-slate-500 transition-transform ${
+                      className={`flex-shrink-0 text-slate-600 dark:text-slate-500 transition-transform ${
                         expandedFaq === idx ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
                   {expandedFaq === idx && (
-                    <div className="border-t border-slate-100 p-4 pb-5 pt-4 dark:border-navy-700">
+                    <div className="border-t border-slate-200 p-4 pb-5 pt-4 dark:border-navy-700">
                       <p className="pl-8 text-sm text-slate-600 dark:text-slate-400">
                         {faq.answer}
                       </p>

@@ -123,7 +123,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white leading-tight">{title}</h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1 leading-relaxed">
               {description}
             </p>
           </div>
@@ -162,7 +162,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
               'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900',
               isDirty
                 ? 'bg-primary-600 hover:bg-primary-500 text-white'
-                : 'bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-white/5 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             )}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -195,7 +195,7 @@ export const SettingsFormRow: React.FC<SettingsFormRowProps> = ({
   className,
 }) => (
   <div className={cn('space-y-2', className)}>
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-300">
+    <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-600">
       {label}
       {required && <span className="text-rose-400 ml-1">*</span>}
     </label>
@@ -311,7 +311,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
     <div className="flex-1">
       <span className="text-sm font-medium text-white">{label}</span>
       {description && (
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{description}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">{description}</p>
       )}
     </div>
     <button
@@ -379,7 +379,7 @@ export const SettingsButtonGroup: React.FC<SettingsButtonGroupProps> = ({
               sizeClasses[size],
               isActive
                 ? 'bg-primary-600 text-white shadow-sm'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             )}
           >
             {Icon && <Icon size={size === 'sm' ? 14 : size === 'md' ? 16 : 18} />}

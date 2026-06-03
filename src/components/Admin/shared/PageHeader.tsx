@@ -111,7 +111,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
           ) : (
             <span
               className={
-                index === items.length - 1 ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'
+                index === items.length - 1 ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'
               }
             >
               {item.label}

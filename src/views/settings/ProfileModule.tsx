@@ -151,7 +151,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             <button
               type="button"
               onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
             >
               {showCurrentPassword ? 'Hide' : 'Show'}
             </button>
@@ -173,7 +173,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             <button
               type="button"
               onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
             >
               {showNewPassword ? 'Hide' : 'Show'}
             </button>

@@ -176,7 +176,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
         </div>
       ) : filteredProjects.length === 0 ? (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-16 text-center space-y-4">
-          <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto text-slate-400 dark:text-slate-600">
+          <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto text-slate-600 dark:text-slate-600">
             <Layers size={32} />
           </div>
           <div>
@@ -212,7 +212,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   {canEdit && (
                     <button
                       onClick={() => setSelectedProjectForGovernance(p)}
-                      className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 shadow-sm"
+                      className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 shadow-sm"
                       title="Project Settings"
                     >
                       <Settings size={16} />
@@ -221,7 +221,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   {canDelete && (
                     <button
                       onClick={() => handleDeleteProject(p.id)}
-                      className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 shadow-sm"
+                      className="p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 shadow-sm"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -240,7 +240,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               )}
 
               {!p.description && (
-                <p className="text-sm text-slate-400 dark:text-slate-600 italic mb-4 h-10">
+                <p className="text-sm text-slate-600 dark:text-slate-600 italic mb-4 h-10">
                   No description provided.
                 </p>
               )}
@@ -267,14 +267,14 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-navy-700 flex justify-between items-center text-xs">
+              <div className="pt-4 border-t border-slate-200 dark:border-navy-700 flex justify-between items-center text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center text-[10px] text-navy-900 dark:text-white">
                     {p.owner?.firstName?.[0] || (p as any).owner_first_name?.[0] || 'U'}
                   </div>
                   <span className="text-slate-600 dark:text-slate-400 capitalize">{p.status}</span>
                 </div>
-                <span className="text-slate-400 dark:text-slate-600">
+                <span className="text-slate-600 dark:text-slate-600">
                   {new Date(p.createdAt || (p as any).created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -295,7 +295,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {filteredProjects.map((p) => (
                 <tr
                   key={p.id}
@@ -321,7 +321,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-slate-300">
+                    <div className="flex items-center gap-1.5 text-slate-600">
                       <Users size={14} className="text-blue-400" />
                       <span className="text-sm font-medium">{p.memberCount || 0}</span>
                     </div>
@@ -346,7 +346,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                         className="flex items-center gap-1 text-slate-600 dark:text-slate-300"
                         title="Documents"
                       >
-                        <FileText size={14} className="text-slate-400 dark:text-slate-400" />
+                        <FileText size={14} className="text-slate-600 dark:text-slate-400" />
                         <span className="text-xs">{p.documentCount || 0}</span>
                       </div>
                     </div>
@@ -364,7 +364,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
                         title="View Details"
                       >
                         <ChevronRight size={18} />
@@ -372,7 +372,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                       {canEdit && (
                         <button
                           onClick={() => setSelectedProjectForGovernance(p)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                           title="Settings"
                         >
                           <Settings size={18} />
@@ -381,7 +381,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                       {canDelete && (
                         <button
                           onClick={() => handleDeleteProject(p.id)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -410,7 +410,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               </div>
               <button
                 onClick={() => setShowAddProjectModal(false)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>
@@ -486,7 +486,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               </h2>
               <button
                 onClick={() => setSelectedProjectForGovernance(null)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>

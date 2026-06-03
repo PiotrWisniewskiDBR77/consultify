@@ -393,7 +393,7 @@ const SourceItem: React.FC<{ source: SourceUsed; index: number }> = ({ source, i
   if (source.type === 'dt_section') {
     return (
       <div className="text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
-        <FileText size={12} className="flex-shrink-0 mt-0.5 text-slate-400" />
+        <FileText size={12} className="flex-shrink-0 mt-0.5 text-slate-600" />
         <div>
           <span className="font-medium">DT Report</span>
           {source.quote && (
@@ -536,7 +536,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
               <span className={`text-[10px] font-semibold ${confidenceLevel.color}`}>
                 {isPl ? confidenceLevel.labelPl : confidenceLevel.label}
               </span>
-              <p className="text-[9px] text-slate-400 dark:text-slate-500">
+              <p className="text-[9px] text-slate-600 dark:text-slate-500">
                 {isPl ? 'pewność' : 'confidence'}
               </p>
             </div>
@@ -758,7 +758,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                             key={idx}
                             className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5"
                           >
-                            <span className="text-slate-400">•</span>
+                            <span className="text-slate-600">•</span>
                             {q}
                           </li>
                         ))}
@@ -839,7 +839,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
               <span className={`font-semibold ${confidenceLevel.color}`}>
                 {isPl ? 'Pewność' : 'Confidence'}: {confidenceScore}%
               </span>
-              <span className="text-slate-300 dark:text-navy-600">|</span>
+              <span className="text-slate-600 dark:text-navy-600">|</span>
               <span>
                 {isPl ? 'Źródła' : 'Sources'}: {verdict.sourcesSummary.counts.dt_section} DT ·{' '}
                 {verdict.sourcesSummary.counts.kb_snippet} KB ·{' '}

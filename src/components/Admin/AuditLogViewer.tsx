@@ -373,7 +373,7 @@ export function AuditLogViewer() {
               <div className="relative">
                 <Search
                   size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                 />
                 <input
                   type="text"
@@ -545,7 +545,7 @@ export function AuditLogViewer() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                   {logs.map((log) => (
                     <tr
                       key={log.id}
@@ -555,13 +555,13 @@ export function AuditLogViewer() {
                     >
                       <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <Clock size={14} className="text-slate-400 dark:text-slate-500" />
+                          <Clock size={14} className="text-slate-600 dark:text-slate-500" />
                           {formatDate(log.timestamp)}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
                         <div className="flex items-center gap-2">
-                          <User size={14} className="text-slate-400 dark:text-slate-500" />
+                          <User size={14} className="text-slate-600 dark:text-slate-500" />
                           {log.user_email || log.user_id?.slice(0, 8) || '-'}
                         </div>
                       </td>
@@ -583,7 +583,7 @@ export function AuditLogViewer() {
                       <td className="px-4 py-3">
                         <button
                           onClick={() => setSelectedLog(log)}
-                          className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                          className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                           title="View Details"
                         >
                           <Eye size={16} />
@@ -598,7 +598,7 @@ export function AuditLogViewer() {
 
           {/* Pagination */}
           {!loading && logs.length > 0 && (
-            <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 flex items-center justify-between">
+            <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Page {page} of {totalPages}
               </p>
@@ -633,7 +633,7 @@ export function AuditLogViewer() {
               </h3>
               <button
                 onClick={() => setSelectedLog(null)}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>

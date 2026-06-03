@@ -1392,7 +1392,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             animate={{ rotate: expandedSections.has(id) ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-600" />
           </motion.div>
         </div>
       </motion.button>
@@ -1432,7 +1432,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             {isPolish ? 'Gotowe' : 'Done'}
           </span>
         )}
-        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+        <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
           {progress?.answeredQuestions || 0}/{progress?.totalQuestions || 0}
         </span>
       </div>,
@@ -1972,7 +1972,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   >
                     <cfg.icon
                       size={14}
-                      className={isActive ? 'text-primary-500' : 'text-slate-400'}
+                      className={isActive ? 'text-primary-500' : 'text-slate-600'}
                     />
                     {isPolish ? cfg.labelPl : cfg.labelEn}
                   </button>
@@ -2118,7 +2118,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {companyProfile.name ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Building2 size={14} className="text-slate-400" /> {companyProfile.name}
+                      <Building2 size={14} className="text-slate-600" /> {companyProfile.name}
                     </div>
                     {companyProfile.industry && (
                       <div className="text-xs text-slate-500">{companyProfile.industry}</div>
@@ -2128,7 +2128,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     )}
                   </div>
                 ) : (
-                  <span className="text-slate-400">
+                  <span className="text-slate-600">
                     {isPolish ? 'Brak danych firmy' : 'No company data yet'}
                   </span>
                 )}
@@ -2285,7 +2285,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   ))}
                 </ul>
               ) : (
-                <div className="text-sm text-slate-400">
+                <div className="text-sm text-slate-600">
                   {isPolish ? 'Brak faktów' : 'No facts yet'}
                 </div>
               )}
@@ -2329,7 +2329,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           </span>
           <span className={`ml-1 inline-flex h-2 w-2 rounded-full ${statusConfig.color}`} />
           <div className="flex-1" />
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+          <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
             {answeredCount}/{totalCount}
           </span>
           <div className="w-24 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
@@ -2338,7 +2338,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+          <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
             {progressPct}%
           </span>
           <div className="h-4 w-px bg-white/[0.08]" />
@@ -2385,7 +2385,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <button
             type="button"
             onClick={() => handleRuntimeModeSelect('task_list')}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             title={isPolish ? 'Przełącz na widok listy' : 'Switch to list view'}
           >
             <ArrowRight size={13} />
@@ -2451,7 +2451,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     setShowSendBackForm(false);
                     setSendBackReason('');
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors"
                 >
                   {isPolish ? 'Anuluj' : 'Cancel'}
                 </button>

@@ -301,7 +301,7 @@ export function DynamicSwotLibraryGraphic({
 
       <div className="grid gap-4 border-b border-slate-200/70 px-5 py-4 dark:border-white/10 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[22px] border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
             {labels.scenario}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -324,7 +324,7 @@ export function DynamicSwotLibraryGraphic({
         <div className="rounded-[26px] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                 {labels.stagesTitle}
               </div>
               <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -336,7 +336,7 @@ export function DynamicSwotLibraryGraphic({
             </span>
           </div>
 
-          <div className="mt-3 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+          <div className="mt-3 text-[10px] uppercase tracking-[0.18em] text-slate-600">
             {labels.legend}
           </div>
 
@@ -397,7 +397,7 @@ export function DynamicSwotLibraryGraphic({
         <div className="rounded-[26px] border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
           <div className="mb-3">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                 {labels.signals}
               </div>
               <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">

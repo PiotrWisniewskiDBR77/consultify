@@ -428,7 +428,7 @@ const CustomerAutomationView: React.FC = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Zap
-                            className={`w-4 h-4 ${rule.is_active ? 'text-yellow-500' : 'text-slate-400 dark:text-slate-400'}`}
+                            className={`w-4 h-4 ${rule.is_active ? 'text-yellow-500' : 'text-slate-600 dark:text-slate-400'}`}
                           />
                           <h4 className="text-slate-900 dark:text-white font-medium">
                             {rule.name}

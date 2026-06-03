@@ -112,7 +112,7 @@ const NumberSetting: React.FC<{
         [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer
         [&::-webkit-slider-thumb]:hover:bg-blue-700"
     />
-    <div className="flex justify-between text-[9px] text-slate-400 mt-0.5">
+    <div className="flex justify-between text-[9px] text-slate-600 mt-0.5">
       <span>{setting.min || 1}</span>
       <span>{setting.max || 20}</span>
     </div>
@@ -447,7 +447,7 @@ export const BlockSettingsPanel: React.FC<BlockSettingsPanelProps> = ({
             }}
             className="w-full flex items-center justify-between py-1.5 group"
           >
-            <span className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+            <span className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
               <Settings2 className="w-3 h-3" />
               {isPl ? 'Zaawansowane' : 'Fine-tune'}
               {advancedNonDefault > 0 && (
@@ -457,9 +457,9 @@ export const BlockSettingsPanel: React.FC<BlockSettingsPanelProps> = ({
               )}
             </span>
             {showAdvanced ? (
-              <ChevronDown className="w-3 h-3 text-slate-400" />
+              <ChevronDown className="w-3 h-3 text-slate-600" />
             ) : (
-              <ChevronRight className="w-3 h-3 text-slate-400" />
+              <ChevronRight className="w-3 h-3 text-slate-600" />
             )}
           </button>
 

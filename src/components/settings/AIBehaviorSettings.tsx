@@ -261,7 +261,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
         <div className="space-y-6">
           {/* Quick Templates */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-3">
+            <label className="block text-sm font-medium text-slate-600 mb-3">
               {t('settings.ai.quickTemplates', 'Quick Templates')}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -270,7 +270,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                   key={tpl.id}
                   onClick={() => applyTemplate(tpl)}
                   className="flex items-center gap-2 px-3 py-1.5 bg-navy-700/50 hover:bg-navy-700
-                    border border-white/10 rounded-lg text-sm text-slate-300
+                    border border-white/10 rounded-lg text-sm text-slate-600
                     hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />

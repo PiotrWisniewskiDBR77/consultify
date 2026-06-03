@@ -140,7 +140,7 @@ const StatCard: React.FC<{
       ? 'text-green-500'
       : trend === 'down'
         ? 'text-rose-500'
-        : 'text-slate-400 dark:text-slate-500';
+        : 'text-slate-600 dark:text-slate-500';
 
   return (
     <div className={`p-4 bg-slate-50 dark:bg-navy-800 rounded-xl ${className}`}>
@@ -158,7 +158,7 @@ const StatCard: React.FC<{
       </p>
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-bold text-navy-900 dark:text-white">{value}</span>
-        {subValue && <span className="text-sm text-slate-400 dark:text-slate-500">{subValue}</span>}
+        {subValue && <span className="text-sm text-slate-600 dark:text-slate-500">{subValue}</span>}
       </div>
       {progress && (
         <div className="mt-3">
@@ -203,7 +203,7 @@ const PeriodSelector: React.FC<{
       </select>
       <ChevronDown
         size={14}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
       />
     </div>
   );

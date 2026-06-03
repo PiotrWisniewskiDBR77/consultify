@@ -37,8 +37,8 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({ compact = false 
   if (!currentPhase) {
     return compact ? null : (
       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-        <Target size={14} className="text-slate-400 dark:text-slate-500" />
-        <span className="text-xs text-slate-400 dark:text-slate-500">No project selected</span>
+        <Target size={14} className="text-slate-600 dark:text-slate-500" />
+        <span className="text-xs text-slate-600 dark:text-slate-500">No project selected</span>
       </div>
     );
   }

@@ -91,7 +91,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
       className="w-56 max-h-[420px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl"
     >
       <div className="px-1 py-1">
-        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
           {isPl ? 'Import' : 'Import'}
         </div>
         {IMPORT_ACTIONS.map((a) => {
@@ -107,14 +107,14 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
               }}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
             >
-              <Icon size={12} className="text-slate-400 shrink-0" />
+              <Icon size={12} className="text-slate-600 shrink-0" />
               {isPl ? a.labelPl : a.labelEn}
             </button>
           );
         })}
       </div>
       <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
-        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
           {isPl ? 'Eksport' : 'Export'}
         </div>
         {EXPORT_ACTIONS.map((a) => {
@@ -130,7 +130,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
               }}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
             >
-              <Icon size={12} className="text-slate-400 shrink-0" />
+              <Icon size={12} className="text-slate-600 shrink-0" />
               {isPl ? a.labelPl : a.labelEn}
             </button>
           );
@@ -148,7 +148,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
         >
           <Clock size={12} className="text-amber-500 shrink-0" />
           {isPl ? 'Historia wersji' : 'Version History'}
-          <span className="ml-auto text-[9px] text-slate-400">⌘⇧H</span>
+          <span className="ml-auto text-[9px] text-slate-600">⌘⇧H</span>
         </button>
       </div>
     </div>

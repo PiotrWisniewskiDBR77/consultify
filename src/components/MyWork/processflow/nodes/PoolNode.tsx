@@ -61,7 +61,7 @@ export const PoolNode: React.FC<NodeProps<any>> = ({ id, data, selected }) => {
       </div>
 
       <div className="flex-1 p-2 flex items-center justify-center">
-        <span className="text-[9px] text-slate-400 dark:text-slate-500 italic select-none">
+        <span className="text-[9px] text-slate-600 dark:text-slate-500 italic select-none">
           {data?.participantCount ? `${data.participantCount} participants` : ''}
         </span>
       </div>

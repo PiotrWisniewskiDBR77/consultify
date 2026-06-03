@@ -513,7 +513,7 @@ export const PartnerSettlementsView: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500" />
                 <input
                   type="text"
                   placeholder="Search partners..."
@@ -552,22 +552,22 @@ export const PartnerSettlementsView: React.FC = () => {
                       className="rounded text-primary-600"
                     />
                   </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     Partner
                   </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     Customer
                   </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     Type
                   </th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     Amount
                   </th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     Commission
                   </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     Date
                   </th>
                   <th className="px-3 py-2"></th>
@@ -598,7 +598,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-sm text-slate-400 dark:text-slate-500 capitalize">
+                      <span className="text-sm text-slate-600 dark:text-slate-500 capitalize">
                         {commission.transactionType.toLowerCase()}
                       </span>
                     </td>
@@ -616,7 +616,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-sm text-slate-400 dark:text-slate-500">
+                      <span className="text-sm text-slate-600 dark:text-slate-500">
                         {commission.transactionDate}
                       </span>
                     </td>
@@ -634,7 +634,7 @@ export const PartnerSettlementsView: React.FC = () => {
           {commissions.length === 0 && (
             <div className="text-center py-12">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-slate-400 dark:text-slate-500">
+              <p className="text-slate-600 dark:text-slate-500">
                 No pending commissions to approve
               </p>
             </div>
@@ -707,7 +707,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </button>
                     )}
                     <button
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
+                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
                       title="Reject"
                     >
                       <XCircle className="w-5 h-5" />
@@ -751,7 +751,7 @@ export const PartnerSettlementsView: React.FC = () => {
           {/* Search */}
           <div className="mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search by organization or partner name..."
@@ -768,22 +768,22 @@ export const PartnerSettlementsView: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Organization
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Partner
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Type
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Code Used
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Status
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Date
                     </th>
                     <th className="px-3 py-2"></th>
@@ -816,7 +816,7 @@ export const PartnerSettlementsView: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-3 py-3">
-                          <span className="text-sm text-slate-400 dark:text-slate-500">
+                          <span className="text-sm text-slate-600 dark:text-slate-500">
                             {attribution.attributionType?.replace('_', ' ')}
                           </span>
                         </td>
@@ -837,14 +837,14 @@ export const PartnerSettlementsView: React.FC = () => {
                                 'bg-emerald-500/20 text-emerald-400',
                               attribution.status === 'PENDING' && 'bg-amber-500/20 text-amber-400',
                               attribution.status === 'EXPIRED' &&
-                                'bg-slate-500/20 text-slate-400 dark:text-slate-500'
+                                'bg-slate-500/20 text-slate-600 dark:text-slate-500'
                             )}
                           >
                             {attribution.status?.toLowerCase()}
                           </span>
                         </td>
                         <td className="px-3 py-3">
-                          <span className="text-sm text-slate-400 dark:text-slate-500">
+                          <span className="text-sm text-slate-600 dark:text-slate-500">
                             {attribution.attributedAt
                               ? new Date(attribution.attributedAt).toLocaleDateString()
                               : '-'}
@@ -853,7 +853,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-1 justify-end">
                             <button
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white rounded transition-colors"
+                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-white rounded transition-colors"
                               title="View details"
                             >
                               <Eye className="w-4 h-4" />
@@ -861,7 +861,7 @@ export const PartnerSettlementsView: React.FC = () => {
                             <button
                               onClick={() => handleRemoveAttribution(attribution.id)}
                               disabled={processing}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
+                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
                               title="Remove attribution"
                             >
                               <Unlink className="w-4 h-4" />
@@ -924,22 +924,22 @@ export const PartnerSettlementsView: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Organization
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Partner
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Discount
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Expires In
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Lifetime Value
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Commission Earned
                     </th>
                   </tr>
@@ -979,7 +979,7 @@ export const PartnerSettlementsView: React.FC = () => {
                               ? 'bg-rose-500/20 text-rose-400'
                               : attr.daysRemaining <= 14
                                 ? 'bg-amber-500/20 text-amber-400'
-                                : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'
+                                : 'bg-slate-500/20 text-slate-600 dark:text-slate-500'
                           )}
                         >
                           {attr.daysRemaining} days
@@ -1037,28 +1037,28 @@ export const PartnerSettlementsView: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Code
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Partner
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Clicks
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Signups
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Conv. Rate
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Active Orgs
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Revenue
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                       Commissions
                     </th>
                   </tr>
@@ -1097,7 +1097,7 @@ export const PartnerSettlementsView: React.FC = () => {
                               ? 'text-emerald-400'
                               : code.conversionRate >= 10
                                 ? 'text-amber-400'
-                                : 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-600 dark:text-slate-500'
                           )}
                         >
                           {code.conversionRate}%

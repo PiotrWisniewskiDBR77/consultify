@@ -125,7 +125,7 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
               className={`flex items-center justify-between p-3 rounded-lg ${action.enabled ? 'bg-blue-50 dark:bg-blue-500/10' : 'bg-slate-50 dark:bg-navy-950 opacity-60'}`}
             >
               <div className="flex items-center gap-3">
-                <Grip size={16} className="text-slate-400 dark:text-slate-500 cursor-grab" />
+                <Grip size={16} className="text-slate-600 dark:text-slate-500 cursor-grab" />
                 <span className="font-medium text-slate-900 dark:text-white">{action.label}</span>
                 <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs font-mono">
                   {action.shortcut}

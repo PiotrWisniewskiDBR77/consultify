@@ -60,7 +60,7 @@ export const BackupPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -70,7 +70,7 @@ export const BackupPanel: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">Backup & Recovery</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-500 text-sm">
             Manage database backups and disaster recovery
           </p>
         </div>
@@ -86,7 +86,7 @@ export const BackupPanel: React.FC = () => {
 
       <div className="space-y-2">
         {backups.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+          <div className="text-center py-12 text-slate-600 dark:text-slate-500">
             <HardDrive size={48} className="mx-auto mb-4 opacity-50" />
             <p>No backups available</p>
           </div>
@@ -117,7 +117,7 @@ export const BackupPanel: React.FC = () => {
                       <XCircle size={16} className="text-rose-400" />
                     )}
                   </div>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
                     Created: {new Date(backup.started_at).toLocaleString()}
                   </p>
                   {backup.size_bytes && (
@@ -129,7 +129,7 @@ export const BackupPanel: React.FC = () => {
                 <div className="flex items-center gap-2">
                   {backup.status === 'completed' && (
                     <button
-                      className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                      className="p-2 rounded-lg bg-slate-700 text-slate-600 hover:bg-slate-600 transition-colors"
                       title="Download"
                     >
                       <Download size={16} />

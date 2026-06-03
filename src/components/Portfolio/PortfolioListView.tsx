@@ -201,9 +201,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   const SortIcon: React.FC<{ field: SortField }> = ({ field }) => {
     if (sortConfig.field !== field) return <div className="w-4 h-4" />;
     return sortConfig.direction === 'asc' ? (
-      <ChevronUp size={14} className="text-slate-400 dark:text-slate-500" />
+      <ChevronUp size={14} className="text-slate-600 dark:text-slate-500" />
     ) : (
-      <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+      <ChevronDown size={14} className="text-slate-600 dark:text-slate-500" />
     );
   };
 
@@ -259,7 +259,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100/60 dark:divide-white/[0.03]">
+          <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
             {sortedInitiatives.map((initiative) => {
               const terminal = isTerminal(initiative.status);
               const owner = initiative.ownerBusiness || initiative.ownerExecution;
@@ -315,7 +315,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                       </select>
                       <ChevronDown
                         size={12}
-                        className="absolute right-0 text-slate-400 pointer-events-none"
+                        className="absolute right-0 text-slate-600 pointer-events-none"
                       />
                     </div>
                   </td>
@@ -350,7 +350,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                         </span>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400">—</span>
+                      <span className="text-xs text-slate-600">—</span>
                     )}
                   </td>
 
@@ -384,19 +384,19 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                           {nextStep.label}
                         </span>
                         {nextStep.role && (
-                          <span className="text-slate-400 dark:text-slate-500 ml-1">
+                          <span className="text-slate-600 dark:text-slate-500 ml-1">
                             ({nextStep.role})
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400">—</span>
+                      <span className="text-xs text-slate-600">—</span>
                     )}
                   </td>
 
                   {/* Missing (blocking) — placeholder, filled when gate readiness is fetched per-row */}
                   <td className="px-4 py-2">
-                    <span className="text-xs text-slate-400">—</span>
+                    <span className="text-xs text-slate-600">—</span>
                   </td>
 
                   {/* Updated */}

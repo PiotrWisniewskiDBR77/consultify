@@ -95,7 +95,7 @@ const HoverPreviewCard: React.FC<{
   if (loading) {
     return (
       <div className="flex items-center justify-center p-3">
-        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+        <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
       </div>
     );
   }
@@ -109,7 +109,7 @@ const HoverPreviewCard: React.FC<{
         if (val == null || val === '') return null;
         return (
           <div key={fm.id} className="flex items-start gap-2">
-            <span className="w-20 flex-shrink-0 truncate text-[10px] font-medium text-slate-400 dark:text-zinc-500">
+            <span className="w-20 flex-shrink-0 truncate text-[10px] font-medium text-slate-600 dark:text-zinc-500">
               {fm.name}
             </span>
             <span className="text-[10px] text-slate-600 dark:text-zinc-300 truncate">
@@ -219,7 +219,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
     }, []);
 
     if (loading) {
-      return <span className="text-xs text-slate-400">...</span>;
+      return <span className="text-xs text-slate-600">...</span>;
     }
 
     if (links.length === 0) {
@@ -227,7 +227,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
         <button
           onClick={onOpenPicker}
           disabled={locked}
-          className="flex items-center gap-1.5 text-xs text-slate-400 transition-colors hover:text-blue-500 disabled:cursor-default disabled:hover:text-slate-400"
+          className="flex items-center gap-1.5 text-xs text-slate-600 transition-colors hover:text-blue-500 disabled:cursor-default disabled:hover:text-slate-400"
         >
           <Link2 className="h-3.5 w-3.5" />
           <span>{isPl ? 'Brak powiązań' : 'No linked records'}</span>
@@ -280,7 +280,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
         {!locked && (
           <button
             onClick={onOpenPicker}
-            className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-500 dark:hover:bg-zinc-800"
+            className="rounded-full p-1 text-slate-600 transition-colors hover:bg-slate-100 hover:text-blue-500 dark:hover:bg-zinc-800"
           >
             <Link2 className="h-3 w-3" />
           </button>

@@ -175,7 +175,7 @@ export const CompetencyCatalog: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin text-slate-400" size={24} />
+        <Loader2 className="animate-spin text-slate-600" size={24} />
       </div>
     );
   }
@@ -186,7 +186,7 @@ export const CompetencyCatalog: React.FC = () => {
     <div className="space-y-6">
       {isEmpty && (
         <div className="text-center py-12 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-          <BookOpen size={40} className="mx-auto text-slate-400 mb-3" />
+          <BookOpen size={40} className="mx-auto text-slate-600 mb-3" />
           <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-1">
             {t('competency.empty.title', 'No competency catalog yet')}
           </h3>
@@ -211,7 +211,7 @@ export const CompetencyCatalog: React.FC = () => {
           <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-                <Layers size={16} className="text-slate-400" />
+                <Layers size={16} className="text-slate-600" />
                 {t('competency.categories.title', 'Categories')}
               </h3>
               <button
@@ -250,7 +250,7 @@ export const CompetencyCatalog: React.FC = () => {
                       e.stopPropagation();
                       handleDeleteCategory(cat.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 ml-1 text-slate-400 hover:text-rose-500"
+                    className="opacity-0 group-hover:opacity-100 ml-1 text-slate-600 hover:text-rose-500"
                   >
                     <X size={12} />
                   </button>
@@ -320,7 +320,7 @@ export const CompetencyCatalog: React.FC = () => {
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
                 size={16}
               />
               <input
@@ -409,7 +409,7 @@ export const CompetencyCatalog: React.FC = () => {
                   <tr>
                     <td
                       colSpan={4}
-                      className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm"
+                      className="text-center py-8 text-slate-600 dark:text-slate-500 text-sm"
                     >
                       {t('competency.table.empty', 'No competencies found')}
                     </td>
@@ -418,7 +418,7 @@ export const CompetencyCatalog: React.FC = () => {
                   filteredCompetencies.map((comp) => (
                     <tr
                       key={comp.id}
-                      className="border-b border-slate-100 dark:border-navy-800 last:border-0 hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors"
+                      className="border-b border-slate-200 dark:border-navy-800 last:border-0 hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors"
                     >
                       <td className="px-4 py-3">
                         <div className="font-medium text-navy-900 dark:text-white">{comp.name}</div>
@@ -434,7 +434,7 @@ export const CompetencyCatalog: React.FC = () => {
                             {comp.categoryName}
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-xs text-slate-600">—</span>
                         )}
                       </td>
                       <td className="text-center px-4 py-3">

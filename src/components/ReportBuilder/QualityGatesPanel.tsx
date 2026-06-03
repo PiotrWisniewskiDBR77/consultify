@@ -246,7 +246,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
         <button
           onClick={runCheck}
           disabled={loading}
-          className="p-1.5 text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
+          className="p-1.5 text-slate-600 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
         </button>
@@ -262,7 +262,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
           <div className="flex items-center gap-3 mb-3">
             <div className={`text-3xl font-bold ${scoreColor}`}>{report.score}</div>
             <div>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-slate-600">
                 {t('reports.qualityGates.readinessScore', 'Readiness Score')}
               </div>
               <div className="flex items-center gap-3 mt-0.5">
@@ -320,7 +320,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
                   <div key={cat}>
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <span className="text-slate-500">{meta.icon}</span>
-                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
                         {t(meta.labelKey, meta.fallback)}
                       </span>
                       <span className="text-[10px] text-slate-600 ml-auto">{gates.length}</span>

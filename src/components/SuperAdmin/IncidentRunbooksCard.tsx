@@ -352,7 +352,7 @@ const IncidentRunbooksCard: React.FC<IncidentRunbooksCardProps> = ({ report }) =
           <ActiveIncident classification={classification} />
         )}
 
-        <div className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <div className="mt-4 border-t border-slate-200 pt-3 text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
           Browse the full incident runbook index:{' '}
           <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">
             {INDEX_PATH}

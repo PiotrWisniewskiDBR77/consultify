@@ -176,7 +176,7 @@ const STATUS_META: Record<RadarSignalStatus, { label: string; tone: string }> = 
   updated: { label: 'Updated', tone: 'border-sky-400/35 bg-sky-500/14 text-sky-200' },
   saved: { label: 'Saved', tone: 'border-indigo-400/35 bg-indigo-500/14 text-indigo-200' },
   watching: { label: 'Watching', tone: 'border-amber-400/35 bg-amber-500/14 text-amber-200' },
-  ignored: { label: 'Ignored', tone: 'border-slate-400/30 bg-slate-500/12 text-slate-300' },
+  ignored: { label: 'Ignored', tone: 'border-slate-400/30 bg-slate-500/12 text-slate-600' },
 };
 
 const RING_WEIGHT: Record<RadarMapSignal['ring'], number> = {
@@ -308,7 +308,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
         <div className="mb-2.5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">Your Radar</h2>
-            <p className="mt-0.5 max-w-3xl text-[12px] text-slate-400">
+            <p className="mt-0.5 max-w-3xl text-[12px] text-slate-600">
               A personal map of signals worth your attention — across your development, projects,
               industry and role.
             </p>
@@ -326,14 +326,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                     'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition',
                     active
                       ? 'border-primary-300/60 bg-primary-500/20 text-primary-100'
-                      : 'border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/20 hover:bg-white/[0.08]'
+                      : 'border-white/10 bg-white/[0.04] text-slate-600 hover:border-white/20 hover:bg-white/[0.08]'
                   )}
                 >
                   {filter.label}
                   <span
                     className={cn(
                       'rounded-full px-1.5 text-[10px] tabular-nums',
-                      active ? 'bg-primary-400/30 text-white' : 'bg-white/10 text-slate-400'
+                      active ? 'bg-primary-400/30 text-white' : 'bg-white/10 text-slate-600'
                     )}
                   >
                     {statusCounts[filter.id] ?? 0}
@@ -349,7 +349,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
             <div className="max-w-md rounded-2xl border border-white/[0.08] bg-white/[0.03] px-8 py-10 text-center">
               <Radar className="mx-auto mb-3 h-9 w-9 text-primary-300/70" />
               <p className="text-sm font-medium text-white">{t('myWork.radar.empty')}</p>
-              <p className="mt-1.5 text-[12px] text-slate-400">{t('myWork.radar.emptyHint')}</p>
+              <p className="mt-1.5 text-[12px] text-slate-600">{t('myWork.radar.emptyHint')}</p>
               <button
                 type="button"
                 onClick={() => void refresh()}
@@ -628,7 +628,7 @@ function RadarCanvas({
                 <Icon className="h-3 w-3" />
                 {q.title}
               </div>
-              <div className="text-[9px] text-slate-300/85">{q.subtitle}</div>
+              <div className="text-[9px] text-slate-600/85">{q.subtitle}</div>
               <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden whitespace-nowrap rounded-md border border-white/10 bg-slate-950/90 px-2 py-1 text-[10px] text-slate-200 shadow-lg group-hover:block">
                 {q.subtitle}
               </div>
@@ -693,7 +693,7 @@ function RadarCanvas({
         {selectedSignal && (
           <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-white/12 bg-slate-900/80 px-2.5 py-1.5 text-[11px] text-slate-100 shadow">
             <div className="font-semibold">{selectedSignal.name}</div>
-            <div className="text-[10px] text-slate-300">
+            <div className="text-[10px] text-slate-600">
               {selectedSignal.ring} · {quadrantTitle(selectedSignal.quadrant)}
             </div>
           </div>
@@ -721,22 +721,22 @@ function RadarCanvas({
         )}
 
         {!signals.length && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-300">
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-600">
             No signals match the current filter.
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-[10px] text-slate-300">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-[10px] text-slate-600">
         <div className="truncate">
-          <span className="text-slate-400">Areas:</span> My Development · My Projects · My Industry
+          <span className="text-slate-600">Areas:</span> My Development · My Projects · My Industry
           · My Role
         </div>
         <div className="truncate">
-          <span className="text-slate-400">Horizon:</span> Now · Prepare · Learn · Observe
+          <span className="text-slate-600">Horizon:</span> Now · Prepare · Learn · Observe
         </div>
         <div className="truncate">
-          <span className="text-slate-400">Types:</span> Technology · Skill · Business · Risk · Tool
+          <span className="text-slate-600">Types:</span> Technology · Skill · Business · Risk · Tool
         </div>
       </div>
     </div>
@@ -757,7 +757,7 @@ function RadarPreviewPanel({
 }) {
   if (!signal) {
     return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center text-slate-300">
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center text-slate-600">
         Pick a signal on the radar to see why it may matter to you right now.
       </div>
     );
@@ -801,7 +801,7 @@ function RadarPreviewPanel({
             <Badge>{quadrantTitle(signal.quadrant)}</Badge>
             <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
           </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-slate-300">{shortDescription}</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-600">{shortDescription}</p>
         </div>
       </div>
 
@@ -912,7 +912,7 @@ function Badge({ children, tone }: { children: React.ReactNode; tone?: string })
   return (
     <span
       className={cn(
-        'rounded-full border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-300',
+        'rounded-full border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-600',
         tone
       )}
     >
@@ -928,7 +928,7 @@ function Section({ title, body }: { title: string; body: string }) {
   if (!text) return null;
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">
         {title}
       </div>
       <p className="text-[12px] leading-relaxed text-slate-200">{text}</p>
@@ -954,7 +954,7 @@ function ActionChip({
       className={cn(
         'inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[11px] font-medium transition',
         tone === 'normal' && 'border-white/12 bg-white/[0.04] text-slate-200 hover:bg-white/[0.1]',
-        tone === 'subtle' && 'border-white/10 bg-white/[0.02] text-slate-300 hover:bg-white/[0.08]'
+        tone === 'subtle' && 'border-white/10 bg-white/[0.02] text-slate-600 hover:bg-white/[0.08]'
       )}
     >
       {icon}

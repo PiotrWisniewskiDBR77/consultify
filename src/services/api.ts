@@ -10667,7 +10667,8 @@ export const Api = {
     return { downloadUrl: '', expiresAt: '' };
   },
   deleteAccount: async (password: string): Promise<void> => {
-    return;
+    // SECURITY: route through the password-verified GDPR deletion endpoint
+    await Api.post('/api/settings/gdpr/deletion-request', { password });
   },
   // AI Memory
   clearAIMemory: async (): Promise<void> => {
@@ -15277,8 +15278,9 @@ export const Api = {
     return Api.post('/api/gdpr/export-request', {});
   },
 
-  requestGdprDeletion: async () => {
-    return Api.post('/api/gdpr/deletion-request', {});
+  requestGdprDeletion: async (password?: string) => {
+    // SECURITY: use the password-gated endpoint that verifies bcrypt before deletion
+    return Api.post('/api/settings/gdpr/deletion-request', { password: password || '' });
   },
 
   cancelGdprDeletion: async (_requestId?: string) => {

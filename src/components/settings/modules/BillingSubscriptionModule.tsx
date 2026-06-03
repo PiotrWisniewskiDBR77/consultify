@@ -685,7 +685,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <div className="text-center">
               <button
                 onClick={handleCancelSubscription}
-                className="text-sm text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors"
+                className="text-sm text-slate-600 dark:text-slate-500 hover:text-rose-400 transition-colors"
               >
                 Cancel Subscription
               </button>
@@ -791,11 +791,11 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
               No invoices yet.
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-white/5">
+            <div className="divide-y divide-slate-200 dark:divide-white/5">
               {invoices.map((invoice) => (
                 <div key={invoice.id} className="px-6 py-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <FileText size={20} className="text-slate-400 dark:text-slate-500" />
+                    <FileText size={20} className="text-slate-600 dark:text-slate-500" />
                     <div>
                       <p className="font-medium text-slate-900 dark:text-white">
                         Invoice {invoice.id}
@@ -894,7 +894,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <CreditCard size={24} className="text-slate-400 dark:text-slate-500" />
+                        <CreditCard size={24} className="text-slate-600 dark:text-slate-500" />
                         <div>
                           <p className="font-medium text-slate-900 dark:text-white">
                             {method.brand} &bull;&bull;&bull;&bull; {method.last4}

@@ -362,7 +362,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                 onClick={onClose}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
-                <X size={20} className="text-slate-400" />
+                <X size={20} className="text-slate-600" />
               </button>
             </div>
           </div>
@@ -376,7 +376,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                   <div className="flex-1 relative">
                     <Search
                       size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
                     />
                     <input
                       type="text"
@@ -401,7 +401,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                 {/* Templates List */}
                 {sortedTemplates.length === 0 ? (
                   <div className="text-center py-12">
-                    <Layers size={48} className="mx-auto mb-4 text-slate-300 dark:text-navy-600" />
+                    <Layers size={48} className="mx-auto mb-4 text-slate-600 dark:text-navy-600" />
                     <p className="text-slate-500 dark:text-slate-400">
                       {searchQuery
                         ? isPolish
@@ -427,7 +427,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                           className={`p-1 rounded ${
                             template.isFavorite
                               ? 'text-amber-500'
-                              : 'text-slate-300 dark:text-navy-500 hover:text-amber-400'
+                              : 'text-slate-600 dark:text-navy-500 hover:text-amber-400'
                           }`}
                         >
                           <Star size={16} className={template.isFavorite ? 'fill-current' : ''} />
@@ -482,7 +482,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                           </button>
                           <button
                             onClick={() => handleDelete(template.id)}
-                            className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors"
+                            className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 hover:text-rose-500 transition-colors"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={16} />

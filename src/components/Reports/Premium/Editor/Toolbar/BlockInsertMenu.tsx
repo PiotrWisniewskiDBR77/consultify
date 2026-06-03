@@ -199,7 +199,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
 
     return (
       <div key={title}>
-        <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+        <div className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
           {title}
         </div>
         {blocks.map((block, idx) => {
@@ -268,7 +268,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
       {/* Block List */}
       <div className="max-h-80 overflow-y-auto py-2">
         {filteredBlocks.length === 0 ? (
-          <div className="px-3 py-8 text-center text-slate-400 dark:text-slate-500">
+          <div className="px-3 py-8 text-center text-slate-600 dark:text-slate-500">
             Nie znaleziono bloków
           </div>
         ) : (
@@ -281,7 +281,7 @@ export const BlockInsertMenu: React.FC<BlockInsertMenuProps> = ({
       </div>
 
       {/* Help */}
-      <div className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-400 dark:text-slate-500">
+      <div className="px-3 py-2 bg-slate-50 dark:bg-navy-800 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-500">
         ↑↓ nawiguj • Enter wybierz • Esc zamknij
       </div>
     </div>

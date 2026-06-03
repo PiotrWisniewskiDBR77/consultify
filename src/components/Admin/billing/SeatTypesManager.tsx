@@ -222,7 +222,7 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                 'Configure different access levels and their pricing'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -305,7 +305,7 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
               {/* User Count */}
               <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
                 <div className="flex items-center gap-2">
-                  <Users size={14} className="text-slate-400 dark:text-slate-500" />
+                  <Users size={14} className="text-slate-600 dark:text-slate-500" />
                   <span className="text-sm font-medium text-navy-900 dark:text-white">
                     {seatType.currentUsers}
                   </span>
@@ -381,7 +381,7 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                     {categoryFeatures.map((feature) => (
                       <tr
                         key={feature.id}
-                        className="border-t border-slate-100 dark:border-navy-700"
+                        className="border-t border-slate-200 dark:border-navy-700"
                       >
                         <td className="px-4 py-3">
                           <span className="text-sm text-navy-900 dark:text-white">
@@ -393,7 +393,7 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                             {hasFeature(type, feature.id) ? (
                               <Check size={16} className="mx-auto text-emerald-500" />
                             ) : (
-                              <X size={16} className="mx-auto text-slate-300 dark:text-navy-600" />
+                              <X size={16} className="mx-auto text-slate-600 dark:text-navy-600" />
                             )}
                           </td>
                         ))}

@@ -205,7 +205,7 @@ export function StarRating({
         >
           <svg
             className={`${sizeClasses[size]} ${
-              star <= (hover || value) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+              star <= (hover || value) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'
             } transition-colors`}
             viewBox="0 0 24 24"
             fill="none"

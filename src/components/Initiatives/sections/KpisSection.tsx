@@ -694,7 +694,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   e.stopPropagation();
                   setKpiMenuId((prev) => (prev === row.id ? null : row.id));
                 }}
-                className="inline-flex items-center justify-center p-1 rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
+                className="inline-flex items-center justify-center p-1 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
                 title={isPolish ? 'Akcje KPI' : 'KPI actions'}
               >
                 <MoreVertical size={14} />
@@ -721,7 +721,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                     <Copy size={13} />
                     {isPolish ? 'Duplikuj' : 'Duplicate'}
                   </button>
-                  <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                  <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                   <button
                     onClick={() => {
                       setKpiMenuId(null);
@@ -997,7 +997,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
           kpis.length > 0 || isAIProposing ? (
             <div className="flex items-center gap-2">
               {kpis.length > 0 ? (
-                <span className="text-xs text-slate-400">{kpis.length}</span>
+                <span className="text-xs text-slate-600">{kpis.length}</span>
               ) : null}
               {isAIProposing ? (
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-navy-800/50 px-2 py-0.5 rounded-full">

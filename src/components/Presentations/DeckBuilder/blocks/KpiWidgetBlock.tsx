@@ -38,7 +38,7 @@ export const KpiWidgetBlock: React.FC<Props> = ({ block, theme }) => {
                   ? 'text-green-500'
                   : trend === 'down'
                     ? 'text-rose-500'
-                    : 'text-slate-400'
+                    : 'text-slate-600'
               }`}
             >
               {change}

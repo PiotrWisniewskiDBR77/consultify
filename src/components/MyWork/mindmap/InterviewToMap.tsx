@@ -129,7 +129,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -147,7 +147,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
             <div className="text-center py-8">
               <MessageSquare
                 size={32}
-                className="text-slate-300 dark:text-slate-600 mx-auto mb-3"
+                className="text-slate-600 dark:text-slate-600 mx-auto mb-3"
               />
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {isPl ? 'Brak insightów do zaimportowania' : 'No insights to import'}
@@ -176,9 +176,9 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400">
                           {insight.category.replace(/_/g, ' ')}
                         </span>
-                        <span className="text-[9px] text-slate-400">→ {branchKey}</span>
+                        <span className="text-[9px] text-slate-600">→ {branchKey}</span>
                         {insight.confidence != null && (
-                          <span className="text-[8px] text-slate-400">
+                          <span className="text-[8px] text-slate-600">
                             {Math.round(insight.confidence * 100)}%
                           </span>
                         )}

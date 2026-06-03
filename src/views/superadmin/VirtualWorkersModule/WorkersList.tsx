@@ -107,11 +107,11 @@ export const WorkersList: React.FC<WorkersListProps> = ({ onSelectWorker }) => {
 
         {workers.length === 0 && (
           <div className="col-span-full text-center py-16">
-            <TeresaMark className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <TeresaMark className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-600 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400">
               No virtual workers yet
             </h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               Create your first virtual worker to get started.
             </p>
           </div>
@@ -145,7 +145,7 @@ const WorkerCard: React.FC<{ worker: VirtualWorker; onClick: () => void }> = ({
       </div>
       <MoreVertical
         size={16}
-        className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
       />
     </div>
 

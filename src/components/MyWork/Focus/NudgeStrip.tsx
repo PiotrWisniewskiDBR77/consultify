@@ -80,7 +80,7 @@ export const NudgeStrip: React.FC = () => {
             onClick={() => handleDismiss(nudge.id)}
             className="p-0.5 rounded hover:bg-black/5 dark:hover:bg-white/5 shrink-0"
           >
-            <X size={12} className="text-slate-400" />
+            <X size={12} className="text-slate-600" />
           </button>
         </div>
       ))}

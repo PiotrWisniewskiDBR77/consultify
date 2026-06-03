@@ -219,8 +219,8 @@ const SchemaContextSummary: React.FC<{
   const totalFields = schema.reduce((sum, t) => sum + t.fields.length, 0);
   return (
     <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/40 dark:border-zinc-700/40 bg-slate-50/30 dark:bg-zinc-800/20">
-      <Database size={12} className="text-slate-400 dark:text-zinc-500" />
-      <span className="text-[10px] text-slate-400 dark:text-zinc-500">
+      <Database size={12} className="text-slate-600 dark:text-zinc-500" />
+      <span className="text-[10px] text-slate-600 dark:text-zinc-500">
         {isPl ? 'Aktualny schemat' : 'Current schema'}: {schema.length} {isPl ? 'tabel' : 'tables'},{' '}
         {totalFields} {isPl ? 'pól' : 'fields'}
       </span>
@@ -234,7 +234,7 @@ const SchemaContextSummary: React.FC<{
           </span>
         ))}
         {schema.length > 3 && (
-          <span className="text-[9px] text-slate-400 dark:text-zinc-500">+{schema.length - 3}</span>
+          <span className="text-[9px] text-slate-600 dark:text-zinc-500">+{schema.length - 3}</span>
         )}
       </div>
     </div>
@@ -253,7 +253,7 @@ const ProposalHistoryList: React.FC<{
     <div className="border-t border-slate-200/40 dark:border-zinc-700/40">
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1.5 px-4 py-2 w-full text-[10px] font-medium text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+        className="flex items-center gap-1.5 px-4 py-2 w-full text-[10px] font-medium text-slate-600 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
       >
         <History size={12} />
         {isPl ? 'Historia propozycji' : 'Proposal history'} ({history.length})
@@ -558,7 +558,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
         )}
         <button
           onClick={handleClose}
-          className="ml-auto p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 transition-colors"
+          className="ml-auto p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 transition-colors"
         >
           <X size={16} />
         </button>
@@ -577,7 +577,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
             <p className="text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">
               {isPl ? 'Opisz swoją tabelę' : 'Describe your table'}
             </p>
-            <p className="text-xs text-slate-400 dark:text-zinc-500 max-w-[280px]">
+            <p className="text-xs text-slate-600 dark:text-zinc-500 max-w-[280px]">
               {isPl
                 ? 'Powiedz mi czego potrzebujesz, a zaproponuję strukturę tabeli z przykładowymi danymi.'
                 : "Tell me what you need and I'll propose a table structure with sample data."}

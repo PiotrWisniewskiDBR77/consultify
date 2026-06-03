@@ -1856,7 +1856,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               <span
                 className={`text-[11px] font-semibold ${
                   due === 'No due date'
-                    ? 'text-slate-400 dark:text-slate-500 italic'
+                    ? 'text-slate-600 dark:text-slate-500 italic'
                     : 'text-slate-600 dark:text-slate-300'
                 }`}
               >
@@ -2048,7 +2048,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             </div>
             {tasks.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
-                <CheckCircle2 size={48} className="text-slate-400 mb-4" />
+                <CheckCircle2 size={48} className="text-slate-600 mb-4" />
                 <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200 mb-2">
                   {t('myWork.personalTasks.empty.title', 'No personal tasks in the current scope')}
                 </h3>
@@ -2301,7 +2301,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                                           {label}
                                         </span>
                                         {alwaysVisible ? (
-                                          <span className="text-[10px] font-medium text-slate-400">
+                                          <span className="text-[10px] font-medium text-slate-600">
                                             {isPolish ? 'Wymagane' : 'Required'}
                                           </span>
                                         ) : null}

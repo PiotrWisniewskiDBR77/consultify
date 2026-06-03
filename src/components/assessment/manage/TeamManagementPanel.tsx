@@ -821,7 +821,7 @@ const TeamMemberRow: FC<{
               </span>
             ))
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">View only</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">View only</span>
           )}
           {activePermissions.length > 4 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400">
@@ -857,7 +857,7 @@ const TeamMemberRow: FC<{
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
                 {isPolish ? 'W organizacji' : 'In org'}
               </span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+              <span className="text-[11px] text-slate-600 dark:text-slate-500 truncate">
                 {member.userEmail ? String(member.userEmail).split('@')[1] || '' : '—'}
               </span>
             </div>
@@ -869,7 +869,7 @@ const TeamMemberRow: FC<{
             </span>
           </div>
         ) : (
-          <span className="text-xs text-slate-400 dark:text-slate-500">All areas</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">All areas</span>
         )}
       </td>
 

@@ -142,7 +142,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.billing.seats.totalSeats', 'Total Seats')}
             </span>
-            <Users size={16} className="text-slate-400 dark:text-slate-500" />
+            <Users size={16} className="text-slate-600 dark:text-slate-500" />
           </div>
           <p className="text-2xl font-bold text-navy-900 dark:text-white">
             {totals.usedSeats}/{totals.totalSeats}
@@ -161,7 +161,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.billing.seats.available', 'Available')}
             </span>
-            <User size={16} className="text-slate-400 dark:text-slate-500" />
+            <User size={16} className="text-slate-600 dark:text-slate-500" />
           </div>
           <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
             {totals.availableSeats}
@@ -177,7 +177,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.billing.seats.monthlyCost', 'Monthly Cost')}
             </span>
-            <CreditCard size={16} className="text-slate-400 dark:text-slate-500" />
+            <CreditCard size={16} className="text-slate-600 dark:text-slate-500" />
           </div>
           <p className="text-2xl font-bold text-navy-900 dark:text-white">
             ${totals.totalCost.toLocaleString()}
@@ -218,7 +218,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                 'Different seat types have different capabilities and pricing'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
         </div>
@@ -322,7 +322,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => onRemoveSeat(user.userId)}
-                    className="text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                    className="text-slate-600 dark:text-slate-500 hover:text-rose-500"
                   >
                     <UserX size={14} />
                   </Button>

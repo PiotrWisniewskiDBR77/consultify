@@ -279,7 +279,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
     const priority = task.priority?.toLowerCase() || 'medium';
     const isDone = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
 
-    let borderClass = 'border-slate-100 dark:border-navy-700';
+    let borderClass = 'border-slate-200 dark:border-navy-700';
 
     if (priority === 'urgent' && !isDone) {
       borderClass =
@@ -446,7 +446,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                   </span>
                 )}
                 <h4
-                  className={`text-sm font-semibold truncate ${isDone ? 'text-slate-400 line-through' : 'text-navy-900 dark:text-white'}`}
+                  className={`text-sm font-semibold truncate ${isDone ? 'text-slate-600 line-through' : 'text-navy-900 dark:text-white'}`}
                 >
                   {task.title}
                 </h4>
@@ -472,8 +472,8 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                   task.dueDate
                     ? new Date(task.dueDate) < new Date() && !isDone
                       ? 'text-rose-500'
-                      : 'text-slate-400 dark:text-slate-500'
-                    : 'text-slate-300 dark:text-slate-600'
+                      : 'text-slate-600 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-600'
                 }`}
               >
                 <Calendar size={10} />
@@ -503,7 +503,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 className={`flex items-center gap-1 text-[10px] ${
                   task.assignee
                     ? 'text-slate-500 dark:text-slate-400'
-                    : 'text-slate-300 dark:text-slate-600'
+                    : 'text-slate-600 dark:text-slate-600'
                 }`}
               >
                 <User size={10} />
@@ -573,9 +573,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
       </div>
 
       {/* Filter Row (h-12 = 48px) */}
-      <div className="h-12 p-4 flex items-center justify-between border-b border-slate-100 dark:border-navy-700 shrink-0">
+      <div className="h-12 p-4 flex items-center justify-between border-b border-slate-200 dark:border-navy-700 shrink-0">
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-slate-400 dark:text-slate-500 text-xs">Showing:</span>
+          <span className="text-slate-600 dark:text-slate-500 text-xs">Showing:</span>
 
           {/* Quick Filter Dropdown */}
           <div className="relative">
@@ -588,14 +588,14 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
               >
                 {quickFilterLabels[quickFilter]}
               </span>
-              <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+              <ChevronDown size={14} className="text-slate-600 dark:text-slate-500" />
             </button>
 
             {openFilter === 'quick' && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setOpenFilter(null)}></div>
                 <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-navy-700">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700">
                     Quick Filters
                   </div>
                   {[
@@ -636,7 +636,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             )}
           </div>
 
-          <span className="text-slate-300 dark:text-white/20">•</span>
+          <span className="text-slate-600 dark:text-white/20">•</span>
           <span className="text-slate-500 dark:text-slate-400 text-xs">
             {filteredTasks.length} tasks
           </span>
@@ -645,7 +645,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         {/* View Toggle */}
         <div className="flex items-center gap-2">
           <CardViewSwitcher moduleId="tasks" value={cardStyle} onChange={setCardStyle} compact />
-          <span className="text-slate-400 dark:text-slate-500 text-xs hidden sm:inline">View:</span>
+          <span className="text-slate-600 dark:text-slate-500 text-xs hidden sm:inline">View:</span>
           <div className="relative">
             <button
               onClick={() => toggleFilter('view')}
@@ -653,7 +653,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
             >
               <Layers size={12} className="text-primary-500" />
               {viewMode === 'pmo' ? 'PMO Priority' : 'List'}
-              <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+              <ChevronDown size={14} className="text-slate-600 dark:text-slate-500" />
             </button>
 
             {openFilter === 'view' && (
@@ -692,12 +692,12 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         {loading && (
           <div className="text-center p-8">
             <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-xs text-slate-400 dark:text-slate-500">Syncing tasks...</p>
+            <p className="text-xs text-slate-600 dark:text-slate-500">Syncing tasks...</p>
           </div>
         )}
 
         {!loading && filteredTasks.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400 dark:text-slate-500 opacity-50">
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-600 dark:text-slate-500 opacity-50">
             <CheckCircle2 size={32} className="mb-3" />
             <p className="text-sm">No tasks found</p>
             <button onClick={onCreateTask} className="mt-2 text-xs text-blue-500 hover:underline">
@@ -737,7 +737,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
               <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider">
                 Pinned
               </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
+              <span className="text-xs text-slate-600 dark:text-slate-500">
                 ({pinnedTasks.length})
               </span>
             </div>
@@ -808,9 +808,9 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                       </span>
                     </div>
                     {isExpanded ? (
-                      <ChevronUp size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronUp size={16} className="text-slate-600 dark:text-slate-500" />
                     ) : (
-                      <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
                     )}
                   </button>
 

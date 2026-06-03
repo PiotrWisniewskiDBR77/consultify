@@ -269,7 +269,7 @@ function formatIdeaDate(idea: MyIdea) {
 function SortIndicator({ active, direction }: { active: boolean; direction: SortDir }) {
   if (!active) return null;
   return (
-    <span className="ml-1 inline-flex text-[10px] text-slate-400">
+    <span className="ml-1 inline-flex text-[10px] text-slate-600">
       {direction === 'asc' ? '↑' : '↓'}
     </span>
   );
@@ -519,7 +519,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
   const renderTagBadges = (tags?: string[], max = 2) => {
     if (!tags?.length) {
-      return <span className="text-[11px] text-slate-400">—</span>;
+      return <span className="text-[11px] text-slate-600">—</span>;
     }
 
     // Canonical neutral metadata chips (MetaChip) — tags are never colored (§N).
@@ -917,7 +917,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
                             {isPolish ? 'Tytuł' : 'Title'}
                           </span>
-                          <span className="text-[10px] font-medium text-slate-400">
+                          <span className="text-[10px] font-medium text-slate-600">
                             {isPolish ? 'Wymagane' : 'Required'}
                           </span>
                         </label>
@@ -950,7 +950,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
                             {isPolish ? 'Akcje' : 'Actions'}
                           </span>
-                          <span className="text-[10px] font-medium text-slate-400">
+                          <span className="text-[10px] font-medium text-slate-600">
                             {isPolish ? 'Wymagane' : 'Required'}
                           </span>
                         </label>
@@ -1206,7 +1206,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                                 : 'Star'
                           }
                           aria-pressed={isFavorite?.(idea.id) ?? false}
-                          className="shrink-0 rounded p-0.5 text-slate-300 transition-colors hover:text-amber-400 dark:text-slate-600"
+                          className="shrink-0 rounded p-0.5 text-slate-600 transition-colors hover:text-amber-400 dark:text-slate-600"
                         >
                           <Star
                             size={14}

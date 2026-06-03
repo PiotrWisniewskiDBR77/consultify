@@ -92,7 +92,7 @@ export const PlaybookRunsView: React.FC = () => {
       case 'CANCELLED':
         return <Pause className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />;
+        return <Clock className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />;
     }
   };
 
@@ -113,7 +113,7 @@ export const PlaybookRunsView: React.FC = () => {
         </div>
       ) : templates.length === 0 ? (
         <div className="bg-white dark:bg-navy-900 rounded-lg border border-gray-200 p-12 text-center">
-          <Play className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-4" />
+          <Play className="mx-auto h-12 w-12 text-gray-600 dark:text-gray-500 dark:text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Published Templates</h3>
           <p className="text-gray-500 dark:text-gray-400">
             Contact an administrator to publish playbook templates.
@@ -142,7 +142,7 @@ export const PlaybookRunsView: React.FC = () => {
                 {template.description || 'No description'}
               </p>
 
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between pt-3 border-t border-gray-200">
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   <span>v{template.version}</span>
                   <span className="mx-2">•</span>

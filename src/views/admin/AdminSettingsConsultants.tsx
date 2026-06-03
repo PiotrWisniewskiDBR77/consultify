@@ -468,7 +468,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-slate-400 dark:text-slate-500">
+                      <span className="text-slate-600 dark:text-slate-500">
                         {consultant.projects.length} project
                         {consultant.projects.length !== 1 ? 's' : ''}
                       </span>
@@ -602,7 +602,7 @@ export const AdminSettingsConsultants: React.FC = () => {
               <div className="p-6 space-y-6">
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-600 mb-2">
                     Consultant Email
                   </label>
                   <div className="relative">
@@ -623,7 +623,7 @@ export const AdminSettingsConsultants: React.FC = () => {
 
                 {/* Project */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-600 mb-2">
                     Assign to Project
                   </label>
                   <select
@@ -656,7 +656,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                         Free Seat Access Code
                       </span>
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
+                    <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-500">
                       <input
                         type="checkbox"
                         checked={inviteGenerateCode}
@@ -689,7 +689,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                 {/* Permissions */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-medium text-slate-300">
+                    <label className="block text-sm font-medium text-slate-600">
                       Initial Permissions
                     </label>
                     <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -748,7 +748,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="flex-1 px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
+                  className="flex-1 px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
                 >
                   Cancel
                 </button>
@@ -795,7 +795,7 @@ export const AdminSettingsConsultants: React.FC = () => {
             </div>
 
             <div className="p-6">
-              <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+              <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
                 Select a project to add this consultant to:
               </p>
 
@@ -827,7 +827,7 @@ export const AdminSettingsConsultants: React.FC = () => {
             <div className="p-6 border-t border-white/10">
               <button
                 onClick={() => setShowAddProjectModal(false)}
-                className="w-full px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
+                className="w-full px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
               >
                 Close
               </button>
@@ -971,7 +971,7 @@ const PermissionsModal: React.FC<{
                       />
                       <div>
                         <span
-                          className={`text-sm ${permissions[perm.key] ? 'text-white' : 'text-slate-300'}`}
+                          className={`text-sm ${permissions[perm.key] ? 'text-white' : 'text-slate-600'}`}
                         >
                           {perm.label}
                         </span>
@@ -990,7 +990,7 @@ const PermissionsModal: React.FC<{
         <div className="p-6 border-t border-white/10 flex gap-3 flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
+            className="flex-1 px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors font-medium"
           >
             Cancel
           </button>

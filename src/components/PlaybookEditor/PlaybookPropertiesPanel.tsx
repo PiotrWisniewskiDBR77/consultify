@@ -56,7 +56,7 @@ export const PlaybookPropertiesPanel: React.FC<PlaybookPropertiesPanelProps> = (
           <h3 className="font-semibold text-gray-900">Node Properties</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
+            className="text-gray-600 hover:text-gray-600 dark:text-gray-400"
           >
             ×
           </button>

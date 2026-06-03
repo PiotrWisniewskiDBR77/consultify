@@ -107,7 +107,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{deckTitle}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <button onClick={onClose} className="text-slate-600 hover:text-slate-600">
             <X size={20} />
           </button>
         </div>
@@ -158,12 +158,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     key={perm.label}
                     className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-400 text-left"
                   >
-                    <perm.icon size={16} className="text-slate-400" />
+                    <perm.icon size={16} className="text-slate-600" />
                     <div>
                       <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         {perm.label}
                       </p>
-                      <p className="text-[10px] text-slate-400">{perm.desc}</p>
+                      <p className="text-[10px] text-slate-600">{perm.desc}</p>
                     </div>
                   </button>
                 ))}
@@ -175,7 +175,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-navy-800">
                 <div className="flex items-center gap-2">
-                  <Link size={16} className="text-slate-400" />
+                  <Link size={16} className="text-slate-600" />
                   <span className="text-sm text-slate-700 dark:text-slate-300">
                     {t('presentations.builder.share.publicLink', 'Public link')}
                   </span>
@@ -218,7 +218,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600">
                     {t(
                       'presentations.builder.share.anyoneCanView',
                       'Anyone with the link can view'
@@ -263,12 +263,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       {exp.label}
                     </p>
-                    <p className="text-[11px] text-slate-400">{exp.desc}</p>
+                    <p className="text-[11px] text-slate-600">{exp.desc}</p>
                   </div>
-                  <Download size={16} className="ml-auto text-slate-400" />
+                  <Download size={16} className="ml-auto text-slate-600" />
                 </button>
               ))}
-              <p className="text-[10px] text-slate-400 mt-2">
+              <p className="text-[10px] text-slate-600 mt-2">
                 {t(
                   'presentations.builder.export.staticNote',
                   'Animated elements will be static in PDF and PowerPoint'

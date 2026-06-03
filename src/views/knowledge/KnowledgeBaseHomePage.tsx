@@ -247,7 +247,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <div className="relative">
                   <Search
                     size={18}
-                    className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40"
+                    className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-white/40"
                   />
                   <input
                     type="text"
@@ -263,7 +263,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                         setSearchQuery('');
                         setActiveSearch('');
                       }}
-                      className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
+                      className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
                     >
                       <X size={18} />
                     </button>
@@ -392,7 +392,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
           <section className="relative z-10 px-4 sm:px-6 pb-6 sm:pb-8">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-                <Tag size={14} className="flex-shrink-0 text-slate-400 dark:text-white/30" />
+                <Tag size={14} className="flex-shrink-0 text-slate-600 dark:text-white/30" />
                 {tags.slice(0, 18).map((tag: any) => (
                   <button
                     key={tag.id}
@@ -609,7 +609,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
         </div>
       ) : (
         <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0D0828] dark:to-[#12082E]">
-          <BookOpen size={32} className="text-slate-300 dark:text-white/15" />
+          <BookOpen size={32} className="text-slate-600 dark:text-white/15" />
         </div>
       )}
 

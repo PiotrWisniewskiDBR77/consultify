@@ -289,7 +289,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                     >
                       <div className="flex items-start gap-2">
                         {editable && (
-                          <GripVertical className="w-4 h-4 text-slate-400 dark:text-slate-500 mt-0.5 cursor-grab" />
+                          <GripVertical className="w-4 h-4 text-slate-600 dark:text-slate-500 mt-0.5 cursor-grab" />
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
@@ -308,7 +308,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
 
                 {/* Empty state */}
                 {quadrantRisks.length === 0 && (
-                  <div className="flex items-center justify-center h-20 text-sm text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center justify-center h-20 text-sm text-slate-600 dark:text-slate-500">
                     {editable
                       ? isPolish
                         ? 'Przeciągnij tutaj'
@@ -373,7 +373,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                     >
                       <div className="flex items-start gap-2">
                         {editable && (
-                          <GripVertical className="w-4 h-4 text-slate-400 dark:text-slate-500 mt-0.5 cursor-grab" />
+                          <GripVertical className="w-4 h-4 text-slate-600 dark:text-slate-500 mt-0.5 cursor-grab" />
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
@@ -392,7 +392,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
 
                 {/* Empty state */}
                 {quadrantRisks.length === 0 && (
-                  <div className="flex items-center justify-center h-20 text-sm text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center justify-center h-20 text-sm text-slate-600 dark:text-slate-500">
                     {editable
                       ? isPolish
                         ? 'Przeciągnij tutaj'
@@ -408,11 +408,11 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
         </div>
 
         {/* Axis arrows */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col justify-between py-4 text-xs text-slate-400 dark:text-slate-500">
+        <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col justify-between py-4 text-xs text-slate-600 dark:text-slate-500">
           <span>{isPolish ? 'Wysoki' : 'High'}</span>
           <span>{isPolish ? 'Niski' : 'Low'}</span>
         </div>
-        <div className="absolute left-8 right-0 -bottom-6 flex justify-between text-xs text-slate-400 dark:text-slate-500">
+        <div className="absolute left-8 right-0 -bottom-6 flex justify-between text-xs text-slate-600 dark:text-slate-500">
           <span>{isPolish ? 'Niskie' : 'Low'}</span>
           <span>{isPolish ? 'Wysokie' : 'High'}</span>
         </div>
@@ -468,7 +468,7 @@ export const RiskMatrix: React.FC<RiskMatrixProps> = ({
                 </div>
                 <button
                   onClick={() => setSelectedRisk(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
+                  className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
                 >
                   <X className="w-5 h-5" />
                 </button>

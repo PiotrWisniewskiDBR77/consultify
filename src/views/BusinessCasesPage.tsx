@@ -65,7 +65,7 @@ export const BusinessCasesPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.14 }}
-            className="mt-6 max-w-3xl text-lg leading-8 text-slate-300"
+            className="mt-6 max-w-3xl text-lg leading-8 text-slate-600"
           >
             AluForm Group had ambitious targets for operational improvement, but each plant ran its
             own spreadsheets, its own priorities, and its own business cases. The board saw dozens
@@ -77,7 +77,7 @@ export const BusinessCasesPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mt-4 max-w-3xl text-lg leading-8 text-slate-300"
+            className="mt-4 max-w-3xl text-lg leading-8 text-slate-600"
           >
             This is the story of how they fixed that with Consultify.
           </motion.p>
@@ -108,7 +108,7 @@ export const BusinessCasesPage: React.FC = () => {
             ].map((m) => (
               <div key={m.sub} className={`rounded-2xl border px-5 py-5 ${m.color}`}>
                 <p className="text-3xl font-black text-white">{m.value}</p>
-                <p className="mt-1 text-sm text-slate-400">{m.sub}</p>
+                <p className="mt-1 text-sm text-slate-600">{m.sub}</p>
               </div>
             ))}
           </div>

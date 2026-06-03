@@ -544,7 +544,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     'w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all appearance-none cursor-pointer';
   const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
   const sectionTitleClass =
-    'text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-100 dark:border-navy-700 pb-2';
+    'text-sm font-bold text-navy-900 dark:text-white mb-6 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700 pb-2';
   const cardClass =
     'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-6';
 
@@ -587,7 +587,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <UserCircle size={64} className="text-slate-300 dark:text-slate-600" />
+                  <UserCircle size={64} className="text-slate-600 dark:text-slate-600" />
                 )}
               </div>
               <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -600,7 +600,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
               {formState.displayName || `${currentUser.firstName} ${currentUser.lastName}`}
             </h3>
             {formState.pronouns && (
-              <p className="text-slate-400 dark:text-slate-500 text-xs">({formState.pronouns})</p>
+              <p className="text-slate-600 dark:text-slate-500 text-xs">({formState.pronouns})</p>
             )}
             <p className="text-primary-600 dark:text-primary-400 text-sm font-medium">
               {currentUser.companyName}
@@ -666,7 +666,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <UserIcon
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                   />
                   <input
                     value={formState.displayName}
@@ -675,7 +675,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     className={inputWithIconClass}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1">
                   {t(
                     'settings.profile.displayNameHint',
                     'This is how your name will appear to other users. Leave empty to use your full name.'
@@ -698,7 +698,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg
-                      className="w-4 h-4 text-slate-400 dark:text-slate-500"
+                      className="w-4 h-4 text-slate-600 dark:text-slate-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -720,7 +720,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <Users
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
                   />
                   <select
                     value={formState.department}
@@ -735,7 +735,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg
-                      className="w-4 h-4 text-slate-400 dark:text-slate-500"
+                      className="w-4 h-4 text-slate-600 dark:text-slate-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -794,7 +794,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <Phone
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                   />
                   <input
                     value={formState.phone}
@@ -808,7 +808,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <Building2
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                   />
                   <input
                     value={formState.companyName}
@@ -824,7 +824,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <Globe
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                   />
                   <input
                     value={formState.linkedinId}
@@ -832,7 +832,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     placeholder="e.g. piotr-wisniewski-123"
                     className={inputWithIconClass}
                   />
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 ml-1">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1 ml-1">
                     {t(
                       'settings.profile.linkedinHint',
                       'Enter your profile ID from the LinkedIn URL (after /in/)'
@@ -846,7 +846,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <Briefcase
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                   />
                   <input
                     value={formState.jobTitle}
@@ -896,7 +896,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <MessageCircle
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                   />
                   <input
                     value={formState.statusMessage}
@@ -909,7 +909,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     className={inputWithIconClass}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1">
                   {t(
                     'settings.profile.statusHint',
                     "Let your team know what you're up to ({{count}}/100)",
@@ -930,7 +930,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                         className={
                           formState.isOutOfOffice
                             ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-slate-400 dark:text-slate-500'
+                            : 'text-slate-600 dark:text-slate-500'
                         }
                       />
                     </div>
@@ -1007,7 +1007,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <Clock
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
                   />
                   <select
                     value={formState.timezone}
@@ -1022,7 +1022,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg
-                      className="w-4 h-4 text-slate-400 dark:text-slate-500"
+                      className="w-4 h-4 text-slate-600 dark:text-slate-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1036,7 +1036,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     </svg>
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                   {t('settings.profile.timezoneHint', 'Current local time:')}{' '}
                   {new Date().toLocaleTimeString(undefined, {
                     timeZone: formState.timezone,
@@ -1054,7 +1054,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 <div className="relative">
                   <Calendar
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
                   />
                   <select
                     value={formState.dateFormat}
@@ -1069,7 +1069,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg
-                      className="w-4 h-4 text-slate-400 dark:text-slate-500"
+                      className="w-4 h-4 text-slate-600 dark:text-slate-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1156,7 +1156,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-navy-700">
+                <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-navy-700">
                   <div>
                     <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">
                       {t('settings.profile.language', 'Language')}

@@ -301,7 +301,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
             </select>
             <ChevronDown
               size={18}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
             />
           </div>
         </div>
@@ -327,7 +327,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
           </select>
           <ChevronDown
             size={18}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
           />
         </div>
       </div>
@@ -345,7 +345,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
               size={16}
               className={`transition-transform ${showSectionConfig ? 'rotate-180' : ''}`}
             />
-            <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+            <span className="ml-auto text-xs text-slate-600 dark:text-slate-500">
               {enabledSections.length}/{availableSections.length} enabled
             </span>
           </button>
@@ -394,7 +394,7 @@ export const ReportTypeSelector: React.FC<ReportTypeSelectorProps> = ({
                       {isRequired && (
                         <Lock
                           size={12}
-                          className="text-slate-400 dark:text-slate-500 flex-shrink-0"
+                          className="text-slate-600 dark:text-slate-500 flex-shrink-0"
                         />
                       )}
                     </button>

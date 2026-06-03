@@ -53,7 +53,7 @@ interface NewSessionModalProps {
 }
 
 const PRIORITY_CONFIG: Record<Priority, { label: string; labelPl: string; color: string }> = {
-  low: { label: 'Low', labelPl: 'Niski', color: 'bg-slate-500/20 text-slate-300' },
+  low: { label: 'Low', labelPl: 'Niski', color: 'bg-slate-500/20 text-slate-600' },
   medium: { label: 'Medium', labelPl: 'Sredni', color: 'bg-blue-500/20 text-blue-300' },
   high: { label: 'High', labelPl: 'Wysoki', color: 'bg-amber-500/20 text-amber-300' },
   urgent: { label: 'Urgent', labelPl: 'Pilny', color: 'bg-rose-500/20 text-rose-300' },
@@ -264,7 +264,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
           <div className="p-6 space-y-6">
             {/* Mode Selection */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
                 {isPolish ? 'Tryb' : 'Mode'}
               </label>
               <div className="flex gap-3">
@@ -303,7 +303,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
 
             {/* Template Selection */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
                 {isPolish ? 'Szablon' : 'Template'} *
               </label>
               <div className="relative">
@@ -373,7 +373,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Team Assignment - Assignees */}
             {mode === 'team' && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
                   {isPolish ? 'Przypisani' : 'Assignees'} *
                 </label>
                 {loadingMembers ? (
@@ -461,7 +461,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
 
             {/* Due Date */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
                 {isPolish ? 'Termin' : 'Due Date'} *
               </label>
               <div className="relative">
@@ -482,7 +482,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Priority (only for team assignments) */}
             {mode === 'team' && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
                   {isPolish ? 'Priorytet' : 'Priority'}
                 </label>
                 <div className="relative">
@@ -533,7 +533,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
             {/* Notes (only for team assignments) */}
             {mode === 'team' && (
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-300 dark:text-slate-400">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">
                   {isPolish ? 'Notatki (opcjonalnie)' : 'Notes (optional)'}
                 </label>
                 <textarea

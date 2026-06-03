@@ -153,7 +153,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
       className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden ${className}`}
     >
       {/* Header with filters */}
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700 flex flex-wrap items-center justify-between gap-4">
+      <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex flex-wrap items-center justify-between gap-4">
         <h3 className="font-semibold text-navy-900 dark:text-white flex items-center gap-2">
           <FileText size={18} />
           Report History
@@ -164,7 +164,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
 
         {onFilterChange && (
           <div className="flex items-center gap-2">
-            <Filter size={14} className="text-slate-400 dark:text-slate-500" />
+            <Filter size={14} className="text-slate-600 dark:text-slate-500" />
 
             {/* Type Filter */}
             <div className="relative">
@@ -187,7 +187,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
               />
             </div>
 
@@ -209,7 +209,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
               />
             </div>
 
@@ -232,7 +232,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
               />
             </div>
           </div>
@@ -268,7 +268,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {[1, 2, 3, 4, 5].map((i) => (
                 <ReportHistoryRowSkeleton key={i} />
               ))}
@@ -276,9 +276,9 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
           </table>
         ) : reports.length === 0 ? (
           <div className="p-8 text-center">
-            <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+            <FileText size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
             <p className="text-slate-500 dark:text-slate-400">No reports found.</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Generate your first report to see it here.
             </p>
           </div>
@@ -309,7 +309,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {reports.map((report) => {
                 const typeBadge =
                   reportTypeLabels[report.reportType] || reportTypeLabels.TEAM_MEETING;
@@ -356,7 +356,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                        <Calendar size={14} className="text-slate-400 dark:text-slate-500" />
+                        <Calendar size={14} className="text-slate-600 dark:text-slate-500" />
                         {new Date(report.createdAt).toLocaleDateString()}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -429,7 +429,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
 
       {/* Pagination Footer */}
       {totalPages > 1 && !loading && (
-        <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
           <div className="text-sm text-slate-500 dark:text-slate-400">
             Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}{' '}
             reports

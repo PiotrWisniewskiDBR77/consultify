@@ -108,7 +108,7 @@ const STATUS_CONFIG = {
   healthy: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
   degraded: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
   down: { color: 'bg-rose-500', text: 'text-rose-400', icon: XCircle },
-  unknown: { color: 'bg-slate-500', text: 'text-slate-400 dark:text-slate-500', icon: Activity },
+  unknown: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Activity },
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -608,7 +608,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   </h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-400 dark:text-slate-500">Used</span>
+                      <span className="text-slate-600 dark:text-slate-500">Used</span>
                       <span className="text-slate-900 dark:text-slate-100 font-medium">
                         {metrics?.memory.used || health?.system?.memory?.used || 0} MB
                       </span>
@@ -633,7 +633,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   </h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-400 dark:text-slate-500">Load Average (1m)</span>
+                      <span className="text-slate-600 dark:text-slate-500">Load Average (1m)</span>
                       <span className="text-slate-900 dark:text-slate-100 font-medium">
                         {safeNumber(health?.system?.loadAvg?.[0]).toFixed(2)}
                       </span>
@@ -756,7 +756,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                           Dependencies:{' '}
                         </span>
                         {service.dependencies.map((dep, i) => (
-                          <span key={dep} className="text-xs text-slate-400 dark:text-slate-500">
+                          <span key={dep} className="text-xs text-slate-600 dark:text-slate-500">
                             {dep}
                             {i < service.dependencies.length - 1 ? ', ' : ''}
                           </span>
@@ -812,11 +812,11 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <Icon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                       {trend === 'up' && <TrendingUp className="w-4 h-4 text-emerald-400" />}
                       {trend === 'down' && <TrendingDown className="w-4 h-4 text-rose-400" />}
                       {trend === 'stable' && (
-                        <Activity className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                        <Activity className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                       )}
                     </div>
                     <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -950,7 +950,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               />
             </div>
           ) : alerts.length === 0 && !showCreateAlert ? (
-            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
               <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="mb-2">No alerts configured</p>
               <p className="text-sm">Set up alerts to monitor critical metrics</p>
@@ -964,7 +964,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-slate-100">{alert.name}</h4>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
                       {alert.metric}{' '}
                       {alert.operator === 'gt' ? '>' : alert.operator === 'lt' ? '<' : '='}{' '}
                       {alert.threshold}
@@ -977,7 +977,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                       className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors ${
                         alert.enabled
                           ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                          : 'bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-600'
+                          : 'bg-slate-700 text-slate-600 dark:text-slate-500 hover:bg-slate-600'
                       }`}
                     >
                       {alert.enabled ? 'Active' : 'Disabled'}
@@ -985,7 +985,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
                       aria-label={`Delete alert ${alert.name}`}
-                      className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
+                      className="p-1 text-slate-600 hover:text-rose-400 transition-colors"
                       title="Delete alert"
                     >
                       <XCircle className="w-4 h-4" />
@@ -1001,7 +1001,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5" />
               <div>
                 <h4 className="font-medium text-amber-400">Alert Channels</h4>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
                   Configure notification channels (Email, Slack, PagerDuty) in the Organization
                   settings to receive alerts.
                 </p>

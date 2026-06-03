@@ -218,7 +218,7 @@ export const SubscriptionAnalytics: React.FC = () => {
           Subscription Analytics
         </h2>
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+          <Calendar className="w-4 h-4 text-slate-600 dark:text-slate-500" />
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(parseInt(e.target.value))}
@@ -411,7 +411,7 @@ export const SubscriptionAnalytics: React.FC = () => {
               </thead>
               <tbody className="text-sm">
                 {churn?.data?.slice(0, 6).map((row, i) => (
-                  <tr key={i} className="border-t border-slate-100 dark:border-navy-700">
+                  <tr key={i} className="border-t border-slate-200 dark:border-navy-700">
                     <td className="py-2 text-slate-900 dark:text-white">
                       {formatMonth(row.month)}
                     </td>
@@ -453,7 +453,7 @@ export const SubscriptionAnalytics: React.FC = () => {
               </thead>
               <tbody className="text-sm">
                 {expansion?.data?.slice(0, 6).map((row, i) => (
-                  <tr key={i} className="border-t border-slate-100 dark:border-navy-700">
+                  <tr key={i} className="border-t border-slate-200 dark:border-navy-700">
                     <td className="py-2 text-slate-900 dark:text-white">
                       {formatMonth(row.month)}
                     </td>

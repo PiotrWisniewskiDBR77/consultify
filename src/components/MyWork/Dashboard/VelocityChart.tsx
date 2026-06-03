@@ -89,13 +89,13 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
       ? 'text-green-500'
       : trend === 'down'
         ? 'text-rose-500'
-        : 'text-slate-400 dark:text-slate-500';
+        : 'text-slate-600 dark:text-slate-500';
 
   if (loading && !metrics) {
     return (
       <div className={`bg-white dark:bg-navy-900 rounded-xl p-6 ${className}`}>
         <div className="flex items-center justify-center py-8">
-          <Loader2 size={24} className="animate-spin text-slate-400 dark:text-slate-500" />
+          <Loader2 size={24} className="animate-spin text-slate-600 dark:text-slate-500" />
         </div>
       </div>
     );
@@ -119,7 +119,7 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
             <span className="text-2xl font-bold text-navy-900 dark:text-white">
               {metrics.averageVelocity}
             </span>
-            <span className="text-sm text-slate-400 dark:text-slate-500">tasks/week</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">tasks/week</span>
           </div>
         </div>
 
@@ -138,7 +138,7 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
         <div className="flex justify-between mt-2">
           {metrics.data.map((d: VelocityMetrics['data'][number], idx: number) => (
             <div key={idx} className="flex-1 text-center">
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                 {new Date(d.date).toLocaleDateString('pl-PL', {
                   month: 'short',
                   day: 'numeric',
@@ -150,7 +150,7 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
       </div>
 
       {/* Legend & Stats */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+      <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
         {/* Legend */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
         {/* Team average comparison */}
         {showTeamAverage && (
           <div className="text-right">
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-500">
               {t('myWork.dashboard.teamAverage', 'Team avg:')} {metrics.teamAverageVelocity}
             </p>
             {metrics.averageVelocity > metrics.teamAverageVelocity && (

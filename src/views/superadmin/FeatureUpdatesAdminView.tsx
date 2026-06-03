@@ -689,7 +689,7 @@ export const FeatureUpdatesAdminView: React.FC = () => {
             </div>
           ) : updates.length === 0 ? (
             <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-10 text-center">
-              <Bell className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+              <Bell className="w-8 h-8 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
               <div className="text-sm text-slate-600 dark:text-slate-300">
                 No updates match the selected filters.
               </div>

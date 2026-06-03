@@ -208,7 +208,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
           ) : !children ? (
             <div
               className={
-                compact ? 'text-xs text-slate-400 italic' : 'text-sm text-slate-400 italic'
+                compact ? 'text-xs text-slate-600 italic' : 'text-sm text-slate-600 italic'
               }
             >
               {isPolish ? 'Brak opisu.' : 'No description.'}

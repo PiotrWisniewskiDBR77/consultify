@@ -774,7 +774,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               </div>
               <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
                 {openAssessments.length === 0 ? (
-                  <div className="text-xs text-slate-400 dark:text-slate-500 px-2 py-2">
+                  <div className="text-xs text-slate-600 dark:text-slate-500 px-2 py-2">
                     Brak aktywnych assessmentow
                   </div>
                 ) : (
@@ -1188,17 +1188,17 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
               {/* Placeholder for other tabs - module-specific buttons will go here */}
               {activeTab === 'assessment' && (
-                <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <span className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {/* Assessment tab actions placeholder */}
                 </span>
               )}
               {activeTab === 'reports' && (
-                <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <span className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {/* Reports tab actions placeholder */}
                 </span>
               )}
               {activeTab === 'initiatives' && (
-                <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <span className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {/* Initiatives tab actions placeholder */}
                 </span>
               )}
@@ -1223,7 +1223,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                 selectedAssessmentId
                   ? 'bg-amber-500 text-white hover:bg-amber-400'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
               }`}
             >
               <Lightbulb size={14} />
@@ -1271,7 +1271,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   <span className="text-xs text-amber-500 dark:text-amber-400 flex items-center gap-1">
                     <AlertCircle size={12} />
                     Unsaved changes
-                    <span className="text-slate-400 dark:text-slate-500 ml-1">
+                    <span className="text-slate-600 dark:text-slate-500 ml-1">
                       (auto-save in 30s)
                     </span>
                   </span>
@@ -1291,7 +1291,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   <span className="text-xs text-rose-500 dark:text-rose-400">{saveError}</span>
                 )}
                 {lastSaved && !saveError && (
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     Saved:{' '}
                     {lastSaved.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </span>
@@ -1314,7 +1314,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                     flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all
                                     ${
                                       isSaving
-                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                         : hasUnsavedChanges
                                           ? 'bg-green-600 hover:bg-green-500 text-white shadow-md shadow-green-600/20'
                                           : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'

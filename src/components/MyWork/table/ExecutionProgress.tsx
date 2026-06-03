@@ -87,7 +87,7 @@ function getStatusIndicator(status: OperationStatus): React.ReactNode {
     default:
       return (
         <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-zinc-600 flex items-center justify-center">
-          <Circle size={8} className="text-slate-300 dark:text-zinc-600" />
+          <Circle size={8} className="text-slate-600 dark:text-zinc-600" />
         </div>
       );
   }
@@ -150,7 +150,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
               {statusLabel}
             </span>
           </div>
-          <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+          <span className="text-[10px] text-slate-600 dark:text-zinc-500 font-mono">
             {stats.done}/{stats.total}
           </span>
         </div>
@@ -209,7 +209,7 @@ export const ExecutionProgress: React.FC<ExecutionProgressProps> = ({
                           ? 'text-rose-600 dark:text-rose-400'
                           : isActive
                             ? 'text-primary-600 dark:text-primary-400'
-                            : 'text-slate-400 dark:text-zinc-500'
+                            : 'text-slate-600 dark:text-zinc-500'
                     }`}
                   />
                   <span

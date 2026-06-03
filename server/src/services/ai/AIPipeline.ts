@@ -1184,6 +1184,28 @@ export class AIPipeline {
       parts.push(`## INSTRUKCJE UŻYTKOWNIKA (Custom Instructions)\n${ctx.customInstructions}`);
     }
 
+    // 4.5c. User AI Settings → shape Teresa's behavior (response style, tone, proactivity)
+    // These are persisted via /api/ai-settings/user and loaded by AIContextBuilder.
+    if (ctx?.aiSettings) {
+      const s = ctx.aiSettings;
+      const settingsParts: string[] = [];
+      if (s.response_style || s.responseStyle) {
+        settingsParts.push(`- Response style: ${s.response_style || s.responseStyle}`);
+      }
+      if (s.writing_tone || s.writingTone) {
+        settingsParts.push(`- Writing tone: ${s.writing_tone || s.writingTone}`);
+      }
+      if (s.proactivity_mode || s.proactivityMode) {
+        settingsParts.push(`- Proactivity: ${s.proactivity_mode || s.proactivityMode}`);
+      }
+      if (s.custom_instructions || s.customInstructions) {
+        settingsParts.push(`- Additional instructions: ${s.custom_instructions || s.customInstructions}`);
+      }
+      if (settingsParts.length > 0) {
+        parts.push(`## PREFERENCJE AI UŻYTKOWNIKA (from Settings)\n${settingsParts.join('\n')}`);
+      }
+    }
+
     // 4.6. Organization memory (terminology, patterns)
     if (ctx?.orgMemory) {
       const om = ctx.orgMemory;

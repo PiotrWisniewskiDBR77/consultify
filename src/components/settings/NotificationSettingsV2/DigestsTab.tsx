@@ -88,7 +88,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
 
         {localDigests.dailyEnabled && (
           <div className="flex items-center gap-3 pt-2 border-t border-slate-200 dark:border-navy-600">
-            <Clock size={16} className="text-slate-400 dark:text-slate-500" />
+            <Clock size={16} className="text-slate-600 dark:text-slate-500" />
             <span className="text-sm text-slate-600 dark:text-slate-400">
               {t('settings.notifications.deliveryTime', 'Delivery time:')}
             </span>
@@ -127,7 +127,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
         {localDigests.weeklyEnabled && (
           <div className="flex items-center gap-4 pt-2 border-t border-slate-200 dark:border-navy-600">
             <div className="flex items-center gap-2">
-              <Calendar size={16} className="text-slate-400 dark:text-slate-500" />
+              <Calendar size={16} className="text-slate-600 dark:text-slate-500" />
               <select
                 value={localDigests.weeklyDay}
                 onChange={(e) => handleChange('weeklyDay', e.target.value)}
@@ -141,7 +141,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <Clock size={16} className="text-slate-400 dark:text-slate-500" />
+              <Clock size={16} className="text-slate-600 dark:text-slate-500" />
               <input
                 type="time"
                 value={localDigests.weeklyTime}

@@ -4670,7 +4670,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return {
           dot: 'bg-slate-300',
           bg: 'bg-slate-100 dark:bg-navy-800',
-          text: 'text-slate-400 dark:text-slate-500',
+          text: 'text-slate-600 dark:text-slate-500',
         };
       // Map target status to module color
       const targetModule = getModuleFromStatus(gateConf.toStatus);
@@ -5545,7 +5545,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         MAP[type] || {
           icon: <Clock size={12} />,
           label: type.replace(/_/g, ' '),
-          style: 'text-slate-400 bg-slate-400/10 border-slate-300/30',
+          style: 'text-slate-600 bg-slate-400/10 border-slate-300/30',
         }
       );
     },
@@ -5577,7 +5577,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       {isPolish ? 'Problem' : 'Problem'}
                     </label>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {isPolish
                         ? 'Jaki problem rozwiązuje ta inicjatywa'
                         : 'What problem does this initiative solve'}
@@ -5615,7 +5615,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       {isPolish ? 'Opis rozwiązania' : 'Proposed Solution'}
                     </label>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {isPolish
                         ? 'Proponowane podejście i sposób realizacji'
                         : 'Proposed approach and implementation method'}
@@ -5653,7 +5653,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       {isPolish ? 'Koszt bezczynności' : 'Cost of Inaction'}
                     </label>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {isPolish
                         ? 'Konsekwencje braku działania'
                         : 'Consequences of not taking action'}
@@ -5691,7 +5691,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       {isPolish ? 'Kontekst rynkowy' : 'Market Context'}
                     </label>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {isPolish
                         ? 'Otoczenie rynkowe, konkurencja i trendy'
                         : 'Market environment, competition and trends'}
@@ -5790,7 +5790,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 placeholder={placeholder}
                 className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 ${
                   item.done
-                    ? 'line-through text-slate-400 dark:text-slate-500'
+                    ? 'line-through text-slate-600 dark:text-slate-500'
                     : 'text-slate-700 dark:text-slate-300'
                 }`}
               />
@@ -5810,7 +5810,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(item.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -5875,7 +5875,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
               <div className="min-h-[56px] border-b border-slate-200/70 dark:border-navy-700/60 pb-2">
                 {items.length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                     {isPolish ? 'Brak pozycji' : 'No items yet'}
                   </p>
                 ) : (
@@ -6011,12 +6011,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onChange={(e) => onUpdate(item.id, { text: e.target.value })}
                 placeholder={placeholder}
                 className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 transition-colors ${
-                  item.done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'
+                  item.done ? 'line-through text-slate-600' : 'text-slate-700 dark:text-slate-300'
                 }`}
               />
               <button
                 onClick={() => onRemove(item.id)}
-                className="mt-0.5 opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                className="mt-0.5 opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6044,14 +6044,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                     {isPolish ? labelPL : labelEN}
                   </label>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                     {isPolish ? descPL : descEN}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={onAdd}
-                    className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                    className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                   >
                     <Plus size={14} />
                     {isPolish ? 'Dodaj' : 'Add item'}
@@ -6206,7 +6206,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(idx)}
-                className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6232,7 +6232,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                           {isPolish ? 'W zakresie' : 'In Scope'}
                         </label>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                           {isPolish
                             ? 'Elementy, procesy i obszary objęte inicjatywą'
                             : 'Elements, processes and areas included in this initiative'}
@@ -6242,7 +6242,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={addInScope}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                       >
                         <Plus size={14} />
                         {isPolish ? 'Dodaj' : 'Add item'}
@@ -6278,7 +6278,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       )
                     )}
                     {inScopeItems.length === 0 && (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                      <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                         {isPolish ? 'Brak elementów' : 'No items yet'}
                       </p>
                     )}
@@ -6297,7 +6297,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                           {isPolish ? 'Poza zakresem' : 'Out of Scope'}
                         </label>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                           {isPolish
                             ? 'Wykluczenia i ograniczenia poza zakresem'
                             : 'Exclusions and boundaries not covered'}
@@ -6307,7 +6307,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={addOutScope}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                       >
                         <Plus size={14} />
                         {isPolish ? 'Dodaj' : 'Add item'}
@@ -6343,7 +6343,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       )
                     )}
                     {outScopeItems.length === 0 && (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                      <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                         {isPolish ? 'Brak elementów' : 'No items yet'}
                       </p>
                     )}
@@ -6363,7 +6363,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         {isPolish ? 'Kryteria rezygnacji (Kill Criteria)' : 'Kill Criteria'}
                       </label>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                         {isPolish
                           ? 'Warunki, których spełnienie oznacza natychmiastowe zatrzymanie inicjatywy'
                           : 'Conditions that trigger immediate initiative termination'}
@@ -6373,7 +6373,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={addKillCriteria}
-                      className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                      className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                     >
                       <Plus size={14} />
                       {isPolish ? 'Dodaj' : 'Add item'}
@@ -6428,14 +6428,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       />
                       <button
                         onClick={() => removeKill(i)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
                       >
                         <Trash2 size={12} />
                       </button>
                     </div>
                   ))}
                   {killCriteriaItems.length === 0 && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                       {isPolish ? 'Brak kryteriów' : 'No criteria yet'}
                     </p>
                   )}
@@ -6669,7 +6669,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
                   {isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
                 </h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500">
+                <p className="text-sm text-slate-600 dark:text-slate-500">
                   {isPolish
                     ? 'Nasz księgowy jeszcze liczy... 🤓'
                     : 'Our accountant is still crunching numbers... 🤓'}
@@ -6719,7 +6719,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
                   {isPolish ? 'Wpływ finansowy' : 'Financial Impact'}
                 </h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500">
+                <p className="text-sm text-slate-600 dark:text-slate-500">
                   {isPolish
                     ? 'Pieniądze się liczą... dosłownie! 💵'
                     : 'The money is counting itself... literally! 💵'}
@@ -7470,7 +7470,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 e.stopPropagation();
                                 setKpiMenuId((prev) => (prev === kpi.id ? null : kpi.id));
                               }}
-                              className="inline-flex items-center justify-center p-1 rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
+                              className="inline-flex items-center justify-center p-1 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
                               title={isPolish ? 'Akcje KPI' : 'KPI actions'}
                             >
                               <MoreVertical size={14} />
@@ -7497,7 +7497,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   <Copy size={13} />
                                   {isPolish ? 'Duplikuj' : 'Duplicate'}
                                 </button>
-                                <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                                <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
@@ -7637,7 +7637,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       </div>
                       <button
                         onClick={() => openBacklinkItem(bl.sourceType, bl.sourceId)}
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+                        className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
                       >
                         <ExternalLink size={12} />
                       </button>

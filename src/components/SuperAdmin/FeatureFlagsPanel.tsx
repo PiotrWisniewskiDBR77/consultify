@@ -104,7 +104,7 @@ export const FeatureFlagsPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -115,7 +115,7 @@ export const FeatureFlagsPanel: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">Feature Flags</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-500 text-sm">
             Control feature availability across your platform
           </p>
         </div>
@@ -132,7 +132,7 @@ export const FeatureFlagsPanel: React.FC = () => {
       <div className="flex items-center gap-4">
         <div className="flex-1 relative">
           <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600 dark:text-slate-500"
             size={16}
           />
           <input
@@ -158,7 +158,7 @@ export const FeatureFlagsPanel: React.FC = () => {
       {/* Flags List */}
       <div className="space-y-2">
         {filteredFlags.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+          <div className="text-center py-12 text-slate-600 dark:text-slate-500">
             <Flag size={48} className="mx-auto mb-4 opacity-50" />
             <p>No feature flags found</p>
           </div>
@@ -175,12 +175,12 @@ export const FeatureFlagsPanel: React.FC = () => {
                     <span className="px-2 py-0.5 text-xs bg-primary-500/20 text-primary-400 rounded">
                       {flag.flag_key}
                     </span>
-                    <span className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">
+                    <span className="px-2 py-0.5 text-xs bg-slate-700 text-slate-600 rounded">
                       {flag.environment}
                     </span>
                   </div>
                   {flag.description && (
-                    <p className="text-sm text-slate-400 dark:text-slate-500 mb-2">
+                    <p className="text-sm text-slate-600 dark:text-slate-500 mb-2">
                       {flag.description}
                     </p>
                   )}
@@ -198,7 +198,7 @@ export const FeatureFlagsPanel: React.FC = () => {
                     className={`p-2 rounded-lg transition-colors ${
                       flag.enabled
                         ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                        : 'bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-600'
+                        : 'bg-slate-700 text-slate-600 dark:text-slate-500 hover:bg-slate-600'
                     }`}
                     title={flag.enabled ? 'Disable' : 'Enable'}
                   >
@@ -206,14 +206,14 @@ export const FeatureFlagsPanel: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setEditingFlag(flag)}
-                    className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                    className="p-2 rounded-lg bg-slate-700 text-slate-600 hover:bg-slate-600 transition-colors"
                     title="Edit"
                   >
                     <Edit size={16} />
                   </button>
                   <button
                     onClick={() => setSelectedFlagHistory(flag.id)}
-                    className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                    className="p-2 rounded-lg bg-slate-700 text-slate-600 hover:bg-slate-600 transition-colors"
                     title="History"
                   >
                     <History size={16} />
@@ -309,13 +309,13 @@ const FeatureFlagModal: React.FC<{
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
           >
-            <X size={20} className="text-slate-400 dark:text-slate-500" />
+            <X size={20} className="text-slate-600 dark:text-slate-500" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Flag Key *</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Flag Key *</label>
             <input
               type="text"
               required
@@ -327,7 +327,7 @@ const FeatureFlagModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Name *</label>
             <input
               type="text"
               required
@@ -338,7 +338,7 @@ const FeatureFlagModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -349,7 +349,7 @@ const FeatureFlagModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Type *</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Type *</label>
               <select
                 value={formData.flag_type}
                 onChange={(e) => setFormData({ ...formData, flag_type: e.target.value as any })}
@@ -363,7 +363,7 @@ const FeatureFlagModal: React.FC<{
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Environment *</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Environment *</label>
               <select
                 value={formData.environment}
                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
@@ -378,7 +378,7 @@ const FeatureFlagModal: React.FC<{
 
           {formData.flag_type === 'percentage' && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-slate-600 mb-1">
                 Rollout Percentage
               </label>
               <input
@@ -402,7 +402,7 @@ const FeatureFlagModal: React.FC<{
               onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
               className="w-4 h-4 text-primary-600 bg-slate-50/30 dark:bg-navy-950/20 border-white/10 rounded focus:ring-primary-500"
             />
-            <label htmlFor="enabled" className="text-sm text-slate-300">
+            <label htmlFor="enabled" className="text-sm text-slate-600">
               Enabled
             </label>
           </div>
@@ -411,7 +411,7 @@ const FeatureFlagModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
             >
               Cancel
             </button>
@@ -464,18 +464,18 @@ const FlagHistoryModal: React.FC<{
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
           >
-            <X size={20} className="text-slate-400 dark:text-slate-500" />
+            <X size={20} className="text-slate-600 dark:text-slate-500" />
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
           </div>
         ) : (
           <div className="space-y-2">
             {history.length === 0 ? (
-              <p className="text-slate-400 dark:text-slate-500 text-center py-8">
+              <p className="text-slate-600 dark:text-slate-500 text-center py-8">
                 No history available
               </p>
             ) : (
@@ -491,7 +491,7 @@ const FlagHistoryModal: React.FC<{
                     </span>
                   </div>
                   {item.changed_by && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                    <p className="text-xs text-slate-600 dark:text-slate-500">
                       Changed by: {item.changed_by}
                     </p>
                   )}

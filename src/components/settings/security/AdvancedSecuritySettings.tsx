@@ -440,7 +440,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   {passwordPolicy.policy?.require_uppercase ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-400 dark:text-slate-500" />
+                    <X size={18} className="text-slate-600 dark:text-slate-500" />
                   )}
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
@@ -450,7 +450,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   {passwordPolicy.policy?.require_numbers ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-400 dark:text-slate-500" />
+                    <X size={18} className="text-slate-600 dark:text-slate-500" />
                   )}
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
@@ -460,7 +460,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   {passwordPolicy.policy?.require_special_chars ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-400 dark:text-slate-500" />
+                    <X size={18} className="text-slate-600 dark:text-slate-500" />
                   )}
                 </div>
               </div>
@@ -837,7 +837,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         ? 'text-green-600'
                         : location.risk_score > 50
                           ? 'text-rose-600'
-                          : 'text-slate-400 dark:text-slate-500'
+                          : 'text-slate-600 dark:text-slate-500'
                     }
                   />
                   <div>

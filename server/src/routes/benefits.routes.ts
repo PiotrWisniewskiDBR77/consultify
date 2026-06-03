@@ -68,42 +68,30 @@ router.get(
         i.name AS initiative_name,
         u.first_name AS owner_first_name,
         u.last_name AS owner_last_name,
-        ts.value AS latest_value,
-        ts.period_start AS latest_period_start,
-        ts_prev.value AS prev_value,
-        ts_prev.period_start AS prev_period_start,
-        c.id AS open_case_id,
-        c.severity AS open_case_severity,
-        c.status AS open_case_status
+        (SELECT value FROM kpi_time_series WHERE kpi_id = k.id AND organization_id = ?
+         ORDER BY period_start DESC, created_at DESC LIMIT 1) AS latest_value,
+        (SELECT period_start FROM kpi_time_series WHERE kpi_id = k.id AND organization_id = ?
+         ORDER BY period_start DESC, created_at DESC LIMIT 1) AS latest_period_start,
+        (SELECT value FROM kpi_time_series WHERE kpi_id = k.id AND organization_id = ?
+         ORDER BY period_start DESC, created_at DESC LIMIT 1 OFFSET 1) AS prev_value,
+        (SELECT period_start FROM kpi_time_series WHERE kpi_id = k.id AND organization_id = ?
+         ORDER BY period_start DESC, created_at DESC LIMIT 1 OFFSET 1) AS prev_period_start,
+        (SELECT id FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = k.id
+         AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
+         ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC LIMIT 1) AS open_case_id,
+        (SELECT severity FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = k.id
+         AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
+         ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC LIMIT 1) AS open_case_severity,
+        (SELECT status FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = k.id
+         AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
+         ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC LIMIT 1) AS open_case_status
       FROM initiative_kpis k
       LEFT JOIN initiatives i ON i.id = k.initiative_id
       LEFT JOIN users u ON u.id = k.owner_user_id
-      LEFT JOIN LATERAL (
-        SELECT value, period_start
-        FROM kpi_time_series
-        WHERE kpi_id = k.id AND organization_id = ?
-        ORDER BY period_start DESC, created_at DESC
-        LIMIT 1
-      ) ts ON TRUE
-      LEFT JOIN LATERAL (
-        SELECT value, period_start
-        FROM kpi_time_series
-        WHERE kpi_id = k.id AND organization_id = ?
-        ORDER BY period_start DESC, created_at DESC
-        OFFSET 1
-        LIMIT 1
-      ) ts_prev ON TRUE
-      LEFT JOIN LATERAL (
-        SELECT id, severity, status
-        FROM kpi_deviation_cases
-        WHERE organization_id = ? AND kpi_id = k.id AND status IN ('OPEN','ACKNOWLEDGED','IN_PROGRESS','MITIGATING')
-        ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC
-        LIMIT 1
-      ) c ON TRUE
       WHERE COALESCE(k.organization_id, i.organization_id) = ?
       ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC
       `,
-      [orgId, orgId, orgId, orgId]
+      [orgId, orgId, orgId, orgId, orgId, orgId, orgId, orgId]
     );
 
     const data = (rows || []).map((r: any) => {

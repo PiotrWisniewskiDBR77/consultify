@@ -135,7 +135,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
           </button>
           <button
             onClick={onDismiss}
-            className="ml-1 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            className="ml-1 p-1 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
             title={isPl ? 'Zamknij' : 'Dismiss'}
           >
             <X size={12} />
@@ -230,15 +230,15 @@ const ProposalItem: React.FC<{
                   style={{ width: `${confidencePercent}%` }}
                 />
               </div>
-              <span className="text-[9px] text-slate-400">{confidencePercent}%</span>
+              <span className="text-[9px] text-slate-600">{confidencePercent}%</span>
             </div>
-            <span className="text-[9px] text-slate-400">{patchSummary}</span>
+            <span className="text-[9px] text-slate-600">{patchSummary}</span>
           </div>
         </div>
         {expanded ? (
-          <ChevronUp size={12} className="text-slate-400" />
+          <ChevronUp size={12} className="text-slate-600" />
         ) : (
-          <ChevronDown size={12} className="text-slate-400" />
+          <ChevronDown size={12} className="text-slate-600" />
         )}
       </button>
 

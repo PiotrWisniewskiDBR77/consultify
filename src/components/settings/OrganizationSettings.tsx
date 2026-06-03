@@ -353,7 +353,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             selectedOrg?.organization_type === 'TRIAL') &&
             selectedOrg?.trialBudgetTotal &&
             selectedOrg?.trialBudgetRemaining !== null && (
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
                 {(() => {
                   const total = selectedOrg.trialBudgetTotal;
                   const remaining = selectedOrg.trialBudgetRemaining ?? 0;
@@ -392,7 +392,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               </div>
             )}
 
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700 text-xs text-slate-500 dark:text-slate-400 text-center">
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 text-xs text-slate-500 dark:text-slate-400 text-center">
             {selectedOrg?.billing_status === 'ACTIVE'
               ? 'Pay-as-you-go billing active'
               : selectedOrg?.paygoStatus === 'PAYGO_PENDING'
@@ -433,7 +433,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {selectedOrg.ledger.slice(0, 10).map((entry: any) => (
                   <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                     <td className="px-4 py-2">
@@ -598,7 +598,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </div>
         )}
 
-        <div className="divide-y divide-slate-100 dark:divide-white/5">
+        <div className="divide-y divide-slate-200 dark:divide-white/5">
           {members.map((member) => (
             <div
               key={member.id}

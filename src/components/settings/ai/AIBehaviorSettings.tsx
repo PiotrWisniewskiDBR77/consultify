@@ -165,7 +165,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
           >
             <Icon
               size={18}
-              className={enabled ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'}
+              className={enabled ? 'text-primary-600' : 'text-slate-600 dark:text-slate-500'}
             />
           </div>
           <div>
@@ -303,7 +303,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                   className={
                     settings.personality === p.id
                       ? 'text-amber-600'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-500'
                   }
                 />
                 <p className="font-medium text-slate-900 dark:text-white mt-2 text-sm">{p.label}</p>

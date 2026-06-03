@@ -528,7 +528,7 @@ export const RoutingRulesTab: React.FC = () => {
       case 'load_balance':
         return 'bg-blue-500/10 text-blue-400';
       default:
-        return 'bg-slate-500/10 text-slate-400';
+        return 'bg-slate-500/10 text-slate-600';
     }
   };
 
@@ -623,7 +623,7 @@ export const RoutingRulesTab: React.FC = () => {
                       <option value="claude-3-haiku">claude-3-haiku</option>
                       <option value="claude-3-5-sonnet">claude-3-5-sonnet</option>
                     </select>
-                    <ArrowRight size={16} className="text-slate-400" />
+                    <ArrowRight size={16} className="text-slate-600" />
                     <select
                       value={item.fallbackModel}
                       disabled

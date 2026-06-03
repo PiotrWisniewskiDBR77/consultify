@@ -841,7 +841,7 @@ export const APIManagementView: React.FC = () => {
                           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                           title="View Usage"
                         >
-                          <BarChart3 size={16} className="text-slate-400 dark:text-slate-500" />
+                          <BarChart3 size={16} className="text-slate-600 dark:text-slate-500" />
                         </button>
                         {key.isActive && (
                           <button
@@ -922,7 +922,7 @@ export const APIManagementView: React.FC = () => {
                 {usageData.endpoints?.map((ep, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700"
+                    className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700"
                   >
                     <div className="flex items-center gap-3">
                       <span
@@ -1014,7 +1014,7 @@ export const APIManagementView: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
         </div>

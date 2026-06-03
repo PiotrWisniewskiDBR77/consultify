@@ -575,7 +575,7 @@ const SCIMProvisioningView: React.FC = () => {
 
       {tokens.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
-          <Key className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <Key className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No tokens generated yet</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Generate a token to enable SCIM provisioning
@@ -792,7 +792,7 @@ const SCIMProvisioningView: React.FC = () => {
 
       {groupMappings.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
-          <Users className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <Users className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No group mappings configured</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Map IdP groups to automatically assign roles
@@ -829,7 +829,7 @@ const SCIMProvisioningView: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <ChevronRight className="text-slate-400 dark:text-gray-400" size={18} />
+                    <ChevronRight className="text-slate-600 dark:text-gray-400" size={18} />
                   </td>
                   <td className="px-4 py-3">
                     <span className="px-2 py-1 bg-primary-500/15 text-primary-700 dark:text-primary-200 rounded text-sm">
@@ -945,7 +945,7 @@ const SCIMProvisioningView: React.FC = () => {
 
       {syncLogs.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
-          <History className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <History className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No sync activity yet</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Logs will appear here when your IdP syncs users
@@ -1066,7 +1066,7 @@ const SCIMProvisioningView: React.FC = () => {
                                 External: {conflict.externalId} → Internal: {conflict.internalId}
                               </div>
                             )}
-                            <div className="text-xs text-slate-400 dark:text-gray-500 mt-1">
+                            <div className="text-xs text-slate-600 dark:text-gray-500 mt-1">
                               {new Date(conflict.createdAt).toLocaleString()}
                             </div>
                           </div>

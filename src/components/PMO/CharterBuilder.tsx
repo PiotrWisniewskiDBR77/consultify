@@ -310,7 +310,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 </div>
               ))}
               {(formData.deliverables || []).length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500 py-4 text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-500 py-4 text-center">
                   No deliverables defined
                 </p>
               )}
@@ -360,7 +360,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 </div>
               ))}
               {(formData.successCriteria || []).length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500 py-4 text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-500 py-4 text-center">
                   No success criteria defined
                 </p>
               )}
@@ -502,7 +502,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
                 </div>
               ))}
               {(formData.keyRisks || []).length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500 py-4 text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-500 py-4 text-center">
                   No risks identified
                 </p>
               )}

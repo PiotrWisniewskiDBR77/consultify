@@ -147,7 +147,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     {breadcrumbs.map((crumb, index) => (
                       <React.Fragment key={index}>
                         {index > 0 && (
-                          <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                          <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                         )}
                         {index < breadcrumbs.length - 1 ? (
                           <button

@@ -360,7 +360,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
           </div>
           <button
             onClick={close}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -394,7 +394,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                   setShowInput(false);
                   setLabel('');
                 }}
-                className="rounded px-2 py-1.5 text-xs text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="rounded px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800"
               >
                 <X size={12} />
               </button>
@@ -414,7 +414,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
             </button>
           )}
           {sorted.length === 0 ? (
-            <div className="text-center py-8 text-[11px] text-slate-400">
+            <div className="text-center py-8 text-[11px] text-slate-600">
               {t('Brak zapisanych snapshotów', 'No snapshots saved yet')}
             </div>
           ) : (
@@ -483,13 +483,13 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                               setEditId(snap.id);
                               setEditLabel(snap.label);
                             }}
-                            className="p-0.5 text-slate-400 hover:text-amber-500"
+                            className="p-0.5 text-slate-600 hover:text-amber-500"
                           >
                             <Pencil size={10} />
                           </button>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1 text-[9px] text-slate-400">
+                      <div className="flex items-center gap-1.5 mt-1 text-[9px] text-slate-600">
                         <span>{relTime(snap.timestamp, pl)}</span>
                         <span>·</span>
                         <span>
@@ -512,7 +512,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                           </button>
                           <button
                             onClick={() => del(snap.id)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
                           >
                             <Trash2 size={10} />
                             {t('Usuń', 'Delete')}

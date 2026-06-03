@@ -68,7 +68,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 1. Critical Megatrends */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-100 dark:border-navy-700 col-span-1 md:col-span-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-200 dark:border-navy-700 col-span-1 md:col-span-2">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <AlertTriangle className="text-rose-500" size={20} />
             Top 5 Critical Megatrends (3-5 Years)
@@ -94,7 +94,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
         </div>
 
         {/* 2. Top External Risks */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-100 dark:border-navy-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <AlertTriangle className="text-amber-500" size={20} />
             Top 3 External Risks
@@ -119,7 +119,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
         </div>
 
         {/* 3. Top Opportunities */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-100 dark:border-navy-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <TrendingUp className="text-green-500" size={20} />
             Top 3 Strategic Opportunities

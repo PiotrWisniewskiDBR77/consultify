@@ -342,7 +342,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                                     ${
                                       hasUnsavedChanges
                                         ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                        : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                        : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}
               >
@@ -411,7 +411,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                         </div>
                       </button>
                     )}
-                    <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                    <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
                     <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
                       <div className="flex justify-between">
                         <span>{t('reports.created', 'Created')}:</span>

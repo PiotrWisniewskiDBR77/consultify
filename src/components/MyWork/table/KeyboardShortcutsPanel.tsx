@@ -104,7 +104,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
@@ -121,7 +121,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {sc.keys.map((key, i) => (
                         <React.Fragment key={i}>
-                          {i > 0 && <span className="text-[9px] text-slate-400">+</span>}
+                          {i > 0 && <span className="text-[9px] text-slate-600">+</span>}
                           <kbd className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 shadow-sm">
                             {key}
                           </kbd>

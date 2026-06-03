@@ -669,12 +669,12 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   {statusBadge(m.status)}
-                  <span className="text-[10px] text-slate-400">v{m.version}</span>
+                  <span className="text-[10px] text-slate-600">v{m.version}</span>
                 </div>
               </button>
             ))}
             {models.length === 0 && (
-              <p className="text-xs text-slate-400 text-center py-8">
+              <p className="text-xs text-slate-600 text-center py-8">
                 {t('finance.model.noModels', 'No models yet. Create one to start.')}
               </p>
             )}
@@ -685,7 +685,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
       {/* ── Main area ── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {!selectedModel ? (
-          <div className="flex-1 flex items-center justify-center text-slate-400">
+          <div className="flex-1 flex items-center justify-center text-slate-600">
             <div className="text-center">
               <FileText size={40} className="mx-auto mb-3 opacity-40" />
               <p>{t('finance.model.selectOrCreate', 'Select or create a model')}</p>
@@ -702,7 +702,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   </h2>
                   {statusBadge(selectedModel.status)}
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 mt-0.5">
                   {selectedModel.currency} · {selectedModel.granularity} ·{' '}
                   {selectedModel.horizon_months} {t('finance.model.months', 'months')}
                 </p>
@@ -936,7 +936,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   </div>
 
                   {events.length === 0 && (
-                    <div className="text-center py-12 text-slate-400">
+                    <div className="text-center py-12 text-slate-600">
                       <Calendar size={32} className="mx-auto mb-3 opacity-40" />
                       <p>
                         {seedSource?.type === 'statement'
@@ -965,7 +965,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             <p className="text-sm font-medium text-slate-900 dark:text-white">
                               {ev.name}
                             </p>
-                            <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+                            <div className="flex items-center gap-3 text-xs text-slate-600 mt-0.5">
                               <span>{isPl ? cfg?.labelPl : cfg?.label}</span>
                               <span className="font-mono">{formatCurrency(ev.amount)}</span>
                               <span>{ev.recurrence}</span>
@@ -977,7 +977,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                               </span>
                             </div>
                           </div>
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-slate-600">
                             {ev.period_start}
                             {ev.period_end ? ` → ${ev.period_end}` : ''}
                           </span>
@@ -1181,7 +1181,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   </div>
 
                   {Object.keys(outputs).length === 0 ? (
-                    <div className="text-center py-12 text-slate-400">
+                    <div className="text-center py-12 text-slate-600">
                       <BarChart3 size={32} className="mx-auto mb-3 opacity-40" />
                       <p>
                         {seedSource?.type === 'statement'
@@ -1216,7 +1216,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
+                        <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
                           {(() => {
                             const firstPeriod = Object.values(outputs)[0]?.[outputTab];
                             if (!firstPeriod) return null;
@@ -1246,7 +1246,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                                   }
                                 >
                                   <td
-                                    className={`px-3 py-2 text-slate-700 dark:text-slate-300 sticky left-0 z-10 whitespace-nowrap border-r border-slate-100 dark:border-navy-700 ${
+                                    className={`px-3 py-2 text-slate-700 dark:text-slate-300 sticky left-0 z-10 whitespace-nowrap border-r border-slate-200 dark:border-navy-700 ${
                                       isSummaryLine
                                         ? 'bg-slate-50 dark:bg-navy-800/50'
                                         : 'bg-white dark:bg-navy-950'
@@ -1347,7 +1347,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       ) : validationSummary.total > 0 ? (
                         <CheckCircle2 size={20} className="text-emerald-500" />
                       ) : (
-                        <Shield size={20} className="text-slate-400" />
+                        <Shield size={20} className="text-slate-600" />
                       )}
                       <span className="font-semibold text-slate-900 dark:text-white">
                         {t('finance.model.modelHealth', 'Model Health')}:{' '}
@@ -1385,7 +1385,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
+                        <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
                           {validations.slice(0, 60).map((v, i) => (
                             <tr
                               key={i}

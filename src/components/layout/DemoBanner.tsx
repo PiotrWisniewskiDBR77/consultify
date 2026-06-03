@@ -70,10 +70,10 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
               {t('demo.banner.mode', 'Demo')}
             </span>
           </div>
-          <span className="text-slate-300">
+          <span className="text-slate-600">
             <span className="font-medium text-slate-200">{activeOrgName}</span>
             {activeOrgId ? (
-              <span className="ml-2 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-mono text-slate-300">
+              <span className="ml-2 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-mono text-slate-600">
                 {activeOrgId}
               </span>
             ) : null}
@@ -91,7 +91,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowLimitations(!showLimitations)}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+            className="flex items-center gap-1 text-xs text-slate-600 hover:text-slate-200 transition-colors"
           >
             <AlertCircle size={14} />
             <span className="hidden sm:inline">
@@ -114,7 +114,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
       {/* Expanded Limitations */}
       {showLimitations && (
         <div className="px-4 py-3 bg-navy-800/60 border-t border-white/5">
-          <div className="flex flex-wrap items-center gap-6 text-xs text-slate-300">
+          <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600">
             {DEMO_LIMITATIONS.map((limitation, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <limitation.icon size={14} className="text-slate-500" />

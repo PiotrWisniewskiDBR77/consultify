@@ -267,7 +267,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1 text-slate-400 hover:text-slate-600 hover:bg-white/50 rounded"
+          className="p-1 text-slate-600 hover:text-slate-600 hover:bg-white/50 rounded"
         >
           <X className="w-4 h-4" />
         </button>
@@ -282,7 +282,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
 
           return (
             <div key={cat} className="mb-2">
-              <div className="px-2 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <div className="px-2 py-1 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
                 {isPl ? catLabel.labelPl : catLabel.label}
               </div>
               <div className="space-y-0.5">
@@ -301,7 +301,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
                       ${isProcessing && activeAction !== action.id ? 'opacity-50' : ''}
                     `}
                   >
-                    <span className="flex-shrink-0 text-slate-400">
+                    <span className="flex-shrink-0 text-slate-600">
                       {activeAction === action.id && isProcessing ? (
                         <Loader2 className="w-4 h-4 animate-spin text-primary-500" />
                       ) : (
@@ -337,7 +337,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
             disabled={isProcessing}
             className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 transition-all"
           >
-            <RefreshCw className="w-4 h-4 text-slate-400" />
+            <RefreshCw className="w-4 h-4 text-slate-600" />
             <span className="text-xs font-medium">
               {isPl ? 'Wygeneruj od nowa' : 'Regenerate Completely'}
             </span>

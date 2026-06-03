@@ -99,7 +99,7 @@ export const SubscriptionChangesView: React.FC = () => {
       cancel: { bg: 'bg-rose-500/20', text: 'text-rose-400' },
       reactivate: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
     };
-    const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-400' };
+    const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-600' };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
         {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -116,7 +116,7 @@ export const SubscriptionChangesView: React.FC = () => {
     };
     const badge = badges[status] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
     };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
@@ -322,7 +322,7 @@ export const SubscriptionChangesView: React.FC = () => {
           </div>
 
           {changes.length === 0 && (
-            <div className="text-center py-8 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-gray-600 dark:text-gray-500 dark:text-gray-400">
               No subscription changes found
             </div>
           )}

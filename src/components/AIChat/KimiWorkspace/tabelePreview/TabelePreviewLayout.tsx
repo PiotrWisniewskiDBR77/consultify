@@ -316,7 +316,7 @@ export function TabelePreviewLayout({
             </div>
           ) : (
             <div className="rounded-hig-lg border border-dashed border-slate-300 p-6 text-center dark:border-navy-700">
-              <Rows3 size={28} className="mx-auto text-slate-400" aria-hidden="true" />
+              <Rows3 size={28} className="mx-auto text-slate-600" aria-hidden="true" />
               <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
                 {t('kimi.tabele.preview.emptyRecords', {
                   defaultValue: 'No record sample is available in this preview yet.',

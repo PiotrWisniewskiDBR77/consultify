@@ -1825,7 +1825,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-            <Paperclip size={14} className="text-slate-400" />
+            <Paperclip size={14} className="text-slate-600" />
             <span>
               {isPolish
                 ? 'Dokumenty (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 plików po 10 MB)'
@@ -1854,7 +1854,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </div>
         {isLoadingContextDocuments ? (
           <div className="mt-3 flex items-center justify-center py-6">
-            <Loader2 size={18} className="animate-spin text-slate-400" />
+            <Loader2 size={18} className="animate-spin text-slate-600" />
           </div>
         ) : contextDocuments.length === 0 ? (
           <div className="mt-3 rounded-md border border-dashed border-slate-300 bg-white px-3 py-4 text-xs text-slate-500 dark:border-white/[0.15] dark:bg-navy-900/60">

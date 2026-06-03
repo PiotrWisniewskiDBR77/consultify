@@ -135,7 +135,7 @@ export const AIOSHub: React.FC = () => {
                     <div className="rounded-2xl bg-primary-50 p-3 text-primary-700 dark:bg-primary-500/10 dark:text-primary-200">
                       <Icon size={22} />
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 group-hover:text-primary-500">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-600 group-hover:text-primary-500">
                       Open
                     </span>
                   </div>

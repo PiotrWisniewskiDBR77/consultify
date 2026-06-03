@@ -127,7 +127,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
       </div>
 
       {/* Currency bar */}
-      <div className="border-b border-slate-200/40 bg-slate-50/50 px-4 py-1 text-[10px] text-slate-400 dark:border-white/[0.04] dark:bg-white/[0.015] dark:text-slate-500">
+      <div className="border-b border-slate-200/40 bg-slate-50/50 px-4 py-1 text-[10px] text-slate-600 dark:border-white/[0.04] dark:bg-white/[0.015] dark:text-slate-500">
         {isPl ? 'Waluta' : 'Currency'}: <span className="font-semibold">{currencyDisplay}</span>
       </div>
 
@@ -155,7 +155,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
             ? 'border-t-2 border-b-2 border-slate-300/70 dark:border-white/[0.12]'
             : isSubtotal
               ? 'border-t border-b border-slate-200/70 dark:border-white/[0.08]'
-              : 'border-b border-slate-100/80 dark:border-white/[0.03]';
+              : 'border-b border-slate-200/80 dark:border-white/[0.03]';
 
           const fontWeight = isTotal ? 'font-bold' : isSubtotal ? 'font-semibold' : 'font-normal';
 
@@ -222,7 +222,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                             ? 'text-emerald-600 dark:text-emerald-400'
                             : row.delta.direction === 'down'
                               ? 'text-rose-600 dark:text-rose-400'
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-600 dark:text-slate-500'
                         }`}
                       >
                         {row.delta.direction === 'up' ? (
@@ -235,7 +235,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                           : `${row.delta.pct > 0 ? '+' : ''}${row.delta.pct.toFixed(1)}%`}
                       </span>
                     ) : (
-                      <span className="text-[10px] text-slate-300 dark:text-slate-600">—</span>
+                      <span className="text-[10px] text-slate-600 dark:text-slate-600">—</span>
                     )}
                   </div>
                 </>

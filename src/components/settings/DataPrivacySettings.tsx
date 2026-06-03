@@ -199,7 +199,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
     label: string;
     description: string;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
       <div className="flex-1 pr-4">
         <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>

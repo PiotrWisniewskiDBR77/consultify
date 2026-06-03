@@ -156,7 +156,7 @@ export const AIFillDialog: React.FC<AIFillDialogProps> = ({
                   <p className="text-xs text-slate-500 dark:text-slate-400">{p.reasoning}</p>
                 )}
                 {p.source && (
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500">
                     {t('nmodeCompleteness.source')}: {p.source}
                   </p>
                 )}

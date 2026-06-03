@@ -270,7 +270,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
               'px-2.5 py-1 text-xs rounded-md transition-colors flex-shrink-0',
               isPreferred
                 ? 'bg-primary-600 text-white'
-                : 'bg-white/5 text-slate-400 hover:bg-primary-600/20 hover:text-primary-300'
+                : 'bg-white/5 text-slate-600 hover:bg-primary-600/20 hover:text-primary-300'
             )}
           >
             {isPreferred
@@ -329,7 +329,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           {!loadError && models.length === 0 && !loading && (
             <div className="text-center py-8">
               <Brain size={32} className="text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-600">
                 {t(
                   'settings.ai.noModels',
                   'No AI models are configured yet. Contact your administrator to enable models.'
@@ -353,7 +353,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
                       <p className="text-xs text-primary-300 font-medium mb-1">
                         Vector DBR77 — Platform AI
                       </p>
-                      <p className="text-xs text-slate-400 leading-relaxed">
+                      <p className="text-xs text-slate-600 leading-relaxed">
                         {t(
                           'settings.ai.vectorDesc',
                           'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations. Currently in beta for early adopters.'

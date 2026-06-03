@@ -348,7 +348,35 @@ export const AIContextBuilder = {
         };
       }
     } catch (err: any) {
-      logger.debug(`[AIContextBuilder] Context policy enforcement skipped: ${err?.message}`);
+      // SECURITY: fail CLOSED — on governance error, strip sensitive categories rather than
+      // leaking unfiltered context. This prevents policy‑bypass on transient DB errors.
+      logger.warn(`[AIContextBuilder] Context policy enforcement failed — applying restrictive defaults: ${err?.message}`);
+      try {
+        const restrictivePolicy: any = {
+          categories: {
+            ORG_PROFILE: true,
+            ORG_TERMINOLOGY: true,
+            ORG_PATTERNS: false,
+            ORG_STRATEGY: true,
+            ORG_SECURITY_POSTURE: false,
+            ORG_FINANCIAL_SUMMARY: false,
+            ORG_DOCUMENTS: true,
+          },
+          piiRedaction: 'on',
+          retention: 'strict',
+        };
+        const govFallback = (await import('./ai/contextGovernance.js')) as any;
+        const fallbackFilter = govFallback.filterContextByPolicy || govFallback.default?.filterContextByPolicy;
+        if (typeof fallbackFilter === 'function') {
+          filteredContext = fallbackFilter(filteredContext as any, restrictivePolicy) as any;
+        }
+      } catch {
+        // Last resort: strip everything sensitive manually
+        const org = (filteredContext as any)?.organization;
+        if (org) { delete org.topPatterns; delete org.orgPatterns; }
+        delete (filteredContext as any).financialData;
+        delete (filteredContext as any).securityPosture;
+      }
     }
 
     // Cap context size to avoid sending excessive tokens to LLM

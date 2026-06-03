@@ -147,13 +147,13 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
         className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 ${className}`}
       >
         <div className="flex items-center gap-2 mb-4">
-          <Users size={18} className="text-slate-400 dark:text-slate-500" />
+          <Users size={18} className="text-slate-600 dark:text-slate-500" />
           <h3 className="font-semibold text-navy-900 dark:text-white">
             {t('myWork.dashboard.teamWorkload', 'Team Workload')}
           </h3>
         </div>
 
-        <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+        <div className="text-center py-8 text-slate-600 dark:text-slate-500">
           <Users size={32} className="mx-auto mb-2 opacity-50" />
           <p className="text-sm">
             {t('myWork.dashboard.noWorkloadData', 'No workload data available')}
@@ -171,9 +171,9 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
       className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-navy-700">
+      <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
-          <Users size={18} className="text-slate-400 dark:text-slate-500" />
+          <Users size={18} className="text-slate-600 dark:text-slate-500" />
           <h3 className="font-semibold text-navy-900 dark:text-white">
             {t('myWork.dashboard.teamWorkload', 'Team Workload')}
           </h3>
@@ -194,18 +194,18 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
       </div>
 
       {/* Day headers */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-100 dark:border-navy-700">
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-200 dark:border-navy-700">
         <div className="w-8" /> {/* Avatar spacer */}
         <div className="flex-1" /> {/* Name spacer */}
         <div className="flex gap-1">
           {dayLabels.map((day, idx) => (
             <div key={idx} className="w-6 text-center">
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">{day}</span>
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">{day}</span>
             </div>
           ))}
         </div>
         <div className="w-16 text-right">
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">Total</span>
+          <span className="text-[10px] text-slate-600 dark:text-slate-500">Total</span>
         </div>
         <div className="w-4" /> {/* Status icon spacer */}
       </div>
@@ -223,7 +223,7 @@ export const WorkloadHeatmap: React.FC<ExtendedWorkloadHeatmapProps> = ({
 
       {/* Legend */}
       {showLegend && (
-        <div className="flex items-center justify-center gap-4 px-4 py-3 border-t border-slate-100 dark:border-navy-700">
+        <div className="flex items-center justify-center gap-4 px-4 py-3 border-t border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded workload-available" />
             <span className="text-[10px] text-slate-500 dark:text-slate-400">Available</span>

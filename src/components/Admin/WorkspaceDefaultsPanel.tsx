@@ -591,7 +591,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
                 className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-navy-700 rounded-lg group"
               >
                 <GripVertical
-                  className="text-slate-400 dark:text-slate-500 cursor-move"
+                  className="text-slate-600 dark:text-slate-500 cursor-move"
                   size={16}
                 />
 
@@ -633,7 +633,7 @@ export const WorkspaceDefaultsPanel: React.FC<WorkspaceDefaultsPanelProps> = ({
 
                 <button
                   onClick={() => removeWorkflowState(state.id)}
-                  className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X size={14} />
                 </button>

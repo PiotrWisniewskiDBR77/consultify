@@ -237,10 +237,10 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
       <div
         className={`text-[${depth === 0 ? '12' : '10'}px] ${depth === 0 ? 'font-bold text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-300'} py-0.5`}
       >
-        {depth > 0 && <span className="text-slate-300 mr-1">{'─'.repeat(Math.min(depth, 3))}</span>}
+        {depth > 0 && <span className="text-slate-600 mr-1">{'─'.repeat(Math.min(depth, 3))}</span>}
         {node.label}
         {node.notes && (
-          <span className="ml-1 text-[8px] text-slate-400" title={node.notes}>
+          <span className="ml-1 text-[8px] text-slate-600" title={node.notes}>
             📝
           </span>
         )}
@@ -265,7 +265,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -274,7 +274,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {!preview && !loading && (
             <div className="text-center py-6">
-              <Upload size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <Upload size={36} className="text-slate-600 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'Importuj mapę z pliku .mm (FreeMind), .xmind (XMind) lub .opml (OPML).'
@@ -313,7 +313,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
                 <div className="text-[10px] font-bold text-sky-700 dark:text-sky-300">
                   {fileName}
                 </div>
-                <div className="text-[9px] text-slate-400">
+                <div className="text-[9px] text-slate-600">
                   {nodeCount} {isPl ? 'węzłów' : 'nodes'} · {preview.children.length}{' '}
                   {isPl ? 'gałęzi' : 'branches'}
                 </div>

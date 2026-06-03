@@ -187,7 +187,7 @@ export const ActionProposalView: React.FC = () => {
           <>
             {/* List Sidebar */}
             <div className="w-1/3 flex flex-col min-h-0">
-              <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest mb-4 flex items-center justify-between">
                 AI Proposals Queue
                 <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full text-[10px]">
                   {proposals.length}
@@ -224,7 +224,7 @@ export const ActionProposalView: React.FC = () => {
               </div>
               <div className="p-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl flex items-center gap-3">
                 <ShieldCheck className="text-emerald-500" size={20} />
-                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                   Governed Environment
                 </span>
               </div>

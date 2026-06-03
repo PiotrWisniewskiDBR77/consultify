@@ -226,7 +226,7 @@ export function PublicJwtFormPage({
         className="flex min-h-screen items-center justify-center bg-gray-50"
         data-testid="public-jwt-form-loading"
       >
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
       </div>
     );
   }
@@ -330,7 +330,7 @@ export function PublicJwtFormPage({
                   {fc.label || field.name}
                   {fc.required && <span className="ml-1 text-rose-500">*</span>}
                 </label>
-                {fc.helpText && <p className="mb-1 text-xs text-gray-400">{fc.helpText}</p>}
+                {fc.helpText && <p className="mb-1 text-xs text-gray-600">{fc.helpText}</p>}
                 <PublicFormFieldInput
                   field={field}
                   value={values[fc.fieldId]}
@@ -354,7 +354,7 @@ export function PublicJwtFormPage({
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs text-gray-400">
+      <p className="mt-4 text-center text-xs text-gray-600">
         Powered by Consultify Table Platform · Private link
       </p>
     </div>

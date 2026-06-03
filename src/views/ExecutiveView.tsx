@@ -163,7 +163,7 @@ export const ExecutiveView: React.FC = () => {
     return (
       <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="text-center">
-          <Lock size={48} className="mx-auto mb-4 text-slate-400 dark:text-slate-500" />
+          <Lock size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-500" />
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
             Access Restricted
           </h2>
@@ -180,7 +180,7 @@ export const ExecutiveView: React.FC = () => {
     return (
       <SplitLayout title="Executive View">
         <div className="flex h-full items-center justify-center">
-          <div className="animate-pulse text-slate-400 dark:text-slate-500">
+          <div className="animate-pulse text-slate-600 dark:text-slate-500">
             Loading executive summary...
           </div>
         </div>
@@ -194,7 +194,7 @@ export const ExecutiveView: React.FC = () => {
       <SplitLayout title="Executive View">
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
-            <Eye size={48} className="mx-auto mb-4 text-slate-400 dark:text-slate-500" />
+            <Eye size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-500" />
             <p className="text-slate-500 dark:text-slate-400">
               Select a project to view executive summary.
             </p>
@@ -297,7 +297,7 @@ export const ExecutiveView: React.FC = () => {
               {snapshot?.blockers.slice(0, 5).map((blocker, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-navy-700 last:border-0"
+                  className="flex items-center gap-3 py-2 border-b border-slate-200 dark:border-navy-700 last:border-0"
                 >
                   <span
                     className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -334,13 +334,13 @@ export const ExecutiveView: React.FC = () => {
               {pendingDecisions.map((decision) => (
                 <div
                   key={decision.id}
-                  className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-navy-700 last:border-0"
+                  className="flex items-center gap-3 py-2 border-b border-slate-200 dark:border-navy-700 last:border-0"
                 >
                   <Clock size={14} className="text-amber-500 flex-shrink-0" />
                   <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                     {decision.title}
                   </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     {new Date(decision.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -364,7 +364,7 @@ export const ExecutiveView: React.FC = () => {
               {overdueTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-navy-700 last:border-0"
+                  className="flex items-center gap-3 py-2 border-b border-slate-200 dark:border-navy-700 last:border-0"
                 >
                   <AlertTriangle size={14} className="text-rose-500 flex-shrink-0" />
                   <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
@@ -394,7 +394,7 @@ export const ExecutiveView: React.FC = () => {
               {atRiskInitiatives.map((initiative) => (
                 <div
                   key={initiative.id}
-                  className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-navy-700 last:border-0"
+                  className="flex items-center gap-3 py-2 border-b border-slate-200 dark:border-navy-700 last:border-0"
                 >
                   <Flag size={14} className="text-amber-500 flex-shrink-0" />
                   <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
@@ -417,7 +417,7 @@ export const ExecutiveView: React.FC = () => {
 
         {/* Footer - Timestamp */}
         <div className="mt-6 text-center">
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-600 dark:text-slate-500">
             Last updated: {snapshot ? new Date(snapshot.updatedAt).toLocaleString() : '-'}
           </span>
         </div>

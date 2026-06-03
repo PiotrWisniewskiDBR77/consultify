@@ -387,7 +387,7 @@ export const PerformanceMetricsTab: React.FC = () => {
   const getChangeColor = (changeType: PerformanceMetric['changeType']) => {
     if (changeType === 'positive') return 'text-emerald-500';
     if (changeType === 'negative') return 'text-rose-500';
-    return 'text-slate-400';
+    return 'text-slate-600';
   };
 
   // Simple sparkline component
@@ -505,7 +505,7 @@ export const PerformanceMetricsTab: React.FC = () => {
                         {metric.change > 0 ? '+' : ''}
                         {metric.change}%
                       </span>
-                      <span className="text-slate-400">vs last period</span>
+                      <span className="text-slate-600">vs last period</span>
                     </div>
                   </div>
                   {metric.target && (

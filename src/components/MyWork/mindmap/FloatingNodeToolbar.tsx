@@ -419,7 +419,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             </button>
             {openDropdown === 'convertBranch' && (
               <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3 pt-1 pb-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <div className="px-3 pt-1 pb-1 text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                   {isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
                 </div>
                 {(
@@ -460,7 +460,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                     }}
                     className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-hig-md transition-colors"
                   >
-                    <item.icon size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                    <item.icon size={13} className="shrink-0 text-slate-600 dark:text-slate-500" />
                     <span className="flex-1 truncate">{item.label}</span>
                   </button>
                 ))}

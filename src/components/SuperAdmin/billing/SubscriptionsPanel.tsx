@@ -184,7 +184,7 @@ export const SubscriptionsPanel: React.FC = () => {
       paused: {
         icon: <Pause size={14} />,
         bg: 'bg-slate-500/20',
-        text: 'text-slate-400 dark:text-slate-500',
+        text: 'text-slate-600 dark:text-slate-500',
       },
     };
     const config = configs[status] || configs.active;
@@ -216,7 +216,7 @@ export const SubscriptionsPanel: React.FC = () => {
           <div className="relative">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -248,7 +248,7 @@ export const SubscriptionsPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
           <button
@@ -267,7 +267,7 @@ export const SubscriptionsPanel: React.FC = () => {
           <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredSubscriptions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-600 dark:text-slate-500">
           <CreditCard size={48} className="mb-4 opacity-50" />
           <p>No subscriptions found</p>
         </div>
@@ -285,7 +285,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       <h3 className="font-semibold text-white">{sub.organization_name}</h3>
                       {getStatusBadge(sub.status, sub.cancel_at_period_end)}
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-4 mt-1 text-sm text-slate-600 dark:text-slate-500">
                       <span className="flex items-center gap-1.5">
                         <Zap size={14} className="text-primary-400" />
                         {sub.plan_name}
@@ -301,7 +301,7 @@ export const SubscriptionsPanel: React.FC = () => {
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     {sub.current_period_end && (
-                      <p className="text-sm text-slate-400 dark:text-slate-500">
+                      <p className="text-sm text-slate-600 dark:text-slate-500">
                         {sub.cancel_at_period_end ? 'Cancels' : 'Renews'}{' '}
                         {new Date(sub.current_period_end).toLocaleDateString()}
                       </p>
@@ -319,12 +319,12 @@ export const SubscriptionsPanel: React.FC = () => {
                       className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
                       title="Manage"
                     >
-                      <Edit2 size={16} className="text-slate-400 dark:text-slate-500" />
+                      <Edit2 size={16} className="text-slate-600 dark:text-slate-500" />
                     </button>
                     {sub.status === 'active' && !sub.cancel_at_period_end && (
                       <button
                         onClick={() => handleCancelSubscription(sub.id, false)}
-                        className="p-2 hover:bg-rose-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors"
+                        className="p-2 hover:bg-rose-500/10 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors"
                         title="Cancel"
                       >
                         <XCircle size={16} />
@@ -346,7 +346,7 @@ export const SubscriptionsPanel: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Organization
                 </label>
                 <select
@@ -366,7 +366,7 @@ export const SubscriptionsPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Plan</label>
+                <label className="block text-sm font-medium text-slate-600 mb-2">Plan</label>
                 <select
                   value={createForm.planId}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, planId: e.target.value }))}
@@ -384,7 +384,7 @@ export const SubscriptionsPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Billing Cycle
                 </label>
                 <div className="flex gap-3">
@@ -396,7 +396,7 @@ export const SubscriptionsPanel: React.FC = () => {
                       className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
                         createForm.billingCycle === cycle
                           ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
-                          : 'bg-slate-800 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/20'
+                          : 'bg-slate-800 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
                       }`}
                     >
                       {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
@@ -406,7 +406,7 @@ export const SubscriptionsPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Trial Period (days)
                 </label>
                 <input
@@ -425,7 +425,7 @@ export const SubscriptionsPanel: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
               >
                 Cancel
               </button>
@@ -447,14 +447,14 @@ export const SubscriptionsPanel: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-lg">
             <h3 className="text-lg font-semibold text-white mb-2">Manage Subscription</h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mb-6">
               {selectedSubscription.organization_name}
             </p>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg">
                 <div>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">Current Plan</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-500">Current Plan</p>
                   <p className="font-medium text-white">{selectedSubscription.plan_name}</p>
                 </div>
                 <p className="text-lg font-semibold text-primary-400">
@@ -463,7 +463,7 @@ export const SubscriptionsPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Change Plan</label>
+                <label className="block text-sm font-medium text-slate-600 mb-2">Change Plan</label>
                 <select
                   defaultValue={selectedSubscription.plan_id}
                   onChange={(e) => {
@@ -486,7 +486,7 @@ export const SubscriptionsPanel: React.FC = () => {
               {selectedSubscription.status === 'active' &&
                 !selectedSubscription.cancel_at_period_end && (
                   <div className="border-t border-white/10 pt-4 mt-4">
-                    <h4 className="text-sm font-medium text-slate-300 mb-3">Cancel Subscription</h4>
+                    <h4 className="text-sm font-medium text-slate-600 mb-3">Cancel Subscription</h4>
                     <div className="flex gap-3">
                       <button
                         onClick={() => {
@@ -514,7 +514,7 @@ export const SubscriptionsPanel: React.FC = () => {
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setSelectedSubscription(null)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
               >
                 Close
               </button>

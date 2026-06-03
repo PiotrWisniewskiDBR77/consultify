@@ -510,9 +510,9 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               <div className="text-sm font-semibold text-slate-900 dark:text-white">
                 {t('valuation.list.title', 'Valuations')}
               </div>
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-slate-400" />}
+              {loading && <Loader2 className="w-4 h-4 animate-spin text-slate-600" />}
             </div>
-            <div className="max-h-[520px] overflow-auto divide-y divide-slate-100 dark:divide-navy-800">
+            <div className="max-h-[520px] overflow-auto divide-y divide-slate-200 dark:divide-navy-800">
               {valuations.length === 0 ? (
                 <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
                   {t('valuation.list.empty', 'No valuations yet. Create one to start.')}
@@ -1080,7 +1080,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   {advisory.driverDecomposition.drivers.map((d: any, i: number) => (
                                     <tr
                                       key={i}
-                                      className="border-b border-slate-100 dark:border-navy-700 last:border-0"
+                                      className="border-b border-slate-200 dark:border-navy-700 last:border-0"
                                     >
                                       <td className="px-3 py-1.5 font-medium text-slate-800 dark:text-slate-200">
                                         {d.driver}
@@ -1390,7 +1390,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     ))}
                                   </tbody>
                                 </table>
-                                <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-400">
+                                <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-600">
                                   <span>{t('valuation.sensitivity.legend', 'Legend')}:</span>
                                   <span className="inline-block w-3 h-3 rounded bg-rose-100 dark:bg-rose-900/20" />
                                   <span>{t('valuation.sensitivity.lower', 'Lower')}</span>
@@ -1473,7 +1473,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               </h2>
               <button
                 onClick={() => setShowCreate(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600"
               >
                 <X size={18} />
               </button>

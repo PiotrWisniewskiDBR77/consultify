@@ -28,7 +28,7 @@ const getOverallStatus = (content: RaidReportContent): RAGStatus => {
 
 const renderSectionTable = (title: string, items: RaidReportContent['risks'], accent: string) => (
   <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-    <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700 flex items-center gap-2">
+    <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center gap-2">
       <span className={`w-2 h-2 rounded-full ${accent}`} />
       <h3 className="text-lg font-semibold text-navy-900 dark:text-white">{title}</h3>
     </div>
@@ -42,10 +42,10 @@ const renderSectionTable = (title: string, items: RaidReportContent['risks'], ac
             <th className="px-4 py-3 text-left">Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
+        <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
           {items.length === 0 ? (
             <tr>
-              <td className="px-4 py-3 text-slate-400 dark:text-slate-500" colSpan={4}>
+              <td className="px-4 py-3 text-slate-600 dark:text-slate-500" colSpan={4}>
                 No items logged.
               </td>
             </tr>
@@ -117,7 +117,7 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
             {content.decisionsRequired.map((decision) => (
               <div key={decision.id} className="flex items-center justify-between gap-4">
                 <span className="font-medium text-navy-900 dark:text-white">{decision.title}</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
+                <span className="text-xs text-slate-600 dark:text-slate-500">
                   Due {decision.deadline}
                 </span>
               </div>
@@ -140,7 +140,7 @@ export const RaidReport: React.FC<RaidReportProps> = ({ report, className = '' }
                   <span className="text-slate-600 dark:text-slate-300">{escalation.reason}</span>
                 </div>
                 {escalation.dueDate && (
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     Due {escalation.dueDate}
                   </span>
                 )}

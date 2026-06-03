@@ -206,7 +206,7 @@ export const PricingPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={loadSnapshots}
-            className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
             <RefreshCw size={18} />
           </button>
@@ -378,7 +378,7 @@ export const PricingPanel: React.FC = () => {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
         <input
           type="text"
           value={searchTerm}

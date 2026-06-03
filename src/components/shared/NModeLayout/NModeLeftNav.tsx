@@ -80,7 +80,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
       >
         <span className="flex items-center gap-2">
           <span
-            className="inline-flex items-center text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing"
+            className="inline-flex items-center text-slate-600 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing"
             onClick={(e) => e.stopPropagation()}
             {...attributes}
             {...listeners}
@@ -93,7 +93,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
             className={
               isActive
                 ? 'text-primary-500 dark:text-primary-400'
-                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
+                : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
             }
           />
           <span className="whitespace-nowrap">
@@ -164,7 +164,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
                     className={
                       isActive
                         ? 'text-primary-500 dark:text-primary-400'
-                        : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
+                        : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
                     }
                   />
                   <span className="whitespace-nowrap">

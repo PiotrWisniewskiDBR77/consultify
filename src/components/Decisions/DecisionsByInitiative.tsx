@@ -109,9 +109,9 @@ const GroupHeader: React.FC<{
       <div className="flex items-center gap-3">
         <button onClick={onToggle} className="p-1 -m-1">
           {isExpanded ? (
-            <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+            <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
           ) : (
-            <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+            <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
           )}
         </button>
 
@@ -369,7 +369,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
           <button
             onClick={() => fetchDecisions(true)}
             disabled={refreshing}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           </button>
@@ -379,7 +379,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
         <div className="relative">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -437,11 +437,11 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <Clock size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+            <Clock size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-600" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {t('decisions.noGroupedDecisions', 'No pending decisions')}
             </h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               {t('decisions.allInitiativesClear', 'All initiatives are clear of pending decisions')}
             </p>
           </motion.div>

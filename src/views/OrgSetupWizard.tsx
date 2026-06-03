@@ -503,7 +503,7 @@ export const OrgSetupWizard: React.FC = () => {
                   className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold transition-colors ${
                     canSubmit && !state.isSubmitting
                       ? 'bg-primary-600 text-white hover:bg-primary-500'
-                      : 'cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
+                      : 'cursor-not-allowed bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-500'
                   }`}
                 >
                   {state.isSubmitting ? (

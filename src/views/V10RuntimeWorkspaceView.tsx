@@ -56,7 +56,7 @@ export function V10RuntimeWorkspaceView() {
           aria-label="V10 runtime smoke surface"
         >
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               Route
             </div>
             <div className="mt-1 font-mono text-sm text-slate-800 dark:text-slate-100">
@@ -64,7 +64,7 @@ export function V10RuntimeWorkspaceView() {
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               Block rollout
             </div>
             <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">
@@ -73,7 +73,7 @@ export function V10RuntimeWorkspaceView() {
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               Function rollout
             </div>
             <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">
@@ -82,7 +82,7 @@ export function V10RuntimeWorkspaceView() {
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
               Default-off hygiene
             </div>
             <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">
@@ -92,7 +92,7 @@ export function V10RuntimeWorkspaceView() {
         </div>
 
         <div className="mt-4" data-testid="v10-runtime-rollout-summary">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
             Rollout Summary
           </div>
           <div className="mt-2 grid gap-2 lg:grid-cols-2">

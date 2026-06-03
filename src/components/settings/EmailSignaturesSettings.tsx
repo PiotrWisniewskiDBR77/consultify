@@ -329,7 +329,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
       {signatures.length === 0 && !loadError ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileSignature className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-4" />
+            <FileSignature className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-4" />
             <p className="text-slate-500 dark:text-slate-400 text-center">
               {t('settings.signatures.empty', 'No signatures yet')}
             </p>

@@ -445,7 +445,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
           {/* Header with Module Indicator */}
           <div className="border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
             {/* Module Transition Indicator */}
-            <div className="h-8 border-b border-slate-100 dark:border-navy-700 flex items-center px-6 gap-0">
+            <div className="h-8 border-b border-slate-200 dark:border-navy-700 flex items-center px-6 gap-0">
               {[
                 {
                   module: t('initiative.tabs.overview'),
@@ -480,7 +480,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 shadow-sm'
                           : isPassed
                             ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500'
                       }`}
                     >
                       <span
@@ -505,7 +505,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 );
               })}
               <div className="flex-1" />
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                 {initiative.status === 'ARCHIVED'
                   ? `📦 ${t('status.ARCHIVED')}`
                   : initiative.status === 'CANCELLED'
@@ -526,7 +526,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                   <h2 className="text-lg font-bold text-navy-900 dark:text-white">
                     {t('initiative.charterTitle')}
                   </h2>
-                  <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
                     <span className="uppercase">
                       {initiative.id
                         ? `${t('initiative.idLabel')} ${initiative.id.slice(0, 8)}`
@@ -781,7 +781,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     </p>
                   </div>
                   <div className="w-64 space-y-2">
-                    <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                       {t('initiative.decisionOwner')}
                     </label>
                     <Select
@@ -971,34 +971,34 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         </button>
                       </div>
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-100 dark:border-navy-700">
+                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
                           <span className="text-xs text-slate-500 dark:text-slate-400">
                             {t('initiative.alignmentWithAxis')}
                           </span>
                           {initiative.strategicFit?.axisAlign ? (
                             <CheckCircle size={14} className="text-green-500" />
                           ) : (
-                            <X size={14} className="text-slate-400 dark:text-slate-600" />
+                            <X size={14} className="text-slate-600 dark:text-slate-600" />
                           )}
                         </div>
-                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-100 dark:border-navy-700">
+                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
                           <span className="text-xs text-slate-500 dark:text-slate-400">
                             {t('initiative.corporateGoal')}
                           </span>
                           {initiative.strategicFit?.goalAlign ? (
                             <CheckCircle size={14} className="text-green-500" />
                           ) : (
-                            <X size={14} className="text-slate-400 dark:text-slate-600" />
+                            <X size={14} className="text-slate-600 dark:text-slate-600" />
                           )}
                         </div>
-                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-100 dark:border-navy-700">
+                        <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
                           <span className="text-xs text-slate-500 dark:text-slate-400">
                             {t('initiative.painPoint')}
                           </span>
                           {initiative.strategicFit?.painPointAlign ? (
                             <CheckCircle size={14} className="text-green-500" />
                           ) : (
-                            <X size={14} className="text-slate-400 dark:text-slate-600" />
+                            <X size={14} className="text-slate-600 dark:text-slate-600" />
                           )}
                         </div>
                         <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-500/10 rounded border border-blue-100 dark:border-blue-500/20">
@@ -1076,7 +1076,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         key={type}
                         className="bg-white dark:bg-navy-900 p-3 rounded-lg border border-slate-200 dark:border-navy-700"
                       >
-                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 border-b border-slate-100 dark:border-navy-700 pb-1 flex justify-between">
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 border-b border-slate-200 dark:border-navy-700 pb-1 flex justify-between">
                           {t(`initiative.${type.toLowerCase()}Changes`)}
                           <button
                             onClick={() => handleGenerateList('targetState', type.toLowerCase())}
@@ -1524,7 +1524,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <h3 className="text-navy-900 dark:text-white font-bold flex items-center gap-2 border-b border-slate-200 dark:border-navy-700 pb-2">
                       <AlertOctagon size={18} className="text-primary-600 dark:text-primary-500" />{' '}
                       {t('initiative.explicitAssumptions')}
-                      <span className="text-xs text-slate-400 dark:text-slate-500 font-normal ml-2">
+                      <span className="text-xs text-slate-600 dark:text-slate-500 font-normal ml-2">
                         ({t('common.clickLabelToAutoFill')})
                       </span>
                     </h3>
@@ -1966,7 +1966,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         className="mb-4 bg-white dark:bg-navy-900 p-3 rounded border border-slate-200 dark:border-navy-700"
                       >
                         <input
-                          className="w-full bg-transparent border-b border-slate-100 dark:border-navy-700 mb-2 text-sm text-navy-900 dark:text-white focus:outline-none"
+                          className="w-full bg-transparent border-b border-slate-200 dark:border-navy-700 mb-2 text-sm text-navy-900 dark:text-white focus:outline-none"
                           placeholder={t('initiative.riskDescriptionPlaceholder')}
                           value={risk.risk || ''}
                           onChange={(e) => {
@@ -1976,7 +1976,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           }}
                         />
                         <input
-                          className="w-full bg-transparent text-xs text-slate-400 dark:text-slate-500 focus:outline-none"
+                          className="w-full bg-transparent text-xs text-slate-600 dark:text-slate-500 focus:outline-none"
                           placeholder={t('initiative.mitigationStrategyPlaceholder')}
                           value={risk.mitigation || ''}
                           onChange={(e) => {
@@ -2191,7 +2191,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
                         <UserCheck size={12} /> {t('initiative.businessOwner')}
                       </label>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-2">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mb-2">
                         {t('initiative.businessOwnerDescription')}
                       </p>
                       <Select
@@ -2208,7 +2208,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
                         <UserCheck size={12} /> {t('initiative.executionOwner')}
                       </label>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-2">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mb-2">
                         {t('initiative.executionOwnerDescription')}
                       </p>
                       <Select
@@ -2225,7 +2225,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
                         <Shield size={12} /> {t('initiative.sponsor')}
                       </label>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-2">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mb-2">
                         {t('initiative.sponsorDescription')}
                       </p>
                       <Select
@@ -2283,7 +2283,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 ? 'bg-blue-500 border-blue-500 text-white'
                                 : step.done
                                   ? 'bg-green-500/20 border-green-500 text-green-400'
-                                  : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500'
+                                  : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-500'
                             }`}
                           >
                             {step.done && initiative.status !== step.status ? '✓' : idx + 1}
@@ -2398,7 +2398,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                        <span className="text-xs text-slate-600 dark:text-slate-500">
                           {t('initiative.decisionOwner')}:
                         </span>
                         <span className="text-sm text-white font-medium">
@@ -2425,7 +2425,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 {/* Audit Trail */}
                 <div className="bg-slate-50 dark:bg-navy-950 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
                   <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                    <FileText size={20} className="text-slate-400 dark:text-slate-500" />{' '}
+                    <FileText size={20} className="text-slate-600 dark:text-slate-500" />{' '}
                     {t('initiative.governanceAuditTrail')}
                   </h3>
                   <div className="space-y-3 max-h-48 overflow-y-auto">
@@ -2579,7 +2579,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               );
                               setInitiative({ ...initiative, teamMembers: updated });
                             }}
-                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-colors"
+                            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-colors"
                           >
                             <X size={14} />
                           </button>
@@ -2680,7 +2680,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 relatedInitiatives: updated,
                               });
                             }}
-                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded"
+                            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded"
                           >
                             <X size={14} />
                           </button>
@@ -2764,7 +2764,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               <span className="font-medium text-navy-900 dark:text-white">
                                 {comment.user?.firstName} {comment.user?.lastName}
                               </span>
-                              <span className="text-xs text-slate-400 dark:text-slate-500">
+                              <span className="text-xs text-slate-600 dark:text-slate-500">
                                 {new Date(comment.createdAt).toLocaleString()}
                               </span>
                             </div>
@@ -2772,10 +2772,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               {comment.content}
                             </p>
                             <div className="flex gap-4 mt-2">
-                              <button className="text-xs text-slate-400 dark:text-slate-500 hover:text-blue-500">
+                              <button className="text-xs text-slate-600 dark:text-slate-500 hover:text-blue-500">
                                 {t('common.reply')}
                               </button>
-                              <button className="text-xs text-slate-400 dark:text-slate-500 hover:text-blue-500">
+                              <button className="text-xs text-slate-600 dark:text-slate-500 hover:text-blue-500">
                                 {t('common.react')}
                               </button>
                             </div>
@@ -2787,7 +2787,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               );
                               setInitiative({ ...initiative, comments: updated });
                             }}
-                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                            className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500"
                           >
                             <X size={14} />
                           </button>
@@ -2887,7 +2887,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           <p className="text-sm text-slate-500 dark:text-slate-400">
                             {t('initiative.initialCreation')}
                           </p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
                             {initiative.createdAt
                               ? new Date(initiative.createdAt).toLocaleString()
                               : 'Unknown'}
@@ -2931,7 +2931,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
                               {version.changeSummary}
                             </p>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400 dark:text-slate-500">
+                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-600 dark:text-slate-500">
                               <span>
                                 {version.createdByUser?.firstName} {version.createdByUser?.lastName}
                               </span>

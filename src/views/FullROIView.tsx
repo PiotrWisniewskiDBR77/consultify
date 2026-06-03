@@ -258,12 +258,12 @@ export const FullROIView: React.FC = () => {
               return (
                 <tr
                   key={a.id}
-                  className="border-b border-slate-100 dark:border-navy-700/40 transition-colors hover:bg-slate-50 dark:hover:bg-navy-700/40"
+                  className="border-b border-slate-200 dark:border-navy-700/40 transition-colors hover:bg-slate-50 dark:hover:bg-navy-700/40"
                 >
                   <td className="px-4 py-3 font-medium text-navy-900 dark:text-white">{a.name}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                     {a.initiativeName || (
-                      <span className="text-slate-400 dark:text-slate-500">
+                      <span className="text-slate-600 dark:text-slate-500">
                         {t('initiatives.roi.table.unlinked', 'Not linked')}
                       </span>
                     )}
@@ -341,7 +341,7 @@ export const FullROIView: React.FC = () => {
           })}
         </div>
         {selected.length < 2 && (
-          <p className="text-xs text-slate-400 dark:text-slate-500">
+          <p className="text-xs text-slate-600 dark:text-slate-500">
             {t('initiatives.roi.compare.empty', 'Select at least two analyses above to compare.')}
           </p>
         )}

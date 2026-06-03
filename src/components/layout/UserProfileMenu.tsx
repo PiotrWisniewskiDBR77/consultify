@@ -180,7 +180,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
             <div className="text-xs font-semibold text-navy-900 dark:text-white">
               {currentUser.firstName} {currentUser.lastName}
             </div>
-            <div className="flex items-center justify-end gap-1 text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider max-w-[220px]">
+            <div className="flex items-center justify-end gap-1 text-[10px] text-slate-600 dark:text-slate-500 uppercase tracking-wider max-w-[220px]">
               <span className="truncate">{roleLabel}</span>
               <span>·</span>
               <span className="truncate max-w-[140px]">{activeOrganizationName}</span>
@@ -200,7 +200,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               {initials}
             </div>
           ) : (
-            <UserCircle size={20} className="text-slate-400 dark:text-slate-500" />
+            <UserCircle size={20} className="text-slate-600 dark:text-slate-500" />
           )}
         </div>
       </button>
@@ -209,7 +209,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
           {/* Header with User Info */}
-          <div className="px-4 py-4 border-b border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
+          <div className="px-4 py-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-slate-500 dark:text-slate-400 overflow-hidden shrink-0 border border-slate-300 dark:border-navy-600">
                 {currentUser.avatarUrl ? (
@@ -247,7 +247,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
           </div>
 
           {shouldShowOrgSwitcher && (
-            <div className="p-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="p-2 border-b border-slate-200 dark:border-navy-700">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -262,7 +262,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">
                       {t('settings.menu.switchOrg', 'Switch Organization')}
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-sm font-medium">
@@ -278,13 +278,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                 <div className="mx-1 mt-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/[0.02] overflow-hidden">
                   {orgsLoading ? (
                     <div className="flex items-center justify-center py-4">
-                      <Loader2 size={16} className="animate-spin text-slate-400" />
-                      <span className="ml-2 text-xs text-slate-400">
+                      <Loader2 size={16} className="animate-spin text-slate-600" />
+                      <span className="ml-2 text-xs text-slate-600">
                         {t('common.loading', 'Loading...')}
                       </span>
                     </div>
                   ) : orgs.length === 0 ? (
-                    <div className="py-3 px-3 text-xs text-slate-400 dark:text-slate-500 text-center">
+                    <div className="py-3 px-3 text-xs text-slate-600 dark:text-slate-500 text-center">
                       {t('common.noOrganizations', 'No organizations found')}
                     </div>
                   ) : (
@@ -354,8 +354,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
           )}
 
           {/* Settings Section */}
-          <div className="p-2 border-b border-slate-100 dark:border-navy-700">
-            <div className="px-2 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+          <div className="p-2 border-b border-slate-200 dark:border-navy-700">
+            <div className="px-2 py-1 text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-1">
               {t('settings.menu.preferences', 'Preferences')}
             </div>
 
@@ -377,7 +377,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     className={`p-1.5 rounded-md transition-all ${
                       theme === tMode
                         ? 'bg-white dark:bg-navy-800 shadow-sm text-primary-600 dark:text-primary-400'
-                        : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
+                        : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
                     }`}
                     title={tMode.charAt(0).toUpperCase() + tMode.slice(1)}
                   >
@@ -525,7 +525,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               {t('firstRun.relaunch.menu', 'Replay onboarding')}
             </button>
 
-            <div className="my-1 border-t border-slate-100 dark:border-navy-700 opacity-50"></div>
+            <div className="my-1 border-t border-slate-200 dark:border-navy-700 opacity-50"></div>
 
             <button
               onClick={handleLogout}

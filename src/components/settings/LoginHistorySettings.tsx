@@ -73,7 +73,7 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+        <div className="text-center py-8 text-slate-600 dark:text-slate-500">
           {t('common.loading', 'Loading...')}
         </div>
       ) : (
@@ -94,7 +94,7 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
                   </p>
                 </div>
               </div>
-              <span className="text-sm text-slate-400 dark:text-slate-500">
+              <span className="text-sm text-slate-600 dark:text-slate-500">
                 {formatDate(event.timestamp || new Date().toISOString())}
               </span>
             </div>

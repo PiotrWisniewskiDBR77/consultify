@@ -319,7 +319,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {CMMI_PRACTICE_AREAS.map((pa) => {
                 const score = data.practiceAreas[pa.id]?.level || 0;
                 const catConfig = CMMI_CATEGORIES[pa.category];

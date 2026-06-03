@@ -81,7 +81,7 @@ export const OrganizationAdminPanel: React.FC<OrganizationAdminPanelProps> = ({ 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
         <span className="ml-2 text-sm text-slate-500">{t('common.loading', 'Loading…')}</span>
       </div>
     );
@@ -139,7 +139,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-start gap-3">
-          <Users size={18} className="text-slate-400 mt-0.5" strokeWidth={1.5} />
+          <Users size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('organization.members.title', 'Team Members')}
@@ -158,7 +158,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
           </button>
         </div>
         {showInviteForm && (
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700/60 flex items-end gap-3">
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700/60 flex items-end gap-3">
             <div className="flex-1">
               <label className="block text-xs font-medium text-slate-500 mb-1">
                 {t('organization.members.email', 'Email')}
@@ -202,7 +202,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 dark:border-navy-700/60">
+            <tr className="border-b border-slate-200 dark:border-navy-700/60">
               <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 {t('organization.members.name', 'Name')}
               </th>
@@ -217,10 +217,10 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-navy-700/40">
+          <tbody className="divide-y divide-slate-200 dark:divide-navy-700/40">
             {members.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-5 py-12 text-center text-sm text-slate-400">
+                <td colSpan={4} className="px-5 py-12 text-center text-sm text-slate-600">
                   {t(
                     'organization.members.empty',
                     'No members yet. Invite your first team member.'
@@ -276,7 +276,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-start gap-3">
-          <CreditCard size={18} className="text-slate-400 mt-0.5" strokeWidth={1.5} />
+          <CreditCard size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('organization.billing.planTitle', 'Current Plan')}
@@ -308,7 +308,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
       </div>
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Gauge size={16} className="text-slate-400" strokeWidth={1.5} />
+          <Gauge size={16} className="text-slate-600" strokeWidth={1.5} />
           {t('organization.billing.tokensTitle', 'Token Balance')}
         </h3>
         <div className="mt-3 flex items-end gap-3">
@@ -325,7 +325,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-slate-400">
+        <p className="mt-2 text-xs text-slate-600">
           {usagePercent}% {t('organization.billing.used', 'used')}
         </p>
       </div>
@@ -428,7 +428,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
         <span className="ml-2 text-sm text-slate-500">{t('common.loading', 'Loading…')}</span>
       </div>
     );
@@ -455,7 +455,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Gauge size={16} className="text-slate-400" strokeWidth={1.5} />
+          <Gauge size={16} className="text-slate-600" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('organization.limits.title', 'Plan Limits & Current Usage')}
           </h3>
@@ -662,7 +662,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
       )}
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-start gap-3">
-          <Globe size={18} className="text-slate-400 mt-0.5" strokeWidth={1.5} />
+          <Globe size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('organization.domains.title', 'Custom Domain')}
@@ -762,14 +762,14 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   }}
                   disabled={!d.id}
                   title={!d.id ? 'Cannot remove a domain without a server id' : undefined}
-                  className="text-slate-400 hover:text-rose-500"
+                  className="text-slate-600 hover:text-rose-500"
                 >
                   <Trash2 size={12} />
                 </button>
               </span>
             ))
           ) : (
-            <p className="text-sm text-slate-400 italic">
+            <p className="text-sm text-slate-600 italic">
               {t('organization.domains.noApproved', 'No approved domains set.')}
             </p>
           )}
@@ -858,7 +858,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Palette size={16} className="text-slate-400" strokeWidth={1.5} />
+          <Palette size={16} className="text-slate-600" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('organization.branding.visualTitle', 'Visual Identity')}
           </h3>
@@ -872,7 +872,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingLogo}
-              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-400 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-600 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
             >
               {uploadingLogo ? (
                 <Loader2 size={24} className="animate-spin" />
@@ -913,7 +913,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
       </div>
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Globe size={16} className="text-slate-400" strokeWidth={1.5} />
+          <Globe size={16} className="text-slate-600" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('organization.branding.regionalTitle', 'Regional Settings')}
           </h3>

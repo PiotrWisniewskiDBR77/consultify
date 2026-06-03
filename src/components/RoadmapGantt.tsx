@@ -663,14 +663,14 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
           <div className="flex items-center gap-0.5">
             <button
               onClick={scrollLeft}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               title="Scroll left"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={scrollRight}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               title="Scroll right"
             >
               <ChevronRight size={16} />
@@ -687,7 +687,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               className={`p-1.5 rounded-lg transition-colors ${
                 showCriticalPath
                   ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
-                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+                  : 'text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
               }`}
               title={showCriticalPath ? 'Hide critical path' : 'Show critical path'}
             >
@@ -695,7 +695,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
             </button>
             <button
               onClick={toggleFullscreen}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
             >
               {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -764,7 +764,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
       {/* Body */}
       <div className="flex-1 overflow-y-auto relative">
         {initiatives.length === 0 ? (
-          <div className="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+          <div className="flex items-center justify-center h-48 text-slate-600 dark:text-slate-500">
             <div className="text-center">
               <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
               <p>No approved initiatives on roadmap</p>
@@ -862,7 +862,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
               return (
                 <div
                   key={init.id}
-                  className={`flex border-b border-slate-100 dark:border-navy-700 group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
+                  className={`flex border-b border-slate-200 dark:border-navy-700 group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
                     isLinking ? 'bg-primary-50 dark:bg-primary-900/10' : ''
                   } ${isCritical ? 'bg-rose-50/50 dark:bg-rose-900/5' : ''}`}
                 >
@@ -907,7 +907,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                           className={`p-1 rounded transition-colors shrink-0 ${
                             isLinking
                               ? 'bg-primary-600 text-white'
-                              : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
+                              : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
                           }`}
                           title="Create dependency"
                         >
@@ -921,7 +921,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             e.stopPropagation();
                             onPMPerspectiveCheck(init.id);
                           }}
-                          className="p-1 rounded text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          className="p-1 rounded text-slate-600 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                           title="PM Perspective Check"
                         >
                           <Eye size={12} />
@@ -934,7 +934,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                             e.stopPropagation();
                             onOpenScheduleChat(init.id);
                           }}
-                          className="p-1 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          className="p-1 rounded text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                           title="Chat about this initiative"
                         >
                           <MessageSquare size={12} />
@@ -1005,7 +1005,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
                       {timelineGroups.map((_: any, idx: number) => (
                         <div
                           key={idx}
-                          className="border-r border-slate-100 dark:border-navy-700 last:border-r-0"
+                          className="border-r border-slate-200 dark:border-navy-700 last:border-r-0"
                           style={{ width: cellWidth }}
                         />
                       ))}

@@ -691,7 +691,7 @@ const AIBudgetsView: React.FC = () => {
 
       {budgets.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
-          <DollarSign className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <DollarSign className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No budgets configured</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Create a budget to control AI spending
@@ -934,7 +934,7 @@ const AIBudgetsView: React.FC = () => {
 
       {alerts.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
-          <Bell className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <Bell className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No active alerts</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Alerts will appear when budgets are at risk
@@ -1035,7 +1035,7 @@ const AIBudgetsView: React.FC = () => {
 
       {modelPermissions.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
-          <TeresaMark className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+          <TeresaMark className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
           <p className="text-slate-700 dark:text-gray-300">No model restrictions configured</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             All models are accessible by default

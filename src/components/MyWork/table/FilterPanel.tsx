@@ -95,7 +95,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           {filters.rules.length > 0 && (
             <button
               onClick={clearAll}
-              className="text-[10px] text-slate-400 hover:text-rose-500 transition-colors px-1"
+              className="text-[10px] text-slate-600 hover:text-rose-500 transition-colors px-1"
             >
               {isPl ? 'Wyczyść' : 'Clear'}
             </button>
@@ -104,21 +104,21 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
       </div>
 
       <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-auto">
         {filters.rules.length === 0 && (
-          <p className="text-[11px] text-slate-400 text-center py-4">
+          <p className="text-[11px] text-slate-600 text-center py-4">
             {isPl ? 'Brak filtrów. Dodaj pierwszy.' : 'No filters. Add one.'}
           </p>
         )}
         {filters.rules.map((rule, idx) => (
           <div key={rule.id} className="flex items-center gap-1.5">
             {idx > 0 && (
-              <span className="text-[9px] font-bold text-slate-400 w-6 text-center flex-shrink-0">
+              <span className="text-[9px] font-bold text-slate-600 w-6 text-center flex-shrink-0">
                 {filters.logic === 'and' ? (isPl ? 'I' : 'AND') : isPl ? 'LUB' : 'OR'}
               </span>
             )}
@@ -155,7 +155,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             )}
             <button
               onClick={() => removeRule(rule.id)}
-              className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+              className="p-1 rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
             >
               <Trash2 size={12} />
             </button>

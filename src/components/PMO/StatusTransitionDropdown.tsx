@@ -250,7 +250,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
         {isOpen && allowedTransitions.length > 0 && (
           <div className="absolute z-50 mt-1 w-48 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 shadow-lg overflow-hidden">
             <div className="py-1">
-              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
+              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 font-semibold">
                 Change Status To
               </div>
               {allowedTransitions.map((transition) => {

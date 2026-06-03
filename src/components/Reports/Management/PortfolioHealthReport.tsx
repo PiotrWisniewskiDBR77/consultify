@@ -110,7 +110,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
       </div>
 
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700 flex items-center gap-2">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center gap-2">
           <Flag size={18} className="text-amber-500" />
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
             Project Health Snapshot
@@ -127,7 +127,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
                 <th className="px-4 py-3 text-left">Next Milestone</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
               {content.projectHealth.map(
                 (project: PortfolioHealthReportContent['projectHealth'][number]) => (
                   <tr key={project.projectId} className="hover:bg-slate-50 dark:hover:bg-white/5">
@@ -169,7 +169,7 @@ export const PortfolioHealthReport: React.FC<PortfolioHealthReportProps> = ({
                   <span className="font-medium text-navy-900 dark:text-white">
                     {decision.title}
                   </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     Due {decision.deadline}
                   </span>
                 </div>

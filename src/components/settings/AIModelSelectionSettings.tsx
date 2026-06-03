@@ -150,7 +150,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 <div className="flex items-start gap-3 flex-1">
                   <button
                     onClick={() => toggleModel(model.id)}
-                    className={`mt-0.5 ${isEnabled ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'}`}
+                    className={`mt-0.5 ${isEnabled ? 'text-primary-600' : 'text-slate-600 dark:text-slate-500'}`}
                   >
                     {isEnabled ? <CheckCircle size={20} /> : <Circle size={20} />}
                   </button>

@@ -116,7 +116,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
           <div className="max-w-md w-full bg-slate-800 p-8 rounded-xl border border-red-500/30 shadow-2xl">
             <h1 className="text-2xl font-bold text-red-500 mb-4">Something went wrong</h1>
-            <p className="text-slate-300 mb-6">
+            <p className="text-slate-600 mb-6">
               The application encountered an unexpected error. This usually happens due to corrupted
               local data or a temporary glitch.
             </p>
@@ -128,7 +128,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Runtime details are hidden for safety. You can retry, reset app data, or report this
               incident with context.
             </div>
-            <div className="mb-6 text-xs text-slate-400">
+            <div className="mb-6 text-xs text-slate-600">
               Technical diagnostics are captured in telemetry and available through the report
               action.
             </div>

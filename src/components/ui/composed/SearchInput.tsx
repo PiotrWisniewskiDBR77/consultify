@@ -158,7 +158,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         <form onSubmit={handleSubmit}>
           <div className="relative">
             {/* Search icon */}
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none">
               {loading ? (
                 <Loader2 size={iconSize} className="animate-spin" />
               ) : (
@@ -207,7 +207,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-200 dark:hover:bg-white/10"
               >
                 <X size={iconSize - 2} />
               </button>
@@ -237,7 +237,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                       onClick={() => handleSelect(search)}
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                     >
-                      <Clock size={14} className="text-slate-400 dark:text-slate-500" />
+                      <Clock size={14} className="text-slate-600 dark:text-slate-500" />
                       <span className="flex-1 text-left truncate">{search}</span>
                     </button>
                   ))}
@@ -259,9 +259,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                       onClick={() => handleSelect(suggestion)}
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                     >
-                      <Search size={14} className="text-slate-400 dark:text-slate-500" />
+                      <Search size={14} className="text-slate-600 dark:text-slate-500" />
                       <span className="flex-1 text-left truncate">{suggestion}</span>
-                      <ArrowRight size={14} className="text-slate-400 dark:text-slate-500" />
+                      <ArrowRight size={14} className="text-slate-600 dark:text-slate-500" />
                     </button>
                   ))}
                 </>

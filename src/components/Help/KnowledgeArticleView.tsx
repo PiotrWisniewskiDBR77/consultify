@@ -164,7 +164,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
   if (error || !article) {
     return (
       <div className="text-center py-12">
-        <BookOpen size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+        <BookOpen size={40} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
         <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('help.knowledge.contentMoved', 'This content has been moved or removed.')}
         </p>
@@ -464,13 +464,13 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
                     <p className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 truncate">
                       {rel.title}
                     </p>
-                    <p className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                    <p className="text-[10px] text-slate-600 flex items-center gap-2 mt-0.5">
                       <Clock size={10} /> {rel.reading_time_minutes} min
                     </p>
                   </div>
                   <ChevronRight
                     size={14}
-                    className="text-slate-400 group-hover:text-primary-500 flex-shrink-0"
+                    className="text-slate-600 group-hover:text-primary-500 flex-shrink-0"
                   />
                 </button>
               ))}

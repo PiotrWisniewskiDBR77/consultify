@@ -303,11 +303,11 @@ export const PremiumReportEditor: React.FC<PremiumReportEditorProps> = ({
 
       {/* Status Bar */}
       <div className="premium-editor-status">
-        <span className="text-xs text-slate-400 dark:text-slate-500">
+        <span className="text-xs text-slate-600 dark:text-slate-500">
           {isSaving ? 'Zapisywanie...' : 'Wszystkie zmiany zapisane'}
         </span>
         {!readOnly && (
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-600 dark:text-slate-500">
             Ctrl+S aby zapisać • "/" aby wstawić blok
           </span>
         )}

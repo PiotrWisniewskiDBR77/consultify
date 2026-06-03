@@ -192,7 +192,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
         <div className="relative flex-1 max-w-md">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -211,7 +211,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
           >
             {t('admin.permissions.expandAll', 'Expand all')}
           </button>
-          <span className="text-slate-300">|</span>
+          <span className="text-slate-600">|</span>
           <button
             onClick={() => setExpandedCategories(new Set())}
             className="text-sm text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400"
@@ -245,7 +245,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                       {role.name}
                     </span>
                     {role.isSystem && (
-                      <Lock size={10} className="text-slate-400 dark:text-slate-500" />
+                      <Lock size={10} className="text-slate-600 dark:text-slate-500" />
                     )}
                   </div>
                 </th>
@@ -312,7 +312,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                       ? 'bg-primary-600 text-white'
                                       : someGranted
                                         ? 'bg-primary-200 dark:bg-primary-900/50 text-primary-600'
-                                        : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 hover:bg-slate-300 dark:hover:bg-navy-600'
+                                        : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 hover:bg-slate-300 dark:hover:bg-navy-600'
                                   )}
                                 >
                                   {allGranted ? (
@@ -338,7 +338,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                       categoryPerms.map((permission) => (
                         <tr
                           key={permission.id}
-                          className="border-t border-slate-100 dark:border-navy-700/50 hover:bg-slate-50 dark:hover:bg-navy-800/50"
+                          className="border-t border-slate-200 dark:border-navy-700/50 hover:bg-slate-50 dark:hover:bg-navy-800/50"
                         >
                           <td className="px-4 py-2.5 pl-10">
                             <div className="flex items-center gap-2">
@@ -349,7 +349,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                 <Tooltip content={permission.description}>
                                   <HelpCircle
                                     size={14}
-                                    className="text-slate-400 dark:text-slate-500"
+                                    className="text-slate-600 dark:text-slate-500"
                                   />
                                 </Tooltip>
                               )}

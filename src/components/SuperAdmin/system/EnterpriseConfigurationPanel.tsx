@@ -523,7 +523,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
         </div>
       ) : loadError ? (
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
@@ -557,9 +557,9 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                     </span>
                   </div>
                   {isExpanded ? (
-                    <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                    <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                    <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                   )}
                 </button>
 
@@ -670,9 +670,9 @@ const ConfigRow: React.FC<{
             title={isRevealed ? 'Hide' : 'Reveal'}
           >
             {isRevealed ? (
-              <EyeOff className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <EyeOff className="w-4 h-4 text-slate-600 dark:text-slate-500" />
             ) : (
-              <Eye className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <Eye className="w-4 h-4 text-slate-600 dark:text-slate-500" />
             )}
           </button>
         )}
@@ -681,7 +681,7 @@ const ConfigRow: React.FC<{
           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
           title="History"
         >
-          <History className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+          <History className="w-4 h-4 text-slate-600 dark:text-slate-500" />
         </button>
         <button
           onClick={onEdit}
@@ -689,7 +689,7 @@ const ConfigRow: React.FC<{
           title="Edit"
           disabled={config.is_locked}
         >
-          <Edit className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+          <Edit className="w-4 h-4 text-slate-600 dark:text-slate-500" />
         </button>
         <button
           onClick={onDelete}
@@ -736,7 +736,7 @@ const ConfigEditModal: React.FC<{
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
           >
-            <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
           </button>
         </div>
 
@@ -798,7 +798,7 @@ const ConfigEditModal: React.FC<{
 
           {config.description && (
             <div className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
-              <p className="text-sm text-slate-400 dark:text-slate-500">{config.description}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-500">{config.description}</p>
             </div>
           )}
 
@@ -806,7 +806,7 @@ const ConfigEditModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
             >
               Cancel
             </button>
@@ -874,7 +874,7 @@ const ConfigAddModal: React.FC<{
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
           >
-            <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
           </button>
         </div>
 
@@ -994,7 +994,7 @@ const ConfigAddModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
             >
               Cancel
             </button>
@@ -1032,14 +1032,14 @@ const ConfigHistoryModal: React.FC<{
           onClick={onClose}
           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
         >
-          <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+          <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
         </button>
       </div>
 
       {loadError ? (
         <DegradedState title="Version history unavailable" description={loadError} />
       ) : versions.length === 0 ? (
-        <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+        <div className="text-center py-8 text-slate-600 dark:text-slate-500">
           <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No version history available</p>
         </div>
@@ -1061,7 +1061,7 @@ const ConfigHistoryModal: React.FC<{
                   >
                     {versions.length - index}
                   </span>
-                  <span className="text-sm text-slate-400 dark:text-slate-500">
+                  <span className="text-sm text-slate-600 dark:text-slate-500">
                     {version.changed_by}
                   </span>
                 </div>

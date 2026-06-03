@@ -82,7 +82,7 @@ function normalizePortfolioSummary(
 }
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
-  'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
+  'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
   below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
@@ -150,7 +150,7 @@ const ColumnFilterDropdown: React.FC<{
                     className="rounded border-navy-600 bg-navy-800 text-primary-500 focus:ring-primary-500"
                   />
                   {o.color && <span className={`w-2 h-2 rounded-full ${o.color}`} />}
-                  <span className="text-sm text-slate-300">{o.label}</span>
+                  <span className="text-sm text-slate-600">{o.label}</span>
                 </label>
               ))}
             </div>
@@ -355,7 +355,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-slate-400">
+        <div className="flex items-center gap-3 text-slate-600">
           <BarChart3 size={20} className="animate-pulse" />
           <span className="text-sm">{t('common.loading', 'Loading...')}</span>
         </div>
@@ -369,7 +369,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <DollarSign size={16} className="text-slate-400" />
+            <DollarSign size={16} className="text-slate-600" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roi.totalPlanned', 'Total Planned ROI')}
             </span>
@@ -378,7 +378,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
         </div>
         <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Target size={16} className="text-slate-400" />
+            <Target size={16} className="text-slate-600" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roi.totalRealized', 'Total Realized ROI')}
             </span>
@@ -402,7 +402,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                 ? 'text-emerald-400'
                 : totalVariance < 0
                   ? 'text-rose-400'
-                  : 'text-slate-400'
+                  : 'text-slate-600'
             }`}
           >
             {formatCurrency(totalVariance)} ({formatPercent(variancePct)})
@@ -476,7 +476,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                 <tr>
                   <td colSpan={8} className="px-4 py-16 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-2">
-                      <BarChart3 size={24} className="text-slate-400" />
+                      <BarChart3 size={24} className="text-slate-600" />
                       <span>{t('results.roi.emptyState', 'No initiatives with ROI data')}</span>
                     </div>
                   </td>
@@ -495,7 +495,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                       ? 'text-emerald-400'
                       : varPct < 0
                         ? 'text-rose-400'
-                        : 'text-slate-400';
+                        : 'text-slate-600';
 
                   return (
                     <tr
@@ -508,10 +508,10 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                           {item.initiativeName || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">
+                      <td className="px-4 py-3 text-sm text-slate-600">
                         {formatCurrency(item.projectedBenefit)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">
+                      <td className="px-4 py-3 text-sm text-slate-600">
                         {formatCurrency(item.realizedBenefit)}
                       </td>
                       <td className={`px-4 py-3 text-sm font-medium ${varColor}`}>
@@ -549,7 +549,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                                     e.stopPropagation();
                                     handleRowAction('open', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 hover:bg-navy-700"
                                 >
                                   <Maximize2 size={14} />
                                   {t('results.roi.actions.openDetail', 'Open detail')}
@@ -559,7 +559,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                                     e.stopPropagation();
                                     handleRowAction('record', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 hover:bg-navy-700"
                                 >
                                   <Plus size={14} />
                                   {t('results.roi.actions.recordActual', 'Record actual')}
@@ -569,7 +569,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
                                     e.stopPropagation();
                                     handleRowAction('history', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-600 hover:bg-navy-700"
                                 >
                                   <Edit3 size={14} />
                                   {t('results.roi.actions.viewHistory', 'View history')}

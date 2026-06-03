@@ -111,7 +111,7 @@ export const PartnerDashboardView: React.FC = () => {
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             PMO Standards Compliance
           </h3>
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-2 text-xs text-slate-600">
             Wszystkie działania partnerskie są mapowane na standardy ISO 21500, PMBOK 7 i PRINCE2.
             Każdy deal, statement i decyzja otrzymuje automatyczny audit trail z przypisaniem do
             odpowiedniego PMO domain.
@@ -158,7 +158,7 @@ const QuickNavCard: React.FC<QuickNavCardProps> = ({ title, description, onClick
     className="flex flex-col rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/60 p-4 text-left transition hover:border-brand/30 hover:shadow-md"
   >
     <div className="font-semibold text-slate-900 dark:text-white">{title}</div>
-    <div className="mt-1 text-xs text-slate-400">{description}</div>
+    <div className="mt-1 text-xs text-slate-600">{description}</div>
   </button>
 );
 

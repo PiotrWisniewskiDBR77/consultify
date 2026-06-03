@@ -71,7 +71,7 @@ export const TokenBillingManagementView = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">Token Billing Management</h1>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-500 text-sm">
             Configure pricing, margins, and packages for the token economy.
           </p>
         </div>
@@ -160,7 +160,7 @@ const KPICard = ({
   <div className="bg-navy-900 border border-white/5 rounded-xl p-4 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors">
     <div className="absolute top-0 right-0 p-4 opacity-50 bg-gradient-to-br from-white/5 to-transparent w-24 h-24 rounded-bl-full -mr-10 -mt-10" />
     <div className="flex justify-between items-start mb-4 relative z-10">
-      <h3 className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">
+      <h3 className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">
         {title}
       </h3>
       <div className="p-2 bg-white/5 rounded-lg group-hover:scale-110 transition-transform duration-300">

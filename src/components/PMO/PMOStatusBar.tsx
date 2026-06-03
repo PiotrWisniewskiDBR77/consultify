@@ -38,7 +38,7 @@ export const PMOStatusBar: React.FC = () => {
   if (isLoading) {
     return (
       <div className="bg-navy-950 border-b border-white/5 text-white h-10 px-4 flex items-center">
-        <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
           <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-navy-800/300 animate-pulse" />
           <span className="text-xs">Loading PMO context...</span>
         </div>
@@ -52,7 +52,7 @@ export const PMOStatusBar: React.FC = () => {
       <div className="bg-navy-950 border-b border-white/5 text-white h-10 px-4 flex items-center">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-navy-800/300" />
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-600 dark:text-slate-500">
             Select a project to see PMO governance status
           </span>
         </div>
@@ -127,7 +127,7 @@ export const PMOStatusBar: React.FC = () => {
           {/* Phase Badge */}
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${getPhaseColor(currentPhase)} animate-pulse`} />
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               Phase {phaseNumber}/{totalPhases}
             </span>
             <span className="text-sm font-semibold text-white">{currentPhase || 'Loading...'}</span>
@@ -152,7 +152,7 @@ export const PMOStatusBar: React.FC = () => {
         </div>
 
         {/* Expand/Collapse */}
-        <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
           <span className="text-[10px] uppercase tracking-wider">
             {isExpanded ? 'Hide Details' : 'Show Details'}
           </span>
@@ -211,11 +211,11 @@ export const PMOStatusBar: React.FC = () => {
                     {getIssueIcon(issue.type)}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-white truncate">{issue.title}</p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500">
                         {issue.reason}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 rounded text-slate-300">
+                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 rounded text-slate-600">
                           {issue.type}
                         </span>
                         {issue.label && (

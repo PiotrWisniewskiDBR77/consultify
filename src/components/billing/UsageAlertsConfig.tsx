@@ -266,7 +266,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
         </p>
 
         <div className="relative">
-          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
           <input
             type="number"
             value={settings.cost_cap_monthly || ''}

@@ -81,7 +81,7 @@ interface FilterState {
 }
 
 const RISK_LEVELS = {
-  LOW: { color: 'bg-slate-500', text: 'text-slate-400 dark:text-slate-500', icon: Info },
+  LOW: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Info },
   MEDIUM: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
   HIGH: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertCircle },
   CRITICAL: { color: 'bg-rose-500', text: 'text-rose-400', icon: Shield },
@@ -360,7 +360,7 @@ export const EnterpriseAuditLog: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Log</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-500 text-sm">
             Comprehensive activity tracking for compliance and security
           </p>
         </div>
@@ -436,27 +436,27 @@ export const EnterpriseAuditLog: React.FC = () => {
         stats && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-              <div className="text-sm text-slate-400 dark:text-slate-500">Total Events</div>
+              <div className="text-sm text-slate-600 dark:text-slate-500">Total Events</div>
               <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
                 {stats.total || 0}
               </div>
             </div>
             <div className="p-4 bg-slate-50 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-              <div className="text-sm text-slate-400 dark:text-slate-500">Low Risk</div>
+              <div className="text-sm text-slate-600 dark:text-slate-500">Low Risk</div>
               <div className="text-2xl font-bold text-slate-700 dark:text-slate-300 mt-1">
                 {stats.low_risk || 0}
               </div>
             </div>
             <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-              <div className="text-sm text-slate-400 dark:text-slate-500">Medium Risk</div>
+              <div className="text-sm text-slate-600 dark:text-slate-500">Medium Risk</div>
               <div className="text-2xl font-bold text-amber-400 mt-1">{stats.medium_risk || 0}</div>
             </div>
             <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-              <div className="text-sm text-slate-400 dark:text-slate-500">High Risk</div>
+              <div className="text-sm text-slate-600 dark:text-slate-500">High Risk</div>
               <div className="text-2xl font-bold text-amber-400 mt-1">{stats.high_risk || 0}</div>
             </div>
             <div className="p-4 bg-rose-500/10 rounded-xl border border-rose-500/30">
-              <div className="text-sm text-slate-400 dark:text-slate-500">Critical</div>
+              <div className="text-sm text-slate-600 dark:text-slate-500">Critical</div>
               <div className="text-2xl font-bold text-rose-400 mt-1">
                 {stats.critical_risk || 0}
               </div>
@@ -500,7 +500,7 @@ export const EnterpriseAuditLog: React.FC = () => {
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
               showFilters
                 ? 'bg-primary-600 border-primary-500 text-white'
-                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                : 'bg-white/5 border-white/10 text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800/40'
             }`}
           >
             <Filter size={16} />
@@ -520,7 +520,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                   Action Type
                 </label>
                 <select
@@ -538,7 +538,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                   Resource Type
                 </label>
                 <select
@@ -556,7 +556,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                   Compliance Tag
                 </label>
                 <select
@@ -574,7 +574,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                   User ID
                 </label>
                 <input
@@ -587,7 +587,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                   Start Date
                 </label>
                 <input
@@ -599,7 +599,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                   End Date
                 </label>
                 <input
@@ -629,14 +629,14 @@ export const EnterpriseAuditLog: React.FC = () => {
         <div className="space-y-2">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
             </div>
           ) : loadError ? (
             <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
               <DegradedState title="Audit logs unavailable" description={loadError} />
             </div>
           ) : logs.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No audit logs found</p>
               <p className="text-sm mt-1">Try adjusting your filters</p>
@@ -700,7 +700,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                               return (
                                 <span
                                   key={tag}
-                                  className={`px-2 py-0.5 text-xs rounded ${tagConfig?.color || 'bg-slate-700 text-slate-400 dark:text-slate-500'}`}
+                                  className={`px-2 py-0.5 text-xs rounded ${tagConfig?.color || 'bg-slate-700 text-slate-600 dark:text-slate-500'}`}
                                 >
                                   {tagConfig?.name || tag}
                                 </span>
@@ -719,9 +719,9 @@ export const EnterpriseAuditLog: React.FC = () => {
                           {log.risk_level}
                         </span>
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                          <ChevronDown className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                          <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                         )}
                       </div>
                     </div>
@@ -814,7 +814,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                           <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
                             User Agent
                           </div>
-                          <div className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                          <div className="text-xs text-slate-600 dark:text-slate-500 truncate">
                             {log.user_agent}
                           </div>
                         </div>
@@ -829,7 +829,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           {/* Pagination */}
           {logs.length > 0 && (
             <div className="flex items-center justify-between pt-4">
-              <div className="text-sm text-slate-400 dark:text-slate-500">
+              <div className="text-sm text-slate-600 dark:text-slate-500">
                 Showing {logs.length} of {pagination.total || logs.length} entries
               </div>
               <div className="flex items-center gap-2">
@@ -838,17 +838,17 @@ export const EnterpriseAuditLog: React.FC = () => {
                     setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))
                   }
                   disabled={pagination.page === 1}
-                  className="px-3 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 border border-white/10 rounded text-sm text-slate-300 disabled:opacity-50"
+                  className="px-3 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 border border-white/10 rounded text-sm text-slate-600 disabled:opacity-50"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-slate-400 dark:text-slate-500">
+                <span className="text-sm text-slate-600 dark:text-slate-500">
                   Page {pagination.page}
                 </span>
                 <button
                   onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
                   disabled={logs.length < pagination.pageSize}
-                  className="px-3 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 border border-white/10 rounded text-sm text-slate-300 disabled:opacity-50"
+                  className="px-3 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 border border-white/10 rounded text-sm text-slate-600 disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -879,7 +879,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   ) : (
                     analyticsActionCounts.map(({ action, count }) => (
                       <div key={action} className="flex items-center gap-3">
-                        <div className="w-24 text-sm text-slate-400 dark:text-slate-500">
+                        <div className="w-24 text-sm text-slate-600 dark:text-slate-500">
                           {action}
                         </div>
                         <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -913,7 +913,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                             style={{ width: `${percent}%` }}
                           />
                         </div>
-                        <div className="w-12 text-right text-sm text-slate-400 dark:text-slate-500">
+                        <div className="w-12 text-right text-sm text-slate-600 dark:text-slate-500">
                           {Number(count)}
                         </div>
                       </div>

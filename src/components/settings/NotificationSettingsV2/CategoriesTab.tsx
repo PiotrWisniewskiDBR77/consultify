@@ -79,7 +79,7 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({
       {/* Desktop notifications */}
       <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
         <div className="flex items-center gap-3">
-          <Smartphone size={20} className="text-slate-400 dark:text-slate-500" />
+          <Smartphone size={20} className="text-slate-600 dark:text-slate-500" />
           <div>
             <p className="font-medium text-slate-900 dark:text-white">
               {t('settings.notifications.desktop', 'Desktop Notifications')}

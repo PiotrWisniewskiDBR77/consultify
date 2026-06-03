@@ -364,7 +364,7 @@ export function DraftReviewPanel({
       {/* Empty State */}
       {!loading && filteredDrafts.length === 0 && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <Sparkles className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <Sparkles className="w-12 h-12 mx-auto mb-3 text-gray-600" />
           <p className="font-medium">Brak sugestii do przeglądu</p>
           <p className="text-sm">Nowe sugestie AI pojawią się tutaj</p>
         </div>

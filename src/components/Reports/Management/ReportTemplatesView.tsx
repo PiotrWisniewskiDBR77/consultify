@@ -184,11 +184,11 @@ export const ReportTemplatesView: React.FC = () => {
           </div>
           <ChevronDown
             size={18}
-            className={`text-slate-400 transition-transform ${builderExpanded ? 'rotate-180' : ''}`}
+            className={`text-slate-600 transition-transform ${builderExpanded ? 'rotate-180' : ''}`}
           />
         </button>
         {builderExpanded && (
-          <div className="px-6 pb-6 border-t border-slate-100 dark:border-navy-700 pt-4">
+          <div className="px-6 pb-6 border-t border-slate-200 dark:border-navy-700 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
@@ -258,7 +258,7 @@ export const ReportTemplatesView: React.FC = () => {
                       {section.icon && (
                         <span
                           className={
-                            isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+                            isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'
                           }
                         >
                           {section.icon}
@@ -332,11 +332,11 @@ export const ReportTemplatesView: React.FC = () => {
           </h3>
           <ChevronDown
             size={18}
-            className={`text-slate-400 transition-transform ${savedExpanded ? 'rotate-180' : ''}`}
+            className={`text-slate-600 transition-transform ${savedExpanded ? 'rotate-180' : ''}`}
           />
         </button>
         {savedExpanded && (
-          <div className="divide-y divide-slate-100 dark:divide-navy-700 border-t border-slate-100 dark:border-navy-700">
+          <div className="divide-y divide-slate-200 dark:divide-navy-700 border-t border-slate-200 dark:border-navy-700">
             {loading ? (
               <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">Loading...</div>
             ) : templates.length === 0 ? (
@@ -364,11 +364,11 @@ export const ReportTemplatesView: React.FC = () => {
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {template.description || 'No description'}
                       </p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
                         {template.reportType} • {template.sections.length} sections
                       </p>
                     </div>
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       {new Date(template.createdAt).toLocaleDateString()}
                     </span>
                   </div>

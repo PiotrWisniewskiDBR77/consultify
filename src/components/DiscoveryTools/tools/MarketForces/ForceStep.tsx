@@ -183,7 +183,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
               >
                 {score}
               </div>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-slate-600">
                 {score === 1
                   ? isPolish
                     ? 'Bardzo niska'
@@ -310,14 +310,14 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
                 <span className="text-sm text-slate-700 dark:text-slate-300">{driver}</span>
                 <button
                   onClick={() => handleRemoveDriver(index)}
-                  className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-500 transition-colors"
+                  className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-600 hover:text-rose-500 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-400 italic">
+            <p className="text-sm text-slate-600 italic">
               {isPolish ? 'Brak dodanych czynników' : 'No drivers added'}
             </p>
           )}

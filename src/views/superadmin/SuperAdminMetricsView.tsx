@@ -119,7 +119,7 @@ export const SuperAdminMetricsView: React.FC = () => {
               warnings.map((warning, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-3 p-3 border border-slate-100 dark:border-white/[0.04] rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                  className="flex items-start gap-3 p-3 border border-slate-200 dark:border-white/[0.04] rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
                 >
                   <span
                     className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -177,7 +177,7 @@ export const SuperAdminMetricsView: React.FC = () => {
                 {attribution?.channels?.map((channel: any, idx: number) => (
                   <tr
                     key={idx}
-                    className="border-b border-slate-100 dark:border-white/[0.04] last:border-b-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                    className="border-b border-slate-200 dark:border-white/[0.04] last:border-b-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
                   >
                     <td className="py-3 text-sm text-slate-600 dark:text-slate-300">
                       {channel.source}
@@ -218,7 +218,7 @@ export const SuperAdminMetricsView: React.FC = () => {
               partners.slice(0, 5).map((partner, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-3 border border-slate-100 dark:border-white/[0.04] rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                  className="flex items-center justify-between p-3 border border-slate-200 dark:border-white/[0.04] rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-7 h-7 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-semibold">
@@ -256,7 +256,7 @@ export const SuperAdminMetricsView: React.FC = () => {
             {helpMetrics?.byPlaybook?.map((playbook: any, idx: number) => (
               <div
                 key={idx}
-                className="border border-slate-100 dark:border-white/[0.04] rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                className="border border-slate-200 dark:border-white/[0.04] rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
               >
                 <h3
                   className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate mb-3"

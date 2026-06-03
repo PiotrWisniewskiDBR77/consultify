@@ -176,7 +176,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
             hasClaims
               ? 'bg-crimson-50 text-crimson-600 dark:bg-crimson-950/40 dark:text-crimson-400'
-              : 'bg-slate-100 text-slate-400 dark:bg-navy-800 dark:text-slate-500'
+              : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-500'
           }`}
         >
           <Sparkles size={18} />
@@ -212,7 +212,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
               </span>
               <ArrowRight
                 size={14}
-                className="text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-crimson-600 dark:group-hover:text-crimson-400"
+                className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-crimson-600 dark:group-hover:text-crimson-400"
               />
             </button>
           )}

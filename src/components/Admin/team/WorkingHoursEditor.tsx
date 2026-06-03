@@ -216,7 +216,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                 'Set availability for scheduling and workload management'
               )}
             >
-              <button className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+              <button className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
                 <HelpCircle size={16} />
               </button>
             </Tooltip>
@@ -276,7 +276,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                       'w-5 h-5 rounded flex items-center justify-center transition-all',
                       schedule.enabled
                         ? 'bg-primary-600 text-white'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
+                        : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500'
                     )}
                   >
                     {schedule.enabled && <Check size={12} />}
@@ -284,12 +284,12 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                   <span
                     className={cn(
                       'font-medium',
-                      schedule.enabled ? 'text-navy-900 dark:text-white' : 'text-slate-400'
+                      schedule.enabled ? 'text-navy-900 dark:text-white' : 'text-slate-600'
                     )}
                   >
                     {day.short}
                   </span>
-                  {isWeekend && <Moon size={12} className="text-slate-400 dark:text-slate-500" />}
+                  {isWeekend && <Moon size={12} className="text-slate-600 dark:text-slate-500" />}
                 </div>
 
                 {/* Time Range */}
@@ -306,7 +306,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                         </option>
                       ))}
                     </select>
-                    <span className="text-slate-400 dark:text-slate-500">-</span>
+                    <span className="text-slate-600 dark:text-slate-500">-</span>
                     <select
                       value={schedule.end}
                       onChange={(e) => updateDaySchedule(day.key, { end: e.target.value })}
@@ -339,7 +339,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                       >
                         <button
                           onClick={() => copyToWeekdays(day.key)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary-600 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-primary-600 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded transition-colors"
                         >
                           <Copy size={14} />
                         </button>
@@ -347,7 +347,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                     )}
                   </div>
                 ) : (
-                  <span className="text-sm text-slate-400 dark:text-slate-500 flex-1">
+                  <span className="text-sm text-slate-600 dark:text-slate-500 flex-1">
                     {t('admin.team.workingHours.dayOff', 'Day off')}
                   </span>
                 )}

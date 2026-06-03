@@ -216,7 +216,7 @@ export const ContextAssetSelector: React.FC<ContextAssetSelectorProps> = ({
                       {isSelected ? (
                         <CheckCircle2 className="h-4 w-4 text-blue-600" />
                       ) : (
-                        <Circle className="h-4 w-4 text-gray-400" />
+                        <Circle className="h-4 w-4 text-gray-600" />
                       )}
                     </div>
                     <FileText className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />

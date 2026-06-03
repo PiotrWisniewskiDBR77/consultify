@@ -92,7 +92,7 @@ const MetricPill: React.FC<{
       <div className="text-lg font-semibold text-slate-900 dark:text-white tabular-nums leading-tight">
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>
-      {sub && <div className="text-[10px] text-slate-400 dark:text-slate-500">{sub}</div>}
+      {sub && <div className="text-[10px] text-slate-600 dark:text-slate-500">{sub}</div>}
     </div>
   </div>
 );
@@ -109,7 +109,7 @@ const ActionChip: React.FC<{
   >
     <Icon
       size={14}
-      className="text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
+      className="text-slate-600 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
     />
     <span className="text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
       {label}
@@ -121,7 +121,7 @@ const ActionChip: React.FC<{
     )}
     <ChevronRight
       size={12}
-      className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors"
+      className="text-slate-600 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors"
     />
   </button>
 );
@@ -157,7 +157,7 @@ const ActivityRow: React.FC<{ activity: ActivityItem }> = ({ activity }) => {
   };
 
   return (
-    <div className="flex items-center gap-2.5 py-2 border-b border-slate-100/80 dark:border-white/[0.04] last:border-b-0 text-sm">
+    <div className="flex items-center gap-2.5 py-2 border-b border-slate-200/80 dark:border-white/[0.04] last:border-b-0 text-sm">
       <span className="text-slate-600 dark:text-slate-300 min-w-[90px] max-w-[120px] truncate font-medium text-xs">
         {activity.user_name || activity.user_email || 'System'}
       </span>
@@ -169,10 +169,10 @@ const ActivityRow: React.FC<{ activity: ActivityItem }> = ({ activity }) => {
       <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
         {activity.entity_type}
       </span>
-      <span className="text-xs text-slate-400 dark:text-slate-500 truncate flex-1">
+      <span className="text-xs text-slate-600 dark:text-slate-500 truncate flex-1">
         {activity.entity_name || activity.entity_id?.slice(0, 8) || ''}
       </span>
-      <span className="text-[10px] text-slate-400 dark:text-slate-600 ml-auto whitespace-nowrap tabular-nums">
+      <span className="text-[10px] text-slate-600 dark:text-slate-600 ml-auto whitespace-nowrap tabular-nums">
         {formatTimeAgo(activity.created_at)}
       </span>
     </div>
@@ -251,7 +251,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50"
+          className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50"
           title="Refresh"
         >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -278,7 +278,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-5">
         {/* Signals summary */}
         <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-white/[0.01]">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-white/[0.06] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Signals</h3>
               {signalCounts.total > 0 && (
@@ -309,9 +309,9 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             </div>
           </div>
 
-          <div className="divide-y divide-slate-100/80 dark:divide-white/[0.04]">
+          <div className="divide-y divide-slate-200/80 dark:divide-white/[0.04]">
             {signalsLoading ? (
-              <div className="py-6 flex items-center justify-center text-slate-400">
+              <div className="py-6 flex items-center justify-center text-slate-600">
                 <Loader2 size={14} className="animate-spin" />
               </div>
             ) : signalsError ? (
@@ -332,7 +332,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 />
               </div>
             ) : topSignals.length === 0 ? (
-              <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+              <div className="py-6 text-center text-xs text-slate-600 dark:text-slate-500">
                 No active signals
               </div>
             ) : (
@@ -345,11 +345,11 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     <p className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
                       {s.title || 'Untitled'}
                     </p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 truncate mt-0.5">
                       {s.message || 'No details'}
                     </p>
                   </div>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-600 whitespace-nowrap tabular-nums shrink-0">
+                  <span className="text-[10px] text-slate-600 dark:text-slate-600 whitespace-nowrap tabular-nums shrink-0">
                     {formatTimeAgo(s.created_at ?? undefined)}
                   </span>
                 </div>
@@ -358,8 +358,8 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>
 
           {signalCounts.total > 5 && (
-            <div className="px-4 py-2 border-t border-slate-100 dark:border-white/[0.06]">
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <div className="px-4 py-2 border-t border-slate-200 dark:border-white/[0.06]">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                 +{signalCounts.total - 5} more — see Signals tab
               </span>
             </div>
@@ -368,19 +368,19 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
         {/* Activity feed */}
         <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-white/[0.01]">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-white/[0.06] flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               Recent Activity
             </h3>
             {activities.length > 0 && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                 Last {Math.min(activities.length, 20)} events
               </span>
             )}
           </div>
           <div className="px-4 max-h-[360px] overflow-y-auto">
             {activities.length === 0 ? (
-              <p className="text-slate-400 dark:text-slate-500 text-xs py-8 text-center">
+              <p className="text-slate-600 dark:text-slate-500 text-xs py-8 text-center">
                 No recent activity recorded yet.
               </p>
             ) : (

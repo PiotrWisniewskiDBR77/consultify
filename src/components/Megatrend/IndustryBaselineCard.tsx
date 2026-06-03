@@ -56,7 +56,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
 
       {error && (
         <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-8 text-center">
-          <Globe className="mx-auto mb-3 text-slate-400" size={28} strokeWidth={1.5} />
+          <Globe className="mx-auto mb-3 text-slate-600" size={28} strokeWidth={1.5} />
           <p className="text-base font-medium text-slate-700 dark:text-slate-200">
             {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}
           </p>
@@ -69,7 +69,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
 
       {isEmpty && (
         <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-8 text-center">
-          <Globe className="mx-auto mb-3 text-slate-400" size={28} strokeWidth={1.5} />
+          <Globe className="mx-auto mb-3 text-slate-600" size={28} strokeWidth={1.5} />
           <p className="text-base font-medium text-slate-700 dark:text-slate-200">
             {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}
           </p>

@@ -123,7 +123,7 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
                 <Calendar size={12} />
                 {new Date(record.created_at).toLocaleString()}
               </div>
@@ -131,7 +131,7 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({
 
             <div className="space-y-3">
               <div className="flex items-start gap-2">
-                <User size={14} className="text-slate-400 dark:text-slate-500 mt-0.5 shrink-0" />
+                <User size={14} className="text-slate-600 dark:text-slate-500 mt-0.5 shrink-0" />
                 <div className="text-sm">
                   <span className="font-bold text-navy-900 dark:text-white">
                     {record.decided_by_user_id === 'SYSTEM_POLICY_ENGINE'
@@ -159,7 +159,7 @@ export const ActionAuditTrail: React.FC<ActionAuditTrailProps> = ({
                 </div>
               )}
 
-              <div className="flex gap-4 text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+              <div className="flex gap-4 text-[10px] text-slate-600 dark:text-slate-500 font-mono">
                 <span>PROPOSAL ID: {record.proposal_id}</span>
                 {record.policy_rule_id && (
                   <span className="text-primary-400">RULE ID: {record.policy_rule_id}</span>

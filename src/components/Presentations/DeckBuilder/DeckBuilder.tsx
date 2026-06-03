@@ -890,7 +890,7 @@ export const DeckBuilder: React.FC = () => {
 
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
-        <div className="animate-pulse text-slate-400">
+        <div className="animate-pulse text-slate-600">
           {t('presentations.builder.loading', 'Loading deck...')}
         </div>
       </div>

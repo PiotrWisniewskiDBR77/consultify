@@ -626,7 +626,7 @@ const SMART_SECTIONS: {
     icon: MessageSquare,
     color: 'text-amber-500',
   },
-  { id: 'other', labelEn: 'Other', labelPl: 'Inne', icon: Inbox, color: 'text-slate-400' },
+  { id: 'other', labelEn: 'Other', labelPl: 'Inne', icon: Inbox, color: 'text-slate-600' },
 ];
 
 // ── Relative time formatting ──
@@ -669,7 +669,7 @@ const AGING_STYLES = {
 
 // ── SLA pill ──
 const slaPill = (sla: InboxItem['sla']): { label: string; className: string; title?: string } => {
-  if (!sla) return { label: '-', className: 'text-slate-300 dark:text-slate-600' };
+  if (!sla) return { label: '-', className: 'text-slate-600 dark:text-slate-600' };
   const abs = Math.abs(sla.remainingMs);
   const days = Math.floor(abs / 86400000);
   const hours = Math.floor((abs % 86400000) / 3600000);
@@ -709,7 +709,7 @@ const INBOX_URGENCY_FILTER_OPTIONS = [
   { value: 'critical', label: 'Critical', color: 'text-rose-500' },
   { value: 'high', label: 'High', color: 'text-amber-500' },
   { value: 'normal', label: 'Normal', color: 'text-slate-500' },
-  { value: 'low', label: 'Low', color: 'text-slate-400' },
+  { value: 'low', label: 'Low', color: 'text-slate-600' },
 ];
 
 const INBOX_TYPE_FILTER_OPTIONS = [
@@ -1129,7 +1129,7 @@ const PreviewPane: React.FC<{
       <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>{receivedText}</span>
       {item.sla && sla.label !== '-' ? (
         <>
-          <span className="text-slate-300 dark:text-navy-600">·</span>
+          <span className="text-slate-600 dark:text-navy-600">·</span>
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${sla.className}`}
           >
@@ -1424,7 +1424,7 @@ const AIHintStrip: React.FC<{
   return (
     <div className="py-1">
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-500">
           <Sparkles size={12} />
           <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
         </div>
@@ -1441,7 +1441,7 @@ const AIHintStrip: React.FC<{
           ) : null}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
+            className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
           >
             <MoreVertical size={13} />
           </button>
@@ -2786,7 +2786,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           {getColumnLabel(col.id)}
                         </span>
                         {alwaysVisible ? (
-                          <span className="text-[10px] font-medium text-slate-400">
+                          <span className="text-[10px] font-medium text-slate-600">
                             {isPolish ? 'Wymagane' : 'Required'}
                           </span>
                         ) : null}
@@ -3236,7 +3236,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 </>
               ) : (
                 <>
-                  <Inbox size={40} className="mx-auto mb-4 text-slate-400" />
+                  <Inbox size={40} className="mx-auto mb-4 text-slate-600" />
                   <p className="text-base font-semibold mb-1">
                     {isPolish
                       ? 'Inbox jest pusty — zero zaległości!'

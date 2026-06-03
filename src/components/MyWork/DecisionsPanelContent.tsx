@@ -2037,7 +2037,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                         {label}
                                       </span>
                                       {alwaysVisible ? (
-                                        <span className="text-[10px] font-medium text-slate-400">
+                                        <span className="text-[10px] font-medium text-slate-600">
                                           {isPolish ? 'Wymagane' : 'Required'}
                                         </span>
                                       ) : null}

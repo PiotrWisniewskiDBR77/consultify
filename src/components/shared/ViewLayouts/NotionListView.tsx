@@ -36,7 +36,7 @@ const NotionItemCard: React.FC<{
       {/* Row 1: Title + Status */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          {item.icon && <span className="flex-shrink-0 text-slate-400">{item.icon}</span>}
+          {item.icon && <span className="flex-shrink-0 text-slate-600">{item.icon}</span>}
           <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
             {item.title}
           </span>
@@ -73,7 +73,7 @@ const NotionItemCard: React.FC<{
           </span>
         )}
         {item.secondaryLabel && (
-          <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate max-w-[140px]">
+          <span className="text-[11px] text-slate-600 dark:text-slate-500 truncate max-w-[140px]">
             {item.secondaryLabel}
           </span>
         )}
@@ -118,7 +118,7 @@ export const NotionListView: React.FC<NotionViewProps> = ({
   if (totalItems === 0) {
     return (
       <div
-        className={`flex items-center justify-center py-16 text-slate-400 dark:text-slate-500 ${className}`}
+        className={`flex items-center justify-center py-16 text-slate-600 dark:text-slate-500 ${className}`}
       >
         <Inbox size={20} className="mr-2 opacity-50" />
         <span className="text-sm">{emptyMessage}</span>
@@ -145,7 +145,7 @@ export const NotionListView: React.FC<NotionViewProps> = ({
               }`}
             >
               {section.icon && (
-                <span className={`flex-shrink-0 ${isActive ? 'text-blue-500' : 'text-slate-400'}`}>
+                <span className={`flex-shrink-0 ${isActive ? 'text-blue-500' : 'text-slate-600'}`}>
                   {section.icon}
                 </span>
               )}
@@ -168,7 +168,7 @@ export const NotionListView: React.FC<NotionViewProps> = ({
       {/* ── Content Area ── */}
       <div className="flex-1 overflow-y-auto p-4">
         {/* Section header */}
-        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-navy-700">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-navy-700">
           {activeSection?.icon && (
             <span className={activeSection.accentColor || 'text-blue-500'}>
               {activeSection.icon}
@@ -177,7 +177,7 @@ export const NotionListView: React.FC<NotionViewProps> = ({
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
             {activeSection?.label}
           </h3>
-          <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">
+          <span className="text-xs text-slate-600 dark:text-slate-500 ml-1">
             ({activeSection?.items.length || 0})
           </span>
         </div>
@@ -190,7 +190,7 @@ export const NotionListView: React.FC<NotionViewProps> = ({
             ))}
           </div>
         ) : (
-          <div className="flex items-center justify-center py-12 text-sm text-slate-400">
+          <div className="flex items-center justify-center py-12 text-sm text-slate-600">
             No items in this section
           </div>
         )}

@@ -345,9 +345,9 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                       </div>
                     )}
                     {isExpanded ? (
-                      <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
                     ) : (
-                      <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
                     )}
                   </div>
                 </button>
@@ -367,7 +367,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
                           </span>
                           <button
                             onClick={() => copyResponse(result.response || '', result.language)}
-                            className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
+                            className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
                           >
                             {copiedId === result.language ? (
                               <Check size={14} />
@@ -395,7 +395,7 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
 
       {/* Empty State */}
       {results.length === 0 && !isRunning && (
-        <div className="p-8 text-center text-slate-400 dark:text-slate-500">
+        <div className="p-8 text-center text-slate-600 dark:text-slate-500">
           <TestTube className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p className="text-sm">Run tests to validate your prompt across languages</p>
         </div>

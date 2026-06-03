@@ -16,7 +16,7 @@ export const SubAreaNavigator: React.FC<SubAreaNavigatorProps> = ({
 }) => {
   return (
     <div className="w-64 bg-white dark:bg-navy-900 shadow-sm flex flex-col h-full shrink-0">
-      <div className="p-4 border-b border-slate-100 dark:border-navy-800">
+      <div className="p-4 border-b border-slate-200 dark:border-navy-800">
         <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 dark:text-slate-500 uppercase tracking-wider">
           Focus Areas
         </h3>

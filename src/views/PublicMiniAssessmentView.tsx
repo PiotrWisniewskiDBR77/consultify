@@ -301,7 +301,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
               'Answer a few quick questions and get an AI-powered snapshot of your readiness.'
             )}
           </p>
-          <div className="flex items-center justify-center gap-4 text-xs text-gray-400 mb-6">
+          <div className="flex items-center justify-center gap-4 text-xs text-gray-600 mb-6">
             <span className="flex items-center gap-1">
               <Star className="w-3 h-3" /> {assessmentData?.template?.questions?.length || 6}{' '}
               {t('publicAssessment.questions', 'questions')}
@@ -317,7 +317,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
               {t('publicAssessment.emailOptional', 'Email (optional — to receive your results)')}
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type="email"
                 value={email}
@@ -349,7 +349,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </p>
           )}
 
-          <p className="text-xs text-gray-400 mt-4">
+          <p className="text-xs text-gray-600 mt-4">
             {t(
               'publicAssessment.disclaimer',
               'Your answers are saved as a draft before submit and used to generate a rules-based readiness snapshot. No account required.'
@@ -404,7 +404,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Dimensions */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
                 {t('publicAssessment.dimensions', 'Breakdown by Dimension')}
               </h2>
@@ -429,7 +429,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Insights */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                 <Sparkles className="w-4 h-4 inline mr-1" />
                 {t('publicAssessment.keyInsights', 'Key Insights')}
@@ -448,7 +448,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Biggest challenge */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                 {t('publicAssessment.mainChallenge', 'Main challenge reported')}
               </h2>
@@ -459,7 +459,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Follow-up interview action */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                 {t('publicAssessment.followUpTitle', 'Suggested follow-up interview focus')}
               </h2>
@@ -477,7 +477,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Source answers */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                 {t('publicAssessment.sourceAnswers', 'Source answers used')}
               </h2>
@@ -497,12 +497,12 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
 
             {/* Assumptions */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('publicAssessment.methodTitle', 'Method notes')}
                 </p>
-                <p className="text-xs text-gray-400 italic">
+                <p className="text-xs text-gray-600 italic">
                   {[...aiResult.methodNotes, ...aiResult.assumptions].join(' • ')}
                 </p>
               </div>
@@ -533,7 +533,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-6">Powered by Consultify</p>
+          <p className="text-center text-xs text-gray-600 mt-6">Powered by Consultify</p>
         </div>
       </div>
     );
@@ -547,7 +547,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
           <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             {t('publicAssessment.title', 'Digital Transformation Readiness Check')}
           </h1>
-          <span className="text-xs text-gray-400">Consultify</span>
+          <span className="text-xs text-gray-600">Consultify</span>
         </div>
       </header>
       <div className="max-w-3xl mx-auto py-6">
@@ -556,7 +556,7 @@ export const PublicMiniAssessmentView: React.FC = () => {
             {error}
           </div>
         )}
-        <div className="mb-4 px-1 text-xs text-gray-400">
+        <div className="mb-4 px-1 text-xs text-gray-600">
           {isDraftSaving
             ? t('publicAssessment.savingDraft', 'Saving draft...')
             : t('publicAssessment.draftSaved', 'Draft answers are autosaved before submit.')}

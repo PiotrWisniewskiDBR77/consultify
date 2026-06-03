@@ -86,7 +86,7 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
                     >
                       {link.title}
                     </button>
-                    <div className="text-[7px] text-slate-400 dark:text-slate-500">
+                    <div className="text-[7px] text-slate-600 dark:text-slate-500">
                       {buildArtifactCode(link.type, link.id)}
                       {link.linkRole ? ` · ${link.linkRole}` : ''}
                     </div>
@@ -96,7 +96,7 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
                       <button
                         type="button"
                         onClick={() => onOpen({ type: link.type, id: link.id })}
-                        className="p-0.5 rounded hover:bg-white/20 text-slate-400"
+                        className="p-0.5 rounded hover:bg-white/20 text-slate-600"
                         title={isPl ? 'Otwórz' : 'Open'}
                       >
                         <ExternalLink size={8} />
@@ -106,7 +106,7 @@ export const ArtifactLinkIndicator: React.FC<ArtifactLinkIndicatorProps> = ({
                       <button
                         type="button"
                         onClick={() => onRemove({ type: link.type, id: link.id })}
-                        className="p-0.5 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-500"
+                        className="p-0.5 rounded hover:bg-rose-500/10 text-slate-600 hover:text-rose-500"
                         title={isPl ? 'Usuń' : 'Remove'}
                       >
                         <X size={8} />

@@ -411,7 +411,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
             <div className="flex-1 relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               />
               <input
                 type="text"
@@ -536,7 +536,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                     ? t('decisions.noAwaitingOthers', 'No decisions pending from others')
                     : t('decisions.noDecisions', 'No pending decisions')}
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 {t('decisions.allCaughtUp', 'All caught up!')}
               </p>
               {onCreateDecision && (

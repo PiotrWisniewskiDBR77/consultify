@@ -179,7 +179,7 @@ const DocumentCard: React.FC<{ doc: LegalDocumentCard }> = ({ doc }) => (
           {doc.description}
         </p>
       </div>
-      <ArrowRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+      <ArrowRight className="w-5 h-5 text-slate-600 dark:text-slate-600 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
     </div>
   </Link>
 );
@@ -250,7 +250,7 @@ export const LegalIndexView: React.FC = () => {
               <p className="text-primary-200 text-lg mt-1">Consultify by DBR77 Robotics</p>
             </div>
           </div>
-          <p className="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
+          <p className="text-lg sm:text-xl text-slate-600 max-w-2xl leading-relaxed">
             Transparency is fundamental to our relationship with you. Here you'll find all the legal
             documents that govern the use of Consultify, how we handle your data, and which
             commercial terms support procurement, pricing, and enterprise review.

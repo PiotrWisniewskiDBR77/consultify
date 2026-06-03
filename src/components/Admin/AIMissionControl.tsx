@@ -287,7 +287,7 @@ export const AIMissionControl: React.FC = () => {
             <span>LATEST DIAGNOSTIC LOGS</span>
             <button
               onClick={() => setResults({})}
-              className="text-slate-400 hover:bg-white/[0.05] rounded px-2 py-1 transition-colors"
+              className="text-slate-600 hover:bg-white/[0.05] rounded px-2 py-1 transition-colors"
             >
               Clear
             </button>

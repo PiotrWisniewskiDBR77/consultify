@@ -289,7 +289,7 @@ export const KPIAttributionPanel: React.FC = () => {
                 {attribution.unexplainedPercent > 2 && (
                   <div className="flex items-center gap-1.5 text-xs">
                     <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-navy-600" />
-                    <span className="text-slate-400">
+                    <span className="text-slate-600">
                       {t('kpi.attribution.unexplainedLabel', 'Unexplained / External')}
                     </span>
                   </div>
@@ -313,9 +313,9 @@ export const KPIAttributionPanel: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     {expandedContrib === c.initiativeId ? (
-                      <ChevronDown size={16} className="text-slate-400" />
+                      <ChevronDown size={16} className="text-slate-600" />
                     ) : (
-                      <ChevronRight size={16} className="text-slate-400" />
+                      <ChevronRight size={16} className="text-slate-600" />
                     )}
                     <span className="font-medium text-slate-900 dark:text-white">
                       {c.initiativeName}
@@ -333,7 +333,7 @@ export const KPIAttributionPanel: React.FC = () => {
                   </div>
                 </button>
                 {expandedContrib === c.initiativeId && (
-                  <div className="px-4 pb-4 space-y-2 border-t border-slate-100 dark:border-navy-700 pt-3">
+                  <div className="px-4 pb-4 space-y-2 border-t border-slate-200 dark:border-navy-700 pt-3">
                     <p className="text-sm text-slate-600 dark:text-slate-300">{c.explanation}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {c.signals.map((s, i) => (
@@ -345,7 +345,7 @@ export const KPIAttributionPanel: React.FC = () => {
                         </span>
                       ))}
                     </div>
-                    <p className="text-xs text-slate-400 italic">{c.confidenceReason}</p>
+                    <p className="text-xs text-slate-600 italic">{c.confidenceReason}</p>
                   </div>
                 )}
               </div>
@@ -374,7 +374,7 @@ export const KPIAttributionPanel: React.FC = () => {
           )}
 
           {/* Disclaimer */}
-          <div className="flex items-start gap-2 text-xs text-slate-400">
+          <div className="flex items-start gap-2 text-xs text-slate-600">
             <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <p className="italic">{attribution.disclaimer}</p>
           </div>

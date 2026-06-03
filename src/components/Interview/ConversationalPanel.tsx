@@ -228,7 +228,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
+          <div className="flex flex-col items-center justify-center h-full text-gray-600 dark:text-gray-500">
             <MessageSquare className="w-10 h-10 mb-2 opacity-40" />
             <p className="text-sm">{t('interview.conversational.startConversation')}</p>
           </div>
@@ -250,7 +250,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                   {msg.role}
                 </span>
               )}
-              <span className="text-xs text-gray-400 dark:text-gray-500">
+              <span className="text-xs text-gray-600 dark:text-gray-500">
                 {new Date(msg.createdAt).toLocaleTimeString()}
               </span>
             </div>

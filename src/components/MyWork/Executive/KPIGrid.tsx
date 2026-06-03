@@ -120,7 +120,7 @@ const KPICard: React.FC<{
 
       {/* Details */}
       {details && details.length > 0 && (
-        <div className="space-y-1 pt-2.5 border-t border-slate-100/50 dark:border-white/[0.04]">
+        <div className="space-y-1 pt-2.5 border-t border-slate-200/50 dark:border-white/[0.04]">
           {details.map((detail, idx) => (
             <div key={idx} className="flex items-center justify-between text-xs">
               <span className="text-slate-500 dark:text-slate-400">{detail.label}</span>
@@ -372,7 +372,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
             size={16}
             className={
               !hasRiskData
-                ? 'text-slate-400'
+                ? 'text-slate-600'
                 : kpiData.risk.level === 'critical'
                   ? 'text-rose-500'
                   : kpiData.risk.level === 'high'

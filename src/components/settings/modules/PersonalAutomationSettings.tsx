@@ -374,7 +374,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                     className={`p-2 rounded-lg transition-colors ${
                       rule.enabled
                         ? 'text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-500/20'
-                        : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     {rule.enabled ? <Pause size={18} /> : <Play size={18} />}
@@ -398,14 +398,14 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                 <span className="px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-slate-600 dark:text-slate-400">
                   {getTriggerLabel(rule.trigger.type)}
                 </span>
-                <ArrowRight size={14} className="text-slate-400 dark:text-slate-500" />
+                <ArrowRight size={14} className="text-slate-600 dark:text-slate-500" />
                 <span className="px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-slate-600 dark:text-slate-400">
                   {getActionLabel(rule.actions[0]?.type)}
                 </span>
               </div>
 
               {rule.lastRun && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
+                <p className="text-xs text-slate-600 dark:text-slate-500 mt-3">
                   {t('settings.personalAutomation.lastRun', {
                     defaultValue: 'Last run: {{date}} • {{count}} total runs',
                     date: new Date(rule.lastRun).toLocaleString(),
@@ -475,7 +475,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
               <DegradedState title="Automation history unavailable" description={logsLoadError} />
             </div>
           )}
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
+          <div className="divide-y divide-slate-200 dark:divide-white/5">
             {!logsLoadError &&
               logs.map((log) => (
                 <div key={log.id} className="px-6 py-4 flex items-center justify-between">
@@ -490,7 +490,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                       <p className="text-sm text-slate-500 dark:text-slate-400">{log.details}</p>
                     </div>
                   </div>
-                  <span className="text-sm text-slate-400 dark:text-slate-500">
+                  <span className="text-sm text-slate-600 dark:text-slate-500">
                     {new Date(log.timestamp).toLocaleString()}
                   </span>
                 </div>

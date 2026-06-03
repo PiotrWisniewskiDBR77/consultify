@@ -461,7 +461,7 @@ export const EnterpriseApiManagement: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">API Management</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-500 text-sm">
             Manage API keys, view usage analytics, and access documentation
           </p>
         </div>
@@ -493,7 +493,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               <Key className="w-5 h-5 text-emerald-400 mt-0.5" />
               <div>
                 <h4 className="font-medium text-emerald-400">API Key Created Successfully</h4>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1 mb-3">
+                <p className="text-sm text-slate-600 dark:text-slate-500 mt-1 mb-3">
                   Save this key now - it won't be shown again!
                 </p>
                 <div className="flex items-center gap-2 p-3 bg-slate-900 rounded-lg">
@@ -507,7 +507,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                     {copiedKey === newKeyVisible.key ? (
                       <Check className="w-4 h-4 text-emerald-400" />
                     ) : (
-                      <Copy className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <Copy className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                     )}
                   </button>
                 </div>
@@ -517,7 +517,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               onClick={() => setNewKeyVisible(null)}
               className="p-1 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
             >
-              <X className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <X className="w-4 h-4 text-slate-600 dark:text-slate-500" />
             </button>
           </div>
         </div>
@@ -567,14 +567,14 @@ export const EnterpriseApiManagement: React.FC = () => {
           {/* Keys List */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
             </div>
           ) : loadError ? (
             <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
               <DegradedState title="API keys unavailable" description={loadError} />
             </div>
           ) : filteredKeys.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
               <Key className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No API keys found</p>
               <p className="text-sm mt-1">Create your first API key to get started</p>
@@ -606,7 +606,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                           <span className="font-medium text-slate-900 dark:text-slate-100">
                             {key.name}
                           </span>
-                          <code className="px-2 py-0.5 text-xs bg-slate-800 text-slate-300 rounded font-mono">
+                          <code className="px-2 py-0.5 text-xs bg-slate-800 text-slate-600 rounded font-mono">
                             {key.key_prefix}...
                           </code>
                           <span
@@ -650,14 +650,14 @@ export const EnterpriseApiManagement: React.FC = () => {
                             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                             title="View Usage"
                           >
-                            <BarChart3 className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <BarChart3 className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                           </button>
                           <button
                             disabled
                             className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                             title="API key editing requires an audited superadmin update workflow."
                           >
-                            <Edit className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <Edit className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                           </button>
                           <button
                             onClick={() => handleRevokeKey(key.id)}
@@ -677,7 +677,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                       {key.scopes.slice(0, 5).map((scope) => (
                         <span
                           key={scope}
-                          className="px-2 py-0.5 text-xs bg-slate-800 text-slate-400 dark:text-slate-500 rounded"
+                          className="px-2 py-0.5 text-xs bg-slate-800 text-slate-600 dark:text-slate-500 rounded"
                         >
                           {scope}
                         </span>
@@ -718,7 +718,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                     onClick={() => setSelectedKeyUsage(null)}
                     className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                   >
-                    <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 rotate-180" />
+                    <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-500 rotate-180" />
                   </button>
                   <div>
                     <h3 className="text-lg font-medium text-white">{selectedKeyUsage.key.name}</h3>
@@ -732,13 +732,13 @@ export const EnterpriseApiManagement: React.FC = () => {
               {/* Usage Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <div className="text-sm text-slate-400 dark:text-slate-500">Total Requests</div>
+                  <div className="text-sm text-slate-600 dark:text-slate-500">Total Requests</div>
                   <div className="text-2xl font-bold text-white">
                     {selectedKeyUsage.usage.totals?.total_requests?.toLocaleString() || 0}
                   </div>
                 </div>
                 <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <div className="text-sm text-slate-400 dark:text-slate-500">
+                  <div className="text-sm text-slate-600 dark:text-slate-500">
                     Avg Response Time
                   </div>
                   <div className="text-2xl font-bold text-white">
@@ -746,7 +746,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                   </div>
                 </div>
                 <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <div className="text-sm text-slate-400 dark:text-slate-500">Error Rate</div>
+                  <div className="text-sm text-slate-600 dark:text-slate-500">Error Rate</div>
                   <div className="text-2xl font-bold text-white">
                     {selectedKeyUsage.usage.totals?.total_requests
                       ? (
@@ -759,7 +759,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                   </div>
                 </div>
                 <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <div className="text-sm text-slate-400 dark:text-slate-500">Total Errors</div>
+                  <div className="text-sm text-slate-600 dark:text-slate-500">Total Errors</div>
                   <div className="text-2xl font-bold text-rose-400">
                     {selectedKeyUsage.usage.totals?.total_errors || 0}
                   </div>
@@ -785,7 +785,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="w-full text-center text-slate-400 dark:text-slate-500">
+                    <div className="w-full text-center text-slate-600 dark:text-slate-500">
                       No usage data
                     </div>
                   )}
@@ -816,9 +816,9 @@ export const EnterpriseApiManagement: React.FC = () => {
                           >
                             {endpoint.method}
                           </span>
-                          <code className="text-sm text-slate-300">{endpoint.endpoint}</code>
+                          <code className="text-sm text-slate-600">{endpoint.endpoint}</code>
                         </div>
-                        <span className="text-sm text-slate-400 dark:text-slate-500">
+                        <span className="text-sm text-slate-600 dark:text-slate-500">
                           {endpoint.count.toLocaleString()}
                         </span>
                       </div>
@@ -828,7 +828,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               )}
             </>
           ) : (
-            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
               <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Select an API key to view usage analytics</p>
               <button
@@ -847,7 +847,7 @@ export const EnterpriseApiManagement: React.FC = () => {
         <div className="space-y-6">
           <div className="p-6 bg-gradient-to-br from-primary-500/10 to-blue-500/10 rounded-xl border border-primary-500/20">
             <h3 className="text-xl font-bold text-white mb-2">Consultify API</h3>
-            <p className="text-slate-400 dark:text-slate-500 mb-4">
+            <p className="text-slate-600 dark:text-slate-500 mb-4">
               Build powerful integrations with the Consultify REST API. Access projects,
               assessments, reports, and more.
             </p>
@@ -880,7 +880,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 <Shield className="w-4 h-4 text-primary-400" />
                 Authentication
               </h4>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mb-3">
+              <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
                 All API requests require authentication using an API key in the Authorization
                 header.
               </p>
@@ -894,16 +894,16 @@ export const EnterpriseApiManagement: React.FC = () => {
                 <Zap className="w-4 h-4 text-amber-400" />
                 Rate Limits
               </h4>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mb-3">
+              <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
                 API requests are rate limited based on your key configuration.
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-400 dark:text-slate-500">Default per minute:</span>
+                  <span className="text-slate-600 dark:text-slate-500">Default per minute:</span>
                   <span className="text-white">60 requests</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400 dark:text-slate-500">Default per day:</span>
+                  <span className="text-slate-600 dark:text-slate-500">Default per day:</span>
                   <span className="text-white">10,000 requests</span>
                 </div>
               </div>
@@ -926,7 +926,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 <Activity className="w-4 h-4 text-blue-400" />
                 Response Format
               </h4>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mb-3">
+              <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
                 All responses are returned in JSON format.
               </p>
               <div className="p-3 bg-slate-900 rounded-lg">
@@ -951,7 +951,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                       {scope.category}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">{scope.description}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-500">{scope.description}</p>
                 </div>
               ))}
             </div>
@@ -1043,13 +1043,13 @@ const ApiKeyModal: React.FC<{
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
           >
-            <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Organization *</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Organization *</label>
             <select
               required
               value={formData.organizationId}
@@ -1066,7 +1066,7 @@ const ApiKeyModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Name *</label>
             <input
               type="text"
               required
@@ -1078,7 +1078,7 @@ const ApiKeyModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -1090,7 +1090,7 @@ const ApiKeyModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Key Type</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Key Type</label>
               <select
                 value={formData.key_type}
                 onChange={(e) =>
@@ -1104,7 +1104,7 @@ const ApiKeyModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Expires</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Expires</label>
               <input
                 type="date"
                 value={formData.expires_at}
@@ -1116,7 +1116,7 @@ const ApiKeyModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-slate-600 mb-1">
                 Rate Limit (per minute)
               </label>
               <input
@@ -1129,7 +1129,7 @@ const ApiKeyModal: React.FC<{
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-slate-600 mb-1">
                 Rate Limit (per day)
               </label>
               <input
@@ -1144,7 +1144,7 @@ const ApiKeyModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-slate-600 mb-1">
               Allowed IPs (comma separated)
             </label>
             <input
@@ -1157,7 +1157,7 @@ const ApiKeyModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Scopes</label>
+            <label className="block text-sm font-medium text-slate-600 mb-2">Scopes</label>
             <div className="space-y-4 max-h-60 overflow-y-auto p-2 bg-slate-800/50 rounded-lg">
               {Object.entries(scopesByCategory).map(([category, scopes]) => (
                 <div key={category}>
@@ -1171,7 +1171,7 @@ const ApiKeyModal: React.FC<{
                         className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                           formData.scopes.includes(scope.id)
                             ? 'bg-primary-600 text-white'
-                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            : 'bg-slate-700 text-slate-600 hover:bg-slate-600'
                         }`}
                       >
                         {scope.name}
@@ -1187,7 +1187,7 @@ const ApiKeyModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
             >
               Cancel
             </button>

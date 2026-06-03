@@ -109,7 +109,7 @@ const AssessmentItem: React.FC<{ frameworkId: string }> = ({ frameworkId }) => {
           {framework.fullName}
         </span>
       </div>
-      <ArrowRight size={14} className="text-slate-400 dark:text-slate-500" />
+      <ArrowRight size={14} className="text-slate-600 dark:text-slate-500" />
     </div>
   );
 };
@@ -137,7 +137,7 @@ const ToolItem: React.FC<{ toolId: string }> = ({ toolId }) => {
 // Initiative idea item
 const InitiativeItem: React.FC<{ initiative: InitiativeIdea }> = ({ initiative }) => {
   return (
-    <div className="p-3 bg-white dark:bg-navy-800 rounded-lg border border-slate-100 dark:border-navy-700">
+    <div className="p-3 bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
       <div className="flex items-start gap-2">
         <Lightbulb size={16} className="text-amber-500 mt-0.5 shrink-0" />
         <div>
@@ -153,7 +153,7 @@ const InitiativeItem: React.FC<{ initiative: InitiativeIdea }> = ({ initiative }
                 ⚡ Quick Win
               </span>
             )}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">
               Impact: {initiative.impact} | Effort: {initiative.effort}
             </span>
           </div>

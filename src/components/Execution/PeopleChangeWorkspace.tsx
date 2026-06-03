@@ -432,7 +432,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               return (
                 <div
                   key={r.id}
-                  className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2"
+                  className="flex items-center justify-between border-b border-slate-200 dark:border-navy-800 pb-2"
                 >
                   <span className="text-sm text-slate-800 dark:text-slate-200">
                     {cap?.name ?? r.capabilityId}
@@ -470,7 +470,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
             {candidates.map((c) => (
               <div
                 key={c.userId}
-                className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2"
+                className="flex items-center justify-between border-b border-slate-200 dark:border-navy-800 pb-2"
               >
                 <div>
                   <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
@@ -581,7 +581,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               key={n}
               type="button"
               onClick={() => setPulseRating(n)}
-              className={`p-1.5 rounded-lg transition-colors ${pulseRating >= n ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600'}`}
+              className={`p-1.5 rounded-lg transition-colors ${pulseRating >= n ? 'text-amber-400' : 'text-slate-600 dark:text-slate-600'}`}
             >
               <Star size={24} fill={pulseRating >= n ? 'currentColor' : 'none'} />
             </button>
@@ -712,7 +712,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               return (
                 <div
                   key={p.id}
-                  className="border-b border-slate-100 dark:border-navy-800 pb-2 last:border-b-0"
+                  className="border-b border-slate-200 dark:border-navy-800 pb-2 last:border-b-0"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -725,7 +725,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
                       {p.isActive ? (
                         <CheckCircle2 size={14} className="text-green-500" />
                       ) : (
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-600">
                           {t('stakeholder.inactive', 'Inactive')}
                         </span>
                       )}
@@ -780,7 +780,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
             {sendLog.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center justify-between text-sm border-b border-slate-100 dark:border-navy-800 pb-2"
+                className="flex items-center justify-between text-sm border-b border-slate-200 dark:border-navy-800 pb-2"
               >
                 <span className="text-slate-800 dark:text-slate-200">
                   {entry.channel ?? 'email'} · {entry.recipientCount}{' '}
@@ -811,7 +811,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               return (
                 <div
                   key={pack.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 dark:border-navy-800"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-navy-800"
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-slate-800 dark:text-slate-200">

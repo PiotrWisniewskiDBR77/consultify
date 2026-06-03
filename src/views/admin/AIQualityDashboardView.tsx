@@ -240,21 +240,21 @@ const AIQualityDashboardView: React.FC = () => {
                 ? 'text-green-500'
                 : trend === 'down'
                   ? 'text-rose-500'
-                  : 'text-slate-400'
+                  : 'text-slate-600'
             }`}
           >
             {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'}
           </span>
         )}
       </div>
-      {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
+      {subtitle && <p className="text-xs text-slate-600 mt-1">{subtitle}</p>}
     </div>
   );
 
   const renderTrendChart = () => {
     if (trend.length === 0) {
       return (
-        <div className="h-48 flex items-center justify-center text-slate-400">
+        <div className="h-48 flex items-center justify-center text-slate-600">
           {t('admin.aiQuality.noTrendData', 'Brak danych trendu')}
         </div>
       );
@@ -280,7 +280,7 @@ const AIQualityDashboardView: React.FC = () => {
                   style={{ height: '100%', zIndex: -1 }}
                 />
               </div>
-              <span className="text-[8px] text-slate-400 truncate w-full text-center">
+              <span className="text-[8px] text-slate-600 truncate w-full text-center">
                 {point.date.split('-').slice(1).join('/')}
               </span>
             </div>
@@ -458,7 +458,7 @@ const AIQualityDashboardView: React.FC = () => {
         <div className="space-y-4">
           {/* Filters */}
           <div className="flex items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-            <Filter size={18} className="text-slate-400" />
+            <Filter size={18} className="text-slate-600" />
             <select
               value={feedbackStatus}
               onChange={(e) => {

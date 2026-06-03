@@ -130,7 +130,7 @@ export const CoThinkerActivePill: React.FC<{ className?: string }> = ({ classNam
       </div>
       <button
         onClick={() => setAIConfig({ coThinkerMode: null, marketResearch: false } as any)}
-        className="shrink-0 inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+        className="shrink-0 inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
         title={t('chat.coThinker.clear', 'Clear')}
         aria-label={t('chat.coThinker.clear', 'Clear')}
       >
@@ -207,7 +207,7 @@ export const CoThinkerMenu: React.FC<{
           ${
             activePersona
               ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
-              : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+              : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
           }
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
         `}
@@ -247,7 +247,7 @@ export const CoThinkerMenu: React.FC<{
           aria-label={t('chat.coThinker.title', 'Co-Thinker')}
         >
           <div className="px-3.5 pt-1.5 pb-1">
-            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
               {t('chat.coThinker.title', 'Co-Thinker')}
             </span>
           </div>
@@ -274,7 +274,7 @@ export const CoThinkerMenu: React.FC<{
               >
                 <Icon
                   size={16}
-                  className={`shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}`}
+                  className={`shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'}`}
                 />
                 <span className="flex-1 min-w-0">
                   <span
@@ -296,7 +296,7 @@ export const CoThinkerMenu: React.FC<{
           })}
           {activePersona && (
             <>
-              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
               <button
                 onClick={() => {
                   setAIConfig({ coThinkerMode: null, marketResearch: false } as any);

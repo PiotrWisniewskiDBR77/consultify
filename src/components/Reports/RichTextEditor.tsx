@@ -333,13 +333,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         />
 
         {/* Help text */}
-        <div className="absolute bottom-2 right-3 text-xs text-slate-400 dark:text-slate-500 pointer-events-none">
+        <div className="absolute bottom-2 right-3 text-xs text-slate-600 dark:text-slate-500 pointer-events-none">
           Markdown
         </div>
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50 dark:bg-navy-800/50 border-t border-slate-200 dark:border-navy-700 text-xs text-slate-400 dark:text-slate-500">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50 dark:bg-navy-800/50 border-t border-slate-200 dark:border-navy-700 text-xs text-slate-600 dark:text-slate-500">
         <span>
           {content.length} {t('editor.characters', 'characters')} •{' '}
           {content.split(/\s+/).filter(Boolean).length} {t('editor.words', 'words')}

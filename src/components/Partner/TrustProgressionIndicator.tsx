@@ -48,7 +48,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                     ? 'bg-emerald-500 text-white'
                     : isCurrent
                       ? 'bg-brand text-white ring-4 ring-brand/20'
-                      : 'bg-slate-100 text-slate-400 dark:text-slate-500 dark:bg-white/10'
+                      : 'bg-slate-100 text-slate-600 dark:text-slate-500 dark:bg-white/10'
                 }`}
                 title={phase.label}
               >
@@ -108,7 +108,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                   ? 'border-brand bg-brand/5 dark:bg-brand/10'
                   : isCompleted
                     ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5'
-                    : 'border-slate-100 bg-slate-50/50 dark:border-navy-700 dark:bg-navy-950/20'
+                    : 'border-slate-200 bg-slate-50/50 dark:border-navy-700 dark:bg-navy-950/20'
               }`}
             >
               {/* Status Icon */}
@@ -118,7 +118,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                     ? 'bg-emerald-500 text-white'
                     : isCurrent
                       ? 'bg-brand text-white'
-                      : 'bg-slate-100 text-slate-400 dark:text-slate-500 dark:bg-white/10'
+                      : 'bg-slate-100 text-slate-600 dark:text-slate-500 dark:bg-white/10'
                 }`}
               >
                 {isCompleted ? (
@@ -136,7 +136,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                   <h4
                     className={`font-semibold ${
                       isFuture
-                        ? 'text-slate-400 dark:text-slate-500'
+                        ? 'text-slate-600 dark:text-slate-500'
                         : 'text-navy-900 dark:text-white'
                     }`}
                   >
@@ -156,7 +156,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                 <p
                   className={`mt-1 text-sm ${
                     isFuture
-                      ? 'text-slate-400 dark:text-slate-500'
+                      ? 'text-slate-600 dark:text-slate-500'
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -188,7 +188,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                 <ChevronRight
                   size={20}
                   className={`absolute -right-3 top-1/2 -translate-y-1/2 ${
-                    isCompleted ? 'text-emerald-500' : 'text-slate-300 dark:text-slate-600'
+                    isCompleted ? 'text-emerald-500' : 'text-slate-600 dark:text-slate-600'
                   }`}
                 />
               )}

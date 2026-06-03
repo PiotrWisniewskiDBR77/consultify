@@ -558,7 +558,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-100/60 dark:divide-white/[0.03]">
+              <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
                 {sortedItems.map((initiative) => {
                   const statusStyle = getStatusStyle(initiative.initiativeStatus);
                   return (
@@ -603,7 +603,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                           </select>
                           <ChevronDown
                             size={12}
-                            className="absolute right-0 text-slate-400 pointer-events-none"
+                            className="absolute right-0 text-slate-600 pointer-events-none"
                           />
                         </div>
                       </td>

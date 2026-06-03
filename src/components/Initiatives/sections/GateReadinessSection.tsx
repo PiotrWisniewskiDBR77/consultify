@@ -1741,7 +1741,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                           ? 'bg-emerald-500 border-emerald-500 text-white'
                           : isCurrent
                             ? 'bg-primary-500 border-primary-500 text-white shadow-lg shadow-primary-500/40'
-                            : 'bg-white dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-400'
+                            : 'bg-white dark:bg-navy-800 border-slate-300 dark:border-navy-600 text-slate-600'
                       }`}
                     >
                       {isPast ? (
@@ -1754,7 +1754,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                     </motion.div>
                     <div className={`mt-2 text-center ${isCurrent ? 'font-semibold' : ''}`}>
                       <p
-                        className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-primary-500' : 'text-slate-400'}`}
+                        className={`text-[10px] ${isPast ? 'text-emerald-500' : isCurrent ? 'text-primary-500' : 'text-slate-600'}`}
                       >
                         {isPolish ? config.namePl.split(' ')[0] : config.name.split(' ')[0]}
                       </p>
@@ -1870,7 +1870,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                             </span>{' '}
                             {r.suggestedAction}
                             {r.suggestedActor && (
-                              <span className="ml-2 text-slate-400 dark:text-slate-500">
+                              <span className="ml-2 text-slate-600 dark:text-slate-500">
                                 ({r.suggestedActor})
                               </span>
                             )}
@@ -1993,7 +1993,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                                 </span>{' '}
                                 {f.suggestedAction}
                                 {f.suggestedActor && (
-                                  <span className="ml-1.5 text-slate-400 dark:text-slate-500">
+                                  <span className="ml-1.5 text-slate-600 dark:text-slate-500">
                                     ({f.suggestedActor})
                                   </span>
                                 )}
@@ -2071,7 +2071,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           {/* Approver Info */}
           <div className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
             <div className="flex items-center gap-2">
-              <User size={14} className="text-slate-400" />
+              <User size={14} className="text-slate-600" />
               <span className="text-xs text-slate-500">
                 {isPolish ? 'Wymagana aprobata' : 'Required approval'}:
               </span>
@@ -2118,7 +2118,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                   <span className="text-sm text-slate-700 dark:text-slate-300">{g.label}</span>
                 </div>
                 <span
-                  className={`px-2 py-0.5 text-[10px] font-medium rounded ${ok ? 'bg-emerald-500/20 text-emerald-400' : gs === 'PENDING' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'}`}
+                  className={`px-2 py-0.5 text-[10px] font-medium rounded ${ok ? 'bg-emerald-500/20 text-emerald-400' : gs === 'PENDING' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-600'}`}
                 >
                   {gs === 'MISSING' ? (isPolish ? 'Nie zgłoszono' : 'Not requested') : gs}
                 </span>

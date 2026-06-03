@@ -819,7 +819,7 @@ export const FeedbackSidePanel: React.FC = () => {
             {t('feedback.ai.improve', 'Improve with AI')}
           </button>
           {aiQuestions.length > 0 ? (
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">
               {t('feedback.ai.questions', 'AI has questions')}
             </span>
           ) : null}
@@ -913,7 +913,7 @@ export const FeedbackSidePanel: React.FC = () => {
           <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <span>{t('feedback.attach.title', 'Cursor-ready dowody')}</span>
             {isPreparingDossier ? (
-              <span className="inline-flex items-center gap-1 text-slate-400">
+              <span className="inline-flex items-center gap-1 text-slate-600">
                 <Loader2 size={12} className="animate-spin" />
                 {t('feedback.attach.preparing', 'Przygotowuję…')}
               </span>
@@ -972,7 +972,7 @@ export const FeedbackSidePanel: React.FC = () => {
                 {t('feedback.attach.removeShort', 'Usuń')}
               </button>
             ) : (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                 {t('feedback.attach.pasteHint', 'lub wklej (Ctrl/⌘+V)')}
               </span>
             )}
@@ -992,7 +992,7 @@ export const FeedbackSidePanel: React.FC = () => {
                 alt={uploadedScreenshot.fileName || 'uploaded-screenshot'}
                 className="w-full h-auto max-h-48 object-contain object-top bg-slate-950"
               />
-              <div className="flex items-center justify-between px-2 py-1 text-[10px] text-slate-400">
+              <div className="flex items-center justify-between px-2 py-1 text-[10px] text-slate-600">
                 <span className="truncate">
                   <Paperclip size={10} className="inline-block mr-1 align-text-bottom" />
                   {uploadedScreenshot.fileName || 'screenshot.png'}
@@ -1013,7 +1013,7 @@ export const FeedbackSidePanel: React.FC = () => {
                 className="w-full h-auto max-h-48 object-cover object-top"
                 data-feedback-redact
               />
-              <div className="px-2 py-1 text-[10px] text-slate-400">
+              <div className="px-2 py-1 text-[10px] text-slate-600">
                 {t(
                   'feedback.attach.previewHint',
                   'Hasła i pola email są zamazywane automatycznie. Użyj atrybutu data-feedback-redact dla innych wrażliwych miejsc.'
@@ -1374,8 +1374,8 @@ export const FeedbackSidePanel: React.FC = () => {
 
         {/* Footer */}
         {!showSuccess && (
-          <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
+            <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center">
               {t('feedback.footer', 'Opinia wysyłana jako')}{' '}
               <b>{currentUser?.email || t('feedback.anonymous', 'Anonimowo')}</b>
             </div>

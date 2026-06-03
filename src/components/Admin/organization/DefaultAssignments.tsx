@@ -96,7 +96,7 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
                 'Configure what happens when new users join'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">

@@ -433,7 +433,7 @@ export const AdminAnalyticsView: React.FC = () => {
                           {((provider.successRate || 0) * 100).toFixed(1)}% success
                         </span>
                       </div>
-                      <div className="flex justify-between text-sm text-slate-400 dark:text-slate-500">
+                      <div className="flex justify-between text-sm text-slate-600 dark:text-slate-500">
                         <span>{formatNumber(provider.tokens || 0)} tokens</span>
                         <span>{formatCurrency(provider.cost || 0)}</span>
                       </div>
@@ -492,7 +492,7 @@ export const AdminAnalyticsView: React.FC = () => {
                   <h3 className="text-base font-bold text-navy-900 dark:text-white mb-2">
                     {idea.title}
                   </h3>
-                  <p className="text-slate-400 dark:text-slate-500 text-sm mb-4 line-clamp-3">
+                  <p className="text-slate-600 dark:text-slate-500 text-sm mb-4 line-clamp-3">
                     {idea.description}
                   </p>
                   <div className="flex justify-between items-center pt-3 border-t border-white/5">
@@ -523,7 +523,7 @@ export const AdminAnalyticsView: React.FC = () => {
                           ? 'bg-blue-500/20 text-blue-400'
                           : idea.status === 'approved'
                             ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-white/10 text-slate-400 dark:text-slate-500'
+                            : 'bg-white/10 text-slate-600 dark:text-slate-500'
                       }`}
                     >
                       {idea.status?.toUpperCase() || 'NEW'}
@@ -553,7 +553,7 @@ export const AdminAnalyticsView: React.FC = () => {
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
               {t('admin.analytics.observationsLog', 'System Observations Log')}
             </h2>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               {t(
                 'admin.analytics.observationsDesc',
                 'Automated insights and anomalies detected by the AI Monitor'
@@ -574,7 +574,7 @@ export const AdminAnalyticsView: React.FC = () => {
                           ? 'bg-rose-500/20 text-rose-400'
                           : obs.category === 'insight'
                             ? 'bg-primary-500/20 text-primary-400'
-                            : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'
+                            : 'bg-slate-500/20 text-slate-600 dark:text-slate-500'
                       }`}
                     >
                       {obs.category === 'anomaly' ? (
@@ -594,9 +594,9 @@ export const AdminAnalyticsView: React.FC = () => {
                           {new Date(obs.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-slate-400 dark:text-slate-500 text-sm">{obs.content}</p>
+                      <p className="text-slate-600 dark:text-slate-500 text-sm">{obs.content}</p>
                       <div className="mt-2 flex items-center space-x-4">
-                        <span className="text-xs bg-white/10 text-slate-300 px-2 py-1 rounded">
+                        <span className="text-xs bg-white/10 text-slate-600 px-2 py-1 rounded">
                           Confidence: {(obs.confidence_score * 100).toFixed(0)}%
                         </span>
                       </div>

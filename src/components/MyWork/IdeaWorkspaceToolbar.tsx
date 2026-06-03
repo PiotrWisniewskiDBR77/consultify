@@ -122,8 +122,8 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
           if (otherFamilies.length === 0) return null;
           return (
             <div className="flex items-center gap-0.5 ml-0.5">
-              <Layers size={10} className="text-slate-400" />
-              <span className="text-[8px] text-slate-400 font-medium">+{otherFamilies.length}</span>
+              <Layers size={10} className="text-slate-600" />
+              <span className="text-[8px] text-slate-600 font-medium">+{otherFamilies.length}</span>
             </div>
           );
         })()}

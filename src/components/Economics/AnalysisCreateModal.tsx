@@ -61,21 +61,21 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
                 rounded-xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-navy-700">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center">
               <FileText size={24} className="text-emerald-500" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-navy-900 dark:text-white">Nowa analysis</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 Create financial or maturity analysis
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
             <X size={20} />
           </button>
@@ -104,7 +104,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
               <Briefcase size={14} className="inline mr-1.5 -mt-0.5" />
               Link to project{' '}
-              <span className="text-slate-400 dark:text-slate-500 font-normal">(opcjonalnie)</span>
+              <span className="text-slate-600 dark:text-slate-500 font-normal">(opcjonalnie)</span>
             </label>
             <select
               value={formData.projectId}
@@ -142,7 +142,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
           <div>
             <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
               Opis{' '}
-              <span className="text-slate-400 dark:text-slate-500 font-normal">(opcjonalnie)</span>
+              <span className="text-slate-600 dark:text-slate-500 font-normal">(opcjonalnie)</span>
             </label>
             <textarea
               value={formData.description}

@@ -137,7 +137,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
     label: string;
     description: string;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
       <div className="flex-1 pr-4">
         <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
@@ -347,7 +347,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
             </div>
           </div>
 
-          <div className="space-y-1 pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="space-y-1 pt-4 border-t border-slate-200 dark:border-navy-700">
             <ToggleSwitch
               enabled={performance.offlineModeEnabled}
               onChange={(val) =>
@@ -415,7 +415,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       {/* Info */}
       <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <Info size={18} className="text-slate-400 dark:text-slate-500 mt-0.5" />
+          <Info size={18} className="text-slate-600 dark:text-slate-500 mt-0.5" />
           <div>
             <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {t('settings.performance.tip', 'Performance Tip')}

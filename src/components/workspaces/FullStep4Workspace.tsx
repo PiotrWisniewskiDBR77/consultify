@@ -80,7 +80,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Cost */}
           <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
-            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500 mb-1">
               <DollarSign size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">
                 {t.summary.totalCost}
@@ -93,7 +93,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
 
           {/* Benefit */}
           <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
-            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500 mb-1">
               <TrendingUp size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">
                 {t.summary.totalBenefit}
@@ -106,7 +106,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
 
           {/* ROI */}
           <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
-            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500 mb-1">
               <Activity size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">
                 {t.summary.roi}
@@ -121,7 +121,7 @@ export const FullStep4Workspace: React.FC<FullStep4WorkspaceProps> = ({
 
           {/* Payback */}
           <div className="bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
-            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500 mb-1">
               <Clock size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">
                 {t.summary.payback}

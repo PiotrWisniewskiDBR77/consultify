@@ -86,7 +86,7 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
         className="w-[420px] max-w-full h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto"
         data-testid={`${testId}-aside`}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-navy-700 sticky top-0 bg-white dark:bg-navy-900 z-10">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700 sticky top-0 bg-white dark:bg-navy-900 z-10">
           <div className="flex items-center gap-2">
             <ShieldCheck size={14} className="text-slate-500" aria-hidden />
             <h2
@@ -99,7 +99,7 @@ export const TemplateGovernanceDrawer: React.FC<TemplateGovernanceDrawerProps> =
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-1"
+            className="text-slate-600 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-1"
             aria-label={isPl ? 'Zamknij' : 'Close'}
             data-testid={`${testId}-close`}
           >

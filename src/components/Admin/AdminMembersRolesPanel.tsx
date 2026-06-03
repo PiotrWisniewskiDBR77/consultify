@@ -265,7 +265,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                 <th className="py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">

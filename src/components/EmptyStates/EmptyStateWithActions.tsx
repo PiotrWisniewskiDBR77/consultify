@@ -69,7 +69,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
         </div>
       ) : (
         <div className="w-20 h-20 rounded-xl bg-slate-100 dark:bg-navy-900 flex items-center justify-center mb-6">
-          <Sparkles size={40} className="text-slate-300 dark:text-slate-600" />
+          <Sparkles size={40} className="text-slate-600 dark:text-slate-600" />
         </div>
       )}
 
@@ -107,7 +107,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
       {/* Templates */}
       {templates.length > 0 && (
         <div className="w-full max-w-lg">
-          <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3">
             Lub wybierz szablon
           </p>
           <div className="grid grid-cols-1 gap-2">
@@ -123,7 +123,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
                     <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-900 flex items-center justify-center group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
                       <TemplateIcon
                         size={20}
-                        className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
+                        className="text-slate-600 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
                       />
                     </div>
                   )}
@@ -137,7 +137,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
                   </div>
                   <ArrowRight
                     size={16}
-                    className="text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
+                    className="text-slate-600 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
                   />
                 </button>
               );

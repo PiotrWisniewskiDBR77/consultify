@@ -181,7 +181,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
             maxLength={150}
             className={inputClass}
           />
-          <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
+          <div className="flex justify-between text-xs text-slate-600 dark:text-slate-500">
             <span>
               {t('settings.profile.bioAbout.shortBioHint', 'Displayed on your profile card')}
             </span>
@@ -208,7 +208,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
             rows={6}
             className={inputClass + ' resize-none'}
           />
-          <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
+          <div className="flex justify-between text-xs text-slate-600 dark:text-slate-500">
             <span>
               {t('settings.profile.bioAbout.longBioHint', 'Markdown formatting supported')}
             </span>
@@ -241,7 +241,7 @@ export const BioAboutSection: React.FC<BioAboutSectionProps> = ({ currentUser, o
             </span>
           ))}
           {formState.skills.length === 0 && (
-            <span className="text-slate-400 dark:text-slate-500 text-sm italic">
+            <span className="text-slate-600 dark:text-slate-500 text-sm italic">
               {t('settings.profile.bioAbout.noSkills', 'No skills added yet')}
             </span>
           )}

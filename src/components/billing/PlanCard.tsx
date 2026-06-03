@@ -106,7 +106,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                 ? isCurrentPlan
                   ? 'text-white'
                   : 'text-gray-700 dark:text-gray-300'
-                : 'text-gray-400 dark:text-gray-500 line-through'
+                : 'text-gray-600 dark:text-gray-500 line-through'
             }`}
           >
             <div
@@ -124,7 +124,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                     ? isCurrentPlan
                       ? 'text-white'
                       : 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-400 dark:text-gray-500 dark:text-gray-400'
+                    : 'text-gray-600 dark:text-gray-500 dark:text-gray-400'
                 }`}
               />
             </div>

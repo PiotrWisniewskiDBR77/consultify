@@ -123,7 +123,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
         }}
         className="w-[420px] max-w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-navy-700">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
           <h2
             id={`${testId}-title`}
             className="text-sm font-semibold text-slate-800 dark:text-slate-100"
@@ -138,7 +138,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
                 onClose();
               }
             }}
-            className="text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-1"
+            className="text-slate-600 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-1"
             aria-label={isPl ? 'Zamknij' : 'Close'}
             data-testid={`${testId}-close`}
           >
@@ -222,7 +222,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-700">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 dark:border-navy-700">
           <button
             type="button"
             onClick={() => {

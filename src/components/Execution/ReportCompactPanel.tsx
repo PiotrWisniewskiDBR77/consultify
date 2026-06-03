@@ -50,7 +50,7 @@ const RAG_DOT: Record<string, string> = {
 };
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
     {children}
   </div>
 );
@@ -153,18 +153,18 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                         {ragConf.label}
                       </span>
                     </div>
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
                       {report.cadence}
                     </span>
-                    <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-600">·</span>
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500">
                       {report.dataQuality?.freshnessLabel ?? 'Live'}
                     </span>
                   </div>
                   <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {report.title}
                   </h3>
-                  <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  <p className="mt-0.5 truncate text-[11px] text-slate-600 dark:text-slate-500">
                     {report.audience}
                   </p>
                 </div>
@@ -173,7 +173,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => onGenerate(report)}
-                      className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100/80 hover:text-primary-500 dark:hover:bg-white/[0.06]"
+                      className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-primary-500 dark:hover:bg-white/[0.06]"
                       title={t('execution.reportPanel.generate', 'Generate with AI')}
                     >
                       <Maximize2 size={14} />
@@ -182,7 +182,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100/80 hover:text-slate-600 dark:hover:bg-white/[0.06]"
+                    className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-600 dark:hover:bg-white/[0.06]"
                   >
                     <X size={14} />
                   </button>
@@ -229,7 +229,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                         'rounded-t-lg border-b-2 px-2.5 py-1.5 text-[11px] font-medium transition-colors',
                         isActive
                           ? 'border-primary-500 text-primary-500 dark:text-primary-400'
-                          : 'border-transparent text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',
+                          : 'border-transparent text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',
                       ].join(' ')}
                     >
                       {t(tab.labelKey, tab.id)}
@@ -308,7 +308,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                           <div className="text-[12px] font-semibold text-slate-900 dark:text-white">
                             {action.action}
                           </div>
-                          <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                          <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-500">
                             {action.owner} · {action.dueLabel}
                           </div>
                           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
@@ -335,7 +335,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                     {((report.dataQuality?.knownLimitations ?? []).length ?? 0) > 0 && (
                       <div className="mt-2 space-y-1">
                         {(report.dataQuality?.knownLimitations ?? []).map((lim) => (
-                          <div key={lim} className="text-[10px] text-slate-400 dark:text-slate-500">
+                          <div key={lim} className="text-[10px] text-slate-600 dark:text-slate-500">
                             ⚠ {lim}
                           </div>
                         ))}
@@ -391,9 +391,9 @@ const ExportButton: React.FC<{
       {label}
     </span>
     {loading ? (
-      <Loader2 size={14} className="animate-spin text-slate-400" />
+      <Loader2 size={14} className="animate-spin text-slate-600" />
     ) : (
-      <ChevronRight size={14} className="text-slate-300 dark:text-slate-600" />
+      <ChevronRight size={14} className="text-slate-600 dark:text-slate-600" />
     )}
   </button>
 );

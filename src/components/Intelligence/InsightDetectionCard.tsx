@@ -70,7 +70,7 @@ export function InsightDetectionCard({
 
       {/* Expandable Content */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-slate-100 dark:border-navy-700 pt-3">
+        <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700 pt-3">
           <div className="space-y-2">
             {Object.entries(insight.content).map(([key, value]) => (
               <div key={key} className="flex items-start gap-2">
@@ -87,7 +87,7 @@ export function InsightDetectionCard({
       )}
 
       {/* Actions */}
-      <div className="flex items-center border-t border-slate-100 dark:border-navy-700">
+      <div className="flex items-center border-t border-slate-200 dark:border-navy-700">
         <button
           onClick={() => setExpanded(!expanded)}
           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"

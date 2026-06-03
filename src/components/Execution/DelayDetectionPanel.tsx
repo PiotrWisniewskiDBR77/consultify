@@ -78,10 +78,10 @@ const DEVIATION_ICONS: Record<string, React.FC<{ size?: number; className?: stri
 const REASON_COLORS: Record<string, string> = {
   BLOCKED: 'bg-rose-500/20 text-rose-400',
   DEPENDENCY_NOT_DONE: 'bg-amber-500/20 text-amber-400',
-  NO_OWNER: 'bg-slate-500/20 text-slate-400',
+  NO_OWNER: 'bg-slate-500/20 text-slate-600',
   RAID_HIGH_RISK: 'bg-primary-500/20 text-primary-400',
   CAPACITY_OVERLOAD: 'bg-blue-500/20 text-blue-400',
-  NO_TASKS_PLANNED: 'bg-gray-500/20 text-gray-400',
+  NO_TASKS_PLANNED: 'bg-gray-500/20 text-gray-600',
 };
 
 // ── Component ──────────────────────────────────────────────────
@@ -289,11 +289,11 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
 
       {/* Signal List */}
       {effectiveLoading ? (
-        <div className="flex items-center justify-center h-24 text-slate-400 text-sm">
+        <div className="flex items-center justify-center h-24 text-slate-600 text-sm">
           {t('execution.delay.loading')}
         </div>
       ) : filteredSignals.length === 0 ? (
-        <div className="flex items-center justify-center h-24 text-slate-400">
+        <div className="flex items-center justify-center h-24 text-slate-600">
           <div className="text-center">
             <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">{t('execution.delay.noDelays')}</p>
@@ -337,9 +337,9 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
                       : `${signal.daysDeviation}d`}
                   </span>
                   {isExpanded ? (
-                    <ChevronUp size={14} className="text-slate-400 shrink-0" />
+                    <ChevronUp size={14} className="text-slate-600 shrink-0" />
                   ) : (
-                    <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                    <ChevronDown size={14} className="text-slate-600 shrink-0" />
                   )}
                 </button>
 
@@ -370,7 +370,7 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
                           {signal.whySlipReasons.map((r, idx) => (
                             <span
                               key={idx}
-                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs ${REASON_COLORS[r.reason] || 'bg-slate-500/20 text-slate-400'}`}
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs ${REASON_COLORS[r.reason] || 'bg-slate-500/20 text-slate-600'}`}
                               title={r.detail}
                             >
                               {r.detail}
@@ -395,7 +395,7 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
                       <button
                         type="button"
                         onClick={() => handleDismiss(signal)}
-                        className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-300 transition-colors ml-auto"
+                        className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-300 transition-colors ml-auto"
                       >
                         <XCircle size={12} />
                         {t('execution.delay.dismiss')}

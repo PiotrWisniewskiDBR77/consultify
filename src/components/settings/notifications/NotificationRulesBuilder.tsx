@@ -349,7 +349,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       className={`p-2 rounded-lg transition-colors ${
                         rule.enabled
                           ? 'text-amber-600 hover:bg-amber-100'
-                          : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30'
+                          : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30'
                       }`}
                     >
                       {rule.enabled ? <Play size={16} /> : <Pause size={16} />}

@@ -46,7 +46,7 @@ export const AIOSWave0GateReport: React.FC = () => {
               <th className="py-2 pr-4">Evidence</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
+          <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
             {gateRows.map(([wave, scope, gate, evidence]) => (
               <tr key={wave}>
                 <td className="py-2 pr-4 font-medium text-slate-900 dark:text-white">{wave}</td>

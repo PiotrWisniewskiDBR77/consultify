@@ -163,11 +163,11 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
             {isPl ? 'Blind Spots AI' : 'AI Blind Spots'}
           </span>
           {loading && <Loader2 size={12} className="animate-spin text-amber-500" />}
-          <span className="text-[10px] text-slate-400 font-medium">{visibleSpots.length}</span>
+          <span className="text-[10px] text-slate-600 font-medium">{visibleSpots.length}</span>
           {expanded ? (
-            <ChevronDown size={12} className="text-slate-400" />
+            <ChevronDown size={12} className="text-slate-600" />
           ) : (
-            <ChevronUp size={12} className="text-slate-400" />
+            <ChevronUp size={12} className="text-slate-600" />
           )}
         </button>
 
@@ -203,7 +203,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
                     </button>
                     <button
                       onClick={() => handleDismiss(spot.id)}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-medium text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     >
                       <X size={9} />
                       {isPl ? 'Odrzuć' : 'Dismiss'}

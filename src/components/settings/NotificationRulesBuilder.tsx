@@ -235,7 +235,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 <button
                   onClick={() => handleDeleteRule(rule.id)}
                   disabled={isReadOnly}
-                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -267,7 +267,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
             {/* Custom Options */}
             {rule.rule_type === 'custom' && (
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 dark:border-navy-700">
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-navy-700">
                 {[
                   { key: 'notify_tasks', label: 'Task updates', icon: Check },
                   { key: 'notify_comments', label: 'Comments', icon: MessageSquare },
@@ -284,7 +284,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       }
                       className="rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-primary-500"
                     />
-                    <option.icon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                    <option.icon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
                       {option.label}
                     </span>
@@ -295,7 +295,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
             {/* Priority Filter */}
             {rule.rule_type !== 'muted' && (
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-navy-700">
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   {t('settings.notifications.rules.priorityFilter', 'Priority Filter')}
                 </label>
@@ -395,7 +395,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
         </div>
 
         {digestSettings.enabled && (
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 {t('settings.notifications.digest.frequency', 'Frequency')}
@@ -508,7 +508,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           </div>
         </div>
 
-        <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+        <p className="text-sm text-slate-600 dark:text-slate-500 italic">
           {t(
             'settings.notifications.vip.empty',
             'No VIP contacts configured. Messages from VIP contacts will always notify you.'

@@ -188,7 +188,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
     <div className="w-[280px] max-h-[440px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
       <div className="p-2 sticky top-0 bg-white dark:bg-navy-900 z-10">
         <div className="relative">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -201,7 +201,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
       <div className="px-1 pb-1.5">
         {Object.entries(grouped).map(([cat, items]) => (
           <div key={cat}>
-            <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+            <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
               {isPl ? CATEGORY_LABELS[cat]?.pl : CATEGORY_LABELS[cat]?.en}
             </div>
             {items.map((tool) => {
@@ -212,7 +212,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
                   onClick={() => dispatch(tool.action)}
                   className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
                 >
-                  <Icon size={12} className="text-slate-400 shrink-0" />
+                  <Icon size={12} className="text-slate-600 shrink-0" />
                   {isPl ? tool.labelPl : tool.labelEn}
                 </button>
               );
@@ -220,7 +220,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="px-2 py-4 text-[10px] text-slate-400 text-center">
+          <div className="px-2 py-4 text-[10px] text-slate-600 text-center">
             {isPl ? 'Brak wyników' : 'No results'}
           </div>
         )}

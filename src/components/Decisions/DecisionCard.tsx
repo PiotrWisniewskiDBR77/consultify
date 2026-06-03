@@ -337,8 +337,8 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           {decision.title}
         </h4>
 
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-navy-700">
-          <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-3 text-[11px] text-slate-600 dark:text-slate-500">
             <div className="flex items-center gap-1">
               <User size={11} />
               <span className="truncate max-w-[80px]">
@@ -445,8 +445,8 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
 
         {/* Waiting Time Bar */}
         {decision.daysWaiting !== undefined && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-500 mb-1">
               <span>{t('decisions.waitingFor', 'Waiting for')}</span>
               <span className="font-medium">
                 {decision.daysWaiting} {t('decisions.days', 'days')}
@@ -475,7 +475,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           className={`px-4 py-3 border-t flex items-center gap-2 ${
             isOverdue
               ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-500/10'
-              : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-navy-700'
+              : 'bg-slate-50/50 dark:bg-white/5 border-slate-200 dark:border-navy-700'
           }`}
         >
           {isMyDecision ? (

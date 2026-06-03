@@ -1950,7 +1950,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   <td className="py-2.5 pl-3 pr-2 text-xs text-right text-slate-500">{idx + 1}</td>
                   <td className="py-2.5 pl-3 pr-2 text-slate-700 dark:text-slate-200 truncate">
                     <span className="inline-flex items-center gap-1.5">
-                      <Briefcase size={12} className="text-slate-400 flex-shrink-0" />
+                      <Briefcase size={12} className="text-slate-600 flex-shrink-0" />
                       {BUDGET_CATEGORIES.find((c) => c.value === item.category)?.[
                         isPolish ? 'labelPl' : 'labelEn'
                       ] || item.category}
@@ -1979,7 +1979,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
@@ -2007,7 +2007,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-emerald-50/30 dark:bg-emerald-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2083,7 +2083,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-400 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
                       title={isPolish ? 'Anuluj' : 'Cancel'}
                     >
                       <X size={14} />
@@ -2094,7 +2094,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-sm text-slate-400">
+                <td colSpan={7} className="py-8 text-center text-sm text-slate-600">
                   {isPolish ? 'Brak pozycji budżetowych' : 'No budget items yet'}
                 </td>
               </tr>
@@ -2302,7 +2302,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
@@ -2330,7 +2330,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-blue-50/30 dark:bg-blue-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2414,7 +2414,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-400 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
                       title={isPolish ? 'Anuluj' : 'Cancel'}
                     >
                       <X size={14} />
@@ -2425,7 +2425,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-sm text-slate-400">
+                <td colSpan={8} className="py-8 text-center text-sm text-slate-600">
                   {isPolish ? 'Brak przypisanych zasobów' : 'No team members assigned'}
                 </td>
               </tr>
@@ -2617,7 +2617,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
@@ -2645,7 +2645,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-indigo-50/30 dark:bg-indigo-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2737,7 +2737,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-400 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
                       title={isPolish ? 'Anuluj' : 'Cancel'}
                     >
                       <X size={14} />
@@ -2748,7 +2748,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-sm text-slate-400">
+                <td colSpan={8} className="py-8 text-center text-sm text-slate-600">
                   {isPolish ? 'Brak narzędzi' : 'No tools added yet'}
                 </td>
               </tr>
@@ -2857,7 +2857,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
       case 'knowledge':
         return <BookOpen size={12} className="text-amber-400 flex-shrink-0" />;
       default:
-        return <Briefcase size={12} className="text-slate-400 flex-shrink-0" />;
+        return <Briefcase size={12} className="text-slate-600 flex-shrink-0" />;
     }
   };
 
@@ -2987,7 +2987,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
@@ -3015,7 +3015,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-primary-50/30 dark:bg-primary-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pr-2">
@@ -3110,7 +3110,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-400 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
                       title={isPolish ? 'Anuluj' : 'Cancel'}
                     >
                       <X size={14} />
@@ -3121,7 +3121,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-sm text-slate-400">
+                <td colSpan={9} className="py-8 text-center text-sm text-slate-600">
                   {isPolish ? 'Brak wartości niematerialnych' : 'No intangible assets yet'}
                 </td>
               </tr>

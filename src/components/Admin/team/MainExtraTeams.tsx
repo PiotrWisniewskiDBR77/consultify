@@ -146,7 +146,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                 'Manage primary and additional team memberships'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -162,7 +162,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.team.mainExtra.totalUsers', 'Total Users')}
             </span>
-            <Users size={16} className="text-slate-400 dark:text-slate-500" />
+            <Users size={16} className="text-slate-600 dark:text-slate-500" />
           </div>
           <p className="text-2xl font-bold text-navy-900 dark:text-white">{users.length}</p>
         </div>
@@ -195,7 +195,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
         <div className="flex-1 relative">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -367,7 +367,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                           {onRemoveExtraTeam && (
                             <button
                               onClick={() => onRemoveExtraTeam(user.userId, team.id)}
-                              className="text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                              className="text-slate-600 dark:text-slate-500 hover:text-rose-500"
                             >
                               <X size={12} />
                             </button>
@@ -421,7 +421,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
       {/* Empty State */}
       {filteredUsers.length === 0 && (
         <div className="text-center py-12 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 border-dashed">
-          <Users size={48} className="mx-auto mb-4 text-slate-300 dark:text-navy-600" />
+          <Users size={48} className="mx-auto mb-4 text-slate-600 dark:text-navy-600" />
           <p className="text-slate-500 dark:text-slate-400">
             {t('admin.team.mainExtra.noUsers', 'No users match your filters')}
           </p>

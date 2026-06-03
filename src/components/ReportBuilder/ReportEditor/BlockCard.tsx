@@ -1122,7 +1122,7 @@ const CoverPreview: React.FC<{ content: string }> = ({ content }) => {
           {p.subtitle && (
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{p.subtitle}</p>
           )}
-          <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-600">
             {p.companyName || p.company ? <span>{p.companyName || p.company}</span> : null}
             {(p.companyName || p.company) && p.date ? <span>·</span> : null}
             {p.date ? <span>{p.date}</span> : null}
@@ -1429,9 +1429,9 @@ export const BlockCard: React.FC<BlockCardProps> = ({
       onClick={onSelect}
     >
       {/* ===== HEADER ===== */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200 dark:border-slate-800">
         {/* Drag */}
-        <div className="cursor-grab text-slate-300 hover:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="cursor-grab text-slate-600 hover:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
           <Grip className="w-4 h-4" />
         </div>
 
@@ -1453,7 +1453,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             onClick={(e) => e.stopPropagation()}
           />
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-[10px] text-slate-400 capitalize">
+            <span className="text-[10px] text-slate-600 capitalize">
               {block.type.replace(/_/g, ' ')}
             </span>
             {block.isGenerating && (
@@ -1474,7 +1474,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               </span>
             )}
             {!block.isGenerating && !block.isGenerated && !block.needsRegeneration && (
-              <span className="text-[9px] px-1 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded font-medium">
+              <span className="text-[9px] px-1 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded font-medium">
                 {isPl ? 'Nowy' : 'New'}
               </span>
             )}
@@ -1491,7 +1491,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             disabled={block.isGenerating}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all ${
               block.isGenerating
-                ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400'
+                ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-600'
                 : !block.isGenerated
                   ? 'bg-gradient-to-r from-blue-500 to-primary-500 text-white hover:from-blue-600 hover:to-primary-600 shadow-sm'
                   : block.needsRegeneration
@@ -1549,7 +1549,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               onMoveUp();
             }}
             disabled={!canMoveUp}
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
+            className="p-1 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
           >
             <ArrowUp className="w-3.5 h-3.5" />
           </button>
@@ -1559,7 +1559,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               onMoveDown();
             }}
             disabled={!canMoveDown}
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
+            className="p-1 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
           >
             <ArrowDown className="w-3.5 h-3.5" />
           </button>
@@ -1572,7 +1572,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <MoreHorizontal className="w-4 h-4" />
           </button>
@@ -1632,7 +1632,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          className="p-1 text-slate-400 hover:text-slate-600"
+          className="p-1 text-slate-600 hover:text-slate-600"
         >
           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
@@ -1640,7 +1640,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
 
       {/* ===== MODE TABS ===== */}
       {isExpanded && (
-        <div className="flex items-center border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
           {[
             {
               key: 'configure' as BlockMode,
@@ -1671,7 +1671,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               className={`relative flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium transition-all border-b-2 ${
                 mode === tab.key
                   ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
-                  : 'text-slate-400 border-transparent hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  : 'text-slate-600 border-transparent hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               {tab.icon}
@@ -1850,7 +1850,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                 {/* Universal modifiers */}
                 <div>
                   {contextActions.length > 0 && (
-                    <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                    <div className="text-[9px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
                       {isPl ? 'Modyfikatory' : 'Modifiers'}
                     </div>
                   )}
@@ -1909,7 +1909,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               </details>
 
               {/* ── Section 5: Action Bar ── */}
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
                 {/* Summary of pending changes */}
                 {(selectedActions.size > 0 || additionalPrompt.trim()) && (
                   <div className="mb-2 p-2 bg-blue-50/80 dark:bg-blue-900/15 border border-blue-200/50 dark:border-blue-800/30 rounded-lg">
@@ -2043,7 +2043,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                         setSelectedActions(new Set());
                         setAdditionalPrompt('');
                       }}
-                      className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                      className="p-2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                       title={isPl ? 'Wyczyść' : 'Clear'}
                     >
                       <X className="w-4 h-4" />
@@ -2107,7 +2107,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                         className={`flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded ml-0.5 ${
                           editHasChanges
                             ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 cursor-not-allowed'
                         }`}
                       >
                         <Check className="w-2.5 h-2.5" /> {isPl ? 'Zapisz' : 'Save'}
@@ -2122,20 +2122,20 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                     className="w-full px-4 py-3 text-sm font-mono bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 resize-y min-h-[120px] leading-relaxed border-none outline-none"
                     style={{ maxHeight: '500px' }}
                   />
-                  <div className="flex items-center gap-3 px-3 py-1 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
-                    <span className="text-[9px] text-slate-400">
+                  <div className="flex items-center gap-3 px-3 py-1 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-800">
+                    <span className="text-[9px] text-slate-600">
                       <kbd className="px-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[8px]">
                         ⌘S
                       </kbd>{' '}
                       {isPl ? 'zapisz' : 'save'}
                     </span>
-                    <span className="text-[9px] text-slate-400">
+                    <span className="text-[9px] text-slate-600">
                       <kbd className="px-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[8px]">
                         ⌘Z
                       </kbd>{' '}
                       {isPl ? 'cofnij' : 'undo'}
                     </span>
-                    <span className="text-[9px] text-slate-400">
+                    <span className="text-[9px] text-slate-600">
                       <kbd className="px-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[8px]">
                         Esc
                       </kbd>{' '}
@@ -2246,7 +2246,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                       </>
                     )
                   ) : (
-                    <div className="flex items-center justify-center py-10 text-slate-400">
+                    <div className="flex items-center justify-center py-10 text-slate-600">
                       <div className="text-center space-y-3">
                         <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-blue-100 to-primary-100 dark:from-blue-900/30 dark:to-primary-900/30 flex items-center justify-center">
                           <Sparkles className="w-7 h-7 text-blue-500 opacity-70" />
@@ -2304,7 +2304,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                       const readingMinutes = Math.max(1, Math.ceil(wordCount / 200));
                       const isAiGenerated = block.isGenerated;
                       return (
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-200 dark:border-slate-800">
                           <div className="flex items-center gap-1">
                             <button
                               onClick={(e) => {
@@ -2365,7 +2365,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               )}
                             </span>
                             {/* Reading time + word count */}
-                            <span className="text-[9px] text-slate-400">
+                            <span className="text-[9px] text-slate-600">
                               {wordCount} {isPl ? 'słów' : 'words'} · ~{readingMinutes} min
                             </span>
                           </div>
@@ -2461,7 +2461,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                     <Send className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <p className="text-[9px] text-slate-400 mt-1">
+                <p className="text-[9px] text-slate-600 mt-1">
                   {isPl
                     ? '⌘+Enter aby dodać. Rozwiązanie sugestii/zmiany zleci AI aktualizację treści.'
                     : '⌘+Enter to add. Resolving suggestions/changes will instruct AI to update content.'}
@@ -2471,10 +2471,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({
               {/* Comments list */}
               {isLoadingComments ? (
                 <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                  <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
                 </div>
               ) : blockComments.length === 0 ? (
-                <div className="text-center py-6 text-slate-400">
+                <div className="text-center py-6 text-slate-600">
                   <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-40" />
                   <p className="text-[11px]">{isPl ? 'Brak komentarzy' : 'No comments yet'}</p>
                   <p className="text-[9px] mt-0.5">
@@ -2553,7 +2553,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                                     : 'Change'
                                   : comment.commentType}
                               </span>
-                              <span className="text-[8px] text-slate-400">
+                              <span className="text-[8px] text-slate-600">
                                 {new Date(comment.createdAt).toLocaleTimeString([], {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -2605,7 +2605,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                               <button
                                 onClick={() => handleDismissComment(comment.id)}
                                 title={isPl ? 'Odrzuć' : 'Dismiss'}
-                                className="p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+                                className="p-1 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>

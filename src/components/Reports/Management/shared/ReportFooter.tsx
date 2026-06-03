@@ -82,7 +82,7 @@ export const ReportFooter: React.FC<ReportFooterProps> = ({
       {/* Data Snapshot */}
       {dataSnapshot && (
         <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-200 dark:border-navy-700">
-          <Info size={14} className="text-slate-400 dark:text-slate-500" />
+          <Info size={14} className="text-slate-600 dark:text-slate-500" />
           <span className="text-xs text-slate-500 dark:text-slate-400">
             Data analyzed: {dataSnapshot.projectsIncluded || 0} projects,{' '}
             {dataSnapshot.tasksAnalyzed || 0} tasks, {dataSnapshot.initiativesAnalyzed || 0}{' '}
@@ -93,7 +93,7 @@ export const ReportFooter: React.FC<ReportFooterProps> = ({
       )}
 
       {/* Report Metadata */}
-      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
+      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-500">
         <span>
           Report ID:{' '}
           <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded">{reportId}</code>

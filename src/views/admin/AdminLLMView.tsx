@@ -260,7 +260,7 @@ export const AdminLLMView: React.FC = () => {
       case 'unhealthy':
         return <XCircle size={16} className="text-rose-400" />;
       default:
-        return <Activity size={16} className="text-slate-400 dark:text-slate-500" />;
+        return <Activity size={16} className="text-slate-600 dark:text-slate-500" />;
     }
   };
 
@@ -274,7 +274,7 @@ export const AdminLLMView: React.FC = () => {
       case 'unhealthy':
         return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
       default:
-        return 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
+        return 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
     }
   };
 
@@ -364,13 +364,13 @@ export const AdminLLMView: React.FC = () => {
       <div className="flex gap-4 border-b border-white/5 pb-1">
         <button
           onClick={() => setActiveTab('providers')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'providers' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
         >
           LLM Providers
         </button>
         <button
           onClick={() => setActiveTab('health')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'health' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
         >
           <Activity size={14} />
           Health Dashboard
@@ -388,7 +388,7 @@ export const AdminLLMView: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('prompts')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-white'}`}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prompts' ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-white'}`}
         >
           System Personas (Prompts)
         </button>
@@ -400,7 +400,7 @@ export const AdminLLMView: React.FC = () => {
             <DegradedState title="LLM providers unavailable" description={providerLoadError} />
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
-              <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+              <RefreshCw className="h-6 w-6 animate-spin text-slate-600" />
             </div>
           ) : (
             <>
@@ -409,7 +409,7 @@ export const AdminLLMView: React.FC = () => {
                 description="Provider management actions are not shown until the persistence and audit workflow is fully connected."
               />
               <div className="rounded-xl border border-white/10 bg-navy-900/50 p-4">
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-slate-600">
                   Loaded providers:{' '}
                   <span className="font-semibold text-white">{providers.length}</span>
                 </p>
@@ -430,7 +430,7 @@ export const AdminLLMView: React.FC = () => {
                 description="Prompt editing is hidden until user attribution, persistence, and audit metadata are wired."
               />
               <div className="rounded-xl border border-white/10 bg-navy-900/50 p-4">
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-slate-600">
                   Loaded prompts: <span className="font-semibold text-white">{prompts.length}</span>
                 </p>
               </div>
@@ -460,7 +460,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="text-2xl font-bold text-white mb-1">
                     {analytics?.total_requests?.toLocaleString() || 0}
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">Total Requests</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-500">Total Requests</div>
                 </div>
 
                 <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
@@ -475,7 +475,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="text-2xl font-bold text-white mb-1">
                     {analytics?.avg_latency || 0}ms
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">Response Time</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-500">Response Time</div>
                 </div>
 
                 <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
@@ -490,7 +490,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="text-2xl font-bold text-white mb-1">
                     ${(analytics?.total_cost || 0).toFixed(4)}
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">Total Spend</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-500">Total Spend</div>
                 </div>
 
                 <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
@@ -512,7 +512,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="text-2xl font-bold text-white mb-1">
                     {(analytics?.error_rate * 100).toFixed(1)}%
                   </div>
-                  <div className="text-xs text-slate-400 dark:text-slate-500">
+                  <div className="text-xs text-slate-600 dark:text-slate-500">
                     {analytics?.error_count} Failed Requests
                   </div>
                 </div>
@@ -522,7 +522,7 @@ export const AdminLLMView: React.FC = () => {
               <div className="bg-navy-900/50 border border-white/10 rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-white/10 flex justify-between items-center">
                   <h3 className="font-semibold text-white flex items-center gap-2">
-                    <Terminal size={18} className="text-slate-400 dark:text-slate-500" />
+                    <Terminal size={18} className="text-slate-600 dark:text-slate-500" />
                     Recent Interactions
                   </h3>
                   <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">
@@ -555,7 +555,7 @@ export const AdminLLMView: React.FC = () => {
                               {log.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-500 font-mono text-xs">
                             {new Date(log.timestamp).toLocaleTimeString()}
                           </td>
                           <td className="px-4 py-3">
@@ -566,10 +566,10 @@ export const AdminLLMView: React.FC = () => {
                               </span>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-slate-300 font-mono text-xs">
+                          <td className="px-4 py-3 text-slate-600 font-mono text-xs">
                             {log.latency_ms}ms
                           </td>
-                          <td className="px-4 py-3 text-slate-300 font-mono text-xs">
+                          <td className="px-4 py-3 text-slate-600 font-mono text-xs">
                             ${(log.cost || 0).toFixed(6)}
                           </td>
                           <td className="px-4 py-3">
@@ -636,8 +636,8 @@ export const AdminLLMView: React.FC = () => {
               </div>
               <div className="bg-gradient-to-br from-slate-800/50 to-navy-900 border border-white/10 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Server size={18} className="text-slate-400 dark:text-slate-500" />
-                  <span className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <Server size={18} className="text-slate-600 dark:text-slate-500" />
+                  <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
                     Total
                   </span>
                 </div>
@@ -655,7 +655,7 @@ export const AdminLLMView: React.FC = () => {
               <div className="flex items-center gap-4">
                 {llmStatus?.defaultProvider && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-slate-400 dark:text-slate-500">Default:</span>
+                    <span className="text-slate-600 dark:text-slate-500">Default:</span>
                     <span className="text-white font-medium">{llmStatus.defaultProvider.name}</span>
                     <span className="text-slate-500 dark:text-slate-400">
                       ({llmStatus.defaultProvider.model})
@@ -663,7 +663,7 @@ export const AdminLLMView: React.FC = () => {
                   </div>
                 )}
                 {llmStatus?.startupValidation && (
-                  <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
                     <Clock size={12} />
                     Last check:{' '}
                     {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}(
@@ -709,7 +709,7 @@ export const AdminLLMView: React.FC = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h4 className="font-semibold text-white">{p.name || p.provider}</h4>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                      <p className="text-xs text-slate-600 dark:text-slate-500 font-mono">
                         {p.model}
                       </p>
                     </div>
@@ -721,7 +721,7 @@ export const AdminLLMView: React.FC = () => {
 
                   <div className="flex flex-wrap gap-1 mb-3">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-primary-500/20 text-primary-300' : 'bg-slate-700/50 text-slate-400 dark:text-slate-500'}`}
+                      className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-primary-500/20 text-primary-300' : 'bg-slate-700/50 text-slate-600 dark:text-slate-500'}`}
                     >
                       {p.isDefault ? '★ Default' : p.tier}
                     </span>
@@ -774,7 +774,7 @@ export const AdminLLMView: React.FC = () => {
                                 : 'text-yellow-400'
                           }
                         />
-                        <span className="text-slate-400 dark:text-slate-500">
+                        <span className="text-slate-600 dark:text-slate-500">
                           Circuit: {llmStatus.circuitBreakers[p.provider].state}
                         </span>
                         {llmStatus.circuitBreakers[p.provider].failures > 0 && (
@@ -816,7 +816,7 @@ export const AdminLLMView: React.FC = () => {
                                 llmStatus.providers.find((p) => p.provider === provider)
                                   ?.healthStatus === 'healthy'
                                   ? 'bg-green-500/20 text-green-300'
-                                  : 'bg-slate-700/50 text-slate-400 dark:text-slate-500'
+                                  : 'bg-slate-700/50 text-slate-600 dark:text-slate-500'
                               }`}
                             >
                               {provider}

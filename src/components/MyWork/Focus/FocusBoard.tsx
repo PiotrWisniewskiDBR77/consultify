@@ -91,7 +91,7 @@ const DailyStatCard: React.FC<{
           <p className="text-2xl font-bold text-navy-900 dark:text-white">
             {value}
             {suffix && (
-              <span className="text-sm font-normal text-slate-400 dark:text-slate-500 ml-1">
+              <span className="text-sm font-normal text-slate-600 dark:text-slate-500 ml-1">
                 {suffix}
               </span>
             )}
@@ -191,7 +191,7 @@ const FocusTaskCard: React.FC<{
       <div className="flex items-start gap-3 p-4">
         {/* Drag Handle */}
         <div className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-          <GripVertical size={16} className="text-slate-300 dark:text-slate-600" />
+          <GripVertical size={16} className="text-slate-600 dark:text-slate-600" />
         </div>
 
         {/* Completion Toggle */}
@@ -205,7 +205,7 @@ const FocusTaskCard: React.FC<{
           {task.isCompleted ? (
             <CheckCircle size={22} className="text-green-500" />
           ) : (
-            <Circle size={22} className="text-slate-300 hover:text-brand transition-colors" />
+            <Circle size={22} className="text-slate-600 hover:text-brand transition-colors" />
           )}
         </button>
 
@@ -223,7 +223,7 @@ const FocusTaskCard: React.FC<{
               {/* Title */}
               <h4
                 className={`text-sm font-semibold truncate ${
-                  task.isCompleted ? 'text-slate-400 line-through' : 'text-navy-900 dark:text-white'
+                  task.isCompleted ? 'text-slate-600 line-through' : 'text-navy-900 dark:text-white'
                 }`}
               >
                 {task.title}
@@ -236,7 +236,7 @@ const FocusTaskCard: React.FC<{
                 e.stopPropagation();
                 onRemove(task.taskId);
               }}
-              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-all"
+              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-all"
             >
               <X size={14} />
             </button>
@@ -254,7 +254,7 @@ const FocusTaskCard: React.FC<{
               />
             )}
             {task.estimatedMinutes && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500 flex items-center gap-1">
                 <Clock size={10} />
                 {task.estimatedMinutes} min
               </span>
@@ -297,7 +297,7 @@ const TimeBlockSection: React.FC<{
           <span className="font-semibold text-navy-900 dark:text-white">
             {t(`myWork.focus.timeBlock.${block}`, config.label)}
           </span>
-          <span className="text-xs text-slate-400 dark:text-slate-500">{config.time}</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">{config.time}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -331,7 +331,7 @@ const TimeBlockSection: React.FC<{
                   ))}
                 </Reorder.Group>
               ) : (
-                <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">
+                <div className="text-center py-4 text-sm text-slate-600 dark:text-slate-500">
                   {t('myWork.focus.noTasksInBlock', 'No tasks in this block')}
                 </div>
               )}
@@ -775,7 +775,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               <span className="text-3xl font-bold text-navy-900 dark:text-white">
                 {executionScore}
               </span>
-              <span className="text-sm text-slate-400 dark:text-slate-500">/ 100</span>
+              <span className="text-sm text-slate-600 dark:text-slate-500">/ 100</span>
             </div>
           </div>
           <div

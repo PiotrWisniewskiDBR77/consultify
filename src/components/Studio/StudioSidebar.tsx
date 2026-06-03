@@ -71,15 +71,15 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({
       raci: 'text-amber-400 bg-amber-500/20',
       swimlane: 'text-blue-400 bg-blue-500/20',
     };
-    return colors[type] || 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/20';
+    return colors[type] || 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/20';
   };
 
   return (
     <div className="w-64 shrink-0 flex flex-col bg-white dark:bg-navy-900 shadow-sm">
       {/* Header */}
-      <div className="shrink-0 p-4 flex items-center justify-between border-b border-slate-100 dark:border-navy-800">
+      <div className="shrink-0 p-4 flex items-center justify-between border-b border-slate-200 dark:border-navy-800">
         <div className="flex items-center gap-2">
-          <FolderOpen size={18} className="text-slate-400 dark:text-slate-500" />
+          <FolderOpen size={18} className="text-slate-600 dark:text-slate-500" />
           <span className="font-medium text-white">Documents</span>
         </div>
         <button

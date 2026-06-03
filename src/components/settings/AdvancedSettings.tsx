@@ -408,7 +408,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                       <Copy size={14} />
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                     {t('settings.advanced.created', 'Created')}:{' '}
                     {new Date(apiKey.createdAt).toLocaleDateString()}
                     {apiKey.lastUsed &&
@@ -463,7 +463,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           </div>
 
           {/* Include Attachments */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.advanced.includeAttachments', 'Include Attachments')}
@@ -490,7 +490,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           </div>
 
           {/* Date Range */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.advanced.dateRange', 'Default Date Range')}
@@ -564,7 +564,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                   <span className="font-medium text-slate-700 dark:text-slate-300">
                     {t(`settings.advanced.shortcuts.${shortcut.id}`, shortcut.action)}
                   </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
+                  <span className="text-xs text-slate-600 dark:text-slate-500 ml-2">
                     {t(
                       `settings.advanced.shortcutCategories.${shortcut.category}`,
                       shortcut.category
@@ -641,7 +641,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           {preferences.enableDeveloperMode && (
             <>
               {/* Show Debug Info */}
-              <div className="flex items-center justify-between pl-6 pt-4 border-t border-slate-100 dark:border-navy-700">
+              <div className="flex items-center justify-between pl-6 pt-4 border-t border-slate-200 dark:border-navy-700">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300">
                     {t('settings.advanced.showDebugInfo', 'Show Debug Info')}
@@ -693,7 +693,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           )}
 
           {/* Beta Features */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <Shield size={16} className="text-amber-500" />

@@ -60,14 +60,14 @@ export const QaAxisCard: React.FC<QaAxisCardProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{pct}%</span>
           {open ? (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronDown className="h-3.5 w-3.5 text-slate-600" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
           )}
         </div>
       </button>
       {open && (
-        <dl className="border-t border-slate-100 dark:border-slate-800 px-3 py-2 text-xs">
+        <dl className="border-t border-slate-200 dark:border-slate-800 px-3 py-2 text-xs">
           {detail.details.map((d, idx) => (
             <div key={`${d.metric}-${idx}`} className="flex justify-between gap-2 py-0.5">
               <dt className="text-slate-500 dark:text-slate-400">{d.metric}</dt>

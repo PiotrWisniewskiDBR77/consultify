@@ -84,13 +84,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       style={{ maxHeight: maxHeight ? `${maxHeight}px` : '60vh' }}
     >
       <div className="px-3.5 pt-1.5 pb-1">
-        <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
           {header}
         </span>
       </div>
 
       {items.length === 0 ? (
-        <div className="px-3.5 py-2 text-[13px] text-slate-400 dark:text-slate-500">
+        <div className="px-3.5 py-2 text-[13px] text-slate-600 dark:text-slate-500">
           {emptyText}
         </div>
       ) : (
@@ -118,7 +118,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               {Icon && (
                 <Icon
                   size={16}
-                  className={`shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}`}
+                  className={`shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'}`}
                 />
               )}
               <span className="flex flex-col min-w-0 flex-1">
@@ -128,7 +128,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   {item.label}
                 </span>
                 {item.sublabel && (
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                  <span className="text-[11px] text-slate-600 dark:text-slate-500 truncate">
                     {item.sublabel}
                   </span>
                 )}

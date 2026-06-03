@@ -84,7 +84,7 @@ const IMPORT_STATUS_CONFIG: Record<
 > = {
   pending: {
     label: 'Uploaded',
-    color: 'text-slate-400 bg-slate-500/15 border-slate-500/20',
+    color: 'text-slate-600 bg-slate-500/15 border-slate-500/20',
     icon: 'clock',
   },
   detecting: {
@@ -225,7 +225,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-400 mx-auto mb-3" />
-          <p className="text-sm text-slate-400">Loading imported report...</p>
+          <p className="text-sm text-slate-600">Loading imported report...</p>
         </div>
       </div>
     );
@@ -310,7 +310,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
             title="Refresh"
           >
-            <RefreshCw size={16} className="text-slate-400" />
+            <RefreshCw size={16} className="text-slate-600" />
           </button>
 
           {/* Download PDF */}
@@ -457,7 +457,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
                 Report Summary
               </h3>
-              <div className="prose prose-sm prose-invert max-w-none text-slate-300">
+              <div className="prose prose-sm prose-invert max-w-none text-slate-600">
                 {data.autoSummary.split('\n').map((line, i) => {
                   if (line.startsWith('## ')) {
                     return (
@@ -482,7 +482,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                   }
                   if (line.startsWith('- ')) {
                     return (
-                      <li key={i} className="text-sm text-slate-400 ml-4">
+                      <li key={i} className="text-sm text-slate-600 ml-4">
                         {line.replace('- ', '')}
                       </li>
                     );
@@ -490,15 +490,15 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                   if (line.startsWith('**')) {
                     const parts = line.split('**');
                     return (
-                      <p key={i} className="text-sm text-slate-400">
-                        <span className="font-medium text-slate-300">{parts[1]}</span>
+                      <p key={i} className="text-sm text-slate-600">
+                        <span className="font-medium text-slate-600">{parts[1]}</span>
                         {parts[2]}
                       </p>
                     );
                   }
                   if (line.trim() === '') return <br key={i} />;
                   return (
-                    <p key={i} className="text-sm text-slate-400">
+                    <p key={i} className="text-sm text-slate-600">
                       {line}
                     </p>
                   );
@@ -541,19 +541,19 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                                   ? 'bg-amber-500/15 text-amber-400'
                                   : init.priority === 'medium'
                                     ? 'bg-blue-500/15 text-blue-400'
-                                    : 'bg-slate-500/15 text-slate-400'
+                                    : 'bg-slate-500/15 text-slate-600'
                             }`}
                           >
                             {init.priority}
                           </span>
                         )}
                         {init.effort && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-400">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-600">
                             effort: {init.effort}
                           </span>
                         )}
                         {init.impact && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-400">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-600">
                             impact: {init.impact}
                           </span>
                         )}

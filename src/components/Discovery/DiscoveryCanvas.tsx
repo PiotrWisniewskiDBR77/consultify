@@ -138,7 +138,7 @@ const EmptyState: React.FC = () => {
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="text-center p-8 max-w-md">
         <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 dark:bg-navy-700 rounded-full flex items-center justify-center">
-          <Plus size={32} className="text-slate-400 dark:text-slate-500" />
+          <Plus size={32} className="text-slate-600 dark:text-slate-500" />
         </div>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
           {t(

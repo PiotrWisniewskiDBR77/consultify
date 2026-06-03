@@ -375,7 +375,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             >
               <Webhook
                 className={
-                  webhook.isActive ? 'text-green-500' : 'text-slate-400 dark:text-slate-500'
+                  webhook.isActive ? 'text-green-500' : 'text-slate-600 dark:text-slate-500'
                 }
                 size={20}
               />
@@ -397,12 +397,12 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                 {webhook.url}
               </p>
               <div className="flex items-center gap-4 mt-2">
-                <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                <span className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1">
                   <Zap size={12} />
                   {webhook.events.length} events
                 </span>
                 {webhook.lastTriggered && (
-                  <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <span className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1">
                     <Clock size={12} />
                     Last: {new Date(webhook.lastTriggered).toLocaleString()}
                   </span>
@@ -427,7 +427,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           <div className="flex items-center gap-1">
             <button
               disabled
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
               title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Send size={16} />
@@ -435,7 +435,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             <button
               onClick={() => toggleWebhookActive(webhook)}
               disabled
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               {webhook.isActive ? <Pause size={16} /> : <Play size={16} />}
@@ -443,7 +443,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             <button
               onClick={() => startEditing(webhook)}
               disabled
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
               title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Edit size={16} />
@@ -451,7 +451,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             <button
               onClick={() => deleteWebhook(webhook)}
               disabled
-              className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+              className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
               title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Trash2 size={16} />
@@ -485,7 +485,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{app.description}</p>
               {app.status === 'connected' && app.lastSync && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 flex items-center gap-1">
+                <p className="text-xs text-slate-600 dark:text-slate-500 mt-2 flex items-center gap-1">
                   <RefreshCw size={12} />
                   Last sync: {new Date(app.lastSync).toLocaleString()}
                 </p>
@@ -537,7 +537,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           </h3>
           <button
             onClick={cancelEditing}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
           >
             <X size={18} />
           </button>
@@ -584,13 +584,13 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                 />
                 <button
                   onClick={() => setShowSecret(!showSecret)}
-                  className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                  className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                 >
                   {showSecret ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
                 <button
                   onClick={() => copyToClipboard(selectedWebhook.secret)}
-                  className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500"
+                  className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-500"
                 >
                   <Copy size={18} />
                 </button>
@@ -623,7 +623,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
                         <span className="text-sm text-slate-700 dark:text-slate-300">
                           {event.label}
                         </span>
-                        <code className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-navy-600 px-1.5 py-0.5 rounded">
+                        <code className="text-xs text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-navy-600 px-1.5 py-0.5 rounded">
                           {event.id}
                         </code>
                       </label>
@@ -754,7 +754,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           {/* Search */}
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               size={18}
             />
             <input
@@ -798,7 +798,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
             renderWebhookEditor()
           ) : (
             <div className="text-center py-12">
-              <Webhook className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
+              <Webhook className="mx-auto text-slate-600 dark:text-slate-600 mb-4" size={48} />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                 {t('admin.integrations.selectOrCreate', 'Select or Create')}
               </h3>

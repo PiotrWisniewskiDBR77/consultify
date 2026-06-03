@@ -206,7 +206,7 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
                       <span className="font-bold" style={{ color: axis.color }}>
                         {axis.currentScore.toFixed(1)}
                       </span>
-                      <ArrowRight size={14} className="text-slate-400 dark:text-slate-500" />
+                      <ArrowRight size={14} className="text-slate-600 dark:text-slate-500" />
                       <span className="text-slate-500 dark:text-slate-400">
                         {axis.targetScore.toFixed(1)}
                       </span>

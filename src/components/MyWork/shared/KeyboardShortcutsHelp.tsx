@@ -92,7 +92,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                 onClick={onClose}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
-                <X size={20} className="text-slate-400" />
+                <X size={20} className="text-slate-600" />
               </button>
             </div>
 
@@ -124,7 +124,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                               {shortcut.key.split('+').map((key, i) => (
                                 <React.Fragment key={i}>
                                   {i > 0 && (
-                                    <span className="text-slate-400 dark:text-slate-500 text-xs">
+                                    <span className="text-slate-600 dark:text-slate-500 text-xs">
                                       +
                                     </span>
                                   )}

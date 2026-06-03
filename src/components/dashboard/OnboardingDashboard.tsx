@@ -81,7 +81,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-md ring-1 ring-primary-500/20'
                       : status === 'completed'
                         ? 'border-green-200 bg-green-50/50 dark:bg-green-900/10'
-                        : 'border-slate-100 bg-slate-50 dark:bg-navy-950 dark:border-white/5 opacity-60'
+                        : 'border-slate-200 bg-slate-50 dark:bg-navy-950 dark:border-white/5 opacity-60'
                   }`}
                 >
                   <div
@@ -90,7 +90,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                         ? 'bg-green-500 text-white'
                         : isCurrent
                           ? 'bg-primary-600 text-white'
-                          : 'bg-slate-200 text-slate-400 dark:bg-slate-800'
+                          : 'bg-slate-200 text-slate-600 dark:bg-slate-800'
                     }`}
                   >
                     {status === 'completed' ? (

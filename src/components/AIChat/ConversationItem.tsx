@@ -113,7 +113,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   const IconComponent = config?.icon || MessageSquare;
   const iconColor = isActive
     ? config?.activeColor || 'text-primary-500'
-    : config?.color || 'text-slate-400 group-hover:text-slate-500 dark:text-slate-400';
+    : config?.color || 'text-slate-600 group-hover:text-slate-500 dark:text-slate-400';
 
   // Determine if this is an auto-titled "New conversation" that should show a hint
   const isDefaultTitle =
@@ -167,7 +167,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         <span
           className={`flex-1 min-w-0 text-[13px] truncate ${
             isDefaultTitle
-              ? 'text-slate-400 dark:text-slate-500 italic'
+              ? 'text-slate-600 dark:text-slate-500 italic'
               : isActive
                 ? 'text-primary-900 dark:text-primary-100 font-medium'
                 : 'text-slate-700 dark:text-slate-300'

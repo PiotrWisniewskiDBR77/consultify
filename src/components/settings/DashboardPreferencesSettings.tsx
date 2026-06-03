@@ -360,7 +360,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                   >
                     <Icon
                       size={24}
-                      className={`mx-auto ${isSelected ? 'text-blue-600' : 'text-slate-400 dark:text-slate-500'}`}
+                      className={`mx-auto ${isSelected ? 'text-blue-600' : 'text-slate-600 dark:text-slate-500'}`}
                     />
                     <div
                       className={`mt-2 text-xs font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
@@ -393,13 +393,13 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 return (
                   <div
                     key={option.key}
-                    className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-700"
+                    className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700"
                   >
                     <div className="flex items-center gap-3">
                       <Icon
                         size={20}
                         className={
-                          isEnabled ? 'text-green-500' : 'text-slate-400 dark:text-slate-500'
+                          isEnabled ? 'text-green-500' : 'text-slate-600 dark:text-slate-500'
                         }
                       />
                       <span className="font-medium text-slate-700 dark:text-slate-300">
@@ -456,7 +456,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
               </div>
 
               {/* Show Greeting */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                     <MessageSquare size={16} className="text-amber-500" />
@@ -482,7 +482,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
               </div>
 
               {/* Live Updates */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                     <Zap size={16} className="text-blue-500" />

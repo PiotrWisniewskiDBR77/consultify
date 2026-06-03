@@ -110,7 +110,7 @@ export function DiffView({
           }`}
         >
           {showLineNumbers && (
-            <span className="w-8 text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs flex-shrink-0">
+            <span className="w-8 text-gray-600 dark:text-gray-500 dark:text-gray-400 text-xs flex-shrink-0">
               {line.lineNumber}
             </span>
           )}
@@ -156,7 +156,7 @@ export function DiffView({
               }`}
             >
               {showLineNumbers && (
-                <span className="w-8 text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs flex-shrink-0">
+                <span className="w-8 text-gray-600 dark:text-gray-500 dark:text-gray-400 text-xs flex-shrink-0">
                   {line.originalLine !== undefined ? line.lineNumber : ''}
                 </span>
               )}
@@ -192,7 +192,7 @@ export function DiffView({
               }`}
             >
               {showLineNumbers && (
-                <span className="w-8 text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs flex-shrink-0">
+                <span className="w-8 text-gray-600 dark:text-gray-500 dark:text-gray-400 text-xs flex-shrink-0">
                   {line.suggestedLine !== undefined ? line.lineNumber : ''}
                 </span>
               )}

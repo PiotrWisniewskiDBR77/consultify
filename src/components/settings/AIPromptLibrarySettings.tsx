@@ -342,7 +342,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                       'px-3 py-1 text-xs rounded-md transition-colors',
                       filterCategory === cat
                         ? 'bg-primary-600 text-white'
-                        : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                        : 'bg-white/5 text-slate-600 hover:text-white hover:bg-white/10'
                     )}
                   >
                     {cat === 'all'
@@ -476,7 +476,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={closeEditor}
-                        className="px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+                        className="px-3 py-1.5 text-sm text-slate-600 hover:text-white transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>

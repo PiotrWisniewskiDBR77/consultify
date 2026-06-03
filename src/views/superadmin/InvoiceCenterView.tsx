@@ -464,7 +464,7 @@ export const InvoiceCenterView: React.FC = () => {
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             size={18}
           />
           <input
@@ -596,14 +596,14 @@ export const InvoiceCenterView: React.FC = () => {
                         className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                         title="View"
                       >
-                        <Eye size={16} className="text-slate-400 dark:text-slate-500" />
+                        <Eye size={16} className="text-slate-600 dark:text-slate-500" />
                       </button>
                       <button
                         onClick={() => handleDownloadPdf(invoice.id)}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                         title="Download Invoice"
                       >
-                        <Download size={16} className="text-slate-400 dark:text-slate-500" />
+                        <Download size={16} className="text-slate-600 dark:text-slate-500" />
                       </button>
                       {(invoice.status === 'pending' || invoice.status === 'overdue') && (
                         <button
@@ -611,7 +611,7 @@ export const InvoiceCenterView: React.FC = () => {
                           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                           title="Send Reminder"
                         >
-                          <Send size={16} className="text-slate-400 dark:text-slate-500" />
+                          <Send size={16} className="text-slate-600 dark:text-slate-500" />
                         </button>
                       )}
                     </div>
@@ -622,11 +622,11 @@ export const InvoiceCenterView: React.FC = () => {
             {!loadError && filteredInvoices.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center">
-                  <Receipt size={40} className="mx-auto mb-3 text-slate-300" />
+                  <Receipt size={40} className="mx-auto mb-3 text-slate-600" />
                   <p className="text-slate-500 dark:text-slate-400 font-medium">
                     No invoices found
                   </p>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
                     Invoices will appear here once created
                   </p>
                 </td>
@@ -931,11 +931,11 @@ export const InvoiceCenterView: React.FC = () => {
           </div>
         ) : usageTiers.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <DollarSign size={40} className="mx-auto mb-3 text-slate-300" />
+            <DollarSign size={40} className="mx-auto mb-3 text-slate-600" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">
               No pricing tiers configured
             </p>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               Add a tier to start configuring usage-based billing rates.
             </p>
           </div>
@@ -1048,20 +1048,20 @@ export const InvoiceCenterView: React.FC = () => {
                 className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                 title="Print Invoice"
               >
-                <Printer size={20} className="text-slate-400 dark:text-slate-500" />
+                <Printer size={20} className="text-slate-600 dark:text-slate-500" />
               </button>
               <button
                 onClick={() => handleDownloadPdf(selectedInvoice.id)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                 title="Download Invoice"
               >
-                <Download size={20} className="text-slate-400 dark:text-slate-500" />
+                <Download size={20} className="text-slate-600 dark:text-slate-500" />
               </button>
               <button
                 onClick={() => setSelectedInvoice(null)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
               >
-                <XCircle size={20} className="text-slate-400 dark:text-slate-500" />
+                <XCircle size={20} className="text-slate-600 dark:text-slate-500" />
               </button>
             </div>
           </div>
@@ -1105,7 +1105,7 @@ export const InvoiceCenterView: React.FC = () => {
               </thead>
               <tbody>
                 {selectedInvoice.items.map((item, idx) => (
-                  <tr key={idx} className="border-b border-slate-100 dark:border-navy-700">
+                  <tr key={idx} className="border-b border-slate-200 dark:border-navy-700">
                     <td className="py-3 text-slate-900 dark:text-white">{item.description}</td>
                     <td className="py-3 text-right text-slate-600 dark:text-slate-400">
                       {item.quantity}
@@ -1186,7 +1186,7 @@ export const InvoiceCenterView: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
         </div>

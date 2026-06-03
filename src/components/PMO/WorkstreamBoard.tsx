@@ -205,7 +205,7 @@ export const WorkstreamBoard: React.FC<WorkstreamBoardProps> = ({
 
         {workstreams.length === 0 && (
           <div className="col-span-full text-center py-12">
-            <Folder className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <Folder className="w-12 h-12 mx-auto text-gray-600 dark:text-gray-600 mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
               {t('pmo.noWorkstreams', 'No workstreams yet')}
             </p>
@@ -278,7 +278,7 @@ const WorkstreamCard: React.FC<WorkstreamCardProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={onToggle}
-                className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
+                className="text-gray-600 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
               >
                 {expanded ? (
                   <ChevronDown className="w-4 h-4" />
@@ -300,7 +300,7 @@ const WorkstreamCard: React.FC<WorkstreamCardProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
+                className="p-1 text-gray-600 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -410,7 +410,7 @@ const WorkstreamCard: React.FC<WorkstreamCardProps> = ({
 
       {/* Expanded content - initiatives list */}
       {expanded && (
-        <div className="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-700/30">
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-700/30">
           <WorkstreamInitiatives workstreamId={workstream.id} />
         </div>
       )}
@@ -461,7 +461,7 @@ const WorkstreamInitiatives: React.FC<WorkstreamInitiativesProps> = ({ workstrea
           className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded"
         >
           <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+            <Target className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
             <span className="text-sm text-gray-700 dark:text-gray-300">{initiative.title}</span>
           </div>
           <span

@@ -574,7 +574,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
-                  <Weight size={14} className="text-slate-400" />
+                  <Weight size={14} className="text-slate-600" />
                   <select
                     value={assignment.priority_weight}
                     onChange={(e) => handleWeightChange(assignment.id, parseFloat(e.target.value))}
@@ -589,7 +589,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                 </div>
                 <button
                   onClick={() => handleRemove(assignment.id)}
-                  className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                  className="p-1.5 text-slate-600 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -599,7 +599,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
 
           {assignments.length === 0 && (
             <div className="text-center py-12">
-              <Brain className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+              <Brain className="w-10 h-10 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 No knowledge assigned yet. Bootstrap the default pills or add a specific pill
                 manually.
@@ -836,7 +836,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
 
             {pills.length === 0 && (
               <div className="text-center py-12">
-                <FileText className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                <FileText className="w-10 h-10 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   No knowledge pills yet. Create a pill or bootstrap the default product set.
                 </p>

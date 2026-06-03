@@ -617,7 +617,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
         </div>
       ) : (
         <>

@@ -574,14 +574,14 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           {onClose && (
             <button
               onClick={onClose}
-              className="text-slate-400 dark:text-slate-500 hover:text-white"
+              className="text-slate-600 dark:text-slate-500 hover:text-white"
             >
               <X size={20} />
             </button>
           )}
         </div>
 
-        <p className="text-slate-400 dark:text-slate-500">
+        <p className="text-slate-600 dark:text-slate-500">
           Choose a base template to start from, or create a blank template:
         </p>
 
@@ -593,13 +593,13 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
               className="p-6 bg-navy-900/50 border border-white/10 rounded-xl text-left hover:border-primary-500/50 hover:bg-primary-500/5 transition-all"
             >
               <h3 className="font-semibold text-white mb-2">{base.name}</h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">{base.description}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-500">{base.description}</p>
             </button>
           ))}
         </div>
 
         <div className="border-t border-white/10 pt-6">
-          <p className="text-sm text-slate-400 dark:text-slate-500 mb-3">
+          <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
             Or import an existing template:
           </p>
           <label className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg cursor-pointer transition-colors">
@@ -622,7 +622,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
             {existingTemplate ? 'Edit' : 'Create'} Compliance Template
           </h2>
           {template.basedOn && (
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               Based on: {template.basedOn}
             </p>
           )}
@@ -630,7 +630,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
         <div className="flex items-center gap-3">
           <button
             onClick={exportTemplate}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-600 rounded-lg transition-colors"
           >
             <Download size={16} />
             Export
@@ -646,7 +646,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           {onClose && (
             <button
               onClick={onClose}
-              className="text-slate-400 dark:text-slate-500 hover:text-white p-2"
+              className="text-slate-600 dark:text-slate-500 hover:text-white p-2"
             >
               <X size={20} />
             </button>
@@ -657,7 +657,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
       {/* Template Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
             Template Name *
           </label>
           <input
@@ -669,7 +669,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">Version</label>
+          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">Version</label>
           <input
             type="text"
             value={template.version}
@@ -679,7 +679,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
             Description
           </label>
           <textarea
@@ -694,7 +694,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
 
       {/* Tags */}
       <div>
-        <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">Tags</label>
+        <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">Tags</label>
         <div className="flex flex-wrap gap-2 mb-2">
           {template.metadata.tags.map((tag) => (
             <span
@@ -719,7 +719,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
           />
           <button
             onClick={addTag}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-600 rounded-lg text-sm transition-colors"
           >
             Add
           </button>
@@ -789,7 +789,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                       onChange={(e) => updateSection(section.id, { description: e.target.value })}
                       onClick={(e) => e.stopPropagation()}
                       placeholder="Section description..."
-                      className="block bg-transparent text-sm text-slate-400 dark:text-slate-500 mt-1 focus:outline-none focus:border-b focus:border-primary-500 w-full"
+                      className="block bg-transparent text-sm text-slate-600 dark:text-slate-500 mt-1 focus:outline-none focus:border-b focus:border-primary-500 w-full"
                     />
                   </div>
                 </div>
@@ -863,7 +863,7 @@ export const CustomComplianceTemplateEditor: React.FC<CustomComplianceTemplateEd
                           <option value="hybrid">Hybrid</option>
                         </select>
                         <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                          <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500">
                             <input
                               type="checkbox"
                               checked={checkpoint.required}

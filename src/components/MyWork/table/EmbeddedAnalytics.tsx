@@ -103,7 +103,7 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
 
   if (Math.abs(diff) < 0.01) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-slate-400">
+      <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-slate-600">
         <Minus size={8} />
         {showLabel && '0%'}
       </span>
@@ -216,7 +216,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
           {isPl ? 'Heatmapa' : 'Heatmap'}
         </span>
         <div className="flex-1" />
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+        <button onClick={onClose} className="text-slate-600 hover:text-slate-600">
           <X size={10} />
         </button>
       </div>
@@ -227,7 +227,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
           <button
             key={p}
             onClick={() => onPaletteChange(p)}
-            className={`flex-1 px-2 py-1 rounded-lg text-[8px] font-bold transition-colors ${palette === p ? 'bg-primary-500/10 text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`flex-1 px-2 py-1 rounded-lg text-[8px] font-bold transition-colors ${palette === p ? 'bg-primary-500/10 text-primary-600' : 'text-slate-600 hover:text-slate-600'}`}
           >
             {p === 'warm' ? '🔥' : p === 'cool' ? '❄️' : '↕️'} {p}
           </button>
@@ -251,7 +251,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
           </label>
         ))}
         {numericCols.length === 0 && (
-          <p className="text-[9px] text-slate-400 text-center py-2">
+          <p className="text-[9px] text-slate-600 text-center py-2">
             {isPl ? 'Brak kolumn numerycznych' : 'No numeric columns'}
           </p>
         )}
@@ -279,7 +279,7 @@ export const AnalyticsSummaryStrip: React.FC<AnalyticsSummaryStripProps> = ({
 
   return (
     <div className="flex items-center gap-3 px-4 py-1.5 border-t border-slate-200/30 dark:border-white/[0.04] bg-slate-50/50 dark:bg-navy-900/30 overflow-x-auto flex-shrink-0">
-      <Activity size={10} className="text-slate-400 flex-shrink-0" />
+      <Activity size={10} className="text-slate-600 flex-shrink-0" />
       {numericCols.slice(0, 4).map((col) => {
         const values = nodes.map((n) => Number(n.data?.[col.key]) || 0);
         const avg = values.reduce((a, b) => a + b, 0) / values.length;
@@ -288,7 +288,7 @@ export const AnalyticsSummaryStrip: React.FC<AnalyticsSummaryStripProps> = ({
 
         return (
           <div key={col.key} className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600">
               {col.header}
             </span>
             <Sparkline values={sparkValues} width={40} height={14} color="#6366f1" />

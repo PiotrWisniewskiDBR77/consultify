@@ -116,7 +116,7 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
             {block.subtitle ? (
               <p
                 className={cn(
-                  'mt-0.5 max-w-[50ch] text-slate-400/80',
+                  'mt-0.5 max-w-[50ch] text-slate-600/80',
                   isCompact ? 'text-[11px] leading-relaxed' : 'text-sm'
                 )}
               >

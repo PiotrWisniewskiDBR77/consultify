@@ -180,7 +180,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
                     />
                   ))}
                   {categoryInsights.length > 3 && (
-                    <span className="text-xs text-slate-400">+{categoryInsights.length - 3}</span>
+                    <span className="text-xs text-slate-600">+{categoryInsights.length - 3}</span>
                   )}
                 </div>
               )}

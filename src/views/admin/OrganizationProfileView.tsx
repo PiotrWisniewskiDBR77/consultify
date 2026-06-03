@@ -358,7 +358,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         ${
                           hasChanges
                             ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/20'
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                         }
                     `}
         >
@@ -431,8 +431,8 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                         />
                       ) : (
                         <div className="text-center">
-                          <Upload className="w-6 h-6 text-slate-400 dark:text-slate-500 mx-auto mb-1" />
-                          <span className="text-xs text-slate-400 dark:text-slate-500">
+                          <Upload className="w-6 h-6 text-slate-600 dark:text-slate-500 mx-auto mb-1" />
+                          <span className="text-xs text-slate-600 dark:text-slate-500">
                             Upload Logo
                           </span>
                         </div>
@@ -541,7 +541,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     </label>
                     <div className="relative">
                       <Globe
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                         size={16}
                       />
                       <input
@@ -568,7 +568,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     </label>
                     <div className="relative">
                       <Linkedin
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                         size={16}
                       />
                       <input
@@ -586,7 +586,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     </label>
                     <div className="relative">
                       <Twitter
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                         size={16}
                       />
                       <input
@@ -697,7 +697,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     {profile.faviconUrl ? (
                       <img src={profile.faviconUrl} alt="Favicon" className="w-8 h-8" />
                     ) : (
-                      <Image className="w-6 h-6 text-slate-400 dark:text-slate-500" />
+                      <Image className="w-6 h-6 text-slate-600 dark:text-slate-500" />
                     )}
                   </div>
                   <input

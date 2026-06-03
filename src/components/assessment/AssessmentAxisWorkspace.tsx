@@ -718,7 +718,7 @@ export const AssessmentAxisWorkspace: React.FC<AssessmentAxisWorkspaceProps> = (
                       setCurrentAreaKey(key);
                       setShowAreaSelector(false);
                     }}
-                    className={`w-full text-left px-4 py-4 flex items-center justify-between border-b border-slate-100 dark:border-navy-700 touch-target ${key === currentAreaKey ? 'bg-primary-50 dark:bg-primary-600/10' : ''}`}
+                    className={`w-full text-left px-4 py-4 flex items-center justify-between border-b border-slate-200 dark:border-navy-700 touch-target ${key === currentAreaKey ? 'bg-primary-50 dark:bg-primary-600/10' : ''}`}
                   >
                     <div>
                       <span

@@ -45,7 +45,7 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
           onClick={onClose}
           className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10"
         >
-          <X size={12} className="text-slate-400" />
+          <X size={12} className="text-slate-600" />
         </button>
       </div>
       <textarea
@@ -123,7 +123,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
           onClick={onClose}
           className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10"
         >
-          <X size={12} className="text-slate-400" />
+          <X size={12} className="text-slate-600" />
         </button>
       </div>
       {tags.length > 0 && (
@@ -206,7 +206,7 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
           onClick={onClose}
           className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10"
         >
-          <X size={12} className="text-slate-400" />
+          <X size={12} className="text-slate-600" />
         </button>
       </div>
       <input

@@ -225,7 +225,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
             className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
               allAnswered
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
-                : 'bg-slate-100 dark:bg-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             <Search size={12} />

@@ -77,9 +77,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
                 <div className="text-xs text-slate-500 dark:text-slate-400">{f.desc}</div>
               </div>
               {isExporting ? (
-                <Loader2 size={16} className="ml-auto animate-spin text-slate-400 flex-shrink-0" />
+                <Loader2 size={16} className="ml-auto animate-spin text-slate-600 flex-shrink-0" />
               ) : (
-                <Download size={16} className="ml-auto text-slate-400 flex-shrink-0" />
+                <Download size={16} className="ml-auto text-slate-600 flex-shrink-0" />
               )}
             </Button>
           ))}

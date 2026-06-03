@@ -60,7 +60,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
       label: isPolish ? 'Zapisano' : 'Saved',
       title: lastSavedLabel || (isPolish ? 'Zmiany zapisane' : 'Changes saved'),
       className:
-        'bg-slate-100/70 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-transparent',
+        'bg-slate-100/70 dark:bg-navy-800/40 text-slate-600 dark:text-slate-500 border-transparent',
       icon: CheckCircle2,
       disabled: true,
     },
@@ -106,7 +106,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onClose}
-          className="p-2 -ml-2 rounded-xl text-slate-400 hover:bg-slate-200/80 dark:hover:bg-navy-800/60 transition-all duration-150"
+          className="p-2 -ml-2 rounded-xl text-slate-600 hover:bg-slate-200/80 dark:hover:bg-navy-800/60 transition-all duration-150"
         >
           <ChevronLeft size={20} />
         </motion.button>
@@ -156,7 +156,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             <span>{saveCopy.label}</span>
           </motion.button>
           {lastSavedLabel && effectiveSaveState === 'saved' ? (
-            <span className="hidden items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500 2xl:inline-flex">
+            <span className="hidden items-center gap-1 text-[11px] text-slate-600 dark:text-slate-500 2xl:inline-flex">
               <Clock3 size={12} />
               {lastSavedLabel}
             </span>

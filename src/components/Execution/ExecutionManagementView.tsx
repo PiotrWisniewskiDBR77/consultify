@@ -317,7 +317,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                       </div>
                       <ChevronRight
                         size={14}
-                        className="text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors mt-1"
+                        className="text-slate-600 dark:text-slate-600 group-hover:text-primary-500 transition-colors mt-1"
                       />
                     </div>
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
@@ -340,7 +340,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                           >
                             {metric.value}
                           </div>
-                          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">
                             {metric.label}
                           </div>
                         </div>

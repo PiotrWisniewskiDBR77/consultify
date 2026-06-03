@@ -117,7 +117,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
         <h2 className="text-sm font-bold text-slate-800 dark:text-white">
           {isPl ? 'Lejek pomysłów' : 'Idea Funnel'}
         </h2>
-        <span className="text-[10px] text-slate-400 ml-auto">
+        <span className="text-[10px] text-slate-600 ml-auto">
           {total} {isPl ? 'pomysłów' : 'ideas'} · {overallConversion}%{' '}
           {isPl ? 'konwersja' : 'conversion'}
         </span>
@@ -169,7 +169,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
 
                   {idx < FUNNEL_STAGES.length - 1 && (
                     <div className="flex justify-center py-1">
-                      <ArrowDown size={16} className="text-slate-300 dark:text-slate-600" />
+                      <ArrowDown size={16} className="text-slate-600 dark:text-slate-600" />
                     </div>
                   )}
                 </React.Fragment>
@@ -197,7 +197,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
                     <span className="text-[10px] text-emerald-600 font-bold">
                       {stats.converted} converted
                     </span>
-                    <span className="text-[9px] text-slate-400">
+                    <span className="text-[9px] text-slate-600">
                       ({stats.total > 0 ? Math.round((stats.converted / stats.total) * 100) : 0}%)
                     </span>
                   </div>

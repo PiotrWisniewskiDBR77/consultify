@@ -134,7 +134,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             `}
     >
       {/* Icon */}
-      <div className="mb-4 text-slate-400 dark:text-slate-500">{iconNode}</div>
+      <div className="mb-4 text-slate-600 dark:text-slate-500">{iconNode}</div>
 
       {/* Title */}
       <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
@@ -219,7 +219,7 @@ export const EmptyStateInline: React.FC<{
 }> = ({ message, actionLabel, onAction, className = '' }) => {
   return (
     <div className={`text-center py-6 ${className}`}>
-      <p className="text-sm text-slate-400 dark:text-slate-500">{message}</p>
+      <p className="text-sm text-slate-600 dark:text-slate-500">{message}</p>
       {actionLabel && onAction && (
         <button
           onClick={onAction}

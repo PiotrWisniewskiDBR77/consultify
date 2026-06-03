@@ -159,7 +159,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
     description: string;
     settingKey: keyof NotificationSettings;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
       <div className="flex items-start gap-3">
         <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
           <Icon size={16} className="text-slate-500 dark:text-slate-400" />
@@ -253,7 +253,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
           <Clock size={16} className="text-amber-500" />
           Escalation Settings
         </h3>
-        <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700">
+        <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700">
           <div>
             <div className="text-sm font-medium text-slate-700 dark:text-white">
               Escalation Delay
@@ -310,7 +310,7 @@ export const NotificationSettingsAdmin: React.FC<NotificationSettingsAdminProps>
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
             hasChanges
               ? 'bg-primary-600 hover:bg-primary-500 text-white'
-              : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
           }`}
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}

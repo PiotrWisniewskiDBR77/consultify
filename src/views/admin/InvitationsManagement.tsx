@@ -249,7 +249,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
         </div>
       ) : invitations.length === 0 ? (
         <div className="text-center py-12">
-          <Mail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <Mail className="w-12 h-12 text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">No invitations</h3>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             {activeTab === 'pending'
@@ -398,7 +398,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
                           {formatDate(event.createdAt)}
                         </p>
                         {event.ipAddress && (
-                          <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400">
                             IP: {event.ipAddress}
                           </p>
                         )}

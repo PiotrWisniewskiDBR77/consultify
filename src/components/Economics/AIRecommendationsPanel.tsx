@@ -248,7 +248,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
       </div>
 
       {/* Recommendations list */}
-      <div className="divide-y divide-slate-100 dark:divide-white/5">
+      <div className="divide-y divide-slate-200 dark:divide-white/5">
         {filteredRecommendations.map((rec, index) => {
           const typeConfig = TYPE_CONFIG[rec.recommendationType] || TYPE_CONFIG.initiative;
           const Icon = typeConfig.icon;
@@ -264,7 +264,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                   >
                     <Icon size={16} className={`text-${typeConfig.color}-500`} />
                   </div>
-                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-1">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-500 mt-1">
                     #{index + 1}
                   </span>
                 </div>
@@ -290,7 +290,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                   {/* Effort/Impact badges */}
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center gap-1.5">
-                      <Clock size={12} className="text-slate-400 dark:text-slate-500" />
+                      <Clock size={12} className="text-slate-600 dark:text-slate-500" />
                       <span
                         className={`text-xs font-medium text-${EFFORT_CONFIG[rec.estimatedEffort].color}-600`}
                       >
@@ -298,14 +298,14 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <TrendingUp size={12} className="text-slate-400 dark:text-slate-500" />
+                      <TrendingUp size={12} className="text-slate-600 dark:text-slate-500" />
                       <span
                         className={`text-xs font-medium text-${IMPACT_CONFIG[rec.estimatedImpact].color}-600`}
                       >
                         Impact: {IMPACT_CONFIG[rec.estimatedImpact].label}
                       </span>
                     </div>
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       {Math.round(rec.aiConfidence * 100)}% pewns
                     </span>
                   </div>
@@ -314,7 +314,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                   {isExpanded && (
                     <div className="mt-4 p-3 bg-slate-50 dark:bg-navy-900/50 rounded-lg space-y-3">
                       <div>
-                        <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                           Opis
                         </p>
                         <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -322,7 +322,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                           Uzasadnienie
                         </p>
                         <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -337,7 +337,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : rec.id)}
-                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500"
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-600 dark:text-slate-500"
                   >
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </button>
@@ -346,14 +346,14 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
                     <>
                       <button
                         onClick={() => handleAccept(rec)}
-                        className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-emerald-500"
+                        className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-emerald-500"
                         title="Zaakceptuj"
                       >
                         <CheckCircle size={16} />
                       </button>
                       <button
                         onClick={() => handleReject(rec)}
-                        className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                        className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-500"
                         title="Reject"
                       >
                         <XCircle size={16} />

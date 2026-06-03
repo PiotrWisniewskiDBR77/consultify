@@ -98,7 +98,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
       {open && (
         <div className="absolute top-full left-0 mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg overflow-hidden">
           <div className="p-3 space-y-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500 px-1">
               {pl ? 'Bloki' : 'Blocks'}
             </div>
             <div className="space-y-0.5">
@@ -163,7 +163,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
               )}
             </div>
 
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1 pt-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500 px-1 pt-2">
               {pl ? 'Nagłówki' : 'Headings'}
             </div>
             <div className="space-y-0.5">

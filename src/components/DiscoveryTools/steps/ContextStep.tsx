@@ -1330,7 +1330,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
 
             <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                   {isPolish
                     ? '1. Jaki kierunek strategiczny projektujemy?'
                     : '1. What strategic direction are we designing?'}
@@ -1366,7 +1366,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                             active
                               ? 'border-primary-500 bg-primary-500 text-white'
-                              : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                              : 'border-slate-300 text-slate-600 dark:border-slate-600'
                           }`}
                         >
                           {active ? '●' : ''}
@@ -1439,7 +1439,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                               active
                                 ? 'border-sky-500 bg-sky-500 text-white'
-                                : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                                : 'border-slate-300 text-slate-600 dark:border-slate-600'
                             }`}
                           >
                             {active ? '●' : ''}
@@ -1525,7 +1525,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                               active
                                 ? 'border-emerald-500 bg-emerald-500 text-white'
-                                : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                                : 'border-slate-300 text-slate-600 dark:border-slate-600'
                             }`}
                           >
                             {active ? '●' : ''}
@@ -1645,7 +1645,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                               active
                                 ? 'border-primary-500 bg-primary-500 text-white'
-                                : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                                : 'border-slate-300 text-slate-600 dark:border-slate-600'
                             }`}
                           >
                             {active ? '●' : ''}
@@ -1724,7 +1724,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                               active
                                 ? 'border-amber-500 bg-amber-500 text-white'
-                                : 'border-slate-300 text-slate-400 dark:border-slate-600'
+                                : 'border-slate-300 text-slate-600 dark:border-slate-600'
                             }`}
                           >
                             {active ? '●' : ''}
@@ -1774,7 +1774,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
             {displayedContext.question5Confirmed && (
               <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                     {isPolish ? 'Executive summary tej sesji' : 'Executive summary of this session'}
                   </div>
                   <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">

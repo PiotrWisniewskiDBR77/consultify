@@ -167,7 +167,7 @@ export const VoteStars: React.FC<VoteStarsProps> = ({
           onClick={() => onVote?.(i + 1 === votes ? 0 : i + 1)}
           disabled={disabled || !onVote}
           className={`transition-colors ${
-            i < votes ? 'text-amber-400' : 'text-slate-300 dark:text-navy-600 hover:text-amber-300'
+            i < votes ? 'text-amber-400' : 'text-slate-600 dark:text-navy-600 hover:text-amber-300'
           } disabled:cursor-default`}
         >
           <svg

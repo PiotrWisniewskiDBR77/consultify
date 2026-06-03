@@ -115,7 +115,7 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
   return (
     <div className="flex flex-col h-full bg-white dark:bg-navy-900 rounded-xl overflow-hidden border border-slate-200 dark:border-navy-700 shadow-sm relative">
       {/* Header */}
-      <div className="p-4 border-b border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 flex items-center justify-between">
+      <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
             <TeresaMark size={20} />
@@ -163,7 +163,7 @@ export const AIConsultantView: React.FC<AIConsultantViewProps> = ({ session }) =
                 {msg.content}
               </div>
               <div
-                className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-slate-400 dark:text-slate-500' : 'text-indigo-200'}`}
+                className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-slate-600 dark:text-slate-500' : 'text-indigo-200'}`}
               >
                 {new Date(msg.timestamp).toLocaleTimeString([], {
                   hour: '2-digit',

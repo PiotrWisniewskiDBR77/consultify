@@ -325,7 +325,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
       <div className="relative">
         <Search
           size={20}
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
         />
         <input
           type="text"
@@ -341,7 +341,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
         {query && (
           <button
             onClick={() => setQuery('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400"
           >
             <X size={18} />
           </button>
@@ -389,7 +389,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
                         fill={favorites.includes(result.id) ? 'currentColor' : 'none'}
                       />
                     </button>
-                    <ArrowRight size={16} className="text-slate-400 dark:text-slate-500" />
+                    <ArrowRight size={16} className="text-slate-600 dark:text-slate-500" />
                   </div>
                 </button>
               ))}
@@ -430,7 +430,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
           {/* Recent Searches */}
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
             <h3 className="font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <Clock size={16} className="text-slate-400 dark:text-slate-500" />
+              <Clock size={16} className="text-slate-600 dark:text-slate-500" />
               Recent Searches
             </h3>
             {recentSearches.length === 0 ? (
@@ -485,7 +485,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
       )}
 
       {/* Keyboard Hint */}
-      <div className="text-center text-sm text-slate-400 dark:text-slate-500">
+      <div className="text-center text-sm text-slate-600 dark:text-slate-500">
         Press <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs">⌘K</kbd>{' '}
         anywhere to search settings
       </div>

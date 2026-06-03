@@ -328,12 +328,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       case 'suspicious':
         return <AlertTriangle size={14} className="text-amber-500" />;
       default:
-        return <CheckCircle size={14} className="text-slate-400" />;
+        return <CheckCircle size={14} className="text-slate-600" />;
     }
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   return (
     <SettingsSection
@@ -388,7 +388,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               <div className="px-4 pb-4 border-t border-white/5">
                 <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-4 max-w-md">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
                       {t('settings.password.current', 'Current Password')}
                     </label>
                     <div className="relative">
@@ -402,7 +402,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
                       {t('settings.password.new', 'New Password')}
                     </label>
                     <div className="relative">
@@ -440,7 +440,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
                       {t('settings.password.confirm', 'Confirm New Password')}
                     </label>
                     <input
@@ -587,7 +587,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-1.5 bg-white/5 rounded-lg">
-                      <DeviceIcon size={16} className="text-slate-400" />
+                      <DeviceIcon size={16} className="text-slate-600" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -754,7 +754,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           setEditingRecovery(null);
                           setEditValue('');
                         }}
-                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
+                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-600 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>
@@ -820,7 +820,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           setEditingRecovery(null);
                           setEditValue('');
                         }}
-                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
+                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-600 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>

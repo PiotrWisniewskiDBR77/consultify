@@ -134,7 +134,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -169,7 +169,7 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
             </button>
           </div>
 
-          <p className="text-[9px] text-slate-400 mt-3 text-center">
+          <p className="text-[9px] text-slate-600 mt-3 text-center">
             {isPl
               ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.'
               : 'Open HTML in browser and use Ctrl+P to save as PDF.'}

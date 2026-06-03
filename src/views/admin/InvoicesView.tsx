@@ -234,7 +234,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
       <div className="flex flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             size={18}
           />
           <input
@@ -276,7 +276,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         </div>
       ) : filteredInvoices.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Invoices</h3>
           <p className="text-slate-500 dark:text-slate-400 mt-1">No invoices match your filters</p>
         </div>
@@ -386,7 +386,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
                     {selectedInvoice.items.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex justify-between py-2 border-b border-slate-100 dark:border-navy-700"
+                        className="flex justify-between py-2 border-b border-slate-200 dark:border-navy-700"
                       >
                         <div>
                           <p className="text-sm text-slate-900 dark:text-white">

@@ -249,7 +249,7 @@ export const AssessmentV8CanonPanel: React.FC<AssessmentV8CanonPanelProps> = ({
                         <Icon size={18} />
                       </div>
                       {index < copy.journey.length - 1 ? (
-                        <ArrowRight size={14} className="text-slate-300 dark:text-slate-600" />
+                        <ArrowRight size={14} className="text-slate-600 dark:text-slate-600" />
                       ) : null}
                     </div>
                     <div className="mt-3 text-sm font-semibold text-slate-900 dark:text-white">

@@ -965,7 +965,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 </span>
                 <button
                   onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
-                  className="ml-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                  className="ml-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                 >
                   ×
                 </button>
@@ -1147,7 +1147,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   ${
                     teresaVoiceMuted
                       ? 'bg-rose-500/80 text-white shadow-lg shadow-rose-500/30'
-                      : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                      : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                   }
                   ${teresaVoiceStatus !== 'live' ? 'cursor-not-allowed opacity-50' : ''}
                 `}
@@ -1169,7 +1169,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   ${
                     isDictating
                       ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
-                      : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                      : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                   }
                   ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
                 `}

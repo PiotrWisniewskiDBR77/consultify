@@ -456,7 +456,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
               <th className="px-4 py-3 w-12" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {filteredReports.map((report) => (
               <tr
                 key={report.id}
@@ -482,7 +482,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
-                    className="p-1 rounded hover:bg-white/10 text-slate-400"
+                    className="p-1 rounded hover:bg-white/10 text-slate-600"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <MoreHorizontal size={16} />
@@ -534,9 +534,9 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 onClick={() => toggleType(rType)}
               >
                 {isExpanded ? (
-                  <ChevronDown size={16} className="text-slate-400" />
+                  <ChevronDown size={16} className="text-slate-600" />
                 ) : (
-                  <ChevronRight size={16} className="text-slate-400" />
+                  <ChevronRight size={16} className="text-slate-600" />
                 )}
                 <span className={`font-mono text-sm font-bold ${meta.color}`}>{rType}</span>
                 <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">
@@ -549,7 +549,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
               </button>
 
               {isExpanded && (
-                <div className="border-t border-slate-100 dark:border-white/5">
+                <div className="border-t border-slate-200 dark:border-white/5">
                   {/* Latest report summary */}
                   <div className="px-4 py-3 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-4">
                     <div className="flex-1 min-w-0">
@@ -577,7 +577,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                   </div>
 
                   {grouped.length > 1 && (
-                    <div className="divide-y divide-slate-100 dark:divide-white/5">
+                    <div className="divide-y divide-slate-200 dark:divide-white/5">
                       {grouped.slice(1).map((report) => (
                         <div
                           key={report.id}
@@ -713,7 +713,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
               <th className="px-4 py-3 w-20" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {filteredSchedules.map((s) => (
               <tr
                 key={s.id}
@@ -735,7 +735,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                     className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full ${
                       s.isActive
                         ? 'bg-emerald-500/10 text-emerald-500'
-                        : 'bg-slate-500/10 text-slate-400'
+                        : 'bg-slate-500/10 text-slate-600'
                     }`}
                   >
                     <span
@@ -747,7 +747,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleToggleSchedule(s.id, s.isActive)}
-                    className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-slate-600 hover:text-slate-200 transition-colors"
                     title={
                       s.isActive
                         ? t('rbHub.pauseSchedule', 'Wstrzymaj')

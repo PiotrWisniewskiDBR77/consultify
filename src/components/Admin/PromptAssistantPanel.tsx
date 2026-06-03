@@ -318,7 +318,7 @@ How can I help you today?`,
 
           {/* Timestamp */}
           <div
-            className={`text-xs text-slate-400 dark:text-slate-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}
+            className={`text-xs text-slate-600 dark:text-slate-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}
           >
             {message.timestamp.toLocaleTimeString()}
           </div>
@@ -348,7 +348,7 @@ How can I help you today?`,
         </div>
         <button
           onClick={clearHistory}
-          className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+          className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           title="Clear history"
         >
           <Trash2 size={16} />
@@ -444,7 +444,7 @@ How can I help you today?`,
             <Send size={18} />
           </button>
         </div>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 text-center">
+        <p className="text-xs text-slate-600 dark:text-slate-500 mt-2 text-center">
           Press Enter to send, Shift+Enter for new line
         </p>
       </div>

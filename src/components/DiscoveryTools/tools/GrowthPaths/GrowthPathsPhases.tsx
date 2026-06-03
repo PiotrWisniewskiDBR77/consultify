@@ -155,7 +155,7 @@ export function GrowthPathsInputPhase({
                 <button
                   type="button"
                   onClick={() => removeSignal(signal.id)}
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                  className="rounded-lg p-1.5 text-slate-600 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -432,7 +432,7 @@ export function GrowthPathsOutputsPhase({
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
                 Final source summary
               </div>
               <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
@@ -487,7 +487,7 @@ export function GrowthPathsOutputsPhase({
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
-        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-600">
           {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
         </div>
         {initiatives.length === 0 ? (

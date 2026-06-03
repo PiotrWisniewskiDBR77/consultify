@@ -245,7 +245,7 @@ export const BottleneckMap: React.FC<BottleneckMapProps> = ({
       className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-slate-100 dark:border-navy-700">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div

@@ -314,7 +314,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
       </div>
 
       {/* Items List */}
-      <div className="divide-y divide-slate-100 dark:divide-white/5">
+      <div className="divide-y divide-slate-200 dark:divide-white/5">
         {/* Incomplete Items First */}
         {incompleteItems.map((item: any) => {
           const Icon = item.icon || Circle;
@@ -324,12 +324,12 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
               className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-slate-500">
+                <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-500">
                   <Icon size={18} />
                 </div>
                 <div>
                   <p className="font-medium text-slate-700 dark:text-slate-200">{item.label}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">
                     +{item.weight}% completion
                   </p>
                 </div>
@@ -441,7 +441,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
           </div>
         </div>
       ) : (
-        <div className="px-6 py-4 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-navy-700">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-white/5 border-t border-slate-200 dark:border-navy-700">
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Complete your profile to unlock all features and get personalized recommendations.
           </p>

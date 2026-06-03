@@ -583,7 +583,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           {title || (isPl ? 'Wyzwanie' : 'Idea')}
         </div>
         {onInsertToCanvas && (
-          <div className="mt-1 text-[9px] text-slate-400 dark:text-slate-500">
+          <div className="mt-1 text-[9px] text-slate-600 dark:text-slate-500">
             {isPl ? 'Przeciągnij element na canvas lub kliknij +' : 'Drag to canvas or click +'}
           </div>
         )}
@@ -689,7 +689,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           </div>
         ) : (
           <div className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 bg-slate-50/30 dark:bg-navy-900/20 p-2.5 text-center">
-            <div className="text-[10px] text-slate-400 dark:text-slate-500">
+            <div className="text-[10px] text-slate-600 dark:text-slate-500">
               {isPl ? 'Kliknij węzeł, aby zobaczyć szczegóły' : 'Click a node to see details'}
             </div>
           </div>
@@ -707,9 +707,9 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               {isPl ? 'Statystyki mapy' : 'Map Statistics'}
             </span>
             {expandedSections.has('map_stats') ? (
-              <ChevronUp size={12} className="text-slate-400" />
+              <ChevronUp size={12} className="text-slate-600" />
             ) : (
-              <ChevronDown size={12} className="text-slate-400" />
+              <ChevronDown size={12} className="text-slate-600" />
             )}
           </button>
           {expandedSections.has('map_stats') && (
@@ -719,13 +719,13 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">
                     {mapStats.total}
                   </div>
-                  <div className="text-[9px] text-slate-400">{isPl ? 'Węzłów' : 'Nodes'}</div>
+                  <div className="text-[9px] text-slate-600">{isPl ? 'Węzłów' : 'Nodes'}</div>
                 </div>
                 <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-slate-200/30 dark:border-navy-700/30">
                   <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">
                     {mapStats.edges}
                   </div>
-                  <div className="text-[9px] text-slate-400">{isPl ? 'Połączeń' : 'Edges'}</div>
+                  <div className="text-[9px] text-slate-600">{isPl ? 'Połączeń' : 'Edges'}</div>
                 </div>
               </div>
               {Object.keys(mapStats.byStatus).length > 0 && (
@@ -846,7 +846,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   </div>
                   <button
                     onClick={() => openItem(bl.sourceType, bl.sourceId)}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+                    className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
                   >
                     <ExternalLink size={12} />
                   </button>
@@ -931,7 +931,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 </button>
               </div>
               {notes.length === 0 && (
-                <div className="text-[10px] text-slate-400">
+                <div className="text-[10px] text-slate-600">
                   {isPl ? 'Brak notatek' : 'No notes yet'}
                 </div>
               )}
@@ -1034,7 +1034,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 </button>
               </div>
               {evidence.length === 0 && (
-                <div className="text-[10px] text-slate-400 mt-1">
+                <div className="text-[10px] text-slate-600 mt-1">
                   {isPl
                     ? 'Dodaj dowody przez URL, tekst lub kartę na canvas'
                     : 'Add evidence via URL, text, or canvas card'}
@@ -1088,7 +1088,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                 </div>
               ))}
               {displayedArtifacts.length === 0 && (
-                <div className="text-[10px] text-slate-400">
+                <div className="text-[10px] text-slate-600">
                   {isPl
                     ? 'Dodaj karty wiedzy na canvas, aby je tu zobaczyć'
                     : 'Add knowledge cards on canvas to see them here'}
@@ -1203,11 +1203,11 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                     <span className={`text-[11px] font-bold flex-1 text-left ${color}`}>
                       {isPl ? labelPl : labelEn}
                     </span>
-                    <span className="text-[9px] text-slate-400 mr-1">{items.length}</span>
+                    <span className="text-[9px] text-slate-600 mr-1">{items.length}</span>
                     {isExpanded ? (
-                      <ChevronUp size={12} className="text-slate-400" />
+                      <ChevronUp size={12} className="text-slate-600" />
                     ) : (
-                      <ChevronDown size={12} className="text-slate-400" />
+                      <ChevronDown size={12} className="text-slate-600" />
                     )}
                   </button>
 
@@ -1224,7 +1224,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                             {onInsertToCanvas && (
                               <GripVertical
                                 size={12}
-                                className="text-slate-300 dark:text-slate-600 mt-0.5 shrink-0"
+                                className="text-slate-600 dark:text-slate-600 mt-0.5 shrink-0"
                               />
                             )}
                             <div className="flex-1 min-w-0">
@@ -1238,12 +1238,12 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                               )}
                               <div className="flex items-center gap-2 mt-1">
                                 {item.source && (
-                                  <span className="text-[8px] text-slate-400 bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
+                                  <span className="text-[8px] text-slate-600 bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
                                     {item.source}
                                   </span>
                                 )}
                                 {item.value != null && (
-                                  <span className="text-[8px] text-slate-400">{item.value}</span>
+                                  <span className="text-[8px] text-slate-600">{item.value}</span>
                                 )}
                               </div>
                             </div>
@@ -1266,7 +1266,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
             })}
 
             {contextItems.length === 0 && (
-              <div className="text-center py-8 text-[11px] text-slate-400">
+              <div className="text-center py-8 text-[11px] text-slate-600">
                 {isPl
                   ? 'Brak kontekstu. Dodaj opis wyzwania.'
                   : 'No context yet. Add a challenge description.'}

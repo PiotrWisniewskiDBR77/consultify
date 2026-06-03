@@ -115,9 +115,9 @@ function getTrendIcon(trend?: string) {
     case 'down':
       return <ArrowDown className="w-3.5 h-3.5 text-rose-500" />;
     case 'stable':
-      return <ArrowRight className="w-3.5 h-3.5 text-slate-400" />;
+      return <ArrowRight className="w-3.5 h-3.5 text-slate-600" />;
     default:
-      return <Minus className="w-3.5 h-3.5 text-slate-300" />;
+      return <Minus className="w-3.5 h-3.5 text-slate-600" />;
   }
 }
 
@@ -141,7 +141,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ content, columns = 3 }) => {
 
   if (!data || !data.items || data.items.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 text-slate-400">
+      <div className="flex items-center justify-center py-8 text-slate-600">
         <p className="text-sm">No KPI data available</p>
       </div>
     );
@@ -175,7 +175,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ content, columns = 3 }) => {
                 {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
               </span>
               {item.unit && (
-                <span className="text-xs font-medium text-slate-400 mb-0.5">{item.unit}</span>
+                <span className="text-xs font-medium text-slate-600 mb-0.5">{item.unit}</span>
               )}
             </div>
 
@@ -194,7 +194,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ content, columns = 3 }) => {
             {/* Target */}
             {item.target && (
               <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
-                <div className="text-[10px] text-slate-400">
+                <div className="text-[10px] text-slate-600">
                   Target: <span className="font-medium">{item.target}</span>
                 </div>
               </div>

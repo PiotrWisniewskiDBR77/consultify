@@ -499,7 +499,7 @@ function TemplatesGrid({
   if (loading && allCards.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 size={24} className="animate-spin text-slate-400" />
+        <Loader2 size={24} className="animate-spin text-slate-600" />
       </div>
     );
   }
@@ -548,7 +548,7 @@ function ArtifactsList({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 size={24} className="animate-spin text-slate-400" />
+        <Loader2 size={24} className="animate-spin text-slate-600" />
       </div>
     );
   }
@@ -556,7 +556,7 @@ function ArtifactsList({
   if (artifacts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FolderOpen size={32} className="text-slate-300 dark:text-slate-600 mb-3" />
+        <FolderOpen size={32} className="text-slate-600 dark:text-slate-600 mb-3" />
         <p className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</p>
       </div>
     );

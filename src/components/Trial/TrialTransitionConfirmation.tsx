@@ -218,7 +218,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
                             ${
                               allConfirmed && !state.isSubmitting
                                 ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/20'
-                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                             }
                         `}
           >
@@ -247,7 +247,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
                 </span>
               </>
             ) : (
-              <span className="text-slate-400 dark:text-slate-500">
+              <span className="text-slate-600 dark:text-slate-500">
                 {3 -
                   [state.timeCommitment, state.teamScope, state.memoryAware].filter(Boolean)
                     .length}{' '}

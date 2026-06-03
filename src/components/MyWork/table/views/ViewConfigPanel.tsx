@@ -180,7 +180,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
@@ -658,7 +658,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                       {isVisible && <Check size={10} className="text-white" />}
                     </div>
                     <span className="flex-1 text-left truncate">{col.header}</span>
-                    <span className="text-[9px] text-slate-400">{col.type}</span>
+                    <span className="text-[9px] text-slate-600">{col.type}</span>
                   </button>
                 );
               })}
@@ -710,7 +710,7 @@ const Section: React.FC<{
         {title}
         <ChevronDown
           size={12}
-          className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-600 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       {isOpen && <div className="px-3 pb-3">{children}</div>}

@@ -333,7 +333,7 @@ export const WorkModeSettings: React.FC = () => {
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('admin.workMode.customLabels', 'Custom Labels')}
           </h3>
-          <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400">
             ({t('admin.workMode.optional', 'optional')})
           </span>
         </div>

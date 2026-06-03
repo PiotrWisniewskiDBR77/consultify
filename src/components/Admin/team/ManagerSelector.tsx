@@ -166,7 +166,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
           {currentManager && !disabled && (
             <button
               onClick={handleClear}
-              className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded"
+              className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded"
             >
               <X size={14} />
             </button>
@@ -174,7 +174,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
           <ChevronDown
             size={16}
             className={cn(
-              'text-slate-400 dark:text-slate-500 transition-transform',
+              'text-slate-600 dark:text-slate-500 transition-transform',
               isOpen && 'rotate-180'
             )}
           />
@@ -192,7 +192,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
             <div className="relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               />
               <input
                 ref={inputRef}

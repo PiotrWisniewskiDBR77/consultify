@@ -43,7 +43,7 @@ const getTrendConfig = (trend: TrendDirection, invertColors: boolean) => {
     STABLE: {
       icon: Minus,
       arrowIcon: Minus,
-      color: 'text-slate-400 dark:text-slate-500',
+      color: 'text-slate-600 dark:text-slate-500',
       bgColor: 'bg-slate-400/10',
       label: 'No change',
     },

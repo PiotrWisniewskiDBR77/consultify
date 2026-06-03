@@ -97,7 +97,7 @@ export const UserTableRow: React.FC<{
             <div className="text-slate-900 dark:text-white font-medium">
               {user.firstName} {user.lastName}
             </div>
-            <div className="text-xs text-slate-400 dark:text-slate-500">{user.email}</div>
+            <div className="text-xs text-slate-600 dark:text-slate-500">{user.email}</div>
           </div>
         </div>
       </td>
@@ -133,7 +133,7 @@ export const UserTableRow: React.FC<{
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className="text-xs text-slate-400 dark:text-slate-500">
+        <span className="text-xs text-slate-600 dark:text-slate-500">
           {userPlans.find((p) => p.id === user.licensePlanId)?.name || 'Standard'}
         </span>
       </td>
@@ -150,7 +150,7 @@ export const UserTableRow: React.FC<{
           {onResetPassword && (
             <button
               onClick={() => onResetPassword(user.id)}
-              className="p-2 hover:bg-yellow-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-yellow-400"
+              className="p-2 hover:bg-yellow-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-yellow-400"
               title="Reset Password"
             >
               <Lock size={16} />
@@ -159,7 +159,7 @@ export const UserTableRow: React.FC<{
           {onEdit && (
             <button
               onClick={() => onEdit(user)}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
               title="Edit"
             >
               <Edit size={16} />
@@ -168,7 +168,7 @@ export const UserTableRow: React.FC<{
           {showAssignments && onAssignments && (
             <button
               onClick={() => onAssignments(user)}
-              className="p-2 hover:bg-green-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-green-400"
+              className="p-2 hover:bg-green-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-green-400"
               title="Manage Assignments"
             >
               <GitBranch size={16} />
@@ -177,7 +177,7 @@ export const UserTableRow: React.FC<{
           {showMove && onMove && (
             <button
               onClick={() => onMove(user)}
-              className="p-2 hover:bg-blue-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-blue-400 text-xs font-medium"
+              className="p-2 hover:bg-blue-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-blue-400 text-xs font-medium"
               title="Move to Organization"
             >
               Move
@@ -186,7 +186,7 @@ export const UserTableRow: React.FC<{
           {showImpersonate && onImpersonate && !isSuperAdminRole(user.role) && (
             <button
               onClick={() => onImpersonate(user.id)}
-              className="p-2 hover:bg-primary-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-primary-400 text-xs font-medium"
+              className="p-2 hover:bg-primary-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-primary-400 text-xs font-medium"
               title="Impersonate"
             >
               Impersonate
@@ -197,7 +197,7 @@ export const UserTableRow: React.FC<{
               onClick={() => onBlock(user.id, user.status || 'active')}
               className={`p-2 rounded-lg text-xs font-medium ${
                 user.status === 'active'
-                  ? 'hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400'
+                  ? 'hover:bg-rose-500/20 text-slate-600 dark:text-slate-500 hover:text-rose-400'
                   : 'hover:bg-green-500/20 text-rose-400 hover:text-green-400'
               }`}
               title={user.status === 'active' ? 'Block' : 'Unblock'}
@@ -208,7 +208,7 @@ export const UserTableRow: React.FC<{
           {onDelete && (
             <button
               onClick={() => onDelete(user.id)}
-              className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
+              className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-400"
               title="Delete"
             >
               <Trash2 size={16} />
@@ -289,7 +289,7 @@ export const UserFormModal: React.FC<{
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            className="text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
           >
             <X size={20} />
           </button>
@@ -425,7 +425,7 @@ export const InviteUserModal: React.FC<{
         <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Invite New User</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
               Email Address
             </label>
             <input
@@ -437,7 +437,7 @@ export const InviteUserModal: React.FC<{
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
               Role
             </label>
             <select
@@ -451,7 +451,7 @@ export const InviteUserModal: React.FC<{
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
               Organization
             </label>
             <select
@@ -516,7 +516,7 @@ export const MoveUserModal: React.FC<{
         <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">
           Move User to Organization
         </h3>
-        <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+        <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
           Select the new organization for{' '}
           <span className="text-slate-900 dark:text-white font-medium">
             {user.firstName} {user.lastName}
@@ -525,7 +525,7 @@ export const MoveUserModal: React.FC<{
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
               Target Organization
             </label>
             <select
@@ -973,7 +973,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
 
       {/* Users Table */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden">
-        <table className="w-full text-left text-sm text-slate-400 dark:text-slate-500">
+        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-500">
           <thead className="bg-slate-50 dark:bg-navy-950 text-slate-600 dark:text-slate-200 uppercase text-xs font-semibold">
             <tr>
               <th className="px-6 py-4">User</th>

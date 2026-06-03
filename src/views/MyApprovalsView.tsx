@@ -210,7 +210,7 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
       {/* Empty State */}
       {!loading && approvals.length === 0 && (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          <ClipboardList className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-4" />
+          <ClipboardList className="w-12 h-12 mx-auto text-gray-600 dark:text-gray-500 dark:text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             No approvals found
           </h3>

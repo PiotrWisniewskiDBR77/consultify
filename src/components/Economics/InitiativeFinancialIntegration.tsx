@@ -323,7 +323,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
             <div className="grid grid-cols-3 gap-2 text-sm">
               {initiative.costCapex && (
                 <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">CAPEX</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-500">CAPEX</p>
                   <p className="font-medium text-navy-900 dark:text-white">
                     {formatCurrency(initiative.costCapex)}
                   </p>
@@ -331,7 +331,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
               )}
               {initiative.costOpex && (
                 <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">OPEX</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-500">OPEX</p>
                   <p className="font-medium text-navy-900 dark:text-white">
                     {formatCurrency(initiative.costOpex)}
                   </p>
@@ -339,7 +339,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
               )}
               {initiative.annualBenefit && (
                 <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">Annual Benefits</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-500">Annual Benefits</p>
                   <p className="font-medium text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(initiative.annualBenefit)}
                   </p>
@@ -367,7 +367,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           )}
         </button>
 
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
+        <p className="text-xs text-slate-600 dark:text-slate-500 mt-4">
           Analysis will be linked to this initiative and available w module Economics
         </p>
       </div>

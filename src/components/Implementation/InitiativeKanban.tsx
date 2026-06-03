@@ -153,7 +153,7 @@ const SortableInitiativeCard: React.FC<{
           </h4>
         </div>
         <button className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded">
-          <MoreHorizontal size={14} className="text-slate-400 dark:text-slate-500" />
+          <MoreHorizontal size={14} className="text-slate-600 dark:text-slate-500" />
         </button>
       </div>
 
@@ -215,7 +215,7 @@ const SortableInitiativeCard: React.FC<{
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-navy-700">
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
         {/* Owner */}
         <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
           <div className="w-5 h-5 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
@@ -364,7 +364,7 @@ export const InitiativeKanban: React.FC<InitiativeKanbanProps> = ({
               <DroppableColumn id={column.id} column={column}>
                 <SortableContext items={initiativeIds} strategy={verticalListSortingStrategy}>
                   {columnInitiatives.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-32 text-slate-400 dark:text-slate-500 text-sm">
+                    <div className="flex flex-col items-center justify-center h-32 text-slate-600 dark:text-slate-500 text-sm">
                       <Package size={24} className="mb-2 opacity-50" />
                       <span>No initiatives</span>
                     </div>

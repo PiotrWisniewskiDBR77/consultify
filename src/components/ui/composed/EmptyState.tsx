@@ -119,7 +119,7 @@ export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
             ${compact ? 'w-12 h-12 mb-4' : 'w-16 h-16 mb-6'}
             rounded-xl
             bg-slate-100 dark:bg-navy-800
-            text-slate-400 dark:text-slate-500
+            text-slate-600 dark:text-slate-500
           `}
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}

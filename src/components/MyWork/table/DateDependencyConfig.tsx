@@ -130,7 +130,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 size={16} className="animate-spin text-slate-400" />
+        <Loader2 size={16} className="animate-spin text-slate-600" />
       </div>
     );
   }
@@ -141,7 +141,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
     <div className="space-y-3">
       {/* Start date */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
           {isPl ? 'Pole daty początkowej' : 'Start date field'}
         </label>
         <select
@@ -161,7 +161,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* End date */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
           {isPl ? 'Pole daty końcowej' : 'End date field'}
         </label>
         <select
@@ -181,7 +181,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* Duration (optional) */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
           {isPl ? 'Pole czasu trwania (opcjonalnie)' : 'Duration field (optional)'}
         </label>
         <select
@@ -201,7 +201,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* Predecessor (optional) */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
           {isPl ? 'Pole poprzednika (opcjonalnie)' : 'Predecessor field (optional)'}
         </label>
         <select
@@ -221,7 +221,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* Default dependency type */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
           {isPl ? 'Domyślny typ zależności' : 'Default dependency type'}
         </label>
         <div className="flex flex-wrap gap-1">
@@ -245,7 +245,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* Default lag days */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
           {isPl ? 'Domyślne opóźnienie (dni)' : 'Default lag days'}
         </label>
         <input

@@ -81,7 +81,7 @@ export const UserLevelBadge: React.FC<{ compact?: boolean }> = ({ compact = fals
       </div>
 
       {stats.nextLevel && (
-        <div className="flex justify-between text-[9px] text-slate-400 dark:text-slate-500">
+        <div className="flex justify-between text-[9px] text-slate-600 dark:text-slate-500">
           <span>{stats.level.minPoints}</span>
           <span>{stats.nextLevel.minPoints}</span>
         </div>

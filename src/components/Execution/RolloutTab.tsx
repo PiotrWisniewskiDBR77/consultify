@@ -424,7 +424,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           />
           {kpis.length === 0 ? (
             <EmptyBox
-              icon={<Target className="w-8 h-8 text-slate-300 dark:text-slate-600" />}
+              icon={<Target className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
               message={t(
                 'execution.rollout.kpi.empty',
                 'No KPIs tracked yet. Add your first KPI to start monitoring rollout performance.'
@@ -474,8 +474,8 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
                         {kpi.baseline}
                         {kpi.unit}
                       </KpiCell>
-                      <div className="border-x border-slate-100 dark:border-navy-700">
-                        <div className="text-[10px] text-slate-400 uppercase font-bold">
+                      <div className="border-x border-slate-200 dark:border-navy-700">
+                        <div className="text-[10px] text-slate-600 uppercase font-bold">
                           {t('execution.rollout.kpi.current', 'Current')}
                         </div>
                         <input
@@ -541,7 +541,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           />
           {risks.length === 0 ? (
             <EmptyBox
-              icon={<AlertOctagon className="w-8 h-8 text-slate-300 dark:text-slate-600" />}
+              icon={<AlertOctagon className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
               message={t('execution.rollout.risks.empty', 'No risks logged.')}
             />
           ) : (
@@ -625,7 +625,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           />
           {changes.length === 0 ? (
             <EmptyBox
-              icon={<Sparkles className="w-8 h-8 text-slate-300 dark:text-slate-600" />}
+              icon={<Sparkles className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
               message={t('execution.rollout.change.empty', 'No change requests logged.')}
             />
           ) : (
@@ -698,7 +698,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           />
           {closures.length === 0 ? (
             <EmptyBox
-              icon={<CheckSquare className="w-8 h-8 text-slate-300 dark:text-slate-600" />}
+              icon={<CheckSquare className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
               message={t('execution.rollout.closure.empty', 'No closure items yet.')}
             />
           ) : (
@@ -728,7 +728,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
                       onBlur={(e) => patchClosure(c.id, { title: e.target.value })}
                       className={`flex-1 bg-transparent outline-none ${
                         done
-                          ? 'line-through text-slate-400 dark:text-slate-500'
+                          ? 'line-through text-slate-600 dark:text-slate-500'
                           : 'text-slate-700 dark:text-slate-200'
                       }`}
                     />
@@ -771,14 +771,14 @@ const EmptyBox: React.FC<{
 }> = ({ icon, message, children }) => (
   <div className="py-14 flex flex-col items-center justify-center gap-3 text-center bg-slate-50 dark:bg-navy-900 border border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
     {icon}
-    <p className="text-sm text-slate-400 dark:text-slate-500 max-w-md">{message}</p>
+    <p className="text-sm text-slate-600 dark:text-slate-500 max-w-md">{message}</p>
     {children}
   </div>
 );
 
 const KpiCell: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div>
-    <div className="text-[10px] text-slate-400 uppercase font-bold">{label}</div>
+    <div className="text-[10px] text-slate-600 uppercase font-bold">{label}</div>
     <div className="font-mono font-bold text-slate-600 dark:text-slate-400">{children}</div>
   </div>
 );
@@ -786,14 +786,14 @@ const KpiCell: React.FC<{ label: string; children: React.ReactNode }> = ({ label
 const KpiSparkline: React.FC<{ points: number[]; target: number }> = ({ points, target }) => {
   if (points.length < 2) {
     return (
-      <div className="h-12 mb-3 rounded border border-dashed border-slate-100 dark:border-navy-700 flex items-center justify-center">
-        <span className="text-[10px] text-slate-400 dark:text-slate-500">No history yet</span>
+      <div className="h-12 mb-3 rounded border border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center">
+        <span className="text-[10px] text-slate-600 dark:text-slate-500">No history yet</span>
       </div>
     );
   }
   const max = Math.max(target || 1, ...points, 1);
   return (
-    <div className="h-12 mb-3 bg-slate-50 dark:bg-navy-950 rounded border border-slate-100 dark:border-navy-700 flex items-end gap-0.5 px-2 pb-1 overflow-hidden">
+    <div className="h-12 mb-3 bg-slate-50 dark:bg-navy-950 rounded border border-slate-200 dark:border-navy-700 flex items-end gap-0.5 px-2 pb-1 overflow-hidden">
       {points.map((val, idx) => (
         <div
           key={idx}
@@ -821,7 +821,7 @@ const RegisterTable: React.FC<{ headers: string[]; children: React.ReactNode }> 
           ))}
         </tr>
       </thead>
-      <tbody className="divide-y divide-slate-100 dark:divide-white/5">{children}</tbody>
+      <tbody className="divide-y divide-slate-200 dark:divide-white/5">{children}</tbody>
     </table>
   </div>
 );
@@ -888,7 +888,7 @@ const RolloutPlanView: React.FC<{
       />
       {initiatives.length === 0 ? (
         <EmptyBox
-          icon={<ClipboardList className="w-8 h-8 text-slate-300 dark:text-slate-600" />}
+          icon={<ClipboardList className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
           message={t('execution.rollout.plan.empty', 'No initiatives scheduled for rollout yet.')}
         />
       ) : (

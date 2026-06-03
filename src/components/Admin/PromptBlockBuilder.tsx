@@ -243,7 +243,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500" />
             <input
               type="text"
               value={searchQuery}
@@ -279,9 +279,9 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                   </span>
                 </div>
                 {expandedCategories.has(category) ? (
-                  <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                  <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
                 ) : (
-                  <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+                  <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
                 )}
               </button>
 
@@ -367,7 +367,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
 
           <div className="p-4 space-y-2 min-h-[200px]">
             {selectedBlocks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-slate-400 dark:text-slate-500">
+              <div className="flex flex-col items-center justify-center h-40 text-slate-600 dark:text-slate-500">
                 <Blocks size={32} className="mb-2 opacity-50" />
                 <p className="text-sm">No blocks selected</p>
                 <p className="text-xs">Click blocks in the library to add them</p>
@@ -388,7 +388,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                 >
                   <GripVertical
                     size={16}
-                    className="text-slate-400 dark:text-slate-500 cursor-move flex-shrink-0"
+                    className="text-slate-600 dark:text-slate-500 cursor-move flex-shrink-0"
                   />
                   <span
                     className={`p-1 rounded ${getCategoryColor(block.category).bg} ${getCategoryColor(block.category).text}`}
@@ -424,7 +424,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
                 onClick={() => {
                   navigator.clipboard.writeText(previewContent);
                 }}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
               >
                 <Copy size={14} />
               </button>

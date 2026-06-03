@@ -81,7 +81,7 @@ export const UsageStatsPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -146,7 +146,7 @@ export const UsageStatsPanel: React.FC = () => {
       <div className="bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
         <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BarChart3 size={18} className="text-slate-400 dark:text-slate-500" />
+            <BarChart3 size={18} className="text-slate-600 dark:text-slate-500" />
             <h3 className="font-medium text-slate-900 dark:text-white">Usage by Organization</h3>
           </div>
           <button
@@ -159,7 +159,7 @@ export const UsageStatsPanel: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-white/5">
+              <tr className="border-b border-slate-200 dark:border-white/5">
                 <th className="text-left p-4 text-xs text-slate-500 dark:text-slate-400 uppercase">
                   Organization
                 </th>
@@ -181,7 +181,7 @@ export const UsageStatsPanel: React.FC = () => {
               {orgUsage.map((org) => (
                 <tr
                   key={org.id}
-                  className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                  className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-navy-800/20"
                 >
                   <td className="p-4">
                     <div className="font-medium text-slate-900 dark:text-white">{org.name}</div>
@@ -193,7 +193,7 @@ export const UsageStatsPanel: React.FC = () => {
                           ? 'bg-primary-500/20 text-primary-400'
                           : org.plan === 'pro'
                             ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-slate-500/20 text-slate-400 dark:text-slate-500'
+                            : 'bg-slate-500/20 text-slate-600 dark:text-slate-500'
                       }`}
                     >
                       {org.plan}

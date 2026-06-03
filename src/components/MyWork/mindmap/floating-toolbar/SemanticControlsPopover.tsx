@@ -55,7 +55,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
   return (
     <div className="w-72 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl p-3 space-y-3">
       <div>
-        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
+        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">
           <CircleDot size={11} />
           {isPl ? 'Semantyka' : 'Semantics'}
         </div>
@@ -75,7 +75,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
       </div>
 
       <div>
-        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
+        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">
           <Tags size={11} />
           {isPl ? 'Tagi i kolor' : 'Tags and color'}
         </div>
@@ -89,7 +89,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
               className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 dark:border-navy-700/70 bg-slate-100/80 dark:bg-navy-800 px-2 py-1 text-[10px] font-medium text-slate-700 dark:text-slate-200 disabled:opacity-50"
             >
               <span>#{tag}</span>
-              <span className="text-slate-400">x</span>
+              <span className="text-slate-600">x</span>
             </button>
           ))}
         </div>
@@ -127,7 +127,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
       </div>
 
       <div>
-        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
+        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">
           {isPl ? 'Szybka notatka' : 'Quick note'}
         </div>
         <textarea

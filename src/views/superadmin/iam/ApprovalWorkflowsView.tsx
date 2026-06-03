@@ -287,7 +287,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 <GitBranch className="w-5 h-5 text-indigo-500" />
               </div>
               <div>
-                <p className="text-sm text-slate-400 dark:text-slate-500">Workflows</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">Workflows</p>
                 <p className="text-xl font-semibold">{workflows.length}</p>
               </div>
             </div>
@@ -299,7 +299,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 <Clock className="w-5 h-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm text-slate-400 dark:text-slate-500">Pending Requests</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">Pending Requests</p>
                 <p className="text-xl font-semibold">
                   {requests.filter((r) => r.status === 'pending').length}
                 </p>
@@ -313,7 +313,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 <Check className="w-5 h-5 text-emerald-500" />
               </div>
               <div>
-                <p className="text-sm text-slate-400 dark:text-slate-500">Approved</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">Approved</p>
                 <p className="text-xl font-semibold">
                   {requests.filter((r) => r.status === 'approved').length}
                 </p>
@@ -327,7 +327,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 <X className="w-5 h-5 text-rose-500" />
               </div>
               <div>
-                <p className="text-sm text-slate-400 dark:text-slate-500">Rejected</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">Rejected</p>
                 <p className="text-xl font-semibold">
                   {requests.filter((r) => r.status === 'rejected').length}
                 </p>
@@ -452,7 +452,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                         <td className="py-3 px-4">
                           <div>
                             <p className="font-medium">{workflow.name}</p>
-                            <p className="text-sm text-slate-400 dark:text-slate-500">
+                            <p className="text-sm text-slate-600 dark:text-slate-500">
                               {workflow.description}
                             </p>
                           </div>
@@ -464,7 +464,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <Users className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                             <span className="text-sm">
                               {workflow.approvers?.length || 0} approvers
                             </span>
@@ -481,7 +481,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-sm text-slate-300">
+                        <td className="py-3 px-4 text-sm text-slate-600">
                           {formatDate(workflow.created_at)}
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -563,13 +563,13 @@ const ApprovalWorkflowsView: React.FC = () => {
                             <span className="px-2 py-1 bg-slate-700 rounded text-xs">
                               {request.resource_type}
                             </span>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate max-w-[150px]">
+                            <p className="text-xs text-slate-600 dark:text-slate-500 mt-1 truncate max-w-[150px]">
                               {request.resource_id}
                             </p>
                           </div>
                         </td>
                         <td className="py-3 px-4">{getStatusBadge(request.status)}</td>
-                        <td className="py-3 px-4 text-sm text-slate-300">
+                        <td className="py-3 px-4 text-sm text-slate-600">
                           {formatDate(request.created_at)}
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -617,7 +617,7 @@ const ApprovalWorkflowsView: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">Create Approval Workflow</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Name
                 </label>
                 <input
@@ -629,7 +629,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Description
                 </label>
                 <textarea
@@ -640,7 +640,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Resource Type
                 </label>
                 <select
@@ -655,7 +655,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Approvers (comma-separated emails)
                 </label>
                 <input

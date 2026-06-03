@@ -538,7 +538,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="text-sm text-slate-400 dark:text-slate-500 font-mono">
+                    <span className="text-sm text-slate-600 dark:text-slate-500 font-mono">
                       {center.code}
                     </span>
                   </td>
@@ -603,7 +603,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                  <DollarSign size={14} className="text-slate-400 dark:text-slate-500" />
+                  <DollarSign size={14} className="text-slate-600 dark:text-slate-500" />
                 </div>
                 <div>
                   <p className="text-sm text-white">{allocation.cost_center_name}</p>
@@ -639,7 +639,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                     setShowAddModal(false);
                     setEditingCenter(null);
                   }}
-                  className="text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+                  className="text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>

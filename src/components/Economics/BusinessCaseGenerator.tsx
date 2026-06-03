@@ -175,7 +175,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
         >
           <FileText
             size={24}
-            className={`mx-auto mb-2 ${options.format === 'pdf' ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500'}`}
+            className={`mx-auto mb-2 ${options.format === 'pdf' ? 'text-indigo-500' : 'text-slate-600 dark:text-slate-500'}`}
           />
           <p
             className={`text-sm font-medium ${options.format === 'pdf' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}
@@ -193,7 +193,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
         >
           <FileSpreadsheet
             size={24}
-            className={`mx-auto mb-2 ${options.format === 'docx' ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500'}`}
+            className={`mx-auto mb-2 ${options.format === 'docx' ? 'text-indigo-500' : 'text-slate-600 dark:text-slate-500'}`}
           />
           <p
             className={`text-sm font-medium ${options.format === 'docx' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}
@@ -352,7 +352,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       )}
 
       {/* Preview Info */}
-      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
         <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
           Document will contain data from analysis: <strong>{analysisName}</strong>
         </p>

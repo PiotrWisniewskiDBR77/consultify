@@ -169,7 +169,7 @@ export const OrgAIPolicy: React.FC<{
       </h3>
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">
+          <label className="block text-sm font-medium text-slate-600 mb-1">
             Default Model for Organization
           </label>
           <select
@@ -187,7 +187,7 @@ export const OrgAIPolicy: React.FC<{
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">
+          <label className="block text-sm font-medium text-slate-600 mb-1">
             AI Assertiveness Level:{' '}
             {orgConfig.assertivenessLevel === 1
               ? 'ADVISORY (Default)'
@@ -345,7 +345,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
 
             {/* Personal Model Preferences */}
             {showModelPreferences && (
-              <div className="mt-8 pt-8 border-t border-slate-100 dark:border-navy-700 text-left bg-slate-50 dark:bg-navy-950/50 rounded-lg p-6">
+              <div className="mt-8 pt-8 border-t border-slate-200 dark:border-navy-700 text-left bg-slate-50 dark:bg-navy-950/50 rounded-lg p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-2 rounded bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400">
                     <Sparkles size={16} />
@@ -409,7 +409,7 @@ export const AIConfigCore: React.FC<AIConfigCoreProps> = ({
           </div>
         )}
 
-        <div className="pt-6 mt-6 border-t border-slate-100 dark:border-navy-700 flex justify-end">
+        <div className="pt-6 mt-6 border-t border-slate-200 dark:border-navy-700 flex justify-end">
           <button
             type="submit"
             className="px-6 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"

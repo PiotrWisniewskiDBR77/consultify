@@ -45,7 +45,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
                   {isPolish ? 'Zrób teraz' : 'Do this now'}
                 </div>
                 <div className="mt-1 text-base font-semibold text-white">{primaryAction.title}</div>
-                <div className="mt-1 text-sm text-slate-300/80">{primaryAction.helper}</div>
+                <div className="mt-1 text-sm text-slate-600/80">{primaryAction.helper}</div>
               </div>
               <button
                 type="button"
@@ -83,7 +83,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
           </div>
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="w-full text-[10px] uppercase tracking-[0.18em] text-slate-400">
+          <div className="w-full text-[10px] uppercase tracking-[0.18em] text-slate-600">
             {isPolish ? 'Skróty i szybkie tworzenie' : 'Shortcuts and quick create'}
           </div>
           {payload.actions.map((action) => {
@@ -136,7 +136,7 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
               </button>
             );
           })}
-          <div className="ml-auto text-xs text-slate-300/55">
+          <div className="ml-auto text-xs text-slate-600/55">
             {isPolish ? 'Najpierw priorytet, potem skróty' : 'Priority first, shortcuts second'}
           </div>
         </div>

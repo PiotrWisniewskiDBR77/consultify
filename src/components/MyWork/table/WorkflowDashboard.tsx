@@ -295,7 +295,7 @@ export function WorkflowDashboard({
         <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           {isPl ? 'Workflow' : 'Workflow'}
         </h2>
-        {loading && <Loader2 size={12} className="animate-spin text-slate-400" />}
+        {loading && <Loader2 size={12} className="animate-spin text-slate-600" />}
       </div>
 
       {/* Cards grid */}
@@ -323,13 +323,13 @@ export function WorkflowDashboard({
                   <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                     {isPl ? card.titlePl : card.titleEn}
                   </h3>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                     {card.stat}
                   </p>
                 </div>
                 <ArrowRight
                   size={14}
-                  className="text-slate-300 dark:text-navy-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors"
+                  className="text-slate-600 dark:text-navy-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors"
                 />
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -357,7 +357,7 @@ function BackBar({ label, onBack }: { label: string; onBack: () => void }) {
       >
         ← {isPl ? 'Workflow' : 'Workflow'}
       </button>
-      <span className="text-slate-300 dark:text-navy-600">/</span>
+      <span className="text-slate-600 dark:text-navy-600">/</span>
       <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{label}</span>
     </div>
   );

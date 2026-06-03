@@ -61,20 +61,20 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
   return (
     <div className="w-[180px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-navy-800">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-800">
         <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
           {t('presentations.builder.slideSorter', 'Slides')}
         </span>
         <div className="flex gap-1">
           <button
             onClick={() => setViewMode('cards')}
-            className={`p-1 rounded ${viewMode === 'cards' ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-white' : 'text-slate-400'}`}
+            className={`p-1 rounded ${viewMode === 'cards' ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-white' : 'text-slate-600'}`}
           >
             <LayoutGrid size={12} />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-1 rounded ${viewMode === 'list' ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-white' : 'text-slate-400'}`}
+            className={`p-1 rounded ${viewMode === 'list' ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-white' : 'text-slate-600'}`}
           >
             <List size={12} />
           </button>
@@ -150,8 +150,8 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                       : 'hover:bg-slate-50 dark:hover:bg-navy-800'
                   }`}
                 >
-                  <GripVertical size={10} className="text-slate-300 cursor-grab" />
-                  <span className="font-bold text-slate-400 w-4 text-right">{index + 1}</span>
+                  <GripVertical size={10} className="text-slate-600 cursor-grab" />
+                  <span className="font-bold text-slate-600 w-4 text-right">{index + 1}</span>
                   <span
                     className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${INTENT_COLORS[card.intent] || 'bg-slate-400'}`}
                   />
@@ -164,7 +164,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                       e.stopPropagation();
                       setContextMenuIndex(contextMenuIndex === index ? null : index);
                     }}
-                    className="text-slate-400 opacity-0 group-hover:opacity-100"
+                    className="text-slate-600 opacity-0 group-hover:opacity-100"
                   >
                     <MoreVertical size={12} />
                   </button>
@@ -202,7 +202,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
       </div>
 
       {/* Add button */}
-      <div className="p-2 border-t border-slate-100 dark:border-navy-800">
+      <div className="p-2 border-t border-slate-200 dark:border-navy-800">
         <button
           onClick={onAddCard}
           className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-navy-600 text-xs text-slate-500 hover:border-primary-400 hover:text-primary-500 transition-colors"

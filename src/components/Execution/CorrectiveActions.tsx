@@ -365,7 +365,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
 
                 {/* Expanded Details */}
                 {selectedAction?.id === action.id && (
-                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700 space-y-4">
+                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 space-y-4">
                     {action.rootCause && (
                       <div>
                         <h5 className="text-sm font-medium text-navy-900 dark:text-white mb-1">

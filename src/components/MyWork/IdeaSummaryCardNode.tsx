@@ -19,7 +19,7 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
       ? 'text-emerald-500'
       : completeness >= 50
         ? 'text-amber-500'
-        : 'text-slate-400';
+        : 'text-slate-600';
 
   const completenessBarColor =
     completeness >= 75 ? 'bg-emerald-400' : completeness >= 50 ? 'bg-amber-400' : 'bg-slate-300';
@@ -47,7 +47,7 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
       {/* Stats */}
       <div className="flex items-center gap-3 mb-2">
         <div className="flex items-center gap-1">
-          <Hash size={9} className="text-slate-400" />
+          <Hash size={9} className="text-slate-600" />
           <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
             {nodeCount}
           </span>
@@ -78,7 +78,7 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
             </span>
           ))}
           {themes.length > 4 && (
-            <span className="text-[8px] text-slate-400">+{themes.length - 4}</span>
+            <span className="text-[8px] text-slate-600">+{themes.length - 4}</span>
           )}
         </div>
       )}

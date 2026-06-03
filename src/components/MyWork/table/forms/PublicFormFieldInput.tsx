@@ -169,7 +169,7 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
               </label>
             );
           })}
-          {options.length === 0 && <p className="text-xs text-gray-400">No options configured</p>}
+          {options.length === 0 && <p className="text-xs text-gray-600">No options configured</p>}
         </div>
       );
     }
@@ -188,7 +188,7 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
             >
               <Star
                 className={`h-6 w-6 ${
-                  i < current ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                  i < current ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'
                 }`}
               />
             </button>
@@ -210,7 +210,7 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
             }}
             className="text-sm text-gray-500"
           />
-          <p className="mt-1 text-xs text-gray-400">Upload a file</p>
+          <p className="mt-1 text-xs text-gray-600">Upload a file</p>
         </div>
       );
 

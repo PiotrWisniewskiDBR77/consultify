@@ -227,7 +227,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
                       onClick={() => handleItemClick(type)}
                       className="w-full flex items-center gap-2 h-9 px-3 hover:bg-slate-100/60 dark:hover:bg-white/5 text-left text-sm text-slate-800 dark:text-slate-200 transition-colors"
                     >
-                      <Icon size={14} className="text-slate-400 dark:text-slate-400 shrink-0" />
+                      <Icon size={14} className="text-slate-600 dark:text-slate-400 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div>{t(labelKey)}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-500">
@@ -253,7 +253,7 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
               >
                 <Icon size={12} />
                 {t(labelKey)}
-                <span className="text-slate-400 dark:text-slate-500 text-[10px]">
+                <span className="text-slate-600 dark:text-slate-500 text-[10px]">
                   ({t('traceability.convertTo.createsSession', 'Creates a MyWork session first')})
                 </span>
               </button>

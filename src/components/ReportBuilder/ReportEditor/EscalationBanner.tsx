@@ -89,7 +89,7 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
         </div>
         <ul className="mt-1.5 space-y-0.5">
           {trigger.reasons.map((reason, i) => (
-            <li key={i} className="flex items-start gap-1.5 text-xs text-slate-400">
+            <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
               <AlertTriangle size={10} className={`${iconColor} shrink-0 mt-0.5`} />
               {reason}
             </li>

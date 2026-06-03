@@ -117,9 +117,9 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
     if (!value?.trim()) return null;
     return (
       <div className="flex gap-2 py-1.5">
-        <div className="shrink-0 mt-0.5 text-slate-400 dark:text-slate-500">{icon}</div>
+        <div className="shrink-0 mt-0.5 text-slate-600 dark:text-slate-500">{icon}</div>
         <div className="min-w-0">
-          <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 mb-0.5">
+          <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-500 mb-0.5">
             {label}
           </div>
           <div className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
@@ -159,7 +159,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
         {/* Quick stats row */}
         <div className="flex items-center gap-3 mt-1">
           {evidenceCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500">
               <FileText size={10} />
               {evidenceCount} {isPl ? 'dowodów' : 'evidence'}
             </span>
@@ -177,7 +177,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
       {hasDetails && (
         <button
           onClick={toggleExpanded}
-          className="w-full flex items-center justify-center gap-1 py-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors border-t border-slate-200/40 dark:border-white/[0.04]"
+          className="w-full flex items-center justify-center gap-1 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors border-t border-slate-200/40 dark:border-white/[0.04]"
         >
           {expanded ? (isPl ? 'Zwiń' : 'Collapse') : isPl ? 'Pokaż szczegóły' : 'Show details'}
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -226,7 +226,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
           {canRevert && (
             <button
               onClick={handleRevert}
-              className="text-[10px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="text-[10px] font-semibold text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             >
               ←{' '}
               {isPl
@@ -242,7 +242,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
               title={advanceBlocked || undefined}
               className={`text-[10px] font-bold transition-colors ${
                 advanceBlocked
-                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                  ? 'text-slate-600 dark:text-slate-600 cursor-not-allowed'
                   : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'
               }`}
             >

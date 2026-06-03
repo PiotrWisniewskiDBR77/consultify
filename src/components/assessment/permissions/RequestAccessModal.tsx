@@ -278,7 +278,7 @@ export const RequestAccessModal: React.FC<RequestAccessModalProps> = ({
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
             <button
               type="button"
               onClick={onClose}

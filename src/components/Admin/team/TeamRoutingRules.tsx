@@ -221,7 +221,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                 'Rules are evaluated in priority order. The first matching rule is applied.'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -249,7 +249,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
       <div className="space-y-3">
         {localRules.length === 0 ? (
           <div className="p-8 text-center bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 border-dashed">
-            <Zap size={48} className="mx-auto mb-4 text-slate-300 dark:text-navy-600" />
+            <Zap size={48} className="mx-auto mb-4 text-slate-600 dark:text-navy-600" />
             <h4 className="font-medium text-navy-900 dark:text-white mb-2">
               {t('admin.team.routing.noRules', 'No routing rules yet')}
             </h4>
@@ -283,7 +283,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                 {/* Rule Header */}
                 <div className="flex items-center gap-3 p-4">
                   {/* Drag Handle */}
-                  <div className="cursor-grab text-slate-400 hover:text-slate-600 dark:text-slate-400">
+                  <div className="cursor-grab text-slate-600 hover:text-slate-600 dark:text-slate-400">
                     <GripVertical size={18} />
                   </div>
 
@@ -371,7 +371,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                   {/* Expand Button */}
                   <button
                     onClick={() => setExpandedRule(isExpanded ? null : rule.id)}
-                    className="text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                    className="text-slate-600 hover:text-slate-600 dark:text-slate-400"
                   >
                     {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   </button>
@@ -416,7 +416,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
 
                       {/* Arrow */}
                       <div className="flex justify-center">
-                        <ArrowRight size={24} className="text-slate-300 dark:text-navy-600" />
+                        <ArrowRight size={24} className="text-slate-600 dark:text-navy-600" />
                       </div>
 
                       {/* Actions */}
@@ -446,7 +446,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
 
                       {/* Actions Footer */}
                       <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                        <p className="text-xs text-slate-600 dark:text-slate-500">
                           {t('admin.team.routing.lastUpdated', 'Last updated:')}{' '}
                           {new Date(rule.updatedAt).toLocaleDateString()}
                         </p>

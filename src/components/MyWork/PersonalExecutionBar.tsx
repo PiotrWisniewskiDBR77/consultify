@@ -30,17 +30,17 @@ export const PersonalExecutionBar: React.FC<Props> = ({ stats }) => {
           </h3>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-navy-900 dark:text-white">{score}</span>
-            <span className="text-sm font-medium text-slate-400 dark:text-slate-500">/ 100</span>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-500">/ 100</span>
           </div>
         </div>
         <div className="flex gap-4 text-xs font-medium">
           <div className="flex flex-col items-center">
             <span className="text-green-500">{completed}</span>
-            <span className="text-slate-400 dark:text-slate-500">Done</span>
+            <span className="text-slate-600 dark:text-slate-500">Done</span>
           </div>
           <div className="flex flex-col items-center">
             <span className="text-rose-500">{overdue}</span>
-            <span className="text-slate-400 dark:text-slate-500">Overdue</span>
+            <span className="text-slate-600 dark:text-slate-500">Overdue</span>
           </div>
         </div>
       </div>

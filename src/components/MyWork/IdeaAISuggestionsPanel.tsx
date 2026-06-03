@@ -443,7 +443,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
         {!isSnoozed && suggestions.length > 0 && (
           <button
             onClick={snooze}
-            className="mt-1.5 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1 transition-colors"
+            className="mt-1.5 text-[10px] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1 transition-colors"
           >
             <BellOff size={10} />
             {isPl ? 'Wstrzymaj na 5 min' : 'Snooze 5 min'}
@@ -478,11 +478,11 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                     <span className={`text-[11px] font-bold flex-1 text-left ${config.color}`}>
                       {isPl ? config.labelPl : config.labelEn}
                     </span>
-                    <span className="text-[9px] text-slate-400 mr-1">{items.length}</span>
+                    <span className="text-[9px] text-slate-600 mr-1">{items.length}</span>
                     {isExpanded ? (
-                      <ChevronUp size={12} className="text-slate-400" />
+                      <ChevronUp size={12} className="text-slate-600" />
                     ) : (
-                      <ChevronDown size={12} className="text-slate-400" />
+                      <ChevronDown size={12} className="text-slate-600" />
                     )}
                   </button>
 
@@ -510,13 +510,13 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                                     style={{ width: `${Math.round(sug.confidence * 100)}%` }}
                                   />
                                 </div>
-                                <span className="text-[8px] text-slate-400">
+                                <span className="text-[8px] text-slate-600">
                                   {Math.round(sug.confidence * 100)}%
                                 </span>
                               </div>
                             )}
                             {sug.source && (
-                              <span className="text-[8px] text-slate-400 bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
+                              <span className="text-[8px] text-slate-600 bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
                                 {sug.source}
                               </span>
                             )}
@@ -541,7 +541,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                             )}
                             <button
                               onClick={() => dismissSuggestion(sug.id)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors ml-auto"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-colors ml-auto"
                               title={isPl ? 'Odrzuć' : 'Dismiss'}
                             >
                               <XCircle size={9} />
@@ -556,7 +556,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
             })}
 
             {suggestions.length === 0 && !loading && (
-              <div className="text-center py-8 text-[11px] text-slate-400">
+              <div className="text-center py-8 text-[11px] text-slate-600">
                 {isPl
                   ? 'Brak sugestii. Opisz wyzwanie i zaakceptuj.'
                   : 'No suggestions. Describe and accept the challenge.'}
@@ -597,7 +597,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
 
         {/* Deep AI generators (moved from IdeaWorkspaceTools) */}
         <div className="pt-3 border-t border-slate-200/30 dark:border-white/[0.04]">
-          <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
+          <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">
             {isPl ? 'Generatory AI' : 'AI Generators'}
           </div>
           <div className="space-y-1">

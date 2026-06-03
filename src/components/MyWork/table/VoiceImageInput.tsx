@@ -255,14 +255,14 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           <div className="flex items-center gap-0.5 rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
             <button
               onClick={() => setMode('voice')}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-primary-500/10 text-primary-600' : 'text-slate-400'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-primary-500/10 text-primary-600' : 'text-slate-600'}`}
             >
               <Mic size={10} className="inline mr-0.5" />
               {isPl ? 'Głos' : 'Voice'}
             </button>
             <button
               onClick={() => setMode('image')}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-primary-500/10 text-primary-600' : 'text-slate-400'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-primary-500/10 text-primary-600' : 'text-slate-600'}`}
             >
               <ImageIcon size={10} className="inline mr-0.5" />
               {isPl ? 'Obraz' : 'Image'}
@@ -272,7 +272,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
@@ -290,7 +290,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
               >
                 {isRecording ? <Square size={20} /> : <Mic size={24} />}
               </button>
-              <p className="text-[10px] text-slate-400 mt-2">
+              <p className="text-[10px] text-slate-600 mt-2">
                 {isRecording
                   ? isPl
                     ? 'Nagrywam… kliknij aby zatrzymać'
@@ -333,7 +333,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                 </div>
               ) : (
                 <>
-                  <Upload size={24} className="text-slate-300 mx-auto mb-2" />
+                  <Upload size={24} className="text-slate-600 mx-auto mb-2" />
                   <p className="text-[11px] text-slate-500">
                     {isPl
                       ? 'Upuść obraz, wklej screenshot (Ctrl+V) lub'
@@ -382,7 +382,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
         {/* Parsed ideas */}
         <div className="flex-1 overflow-auto px-5 py-4">
           {parsedIdeas.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">
+            <p className="text-xs text-slate-600 text-center py-4">
               {isPl
                 ? 'Nagraj głos lub wgraj obraz, potem kliknij "Rozpoznaj"'
                 : 'Record voice or upload image, then click "Parse"'}
@@ -409,7 +409,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                       {idea.label}
                     </span>
                     {idea.description && (
-                      <span className="text-[9px] text-slate-400 block truncate">
+                      <span className="text-[9px] text-slate-600 block truncate">
                         {idea.description}
                       </span>
                     )}

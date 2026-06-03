@@ -100,7 +100,7 @@ function renderSectionPreview(section: DocumentSection, idx: number): React.Reac
         <h3 className="text-base font-semibold text-navy-900 dark:text-white">
           {idx + 1}. {section.title}
         </h3>
-        {section.purpose ? <span className="text-xs text-slate-400">{section.purpose}</span> : null}
+        {section.purpose ? <span className="text-xs text-slate-600">{section.purpose}</span> : null}
       </header>
       <div className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-300">
         {section.blocks.map((block) => {
@@ -256,7 +256,7 @@ function SourceListPanel({
             key={label}
             className="rounded-lg border border-slate-200 bg-white p-2 dark:border-navy-700 dark:bg-navy-900"
           >
-            <div className="text-[10px] uppercase tracking-wide text-slate-400">{label}</div>
+            <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
             <div className="mt-1 font-semibold text-navy-900 dark:text-slate-100">{value}</div>
           </div>
         ))}
@@ -368,7 +368,7 @@ function PropertiesPanel({
             key={label}
             className="rounded-lg border border-slate-200 bg-white p-3 dark:border-navy-700 dark:bg-navy-900"
           >
-            <dt className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+            <dt className="text-[10px] font-medium uppercase tracking-wide text-slate-600">
               {label}
             </dt>
             <dd className="mt-1 break-words text-xs text-navy-900 dark:text-slate-100">{value}</dd>
@@ -409,7 +409,7 @@ function OutlinePanel({
                 <span className="font-medium">
                   {index + 1}. {section.title}
                 </span>
-                <span className="mt-0.5 block text-[10px] text-slate-400">
+                <span className="mt-0.5 block text-[10px] text-slate-600">
                   {section.blocks.length} block{section.blocks.length === 1 ? '' : 's'}
                 </span>
               </a>
@@ -871,7 +871,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
                 key={label}
                 className="rounded-lg border border-slate-200 bg-white p-2 dark:border-navy-700 dark:bg-navy-900"
               >
-                <div className="text-[10px] uppercase tracking-wide text-slate-400">{label}</div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-600">{label}</div>
                 <div className="mt-1 font-semibold text-navy-900 dark:text-slate-100">{value}</div>
               </div>
             ))}
@@ -906,7 +906,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
                     {changedBlocks.slice(0, 3).map((block) => (
                       <div
                         key={block.blockId}
-                        className="mt-2 rounded border border-slate-100 bg-slate-50 p-2 dark:border-navy-800 dark:bg-navy-950"
+                        className="mt-2 rounded border border-slate-200 bg-slate-50 p-2 dark:border-navy-800 dark:bg-navy-950"
                       >
                         <div className="font-medium text-slate-600 dark:text-slate-300">
                           {block.kind} · {block.blockType ?? 'unknown'}

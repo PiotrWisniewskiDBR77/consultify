@@ -105,7 +105,7 @@ export const ROIAssumptionEditor: React.FC<ROIAssumptionEditorProps> = ({
           <tbody className="divide-y divide-navy-700/50">
             {ROW_DEFS.map((def) => (
               <tr key={def.id} className="hover:bg-navy-800/30">
-                <td className="px-3 py-2 text-slate-300">{t(def.descKey)}</td>
+                <td className="px-3 py-2 text-slate-600">{t(def.descKey)}</td>
                 <td className="px-3 py-2">
                   <input
                     className={`${inputCls} text-right`}
@@ -118,7 +118,7 @@ export const ROIAssumptionEditor: React.FC<ROIAssumptionEditorProps> = ({
                     disabled={disabled}
                   />
                 </td>
-                <td className="px-3 py-2 text-slate-400">{t('results.roi.periodYear')}</td>
+                <td className="px-3 py-2 text-slate-600">{t('results.roi.periodYear')}</td>
                 <td className="px-3 py-2">
                   <select
                     className={inputCls}
@@ -133,13 +133,13 @@ export const ROIAssumptionEditor: React.FC<ROIAssumptionEditorProps> = ({
                     ))}
                   </select>
                 </td>
-                <td className="px-3 py-2 text-slate-400">{t('results.roi.sourceManual')}</td>
+                <td className="px-3 py-2 text-slate-600">{t('results.roi.sourceManual')}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="bg-navy-800/70 border-t border-navy-700">
-              <td className="px-3 py-2 text-sm font-medium text-slate-400" colSpan={4}>
+              <td className="px-3 py-2 text-sm font-medium text-slate-600" colSpan={4}>
                 {t('results.roi.total', 'Total')}
               </td>
               <td className="px-3 py-2 text-right font-semibold text-white">

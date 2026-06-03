@@ -130,19 +130,19 @@ export const VoiceConversationOverlay: React.FC = () => {
           <span
             className={`h-2 w-2 rounded-full ${STATUS_COLORS[voiceStatus]} ${voiceStatus === 'live' ? 'animate-pulse' : ''}`}
           />
-          <span className="text-[11px] text-slate-400">{statusLabel[voiceStatus]}</span>
+          <span className="text-[11px] text-slate-600">{statusLabel[voiceStatus]}</span>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsExpanded(false)}
-            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-md p-1 text-slate-600 transition-colors hover:bg-white/10 hover:text-white"
             title={t('common.minimize', 'Minimize')}
           >
             <ChevronDown size={16} />
           </button>
           <button
             onClick={() => void handleEnd()}
-            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-rose-600/80 hover:text-white"
+            className="rounded-md p-1 text-slate-600 transition-colors hover:bg-rose-600/80 hover:text-white"
             title={t('aiChat.voice.stopVoice', 'End voice')}
           >
             <PhoneOff size={14} />
@@ -159,7 +159,7 @@ export const VoiceConversationOverlay: React.FC = () => {
               </div>
               <span className="absolute inset-0 animate-ping rounded-full bg-crimson-500/20" />
             </div>
-            <p className="mt-1 text-center text-xs text-slate-400">
+            <p className="mt-1 text-center text-xs text-slate-600">
               {t('aiChat.voice.voiceLive', 'Listening…')}
             </p>
             <p className="text-center text-[11px] text-slate-500">
@@ -170,7 +170,7 @@ export const VoiceConversationOverlay: React.FC = () => {
 
         {voiceStatus === 'connecting' && (
           <>
-            <Loader2 size={24} className="animate-spin text-slate-400" />
+            <Loader2 size={24} className="animate-spin text-slate-600" />
             <p className="text-xs text-slate-500">
               {t('aiChat.voice.voiceConnecting', 'Connecting…')}
             </p>

@@ -239,7 +239,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                             }}
                           />
                         </div>
-                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                        <span className="text-xs text-slate-600 dark:text-slate-500">
                           {progress}%
                         </span>
                       </div>
@@ -302,12 +302,12 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                       className="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5"
                       onClick={() => toggleArea(area.id)}
                     >
-                      <button className="text-slate-400 dark:text-slate-500">
+                      <button className="text-slate-600 dark:text-slate-500">
                         {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                       </button>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-slate-400 dark:text-slate-500">
+                          <span className="text-xs font-mono text-slate-600 dark:text-slate-500">
                             {area.code}
                           </span>
                           <span className="font-medium text-navy-900 dark:text-white">
@@ -317,7 +317,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                       </div>
                       <div className="flex items-center gap-6">
                         <div className="text-center">
-                          <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
+                          <p className="text-xs text-slate-600 dark:text-slate-500 mb-1">
                             Aktualny
                           </p>
                           <div
@@ -328,7 +328,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">
+                          <p className="text-xs text-slate-600 dark:text-slate-500 mb-1">
                             Docelowy
                           </p>
                           <div
@@ -351,7 +351,7 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
 
                     {/* Expanded Content */}
                     {isExpanded && (
-                      <div className="border-t border-slate-100 dark:border-navy-700 p-4 space-y-4">
+                      <div className="border-t border-slate-200 dark:border-navy-700 p-4 space-y-4">
                         {/* Level Selector */}
                         <div className="grid grid-cols-2 gap-4">
                           <div>
@@ -467,19 +467,19 @@ export const DigitizationToolTab: React.FC<DigitizationToolTabProps> = ({ analys
               </h3>
             </div>
             <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+              <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
                 <span className="text-slate-600 dark:text-slate-300">Zapisz changesy</span>
                 <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
                   Ctrl+S
                 </kbd>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+              <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
                 <span className="text-slate-600 dark:text-slate-300">Previous Axis</span>
                 <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
                   ↑
                 </kbd>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+              <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
                 <span className="text-slate-600 dark:text-slate-300">Next Axis</span>
                 <kbd className="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-sm font-mono">
                   ↓

@@ -171,7 +171,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
   const getUsageStatusColor = (percentage: number) => {
     if (percentage >= 90) return 'text-rose-400';
     if (percentage >= 75) return 'text-amber-400';
-    return 'text-slate-400 dark:text-slate-500';
+    return 'text-slate-600 dark:text-slate-500';
   };
 
   const getProgressBarColor = (percentage: number) => {
@@ -429,7 +429,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                       ? 'text-rose-400'
                       : organizationContextQuota.tone === 'warning'
                         ? 'text-amber-400'
-                        : 'text-slate-400'
+                        : 'text-slate-600'
                   }
                 />
                 <div>
@@ -447,7 +447,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   >
                     {organizationContextQuota.title}
                   </h3>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1 max-w-3xl">
+                  <p className="text-sm text-slate-600 dark:text-slate-500 mt-1 max-w-3xl">
                     {organizationContextQuota.description}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
@@ -549,7 +549,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   value={breakdownView}
                   onChange={(e) => setBreakdownView(e.target.value as any)}
                   disabled={!!loadError || !usage}
-                  className="text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-1 text-slate-300"
+                  className="text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-1 text-slate-600"
                 >
                   <option value="user">By User</option>
                   <option value="project">By Project</option>
@@ -683,12 +683,12 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <span className="text-sm text-slate-400 dark:text-slate-500">
+                            <span className="text-sm text-slate-600 dark:text-slate-500">
                               {formatNumber(item.requests)}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <span className="text-sm text-slate-400 dark:text-slate-500">
+                            <span className="text-sm text-slate-600 dark:text-slate-500">
                               ${item.cost?.toFixed(2) || '0.00'}
                             </span>
                           </td>
@@ -729,7 +729,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                   >
                     {usage.tokens.percentage >= 90 ? 'Usage Critical' : 'High Usage Warning'}
                   </h4>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
                     You've used {usage.tokens.percentage}% of your monthly token quota.
                     {usage.projectedUsage > usage.tokens.limit && (
                       <>

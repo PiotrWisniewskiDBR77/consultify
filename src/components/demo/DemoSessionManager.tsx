@@ -586,7 +586,7 @@ const WorkspaceDemoNextSteps: React.FC<WorkspaceDemoNextStepsProps> = ({
                   {scenario.title}
                 </span>
                 {scenario.duration ? (
-                  <span className="text-slate-400 dark:text-slate-500">{scenario.duration}</span>
+                  <span className="text-slate-600 dark:text-slate-500">{scenario.duration}</span>
                 ) : null}
               </div>
               {(scenario.persona || scenario.audience) && (

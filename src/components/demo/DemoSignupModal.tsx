@@ -101,7 +101,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
             <div className="p-6 relative">
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-slate-600 hover:text-slate-600 dark:hover:text-white transition-colors"
                 aria-label="Close"
               >
                 <X size={18} />

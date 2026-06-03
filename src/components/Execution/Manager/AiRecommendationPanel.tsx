@@ -180,16 +180,16 @@ const CollapsibleSection: React.FC<{
 }> = ({ title, defaultOpen = true, badge, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-slate-100 dark:border-white/[0.04]">
+    <div className="border-b border-slate-200 dark:border-white/[0.04]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-4 py-2.5 text-left"
       >
         {open ? (
-          <ChevronDown size={14} className="text-slate-400" />
+          <ChevronDown size={14} className="text-slate-600" />
         ) : (
-          <ChevronRight size={14} className="text-slate-400" />
+          <ChevronRight size={14} className="text-slate-600" />
         )}
         <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {title}
@@ -245,7 +245,7 @@ const FocusList: React.FC<{
         >
           <div className="mb-1.5 flex items-center gap-2">
             <SeverityBadge severity={row.severity} />
-            <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
               {row.problemType.replace(/_/g, ' ')}
             </span>
           </div>
@@ -302,7 +302,7 @@ const SuggestionCard: React.FC<{
       Expected outcome: {suggestion.expectedOutcome}
     </div>
     <div className="mt-2 flex items-center justify-between gap-2">
-      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+      <span className="text-[10px] text-slate-600 dark:text-slate-500">
         Cost: {suggestion.cost}
         {suggestion.recommendedOwner ? ` | Suggested owner: ${suggestion.recommendedOwner}` : ''}
       </span>
@@ -476,7 +476,7 @@ const TriageView: React.FC<{
               <span className="text-[12px] font-semibold text-slate-900 dark:text-white">
                 {cluster.theme}
               </span>
-              <span className="ml-auto text-[10px] text-slate-400">
+              <span className="ml-auto text-[10px] text-slate-600">
                 {cluster.problemIds.length} problems
               </span>
             </div>
@@ -803,12 +803,12 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             {MODE_TITLES[mode]}
           </h2>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">{MODE_SUBTITLES[mode]}</p>
+          <p className="text-[10px] text-slate-600 dark:text-slate-500">{MODE_SUBTITLES[mode]}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+          className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
         >
           <X size={16} />
         </button>

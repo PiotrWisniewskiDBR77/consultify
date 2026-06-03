@@ -272,7 +272,7 @@ export function InterfacesIndex({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
       </div>
     );
   }
@@ -318,7 +318,7 @@ export function InterfacesIndex({
           </h2>
           <button
             onClick={() => setShowTemplates(false)}
-            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 dark:hover:bg-navy-800"
           >
             <X className="h-4 w-4" />
           </button>
@@ -387,7 +387,7 @@ export function InterfacesIndex({
 
             {/* Last modified */}
             {iface.updatedAt && (
-              <p className="mb-4 text-xs text-gray-400 dark:text-gray-500">
+              <p className="mb-4 text-xs text-gray-600 dark:text-gray-500">
                 {t('interfacesIndex.lastModified', 'Last modified')}{' '}
                 {new Date(iface.updatedAt).toLocaleDateString()}
               </p>
@@ -441,7 +441,7 @@ export function InterfacesIndex({
                   ) : (
                     <button
                       onClick={() => setDeleteConfirm(iface.id)}
-                      className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
+                      className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
                       title={t('interfacesIndex.delete', 'Delete')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

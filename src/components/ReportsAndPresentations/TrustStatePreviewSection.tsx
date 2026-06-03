@@ -91,7 +91,7 @@ interface TrustBadgeProps {
 const TrustBadge: React.FC<TrustBadgeProps> = ({ state, label }) => {
   const text = label || displayLabel(state);
   if (text === '—') {
-    return <span className="text-[10px] text-slate-400 dark:text-slate-500">—</span>;
+    return <span className="text-[10px] text-slate-600 dark:text-slate-500">—</span>;
   }
   return (
     <span className={`${TRUST_BADGE_BASE} ${badgeVariant(state)}`}>
@@ -145,7 +145,7 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
 
   return (
     <div className="space-y-2 pt-2 border-t border-slate-200/60 dark:border-white/[0.06]">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
         {t('rap.outputs.preview.trustState', 'Trust state')}
       </div>
 
@@ -165,7 +165,7 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
         <Row label={t('rap.outputs.preview.review', 'Review')}>
           <TrustBadge state={governance.publishState} />
           {typeof governance.reviewGateCount === 'number' && governance.reviewGateCount > 0 ? (
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-0.5">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500 ml-0.5">
               ({governance.reviewGateCount} {t('rap.outputs.preview.reviewersShort', 'gates')})
             </span>
           ) : null}

@@ -96,7 +96,7 @@ const STATUS_CONFIG = {
   },
   CANCELLED: {
     icon: X,
-    color: 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-500/10',
+    color: 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-slate-500/10',
     label: 'Cancelled',
   },
 };
@@ -396,7 +396,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-navy-700">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
@@ -419,7 +419,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
 
       {/* Request History */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
           <h4 className="text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider">
             {t('settings.permissions.history', 'Request History')}
           </h4>
@@ -448,7 +448,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
+          <div className="divide-y divide-slate-200 dark:divide-white/5">
             {requests.map((request) => {
               const status = STATUS_CONFIG[request.status] || STATUS_CONFIG.PENDING;
               const StatusIcon = status.icon;
@@ -490,7 +490,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                             <span className="font-medium">Admin notes:</span> {request.adminNotes}
                           </div>
                         )}
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                        <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
                           {new Date(request.createdAt).toLocaleDateString()} at{' '}
                           {new Date(request.createdAt).toLocaleTimeString()}
                         </p>

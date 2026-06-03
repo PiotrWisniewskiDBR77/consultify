@@ -351,7 +351,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                   size={48}
                   className={cn(
                     'mb-4',
-                    isDragOver ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+                    isDragOver ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'
                   )}
                 />
                 <p className="text-lg font-medium text-navy-900 dark:text-white mb-1">
@@ -360,7 +360,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {t('admin.team.import.dropZoneSubtitle', 'or click to browse')}
                 </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
                   CSV, XLS, XLSX (max 10MB)
                 </p>
               </div>

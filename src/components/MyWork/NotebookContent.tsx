@@ -1772,7 +1772,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
                   {notebookTitle || t('myWork.notebook.title', 'Notebook')}
                 </div>
-                <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                <div className="text-[10px] text-slate-600 dark:text-slate-500">
                   {filteredPages.length} {isPolish ? 'stron' : 'pages'}
                 </div>
               </div>
@@ -1846,7 +1846,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   className={`ml-0.5 px-1 py-0 rounded-full text-[9px] ${
                     sidebarTab === tab.key
                       ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                      : 'bg-slate-100 dark:bg-white/[0.06] text-slate-400'
+                      : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600'
                   }`}
                 >
                   {tab.count}
@@ -1856,7 +1856,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           ))}
           <button
             onClick={() => setShowFilters((v) => !v)}
-            className={`p-1.5 rounded-md ml-1 transition-colors ${showFilters ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            className={`p-1.5 rounded-md ml-1 transition-colors ${showFilters ? 'bg-indigo-500/10 text-indigo-500' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
             title={isPolish ? 'Filtry' : 'Filters'}
           >
             <Filter size={12} />
@@ -1878,7 +1878,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               </select>
               <ChevronDown
                 size={10}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
               />
             </div>
             <div className="relative">
@@ -1895,7 +1895,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               </select>
               <ChevronDown
                 size={10}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
               />
             </div>
           </div>
@@ -1906,7 +1906,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           {filteredPages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-700 flex items-center justify-center mb-3">
-                <FileText size={20} className="text-slate-400" />
+                <FileText size={20} className="text-slate-600" />
               </div>
               <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
                 {sidebarTab === 'inbox'
@@ -1915,7 +1915,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     : 'Inbox zero!'
                   : t('myWork.notebook.empty', 'No pages yet')}
               </div>
-              <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              <div className="text-[11px] text-slate-600 dark:text-slate-500 mt-1">
                 {isPolish ? 'Utwórz pierwszą stronę' : 'Create your first page'}
               </div>
             </div>
@@ -1971,14 +1971,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                               {p.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                             </span>
                             {timeAgo && (
-                              <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
+                              <span className="text-[9px] text-slate-600 dark:text-slate-500 shrink-0 tabular-nums">
                                 {timeAgo}
                               </span>
                             )}
                           </div>
 
                           {p.summary && (
-                            <div className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 line-clamp-1 leading-relaxed">
+                            <div className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-500 line-clamp-1 leading-relaxed">
                               {p.summary}
                             </div>
                           )}
@@ -2051,7 +2051,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                 </span>
                               ))}
                             {p.tags && p.tags.length > 2 && (
-                              <span className="text-[9px] text-slate-400">
+                              <span className="text-[9px] text-slate-600">
                                 +{p.tags.length - 2}
                               </span>
                             )}
@@ -2089,7 +2089,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           e.stopPropagation();
                           handleTogglePin(p.id);
                         }}
-                        className={`p-1 rounded transition-colors ${p.pinned ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-amber-500 hover:bg-amber-500/10'}`}
+                        className={`p-1 rounded transition-colors ${p.pinned ? 'text-amber-500 bg-amber-500/10' : 'text-slate-600 hover:text-amber-500 hover:bg-amber-500/10'}`}
                         title={isPolish ? 'Przypnij' : 'Pin'}
                       >
                         <Pin size={10} />
@@ -2100,7 +2100,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             e.stopPropagation();
                             handleSetStatus(p.id, 'archived');
                           }}
-                          className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-500/10 transition-colors"
+                          className="p-1 rounded text-slate-600 hover:text-slate-600 hover:bg-slate-500/10 transition-colors"
                           title={isPolish ? 'Archiwizuj' : 'Archive'}
                         >
                           <Archive size={10} />
@@ -2184,7 +2184,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                           {tmpl.label}
                         </div>
-                        <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        <div className="text-[11px] text-slate-600 dark:text-slate-500 mt-0.5">
                           {tmpl.desc}
                         </div>
                       </div>
@@ -2283,7 +2283,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         />
                         {/* Tags inline */}
                         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                          <Tag size={11} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                          <Tag size={11} className="text-slate-600 dark:text-slate-600 shrink-0" />
                           {pageTags.map((tag) => (
                             <span
                               key={tag}
@@ -2305,7 +2305,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             onKeyDown={handleTagKeyDown}
                             onBlur={handleAddTag}
                             placeholder={isPolish ? '+ tag' : '+ tag'}
-                            className="min-w-[50px] max-w-[120px] bg-transparent text-[11px] text-slate-400 dark:text-slate-500 outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                            className="min-w-[50px] max-w-[120px] bg-transparent text-[11px] text-slate-600 dark:text-slate-500 outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                           />
                           {(() => {
                             const uploadSource = getNotebookUploadSourceSummary(
@@ -2595,7 +2595,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         <button
                           type="button"
                           onClick={() => setSelectedEmbedPreview(null)}
-                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-white/70 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                          className="rounded-md p-1 text-slate-600 transition-colors hover:bg-white/70 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
                         >
                           <X size={14} />
                         </button>
@@ -2811,7 +2811,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <button
                 type="button"
                 onClick={() => setOutlineDraft(null)}
-                className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                className="rounded-md p-1 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
               >
                 <X size={16} />
               </button>

@@ -65,7 +65,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
             <div className="mt-1.5 text-sm font-semibold leading-snug text-white">
               {payload.hottestDecision.title}
             </div>
-            <div className="mt-2 text-sm text-slate-300/75">
+            <div className="mt-2 text-sm text-slate-600/75">
               {payload.hottestDecision.ownerLabel}
             </div>
             <div className="mt-1 text-xs text-amber-100/80">
@@ -100,7 +100,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-white">{signal.title}</div>
-                <div className="mt-1 text-xs leading-6 text-slate-300/70">{signal.summary}</div>
+                <div className="mt-1 text-xs leading-6 text-slate-600/70">{signal.summary}</div>
               </div>
               <ArrowRight size={16} className="text-white/30" />
             </button>

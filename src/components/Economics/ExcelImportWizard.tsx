@@ -160,7 +160,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-navy-900 dark:text-white">Import z Excel</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 Zaimportuj analysis z file Excel
               </p>
             </div>
@@ -169,7 +169,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
-            <X size={20} className="text-slate-400 dark:text-slate-500" />
+            <X size={20} className="text-slate-600 dark:text-slate-500" />
           </button>
         </div>
 
@@ -196,7 +196,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                     </div>
                     <span
                       className={`text-sm font-medium hidden sm:block ${
-                        isCurrent ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'
+                        isCurrent ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600'
                       }`}
                     >
                       {step.label}
@@ -252,13 +252,13 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                   }`}
                 >
                   <FileSpreadsheet
-                    className={`w-16 h-16 mx-auto mb-4 ${isDragging ? 'text-emerald-500' : 'text-slate-400 dark:text-slate-500'}`}
+                    className={`w-16 h-16 mx-auto mb-4 ${isDragging ? 'text-emerald-500' : 'text-slate-600 dark:text-slate-500'}`}
                   />
                   <p className="text-slate-600 dark:text-slate-400">
                     Drag Excel file here or{' '}
                     <span className="text-emerald-500 font-medium">click to select</span>
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
                     Format: Basic Digitization Project Evaluation Form
                   </p>
                   <input
@@ -372,7 +372,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                 <div className="text-center py-12">
                   <Loader2 className="w-12 h-12 mx-auto mb-4 text-emerald-500 animate-spin" />
                   <p className="text-slate-600 dark:text-slate-400">Importing data...</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
                     This may take a few seconds
                   </p>
                 </div>

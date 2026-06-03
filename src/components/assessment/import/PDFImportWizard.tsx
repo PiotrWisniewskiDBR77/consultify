@@ -389,7 +389,7 @@ const ExtractionStep: React.FC<{
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {extractedScores.map((score) => (
               <tr
                 key={score.dimensionId}

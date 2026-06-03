@@ -146,7 +146,7 @@ export const DataTable = forwardRef<HTMLDivElement, DataTableProps<Record<string
     // Render sort icon
     const SortIcon = ({ columnKey }: { columnKey: keyof T | string }) => {
       if (sortKey !== columnKey) {
-        return <ChevronsUpDown size={14} className="text-slate-400 dark:text-slate-500" />;
+        return <ChevronsUpDown size={14} className="text-slate-600 dark:text-slate-500" />;
       }
       if (sortDirection === 'asc') {
         return <ChevronUp size={14} className="text-primary-500" />;

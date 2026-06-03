@@ -397,7 +397,7 @@ const ThreatIntelligenceView: React.FC = () => {
         );
       default:
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs font-medium">
+          <span className="flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs font-medium">
             <AlertTriangle className="w-3 h-3" />
             Unknown
           </span>
@@ -730,12 +730,12 @@ const ThreatIntelligenceView: React.FC = () => {
                             Blocked
                           </span>
                         ) : (
-                          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+                          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs">
                             Active
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-sm text-slate-300">
+                      <td className="py-3 px-4 text-sm text-slate-600">
                         {formatDateTime(threat.lastSeen)}
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -785,7 +785,7 @@ const ThreatIntelligenceView: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">Add Threat</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Threat Type
                 </label>
                 <select
@@ -802,7 +802,7 @@ const ThreatIntelligenceView: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                     IP Address
                   </label>
                   <input
@@ -814,7 +814,7 @@ const ThreatIntelligenceView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                     Domain
                   </label>
                   <input
@@ -828,7 +828,7 @@ const ThreatIntelligenceView: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                     Threat Level
                   </label>
                   <select
@@ -844,7 +844,7 @@ const ThreatIntelligenceView: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                     Reputation Score (0-100)
                   </label>
                   <input
@@ -860,7 +860,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Source
                 </label>
                 <input
@@ -872,7 +872,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Description
                 </label>
                 <textarea
@@ -914,7 +914,7 @@ const ThreatIntelligenceView: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">Check Reputation</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Check Type
                 </label>
                 <div className="flex gap-2">
@@ -943,7 +943,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   {checkType === 'ip' ? 'IP Address' : 'Domain'}
                 </label>
                 <input
@@ -958,11 +958,11 @@ const ThreatIntelligenceView: React.FC = () => {
                 <Card variant="bordered" className="p-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-400 dark:text-slate-500">Status</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-500">Status</span>
                       {getThreatLevelBadge(checkResult.threatLevel)}
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-400 dark:text-slate-500">
+                      <span className="text-sm text-slate-600 dark:text-slate-500">
                         Reputation Score
                       </span>
                       <span
@@ -974,14 +974,14 @@ const ThreatIntelligenceView: React.FC = () => {
                     {checkResult.found && (
                       <>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-400 dark:text-slate-500">
+                          <span className="text-sm text-slate-600 dark:text-slate-500">
                             Blocked
                           </span>
                           <span>{checkResult.isBlocked ? 'Yes' : 'No'}</span>
                         </div>
                         {checkResult.description && (
                           <div>
-                            <span className="text-sm text-slate-400 dark:text-slate-500">
+                            <span className="text-sm text-slate-600 dark:text-slate-500">
                               Description
                             </span>
                             <p className="text-sm mt-1">{checkResult.description}</p>

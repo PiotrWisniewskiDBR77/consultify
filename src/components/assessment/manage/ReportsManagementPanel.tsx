@@ -264,7 +264,7 @@ const ReportRow: FC<{
               {report.assessmentName}
             </div>
             {report.provenance?.assessmentRunId ? (
-              <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+              <div className="text-[10px] text-slate-600 dark:text-slate-500 truncate">
                 run {report.provenance.assessmentRunId}
                 {report.provenance.workbenchReviewState
                   ? ` • review ${String(report.provenance.workbenchReviewState).replace(/_/g, ' ')}`
@@ -312,7 +312,7 @@ const ReportRow: FC<{
             {report.initiativesCount} generated
           </span>
         ) : (
-          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
         )}
       </td>
 
@@ -699,7 +699,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   {stats.inReview} in review • {stats.approved} approved
                 </p>
                 {latestRunReadback?.assessmentRunId ? (
-                  <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                  <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
                     Current report lane readback: run {latestRunReadback.assessmentRunId}
                     {latestRunReadback.workbenchReviewState
                       ? ` • review ${String(latestRunReadback.workbenchReviewState).replace(/_/g, ' ')}`

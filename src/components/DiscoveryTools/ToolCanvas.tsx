@@ -119,7 +119,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   const renderStepContent = () => {
     if (!stepDefinition) {
       return (
-        <div className="flex items-center justify-center h-full text-slate-400">
+        <div className="flex items-center justify-center h-full text-slate-600">
           Loading step...
         </div>
       );

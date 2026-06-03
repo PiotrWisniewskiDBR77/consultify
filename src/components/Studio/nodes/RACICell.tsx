@@ -42,7 +42,7 @@ export const RACICell: React.FC<NodeProps<RACICellData>> = memo(({ data, selecte
                     ${
                       headerType === 'task'
                         ? 'bg-slate-700 border-slate-600 text-white font-medium'
-                        : 'bg-slate-800 border-slate-700 text-slate-300 font-medium -rotate-45'
+                        : 'bg-slate-800 border-slate-700 text-slate-600 font-medium -rotate-45'
                     }
                     ${selected ? 'ring-2 ring-white/30 ring-offset-1 ring-offset-slate-900' : ''}
                 `}

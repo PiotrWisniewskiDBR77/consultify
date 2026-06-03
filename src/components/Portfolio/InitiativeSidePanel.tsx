@@ -358,7 +358,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             Details
           </h4>
           <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
               <span className="text-sm text-slate-500 dark:text-slate-400">Axis</span>
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${getAxisColor(initiative.axis)}`} />
@@ -368,7 +368,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
               <span className="text-sm text-slate-500 dark:text-slate-400">Target Quarter</span>
               <span className="text-sm font-medium text-navy-900 dark:text-white">
                 {initiative.targetQuarter || '-'}
@@ -376,7 +376,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             </div>
 
             {initiative.waveName && (
-              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+              <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Wave</span>
                 <span className="text-sm font-medium text-navy-900 dark:text-white">
                   {initiative.waveName}
@@ -391,7 +391,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
               </span>
             </div>
             {(initiative as any).sourceType && (
-              <div className="flex items-center justify-between py-2 border-t border-slate-100 dark:border-navy-700">
+              <div className="flex items-center justify-between py-2 border-t border-slate-200 dark:border-navy-700">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Source</span>
                 <span className="text-sm font-medium text-navy-900 dark:text-white">
                   {getSourceDisplayLabel((initiative as any).sourceType, i18n.language === 'pl')}
@@ -433,13 +433,13 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             Budget Breakdown
           </h4>
           <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
               <span className="text-sm text-slate-500 dark:text-slate-400">CapEx</span>
               <span className="text-sm font-medium text-navy-900 dark:text-white">
                 {formatCurrency(initiative.budget)}
               </span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700">
               <span className="text-sm text-slate-500 dark:text-slate-400">OpEx (Annual)</span>
               <span className="text-sm font-medium text-navy-900 dark:text-white">-</span>
             </div>
@@ -474,7 +474,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
               style={{ width: `${initiative.progress || 0}%` }}
             />
           </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+          <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
             Estimated spend:{' '}
             {formatCurrency(Math.round((initiative.budget * (initiative.progress || 0)) / 100))} of{' '}
             {formatCurrency(initiative.budget)}
@@ -711,7 +711,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
           </div>
         ) : filteredTasks.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+          <div className="text-center py-8 text-slate-600 dark:text-slate-500">
             <CheckSquare className="w-10 h-10 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No tasks found</p>
           </div>
@@ -726,7 +726,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     setSelectedTask(task);
                     setIsTaskModalOpen(true);
                   }}
-                  className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-100 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 cursor-pointer transition-all group"
+                  className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 cursor-pointer transition-all group"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -759,7 +759,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                     </div>
                     <ChevronRight
                       size={16}
-                      className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 shrink-0 mt-1"
+                      className="text-slate-600 dark:text-slate-500 group-hover:text-primary-500 shrink-0 mt-1"
                     />
                   </div>
                 </div>
@@ -903,7 +903,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
           </div>
         ) : decisions.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+          <div className="text-center py-8 text-slate-600 dark:text-slate-500">
             <Scale className="w-10 h-10 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No decisions found</p>
           </div>
@@ -925,7 +925,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                   <div
                     key={decision.id}
                     onClick={() => setSelectedDecisionId(decision.id)}
-                    className={`p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border-l-4 border border-slate-100 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 cursor-pointer transition-all group ${getDecisionPriorityColor(decision.priority)} ${
+                    className={`p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border-l-4 border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/30 cursor-pointer transition-all group ${getDecisionPriorityColor(decision.priority)} ${
                       isOverdue ? 'ring-1 ring-rose-400/50' : ''
                     }`}
                   >
@@ -971,7 +971,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                       </div>
                       <ChevronRight
                         size={16}
-                        className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 shrink-0 mt-1"
+                        className="text-slate-600 dark:text-slate-500 group-hover:text-primary-500 shrink-0 mt-1"
                       />
                     </div>
                   </div>
@@ -1140,18 +1140,18 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
                   {onOpenFullDetail && (
                     <button
                       onClick={() => onOpenFullDetail(initiative)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                       title="Open full details"
                     >
                       <ExternalLink size={18} />
                     </button>
                   )}
-                  <button className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
+                  <button className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg">
                     <Edit2 size={18} />
                   </button>
                   <button
                     onClick={onClose}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+                    className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
                   >
                     <X size={18} />
                   </button>

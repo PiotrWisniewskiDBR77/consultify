@@ -57,7 +57,7 @@ export const DocumentStudioOutlinePanel: React.FC<DocumentStudioOutlinePanelProp
               <span className="font-medium text-navy-900 dark:text-white">
                 {idx + 1}. {section.title}
               </span>
-              <span className="text-xs uppercase tracking-wide text-slate-400">
+              <span className="text-xs uppercase tracking-wide text-slate-600">
                 {section.expectedLengthHint}
               </span>
             </div>

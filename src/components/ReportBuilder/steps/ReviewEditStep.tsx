@@ -155,9 +155,9 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
       >
         <div className="flex items-center gap-3">
           {isExpanded ? (
-            <ChevronDown className="w-5 h-5 text-slate-400" />
+            <ChevronDown className="w-5 h-5 text-slate-600" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-400" />
+            <ChevronRight className="w-5 h-5 text-slate-600" />
           )}
           <div>
             <h4 className="font-medium text-slate-900 dark:text-white">{section.title}</h4>
@@ -180,7 +180,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
             <>
               <button
                 onClick={handleCopy}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white dark:hover:bg-slate-700 rounded"
+                className="p-2 text-slate-600 hover:text-slate-600 hover:bg-white dark:hover:bg-slate-700 rounded"
                 title={isPl ? 'Kopiuj' : 'Copy'}
               >
                 <Copy className="w-4 h-4" />
@@ -266,7 +266,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
               </h3>
               <button
                 onClick={() => setShowRegeneratePrompt(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>

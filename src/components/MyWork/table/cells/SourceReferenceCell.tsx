@@ -58,7 +58,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
   if (value == null || value === '') {
     return (
       <span
-        className="inline-flex items-center gap-1 px-1 text-xs text-slate-400 dark:text-slate-500 italic"
+        className="inline-flex items-center gap-1 px-1 text-xs text-slate-600 dark:text-slate-500 italic"
         data-testid="source-ref-empty"
       >
         <Anchor size={10} className="flex-shrink-0" />

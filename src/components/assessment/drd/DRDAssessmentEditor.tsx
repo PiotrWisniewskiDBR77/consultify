@@ -507,7 +507,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
           </div>
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="md:hidden p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="md:hidden p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
           >
             <X className="w-4 h-4" />
           </button>
@@ -551,7 +551,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
       </div>
@@ -578,7 +578,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <div className="text-xs font-mono text-slate-400">{a.id}</div>
+                    <div className="text-xs font-mono text-slate-600">{a.id}</div>
                     {isMine && (
                       <span
                         className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100/70 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/30"
@@ -634,7 +634,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
       <div className="p-2 border-t border-slate-200 dark:border-navy-800">
         <button
           onClick={() => setIsNavCollapsed(true)}
-          className="w-full flex items-center justify-center gap-1 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
+          className="w-full flex items-center justify-center gap-1 py-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
           title="Collapse panel"
         >
           <ChevronRight className="w-3.5 h-3.5" />
@@ -747,7 +747,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               <span className="text-primary-200">{level}.</span> {label}
                             </div>
                           </div>
-                          <div className="mt-1 text-[11px] text-slate-300">
+                          <div className="mt-1 text-[11px] text-slate-600">
                             Hover for preview · Click for details
                           </div>
                         </div>
@@ -850,7 +850,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                           ? 'text-white'
                                           : isTarget
                                             ? 'text-blue-100'
-                                            : 'text-slate-400'
+                                            : 'text-slate-600'
                                       }`}
                                     >
                                       {displayContent}
@@ -867,7 +867,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
                   {/* Bottom X-axis strip (process areas) */}
                   <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
-                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
                       Area
                     </div>
                   </div>
@@ -1325,7 +1325,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
           <>
             <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <div className="text-xs font-mono text-slate-400">{areaId}</div>
+                <div className="text-xs font-mono text-slate-600">{areaId}</div>
                 <div className="text-xl md:text-2xl font-semibold text-navy-900 dark:text-white">
                   {selectedArea?.name || 'Area'}
                 </div>
@@ -1414,7 +1414,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 title={isOpen ? 'Collapse' : 'Expand'}
                               >
                                 <ChevronDown
-                                  className={`w-4 h-4 text-slate-400 transition-transform ${
+                                  className={`w-4 h-4 text-slate-600 transition-transform ${
                                     isOpen ? 'rotate-180' : ''
                                   }`}
                                 />
@@ -1927,7 +1927,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                               <div className="text-white font-bold">
                                 <span className="text-primary-200">{level}.</span> {label}
                               </div>
-                              <div className="mt-1 text-[11px] text-slate-300">
+                              <div className="mt-1 text-[11px] text-slate-600">
                                 Click for details
                               </div>
                             </div>
@@ -2015,7 +2015,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                               ? 'text-white'
                                               : isTarget
                                                 ? 'text-blue-100'
-                                                : 'text-slate-400'
+                                                : 'text-slate-600'
                                           }`}
                                         >
                                           {displayContent}
@@ -2032,7 +2032,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
                       {/* Bottom X-axis strip (process areas) */}
                       <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
-                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
                           Area
                         </div>
                       </div>
@@ -2168,7 +2168,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
       {isNavCollapsed && (
         <button
           onClick={() => setIsNavCollapsed(false)}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 border-r-0 rounded-l-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-sm transition-colors"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 border-r-0 rounded-l-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-sm transition-colors"
           title="Expand navigation"
         >
           <ChevronLeft className="w-4 h-4" />

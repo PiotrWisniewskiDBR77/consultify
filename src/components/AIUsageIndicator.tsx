@@ -95,7 +95,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
       >
         <Zap
           size={12}
-          className={isNearLimit ? 'text-yellow-500' : 'text-slate-400 dark:text-slate-500'}
+          className={isNearLimit ? 'text-yellow-500' : 'text-slate-600 dark:text-slate-500'}
         />
         <div className="w-12 h-1.5 bg-slate-700 rounded-full overflow-hidden">
           <div
@@ -112,7 +112,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Zap size={14} className="text-primary-400" />
-          <span className="text-xs font-medium text-slate-300">AI Usage Today</span>
+          <span className="text-xs font-medium text-slate-600">AI Usage Today</span>
         </div>
         {showTrend && usage.recentUsage && usage.recentUsage.length > 1 && (
           <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
@@ -131,7 +131,7 @@ export const AIUsageIndicator: React.FC<AIUsageIndicatorProps> = ({
             />
           </div>
         </div>
-        <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
+        <span className="text-xs text-slate-600 dark:text-slate-500 whitespace-nowrap">
           {formatNumber(usage.daily)} / {formatNumber(usage.dailyLimit)}
         </span>
       </div>

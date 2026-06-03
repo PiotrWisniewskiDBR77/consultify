@@ -314,7 +314,7 @@ export const ComparisonMatrixRenderer: React.FC<ComparisonMatrixRendererProps> =
                   const score = data.scores[option.id]?.[criterion.name];
                   if (!score) {
                     return (
-                      <td key={option.id} className="px-4 py-3 text-center text-xs text-slate-400">
+                      <td key={option.id} className="px-4 py-3 text-center text-xs text-slate-600">
                         —
                       </td>
                     );

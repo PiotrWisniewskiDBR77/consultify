@@ -463,7 +463,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           </div>
           <div className="relative z-10 flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
-              <BookOpen size={48} className="mx-auto text-slate-300 mb-4 dark:text-white/20" />
+              <BookOpen size={48} className="mx-auto text-slate-600 mb-4 dark:text-white/20" />
               {redirectInfo?.redirectSlug ? (
                 <>
                   <h2 className="text-xl font-bold text-slate-900 mb-2 dark:text-white">
@@ -810,7 +810,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                             {...props}
                           />
                           {caption && (
-                            <figcaption className="mt-2 sm:mt-3 text-center text-xs sm:text-sm text-slate-400 italic dark:text-white/25">
+                            <figcaption className="mt-2 sm:mt-3 text-center text-xs sm:text-sm text-slate-600 italic dark:text-white/25">
                               {caption}
                             </figcaption>
                           )}
@@ -890,7 +890,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                     {t('kb.article.no', 'No')}
                   </button>
                   {feedback && (
-                    <span className="text-xs text-slate-400 ml-2 dark:text-white/25">
+                    <span className="text-xs text-slate-600 ml-2 dark:text-white/25">
                       {t('kb.article.thanksFeedback', 'Thank you')}
                     </span>
                   )}

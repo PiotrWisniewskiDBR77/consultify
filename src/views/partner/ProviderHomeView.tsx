@@ -282,7 +282,7 @@ const BetaSuccessStories: React.FC = () => {
               </ul>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
               <Clock className="w-3 h-3" />
               {t('partner.beta.partnerSince', 'Beta Partner since {{date}}', { date: story.since })}
             </div>
@@ -1066,11 +1066,11 @@ const ContactPartnerManagerSection: React.FC = () => {
               linkedin.com/in/bartosz-sotomski
             </p>
           </div>
-          <ExternalLink className="w-4 h-4 text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ExternalLink className="w-4 h-4 text-slate-600 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>
       </div>
 
-      <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-4 flex items-center justify-center gap-1">
+      <p className="text-center text-xs text-slate-600 dark:text-slate-500 mt-4 flex items-center justify-center gap-1">
         <MessageCircle className="w-3 h-3" />
         Average response time: &lt; 4 hours
       </p>

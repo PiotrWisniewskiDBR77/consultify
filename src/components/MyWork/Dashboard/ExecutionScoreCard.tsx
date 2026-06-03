@@ -62,7 +62,7 @@ export const ExecutionScoreCard: React.FC<
       ? 'text-green-500'
       : trend === 'down'
         ? 'text-rose-500'
-        : 'text-slate-400 dark:text-slate-500';
+        : 'text-slate-600 dark:text-slate-500';
 
   if (compact) {
     return (
@@ -74,7 +74,7 @@ export const ExecutionScoreCard: React.FC<
           <span className={`text-2xl font-bold ${getScoreColor(currentScore)}`}>
             {currentScore}
           </span>
-          <span className="text-sm text-slate-400 dark:text-slate-500">/100</span>
+          <span className="text-sm text-slate-600 dark:text-slate-500">/100</span>
         </div>
 
         {/* Trend */}
@@ -117,7 +117,7 @@ export const ExecutionScoreCard: React.FC<
             >
               {currentScore}
             </motion.span>
-            <span className="text-lg text-slate-400 dark:text-slate-500">/100</span>
+            <span className="text-lg text-slate-600 dark:text-slate-500">/100</span>
           </div>
         </div>
 
@@ -133,7 +133,7 @@ export const ExecutionScoreCard: React.FC<
       </div>
 
       {/* Trend & Stats Row */}
-      <div className="flex items-center gap-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+      <div className="flex items-center gap-4 pt-4 border-t border-slate-200 dark:border-navy-700">
         {/* Trend */}
         {showTrend && (
           <div className="flex items-center gap-2">
@@ -153,7 +153,7 @@ export const ExecutionScoreCard: React.FC<
                 {vsLastWeek > 0 ? '+' : ''}
                 {vsLastWeek}%
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">vs last week</p>
+              <p className="text-[10px] text-slate-600 dark:text-slate-500">vs last week</p>
             </div>
           </div>
         )}
@@ -168,14 +168,14 @@ export const ExecutionScoreCard: React.FC<
             >
               <Flame
                 size={14}
-                className={streak > 0 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}
+                className={streak > 0 ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}
               />
             </div>
             <div>
               <p className="text-sm font-medium text-navy-900 dark:text-white">
                 {streak} {t('myWork.dashboard.days', 'days')}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] text-slate-600 dark:text-slate-500">
                 {t('myWork.dashboard.streak', 'streak')}
               </p>
             </div>
@@ -192,7 +192,7 @@ export const ExecutionScoreCard: React.FC<
               <p className="text-sm font-medium text-navy-900 dark:text-white">
                 Top {score.rank.percentile}%
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] text-slate-600 dark:text-slate-500">
                 #{score.rank.position} of {score.rank.totalInTeam}
               </p>
             </div>
@@ -202,11 +202,11 @@ export const ExecutionScoreCard: React.FC<
 
       {/* Score Breakdown (optional) */}
       {score.breakdown && (
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
           <div className="grid grid-cols-4 gap-2">
             {Object.entries(score.breakdown as Record<string, number>).map(([key, value]) => (
               <div key={key} className="text-center">
-                <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">
+                <p className="text-xs text-slate-600 dark:text-slate-500 capitalize">
                   {key.replace(/([A-Z])/g, ' $1').trim()}
                 </p>
                 <p className="text-sm font-semibold text-navy-900 dark:text-white">{value}%</p>

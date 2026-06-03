@@ -79,7 +79,7 @@ export const FinancialImpactSection: React.FC<InitiativeSectionProps> = ({
             <span className="text-xs font-medium text-slate-500 uppercase">
               {isPolish ? 'Realizacja korzyści' : 'Benefits Realization'}
             </span>
-            <span className="text-xs text-slate-400">{initiative.benefitsRealized || 0}%</span>
+            <span className="text-xs text-slate-600">{initiative.benefitsRealized || 0}%</span>
           </div>
           <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
             <motion.div

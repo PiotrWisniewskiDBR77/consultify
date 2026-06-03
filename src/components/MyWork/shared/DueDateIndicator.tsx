@@ -87,7 +87,7 @@ const statusStyles: Record<DueStatus, { bg: string; text: string; icon: string }
   upcoming: {
     bg: 'bg-slate-100 dark:bg-navy-800/60',
     text: 'text-slate-600 dark:text-slate-400',
-    icon: 'text-slate-400 dark:text-slate-500',
+    icon: 'text-slate-600 dark:text-slate-500',
   },
   completed: {
     bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
@@ -96,8 +96,8 @@ const statusStyles: Record<DueStatus, { bg: string; text: string; icon: string }
   },
   no_date: {
     bg: 'bg-slate-50 dark:bg-slate-800/50',
-    text: 'text-slate-400 dark:text-slate-500',
-    icon: 'text-slate-400 dark:text-slate-500',
+    text: 'text-slate-600 dark:text-slate-500',
+    icon: 'text-slate-600 dark:text-slate-500',
   },
 };
 

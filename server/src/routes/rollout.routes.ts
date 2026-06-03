@@ -134,7 +134,7 @@ router.patch(
          target = COALESCE(?, target),
          current_value = COALESCE(?, current_value),
          unit = COALESCE(?, unit),
-         updated_at = NOW()
+         updated_at = datetime('now')
        WHERE id = ? AND organization_id = ?
        RETURNING id, organization_id, project_id, name, baseline, target, current_value, unit,
                  created_by, created_at, updated_at`,
@@ -280,7 +280,7 @@ router.patch(
          mitigation = COALESCE(?, mitigation),
          status = COALESCE(?, status),
          owner_id = COALESCE(?, owner_id),
-         updated_at = NOW()
+         updated_at = datetime('now')
        WHERE id = ? AND organization_id = ?
        RETURNING id, organization_id, project_id, title, probability, impact, mitigation, status,
                  owner_id, created_at, updated_at`,
@@ -396,7 +396,7 @@ router.patch(
          status = COALESCE(?, status),
          impact = COALESCE(?, impact),
          approved_by = COALESCE(?, approved_by),
-         updated_at = NOW()
+         updated_at = datetime('now')
        WHERE id = ? AND organization_id = ?
        RETURNING id, organization_id, project_id, title, type, status, impact, approved_by,
                  created_at, updated_at`,
@@ -508,8 +508,8 @@ router.patch(
          category = COALESCE(?, category),
          status = COALESCE(?, status),
          due_date = COALESCE(?, due_date),
-         resolved_at = CASE WHEN ? THEN NOW() ELSE resolved_at END,
-         updated_at = NOW()
+         resolved_at = CASE WHEN ? THEN datetime('now') ELSE resolved_at END,
+         updated_at = datetime('now')
        WHERE id = ? AND organization_id = ?
        RETURNING id, organization_id, project_id, title, category, status, due_date, resolved_at,
                  created_at, updated_at`,

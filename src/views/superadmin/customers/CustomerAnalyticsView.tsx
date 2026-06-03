@@ -261,7 +261,7 @@ const CustomerAnalyticsView: React.FC = () => {
                   {sortedMetrics.map((org) => (
                     <tr
                       key={org.org_id}
-                      className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
+                      className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
                     >
                       <td className="py-3 text-slate-900 dark:text-white font-medium">
                         {org.org_name}
@@ -299,7 +299,7 @@ const CustomerAnalyticsView: React.FC = () => {
                         ) : typeof org.health_score === 'number' ? (
                           <TrendingDown className="w-4 h-4 text-rose-400" />
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-slate-600">—</span>
                         )}
                       </td>
                     </tr>

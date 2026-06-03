@@ -284,7 +284,7 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
                 <h4 className="text-sm font-medium text-primary-300 mb-1">
                   {t('settings.ai.tips', 'Pro Tips')}
                 </h4>
-                <ul className="text-xs text-slate-400 dark:text-slate-500 space-y-1">
+                <ul className="text-xs text-slate-600 dark:text-slate-500 space-y-1">
                   <li>• {t('settings.ai.tip1', 'Be specific about your role and expertise')}</li>
                   <li>
                     •{' '}

@@ -74,9 +74,9 @@ const SettingsGroup: React.FC<{
   description: string;
   children: React.ReactNode;
 }> = ({ title, icon, description, children }) => (
-  <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
     <div className="flex items-center gap-3 mb-2">
-      <div className="text-gray-400 dark:text-gray-500 dark:text-gray-400">{icon}</div>
+      <div className="text-gray-600 dark:text-gray-500 dark:text-gray-400">{icon}</div>
       <h3 className="font-semibold text-gray-800 dark:text-gray-100">{title}</h3>
     </div>
     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{description}</p>

@@ -154,7 +154,7 @@ export const ROITrackingPanel: React.FC = () => {
       ? 'text-green-500'
       : summary.totalVariance < 0
         ? 'text-rose-500'
-        : 'text-slate-400';
+        : 'text-slate-600';
 
   return (
     <div className="p-6 space-y-6">
@@ -190,7 +190,7 @@ export const ROITrackingPanel: React.FC = () => {
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {summary.coveragePercent}%
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 {summary.initiativeCount} {t('benefits.roi.initiatives', 'initiatives')}
               </p>
             </div>
@@ -257,14 +257,14 @@ export const ROITrackingPanel: React.FC = () => {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
+            <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
               {items.map((item) => (
                 <tr key={item.initiativeId} className="hover:bg-slate-50 dark:hover:bg-navy-800/50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-slate-900 dark:text-white">
                       {item.initiativeName}
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-600">
                       {item.status} · {item.priority}
                     </div>
                   </td>
@@ -278,7 +278,7 @@ export const ROITrackingPanel: React.FC = () => {
                     {item.hasRealized ? (
                       <span className="text-green-500">{fmtCurrency(item.realizedBenefit)}</span>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-slate-600">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -288,7 +288,7 @@ export const ROITrackingPanel: React.FC = () => {
                         {fmtCurrency(item.variance)}
                       </span>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-slate-600">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -302,7 +302,7 @@ export const ROITrackingPanel: React.FC = () => {
       </div>
 
       {/* Disclaimer */}
-      <p className="text-xs text-slate-400 text-center italic">
+      <p className="text-xs text-slate-600 text-center italic">
         {t(
           'benefits.roi.disclaimer',
           'ROI figures are based on stated assumptions. Realized values may differ from projections due to external factors.'

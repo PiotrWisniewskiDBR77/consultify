@@ -974,7 +974,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           )}
           <button
             onClick={refresh}
-            className="p-2 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="p-2 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={16} />
@@ -993,7 +993,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       )}
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
         <input
           type="text"
           value={searchQuery}
@@ -1004,7 +1004,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600"
           >
             <X size={14} />
           </button>
@@ -1025,7 +1025,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           >
             {t(cat.labelKey, cat.fallback)}
             <span
-              className={`ml-1.5 ${selectedCategory === cat.id ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`ml-1.5 ${selectedCategory === cat.id ? 'text-white/70' : 'text-slate-600 dark:text-slate-500'}`}
             >
               {categoryCounts[cat.id] || 0}
             </span>
@@ -1044,7 +1044,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       {/* App cards */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
-          <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <Search className="w-8 h-8 text-slate-600 dark:text-slate-600 mx-auto mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {t('settings.integrations.noResults', 'No apps found')}
           </p>
@@ -1147,7 +1147,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 <button
                                   onClick={() => handleTest(app.id)}
                                   disabled={testingProvider === app.id}
-                                  className="p-1.5 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
                                   title="Test connection"
                                 >
                                   {testingProvider === app.id ? (
@@ -1158,7 +1158,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </button>
                                 <button
                                   onClick={() => setMappingIntegrationId(app.id)}
-                                  className="p-1.5 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                  className="p-1.5 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                                   title={t('settings.integrations.viewMappings', 'View Mappings')}
                                 >
                                   <GitMerge size={14} />
@@ -1234,7 +1234,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               </div>
               <button
                 onClick={() => setConnectModalApp(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1.5 text-slate-600 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -1343,7 +1343,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         <p className="font-medium text-slate-600 dark:text-slate-300">
           {t('settings.integrations.note', 'Note:')}
         </p>
-        <ul className="list-disc list-inside space-y-0.5 text-slate-400 dark:text-slate-500">
+        <ul className="list-disc list-inside space-y-0.5 text-slate-600 dark:text-slate-500">
           <li>
             {t(
               'settings.integrations.notePersonal',

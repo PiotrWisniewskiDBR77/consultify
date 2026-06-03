@@ -98,7 +98,7 @@ export function AdminTable<T extends Record<string, any>>({
                 key={String(item[keyField]) || rowIndex}
                 onClick={() => onRowClick?.(item)}
                 className={`
-                                    border-b border-slate-100 dark:border-white/[0.04] last:border-b-0
+                                    border-b border-slate-200 dark:border-white/[0.04] last:border-b-0
                                     hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors
                                     ${onRowClick ? 'cursor-pointer' : ''}
                                 `}
@@ -152,7 +152,7 @@ const badgeConfig: Record<BadgeVariant, { bg: string; text: string; dot: string 
   info: { bg: 'bg-secondary-500/10', text: 'text-secondary-400', dot: 'bg-secondary-400' }, // Navy zamiast blue
   neutral: {
     bg: 'bg-slate-500/10',
-    text: 'text-slate-400 dark:text-slate-500',
+    text: 'text-slate-600 dark:text-slate-500',
     dot: 'bg-slate-400',
   },
 };

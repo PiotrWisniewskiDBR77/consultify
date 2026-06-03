@@ -74,7 +74,7 @@ const SortIcon: React.FC<{ column: SortColumn; currentCol: SortColumn; currentDi
   currentDir,
 }) => {
   if (column !== currentCol)
-    return <ArrowUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+    return <ArrowUpDown size={12} className="text-slate-600 dark:text-slate-600" />;
   return currentDir === 'asc' ? (
     <ArrowUp size={12} className="text-primary-500" />
   ) : (
@@ -457,11 +457,11 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                       <span className="font-medium text-slate-900 dark:text-white truncate">
                         {proposal.initiativeName}
                       </span>
-                      <span className="text-slate-400 dark:text-slate-500">:</span>
+                      <span className="text-slate-600 dark:text-slate-500">:</span>
                       <span className="text-rose-600 dark:text-rose-400 line-through text-xs">
                         {proposal.fromUserName}
                       </span>
-                      <span className="text-slate-400">→</span>
+                      <span className="text-slate-600">→</span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {proposal.reason}
@@ -661,7 +661,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                     className={`p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors ${
                       roleFilter !== 'all'
                         ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-slate-400 dark:text-slate-500'
+                        : 'text-slate-600 dark:text-slate-500'
                     }`}
                   >
                     <Filter size={12} />
@@ -745,12 +745,12 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
               return (
                 <React.Fragment key={a.resourceId}>
                   <tr
-                    className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
+                    className={`border-b border-slate-200 dark:border-navy-800/50 cursor-pointer
                       hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
                       ${a.status === 'overallocated' ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
                     onClick={() => setExpandedResourceId(isExpanded ? null : a.resourceId)}
                   >
-                    <td className="px-4 py-3 text-slate-400">
+                    <td className="px-4 py-3 text-slate-600">
                       {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </td>
                     <td className="px-4 py-3">
@@ -889,7 +889,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                                           setReassigningInitId(null);
                                           setSelectedNewOwner('');
                                         }}
-                                        className="p-1 rounded text-slate-400
+                                        className="p-1 rounded text-slate-600
                                           hover:bg-slate-200 dark:hover:bg-navy-700"
                                       >
                                         <X size={14} />

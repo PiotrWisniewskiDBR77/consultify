@@ -284,7 +284,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                     {onDeletePreset && !preset.isDefault && (
                       <button
                         onClick={() => onDeletePreset(preset.id)}
-                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                        className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -493,7 +493,7 @@ const FilterFieldEditor: React.FC<FilterFieldEditorProps> = ({
               }
               className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500"
             />
-            <span className="text-slate-400 dark:text-slate-500">-</span>
+            <span className="text-slate-600 dark:text-slate-500">-</span>
             <input
               type="date"
               value={typeof localValue === 'object' && 'end' in localValue ? localValue.end : ''}

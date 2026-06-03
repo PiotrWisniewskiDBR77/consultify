@@ -149,7 +149,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
         <div className="h-full flex items-center justify-center bg-slate-950">
           <div className="text-center">
             <Loader2 size={32} className="text-blue-500 animate-spin mx-auto mb-4" />
-            <p className="text-slate-400 dark:text-slate-500">Loading Studio...</p>
+            <p className="text-slate-600 dark:text-slate-500">Loading Studio...</p>
           </div>
         </div>
       </SplitLayout>
@@ -166,7 +166,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               {/* Toggle Sidebar */}
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                className="p-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
               >
                 <FolderOpen size={18} />
               </button>
@@ -206,7 +206,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-slate-300 hover:text-white rounded-lg transition-colors text-sm"
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-slate-600 hover:text-white rounded-lg transition-colors text-sm"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 Save
@@ -215,7 +215,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               {/* Link Button */}
               <button
                 onClick={handleLink}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                className="p-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                 title="Link to Task/Project"
               >
                 <Link2 size={18} />
@@ -224,7 +224,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               {/* Export Button */}
               <button
                 onClick={handleExport}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                className="p-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                 title="Export"
               >
                 <Download size={18} />
@@ -236,7 +236,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
                 className={`p-2 rounded-lg transition-colors ${
                   showChat
                     ? 'bg-blue-500/20 text-blue-400'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                    : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
                 }`}
                 title={showChat ? 'Hide AI Chat' : 'Show AI Chat'}
               >
@@ -247,7 +247,7 @@ export const StudioView: React.FC<StudioViewProps> = ({
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                  className="p-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                 >
                   <X size={18} />
                 </button>

@@ -152,12 +152,12 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {loading ? (
-          <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
+          <div className="flex items-center justify-center py-12 text-gray-600 text-sm">
             Loading extensions...
           </div>
         ) : tab === 'marketplace' ? (
           marketplace.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-12 text-gray-600">
               <p className="text-sm">No extensions available yet.</p>
               <p className="text-xs mt-1">Check back later or register your own.</p>
             </div>
@@ -176,7 +176,7 @@ export const ExtensionMarketplace: React.FC<ExtensionMarketplaceProps> = ({
             </div>
           )
         ) : installed.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-12 text-gray-600">
             <p className="text-sm">No extensions installed.</p>
             <button
               onClick={() => setTab('marketplace')}
@@ -244,14 +244,14 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
           <h3 className="text-sm font-semibold text-gray-900 truncate">{extension.name}</h3>
           {extension.author && <p className="text-xs text-gray-500">by {extension.author}</p>}
         </div>
-        <span className="text-xs text-gray-400 flex-shrink-0">v{extension.version}</span>
+        <span className="text-xs text-gray-600 flex-shrink-0">v{extension.version}</span>
       </div>
 
       {extension.description && (
         <p className="text-xs text-gray-600 line-clamp-2">{extension.description}</p>
       )}
 
-      <div className="flex items-center gap-2 text-xs text-gray-400">
+      <div className="flex items-center gap-2 text-xs text-gray-600">
         <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500">
           {extension.category}
         </span>
@@ -260,7 +260,7 @@ const ExtensionCard: React.FC<ExtensionCardProps> = ({
         </span>
         <button
           onClick={() => setShowScopes(!showScopes)}
-          className="ml-auto text-gray-400 hover:text-gray-600"
+          className="ml-auto text-gray-600 hover:text-gray-600"
         >
           {extension.scopes.length} scope{extension.scopes.length !== 1 ? 's' : ''}
         </button>

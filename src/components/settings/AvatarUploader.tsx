@@ -51,7 +51,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         {currentAvatar ? (
           <img src={currentAvatar} alt="Avatar" className="w-full h-full object-cover" />
         ) : (
-          <Camera className="w-8 h-8 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+          <Camera className="w-8 h-8 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
         )}
       </div>
       <button

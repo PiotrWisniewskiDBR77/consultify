@@ -4528,6 +4528,31 @@ router.post(
             }
 
             // ================================================================
+            // Post-stream: User memory write-back (A0 — close the memory loop)
+            // Previously `updateUserMemoryAfterInteraction` had ZERO runtime callers.
+            // Now every chat turn increments interaction_count + total_messages.
+            // ================================================================
+            try {
+              if (req.userId) {
+                const memMod = await import('../services/ai/aiMemoryService.js');
+                const memSvc = (memMod as any).default || memMod;
+                if (memSvc?.updateUserMemoryAfterInteraction) {
+                  // Extract a rough topic from the user message (first 50 chars)
+                  const roughTopic = typeof message === 'string'
+                    ? message.slice(0, 50).replace(/\n/g, ' ').trim() || undefined
+                    : undefined;
+                  memSvc
+                    .updateUserMemoryAfterInteraction(req.userId, roughTopic, 1)
+                    .catch((err: unknown) =>
+                      logger.debug('[AI] user memory write-back failed (non-critical)', err)
+                    );
+                }
+              }
+            } catch {
+              // Non-critical — don't break the stream for memory
+            }
+
+            // ================================================================
             // Post-stream: Citation extraction (best-effort, non-blocking)
             // ================================================================
             try {

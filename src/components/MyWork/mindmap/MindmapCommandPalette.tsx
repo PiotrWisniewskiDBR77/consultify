@@ -341,7 +341,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
       <div className="fixed top-[14%] left-1/2 -translate-x-1/2 w-full max-w-md z-[201]">
         <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-slate-200 dark:border-navy-700">
-            <Search size={16} className="text-slate-400 shrink-0" />
+            <Search size={16} className="text-slate-600 shrink-0" />
             <input
               ref={inputRef}
               value={query}
@@ -357,13 +357,13 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
 
           <div ref={listRef} className="max-h-[360px] overflow-y-auto p-1.5">
             {filtered.length === 0 ? (
-              <div className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+              <div className="py-8 text-center text-sm text-slate-600 dark:text-slate-500">
                 {isPl ? 'Brak wyników' : 'No results'}
               </div>
             ) : (
               Array.from(grouped.entries()).map(([cat, { items, startIdx }]) => (
                 <div key={cat} className="mb-1">
-                  <div className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <div className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                     {isPl ? CATEGORY_LABELS[cat]?.pl : CATEGORY_LABELS[cat]?.en || cat}
                   </div>
                   {items.map((cmd, i) => {
@@ -389,7 +389,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
                             className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
                               isActive
                                 ? 'bg-primary-200/60 dark:bg-primary-800/40 text-primary-700 dark:text-primary-300'
-                                : 'bg-slate-100 dark:bg-white/10 text-slate-400'
+                                : 'bg-slate-100 dark:bg-white/10 text-slate-600'
                             }`}
                           >
                             {cmd.shortcut}
@@ -403,7 +403,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-3 px-3.5 py-1.5 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-white/[0.02] text-[10px] text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-3 px-3.5 py-1.5 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/[0.02] text-[10px] text-slate-600 dark:text-slate-500">
             <span className="flex items-center gap-1">
               <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-white/10 rounded">↑↓</kbd>
               {isPl ? 'Nawiguj' : 'Navigate'}

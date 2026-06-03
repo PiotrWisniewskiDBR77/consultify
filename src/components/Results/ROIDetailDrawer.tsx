@@ -266,7 +266,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
       ? 'bg-emerald-500/10 text-emerald-400'
       : statusInfo === 'below_plan'
         ? 'bg-rose-500/10 text-rose-400'
-        : 'bg-slate-500/10 text-slate-400';
+        : 'bg-slate-500/10 text-slate-600';
 
   const inputCls =
     'h-9 px-3 text-sm rounded-lg border border-navy-600 bg-navy-800 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors w-full';
@@ -309,15 +309,15 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-16 text-slate-400">
+            <div className="flex items-center justify-center py-16 text-slate-600">
               <BarChart3 size={20} className="animate-pulse mr-2" />
               {t('common.loading', 'Loading...')}
             </div>
           ) : (
             <div className="p-5 space-y-6">
               {readOnly && (
-                <div className="rounded-lg border border-navy-700 bg-navy-800 px-3 py-2 flex items-center gap-2 text-xs text-slate-300">
-                  <Lock size={14} className="text-slate-400 shrink-0" />
+                <div className="rounded-lg border border-navy-700 bg-navy-800 px-3 py-2 flex items-center gap-2 text-xs text-slate-600">
+                  <Lock size={14} className="text-slate-600 shrink-0" />
                   <span>
                     {lockState === 'approved'
                       ? t(
@@ -491,20 +491,20 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                                 ? 'text-emerald-400'
                                 : varAmt < 0
                                   ? 'text-rose-400'
-                                  : 'text-slate-400';
+                                  : 'text-slate-600';
                             return (
                               <tr key={r.id} className="hover:bg-navy-800/30">
-                                <td className="px-3 py-2 text-slate-400">
+                                <td className="px-3 py-2 text-slate-600">
                                   {r.period_month?.slice(0, 7) || '—'}
                                 </td>
-                                <td className="px-3 py-2 text-right text-slate-400">
+                                <td className="px-3 py-2 text-right text-slate-600">
                                   {planned.toLocaleString(undefined, {
                                     style: 'currency',
                                     currency: 'EUR',
                                     maximumFractionDigits: 0,
                                   })}
                                 </td>
-                                <td className="px-3 py-2 text-right font-medium text-slate-300">
+                                <td className="px-3 py-2 text-right font-medium text-slate-600">
                                   {realizedVal.toLocaleString(undefined, {
                                     style: 'currency',
                                     currency: 'EUR',

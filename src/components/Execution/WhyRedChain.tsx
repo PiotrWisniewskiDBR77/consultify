@@ -122,7 +122,7 @@ export const WhyRedChain: React.FC<WhyRedChainProps> = ({ data, compact }) => {
                 <span className="text-amber-500">•</span>
                 <span className="truncate">{r.title}</span>
                 {r.severity && (
-                  <span className="text-[10px] text-slate-400 shrink-0">{r.severity}</span>
+                  <span className="text-[10px] text-slate-600 shrink-0">{r.severity}</span>
                 )}
               </li>
             ))}
@@ -161,7 +161,7 @@ export const WhyRedChain: React.FC<WhyRedChainProps> = ({ data, compact }) => {
               <li key={t.id} className="flex items-start gap-2 truncate">
                 <span className="text-primary-500">•</span>
                 <span className="truncate">{t.title}</span>
-                <span className="text-[10px] text-slate-400 shrink-0 uppercase">{t.status}</span>
+                <span className="text-[10px] text-slate-600 shrink-0 uppercase">{t.status}</span>
               </li>
             ))}
           </ul>

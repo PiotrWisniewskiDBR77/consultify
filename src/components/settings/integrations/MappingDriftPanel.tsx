@@ -213,7 +213,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
     if (overview.length === 0) {
       return (
         <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
-          <GitMerge className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <GitMerge className="w-8 h-8 text-slate-600 dark:text-slate-600 mx-auto mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {t('integrations.mappings.noIntegrations', 'No integrations with mappings found.')}
           </p>
@@ -238,7 +238,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
           </div>
           <button
             onClick={loadOverview}
-            className="p-2 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="p-2 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
           >
             <RefreshCw size={16} />
           </button>
@@ -275,7 +275,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     )}
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-slate-600" />
               </div>
             </button>
           ))}
@@ -444,14 +444,14 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     <tr>
                       <td
                         colSpan={6}
-                        className="py-8 text-center text-slate-400 dark:text-slate-500"
+                        className="py-8 text-center text-slate-600 dark:text-slate-500"
                       >
                         {t('common.noData', 'No data')}
                       </td>
                     </tr>
                   ) : (
                     data.entityMappings.map((m) => (
-                      <tr key={m.id} className="border-b border-slate-100 dark:border-navy-700/50">
+                      <tr key={m.id} className="border-b border-slate-200 dark:border-navy-700/50">
                         <td className="py-2 pr-4 font-mono text-xs">{m.localType}</td>
                         <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">
                           {m.localId}
@@ -475,7 +475,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
           {activeTab === 'drift' && (
             <div className="space-y-3">
               {data.driftEvents.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+                <div className="text-center py-8 text-slate-600 dark:text-slate-500">
                   <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-400" />
                   <p className="text-sm">
                     {t('integrations.mappings.noDrift', 'No schema drift detected')}
@@ -543,14 +543,14 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     <tr>
                       <td
                         colSpan={5}
-                        className="py-8 text-center text-slate-400 dark:text-slate-500"
+                        className="py-8 text-center text-slate-600 dark:text-slate-500"
                       >
                         {t('common.noData', 'No data')}
                       </td>
                     </tr>
                   ) : (
                     data.syncStates.map((s) => (
-                      <tr key={s.id} className="border-b border-slate-100 dark:border-navy-700/50">
+                      <tr key={s.id} className="border-b border-slate-200 dark:border-navy-700/50">
                         <td className="py-2 pr-4 text-xs">{s.objectType}</td>
                         <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">
                           {s.objectId}

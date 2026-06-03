@@ -104,7 +104,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
           <ArrowLeft size={16} />
         </button>
@@ -134,14 +134,14 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
       {/* Run list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 size={20} className="animate-spin text-slate-400" />
+          <Loader2 size={20} className="animate-spin text-slate-600" />
         </div>
       ) : runs.length === 0 ? (
-        <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-8">
+        <p className="text-center text-sm text-slate-600 dark:text-slate-500 py-8">
           {isPl ? 'Brak uruchomień' : 'No runs yet'}
         </p>
       ) : (
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden divide-y divide-slate-100 dark:divide-navy-800">
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden divide-y divide-slate-200 dark:divide-navy-800">
           {runs.map((run) => {
             const isExpanded = expandedRun === run.id;
             return (
@@ -157,7 +157,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
                       <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                         {statusLabel(run.status)}
                       </span>
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                      <span className="text-[11px] text-slate-600 dark:text-slate-500">
                         {formatTime(run.startedAt)}
                       </span>
                     </div>
@@ -201,9 +201,9 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
 
                   {run.error &&
                     (isExpanded ? (
-                      <ChevronDown size={14} className="text-slate-400" />
+                      <ChevronDown size={14} className="text-slate-600" />
                     ) : (
-                      <ChevronRight size={14} className="text-slate-400" />
+                      <ChevronRight size={14} className="text-slate-600" />
                     ))}
                 </button>
 

@@ -612,7 +612,7 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
           )}
 
           {!loadingInsights && filteredInsights.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+            <div className="flex flex-col items-center justify-center py-16 text-gray-600 dark:text-gray-500">
               <BarChart3 className="w-12 h-12 mb-3 opacity-30" />
               <p className="text-sm">{t('interview.inference.noInsights')}</p>
             </div>
@@ -637,9 +637,9 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
                   className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 >
                   {expanded ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <ChevronDown className="w-4 h-4 text-gray-600 flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-gray-600 flex-shrink-0" />
                   )}
 
                   <span
@@ -657,7 +657,7 @@ export const InsightPackView: React.FC<InsightPackViewProps> = ({
 
                   <P10ConfidenceBadge level={level} />
 
-                  <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                  <span className="text-xs text-gray-600 dark:text-gray-500 flex-shrink-0">
                     {(insight.evidenceLinks || []).length} evidence
                   </span>
                 </button>
@@ -719,7 +719,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
   }, []);
 
   return (
-    <div className="border-t border-gray-100 dark:border-gray-800 px-5 py-4 space-y-4">
+    <div className="border-t border-gray-200 dark:border-gray-800 px-5 py-4 space-y-4">
       {/* Contradicted finding callout */}
       {level === 'contradicted' && (
         <div
@@ -808,7 +808,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
                 <div
                   key={i}
                   data-testid="tombstone-evidence"
-                  className="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/30 rounded-lg p-2 border border-gray-100 dark:border-gray-700 opacity-60"
+                  className="text-xs text-gray-600 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/30 rounded-lg p-2 border border-gray-200 dark:border-gray-700 opacity-60"
                 >
                   <span className="line-through">
                     {exc ? `"${exc}"` : e.sourceRef || 'Evidence item'}
@@ -823,12 +823,12 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
             return (
               <div
                 key={i}
-                className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 border border-gray-100 dark:border-gray-700"
+                className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 border border-gray-200 dark:border-gray-700"
               >
                 <div className="flex items-start gap-2">
                   {e.type && EVIDENCE_TYPE_ICONS[e.type] && (
                     <span
-                      className="mt-0.5 text-gray-400 dark:text-gray-500 flex-shrink-0"
+                      className="mt-0.5 text-gray-600 dark:text-gray-500 flex-shrink-0"
                       title={e.type.replace(/_/g, ' ')}
                     >
                       {EVIDENCE_TYPE_ICONS[e.type]}
@@ -875,7 +875,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
                   {!locked && removingIdx !== i && (
                     <button
                       onClick={() => setRemovingIdx(i)}
-                      className="flex-shrink-0 text-gray-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
+                      className="flex-shrink-0 text-gray-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                       title="Remove evidence"
                       aria-label="Remove evidence"
                     >
@@ -893,7 +893,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
             );
           })}
           {localEvidence.length === 0 && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 italic">No evidence pointers</p>
+            <p className="text-xs text-gray-600 dark:text-gray-500 italic">No evidence pointers</p>
           )}
         </div>
       </div>
@@ -914,7 +914,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-gray-400 dark:text-gray-500 italic">No limits specified</p>
+          <p className="text-xs text-gray-600 dark:text-gray-500 italic">No limits specified</p>
         )}
       </div>
 
@@ -955,7 +955,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
 
       {/* Properties strip / actions */}
       {!locked && (
-        <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-800">
           <span
             className={`text-xs px-2 py-1 rounded-md font-medium ${
               insight.status === 'approved'

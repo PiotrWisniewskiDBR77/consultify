@@ -273,7 +273,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
             <>
               <button
                 onClick={onStartEdit}
-                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
+                className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
                 title={t('common.edit', 'Edit')}
               >
                 <Edit3 className="w-4 h-4" />
@@ -282,7 +282,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
                 <button
                   onClick={() => setShowAIMenu(!showAIMenu)}
                   disabled={isAIProcessing}
-                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
+                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
                   title={t('reports.aiActions', 'AI Actions')}
                 >
                   {isAIProcessing ? (
@@ -301,7 +301,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
                         onClick={() => handleAIAction(action)}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                       >
-                        <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                        <Icon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                         <span className="text-navy-900 dark:text-white">
                           {isPolish ? labelPl : label}
                         </span>
@@ -314,7 +314,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
           )}
           <button
             onClick={handleCopy}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
             title={t('common.copy', 'Copy')}
           >
             {showCopied ? (
@@ -335,7 +335,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
         />
 
         {/* Section metadata */}
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-navy-700 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between text-xs text-slate-600 dark:text-slate-500">
           <span>
             {section.isAiGenerated ? (
               <span className="inline-flex items-center gap-1">
@@ -377,7 +377,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPanelMode(!panelMode)}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
             title={panelMode ? t('common.minimize', 'Minimize') : t('common.maximize', 'Maximize')}
           >
             {panelMode ? <Minimize2 className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
@@ -387,7 +387,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
 
           <button
             onClick={handleCancel}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
             title={t('common.cancel', 'Cancel')}
           >
             <X className="w-4 h-4" />
@@ -421,7 +421,7 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
       <div
         className={`flex items-center gap-2 ${panelMode ? 'p-4 border-t border-slate-200 dark:border-navy-700' : 'mt-4'}`}
       >
-        <span className="text-xs text-slate-400 dark:text-slate-500 mr-2">
+        <span className="text-xs text-slate-600 dark:text-slate-500 mr-2">
           {t('reports.quickAI', 'Quick AI:')}
         </span>
         {AI_ACTIONS.slice(0, 3).map(({ action, icon: Icon, label, labelPl }) => (

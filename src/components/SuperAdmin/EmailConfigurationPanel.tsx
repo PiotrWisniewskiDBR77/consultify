@@ -203,7 +203,7 @@ export const EmailConfigurationPanel: React.FC = () => {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">SMTP Host</label>
+          <label className="block text-sm font-medium text-slate-600 mb-2">SMTP Host</label>
           <input
             type="text"
             value={config?.smtp_host || ''}
@@ -213,7 +213,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Port</label>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Port</label>
           <input
             type="number"
             value={config?.smtp_port || 587}
@@ -225,7 +225,7 @@ export const EmailConfigurationPanel: React.FC = () => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Username</label>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Username</label>
           <input
             type="text"
             value={config?.smtp_username || ''}
@@ -234,7 +234,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Password</label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -245,7 +245,7 @@ export const EmailConfigurationPanel: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 hover:text-white"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -261,7 +261,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500"
         />
         <div>
-          <span className="text-slate-300">Use TLS</span>
+          <span className="text-slate-600">Use TLS</span>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Encrypt connection with TLS/SSL
           </p>
@@ -273,7 +273,7 @@ export const EmailConfigurationPanel: React.FC = () => {
   const renderAPIConfig = () => (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">API Key</label>
+        <label className="block text-sm font-medium text-slate-600 mb-2">API Key</label>
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
@@ -285,7 +285,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-white"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 hover:text-white"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
@@ -294,7 +294,7 @@ export const EmailConfigurationPanel: React.FC = () => {
 
       {config?.provider === 'mailgun' && (
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Domain</label>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Domain</label>
           <input
             type="text"
             value={config?.domain || ''}
@@ -307,7 +307,7 @@ export const EmailConfigurationPanel: React.FC = () => {
 
       {config?.provider === 'ses' && (
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">AWS Region</label>
+          <label className="block text-sm font-medium text-slate-600 mb-2">AWS Region</label>
           <select
             value={config?.region || 'us-east-1'}
             onChange={(e) => updateConfig('region', e.target.value)}
@@ -332,7 +332,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           </div>
           <div>
             <h3 className="font-semibold text-white">DNS Verification</h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Email authentication records
             </p>
           </div>
@@ -408,7 +408,7 @@ export const EmailConfigurationPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
           <button
@@ -423,7 +423,7 @@ export const EmailConfigurationPanel: React.FC = () => {
       </div>
 
       {!selectedOrgId ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-600 dark:text-slate-500">
           <Building2 size={48} className="mb-4 opacity-50" />
           <p>Select an organization to configure email</p>
         </div>
@@ -443,7 +443,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Email Provider</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <p className="text-sm text-slate-600 dark:text-slate-500">
                       Choose your email service
                     </p>
                   </div>
@@ -483,7 +483,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Sender Settings</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <p className="text-sm text-slate-600 dark:text-slate-500">
                       Configure email sender details
                     </p>
                   </div>
@@ -492,7 +492,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-600 mb-2">
                         From Email
                       </label>
                       <input
@@ -504,7 +504,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-slate-600 mb-2">
                         From Name
                       </label>
                       <input
@@ -517,7 +517,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-600 mb-2">
                       Reply-To Email (optional)
                     </label>
                     <input
@@ -544,7 +544,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Test Configuration</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">Send a test email</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-500">Send a test email</p>
                   </div>
                 </div>
 

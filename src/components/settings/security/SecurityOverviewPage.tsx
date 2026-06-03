@@ -320,7 +320,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       case 'suspicious':
         return <AlertTriangle size={16} className="text-amber-500" />;
       default:
-        return <CheckCircle size={16} className="text-slate-400" />;
+        return <CheckCircle size={16} className="text-slate-600" />;
     }
   };
 
@@ -343,7 +343,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     emerald: {
       icon: 'bg-emerald-500/10 text-emerald-400',
       statusOk: 'text-emerald-400',
-      statusBad: 'text-slate-400',
+      statusBad: 'text-slate-600',
     },
     amber: {
       icon: 'bg-amber-500/10 text-amber-400',
@@ -428,7 +428,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                 {scoreLabel}
               </h4>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               {scorePercentage >= 80
                 ? t(
                     'settings.securityOverview.scoreExcellentDesc',
@@ -449,7 +449,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
         {/* Status Cards Grid */}
         <div>
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+          <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4">
             <Shield size={14} className="text-primary-400" />
             {t('settings.securityOverview.protectionStatus', 'Protection Status')}
           </h4>
@@ -497,7 +497,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
           <>
             <SettingsDivider />
             <div>
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4">
                 <AlertTriangle size={14} className="text-amber-400" />
                 {t('settings.securityOverview.recommendations', 'Recommendations')}
               </h4>
@@ -527,7 +527,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                               : 'text-slate-500'
                         )}
                       />
-                      <p className="text-xs text-slate-300 leading-relaxed">{rec.text}</p>
+                      <p className="text-xs text-slate-600 leading-relaxed">{rec.text}</p>
                     </div>
                   );
                 })}
@@ -540,7 +540,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         <SettingsDivider />
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2">
               <History size={14} className="text-primary-400" />
               {t('settings.securityOverview.recentActivity', 'Recent Activity')}
             </h4>

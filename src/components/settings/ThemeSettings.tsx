@@ -219,13 +219,13 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                         size={18}
                         className={cn(
                           'transition-colors',
-                          isSelected ? 'text-primary-400' : 'text-slate-400'
+                          isSelected ? 'text-primary-400' : 'text-slate-600'
                         )}
                       />
                       <span
                         className={cn(
                           'font-medium transition-colors',
-                          isSelected ? 'text-primary-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {label}
@@ -375,7 +375,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       <span
                         className={cn(
                           'text-sm font-medium',
-                          isSelected ? 'text-primary-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {opt.label}

@@ -629,7 +629,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                               'w-4 h-4 flex-shrink-0',
                               isActive
                                 ? 'text-primary-600 dark:text-primary-400'
-                                : 'text-slate-400 dark:text-slate-400'
+                                : 'text-slate-600 dark:text-slate-400'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>

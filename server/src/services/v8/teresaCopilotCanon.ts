@@ -30,7 +30,17 @@ export type HandoffTargetModule =
   | 'notebook'
   | 'interview'
   | 'excele'
-  | 'ideas';
+  | 'ideas'
+  | 'results'
+  | 'kpi'
+  | 'roi'
+  | 'execution'
+  | 'finance'
+  | 'meeting'
+  | 'outputs'
+  | 'documents'
+  | 'tables'
+  | 'presentations';
 
 export interface TeresaHandoffContext {
   origin: 'teresa';

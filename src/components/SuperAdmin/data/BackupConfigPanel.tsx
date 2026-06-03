@@ -181,7 +181,7 @@ export const BackupConfigPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
           <button
@@ -206,7 +206,7 @@ export const BackupConfigPanel: React.FC = () => {
       </div>
 
       {!selectedOrgId ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-600 dark:text-slate-500">
           <Building2 size={48} className="mb-4 opacity-50" />
           <p>Select an organization to configure backups</p>
         </div>
@@ -232,7 +232,7 @@ export const BackupConfigPanel: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">Backup Configuration</h3>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
                     Configure automatic backups
                   </p>
                 </div>
@@ -242,7 +242,7 @@ export const BackupConfigPanel: React.FC = () => {
                 <label className="flex items-center justify-between cursor-pointer group">
                   <div>
                     <span className="text-white font-medium">Enable Automatic Backups</span>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <p className="text-sm text-slate-600 dark:text-slate-500">
                       Automatically backup organization data
                     </p>
                   </div>
@@ -264,7 +264,7 @@ export const BackupConfigPanel: React.FC = () => {
                 </label>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-600 mb-2">
                     Backup Frequency
                   </label>
                   <select
@@ -281,7 +281,7 @@ export const BackupConfigPanel: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-600 mb-2">
                     Retention Period (days)
                   </label>
                   <input
@@ -308,7 +308,7 @@ export const BackupConfigPanel: React.FC = () => {
                       className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 disabled:opacity-50"
                     />
                     <div>
-                      <span className="text-slate-300 group-hover:text-white">
+                      <span className="text-slate-600 group-hover:text-white">
                         Include Attachments
                       </span>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -326,7 +326,7 @@ export const BackupConfigPanel: React.FC = () => {
                       className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 disabled:opacity-50"
                     />
                     <div>
-                      <span className="text-slate-300 group-hover:text-white">
+                      <span className="text-slate-600 group-hover:text-white">
                         Include Audit Logs
                       </span>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -348,7 +348,7 @@ export const BackupConfigPanel: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Backup Status</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
+                    <p className="text-sm text-slate-600 dark:text-slate-500">
                       Current backup information
                     </p>
                   </div>
@@ -409,7 +409,7 @@ export const BackupConfigPanel: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Recent Backups</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">Backup history</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-500">Backup history</p>
                   </div>
                 </div>
 
@@ -439,7 +439,7 @@ export const BackupConfigPanel: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                        <span className="text-sm text-slate-400 dark:text-slate-500">
+                        <span className="text-sm text-slate-600 dark:text-slate-500">
                           {formatFileSize(item.size)}
                         </span>
                       </div>

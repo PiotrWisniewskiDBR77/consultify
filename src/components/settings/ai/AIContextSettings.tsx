@@ -289,7 +289,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
             <div className="relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               />
               <input
                 type="text"
@@ -374,7 +374,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                 <div className="relative">
                   <Search
                     size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                   />
                   <input
                     type="text"

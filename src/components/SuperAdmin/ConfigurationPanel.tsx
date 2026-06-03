@@ -50,7 +50,7 @@ export const ConfigurationPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -60,13 +60,13 @@ export const ConfigurationPanel: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">System Configuration</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">Manage system-wide settings</p>
+          <p className="text-slate-600 dark:text-slate-500 text-sm">Manage system-wide settings</p>
         </div>
       </div>
 
       <div className="space-y-2">
         {configs.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+          <div className="text-center py-12 text-slate-600 dark:text-slate-500">
             No configurations
           </div>
         ) : (
@@ -79,7 +79,7 @@ export const ConfigurationPanel: React.FC = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-white font-medium">{config.config_key}</span>
-                    <span className="px-2 py-1 text-xs bg-slate-700 text-slate-300 rounded">
+                    <span className="px-2 py-1 text-xs bg-slate-700 text-slate-600 rounded">
                       {config.config_type}
                     </span>
                     {config.environment && (
@@ -89,7 +89,7 @@ export const ConfigurationPanel: React.FC = () => {
                     )}
                   </div>
                   {config.description && (
-                    <p className="text-sm text-slate-400 dark:text-slate-500 mb-2">
+                    <p className="text-sm text-slate-600 dark:text-slate-500 mb-2">
                       {config.description}
                     </p>
                   )}
@@ -115,7 +115,7 @@ export const ConfigurationPanel: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-slate-600">
                       {typeof config.config_value === 'object'
                         ? JSON.stringify(config.config_value)
                         : String(config.config_value)}
@@ -128,7 +128,7 @@ export const ConfigurationPanel: React.FC = () => {
                       setEditingKey(config.config_key);
                       setEditValue(config.config_value);
                     }}
-                    className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                    className="p-2 rounded-lg bg-slate-700 text-slate-600 hover:bg-slate-600 transition-colors"
                   >
                     <Edit size={16} />
                   </button>

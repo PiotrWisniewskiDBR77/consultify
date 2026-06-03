@@ -125,7 +125,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -140,7 +140,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
                   setFormat(f);
                   setCopied(false);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
               >
                 {f === 'mermaid' ? 'Mermaid' : 'PlantUML'}
               </button>
@@ -163,7 +163,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
             </button>
           </div>
 
-          <p className="text-[9px] text-slate-400 mt-3 text-center">
+          <p className="text-[9px] text-slate-600 mt-3 text-center">
             {format === 'mermaid'
               ? isPl
                 ? 'Wklej do edytora Mermaid lub dokumentacji Markdown.'

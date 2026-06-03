@@ -248,7 +248,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
         <div className="flex items-center gap-2">
           <button
             onClick={fetchAnalytics}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={18} />
@@ -302,7 +302,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
 
       {!selectedIntegration && integrations.length === 0 && (
         <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
-          <BarChart3 className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <BarChart3 className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
           <p className="text-slate-500 dark:text-slate-400">
             {t(
               'settings.analytics.noIntegrations',
@@ -488,7 +488,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
                 {t('settings.analytics.recentLogs', 'Recent Logs')}
               </h4>
               <div className="flex items-center gap-2">
-                <Filter size={14} className="text-slate-400 dark:text-slate-500" />
+                <Filter size={14} className="text-slate-600 dark:text-slate-500" />
                 <select
                   value={logFilter}
                   onChange={(e) => {

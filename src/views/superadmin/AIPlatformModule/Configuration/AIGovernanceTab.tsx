@@ -437,7 +437,7 @@ export const AIGovernanceTab: React.FC = () => {
                 </span>
               )}
               <span className="text-slate-500 dark:text-slate-400">{warnCount} warnings</span>
-              <span className="text-slate-400 dark:text-slate-500">
+              <span className="text-slate-600 dark:text-slate-500">
                 {new Date(sanityReport.timestamp).toLocaleString()}
               </span>
             </div>

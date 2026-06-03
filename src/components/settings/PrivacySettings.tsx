@@ -201,7 +201,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   return (
     <SettingsSection
@@ -297,7 +297,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-primary-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}
@@ -347,7 +347,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-primary-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}

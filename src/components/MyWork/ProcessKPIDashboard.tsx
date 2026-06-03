@@ -70,7 +70,7 @@ const KPICard: React.FC<KPICardProps> = ({ icon, label, value, color, subtitle }
         {value}
       </div>
       {subtitle && (
-        <div className="text-[8px] text-slate-400 dark:text-slate-500 truncate">{subtitle}</div>
+        <div className="text-[8px] text-slate-600 dark:text-slate-500 truncate">{subtitle}</div>
       )}
     </div>
   </div>
@@ -158,7 +158,7 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
           onClick={onClose}
           className="p-0.5 rounded-md hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
-          <X size={12} className="text-slate-400" />
+          <X size={12} className="text-slate-600" />
         </button>
       </div>
 

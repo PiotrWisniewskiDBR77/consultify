@@ -119,7 +119,7 @@ export const FirstRunOnboarding: React.FC = () => {
             />
           ))}
         </div>
-        <p className="mt-2 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
+        <p className="mt-2 text-center text-xs font-medium text-slate-600 dark:text-slate-500">
           {stepLabel}
         </p>
 
@@ -210,7 +210,7 @@ const WelcomeStep: React.FC<StepCommonProps & { onStart: () => void; onSkip: () 
         <button
           type="button"
           onClick={onSkip}
-          className="text-xs font-medium text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+          className="text-xs font-medium text-slate-600 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
         >
           {t('firstRun.welcome.skip', 'Skip for now')}
         </button>
@@ -263,7 +263,7 @@ const RoleStep: React.FC<
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                 isSelected
                   ? 'bg-crimson-100 text-crimson-600 dark:bg-crimson-900/40 dark:text-crimson-300'
-                  : 'bg-slate-100 text-slate-400 dark:bg-navy-900 dark:text-slate-500'
+                  : 'bg-slate-100 text-slate-600 dark:bg-navy-900 dark:text-slate-500'
               }`}
             >
               <Icon size={20} />

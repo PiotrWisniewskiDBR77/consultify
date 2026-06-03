@@ -38,7 +38,7 @@ export const DocumentStudioView: React.FC = () => {
   const [phase, setPhase] = useState<Phase>('intake');
   const [intake, setIntake] = useState<DocumentIntake | null>(null);
   const [outline, setOutline] = useState<DocumentOutline | null>(null);
-  const [useLlm, setUseLlm] = useState(false);
+  const [useLlm, setUseLlm] = useState(true);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [approvedTemplates, setApprovedTemplates] = useState<DocumentTemplate[]>([]);
   const [artifactId, setArtifactId] = useState<string | null>(null);

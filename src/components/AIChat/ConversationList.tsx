@@ -71,7 +71,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
     archived: {
       label: t('aiChat.groups.archived', 'Archiwum'),
       icon: Archive,
-      iconColor: 'text-slate-400',
+      iconColor: 'text-slate-600',
     },
   };
 
@@ -110,19 +110,19 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               aria-expanded={!isGroupCollapsed}
               aria-label={t('aiChat.toggleGroup', 'Toggle {{label}}', { label: config.label })}
             >
-              <span className="shrink-0 text-slate-400 dark:text-slate-500 group-hover/header:text-slate-600 dark:group-hover/header:text-slate-300">
+              <span className="shrink-0 text-slate-600 dark:text-slate-500 group-hover/header:text-slate-600 dark:group-hover/header:text-slate-300">
                 {isGroupCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
               </span>
               {Icon && (
                 <Icon
                   size={10}
-                  className={config.iconColor || 'text-slate-400 dark:text-slate-500'}
+                  className={config.iconColor || 'text-slate-600 dark:text-slate-500'}
                 />
               )}
-              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex-1">
+              <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider flex-1">
                 {config.label}
               </span>
-              <span className="text-[9px] tabular-nums text-slate-300 dark:text-slate-600">
+              <span className="text-[9px] tabular-nums text-slate-600 dark:text-slate-600">
                 {conversations.length}
               </span>
             </div>
@@ -146,7 +146,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                       e.stopPropagation();
                       toggleGroup(groupKey);
                     }}
-                    className="w-full flex items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-md transition-colors"
+                    className="w-full flex items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-md transition-colors"
                   >
                     {isExpanded ? (
                       <>

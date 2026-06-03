@@ -322,7 +322,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
           {value && (
             <button
               onClick={() => updateField(field, '')}
-              className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded"
+              className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded"
             >
               <Trash2 size={14} />
             </button>
@@ -350,7 +350,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
             onClick={() => triggerUpload(field)}
             className="w-full p-6 border-2 border-dashed border-slate-200 dark:border-navy-600 rounded-lg hover:border-primary-400 dark:hover:border-primary-500 transition-colors flex flex-col items-center gap-2"
           >
-            <Upload className="text-slate-400 dark:text-slate-500" size={24} />
+            <Upload className="text-slate-600 dark:text-slate-500" size={24} />
             <span className="text-sm text-slate-500 dark:text-slate-400">
               {t('admin.branding.uploadImage', 'Upload Image')}
             </span>
@@ -775,7 +775,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                         href={`https://${branding.customDomain}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500"
+                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-500"
                       >
                         <ExternalLink size={18} />
                       </a>

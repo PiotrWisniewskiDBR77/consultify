@@ -124,16 +124,16 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Search + Category tabs */}
-        <div className="px-6 py-3 border-b border-slate-100 dark:border-navy-800 space-y-3">
+        <div className="px-6 py-3 border-b border-slate-200 dark:border-navy-800 space-y-3">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -165,7 +165,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
               <Loader2 size={24} className="animate-spin text-primary-500" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-16 text-slate-600">
               <FileText size={32} className="mb-2 opacity-50" />
               <p className="text-sm">{isPl ? 'Brak szablonów' : 'No templates found'}</p>
             </div>
@@ -191,7 +191,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
                           {tpl.name}
                         </h3>
-                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">
+                        <span className="text-[10px] font-medium text-slate-600 uppercase tracking-wide">
                           {tpl.category?.replace('-', ' ')}
                         </span>
                       </div>
@@ -200,7 +200,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                       {tpl.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-slate-600">
                         {tpl.usage_count > 0
                           ? `${tpl.usage_count} ${isPl ? 'użyć' : 'uses'}`
                           : isPl
@@ -217,7 +217,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                       </button>
                     </div>
                     {tpl.schema_snapshot?.tables && (
-                      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-navy-700">
+                      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
                         <div className="flex flex-wrap gap-1">
                           {(tpl.schema_snapshot.tables as any[]).map((table: any, i: number) => (
                             <span

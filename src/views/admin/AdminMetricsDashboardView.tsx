@@ -61,7 +61,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-slate-400 dark:text-slate-500">
+      <div className="flex flex-col items-center justify-center h-96 text-slate-600 dark:text-slate-500">
         <RefreshCw className="animate-spin mb-4" size={32} />
         <p className="text-lg font-medium">Crunching your organization's data...</p>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 italic">
@@ -81,7 +81,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
             <TrendingUp className="text-blue-400" size={32} />
             Conversion Intelligence
           </h1>
-          <p className="text-slate-400 dark:text-slate-500 mt-1 max-w-2xl">
+          <p className="text-slate-600 dark:text-slate-500 mt-1 max-w-2xl">
             Monitor your organization's adoption, efficiency, and growth metrics in real-time.
           </p>
         </div>
@@ -452,7 +452,7 @@ const EventRow: React.FC<{ event: any }> = ({ event }) => {
     if (isHelp) return <BookOpen size={14} className="text-blue-400" />;
     if (isInvite) return <Mail size={14} className="text-primary-400" />;
     if (isTrial) return <Clock size={14} className="text-blue-400" />;
-    return <Activity size={14} className="text-slate-400 dark:text-slate-500" />;
+    return <Activity size={14} className="text-slate-600 dark:text-slate-500" />;
   };
 
   const formatContext = () => {

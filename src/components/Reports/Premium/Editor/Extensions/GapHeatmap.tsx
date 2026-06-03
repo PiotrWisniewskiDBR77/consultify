@@ -138,7 +138,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded transition-colors"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded transition-colors"
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -147,7 +147,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
               setIsLoading(true);
               setTimeout(() => setIsLoading(false), 500);
             }}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded transition-colors"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
@@ -255,7 +255,7 @@ const GapHeatmapComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, 
           </table>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+        <div className="flex items-center justify-center h-48 text-slate-600 dark:text-slate-500">
           Brak danych do wyświetlenia
         </div>
       )}

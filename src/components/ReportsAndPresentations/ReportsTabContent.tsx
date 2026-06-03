@@ -165,7 +165,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         label: t('rap.columns.period', 'Okres'),
         width: '160px',
         render: (row: ReportItem) => {
-          if (!row.periodFrom) return <span className="text-sm text-slate-400">—</span>;
+          if (!row.periodFrom) return <span className="text-sm text-slate-600">—</span>;
           const from = new Date(row.periodFrom).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
             day: 'numeric',
             month: 'short',
@@ -207,7 +207,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         label: t('rap.columns.exports', 'Eksporty'),
         width: '140px',
         render: (row: ReportItem) => {
-          if (!row.exportFormats?.length) return <span className="text-sm text-slate-400">—</span>;
+          if (!row.exportFormats?.length) return <span className="text-sm text-slate-600">—</span>;
           return (
             <div className="flex items-center gap-1">
               {row.exportFormats.map((fmt) => (
@@ -321,7 +321,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={24} className="animate-spin text-slate-400" />
+        <Loader2 size={24} className="animate-spin text-slate-600" />
       </div>
     );
   }

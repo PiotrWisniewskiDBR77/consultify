@@ -58,7 +58,7 @@ const DemoTrialAnalyticsView: React.FC = () => {
   if (loading && !summary) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
       </div>
     );
   }
@@ -195,7 +195,7 @@ const DemoTrialAnalyticsView: React.FC = () => {
                 recentEvents.map((e) => (
                   <tr
                     key={e.id}
-                    className="border-t border-slate-100 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800/30"
+                    className="border-t border-slate-200 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800/30"
                   >
                     <td className="px-4 py-2 text-slate-600 dark:text-slate-400">
                       {e.createdAt ? new Date(e.createdAt).toLocaleString() : '—'}

@@ -377,7 +377,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <span className="text-green-600 dark:text-green-400 font-medium">
               {metrics.onTrack} on track
             </span>
-            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <span className="text-slate-600 dark:text-slate-600">|</span>
             <span className="text-amber-600 dark:text-amber-400 font-medium">
               {metrics.atRisk} at risk
             </span>
@@ -433,7 +433,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             >
               <Pause
                 className={`w-6 h-6 ${
-                  metrics.blocked > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'
+                  metrics.blocked > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600'
                 }`}
               />
             </div>
@@ -470,7 +470,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             >
               <AlertTriangle
                 className={`w-6 h-6 ${
-                  metrics.atRisk > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'
+                  metrics.atRisk > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600'
                 }`}
               />
             </div>
@@ -510,7 +510,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 className={`w-6 h-6 ${
                   metrics.pendingDecisions > 0
                     ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-slate-400'
+                    : 'text-slate-600'
                 }`}
               />
             </div>
@@ -549,7 +549,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 className={`w-6 h-6 ${
                   metrics.highRiskItems > 0
                     ? 'text-amber-600 dark:text-amber-400'
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-500'
                 }`}
               />
             </div>
@@ -610,7 +610,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             >
               <Clock
                 className={`w-6 h-6 ${
-                  metrics.overdueTasks > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'
+                  metrics.overdueTasks > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600'
                 }`}
               />
             </div>
@@ -645,7 +645,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                     {alert.message}
                   </span>
                   {alert.initiativeId && (
-                    <ArrowRight size={14} className="text-slate-400 dark:text-slate-500" />
+                    <ArrowRight size={14} className="text-slate-600 dark:text-slate-500" />
                   )}
                 </div>
               );
@@ -679,9 +679,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               )}
             </div>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-white/5 max-h-64 overflow-y-auto">
+          <div className="divide-y divide-slate-200 dark:divide-white/5 max-h-64 overflow-y-auto">
             {executingInitiatives.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 dark:text-slate-500">
+              <div className="p-6 text-center text-slate-600 dark:text-slate-500">
                 No initiatives in execution
               </div>
             ) : (
@@ -719,7 +719,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               Blocked ({blockedInitiatives.length})
             </h3>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-white/5 max-h-64 overflow-y-auto">
+          <div className="divide-y divide-slate-200 dark:divide-white/5 max-h-64 overflow-y-auto">
             {blockedInitiatives.length === 0 ? (
               <div className="p-6 text-center text-green-500 flex flex-col items-center">
                 <CheckCircle2 size={24} className="mb-2" />

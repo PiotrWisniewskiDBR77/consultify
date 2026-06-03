@@ -359,7 +359,7 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
               {loading && sessions.length > 0 ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-navy-800">
+          <div className="divide-y divide-slate-200 dark:divide-navy-800">
             {loading && sessions.length === 0 ? (
               <div className="p-4 text-sm text-slate-500">Loading research sessions...</div>
             ) : sessions.length === 0 ? (
@@ -498,7 +498,7 @@ export const ResearchSessionsDock: React.FC<ResearchSessionsDockProps> = ({
                     (selected.evidenceGraph || []).map((node) => (
                       <div
                         key={node.nodeId}
-                        className="rounded-lg border border-slate-100 dark:border-navy-800 p-2 text-xs"
+                        className="rounded-lg border border-slate-200 dark:border-navy-800 p-2 text-xs"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span>{node.sourceClass}</span>

@@ -307,7 +307,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                 </span>
               </div>
             )}
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] text-slate-600 dark:text-slate-500">
               {t(
                 'llm.description',
                 'Define which LLM level to use. System automatically selects the best available model in that tier.'
@@ -347,7 +347,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                     >
                       {t(tier.nameKey)}
                     </div>
-                    <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <div className="text-[10px] text-slate-600 dark:text-slate-500">
                       {t(tier.descKey)}
                     </div>
                   </div>
@@ -364,7 +364,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
           {/* Active Model Info */}
           {activeModelName && (
             <div className="px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-500">
                 <Gauge size={10} />
                 <span>{t('llm.currentRouting', 'Current routing:')}</span>
               </div>

@@ -28,7 +28,7 @@ export const OverviewSection: React.FC<InitiativeSectionProps> = ({
       iconBg="bg-gradient-to-br from-blue-500/10 to-blue-500/10 dark:from-blue-500/20 dark:to-blue-500/20"
       expanded={expanded}
       onToggle={onToggle}
-      badge={summary ? <span className="text-xs text-slate-400">✓</span> : undefined}
+      badge={summary ? <span className="text-xs text-slate-600">✓</span> : undefined}
       actions={
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}

@@ -61,7 +61,7 @@ export const ProcessStepNode: React.FC<NodeProps<ProcessStepData>> = memo(
 
             <div className="flex-1 min-w-0">
               {/* Icon */}
-              {icon && <div className="text-slate-400 dark:text-slate-500 mb-1">{icon}</div>}
+              {icon && <div className="text-slate-600 dark:text-slate-500 mb-1">{icon}</div>}
 
               {/* Label */}
               <div className="font-medium text-sm text-slate-800 dark:text-white truncate">

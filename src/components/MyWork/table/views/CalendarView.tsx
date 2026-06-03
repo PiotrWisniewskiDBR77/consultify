@@ -236,10 +236,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   if (!dateCol) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2 p-8">
+      <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-2 p-8">
         <Calendar size={32} />
         <span className="text-sm font-medium">{isPl ? 'Widok kalendarza' : 'Calendar View'}</span>
-        <span className="text-xs text-slate-400/70">
+        <span className="text-xs text-slate-600/70">
           {isPl
             ? 'Skonfiguruj pole daty w ustawieniach widoku'
             : 'Configure a date field in view settings'}
@@ -299,7 +299,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         {weekdays.map((d) => (
           <div
             key={d}
-            className="text-[9px] font-bold text-center text-slate-400 dark:text-slate-500 uppercase tracking-wider"
+            className="text-[9px] font-bold text-center text-slate-600 dark:text-slate-500 uppercase tracking-wider"
           >
             {d}
           </div>
@@ -321,7 +321,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     ? isToday
                       ? 'border-primary-400/60 bg-primary-50/50 dark:bg-primary-500/5'
                       : 'border-slate-200/60 dark:border-navy-700/40 bg-white dark:bg-navy-900/50'
-                    : 'border-slate-100/40 dark:border-navy-800/30 bg-slate-50/30 dark:bg-navy-950/30'
+                    : 'border-slate-200/40 dark:border-navy-800/30 bg-slate-50/30 dark:bg-navy-950/30'
                 }`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(cell.date)}
@@ -333,7 +333,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         ? 'text-primary-600 dark:text-primary-400'
                         : cell.isCurrentMonth
                           ? 'text-slate-500 dark:text-slate-400'
-                          : 'text-slate-300 dark:text-slate-600'
+                          : 'text-slate-600 dark:text-slate-600'
                     }`}
                   >
                     {cell.day}
@@ -350,7 +350,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   />
                 ))}
                 {dayRecords.length > MAX_VISIBLE_PER_DAY && (
-                  <div className="text-[7px] text-slate-400 dark:text-slate-500 px-1 font-medium">
+                  <div className="text-[7px] text-slate-600 dark:text-slate-500 px-1 font-medium">
                     +{dayRecords.length - MAX_VISIBLE_PER_DAY} {isPl ? 'więcej' : 'more'}
                   </div>
                 )}
@@ -406,7 +406,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   ))}
                   <button
                     onClick={() => onAddRecord({ [dateFieldId]: dateStr })}
-                    className="w-full flex items-center justify-center gap-0.5 py-1 rounded border border-dashed border-slate-200 dark:border-navy-700 text-[8px] text-slate-400 hover:text-primary-500 hover:border-primary-300 transition-colors"
+                    className="w-full flex items-center justify-center gap-0.5 py-1 rounded border border-dashed border-slate-200 dark:border-navy-700 text-[8px] text-slate-600 hover:text-primary-500 hover:border-primary-300 transition-colors"
                   >
                     <Plus size={8} />
                   </button>

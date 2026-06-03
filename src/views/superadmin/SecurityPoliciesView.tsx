@@ -610,7 +610,7 @@ export const SecurityPoliciesView: React.FC = () => {
                   <h4 className="font-medium text-slate-900 dark:text-white">{org.name}</h4>
                 </div>
               </div>
-              <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+              <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
             </div>
             <div className="flex items-center gap-2">
               {org.hasCustomPolicy ? (
@@ -902,7 +902,7 @@ export const SecurityPoliciesView: React.FC = () => {
       <tr className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
         <td className="px-6 py-4">
           <span className="font-medium text-slate-900 dark:text-white">{org.name}</span>
-          <span className="ml-2 text-xs text-slate-400 dark:text-slate-500 font-mono">
+          <span className="ml-2 text-xs text-slate-600 dark:text-slate-500 font-mono">
             {org.id}
           </span>
         </td>
@@ -993,7 +993,7 @@ export const SecurityPoliciesView: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
         </div>

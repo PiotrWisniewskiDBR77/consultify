@@ -70,8 +70,8 @@ const SEVERITY_CONFIG = {
   LOW: {
     bg: 'bg-slate-500/10',
     border: 'border-slate-500/30',
-    text: 'text-slate-400',
-    badge: 'bg-slate-500/20 text-slate-400',
+    text: 'text-slate-600',
+    badge: 'bg-slate-500/20 text-slate-600',
     icon: Eye,
   },
 };
@@ -250,9 +250,9 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
                   </span>
                 </div>
                 {isExpanded ? (
-                  <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                  <ChevronDown size={14} className="text-slate-600 shrink-0" />
                 ) : (
-                  <ChevronRight size={14} className="text-slate-400 shrink-0" />
+                  <ChevronRight size={14} className="text-slate-600 shrink-0" />
                 )}
               </div>
 
@@ -260,7 +260,7 @@ export const RiskSignalsPanel: React.FC<RiskSignalsPanelProps> = ({
                 <div className="px-3 pb-3 space-y-2 border-t border-slate-200/20 dark:border-navy-700/50 pt-2">
                   <p className="text-xs text-slate-600 dark:text-slate-300">{signal.description}</p>
                   <div className="flex items-start gap-2">
-                    <span className="text-[10px] uppercase font-semibold text-slate-400 shrink-0 mt-px">
+                    <span className="text-[10px] uppercase font-semibold text-slate-600 shrink-0 mt-px">
                       {t('execution.riskSignals.suggestedAction')}:
                     </span>
                     <p className="text-xs text-blue-600 dark:text-blue-400">

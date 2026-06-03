@@ -101,7 +101,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
       return { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-500' };
     if (warning.includes(key))
       return { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-500' };
-    return { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' };
+    return { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' };
   })();
 
   const label = LABELS[status] || status || 'Draft';
@@ -442,7 +442,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 ) : null}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100/60 dark:divide-white/[0.03]">
+            <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
               {filteredData.length === 0 ? (
                 <tr>
                   <td

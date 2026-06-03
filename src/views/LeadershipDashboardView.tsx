@@ -163,7 +163,7 @@ export const LeadershipDashboardView: React.FC = () => {
                 value={`$${((economicsData?.expected_benefit || 0) - (economicsData?.actualSpend || 0)) / 1000}k`}
                 subValue="Projected"
                 icon={<PieChart size={16} />}
-                color="text-slate-400 dark:text-slate-500"
+                color="text-slate-600 dark:text-slate-500"
               />
             </div>
           </div>

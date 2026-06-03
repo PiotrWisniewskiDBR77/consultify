@@ -1135,7 +1135,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
             Decks currently flagged BLOCKED_P0 or BLOCKED_P1, sorted by severity.
           </p>
           {data && (
-            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+            <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
               Generated {new Date(data.generatedAt).toLocaleString()} · {data.entries.length} of{' '}
               {data.totals.decks} deck
               {data.totals.decks === 1 ? '' : 's'} shown
@@ -1238,7 +1238,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                   </button>
 
                   {saveFormOpen && (
-                    <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/60">
+                    <div className="border-t border-slate-200 bg-slate-50/60 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/60">
                       <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Name
                       </label>
@@ -1303,7 +1303,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                     </div>
                   )}
 
-                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                  <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
 
                   <div className="flex items-center justify-between px-3 py-1.5">
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -1389,7 +1389,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                     </ul>
                   )}
 
-                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                  <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
 
                   <div className="px-3 py-1.5">
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -1566,7 +1566,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                 </div>
               )}
               {!presetsAvailable && presetsUnavailableMessage && (
-                <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                <p className="mt-1 text-[10px] text-slate-600 dark:text-slate-500">
                   {presetsUnavailableMessage}
                 </p>
               )}
@@ -1584,7 +1584,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
             <div className="relative">
               <Search
                 size={12}
-                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                 aria-hidden="true"
               />
               <input
@@ -1645,7 +1645,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                   </button>
 
                   {savedSearchSaveFormOpen && (
-                    <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/60">
+                    <div className="border-t border-slate-200 bg-slate-50/60 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/60">
                       <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Name
                       </label>
@@ -1704,7 +1704,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                     </div>
                   )}
 
-                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                  <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
 
                   <div className="flex items-center justify-between px-3 py-1.5">
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -1797,7 +1797,7 @@ const PresentationGovernanceWatchlistView: React.FC<PresentationGovernanceWatchl
                 </div>
               )}
               {!savedSearchesAvailable && savedSearchesUnavailableMessage && (
-                <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                <p className="mt-1 text-[10px] text-slate-600 dark:text-slate-500">
                   {savedSearchesUnavailableMessage}
                 </p>
               )}
@@ -2149,7 +2149,7 @@ function renderBody(props: BodyProps): React.ReactElement {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                 {entries.map((entry) => {
                   const tone = VERDICT_TONE[entry.overallVerdict] || VERDICT_TONE.INCONCLUSIVE;
                   const isHighlighted = highlightDeckId === entry.deckId;
@@ -2213,7 +2213,7 @@ function renderBody(props: BodyProps): React.ReactElement {
                             {formatRelativeTime(entry.updatedAt)}
                           </span>
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-slate-600">—</span>
                         )}
                       </td>
                       <td className="px-4 py-2 text-right">

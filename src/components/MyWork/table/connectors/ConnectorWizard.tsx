@@ -361,8 +361,8 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             onClick={() => fileInputRef.current?.click()}
             className={`${inputCls} flex items-center gap-2 cursor-pointer text-left`}
           >
-            <Upload size={14} className="text-slate-400" />
-            <span className={fileName ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}>
+            <Upload size={14} className="text-slate-600" />
+            <span className={fileName ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600'}>
               {fileName || (isPl ? 'Wybierz plik...' : 'Choose file...')}
             </span>
           </button>
@@ -577,7 +577,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               isPl ? 'Współdzielony sekret do walidacji' : 'Shared secret for validation'
             }
           />
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
             {isPl
               ? 'Po utworzeniu konektora otrzymasz URL webhooka do wysyłania danych.'
               : 'After creating the connector you will receive a webhook URL to send data to.'}
@@ -646,7 +646,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         </div>
 
         {/* Rows */}
-        <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-navy-800">
+        <div className="max-h-64 overflow-y-auto divide-y divide-slate-200 dark:divide-navy-800">
           {mappings.map((m, idx) => (
             <div
               key={m.sourceField}
@@ -662,7 +662,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
                   </span>
                 )}
               </div>
-              <div className="col-span-1 text-center text-slate-400">→</div>
+              <div className="col-span-1 text-center text-slate-600">→</div>
               <div className="col-span-4">
                 <select
                   className={`${inputCls} py-1.5 text-xs`}
@@ -710,7 +710,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       </div>
 
       {mappings.length === 0 && (
-        <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-6">
+        <p className="text-center text-sm text-slate-600 dark:text-slate-500 py-6">
           {isPl
             ? 'Przetestuj połączenie w poprzednim kroku, aby pobrać pola.'
             : 'Test the connection in the previous step to fetch fields.'}
@@ -774,7 +774,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
               />
             </div>
           </div>
@@ -895,7 +895,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
                     ? 'bg-primary-500 text-white'
                     : isDone
                       ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 cursor-pointer hover:bg-primary-100'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
+                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
                 }
               `}
             >

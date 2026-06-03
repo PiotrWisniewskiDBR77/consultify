@@ -140,7 +140,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                 {/* AI Roles Model: Display active role badge */}
                 {pmoContext.projectId && <AIRoleBadge role={pmoContext.aiRole} size="sm" />}
               </div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+              <div className="text-[10px] text-slate-600 dark:text-slate-500 flex items-center gap-1">
                 <MapPin size={8} />
                 {pmoContext.currentPhase} • {pmoContext.userRole}
               </div>
@@ -156,7 +156,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
               className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
                 showThinking
                   ? 'bg-primary-500/20 text-primary-300 ring-1 ring-primary-500/50'
-                  : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-white'
+                  : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-white'
               }`}
               title={showThinking ? 'Hide Thinking Process' : 'Show Thinking Process'}
             >
@@ -172,14 +172,14 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ hideTrigger = false })
                 toggleChat(); // Close the overlay
                 setCurrentView(AppView.AI_ACTION_PROPOSALS); // Open fullscreen chat
               }}
-              className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-white transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-navy-800/40"
+              className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-500 hover:text-white transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-navy-800/40"
               title={t('aiChat.expandFullScreen', 'Expand to full screen')}
             >
               <Maximize2 size={16} />
             </button>
             <button
               onClick={toggleChat}
-              className="w-8 h-8 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-white transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-navy-800/40"
+              className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-500 hover:text-white transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-navy-800/40"
             >
               <X size={18} />
             </button>

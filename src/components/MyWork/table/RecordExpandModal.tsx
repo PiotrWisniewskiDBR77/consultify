@@ -64,7 +64,7 @@ const FieldValueDisplay: React.FC<{
   onChange?: (v: unknown) => void;
 }> = ({ value, fieldType, fieldOptions, isEditing, onChange }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-400 italic">—</span>;
+    return <span className="text-xs text-slate-600 italic">—</span>;
   }
 
   if (fieldType === 'checkbox') {
@@ -210,7 +210,7 @@ const NestedLinkedChips: React.FC<{
   const linkedTableId = (fieldOptions as { linkedTableId?: string })?.linkedTableId ?? '';
 
   if (items.length === 0) {
-    return <span className="text-xs text-slate-400 italic">—</span>;
+    return <span className="text-xs text-slate-600 italic">—</span>;
   }
 
   return (
@@ -373,7 +373,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                     {primaryValue}
                   </h2>
                   {resolvedTableName && (
-                    <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                    <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-zinc-500">
                       {resolvedTableName}
                     </p>
                   )}
@@ -390,7 +390,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                   className={`rounded-lg p-2 transition-colors ${
                     editMode
                       ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
-                      : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                      : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-zinc-800'
                   }`}
                   title={
                     editMode ? (isPl ? 'Anuluj edycję' : 'Cancel edit') : isPl ? 'Edytuj' : 'Edit'
@@ -401,7 +401,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
               )}
               <button
                 onClick={onClose}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-zinc-800"
+                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -429,7 +429,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                   return (
                     <div
                       key={field.id}
-                      className="rounded-xl border border-slate-100 px-4 py-3 dark:border-zinc-800/60"
+                      className="rounded-xl border border-slate-200 px-4 py-3 dark:border-zinc-800/60"
                     >
                       <div className="mb-1.5 flex items-center gap-2">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
@@ -473,7 +473,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
             {onOpenAuditTrail && (
               <button
                 onClick={() => onOpenAuditTrail(recordId)}
-                className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-zinc-300"
+                className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 transition-colors hover:text-slate-600 dark:hover:text-zinc-300"
               >
                 <Clock className="h-3.5 w-3.5" />
                 {isPl ? 'Historia zmian' : 'Audit trail'}

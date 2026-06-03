@@ -130,7 +130,7 @@ const GalleryCard = React.memo<{
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="text-[8px] text-slate-400">{pct}%</span>
+                  <span className="text-[8px] text-slate-600">{pct}%</span>
                 </div>
               );
             }
@@ -146,7 +146,7 @@ const GalleryCard = React.memo<{
             if (col.type === 'date') {
               const dateStr = String(val).slice(0, 10);
               return (
-                <span key={col.key} className="text-[8px] text-slate-400 dark:text-slate-500">
+                <span key={col.key} className="text-[8px] text-slate-600 dark:text-slate-500">
                   {dateStr}
                 </span>
               );
@@ -192,12 +192,12 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
 
   if (records.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-3 p-8">
+      <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-3 p-8">
         <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-          <Image size={28} className="text-slate-300 dark:text-slate-600" />
+          <Image size={28} className="text-slate-600 dark:text-slate-600" />
         </div>
         <span className="text-sm font-medium">{isPl ? 'Brak elementów' : 'No records'}</span>
-        <span className="text-xs text-slate-400/70">
+        <span className="text-xs text-slate-600/70">
           {isPl ? 'Dodaj pierwszy rekord, aby zobaczyć galerię' : 'Add a record to see the gallery'}
         </span>
       </div>

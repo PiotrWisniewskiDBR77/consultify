@@ -56,7 +56,7 @@ const SOURCE_ICONS: Record<string, React.ReactNode> = {
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-2 py-1.5">
-      <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap">
+      <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 whitespace-nowrap">
         {label}
       </span>
       <span className="text-xs text-right text-slate-700 dark:text-slate-300">{value}</span>
@@ -115,7 +115,7 @@ export function ProblemPreview({
             onClick={onClose}
             className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-slate-600" />
           </button>
         </div>
 
@@ -132,7 +132,7 @@ export function ProblemPreview({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Source entity */}
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-2">
             {t('manager.preview.sourceEntity', 'Source Entity')}
           </h4>
           <button
@@ -145,23 +145,23 @@ export function ProblemPreview({
               <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
                 {problem.sourceEntityName}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] text-slate-600 dark:text-slate-500">
                 {problem.sourceEntityType.replace(/_/g, ' ')}
               </p>
             </div>
             <ExternalLink
               size={12}
-              className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors shrink-0"
+              className="text-slate-600 dark:text-slate-600 group-hover:text-blue-500 transition-colors shrink-0"
             />
           </button>
         </div>
 
         {/* Details */}
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-2">
             {t('manager.preview.details', 'Details')}
           </h4>
-          <div className="divide-y divide-slate-100 dark:divide-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+          <div className="divide-y divide-slate-200 dark:divide-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
             {problem.ownerName && <DetailRow label="Owner" value={problem.ownerName} />}
             {problem.daysOverdue !== null && (
               <DetailRow
@@ -200,7 +200,7 @@ export function ProblemPreview({
         {/* Affected entities */}
         {problem.affectedEntities.length > 0 && (
           <div>
-            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-2">
               {t('manager.preview.affected', 'Affected Entities')} (
               {problem.affectedEntities.length})
             </h4>
@@ -210,7 +210,7 @@ export function ProblemPreview({
                   key={ent.id}
                   type="button"
                   onClick={() => onOpenEntity?.(ent.type, ent.id)}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg border border-slate-100 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group text-left"
+                  className="w-full flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group text-left"
                 >
                   {SOURCE_ICONS[ent.type] || <Link2 size={12} />}
                   <span className="text-xs text-slate-700 dark:text-slate-300 truncate flex-1">
@@ -218,7 +218,7 @@ export function ProblemPreview({
                   </span>
                   <ChevronRight
                     size={12}
-                    className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 shrink-0"
+                    className="text-slate-600 dark:text-slate-600 group-hover:text-blue-500 shrink-0"
                   />
                 </button>
               ))}

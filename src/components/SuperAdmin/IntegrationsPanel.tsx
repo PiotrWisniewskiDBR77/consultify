@@ -103,7 +103,7 @@ export const IntegrationsPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -116,7 +116,7 @@ export const IntegrationsPanel: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
             Integrations Hub
           </h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-500 text-sm">
             Connect Consultify with your existing tools
           </p>
         </div>
@@ -157,7 +157,7 @@ export const IntegrationsPanel: React.FC = () => {
       {activeTab === 'integrations' ? (
         <div className="space-y-2">
           {integrations.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
               <Webhook size={48} className="mx-auto mb-4 opacity-50" />
               <p>No integrations configured</p>
             </div>
@@ -223,7 +223,7 @@ export const IntegrationsPanel: React.FC = () => {
       ) : (
         <div className="space-y-2">
           {webhooks.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
               <Webhook size={48} className="mx-auto mb-4 opacity-50" />
               <p>No webhooks configured</p>
             </div>

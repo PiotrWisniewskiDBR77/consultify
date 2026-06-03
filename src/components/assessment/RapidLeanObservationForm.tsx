@@ -220,14 +220,14 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                 )}
               </button>
               <span
-                className={`text-sm font-medium ${forceDarkMode ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400'}`}
+                className={`text-sm font-medium ${forceDarkMode ? 'text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}
               >
                 {templateIndex + 1}/{totalTemplates}
               </span>
             </div>
           </div>
           <p
-            className={`text-sm ${forceDarkMode ? 'text-gray-400' : 'text-gray-600 dark:text-gray-400'}`}
+            className={`text-sm ${forceDarkMode ? 'text-gray-600' : 'text-gray-600 dark:text-gray-400'}`}
           >
             {template.description}
           </p>
@@ -246,7 +246,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
               />
             </div>
             <div
-              className={`flex items-center gap-1 ${forceDarkMode ? 'text-gray-400 dark:text-gray-500 dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`flex items-center gap-1 ${forceDarkMode ? 'text-gray-600 dark:text-gray-500 dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}
             >
               <Clock className="w-4 h-4" />
               <span className="text-sm">

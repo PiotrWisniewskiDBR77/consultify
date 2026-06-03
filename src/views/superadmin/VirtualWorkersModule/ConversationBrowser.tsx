@@ -242,7 +242,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
                     {msg.role}
                   </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     {formatDate(msg.created_at)}
                     {msg.latency_ms ? ` · ${msg.latency_ms}ms` : ''}
                   </span>
@@ -362,7 +362,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
         </div>
       ) : conversations.length === 0 ? (
         <div className="text-center py-16">
-          <MessageSquare className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <MessageSquare className="w-10 h-10 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             No conversations recorded yet.
           </p>
@@ -380,7 +380,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
                   {conv.channel === 'voice' ? (
                     <Mic size={16} className="text-blue-500" />
                   ) : (
-                    <Type size={16} className="text-slate-400" />
+                    <Type size={16} className="text-slate-600" />
                   )}
                   <div>
                     <span className="text-sm font-medium text-slate-900 dark:text-white">

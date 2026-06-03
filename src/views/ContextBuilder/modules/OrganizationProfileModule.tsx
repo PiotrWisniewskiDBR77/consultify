@@ -842,7 +842,7 @@ export const OrganizationProfileModule: React.FC = () => {
             <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
               {teresaHint.message}
             </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+            <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
               Used by: {teresaHint.downstream}
             </p>
           </div>
@@ -858,7 +858,7 @@ export const OrganizationProfileModule: React.FC = () => {
           </button>
           <button
             onClick={() => setShowTeresa(false)}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1"
+            className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 p-1"
           >
             <span className="sr-only">Dismiss</span>&times;
           </button>
@@ -984,7 +984,7 @@ export const OrganizationProfileModule: React.FC = () => {
                 {r.ready ? (
                   <CheckCircle size={14} className="text-green-500 shrink-0" />
                 ) : (
-                  <AlertCircle size={14} className="text-slate-400 shrink-0" />
+                  <AlertCircle size={14} className="text-slate-600 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <span
@@ -993,7 +993,7 @@ export const OrganizationProfileModule: React.FC = () => {
                     {r.label}
                   </span>
                   {!r.ready && r.missing.length > 0 && (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500 ml-1">
                       needs: {r.missing.join(', ')}
                     </span>
                   )}

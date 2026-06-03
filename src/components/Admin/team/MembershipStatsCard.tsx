@@ -154,7 +154,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                 'Overview of your team membership and activity'
               )}
             >
-              <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+              <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
             </Tooltip>
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">{timeRangeLabels[timeRange]}</p>
@@ -207,7 +207,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                 {stats.growthRate.toFixed(1)}%
               </span>
             )}
-            <span className="text-xs text-slate-400 dark:text-slate-500">
+            <span className="text-xs text-slate-600 dark:text-slate-500">
               {t('admin.team.stats.vsLastPeriod', 'vs last period')}
             </span>
           </div>
@@ -351,7 +351,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                   <span className="text-sm font-medium text-navy-900 dark:text-white">
                     {item.count}
                   </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     ({((item.count / stats.totalUsers) * 100).toFixed(0)}%)
                   </span>
                 </div>

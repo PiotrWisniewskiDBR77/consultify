@@ -288,7 +288,7 @@ const OperationItem: React.FC<{
         </button>
         <button
           onClick={onToggleExpand}
-          className="flex-shrink-0 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+          className="flex-shrink-0 p-0.5 text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
         >
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
@@ -332,7 +332,7 @@ function renderPayloadDetails(payload: Record<string, unknown>, isPl: boolean): 
             <span className="text-primary-600 dark:text-primary-400 font-semibold">
               {String(f.name ?? f.fieldName ?? `field_${i}`)}
             </span>
-            <span className="text-slate-400">—</span>
+            <span className="text-slate-600">—</span>
             <span>{String(f.type ?? f.fieldType ?? 'text')}</span>
             {Boolean(f.required) && (
               <span className="text-rose-500 text-[9px]">{isPl ? 'wymagane' : 'required'}</span>
@@ -465,7 +465,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
             </span>
           )}
           {timeStr && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-zinc-500">
+            <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-zinc-500">
               <Clock size={10} />
               {timeStr}
             </span>
@@ -473,7 +473,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
         >
           <X size={14} />
         </button>
@@ -494,7 +494,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={() => setAllOpsVisible((v) => !v)}
-            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
           >
             {allOpsVisible ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             {isPl ? 'Operacje' : 'Operations'} ({proposal.operations.length})
@@ -507,7 +507,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
               >
                 {isPl ? 'Wszystkie' : 'All'}
               </button>
-              <span className="text-slate-300 dark:text-zinc-600">|</span>
+              <span className="text-slate-600 dark:text-zinc-600">|</span>
               <button
                 onClick={selectNone}
                 className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
@@ -516,7 +516,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
               </button>
               {onShowDiff && (
                 <>
-                  <span className="text-slate-300 dark:text-zinc-600">|</span>
+                  <span className="text-slate-600 dark:text-zinc-600">|</span>
                   <button
                     onClick={onShowDiff}
                     className="text-[10px] text-sky-600 dark:text-sky-400 hover:underline"

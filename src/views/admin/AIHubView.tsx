@@ -271,7 +271,7 @@ PODEJŚCIE:
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">AI Hub</h1>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Centralne zarządzanie zachowaniem AI
             </p>
           </div>
@@ -287,7 +287,7 @@ PODEJŚCIE:
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.id
                 ? 'bg-primary-500/20 text-primary-300 border border-primary-500/30'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             <tab.icon size={16} />
@@ -439,10 +439,10 @@ PODEJŚCIE:
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
                     <div>
-                      Model: <span className="text-slate-300">{provider.model_id}</span>
+                      Model: <span className="text-slate-600">{provider.model_id}</span>
                     </div>
                     <div>
-                      Widoczność: <span className="text-slate-300">{provider.visibility}</span>
+                      Widoczność: <span className="text-slate-600">{provider.visibility}</span>
                     </div>
                   </div>
                 </div>
@@ -459,7 +459,7 @@ PODEJŚCIE:
             <div className="max-w-2xl mx-auto">
               <div className="bg-slate-900 border border-white/10 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Model Routing per Tier</h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
+                <p className="text-sm text-slate-600 dark:text-slate-500 mb-6">
                   Określ, który model LLM ma być używany dla różnych poziomów złożoności zadań.
                 </p>
 
@@ -597,14 +597,14 @@ PODEJŚCIE:
                       key={idx}
                       className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
                     >
-                      <span className="text-sm text-slate-300">{check.name}</span>
+                      <span className="text-sm text-slate-600">{check.name}</span>
                       <span
                         className={`text-sm ${
                           check.status === 'OK'
                             ? 'text-emerald-400'
                             : check.status === 'MISSING'
                               ? 'text-amber-400'
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-600 dark:text-slate-500'
                         }`}
                       >
                         {check.status || check.value}

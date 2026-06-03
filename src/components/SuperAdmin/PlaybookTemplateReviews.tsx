@@ -267,7 +267,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
 
   const getPriorityBadge = (priority: ContentReviewPriority) => {
     const styles: Record<ContentReviewPriority, string> = {
-      LOW: 'bg-slate-500/10 text-slate-400 dark:text-slate-500',
+      LOW: 'bg-slate-500/10 text-slate-600 dark:text-slate-500',
       NORMAL: 'bg-blue-500/10 text-blue-400',
       HIGH: 'bg-amber-500/10 text-amber-400',
       URGENT: 'bg-rose-500/10 text-rose-400',
@@ -283,7 +283,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-6 h-6 text-slate-400 dark:text-slate-500 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -295,7 +295,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
         <div className="flex items-center gap-2">
           <ClipboardCheck className="w-5 h-5 text-primary-400" />
           <h3 className="font-semibold text-white">Reviews</h3>
-          <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
+          <span className="px-2 py-0.5 bg-slate-700 text-slate-600 text-xs rounded-full">
             {reviews.length}
           </span>
         </div>
@@ -315,7 +315,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Reviewer *</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1.5">Reviewer *</label>
               <select
                 value={newReview.reviewerId}
                 onChange={(e) => setNewReview((prev) => ({ ...prev, reviewerId: e.target.value }))}
@@ -331,7 +331,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Priority</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1.5">Priority</label>
               <select
                 value={newReview.priority}
                 onChange={(e) =>
@@ -350,7 +350,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Due Date</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1.5">Due Date</label>
               <input
                 type="date"
                 value={newReview.dueDate}
@@ -363,7 +363,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
           {/* Checklist */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-slate-300">Review Checklist</label>
+              <label className="text-sm font-medium text-slate-600">Review Checklist</label>
               <button
                 onClick={addChecklistItem}
                 className="text-xs text-primary-400 hover:text-primary-300"
@@ -395,7 +395,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
           <div className="flex justify-end gap-2 pt-2">
             <button
               onClick={() => setShowNewReview(false)}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
             >
               Cancel
             </button>
@@ -415,7 +415,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
       {reviews.length === 0 ? (
         <div className="text-center py-8">
           <ClipboardCheck className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-          <p className="text-slate-400 dark:text-slate-500">No reviews yet</p>
+          <p className="text-slate-600 dark:text-slate-500">No reviews yet</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Request a review to get feedback
           </p>
@@ -468,9 +468,9 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     {getStatusBadge(review.status)}
                     {getPriorityBadge(review.priority)}
                     {isExpanded ? (
-                      <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
                     ) : (
-                      <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
                     )}
                   </div>
                 </button>
@@ -482,12 +482,12 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                       {/* Review info */}
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="text-slate-400 dark:text-slate-500">Version:</span>{' '}
+                          <span className="text-slate-600 dark:text-slate-500">Version:</span>{' '}
                           <span className="text-white">v{review.versionAtReview || 'N/A'}</span>
                         </div>
                         {review.dueDate && (
                           <div>
-                            <span className="text-slate-400 dark:text-slate-500">Due:</span>{' '}
+                            <span className="text-slate-600 dark:text-slate-500">Due:</span>{' '}
                             <span className="text-white">
                               {new Date(review.dueDate).toLocaleDateString()}
                             </span>
@@ -495,7 +495,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                         )}
                         {review.reviewedAt && (
                           <div>
-                            <span className="text-slate-400 dark:text-slate-500">Reviewed:</span>{' '}
+                            <span className="text-slate-600 dark:text-slate-500">Reviewed:</span>{' '}
                             <span className="text-white">
                               {new Date(review.reviewedAt).toLocaleDateString()}
                             </span>
@@ -506,7 +506,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                       {/* Checklist */}
                       {review.checklistItems && review.checklistItems.length > 0 && (
                         <div>
-                          <div className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-2">
+                          <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-2">
                             Checklist
                           </div>
                           <div className="space-y-1">
@@ -520,8 +520,8 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                                 <span
                                   className={
                                     item.checked
-                                      ? 'text-slate-400 dark:text-slate-500 line-through'
-                                      : 'text-slate-300'
+                                      ? 'text-slate-600 dark:text-slate-500 line-through'
+                                      : 'text-slate-600'
                                   }
                                 >
                                   {item.label}
@@ -535,10 +535,10 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                       {/* Review notes */}
                       {review.reviewNotes && (
                         <div>
-                          <div className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                          <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                             Review Notes
                           </div>
-                          <p className="text-sm text-slate-300 bg-slate-900/50 p-3 rounded-lg">
+                          <p className="text-sm text-slate-600 bg-slate-900/50 p-3 rounded-lg">
                             {review.reviewNotes}
                           </p>
                         </div>

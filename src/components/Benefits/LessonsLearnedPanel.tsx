@@ -133,14 +133,14 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
         <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700/50 pt-3">
           {lesson.actionTaken && (
             <div className="mb-3">
-              <h4 className="text-xs font-medium text-slate-400 mb-1">Action Taken</h4>
-              <p className="text-sm text-slate-300">{lesson.actionTaken}</p>
+              <h4 className="text-xs font-medium text-slate-600 mb-1">Action Taken</h4>
+              <p className="text-sm text-slate-600">{lesson.actionTaken}</p>
             </div>
           )}
 
           {lesson.applicableTo && lesson.applicableTo.length > 0 && (
             <div className="mb-3">
-              <h4 className="text-xs font-medium text-slate-400 mb-1">Applicable To</h4>
+              <h4 className="text-xs font-medium text-slate-600 mb-1">Applicable To</h4>
               <div className="flex flex-wrap gap-1">
                 {lesson.applicableTo.map((tag, idx) => (
                   <span

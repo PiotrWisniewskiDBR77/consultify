@@ -203,7 +203,7 @@ export const ComplianceTab: React.FC = () => {
       case 'non_compliant':
         return <XCircle size={18} className="text-rose-500" />;
       case 'not_applicable':
-        return <Info size={18} className="text-slate-400" />;
+        return <Info size={18} className="text-slate-600" />;
     }
   };
 
@@ -212,7 +212,7 @@ export const ComplianceTab: React.FC = () => {
       compliant: 'bg-emerald-500/10 text-emerald-500',
       warning: 'bg-amber-500/10 text-amber-500',
       non_compliant: 'bg-rose-500/10 text-rose-500',
-      not_applicable: 'bg-slate-500/10 text-slate-400',
+      not_applicable: 'bg-slate-500/10 text-slate-600',
     };
     const labels = {
       compliant: 'Compliant',
@@ -300,7 +300,7 @@ export const ComplianceTab: React.FC = () => {
                 <ShieldCheck size={20} className="text-emerald-500" />
               </div>
               <div className="text-3xl font-bold text-emerald-500">{complianceScore}%</div>
-              <div className="text-xs text-slate-400 mt-1">
+              <div className="text-xs text-slate-600 mt-1">
                 {checks.filter((c) => c.status === 'compliant').length} of{' '}
                 {checks.filter((c) => c.status !== 'not_applicable').length} checks passed
               </div>
@@ -313,7 +313,7 @@ export const ComplianceTab: React.FC = () => {
               <div className="text-3xl font-bold text-amber-500">
                 {checks.filter((c) => c.status === 'warning').length}
               </div>
-              <div className="text-xs text-slate-400 mt-1">Require attention</div>
+              <div className="text-xs text-slate-600 mt-1">Require attention</div>
             </div>
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between mb-3">
@@ -323,17 +323,17 @@ export const ComplianceTab: React.FC = () => {
               <div className="text-3xl font-bold text-rose-500">
                 {checks.filter((c) => c.status === 'non_compliant').length}
               </div>
-              <div className="text-xs text-slate-400 mt-1">Critical issues</div>
+              <div className="text-xs text-slate-600 mt-1">Critical issues</div>
             </div>
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Last Scan</span>
-                <Clock size={20} className="text-slate-400" />
+                <Clock size={20} className="text-slate-600" />
               </div>
               <div className="text-lg font-semibold text-slate-900 dark:text-white">
                 {lastScanTime ? new Date(lastScanTime).toLocaleTimeString() : 'Never'}
               </div>
-              <div className="text-xs text-slate-400 mt-1">
+              <div className="text-xs text-slate-600 mt-1">
                 {lastScanTime ? new Date(lastScanTime).toLocaleDateString() : ''}
               </div>
             </div>
@@ -404,7 +404,7 @@ export const ComplianceTab: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <Globe
                         size={16}
-                        className={config.isActive ? 'text-emerald-500' : 'text-slate-400'}
+                        className={config.isActive ? 'text-emerald-500' : 'text-slate-600'}
                       />
                       <span className="font-medium text-slate-900 dark:text-white">
                         {config.label}

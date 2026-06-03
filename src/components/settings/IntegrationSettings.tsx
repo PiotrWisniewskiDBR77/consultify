@@ -1515,7 +1515,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
           {/* Webhooks List */}
           {webhooks.length === 0 ? (
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
-              <Webhook size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+              <Webhook size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
               <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 No webhooks configured
               </h3>
@@ -1583,7 +1583,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                   </div>
 
                   {webhook.secretKey && (
-                    <div className="pt-4 border-t border-slate-100 dark:border-navy-700">
+                    <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           Secret Key:
@@ -1595,13 +1595,13 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           onClick={() =>
                             setShowSecret(showSecret === webhook.id ? null : webhook.id)
                           }
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded text-slate-400 dark:text-slate-500"
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded text-slate-600 dark:text-slate-500"
                         >
                           {showSecret === webhook.id ? <EyeOff size={14} /> : <Eye size={14} />}
                         </button>
                         <button
                           onClick={() => copyToClipboard(webhook.secretKey || '')}
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded text-slate-400 dark:text-slate-500"
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded text-slate-600 dark:text-slate-500"
                         >
                           <Copy size={14} />
                         </button>
@@ -1768,7 +1768,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             </div>
           ) : mcpProviders.length === 0 ? (
             <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
-              <Database size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+              <Database size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
               <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 {t('settings.mcp.emptyTitle', 'No MCP providers configured')}
               </h3>

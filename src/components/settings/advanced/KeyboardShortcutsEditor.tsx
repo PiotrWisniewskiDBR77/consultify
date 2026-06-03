@@ -220,7 +220,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
           <div className="flex-1 relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -231,7 +231,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter size={16} className="text-slate-400 dark:text-slate-500" />
+            <Filter size={16} className="text-slate-600 dark:text-slate-500" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -302,7 +302,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
                             </kbd>
                           ))
                         ) : (
-                          <span className="text-slate-400 dark:text-slate-500 text-sm animate-pulse">
+                          <span className="text-slate-600 dark:text-slate-500 text-sm animate-pulse">
                             {t('settings.shortcuts.pressKeysPlaceholder', 'Press keys...')}
                           </span>
                         )}
@@ -318,7 +318,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
                           setEditingId(null);
                           setRecordingKeys([]);
                         }}
-                        className="p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
+                        className="p-1 text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
                       >
                         <X size={14} />
                       </button>
@@ -342,14 +342,14 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
                     <>
                       <button
                         onClick={() => setEditingId(shortcut.id)}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg text-sm"
+                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg text-sm"
                       >
                         {t('common.edit', 'Edit')}
                       </button>
                       {shortcut.isCustom && (
                         <button
                           onClick={() => resetShortcut(shortcut.id)}
-                          className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-800 rounded-lg"
+                          className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-800 rounded-lg"
                         >
                           <RotateCcw size={14} />
                         </button>

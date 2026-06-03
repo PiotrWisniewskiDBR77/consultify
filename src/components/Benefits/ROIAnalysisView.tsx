@@ -116,7 +116,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
                 ? 'text-green-400'
                 : trend === 'down'
                   ? 'text-rose-400'
-                  : 'text-slate-400'
+                  : 'text-slate-600'
             }`}
           >
             {trend === 'up' ? (
@@ -130,7 +130,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
       </div>
       <div className="mt-4">
         <p className="text-2xl font-bold text-white">{value}</p>
-        <p className="text-sm text-slate-400 mt-1">{title}</p>
+        <p className="text-sm text-slate-600 mt-1">{title}</p>
         {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
       </div>
     </div>
@@ -186,7 +186,7 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
                       ? 'text-green-400'
                       : metric.status === InitiativeStatus.BLOCKED
                         ? 'text-rose-400'
-                        : 'text-slate-400'
+                        : 'text-slate-600'
                   }`}
                 >
                   {metric.status}
@@ -239,7 +239,7 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="text-left text-xs text-slate-400 border-b border-navy-700">
+          <tr className="text-left text-xs text-slate-600 border-b border-navy-700">
             <th className="pb-3 font-medium">Initiative</th>
             <th
               className="pb-3 font-medium cursor-pointer hover:text-white"
@@ -286,13 +286,13 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
                   </span>
                 </div>
               </td>
-              <td className="py-3 text-sm text-slate-300">
+              <td className="py-3 text-sm text-slate-600">
                 {formatCurrency(metric.totalInvestment)} PLN
               </td>
-              <td className="py-3 text-sm text-slate-300">
+              <td className="py-3 text-sm text-slate-600">
                 {formatCurrency(metric.realizedBenefits)} PLN
               </td>
-              <td className="py-3 text-sm text-slate-300">
+              <td className="py-3 text-sm text-slate-600">
                 {formatCurrency(metric.projectedBenefits)} PLN
               </td>
               <td className="py-3">
@@ -405,7 +405,7 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
 
   if (roiMetrics.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-400">
+      <div className="flex items-center justify-center h-full text-slate-600">
         <div className="text-center">
           <Calculator className="w-12 h-12 mx-auto mb-3 opacity-50" />
           <p className="text-sm">No completed initiatives for ROI analysis</p>
@@ -472,7 +472,7 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
             <div className="bg-navy-800 rounded-xl p-4 border border-navy-700">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-sm text-slate-400">On Track</span>
+                <span className="text-sm text-slate-600">On Track</span>
               </div>
               <span className="text-3xl font-bold text-green-400">
                 {summary.initiativesOnTrack}
@@ -481,7 +481,7 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
             <div className="bg-navy-800 rounded-xl p-4 border border-navy-700">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-3 h-3 rounded-full bg-rose-500" />
-                <span className="text-sm text-slate-400">Below Target</span>
+                <span className="text-sm text-slate-600">Below Target</span>
               </div>
               <span className="text-3xl font-bold text-rose-400">
                 {summary.initiativesBelowTarget}

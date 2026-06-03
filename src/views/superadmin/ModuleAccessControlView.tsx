@@ -243,13 +243,13 @@ export const ModuleAccessControlView: React.FC = () => {
       </div>
 
       <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-800 text-sm font-medium">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 text-sm font-medium">
           Active Grants
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-navy-800">
+              <tr className="border-b border-slate-200 dark:border-navy-800">
                 <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-slate-500">
                   Module
                 </th>
@@ -273,13 +273,13 @@ export const ModuleAccessControlView: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-600">
                     Loading grants...
                   </td>
                 </tr>
               ) : grants.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-600">
                     No grants configured yet.
                   </td>
                 </tr>

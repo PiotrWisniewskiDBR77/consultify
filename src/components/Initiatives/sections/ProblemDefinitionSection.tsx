@@ -54,7 +54,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
       onToggle={onToggle}
       badge={
         filledCount > 0 ? (
-          <span className="text-xs text-slate-400">{filledCount}/3</span>
+          <span className="text-xs text-slate-600">{filledCount}/3</span>
         ) : undefined
       }
       actions={
@@ -87,11 +87,11 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
     >
       {filledCount === 0 && (
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl mb-4">
-          <AlertTriangle size={32} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+          <AlertTriangle size={32} className="mx-auto mb-3 text-slate-600 dark:text-slate-600" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             {isPolish ? 'Brak zdefiniowanego problemu' : 'No problem definition yet'}
           </p>
-          <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+          <p className="text-xs text-slate-600 mt-1 max-w-xs mx-auto">
             {isPolish
               ? 'Opisz symptom, przyczynę źródłową i koszt bezczynności — lub użyj AI, aby wygenerować analizę'
               : 'Describe the symptom, root cause, and cost of inaction — or use AI to generate the analysis'}
@@ -147,7 +147,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
               />
             </div>
           </label>
-          <p className="text-xs text-slate-400 mb-2">
+          <p className="text-xs text-slate-600 mb-2">
             {isPolish
               ? 'Opisz widoczne objawy problemu - co zgłaszają użytkownicy, jakie metryki spadają'
               : 'Describe visible symptoms - what users report, which metrics are declining'}
@@ -190,7 +190,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
               />
             </div>
           </label>
-          <p className="text-xs text-slate-400 mb-2">
+          <p className="text-xs text-slate-600 mb-2">
             {isPolish
               ? 'Zidentyfikuj dlaczego problem występuje - analiza 5 Why, diagram Ishikawy'
               : 'Identify why the problem occurs - 5 Whys analysis, Ishikawa diagram'}
@@ -233,7 +233,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
               />
             </div>
           </label>
-          <p className="text-xs text-slate-400 mb-2">
+          <p className="text-xs text-slate-600 mb-2">
             {isPolish
               ? 'Co się stanie jeśli nie podejmiemy działań? Jakie są konsekwencje biznesowe?'
               : 'What happens if we do nothing? What are the business consequences?'}

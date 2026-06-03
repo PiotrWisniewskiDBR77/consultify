@@ -276,7 +276,7 @@ export const CommissionView: React.FC = () => {
                 <h3 className="font-semibold text-slate-900 dark:text-white">
                   Commission Statements
                 </h3>
-                <p className="text-xs text-slate-400">Historical statements and payouts</p>
+                <p className="text-xs text-slate-600">Historical statements and payouts</p>
               </div>
             </div>
             <PMODomainBadge mapping={PARTNER_PMO_MAPPING.COMMISSION_SETTLEMENT} />
@@ -284,7 +284,7 @@ export const CommissionView: React.FC = () => {
 
           <div className="space-y-3">
             {statementsLoading && (
-              <div className="rounded-xl bg-slate-50 dark:bg-navy-950/40 p-4 text-center text-sm text-slate-400">
+              <div className="rounded-xl bg-slate-50 dark:bg-navy-950/40 p-4 text-center text-sm text-slate-600">
                 Loading commission statements...
               </div>
             )}
@@ -298,7 +298,7 @@ export const CommissionView: React.FC = () => {
                   <div className="font-semibold text-slate-900 dark:text-white">
                     {statement.period}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     {statement.paymentReference
                       ? `Ref ${statement.paymentReference}`
                       : statement.deals.length > 0
@@ -333,7 +333,7 @@ export const CommissionView: React.FC = () => {
             ))}
 
             {!statementsLoading && statements.length === 0 && (
-              <div className="rounded-xl bg-slate-50 dark:bg-navy-950/40 p-4 text-center text-sm text-slate-400">
+              <div className="rounded-xl bg-slate-50 dark:bg-navy-950/40 p-4 text-center text-sm text-slate-600">
                 No commission statements yet
               </div>
             )}
@@ -353,7 +353,7 @@ export const CommissionView: React.FC = () => {
               <h3 className="font-semibold text-slate-900 dark:text-white">
                 Commission inquiry routing unavailable
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 This partner surface no longer pretends to submit inquiries without a governed
                 partner-user support contract.
               </p>

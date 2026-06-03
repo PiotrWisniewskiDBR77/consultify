@@ -71,7 +71,7 @@ function TierBadge({ tier, isPl }: { tier?: string; isPl: boolean }) {
 
   if (tier === 'excluded') {
     return (
-      <span className="ml-1.5 rounded bg-slate-100 px-1 py-0.5 text-[9px] font-medium text-slate-400 dark:bg-white/[0.06] dark:text-slate-500">
+      <span className="ml-1.5 rounded bg-slate-100 px-1 py-0.5 text-[9px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-500">
         {isPl ? 'wykluczone' : 'excluded'}
       </span>
     );
@@ -140,7 +140,7 @@ function SearchableSelect({
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-full z-20 mt-1 w-72 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-lg dark:border-white/[0.08] dark:bg-navy-900">
             <div className="flex items-center gap-2 border-b border-slate-200/60 px-3 py-2 dark:border-white/[0.06]">
-              <Search size={12} className="text-slate-400" />
+              <Search size={12} className="text-slate-600" />
               <input
                 ref={inputRef}
                 type="text"
@@ -153,7 +153,7 @@ function SearchableSelect({
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-slate-600 hover:text-slate-600"
                 >
                   <X size={12} />
                 </button>
@@ -188,7 +188,7 @@ function SearchableSelect({
                 </button>
               ))}
               {filtered.length === 0 && (
-                <div className="px-3 py-4 text-center text-xs text-slate-400">
+                <div className="px-3 py-4 text-center text-xs text-slate-600">
                   {isPl ? 'Brak wyników' : 'No results'}
                 </div>
               )}
@@ -261,22 +261,22 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
         <table className="w-full text-sm" role="grid">
           <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm dark:bg-navy-900/95">
             <tr>
-              <th className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <th className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {t('finance.importWizard.originalLabel', 'Original Label')}
               </th>
-              <th className="text-right px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <th className="text-right px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {t('finance.importWizard.value', 'Value')}
               </th>
-              <th className="text-center px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <th className="text-center px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {t('finance.importWizard.conf', 'Conf.')}
               </th>
-              <th className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <th className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {t('finance.importWizard.mappedTo', 'Mapped To')}
               </th>
               <th className="w-10" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100/80 dark:divide-white/[0.04]">
+          <tbody className="divide-y divide-slate-200/80 dark:divide-white/[0.04]">
             {mappedValues.map((value, idx) => (
               <tr
                 key={`${value.originalLabel}-${value.sourceRow || idx}`}
@@ -344,7 +344,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setEditingIdx(idx)}
-                    className="rounded-lg p-1.5 text-slate-400 opacity-0 transition-all hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                    className="rounded-lg p-1.5 text-slate-600 opacity-0 transition-all hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
                     aria-label={`Edit ${value.originalLabel}`}
                   >
                     <Edit3 size={12} />
@@ -355,7 +355,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
           </tbody>
         </table>
         {mappedValues.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 text-sm text-slate-400 dark:text-slate-500">
+          <div className="flex flex-col items-center justify-center gap-2 py-12 text-sm text-slate-600 dark:text-slate-500">
             <Search size={20} />
             {t('finance.importWizard.noMappedValues', 'No lines to map')}
           </div>

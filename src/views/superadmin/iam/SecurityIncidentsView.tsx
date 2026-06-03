@@ -449,13 +449,13 @@ const SecurityIncidentsView: React.FC = () => {
         );
       case 'closed':
         return (
-          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs">
             Closed
           </span>
         );
       default:
         return (
-          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+          <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs">
             {status}
           </span>
         );
@@ -710,7 +710,7 @@ const SecurityIncidentsView: React.FC = () => {
                       <td className="py-3 px-4">{getSeverityBadge(incident.severity)}</td>
                       <td className="py-3 px-4">{getStatusBadge(incident.status)}</td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-1 text-sm text-slate-300">
+                        <div className="flex items-center gap-1 text-sm text-slate-600">
                           <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
                           {formatDateTime(incident.detectedAt)}
                         </div>
@@ -761,7 +761,7 @@ const SecurityIncidentsView: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">Report Security Incident</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Incident Type
                 </label>
                 <select
@@ -777,7 +777,7 @@ const SecurityIncidentsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Severity
                 </label>
                 <select
@@ -793,7 +793,7 @@ const SecurityIncidentsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Description
                 </label>
                 <textarea
@@ -804,7 +804,7 @@ const SecurityIncidentsView: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Affected Resources (comma-separated)
                 </label>
                 <input
@@ -894,7 +894,7 @@ const SecurityIncidentsView: React.FC = () => {
               <h3 className="text-lg font-semibold">Incident Details</h3>
               <button
                 onClick={() => setShowDetailModal(null)}
-                className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-200"
+                className="p-1 text-slate-600 dark:text-slate-500 hover:text-slate-200"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -902,26 +902,26 @@ const SecurityIncidentsView: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">Incident Type</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-500">Incident Type</p>
                   <p className="font-medium">
                     {getIncidentTypeLabel(showDetailModal.incidentType)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">Severity</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-500">Severity</p>
                   {getSeverityBadge(showDetailModal.severity)}
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">Status</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-500">Status</p>
                   {getStatusBadge(showDetailModal.status)}
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">Detected At</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-500">Detected At</p>
                   <p>{formatDateTime(showDetailModal.detectedAt)}</p>
                 </div>
               </div>
               <div>
-                <p className="text-sm text-slate-400 dark:text-slate-500">Description</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">Description</p>
                 <p className="mt-1 text-slate-900 dark:text-slate-200">
                   {showDetailModal.description}
                 </p>
@@ -929,7 +929,7 @@ const SecurityIncidentsView: React.FC = () => {
               {showDetailModal.affectedResources &&
                 showDetailModal.affectedResources.length > 0 && (
                   <div>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">Affected Resources</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-500">Affected Resources</p>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {showDetailModal.affectedResources.map((r, i) => (
                         <span key={i} className="px-2 py-1 bg-slate-700 rounded text-xs">
@@ -942,12 +942,12 @@ const SecurityIncidentsView: React.FC = () => {
               {showDetailModal.resolvedAt && (
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
                   <div>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">Resolved At</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-500">Resolved At</p>
                     <p>{formatDateTime(showDetailModal.resolvedAt)}</p>
                   </div>
                   {showDetailModal.resolvedBy && (
                     <div>
-                      <p className="text-sm text-slate-400 dark:text-slate-500">Resolved By</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-500">Resolved By</p>
                       <p>
                         {showDetailModal.resolvedBy.firstName} {showDetailModal.resolvedBy.lastName}
                       </p>
@@ -955,7 +955,7 @@ const SecurityIncidentsView: React.FC = () => {
                   )}
                   {showDetailModal.resolutionNotes && (
                     <div className="col-span-2">
-                      <p className="text-sm text-slate-400 dark:text-slate-500">Resolution Notes</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-500">Resolution Notes</p>
                       <p className="mt-1">{showDetailModal.resolutionNotes}</p>
                     </div>
                   )}

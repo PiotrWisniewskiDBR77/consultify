@@ -381,7 +381,7 @@ export const HealthMonitoringTab: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="divide-y divide-slate-100 dark:divide-white/5">
+            <div className="divide-y divide-slate-200 dark:divide-white/5">
               {capabilities.map((cap) => (
                 <div
                   key={cap.id}
@@ -445,7 +445,7 @@ export const HealthMonitoringTab: React.FC = () => {
           {Object.keys(results).length > 0 && (
             <div className="bg-gray-900 rounded-xl p-6 font-mono text-xs text-green-400 overflow-auto max-h-80">
               <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
-                <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
                   DIAGNOSTIC LOGS
                 </span>
                 <button
@@ -614,7 +614,7 @@ export const HealthMonitoringTab: React.FC = () => {
                   <th className="px-4 py-3">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {logs.map((log: LogEntry) => (
                   <tr
                     key={log.id}

@@ -126,7 +126,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
           </h4>
 
           <div className="grid grid-cols-2 gap-3 relative z-10">
-            <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded border border-slate-100 dark:border-navy-700">
+            <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
               <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">
                 Strongest
               </div>
@@ -137,7 +137,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
                 {highest.score.toFixed(1)}/7
               </div>
             </div>
-            <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded border border-slate-100 dark:border-navy-700">
+            <div className="p-3 bg-slate-50 dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
               <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">
                 Weakest
               </div>
@@ -162,7 +162,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
           </h4>
 
           <div className="space-y-2 relative z-10">
-            <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-navy-700">
+            <div className="flex justify-between items-center pb-1.5 border-b border-slate-200 dark:border-navy-700">
               <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase">
                 Total Cost
               </span>
@@ -170,7 +170,7 @@ Weakest Axis: ${getAxisLabel(lowest.id)} (${lowest.score.toFixed(1)}/7)
                 ${econ.totalCost.toLocaleString()}k
               </span>
             </div>
-            <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-navy-700">
+            <div className="flex justify-between items-center pb-1.5 border-b border-slate-200 dark:border-navy-700">
               <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase">
                 Annual Benefit
               </span>

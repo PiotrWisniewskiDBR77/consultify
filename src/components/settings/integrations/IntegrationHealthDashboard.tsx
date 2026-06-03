@@ -263,7 +263,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       case 'error':
         return <XCircle size={18} className="text-rose-500" />;
       default:
-        return <AlertCircle size={18} className="text-slate-400 dark:text-slate-500" />;
+        return <AlertCircle size={18} className="text-slate-600 dark:text-slate-500" />;
     }
   };
 
@@ -431,7 +431,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                       className={`p-2 rounded-lg transition-colors ${
                         integration.enabled
                           ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-500/20'
-                          : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
+                          : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                       title={
                         integration.enabled
@@ -610,7 +610,7 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
                   ? run.error_summary || t('integrations.health.syncFailed', 'Sync failed')
                   : t('integrations.health.syncInProgress', 'Sync in progress')}
             </span>
-            <span className="text-slate-400 dark:text-slate-500 ml-auto">
+            <span className="text-slate-600 dark:text-slate-500 ml-auto">
               {formatTimestamp(run.started_at)}
             </span>
           </div>

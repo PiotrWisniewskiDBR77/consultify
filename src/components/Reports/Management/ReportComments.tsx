@@ -70,7 +70,7 @@ const CommentItem: React.FC<{
               <span className="font-medium text-sm text-navy-900 dark:text-white">
                 {comment.createdByName || 'Unknown User'}
               </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
+              <span className="text-xs text-slate-600 dark:text-slate-500">
                 {new Date(comment.createdAt).toLocaleString()}
               </span>
               {comment.isResolved && (
@@ -103,7 +103,7 @@ const CommentItem: React.FC<{
               aria-label="More options"
               className="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-navy-700 rounded transition-all"
             >
-              <MoreHorizontal size={16} className="text-slate-400 dark:text-slate-500" />
+              <MoreHorizontal size={16} className="text-slate-600 dark:text-slate-500" />
             </button>
 
             {showMenu && (
@@ -273,7 +273,7 @@ const CommentInput: React.FC<{
                 <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
                   {member.name}
                 </div>
-                <div className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                <div className="text-xs text-slate-600 dark:text-slate-500 truncate">
                   {member.email}
                 </div>
               </div>
@@ -325,7 +325,7 @@ export const ReportComments: React.FC<ReportCommentsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <MessageSquare size={16} className="text-slate-400 dark:text-slate-500" />
+          <MessageSquare size={16} className="text-slate-600 dark:text-slate-500" />
           <span className="text-sm font-medium text-navy-900 dark:text-white">
             {sectionName ? `Comments on ${sectionName}` : 'Comments'}
           </span>
@@ -353,7 +353,7 @@ export const ReportComments: React.FC<ReportCommentsProps> = ({
           ))}
         </div>
       ) : (
-        <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
+        <div className="text-center py-6 text-slate-600 dark:text-slate-500 text-sm">
           <MessageSquare size={24} className="mx-auto mb-2 opacity-50" />
           No comments yet
         </div>
@@ -383,7 +383,7 @@ export const ReportComments: React.FC<ReportCommentsProps> = ({
       )}
 
       {isLocked && (
-        <div className="text-center py-3 text-sm text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2">
+        <div className="text-center py-3 text-sm text-slate-600 dark:text-slate-500 flex items-center justify-center gap-2">
           <Clock size={14} />
           Report is finalized. Comments are read-only.
         </div>

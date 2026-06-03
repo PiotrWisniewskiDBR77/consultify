@@ -80,7 +80,7 @@ const getTypeIcon = (type: string) => {
     case 'PHASE':
       return <Clock size={16} className="text-emerald-500" />;
     default:
-      return <AlertCircle size={16} className="text-slate-400 dark:text-slate-500" />;
+      return <AlertCircle size={16} className="text-slate-600 dark:text-slate-500" />;
   }
 };
 
@@ -148,15 +148,15 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
 
   if (loading) {
     return (
-      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-navy-700 flex items-center justify-center">
-        <Loader2 size={20} className="animate-spin text-slate-400 dark:text-slate-500" />
+      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700 flex items-center justify-center">
+        <Loader2 size={20} className="animate-spin text-slate-600 dark:text-slate-500" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-navy-700 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
         <AlertCircle size={16} />
         {error || t('decisions.noRelatedObject', 'Related item not found')}
       </div>
@@ -202,14 +202,14 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
               </p>
             )}
 
-            <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-500">
               {(initiative.ownerName || initiative.owner_business_name) && (
                 <div className="flex items-center gap-1">
                   <User size={12} />
                   <span>{initiative.ownerName || initiative.owner_business_name}</span>
                 </div>
               )}
-              {initiative.category && <span className="text-slate-300 dark:text-slate-600">•</span>}
+              {initiative.category && <span className="text-slate-600 dark:text-slate-600">•</span>}
               {initiative.category && <span>{initiative.category}</span>}
             </div>
           </div>
@@ -217,7 +217,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
           {onNavigate && (
             <ArrowRight
               size={16}
-              className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
+              className="shrink-0 text-slate-600 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
             />
           )}
         </div>
@@ -267,7 +267,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
               </p>
             )}
 
-            <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-500">
               {assignee && (
                 <div className="flex items-center gap-1">
                   <User size={12} />
@@ -276,7 +276,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
               )}
               {dueDate && (
                 <>
-                  {assignee && <span className="text-slate-300 dark:text-slate-600">•</span>}
+                  {assignee && <span className="text-slate-600 dark:text-slate-600">•</span>}
                   <div className="flex items-center gap-1">
                     <Calendar size={12} />
                     <span>{formatDate(dueDate)}</span>
@@ -289,7 +289,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
           {onNavigate && (
             <ArrowRight
               size={16}
-              className="shrink-0 text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors"
+              className="shrink-0 text-slate-600 dark:text-slate-600 group-hover:text-blue-500 transition-colors"
             />
           )}
         </div>
@@ -299,7 +299,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
 
   // Generic fallback
   return (
-    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-navy-700 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
       {getTypeIcon(type)}
       <span>
         {type}: {id}

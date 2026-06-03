@@ -92,7 +92,7 @@ const BranchItem: React.FC<BranchItemProps> = ({
       `}
       onClick={() => !isEditing && onSelect()}
     >
-      <GitBranch size={14} className={isActive ? 'text-primary-500' : 'text-slate-400'} />
+      <GitBranch size={14} className={isActive ? 'text-primary-500' : 'text-slate-600'} />
 
       {isEditing ? (
         <input
@@ -108,12 +108,12 @@ const BranchItem: React.FC<BranchItemProps> = ({
       ) : (
         <span className="flex-1 text-sm truncate">
           {branch.name}
-          {branch.isMain && <span className="ml-1 text-xs text-slate-400">(main)</span>}
+          {branch.isMain && <span className="ml-1 text-xs text-slate-600">(main)</span>}
         </span>
       )}
 
       {branch.messageCount !== undefined && (
-        <span className="text-xs text-slate-400">{branch.messageCount}</span>
+        <span className="text-xs text-slate-600">{branch.messageCount}</span>
       )}
 
       {/* Actions menu */}
@@ -216,7 +216,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
         <span className="max-w-[120px] truncate">
           {activeBranch?.name || t('branch.main', 'Main')}
         </span>
-        {branches.length > 1 && <span className="text-xs text-slate-400">({branches.length})</span>}
+        {branches.length > 1 && <span className="text-xs text-slate-600">({branches.length})</span>}
         <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -229,7 +229,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
           {/* Menu */}
           <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 py-2 z-50">
             {/* Header */}
-            <div className="px-3 pb-2 mb-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="px-3 pb-2 mb-2 border-b border-slate-200 dark:border-navy-700">
               <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                 {t('branch.title', 'Conversation Branches')}
               </h4>
@@ -254,7 +254,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
 
             {/* Create new branch */}
             {onCreateBranch && (
-              <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700 px-2">
+              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700 px-2">
                 {showCreateForm ? (
                   <div className="flex items-center gap-2">
                     <input

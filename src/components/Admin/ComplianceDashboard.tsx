@@ -623,7 +623,7 @@ export function ComplianceDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <Calendar size={20} className="text-slate-400 dark:text-slate-500" />
+                  <Calendar size={20} className="text-slate-600 dark:text-slate-500" />
                   <h3 className="font-semibold text-slate-900 dark:text-white">Last Audit</h3>
                 </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -636,7 +636,7 @@ export function ComplianceDashboard() {
 
               <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <Calendar size={20} className="text-slate-400 dark:text-slate-500" />
+                  <Calendar size={20} className="text-slate-600 dark:text-slate-500" />
                   <h3 className="font-semibold text-slate-900 dark:text-white">Next Audit</h3>
                 </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -689,7 +689,7 @@ export function ComplianceDashboard() {
                   onClick={() => toggleMetric(metric.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <button className="text-slate-400 dark:text-slate-500">
+                    <button className="text-slate-600 dark:text-slate-500">
                       {expandedMetrics.has(metric.id) ? (
                         <ChevronDown size={20} />
                       ) : (
@@ -702,7 +702,7 @@ export function ComplianceDashboard() {
                           {metric.name}
                         </h3>
                         {getStatusBadge(metric.status)}
-                        <span className="text-xs text-slate-400 dark:text-slate-500 px-2 py-0.5 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-900 rounded">
+                        <span className="text-xs text-slate-600 dark:text-slate-500 px-2 py-0.5 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-900 rounded">
                           {metric.category}
                         </span>
                       </div>
@@ -719,7 +719,7 @@ export function ComplianceDashboard() {
                 </div>
 
                 {expandedMetrics.has(metric.id) && (
-                  <div className="px-6 py-4 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
+                  <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -776,7 +776,7 @@ export function ComplianceDashboard() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {activities.map((activity) => (
                   <tr key={activity.id}>
                     <td className="px-6 py-4">
@@ -867,7 +867,7 @@ export function ComplianceDashboard() {
                     </div>
                   </div>
                   {incident.affectedRecords > 0 && (
-                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-navy-700">
+                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
                       <span className="text-sm text-slate-500 dark:text-slate-400">
                         Affected records: {incident.affectedRecords}
                       </span>

@@ -85,7 +85,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
       onClick={() => onClick(task.id)}
       className={`
                 group h-12 flex items-center gap-3 px-3 cursor-pointer
-                border-b border-slate-100 dark:border-navy-700
+                border-b border-slate-200 dark:border-navy-700
                 transition-colors duration-150
                 ${
                   isCompleted

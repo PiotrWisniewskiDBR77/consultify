@@ -246,7 +246,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+          <Upload className="w-10 h-10 text-slate-600 mx-auto mb-3" />
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
             {isPolish ? 'Przeciągnij pliki tutaj lub' : 'Drag files here or'}
           </p>
@@ -261,7 +261,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
           </label>
           <button
             onClick={() => setShowAddType(null)}
-            className="block mx-auto mt-3 text-xs text-slate-400 hover:text-slate-600"
+            className="block mx-auto mt-3 text-xs text-slate-600 hover:text-slate-600"
           >
             {isPolish ? 'Anuluj' : 'Cancel'}
           </button>
@@ -416,7 +416,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500 mt-0.5">
                   {item.fileSize && <span>{formatFileSize(item.fileSize)}</span>}
                   {item.description && <span className="truncate">{item.description}</span>}
                   {uploadedAt ? <span>{new Date(uploadedAt).toLocaleDateString()}</span> : null}
@@ -441,13 +441,13 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
                     title={isPolish ? 'Dołącz do pomysłu' : 'Attach to Idea'}
                   >
-                    <Lightbulb size={16} className="text-slate-400" />
+                    <Lightbulb size={16} className="text-slate-600" />
                   </button>
                   <button
                     onClick={() => setShowMenuId(showMenuId === item.id ? null : item.id)}
                     className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
                   >
-                    <MoreVertical size={16} className="text-slate-400" />
+                    <MoreVertical size={16} className="text-slate-600" />
                   </button>
 
                   {showMenuId === item.id && (
@@ -473,7 +473,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         {/* Empty State */}
         {filteredEvidence.length === 0 && !showAddType && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Paperclip className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+            <Paperclip className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-3" />
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
               {isPolish ? 'Brak załączników' : 'No evidence yet'}
             </p>

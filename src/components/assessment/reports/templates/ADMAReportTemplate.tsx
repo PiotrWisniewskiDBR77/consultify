@@ -310,7 +310,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                     <span
                       className={
                         t.gapToFoF === null
-                          ? 'text-slate-400'
+                          ? 'text-slate-600'
                           : t.gapToFoF <= 0
                             ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
                             : 'text-amber-600 dark:text-amber-400 font-semibold'
@@ -353,7 +353,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {dimensionsWithGaps
                 .filter((d) => d.gap > 0)
                 .slice(0, 10)

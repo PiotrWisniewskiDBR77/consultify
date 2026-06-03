@@ -166,7 +166,7 @@ export const AuditComplianceTab: React.FC = () => {
       case 'low':
         return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       default:
-        return 'bg-slate-500/20 text-slate-400 dark:text-slate-500 border-slate-500/30';
+        return 'bg-slate-500/20 text-slate-600 dark:text-slate-500 border-slate-500/30';
     }
   };
 
@@ -327,7 +327,7 @@ export const AuditComplianceTab: React.FC = () => {
               <div className="relative flex-1 max-w-md">
                 <Search
                   size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                 />
                 <input
                   type="text"
@@ -351,7 +351,7 @@ export const AuditComplianceTab: React.FC = () => {
       {/* Usage Audit Log - DBR77 Compatible */}
       {activeSubTab === 'usage' && (
         <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center shadow-sm dark:shadow-none">
-          <Activity className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
+          <Activity className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-navy-900 dark:text-white">Usage Audit Log</h3>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
             Detailed log of all AI requests and responses
@@ -418,7 +418,7 @@ export const AuditComplianceTab: React.FC = () => {
                     <th className="px-6 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                   {securityEvents.map((event) => (
                     <tr key={event.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                       <td className="px-6 py-4">
@@ -533,7 +533,7 @@ export const AuditComplianceTab: React.FC = () => {
             <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
               <h3 className="font-semibold text-navy-900 dark:text-white">Recent Reports</h3>
             </div>
-            <div className="divide-y divide-slate-100 dark:divide-white/5">
+            <div className="divide-y divide-slate-200 dark:divide-white/5">
               {complianceReports.map((report) => (
                 <div
                   key={report.id}
@@ -549,13 +549,13 @@ export const AuditComplianceTab: React.FC = () => {
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           {report.standard}
                         </span>
-                        <span className="text-xs text-slate-400 dark:text-slate-500">•</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-500">•</span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           {new Date(report.generatedAt).toLocaleDateString()}
                         </span>
                         {report.findings > 0 && (
                           <>
-                            <span className="text-xs text-slate-400 dark:text-slate-500">•</span>
+                            <span className="text-xs text-slate-600 dark:text-slate-500">•</span>
                             <span className="text-xs text-warning-600 dark:text-amber-400">
                               {report.findings} findings
                             </span>
@@ -641,14 +641,14 @@ export const AuditComplianceTab: React.FC = () => {
                           setEditingTemplate(template);
                           setShowTemplateEditor(true);
                         }}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
+                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
                         title="Edit"
                       >
                         <Edit3 size={16} />
                       </button>
                       <button
                         onClick={() => toast.success('Template duplicated')}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
+                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
                         title="Duplicate"
                       >
                         <Copy size={16} />
@@ -658,7 +658,7 @@ export const AuditComplianceTab: React.FC = () => {
                           setCustomTemplates((prev) => prev.filter((t) => t.id !== template.id));
                           toast.success('Template deleted');
                         }}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-600 dark:hover:text-rose-400 hover:bg-danger-500/10 rounded transition-colors"
+                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-600 dark:hover:text-rose-400 hover:bg-danger-500/10 rounded transition-colors"
                         title="Delete"
                       >
                         <Trash2 size={16} />
@@ -670,7 +670,7 @@ export const AuditComplianceTab: React.FC = () => {
             </div>
           ) : (
             <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 border-dashed rounded-xl p-12 text-center shadow-sm dark:shadow-none">
-              <FileText size={48} className="mx-auto text-slate-400 dark:text-slate-600 mb-4" />
+              <FileText size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
               <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
                 No Custom Templates
               </h3>

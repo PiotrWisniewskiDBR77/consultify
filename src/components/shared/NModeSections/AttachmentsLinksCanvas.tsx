@@ -141,7 +141,7 @@ const FileIcon: React.FC<{ name: string; className?: string }> = ({ name, classN
   if (['pdf'].includes(ext)) return <FileText size={15} className={`text-rose-400 ${className}`} />;
   if (['doc', 'docx', 'odt', 'rtf', 'txt', 'md'].includes(ext))
     return <FileText size={15} className={`text-blue-500 ${className}`} />;
-  return <File size={15} className={`text-slate-400 ${className}`} />;
+  return <File size={15} className={`text-slate-600 ${className}`} />;
 };
 
 /** Coloured chip config per linked item type */
@@ -155,13 +155,13 @@ const TYPE_CHIP: Record<string, { bg: string; text: string; border: string }> = 
   report: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
   tool: { bg: 'bg-pink-500/10', text: 'text-pink-400', border: 'border-pink-500/20' },
   insight: { bg: 'bg-lime-500/10', text: 'text-lime-400', border: 'border-lime-500/20' },
-  external: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/20' },
+  external: { bg: 'bg-slate-500/10', text: 'text-slate-600', border: 'border-slate-500/20' },
 };
 
 const getChip = (type: string) =>
   TYPE_CHIP[type] ?? {
     bg: 'bg-slate-500/10',
-    text: 'text-slate-400',
+    text: 'text-slate-600',
     border: 'border-slate-500/20',
   };
 
@@ -227,7 +227,7 @@ const getStatusBadge = (status?: string) => {
   const s = String(status || '')
     .trim()
     .toLowerCase();
-  if (!s) return 'border-slate-300/50 text-slate-400 bg-slate-100/60 dark:bg-slate-500/10';
+  if (!s) return 'border-slate-300/50 text-slate-600 bg-slate-100/60 dark:bg-slate-500/10';
   if (['approved', 'completed', 'done', 'closed', 'mitigated', 'resolved'].includes(s))
     return 'border-emerald-400/40 text-emerald-400 bg-emerald-500/10';
   if (['in progress', 'in_progress', 'active', 'open', 'monitoring', 'monitored'].includes(s))
@@ -236,7 +236,7 @@ const getStatusBadge = (status?: string) => {
     return 'border-amber-400/40 text-amber-400 bg-amber-500/10';
   if (['blocked', 'rejected', 'critical', 'overdue'].includes(s))
     return 'border-rose-400/40 text-rose-400 bg-rose-500/10';
-  return 'border-slate-300/50 text-slate-400 bg-slate-100/60 dark:bg-slate-500/10';
+  return 'border-slate-300/50 text-slate-600 bg-slate-100/60 dark:bg-slate-500/10';
 };
 
 const formatSize = (bytes: number) => {
@@ -255,13 +255,13 @@ const SectionCard: React.FC<{
   children: React.ReactNode;
 }> = ({ icon, title, count, actions, children }) => (
   <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 bg-white/60 dark:bg-navy-900/40 backdrop-blur-sm overflow-hidden">
-    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100/80 dark:border-navy-800/60 bg-slate-50/50 dark:bg-navy-900/30">
+    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/80 dark:border-navy-800/60 bg-slate-50/50 dark:bg-navy-900/30">
       <div className="flex items-center gap-2.5">
         {icon}
         <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">
           {title}
         </span>
-        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full tabular-nums">
+        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full tabular-nums">
           {count}
         </span>
       </div>
@@ -286,11 +286,11 @@ const ModalShell: React.FC<{
       <div
         className={`relative w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} rounded-2xl border border-slate-200/50 dark:border-navy-700/50 bg-white dark:bg-navy-900 shadow-2xl`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-navy-800/60">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-800/60">
           <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h4>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -323,7 +323,7 @@ const ModalActions: React.FC<{
   cancelLabel: string;
   disabled?: boolean;
 }> = ({ onCancel, onConfirm, confirmLabel, cancelLabel, disabled }) => (
-  <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-navy-800/60">
+  <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-navy-800/60">
     <button
       onClick={onCancel}
       className="px-4 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
@@ -353,7 +353,7 @@ const EmptyState: React.FC<{
     <div className="h-11 w-11 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
       {icon}
     </div>
-    <p className="text-sm text-slate-400 dark:text-slate-500">{message}</p>
+    <p className="text-sm text-slate-600 dark:text-slate-500">{message}</p>
     {actionLabel && onAction && (
       <button
         onClick={onAction}
@@ -384,7 +384,7 @@ const ContextMenu: React.FC<{
         e.stopPropagation();
         onToggle();
       }}
-      className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/50 transition-colors"
+      className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-navy-800/50 transition-colors"
       title={triggerTitle}
     >
       <MoreVertical size={14} />
@@ -753,7 +753,7 @@ Write a clear, professional comment explaining why this link exists and its sign
 
       {/* ━━ ATTACHMENTS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SectionCard
-        icon={<Paperclip size={15} className="text-slate-400" />}
+        icon={<Paperclip size={15} className="text-slate-600" />}
         title={isPolish ? 'Załączniki' : 'Attachments'}
         count={filteredAttachments.length}
         actions={
@@ -788,7 +788,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       >
         {filteredAttachments.length === 0 ? (
           <EmptyState
-            icon={<Paperclip size={20} className="text-slate-300 dark:text-slate-600" />}
+            icon={<Paperclip size={20} className="text-slate-600 dark:text-slate-600" />}
             message={isPolish ? 'Brak załączników.' : 'No attachments yet.'}
           />
         ) : (
@@ -806,7 +806,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 >
                   {a.name}
                 </button>
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 tabular-nums whitespace-nowrap">
+                <span className="text-[11px] text-slate-600 dark:text-slate-500 tabular-nums whitespace-nowrap">
                   {formatSize(a.size)}
                 </span>
                 {!readOnly && (
@@ -857,7 +857,7 @@ Write a clear, professional comment explaining why this link exists and its sign
 
       {/* ━━ EXTERNAL LINKS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SectionCard
-        icon={<Globe size={15} className="text-slate-400" />}
+        icon={<Globe size={15} className="text-slate-600" />}
         title={isPolish ? 'Linki zewnętrzne' : 'External Links'}
         count={externalItems.length}
         actions={
@@ -889,7 +889,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       >
         {externalItems.length === 0 ? (
           <EmptyState
-            icon={<Globe size={20} className="text-slate-300 dark:text-slate-600" />}
+            icon={<Globe size={20} className="text-slate-600 dark:text-slate-600" />}
             message={isPolish ? 'Brak linków zewnętrznych.' : 'No external links yet.'}
           />
         ) : (
@@ -899,7 +899,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 key={item.id}
                 className="group flex items-center gap-3 px-2.5 py-2 -mx-1 rounded-lg hover:bg-slate-50/80 dark:hover:bg-navy-800/40 transition-colors"
               >
-                <ExternalLink size={14} className="text-slate-400 flex-shrink-0" />
+                <ExternalLink size={14} className="text-slate-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <button
                     onClick={() => onNavigateLinkedItem?.(item)}
@@ -909,7 +909,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     {item.title}
                   </button>
                   {item.comment && (
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-500 truncate mt-0.5">
                       {item.comment}
                     </p>
                   )}
@@ -919,7 +919,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   artifactId={item.id}
                   isPolish={isPolish}
                   size={12}
-                  className="p-1 text-slate-400/80"
+                  className="p-1 text-slate-600/80"
                 />
                 {!readOnly && (
                   <ContextMenu
@@ -969,7 +969,7 @@ Write a clear, professional comment explaining why this link exists and its sign
 
       {/* ━━ INTERNAL LINKS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SectionCard
-        icon={<LinkIcon size={15} className="text-slate-400" />}
+        icon={<LinkIcon size={15} className="text-slate-600" />}
         title={isPolish ? 'Linki wewnętrzne' : 'Internal Links'}
         count={internalItems.length}
         actions={
@@ -1004,7 +1004,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       >
         {internalItems.length === 0 ? (
           <EmptyState
-            icon={<LinkIcon size={20} className="text-slate-300 dark:text-slate-600" />}
+            icon={<LinkIcon size={20} className="text-slate-600 dark:text-slate-600" />}
             message={isPolish ? 'Brak powiązań wewnętrznych.' : 'No internal links yet.'}
           />
         ) : (
@@ -1038,7 +1038,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     artifactId={item.id}
                     isPolish={isPolish}
                     size={12}
-                    className="p-1 text-slate-400/80"
+                    className="p-1 text-slate-600/80"
                   />
 
                   {/* Status badge */}
@@ -1153,7 +1153,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                     {isPolish ? 'Kliknij, aby wybrać pliki' : 'Click to choose files'}
                   </p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-500 mt-0.5">
                     {isPolish
                       ? 'Możesz wybrać wiele plików jednocześnie'
                       : 'You can select multiple files at once'}
@@ -1200,7 +1200,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     </div>
                     <span
                       className={`block mt-1.5 text-[10px] ${
-                        connected ? 'text-emerald-400' : 'text-slate-400'
+                        connected ? 'text-emerald-400' : 'text-slate-600'
                       }`}
                     >
                       {connected
@@ -1242,7 +1242,7 @@ Write a clear, professional comment explaining why this link exists and its sign
         {/* Selected files list */}
         {attachmentDiskFiles.length > 0 && (
           <div className="max-h-44 overflow-y-auto space-y-1.5">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-500 px-1">
               {isPolish
                 ? `Wybrane pliki (${attachmentDiskFiles.length})`
                 : `Selected files (${attachmentDiskFiles.length})`}
@@ -1257,7 +1257,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   <span className="text-xs text-slate-700 dark:text-slate-300 truncate">
                     {file.name}
                   </span>
-                  <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                  <span className="text-[10px] text-slate-600 whitespace-nowrap">
                     {formatSize(file.size)}
                   </span>
                 </div>
@@ -1274,7 +1274,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       )
                     )
                   }
-                  className="text-slate-400 hover:text-rose-400 transition-colors flex-shrink-0"
+                  className="text-slate-600 hover:text-rose-400 transition-colors flex-shrink-0"
                 >
                   <X size={13} />
                 </button>
@@ -1347,7 +1347,7 @@ Write a clear, professional comment explaining why this link exists and its sign
               onClick={(e) => e.stopPropagation()}
             >
               {/* ── Header ─────────────────────────────── */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-navy-700/70 bg-gradient-to-r from-primary-50/40 via-white to-white dark:from-primary-500/5 dark:via-navy-900 dark:to-navy-900">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700/70 bg-gradient-to-r from-primary-50/40 via-white to-white dark:from-primary-500/5 dark:via-navy-900 dark:to-navy-900">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary-100 dark:bg-primary-500/15">
                     <LinkIcon size={16} className="text-primary-600 dark:text-primary-400" />
@@ -1374,7 +1374,7 @@ Write a clear, professional comment explaining why this link exists and its sign
               {/* ── Scrollable body ────────────────────── */}
               <div className="overflow-y-auto max-h-[calc(80vh-140px)]">
                 {/* ── Section: Direction ────────────────── */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2.5 block">
                     {isPolish ? 'Kierunek' : 'Direction'}
                   </label>
@@ -1392,7 +1392,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         className={
                           selectedLinkDirection === 'outgoing'
                             ? 'text-primary-500'
-                            : 'text-slate-400'
+                            : 'text-slate-600'
                         }
                       />
                       <span
@@ -1417,7 +1417,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       <ArrowLeft
                         size={16}
                         className={
-                          selectedLinkDirection === 'incoming' ? 'text-blue-500' : 'text-slate-400'
+                          selectedLinkDirection === 'incoming' ? 'text-blue-500' : 'text-slate-600'
                         }
                       />
                       <span
@@ -1435,7 +1435,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                 </div>
 
                 {/* ── Section: Relationship Type ───────── */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2.5 block">
                     {isPolish ? 'Typ relacji' : 'Relationship Type'}
                   </label>
@@ -1466,7 +1466,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     ))}
                   </div>
                   {/* Type description */}
-                  <p className="mt-2.5 text-[11px] text-secondary-600 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 rounded-lg px-3 py-2 border border-slate-100 dark:border-navy-700/30">
+                  <p className="mt-2.5 text-[11px] text-secondary-600 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 rounded-lg px-3 py-2 border border-slate-200 dark:border-navy-700/30">
                     {isPolish
                       ? LINK_RELATION_LABELS[selectedLinkRelation].desc_pl
                       : LINK_RELATION_LABELS[selectedLinkRelation].desc_en}
@@ -1474,12 +1474,12 @@ Write a clear, professional comment explaining why this link exists and its sign
                 </div>
 
                 {/* ── Section: Notes ────────────────────── */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <div className="flex items-center justify-between mb-2.5">
-                    <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                    <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-600 dark:text-slate-500 flex items-center gap-1.5">
                       <MessageSquare size={11} />
                       {isPolish ? 'Komentarz' : 'Comment'}
-                      <span className="text-[9px] font-normal text-slate-300 dark:text-slate-600 ml-1">
+                      <span className="text-[9px] font-normal text-slate-600 dark:text-slate-600 ml-1">
                         ({isPolish ? 'opcjonalny' : 'optional'})
                       </span>
                     </label>
@@ -1516,7 +1516,7 @@ Write a clear, professional comment explaining why this link exists and its sign
 
                 {/* ── Section: Staged Item (selected) ──── */}
                 {stagedInternalItem && (
-                  <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                  <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-secondary-800 dark:text-slate-400 mb-2 block">
                       {isPolish ? 'Wybrany element' : 'Selected Item'}
                     </label>
@@ -1540,7 +1540,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                       </div>
                       <button
                         onClick={() => setStagedInternalItem(null)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                         title={isPolish ? 'Usuń wybór' : 'Remove selection'}
                       >
                         <X size={14} />
@@ -1566,7 +1566,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     <div className="relative">
                       <Search
                         size={15}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
                       />
                       <input
                         type="text"
@@ -1610,7 +1610,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                                   {item.title}
                                 </p>
                               </div>
-                              <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                              <span className="text-[10px] text-slate-600 whitespace-nowrap">
                                 {item.status || '—'}
                               </span>
                               <div className="w-6 h-6 rounded-md bg-primary-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -1653,7 +1653,7 @@ Write a clear, professional comment explaining why this link exists and its sign
               </div>
 
               {/* ── Footer ─────────────────────────────── */}
-              <div className="px-6 py-3.5 border-t border-slate-100 dark:border-navy-700/70 bg-slate-50/30 dark:bg-navy-800/20 flex items-center justify-between">
+              <div className="px-6 py-3.5 border-t border-slate-200 dark:border-navy-700/70 bg-slate-50/30 dark:bg-navy-800/20 flex items-center justify-between">
                 <p className="text-[11px] text-secondary-600 dark:text-slate-500">
                   {stagedInternalItem
                     ? isPolish

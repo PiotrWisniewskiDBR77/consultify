@@ -51,7 +51,7 @@ export const SecurityPanel: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -61,7 +61,7 @@ export const SecurityPanel: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">Security & Compliance</h2>
-          <p className="text-slate-400 dark:text-slate-500 text-sm">
+          <p className="text-slate-600 dark:text-slate-500 text-sm">
             Monitor security events and compliance status
           </p>
         </div>
@@ -73,7 +73,7 @@ export const SecurityPanel: React.FC = () => {
           className={`px-4 py-2 font-medium transition-colors ${
             activeTab === 'events'
               ? 'text-blue-400 border-b-2 border-blue-400'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              : 'text-slate-600 dark:text-slate-500 hover:text-white'
           }`}
         >
           Security Events
@@ -83,7 +83,7 @@ export const SecurityPanel: React.FC = () => {
           className={`px-4 py-2 font-medium transition-colors ${
             activeTab === 'compliance'
               ? 'text-blue-400 border-b-2 border-blue-400'
-              : 'text-slate-400 dark:text-slate-500 hover:text-white'
+              : 'text-slate-600 dark:text-slate-500 hover:text-white'
           }`}
         >
           Compliance
@@ -95,19 +95,19 @@ export const SecurityPanel: React.FC = () => {
           {stats && (
             <div className="grid grid-cols-4 gap-4">
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                <div className="text-sm text-slate-400 dark:text-slate-500">Total Events</div>
+                <div className="text-sm text-slate-600 dark:text-slate-500">Total Events</div>
                 <div className="text-2xl font-bold text-white">{stats.total || 0}</div>
               </div>
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                <div className="text-sm text-slate-400 dark:text-slate-500">Critical</div>
+                <div className="text-sm text-slate-600 dark:text-slate-500">Critical</div>
                 <div className="text-2xl font-bold text-rose-400">{stats.critical || 0}</div>
               </div>
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                <div className="text-sm text-slate-400 dark:text-slate-500">High</div>
+                <div className="text-sm text-slate-600 dark:text-slate-500">High</div>
                 <div className="text-2xl font-bold text-amber-400">{stats.high || 0}</div>
               </div>
               <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                <div className="text-sm text-slate-400 dark:text-slate-500">Unresolved</div>
+                <div className="text-sm text-slate-600 dark:text-slate-500">Unresolved</div>
                 <div className="text-2xl font-bold text-yellow-400">{stats.unresolved || 0}</div>
               </div>
             </div>
@@ -115,7 +115,7 @@ export const SecurityPanel: React.FC = () => {
 
           <div className="space-y-2">
             {events.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+              <div className="text-center py-12 text-slate-600 dark:text-slate-500">
                 No security events
               </div>
             ) : (
@@ -147,7 +147,7 @@ export const SecurityPanel: React.FC = () => {
                           <XCircle size={16} className="text-rose-400" />
                         )}
                       </div>
-                      <p className="text-sm text-slate-400 dark:text-slate-500">
+                      <p className="text-sm text-slate-600 dark:text-slate-500">
                         {new Date(event.created_at).toLocaleString()}
                       </p>
                     </div>
@@ -175,7 +175,7 @@ export const SecurityPanel: React.FC = () => {
           </div>
           <div className="space-y-2">
             {complianceRecords.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+              <div className="text-center py-12 text-slate-600 dark:text-slate-500">
                 No compliance records
               </div>
             ) : (
@@ -192,13 +192,13 @@ export const SecurityPanel: React.FC = () => {
                           className="px-2 py-1 text-xs rounded ${
                                                     record.status === 'compliant' ? 'bg-green-500/20 text-green-400' :
                                                     record.status === 'non_compliant' ? 'bg-rose-500/20 text-rose-400' :
-                                                    'bg-slate-500/20 text-slate-400 dark:text-slate-500'
+                                                    'bg-slate-500/20 text-slate-600 dark:text-slate-500'
                                                 }"
                         >
                           {record.status}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 dark:text-slate-500">
+                      <p className="text-sm text-slate-600 dark:text-slate-500">
                         {record.control_name}
                       </p>
                     </div>

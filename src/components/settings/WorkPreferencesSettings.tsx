@@ -331,7 +331,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
               >
                 <Icon
                   size={24}
-                  className={isSelected ? 'text-primary-600' : 'text-slate-400 dark:text-slate-500'}
+                  className={isSelected ? 'text-primary-600' : 'text-slate-600 dark:text-slate-500'}
                 />
                 <div
                   className={`mt-2 font-medium ${isSelected ? 'text-primary-700 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'}`}
@@ -394,7 +394,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Default Reminder */}
-          <div className="pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between">
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
@@ -469,7 +469,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Auto-Snooze Overdue */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.work.autoSnoozeOverdue', 'Auto-Snooze Overdue Tasks')}
@@ -494,7 +494,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Focus Mode */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <Zap size={16} className="text-yellow-500" />
@@ -628,7 +628,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Week Start Day */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.work.weekStart', 'Week Start Day')}
@@ -662,7 +662,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Show Completed Tasks */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <CheckSquare size={16} className="text-green-500" />
@@ -690,7 +690,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Show Subtasks */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.work.showSubtasks', 'Show Subtasks by Default')}
@@ -752,7 +752,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Default Due Days */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
                 {t('settings.work.defaultDue', 'Default Task Due Date')}
@@ -775,7 +775,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
           </div>
 
           {/* Time Tracking Mode */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
             <div>
               <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <Clock size={16} className="text-blue-500" />

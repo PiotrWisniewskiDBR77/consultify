@@ -74,22 +74,22 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
       {/* Compact metadata row */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2 text-xs text-slate-500 dark:text-slate-400">
         <span className="inline-flex items-center gap-1.5">
-          <Calendar size={13} className="text-slate-400 dark:text-slate-500" />
+          <Calendar size={13} className="text-slate-600 dark:text-slate-500" />
           {periodStart} – {periodEnd}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <Clock size={13} className="text-slate-400 dark:text-slate-500" />
+          <Clock size={13} className="text-slate-600 dark:text-slate-500" />
           {new Date(generatedAt).toLocaleDateString()}
         </span>
         {(projectName || organizationName) && (
           <span className="inline-flex items-center gap-1.5">
-            <Building2 size={13} className="text-slate-400 dark:text-slate-500" />
+            <Building2 size={13} className="text-slate-600 dark:text-slate-500" />
             {projectName || organizationName}
           </span>
         )}
         {generatedBy && (
           <span className="inline-flex items-center gap-1.5">
-            <FileText size={13} className="text-slate-400 dark:text-slate-500" />
+            <FileText size={13} className="text-slate-600 dark:text-slate-500" />
             {generatedBy}
           </span>
         )}

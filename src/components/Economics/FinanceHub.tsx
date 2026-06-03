@@ -1471,7 +1471,7 @@ export const FinanceHub: React.FC = () => {
             className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-lg shadow-xl dark:border-white/[0.08] dark:bg-navy-900/95 p-1.5 z-20"
             role="menu"
           >
-            <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               {t('finance.analyze.menuTitle', 'Choose next step')}
             </div>
             <div className="space-y-0.5">

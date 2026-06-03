@@ -251,7 +251,7 @@ const NewDecisionModal: React.FC<{
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 dark:text-slate-500"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-500"
           >
             <X size={20} />
           </button>
@@ -339,7 +339,7 @@ const NewDecisionModal: React.FC<{
               min={today}
               className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
               {t('decisions.field.dueDateHint', 'Leave empty if no specific deadline')}
             </p>
           </div>
@@ -461,7 +461,7 @@ const DelegateModal: React.FC<{
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 dark:text-slate-500"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-500"
           >
             <X size={20} />
           </button>
@@ -800,8 +800,8 @@ const DecisionCard: React.FC<{
         </div>
 
         {/* Waiting Time Bar */}
-        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-          <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1">
+        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-500 mb-1">
             <span>{t('decisions.waitingFor', 'Waiting for')}</span>
             <span className="font-medium">
               {decision.daysWaiting || 0} {t('decisions.days', 'days')}
@@ -828,7 +828,7 @@ const DecisionCard: React.FC<{
         className={`px-4 py-3 border-t flex items-center gap-2 ${
           isOverdue
             ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-500/10'
-            : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-navy-700'
+            : 'bg-slate-50/50 dark:bg-white/5 border-slate-200 dark:border-navy-700'
         }`}
       >
         {viewMode === 'my' ? (
@@ -1207,7 +1207,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               id: 'other',
               label: t('decisions.other', 'Other'),
               items: rest,
-              accentColor: 'text-slate-400',
+              accentColor: 'text-slate-600',
             },
           ]
         : []),
@@ -1314,7 +1314,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
           <div className="flex-1 relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -1351,7 +1351,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
 
             {showFilters && (
               <div className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-20">
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                   {t('decisions.filterByStatus', 'By Status')}
                 </div>
                 {(['all', 'overdue', 'thisWeek', 'blocking'] as FilterType[]).map((filter) => (
@@ -1380,8 +1380,8 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                           : t('decisions.filterBlocking', 'Blocking Items')}
                   </button>
                 ))}
-                <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                   {t('decisions.filterByPriority', 'By Priority')}
                 </div>
                 {(['critical', 'high'] as FilterType[]).map((filter) => (
@@ -1468,7 +1468,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-12 text-slate-400 dark:text-slate-500"
+                className="text-center py-12 text-slate-600 dark:text-slate-500"
               >
                 {viewMode === 'my' ? (
                   <>
@@ -1482,7 +1482,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
                   <>
                     <Hourglass
                       size={32}
-                      className="mx-auto mb-2 text-slate-400 dark:text-slate-500"
+                      className="mx-auto mb-2 text-slate-600 dark:text-slate-500"
                     />
                     <p className="text-sm font-medium">
                       {t('decisions.noAwaitingOthers', 'No decisions pending from others')}

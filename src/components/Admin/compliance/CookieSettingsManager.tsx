@@ -147,7 +147,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                     'Configure how your site handles cookies'
                   )}
                 >
-                  <HelpCircle size={16} className="text-slate-400 dark:text-slate-500" />
+                  <HelpCircle size={16} className="text-slate-600 dark:text-slate-500" />
                 </Tooltip>
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -337,7 +337,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
         <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-navy-700">
           {/* Fake page background */}
           <div className="h-64 bg-slate-100 dark:bg-navy-900 flex items-center justify-center">
-            <span className="text-slate-400 dark:text-slate-500">
+            <span className="text-slate-600 dark:text-slate-500">
               {t('admin.compliance.cookies.pageContent', 'Your page content')}
             </span>
           </div>
@@ -362,7 +362,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
             <p
               className={cn(
                 'text-sm mb-4',
-                settings.theme === 'dark' ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'
+                settings.theme === 'dark' ? 'text-slate-600' : 'text-slate-600 dark:text-slate-400'
               )}
             >
               {settings.bannerDescription || 'We use cookies to improve your experience.'}
@@ -427,7 +427,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                       {category.description}
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                    <p className="text-xs text-slate-600 dark:text-slate-500">
                       {t('admin.compliance.cookies.cookiesIncluded', 'Cookies:')}{' '}
                       {category.cookies.join(', ')}
                     </p>

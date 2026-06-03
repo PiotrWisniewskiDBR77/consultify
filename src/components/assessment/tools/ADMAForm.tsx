@@ -339,7 +339,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
                     ? 'bg-amber-500/20 text-amber-400'
                     : gap < 0
                       ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-slate-500/20 text-slate-400'
+                      : 'bg-slate-500/20 text-slate-600'
                 }`}
               >
                 Gap: {gap > 0 ? '+' : ''}
@@ -589,7 +589,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                 {isPolish ? currentPillar.namePL : currentPillar.name}
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-600">
                 {isPolish ? currentPillar.descriptionPL : currentPillar.description}
               </p>
             </div>
@@ -598,21 +598,21 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
           {/* Pillar Score Summary */}
           <div className="flex items-center gap-6 mt-4 p-4 bg-slate-100 dark:bg-navy-800 rounded-lg">
             <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider">Current</span>
+              <span className="text-xs text-slate-600 uppercase tracking-wider">Current</span>
               <div className={`text-2xl font-bold text-${PILLAR_COLORS[activePillarId]}-400`}>
                 {currentPillarData.current || '-'}
               </div>
             </div>
             <ArrowRight size={20} className="text-slate-600" />
             <div>
-              <span className="text-xs text-slate-400 uppercase tracking-wider">Target</span>
+              <span className="text-xs text-slate-600 uppercase tracking-wider">Target</span>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">
                 {currentPillarData.target || '-'}
               </div>
             </div>
             {currentPillarData.gap !== 0 && (
               <div className="ml-auto">
-                <span className="text-xs text-slate-400 uppercase tracking-wider">Gap</span>
+                <span className="text-xs text-slate-600 uppercase tracking-wider">Gap</span>
                 <div
                   className={`text-2xl font-bold ${
                     currentPillarData.gap > 0 ? 'text-amber-400' : 'text-emerald-400'

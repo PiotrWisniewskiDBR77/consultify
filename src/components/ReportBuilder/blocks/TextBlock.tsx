@@ -52,7 +52,7 @@ export const TextBlock: React.FC<TextBlockProps> = ({ block, onUpdate }) => {
       className="w-full min-h-[60px] p-4 text-slate-700 dark:text-slate-200 font-serif leading-relaxed text-lg whitespace-pre-wrap cursor-text"
     >
       {text || (
-        <span className="text-slate-400 dark:text-slate-500 italic">
+        <span className="text-slate-600 dark:text-slate-500 italic">
           Empty text block. Click to edit.
         </span>
       )}

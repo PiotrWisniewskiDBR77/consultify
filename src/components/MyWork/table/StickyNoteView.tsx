@@ -107,7 +107,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
             if (!val) return null;
             return (
               <div key={col.key} className="flex items-center gap-1.5">
-                <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 w-14 truncate">
+                <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600 w-14 truncate">
                   {col.header}
                 </span>
                 {col.type === 'rating' ? (
@@ -117,7 +117,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
                         key={s}
                         size={8}
                         className={
-                          s <= Number(val) ? 'text-amber-400 fill-amber-400' : 'text-slate-300'
+                          s <= Number(val) ? 'text-amber-400 fill-amber-400' : 'text-slate-600'
                         }
                       />
                     ))}
@@ -130,7 +130,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
                         style={{ width: `${Number(val)}%`, backgroundColor: color }}
                       />
                     </div>
-                    <span className="text-[8px] text-slate-400">{val}%</span>
+                    <span className="text-[8px] text-slate-600">{val}%</span>
                   </div>
                 ) : col.type === 'select' ? (
                   <span
@@ -151,17 +151,17 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
 
         {/* Bottom indicators */}
         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/30 dark:border-white/[0.04]">
-          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
+          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600">
             {node.type || 'idea'}
           </span>
           <div className="flex-1" />
           {commentCount > 0 && (
-            <span className="flex items-center gap-0.5 text-[9px] text-slate-400">
+            <span className="flex items-center gap-0.5 text-[9px] text-slate-600">
               <MessageSquare size={8} /> {commentCount}
             </span>
           )}
           {attachCount > 0 && (
-            <span className="flex items-center gap-0.5 text-[9px] text-slate-400">
+            <span className="flex items-center gap-0.5 text-[9px] text-slate-600">
               <Paperclip size={8} /> {attachCount}
             </span>
           )}
@@ -174,7 +174,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
   if (nodes.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <p className="text-sm text-slate-400">{isPl ? 'Brak karteczek' : 'No sticky notes'}</p>
+        <p className="text-sm text-slate-600">{isPl ? 'Brak karteczek' : 'No sticky notes'}</p>
       </div>
     );
   }

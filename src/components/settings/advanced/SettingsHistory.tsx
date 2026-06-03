@@ -182,7 +182,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
             <div className="flex-1 min-w-[200px] relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               />
               <input
                 type="text"
@@ -236,7 +236,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className="flex flex-col items-center">
-                            <Clock size={14} className="text-slate-400 dark:text-slate-500" />
+                            <Clock size={14} className="text-slate-600 dark:text-slate-500" />
                             <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                               {formatTime(entry.timestamp)}
                             </span>
@@ -259,7 +259,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                         </div>
                         <ChevronDown
                           size={16}
-                          className={`text-slate-400 dark:text-slate-500 transition-transform ${expandedId === entry.id ? 'rotate-180' : ''}`}
+                          className={`text-slate-600 dark:text-slate-500 transition-transform ${expandedId === entry.id ? 'rotate-180' : ''}`}
                         />
                       </div>
                     </button>

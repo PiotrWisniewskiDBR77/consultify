@@ -65,7 +65,7 @@ export const PMOSystemMessages: React.FC<PMOSystemMessagesProps> = ({
             </div>
           ))}
           {criticalMessages.length + warningMessages.length > maxMessages && (
-            <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0">
+            <span className="text-xs text-slate-600 dark:text-slate-500 shrink-0">
               +{criticalMessages.length + warningMessages.length - maxMessages} more
             </span>
           )}

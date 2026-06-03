@@ -121,7 +121,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
         case 'low':
           return 'text-green-500 bg-green-500/10 border-green-500/20';
         default:
-          return 'text-slate-400 dark:text-slate-500 bg-slate-400/10';
+          return 'text-slate-600 dark:text-slate-500 bg-slate-400/10';
       }
     };
 
@@ -646,7 +646,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400 space-y-4 animate-in fade-in">
                   <Link size={48} className="opacity-20" />
                   <div className="text-center">
-                    <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-500">
                       Dependency Management
                     </p>
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-xs mx-auto">
@@ -660,7 +660,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
               {activeTab === 'history' && (
                 <div className="space-y-4 animate-in fade-in">
                   <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                    <History size={16} className="text-slate-400 dark:text-slate-500" /> Change Log
+                    <History size={16} className="text-slate-600 dark:text-slate-500" /> Change Log
                   </h3>
                   <div className="space-y-3">
                     {task.changeLog && task.changeLog.length > 0 ? (

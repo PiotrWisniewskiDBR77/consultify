@@ -432,7 +432,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
       {/* Empty state */}
       {keys.length === 0 && !showNew && !loadError && (
         <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
-          <Key className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <Key className="w-8 h-8 text-slate-600 dark:text-slate-600 mx-auto mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             {t('settings.api.noKeys', 'No API keys yet. Create one to get started.')}
           </p>
@@ -546,7 +546,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     {key.prefix}••••••••••••
                   </p>
                   {key.lastUsed && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                       {t('settings.api.lastUsed', 'Last used')}: {key.lastUsed}
                     </p>
                   )}
@@ -557,7 +557,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     className={`p-2 rounded-lg transition-colors ${
                       isSelected
                         ? 'bg-brand text-white'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                        : 'text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                     }`}
                     title={t('settings.api.viewUsage', 'View usage')}
                   >
@@ -568,7 +568,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     className={`p-2 rounded-lg transition-colors ${
                       showKeySettings
                         ? 'bg-brand text-white'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                        : 'text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                     }`}
                     title={t('common.settings', 'Settings')}
                   >
@@ -577,7 +577,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   <button
                     onClick={() => rotateKey(key.id)}
                     disabled={rotatingKey === key.id}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
                     title={t('settings.api.rotate', 'Rotate key')}
                   >
                     {rotatingKey === key.id ? (
@@ -620,7 +620,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     />
                   </div>
                   {key.quotaResetAt && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                       {t('settings.api.resetsAt', 'Resets')}:{' '}
                       {new Date(key.quotaResetAt).toLocaleDateString()}
                     </p>

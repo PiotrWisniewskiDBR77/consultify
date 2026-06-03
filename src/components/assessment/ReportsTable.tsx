@@ -522,7 +522,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         <div className="flex items-center gap-3 mt-4">
           <div className="relative flex-1 max-w-md">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               size={18}
             />
             <input
@@ -535,7 +535,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           </div>
           <button
             onClick={fetchReports}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
           >
             <RefreshCw size={18} />
           </button>
@@ -550,7 +550,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           </div>
         ) : filteredReports.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <FileOutput className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+            <FileOutput className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-3" />
             <p className="text-slate-500 dark:text-slate-400 mb-2">
               {searchQuery
                 ? isPolish
@@ -564,7 +564,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     ? 'No reports yet'
                     : 'No reports in review yet'}
             </p>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
               {isPolish
                 ? showAllStatuses
                   ? 'Utwórz nowy raport lub otwórz istniejący z listy.'
@@ -645,7 +645,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                             {report.sourceName || '—'}
                           </span>
                           {report.sourceType && (
-                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                            <span className="text-xs text-slate-600 dark:text-slate-500">
                               {report.sourceType}
                             </span>
                           )}

@@ -58,8 +58,8 @@ export const QuickFilterBar: React.FC<QuickFilterBarProps> = ({
   ];
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-100 dark:border-navy-700">
-      <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mr-1">
+    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700">
+      <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 mr-1">
         {t('common.show', 'Show')}:
       </span>
 
@@ -82,7 +82,7 @@ export const QuickFilterBar: React.FC<QuickFilterBarProps> = ({
                                     ? 'bg-slate-700 text-white dark:bg-slate-600 shadow-sm'
                                     : hasItems
                                       ? 'bg-white dark:bg-navy-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
-                                      : 'bg-slate-100 dark:bg-navy-800/50 text-slate-400 dark:text-slate-500 border border-transparent cursor-not-allowed opacity-50'
+                                      : 'bg-slate-100 dark:bg-navy-800/50 text-slate-600 dark:text-slate-500 border border-transparent cursor-not-allowed opacity-50'
                                 }
                             `}
             >

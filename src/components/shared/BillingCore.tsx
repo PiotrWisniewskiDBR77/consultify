@@ -130,7 +130,7 @@ export const PlanCard: React.FC<{
         ${plan.price_monthly}
         <span className="text-sm text-slate-500 dark:text-slate-400">/mo</span>
       </p>
-      <ul className="text-sm text-slate-400 dark:text-slate-500 space-y-1 mb-4">
+      <ul className="text-sm text-slate-600 dark:text-slate-500 space-y-1 mb-4">
         <li>• {(plan.token_limit / 1000).toFixed(0)}K tokens/month</li>
         <li>• {plan.storage_limit_gb} GB storage</li>
         <li className="text-xs text-slate-500 dark:text-slate-400">
@@ -146,7 +146,7 @@ export const PlanCard: React.FC<{
             const entries = Object.entries(feats);
             if (entries.length === 0) return null;
             return (
-              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-navy-700 mb-4">
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700 mb-4">
                 <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5">
                   {entries.map(([key, val]) => (
                     <li key={key} className="flex justify-between items-start">
@@ -202,7 +202,7 @@ export const InvoiceTable: React.FC<{
             <th className="px-4 py-3 text-left">Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+        <tbody className="divide-y divide-slate-200 dark:divide-white/5">
           {invoices.slice(0, limit).map((inv) => (
             <tr key={inv.id} className="text-slate-700 dark:text-slate-300">
               <td className="px-4 py-3">
@@ -455,7 +455,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
                 CURRENT PLAN
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">{currentPlan.name}</h3>
-              <p className="text-slate-400 dark:text-slate-500 text-sm">
+              <p className="text-slate-600 dark:text-slate-500 text-sm">
                 ${currentPlan.price_monthly}/month • {(currentPlan.token_limit / 1000).toFixed(0)}K
                 tokens • {currentPlan.storage_limit_gb}GB storage
               </p>
@@ -468,7 +468,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
             {canManagePlans && billingData?.billing?.status === 'active' && (
               <button
                 onClick={handleCancelSubscription}
-                className="text-sm text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors"
+                className="text-sm text-slate-600 dark:text-slate-500 hover:text-rose-400 transition-colors"
               >
                 Cancel Subscription
               </button>

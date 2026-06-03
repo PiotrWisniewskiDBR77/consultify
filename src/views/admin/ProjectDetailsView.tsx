@@ -112,7 +112,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-        <p className="text-slate-400 dark:text-slate-500 animate-pulse">
+        <p className="text-slate-600 dark:text-slate-500 animate-pulse">
           Synchronizing project intelligence...
         </p>
       </div>
@@ -135,7 +135,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
           Projects
         </button>
         <ChevronRight size={12} />
-        <span className="text-slate-300 font-medium">{project.name}</span>
+        <span className="text-slate-600 font-medium">{project.name}</span>
       </div>
 
       {/* Project Header - DBR77 Compatible */}
@@ -155,13 +155,13 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                     : project.status === 'completed'
                       ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                      : 'bg-slate-500/10 text-slate-400 dark:text-slate-500 border-slate-500/20'
+                      : 'bg-slate-500/10 text-slate-600 dark:text-slate-500 border-slate-500/20'
                 }`}
               >
                 {project.status}
               </span>
             </div>
-            <div className="flex flex-wrap gap-4 text-sm text-slate-400 dark:text-slate-500">
+            <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-500">
               <div className="flex items-center gap-1.5">
                 <Users size={16} className="text-blue-400" />
                 <span>{project.team?.length || 0} Members</span>

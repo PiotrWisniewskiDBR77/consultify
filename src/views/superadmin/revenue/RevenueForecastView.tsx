@@ -130,7 +130,7 @@ export const RevenueForecastView: React.FC = () => {
     };
     const badge = badges[method] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
       label: method,
     };
     return (
@@ -146,7 +146,7 @@ export const RevenueForecastView: React.FC = () => {
       quarterly: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
       yearly: { bg: 'bg-green-500/20', text: 'text-green-400' },
     };
-    const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-400' };
+    const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-600' };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
         {type.charAt(0).toUpperCase() + type.slice(1)}

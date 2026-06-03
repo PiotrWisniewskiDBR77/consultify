@@ -177,7 +177,7 @@ export const AnalysisCompareView: React.FC = () => {
               >
                 <button
                   onClick={() => removeAnalysis(analysis.id)}
-                  className="absolute top-2 right-2 p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                  className="absolute top-2 right-2 p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                 >
                   <X size={16} />
                 </button>
@@ -189,7 +189,7 @@ export const AnalysisCompareView: React.FC = () => {
                     <p className="font-medium text-navy-900 dark:text-white truncate">
                       {analysis.name}
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                    <p className="text-xs text-slate-600 dark:text-slate-500">
                       {new Date(analysis.createdAt).toLocaleDateString('pl-PL')}
                     </p>
                   </div>
@@ -312,7 +312,7 @@ export const AnalysisCompareView: React.FC = () => {
                 onClick={() => setShowSelector(false)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
               >
-                <X size={20} className="text-slate-400 dark:text-slate-500" />
+                <X size={20} className="text-slate-600 dark:text-slate-500" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
@@ -333,7 +333,7 @@ export const AnalysisCompareView: React.FC = () => {
                           <p className="font-medium text-navy-900 dark:text-white truncate">
                             {analysis.name}
                           </p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
                             Wynik: {analysis.overallScore?.toFixed(1) || '0'}/7 •
                             {new Date(analysis.createdAt).toLocaleDateString('pl-PL')}
                           </p>

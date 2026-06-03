@@ -127,7 +127,7 @@ function PackValidationsSection({
               >
                 <span className="font-medium">{v.checkCode}</span>: {v.message || v.checkName}
                 {v.expectedValue != null && v.actualValue != null && (
-                  <span className="text-slate-400">
+                  <span className="text-slate-600">
                     {' '}
                     (expected: {v.expectedValue}, actual: {v.actualValue})
                   </span>
@@ -480,7 +480,7 @@ export function useFinancePreview({
             pills={metaPillsForCard}
             trailing={
               <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 inline-flex items-center gap-1.5">
-                <Clock size={14} className="text-slate-400" />
+                <Clock size={14} className="text-slate-600" />
                 {formatAge(row.updatedAt, isPl)}
               </span>
             }

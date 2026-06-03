@@ -51,7 +51,7 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
               <div className="p-4">
                 <button
                   onClick={onClose}
-                  className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white transition-colors"
+                  className="absolute top-3 right-3 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -141,7 +141,7 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
           >
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
+              className="absolute top-4 right-4 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
             >
               <X size={20} />
             </button>

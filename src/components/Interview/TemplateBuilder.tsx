@@ -2287,7 +2287,7 @@ ${sourceText || '(none)'}`;
                 <button
                   type="button"
                   onClick={() => setQualityResult(null)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06]"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06]"
                   aria-label={isPolish ? 'Zamknij' : 'Dismiss'}
                 >
                   <X size={14} />
@@ -2306,7 +2306,7 @@ ${sourceText || '(none)'}`;
                     return (
                       <li
                         key={r.questionId || idx}
-                        className="rounded-xl border border-slate-100 dark:border-navy-700 bg-slate-50/60 dark:bg-white/[0.03] px-3 py-2"
+                        className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-white/[0.03] px-3 py-2"
                       >
                         <div className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
                           {label}
@@ -2430,7 +2430,7 @@ const SortableQuestionCard: React.FC<QuestionCardProps> = (props) => {
             {...attributes}
             {...listeners}
             onClick={(event) => event.stopPropagation()}
-            className={`p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors touch-none ${
+            className={`p-1 rounded text-slate-600 hover:text-slate-200 hover:bg-white/10 transition-colors touch-none ${
               props.readOnly
                 ? 'opacity-40 cursor-not-allowed'
                 : 'cursor-grab active:cursor-grabbing'
@@ -2670,7 +2670,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     <button
                       onClick={() => handleRemoveOption(idx)}
                       disabled={readOnly}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-rose-500/20 text-slate-600 hover:text-rose-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     >
                       <X size={14} />
                     </button>
@@ -2723,7 +2723,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {/* Description / helper text */}
           <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
               {isPolish ? 'Opis / tekst pomocniczy' : 'Description / helper text'}
             </label>
             <textarea
@@ -2742,7 +2742,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {/* Evidence prompt */}
           <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-500">
               {isPolish ? 'Zachęta do dowodów' : 'Evidence prompt'}
             </label>
             <input

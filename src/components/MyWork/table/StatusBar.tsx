@@ -118,15 +118,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               onClick={() => handleDropdownToggle(col.id)}
               className="flex items-center gap-0.5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
-              <span className="text-slate-400 dark:text-slate-500">{col.name}:</span>
+              <span className="text-slate-600 dark:text-slate-500">{col.name}:</span>
               {mode !== 'none' && value ? (
                 <span className="font-mono font-medium text-slate-600 dark:text-slate-300">
                   {value}
                 </span>
               ) : (
-                <span className="text-slate-400">—</span>
+                <span className="text-slate-600">—</span>
               )}
-              <ChevronDown size={10} className="text-slate-400" />
+              <ChevronDown size={10} className="text-slate-600" />
             </button>
 
             {isOpen && (

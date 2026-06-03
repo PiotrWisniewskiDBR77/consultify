@@ -410,7 +410,7 @@ const OverviewTab: React.FC = () => {
                         ? grossProfit >= 0
                           ? 'text-emerald-400'
                           : 'text-rose-400'
-                        : 'text-slate-400'
+                        : 'text-slate-600'
                     }`}
                   >
                     {formatCurrency(grossProfit)}
@@ -438,14 +438,14 @@ const OverviewTab: React.FC = () => {
                     <th className="pb-3 font-medium text-right">Monthly Revenue</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                   {revenueStats?.planDistribution.map((plan) => (
                     <tr key={plan.name} className="text-slate-900 dark:text-white">
                       <td className="py-3 font-medium">{plan.name}</td>
-                      <td className="py-3 text-slate-400 dark:text-slate-500">
+                      <td className="py-3 text-slate-600 dark:text-slate-500">
                         {formatCurrency(plan.price_monthly)}/mo
                       </td>
-                      <td className="py-3 text-slate-400 dark:text-slate-500">
+                      <td className="py-3 text-slate-600 dark:text-slate-500">
                         {formatNumber(plan.count)}
                       </td>
                       <td className="py-3 text-right font-semibold text-emerald-400">
@@ -501,7 +501,7 @@ const OverviewTab: React.FC = () => {
                       <td className="py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">
                         {item.model}
                       </td>
-                      <td className="py-3 text-right text-slate-400 dark:text-slate-500">
+                      <td className="py-3 text-right text-slate-600 dark:text-slate-500">
                         {formatNumber(item.totalTokens)}
                       </td>
                       <td className="py-3 text-right font-semibold text-rose-400">
@@ -837,7 +837,7 @@ const PlansTab: React.FC = () => {
                 className={`relative bg-white dark:bg-navy-900 rounded-xl p-6 border transition-all ${
                   plan.is_active
                     ? 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                    : 'border-slate-100 dark:border-white/5 opacity-60'
+                    : 'border-slate-200 dark:border-white/5 opacity-60'
                 }`}
               >
                 {editingId === plan.id ? (
@@ -924,7 +924,7 @@ const PlanForm: React.FC<{
       <>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1 block">
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1 block">
               Tokens
             </label>
             <input
@@ -944,7 +944,7 @@ const PlanForm: React.FC<{
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1 block">
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1 block">
               Storage (GB)
             </label>
             <input
@@ -1046,7 +1046,7 @@ const PlanCard: React.FC<{
     </div>
 
     {type === 'organization' && (
-      <div className="mt-4 space-y-2 text-sm text-slate-400 dark:text-slate-500">
+      <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-500">
         <div className="flex items-center gap-2">
           <Database className="w-4 h-4" />
           {formatCompactNumber(plan.token_limit)} tokens
@@ -1151,7 +1151,7 @@ const TokenEconomyTab: React.FC = () => {
     <div className="space-y-6">
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-6 h-6 animate-spin text-slate-400 dark:text-slate-500" />
+          <RefreshCw className="w-6 h-6 animate-spin text-slate-600 dark:text-slate-500" />
         </div>
       ) : loadError ? (
         <DegradedState title="Token economy metrics unavailable" description={loadError} />
@@ -1161,7 +1161,7 @@ const TokenEconomyTab: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
               <div className="flex justify-between items-start mb-3">
-                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
+                <span className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase">
                   Active AI Models
                 </span>
                 <Zap size={18} className="text-yellow-400" />
@@ -1172,7 +1172,7 @@ const TokenEconomyTab: React.FC = () => {
             </div>
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
               <div className="flex justify-between items-start mb-3">
-                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
+                <span className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase">
                   Active Packages
                 </span>
                 <Package size={18} className="text-blue-400" />
@@ -1183,7 +1183,7 @@ const TokenEconomyTab: React.FC = () => {
             </div>
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
               <div className="flex justify-between items-start mb-3">
-                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
+                <span className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase">
                   Platform Margin
                 </span>
                 <TrendingUp size={18} className="text-emerald-400" />
@@ -1192,7 +1192,7 @@ const TokenEconomyTab: React.FC = () => {
             </div>
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl p-4">
               <div className="flex justify-between items-start mb-3">
-                <span className="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase">
+                <span className="text-slate-600 dark:text-slate-500 text-xs font-medium uppercase">
                   System Balance
                 </span>
                 <DollarSign size={18} className="text-primary-400" />
@@ -1367,7 +1367,7 @@ const TransactionsTab: React.FC = () => {
                       {tx.type}
                     </span>
                   </td>
-                  <td className="py-4 px-6 text-slate-400 dark:text-slate-500 text-sm max-w-xs truncate">
+                  <td className="py-4 px-6 text-slate-600 dark:text-slate-500 text-sm max-w-xs truncate">
                     {tx.description || EMPTY_VALUE}
                   </td>
                   <td className="py-4 px-6 text-right">
@@ -1652,7 +1652,7 @@ const ContractsTab: React.FC = () => {
             No manual contracts configured yet.
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
+          <div className="divide-y divide-slate-200 dark:divide-white/5">
             {contracts.map((contract) => (
               <div
                 key={`${contract.organization_id}-${contract.subscription_plan_id}`}

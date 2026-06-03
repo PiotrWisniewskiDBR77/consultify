@@ -357,7 +357,7 @@ function TableCanvas({ content }: { content: WorkCanvasTableContent }) {
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-white/10 bg-white dark:bg-navy-900">
+        <tbody className="divide-y divide-slate-200 dark:divide-white/10 bg-white dark:bg-navy-900">
           {content.rows.map((row, index) => (
             <tr key={`${row[content.columns[0]]}-${index}`}>
               {content.columns.map((column) => (
@@ -958,7 +958,7 @@ export function WorkCanvasShell() {
                 onClick={() => setVersionIndex((value) => Math.max(0, value - 1))}
                 disabled
                 title="Version history will load from artifact history in a later runtime step."
-                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-400 dark:border-white/10 dark:text-slate-500"
+                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-white/10 dark:text-slate-500"
               >
                 Prev
               </button>
@@ -967,7 +967,7 @@ export function WorkCanvasShell() {
                 onClick={() => setVersionIndex((value) => value + 1)}
                 disabled
                 title="Version history will load from artifact history in a later runtime step."
-                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-400 dark:border-white/10 dark:text-slate-500"
+                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-white/10 dark:text-slate-500"
               >
                 Next
               </button>
@@ -1003,7 +1003,7 @@ export function WorkCanvasShell() {
                 </div>
               ) : null}
               {draft ? (
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-white/10">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -1072,7 +1072,7 @@ export function WorkCanvasShell() {
                 />
               ) : (
                 <div className="flex min-h-[420px] flex-col items-center justify-center text-center">
-                  <Sparkles className="text-slate-400" size={32} />
+                  <Sparkles className="text-slate-600" size={32} />
                   <h2 className="mt-3 text-lg font-semibold">Start working with AI</h2>
                   <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
                     Ask the chat to create a note, table, checklist or research brief.

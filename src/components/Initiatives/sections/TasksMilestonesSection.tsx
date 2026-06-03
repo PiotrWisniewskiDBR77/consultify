@@ -1464,7 +1464,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
                           </button>
                           {!readonly && (
                             <>
-                              <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                              <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                               <button
                                 onClick={() => {
                                   closeMenu();

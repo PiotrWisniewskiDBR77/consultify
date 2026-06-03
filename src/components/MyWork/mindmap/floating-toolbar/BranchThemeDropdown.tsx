@@ -37,7 +37,7 @@ export const BranchThemeDropdown: React.FC<BranchThemeDropdownProps> = ({
 }) => {
   return (
     <div className="w-48 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl py-1">
-      <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+      <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
         {isPl ? 'Styl linii' : 'Line style'}
       </div>
       {LINE_STYLES.map((s) => {

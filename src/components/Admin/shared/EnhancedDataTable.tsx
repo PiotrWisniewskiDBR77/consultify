@@ -391,7 +391,7 @@ export const EnhancedDataTable = forwardRef<
     // Render sort icon
     const SortIcon = ({ columnKey }: { columnKey: keyof T | string }) => {
       if (sortKey !== columnKey) {
-        return <ChevronsUpDown size={14} className="text-slate-400 dark:text-slate-500" />;
+        return <ChevronsUpDown size={14} className="text-slate-600 dark:text-slate-500" />;
       }
       if (sortDirection === 'asc') {
         return <ChevronUp size={14} className="text-primary-500" />;
@@ -663,7 +663,7 @@ export const EnhancedDataTable = forwardRef<
                                   </button>
                                   <button
                                     onClick={cancelEdit}
-                                    className="p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
+                                    className="p-1 text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
                                   >
                                     <X size={14} />
                                   </button>
@@ -679,7 +679,7 @@ export const EnhancedDataTable = forwardRef<
                                         e.stopPropagation();
                                         startEditing(rowId, String(column.key), value);
                                       }}
-                                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 transition-opacity"
+                                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 transition-opacity"
                                     >
                                       <Pencil size={12} />
                                     </button>
@@ -698,7 +698,7 @@ export const EnhancedDataTable = forwardRef<
                           >
                             <Dropdown>
                               <DropdownTrigger asChild>
-                                <button className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-700 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+                                <button className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-700 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
                                   <MoreHorizontal size={16} />
                                 </button>
                               </DropdownTrigger>
@@ -841,13 +841,13 @@ export const EnhancedDataTable = forwardRef<
                   />
                   <GripVertical
                     size={14}
-                    className="text-slate-400 dark:text-slate-500 cursor-grab"
+                    className="text-slate-600 dark:text-slate-500 cursor-grab"
                   />
                   <span className="text-sm text-navy-900 dark:text-white flex-1">
                     {column.header}
                   </span>
                   {isRequired && (
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       {t('admin.table.required', 'Required')}
                     </span>
                   )}

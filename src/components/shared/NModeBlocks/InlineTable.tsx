@@ -71,7 +71,7 @@ export const InlineTable = <T extends Record<string, unknown>>({
       className={`rounded-xl border border-slate-200/50 dark:border-navy-700/50 overflow-hidden ${className}`}
     >
       {caption && (
-        <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-900/30 border-b border-slate-200/50 dark:border-navy-700/50">
+        <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-900/30 border-b border-slate-200/50 dark:border-navy-700/50">
           {caption}
         </div>
       )}
@@ -81,7 +81,7 @@ export const InlineTable = <T extends Record<string, unknown>>({
             {columns.map((col) => (
               <th
                 key={col.key}
-                className={`${headerPadding} text-[10px] uppercase tracking-wide font-semibold text-slate-400 dark:text-slate-500 ${getAlignment(col.align)} ${col.width || ''}`}
+                className={`${headerPadding} text-[10px] uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-500 ${getAlignment(col.align)} ${col.width || ''}`}
               >
                 {col.header}
               </th>
@@ -93,7 +93,7 @@ export const InlineTable = <T extends Record<string, unknown>>({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-3 py-6 text-center text-xs text-slate-400 dark:text-slate-500"
+                className="px-3 py-6 text-center text-xs text-slate-600 dark:text-slate-500"
               >
                 {emptyMessage}
               </td>

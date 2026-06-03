@@ -103,14 +103,14 @@ export const PMODomainBadge: React.FC<{ mapping: PMOStandardsMapping; showToolti
           <div className="mb-2 font-semibold">{domainInfo.label}</div>
           <div className="space-y-1 text-slate-700 dark:text-slate-300">
             <div>
-              <span className="text-slate-400 dark:text-slate-500">ISO 21500:</span>{' '}
+              <span className="text-slate-600 dark:text-slate-500">ISO 21500:</span>{' '}
               {mapping.iso21500}
             </div>
             <div>
-              <span className="text-slate-400 dark:text-slate-500">PMBOK 7:</span> {mapping.pmbok}
+              <span className="text-slate-600 dark:text-slate-500">PMBOK 7:</span> {mapping.pmbok}
             </div>
             <div>
-              <span className="text-slate-400 dark:text-slate-500">PRINCE2:</span> {mapping.prince2}
+              <span className="text-slate-600 dark:text-slate-500">PRINCE2:</span> {mapping.prince2}
             </div>
           </div>
           <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-white dark:bg-navy-900" />
@@ -284,7 +284,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({
 
       {/* PMO Domains Legend */}
       <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-navy-700 dark:bg-navy-900/40">
-        <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
           PMO Standards Compliance Domains
         </div>
         <div className="flex flex-wrap gap-2">

@@ -59,7 +59,7 @@ export default function PublicViewPage() {
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-900 overflow-hidden">
           <GridView rows={data.rows} columns={data.columns} locked={true} />
         </div>
-        <p className="mt-4 text-center text-xs text-slate-400 dark:text-slate-500">
+        <p className="mt-4 text-center text-xs text-slate-600 dark:text-slate-500">
           Shared view — read only
         </p>
       </div>

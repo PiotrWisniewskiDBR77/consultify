@@ -75,9 +75,9 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
       return <Check className="w-4 h-4 text-green-500" />;
     }
     if (isGenerating) {
-      return <Clock className="w-4 h-4 text-slate-400 animate-pulse" />;
+      return <Clock className="w-4 h-4 text-slate-600 animate-pulse" />;
     }
-    return <Clock className="w-4 h-4 text-slate-400" />;
+    return <Clock className="w-4 h-4 text-slate-600" />;
   };
 
   // Already generated
@@ -198,7 +198,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
               <div className="flex-1">
                 <span className="text-sm text-slate-900 dark:text-white">{section.title}</span>
                 {section.generatedAt && (
-                  <span className="ml-2 text-xs text-slate-400">
+                  <span className="ml-2 text-xs text-slate-600">
                     {new Date(section.generatedAt).toLocaleTimeString()}
                   </span>
                 )}

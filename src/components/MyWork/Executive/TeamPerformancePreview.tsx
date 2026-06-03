@@ -145,7 +145,7 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
   if (loading) {
     return (
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-navy-700">
+        <div className="p-4 border-b border-slate-200 dark:border-navy-700">
           <div className="h-6 w-40 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
         </div>
         <div className="p-4 space-y-3">
@@ -239,7 +239,7 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Users size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
+            <Users size={32} className="text-slate-600 dark:text-slate-600 mb-2" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t('executive.team.noMembers', 'No team members found')}
             </p>
@@ -252,7 +252,7 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
         <div className="px-5 py-3 shrink-0">
           <button
             onClick={onViewAll}
-            className="w-full text-center text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center justify-center gap-1 transition-colors duration-150"
+            className="w-full text-center text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center justify-center gap-1 transition-colors duration-150"
           >
             {t('executive.team.viewAll', 'View full team report')}
             <ArrowRight size={13} />

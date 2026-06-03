@@ -79,7 +79,7 @@ const getFileIcon = (mimeType: string, isFolder: boolean) => {
     return <Table size={20} className="text-green-500" />;
   if (mimeType.includes('document') || mimeType.includes('word') || mimeType === 'application/pdf')
     return <FileText size={20} className="text-blue-500" />;
-  return <File size={20} className="text-slate-400" />;
+  return <File size={20} className="text-slate-600" />;
 };
 
 // Format file size
@@ -206,7 +206,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
         <div className="flex items-center gap-1 px-4 py-2 border-b border-slate-200 dark:border-navy-700 overflow-x-auto">
           {currentPath.map((item, index) => (
             <React.Fragment key={item.id}>
-              {index > 0 && <ChevronRight size={14} className="text-slate-400 shrink-0" />}
+              {index > 0 && <ChevronRight size={14} className="text-slate-600 shrink-0" />}
               <button
                 onClick={() => navigateToBreadcrumb(index)}
                 className={`text-sm px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors whitespace-nowrap ${
@@ -229,7 +229,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
             })}
           </p>
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
               type="text"
               placeholder={t('common.search', 'Szukaj...')}
@@ -252,7 +252,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
               <p>{t('aiChat.cloudPicker.noFiles', 'Brak plików')}</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-navy-700">
+            <div className="divide-y divide-slate-200 dark:divide-navy-700">
               {filteredFiles.map((file) => (
                 <button
                   key={file.id}
@@ -286,7 +286,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                       {formatSize(file.size ?? 0)}
                     </span>
                   )}
-                  {file.isFolder && <ChevronRight size={16} className="text-slate-400 shrink-0" />}
+                  {file.isFolder && <ChevronRight size={16} className="text-slate-600 shrink-0" />}
                 </button>
               ))}
             </div>

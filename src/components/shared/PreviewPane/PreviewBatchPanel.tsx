@@ -43,7 +43,7 @@ export const PreviewBatchPanel: React.FC<PreviewBatchPanelProps> = ({
         <CheckSquare2 size={16} className="text-primary-500" />
         <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
-          {totalCount ? <span className="text-slate-400 font-normal"> / {totalCount}</span> : null}
+          {totalCount ? <span className="text-slate-600 font-normal"> / {totalCount}</span> : null}
         </span>
         {onDeselectAll ? (
           <button
@@ -66,7 +66,7 @@ export const PreviewBatchPanel: React.FC<PreviewBatchPanelProps> = ({
               <span className="text-slate-700 dark:text-slate-200 font-medium">
                 {field.value}
                 {field.count < selectedCount ? (
-                  <span className="text-slate-400 ml-1">
+                  <span className="text-slate-600 ml-1">
                     ({field.count}/{selectedCount})
                   </span>
                 ) : null}

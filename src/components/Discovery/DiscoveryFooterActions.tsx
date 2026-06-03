@@ -44,7 +44,7 @@ const VersionSelector: React.FC = () => {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
           <div className="absolute bottom-full mb-2 left-0 bg-white dark:bg-navy-800 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 min-w-[180px] z-20">
-            <div className="p-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="p-2 border-b border-slate-200 dark:border-navy-700">
               <button
                 onClick={handleSaveVersion}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
@@ -69,7 +69,7 @@ const VersionSelector: React.FC = () => {
                     className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
                   >
                     <span>v{v.version}</span>
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       {new Date(v.createdAt).toLocaleTimeString()}
                     </span>
                   </button>

@@ -130,9 +130,9 @@ const getCategoryBadge = (category: string) => {
     case 'control':
       return { color: 'text-primary-400', bg: 'bg-primary-500/15', label: 'Control' };
     case 'meta':
-      return { color: 'text-slate-400', bg: 'bg-slate-500/15', label: 'Meta' };
+      return { color: 'text-slate-600', bg: 'bg-slate-500/15', label: 'Meta' };
     default:
-      return { color: 'text-slate-400', bg: 'bg-slate-500/15', label: category };
+      return { color: 'text-slate-600', bg: 'bg-slate-500/15', label: category };
   }
 };
 
@@ -356,7 +356,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                         ? 'bg-blue-500/15 border-blue-500 text-blue-300'
                         : c === 'control'
                           ? 'bg-primary-500/15 border-primary-500 text-primary-300'
-                          : 'bg-slate-500/15 border-slate-500 text-slate-300'
+                          : 'bg-slate-500/15 border-slate-500 text-slate-600'
                     : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-300'
                 }`}
               >
@@ -546,7 +546,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                   <span className="text-sm font-medium text-slate-900 dark:text-white">
                                     {st.name}
                                   </span>
-                                  <code className="text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 font-mono">
+                                  <code className="text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 font-mono">
                                     {st.key}
                                   </code>
                                 </div>
@@ -596,7 +596,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                 className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center"
                                 title="No AI prompt"
                               >
-                                <span className="text-[10px] text-slate-400">—</span>
+                                <span className="text-[10px] text-slate-600">—</span>
                               </div>
                             )}
                           </td>
@@ -684,7 +684,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                           {st.name}
                                         </p>
                                         {st.namePl && (
-                                          <p className="text-xs text-slate-400">{st.namePl}</p>
+                                          <p className="text-xs text-slate-600">{st.namePl}</p>
                                         )}
                                       </div>
                                     </div>
@@ -692,7 +692,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       {st.description || 'No description'}
                                     </p>
                                     {st.descriptionPl && (
-                                      <p className="text-xs text-slate-400 italic">
+                                      <p className="text-xs text-slate-600 italic">
                                         {st.descriptionPl}
                                       </p>
                                     )}
@@ -706,7 +706,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                   </h4>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">
+                                      <span className="text-[10px] text-slate-600 uppercase">
                                         Key
                                       </span>
                                       <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
@@ -714,7 +714,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">
+                                      <span className="text-[10px] text-slate-600 uppercase">
                                         Component
                                       </span>
                                       <p className="text-xs font-mono text-indigo-500">
@@ -722,7 +722,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">
+                                      <span className="text-[10px] text-slate-600 uppercase">
                                         Icon
                                       </span>
                                       <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -733,7 +733,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">
+                                      <span className="text-[10px] text-slate-600 uppercase">
                                         ID
                                       </span>
                                       <p className="text-xs font-mono text-slate-500 truncate">
@@ -757,9 +757,9 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                     <div className="flex flex-col items-center justify-center h-32 rounded-lg bg-slate-50 dark:bg-navy-900/50 border border-dashed border-slate-200 dark:border-navy-700">
                                       <Sparkles
                                         size={20}
-                                        className="text-slate-300 dark:text-slate-600 mb-2"
+                                        className="text-slate-600 dark:text-slate-600 mb-2"
                                       />
-                                      <p className="text-xs text-slate-400">
+                                      <p className="text-xs text-slate-600">
                                         No AI prompt template configured
                                       </p>
                                     </div>

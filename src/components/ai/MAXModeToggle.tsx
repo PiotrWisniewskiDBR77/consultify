@@ -170,7 +170,7 @@ export function MAXModeCostBadge({
     <div className="flex items-center gap-2 text-xs">
       <span className="text-gray-500 dark:text-gray-400">Szacowany koszt:</span>
       <span className="font-medium text-primary-600">~{totalTokens.toLocaleString()} tokenów</span>
-      <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+      <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
         ({multiplier}x MAX)
       </span>
     </div>

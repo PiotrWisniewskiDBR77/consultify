@@ -91,7 +91,7 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
 
       <div>
         <label className="text-xs font-medium text-gray-500">
-          Y-Axis Field <span className="text-gray-400">(numeric, optional)</span>
+          Y-Axis Field <span className="text-gray-600">(numeric, optional)</span>
         </label>
         <select
           value={config.yFieldId || ''}

@@ -430,10 +430,10 @@ export const Select: React.FC<SelectProps> = ({
             ${fullWidth ? 'w-full' : ''}
           `}
         >
-          <span className={selectedOption ? 'text-navy-900 dark:text-white' : 'text-slate-400'}>
+          <span className={selectedOption ? 'text-navy-900 dark:text-white' : 'text-slate-600'}>
             {selectedOption?.label || placeholder}
           </span>
-          <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+          <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
         </button>
       </DropdownTrigger>
       <DropdownContent width="trigger">

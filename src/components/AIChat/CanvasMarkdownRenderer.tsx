@@ -79,7 +79,7 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
             </th>
           ),
           td: ({ children }) => (
-            <td className="border-t border-slate-100 px-4 py-3 align-top text-slate-700 dark:border-white/10 dark:text-slate-300">
+            <td className="border-t border-slate-200 px-4 py-3 align-top text-slate-700 dark:border-white/10 dark:text-slate-300">
               {children}
             </td>
           ),

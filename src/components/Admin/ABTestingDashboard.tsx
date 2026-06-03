@@ -406,7 +406,7 @@ export function ABTestingDashboard() {
                   onClick={() => toggleExpanded(experiment.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <button className="text-slate-400 dark:text-slate-500">
+                    <button className="text-slate-600 dark:text-slate-500">
                       {expandedExperiments.has(experiment.id) ? (
                         <ChevronDown size={20} />
                       ) : (
@@ -505,7 +505,7 @@ export function ABTestingDashboard() {
 
                 {/* Expanded Details */}
                 {expandedExperiments.has(experiment.id) && (
-                  <div className="px-6 py-4 border-t border-slate-100 dark:border-navy-700">
+                  <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700">
                     {/* Metadata */}
                     <div className="grid grid-cols-4 gap-4 mb-6 text-sm">
                       <div>
@@ -572,7 +572,7 @@ export function ABTestingDashboard() {
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                        <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                           {experiment.variants.map((variant) => (
                             <tr
                               key={variant.id}
@@ -643,7 +643,7 @@ export function ABTestingDashboard() {
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>

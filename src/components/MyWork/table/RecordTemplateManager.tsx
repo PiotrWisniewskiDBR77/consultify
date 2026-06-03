@@ -125,7 +125,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
               onClick={onClose}
               className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
-              <X size={16} className="text-slate-400" />
+              <X size={16} className="text-slate-600" />
             </button>
           </div>
         </div>
@@ -134,12 +134,12 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
             </div>
           ) : templates.length === 0 ? (
             <div className="text-center py-12">
-              <FileText size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-              <p className="text-[11px] text-slate-400">
+              <FileText size={32} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
+              <p className="text-[11px] text-slate-600">
                 {isPl
                   ? 'Brak szablonów. Utwórz pierwszy szablon, aby szybko dodawać rekordy.'
                   : 'No templates yet. Create one to quickly add pre-filled records.'}
@@ -160,7 +160,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                       <div className="text-[12px] font-semibold text-slate-700 dark:text-slate-300 truncate">
                         {tpl.name}
                       </div>
-                      <div className="text-[9px] text-slate-400 mt-0.5">
+                      <div className="text-[9px] text-slate-600 mt-0.5">
                         {Object.keys(tpl.data).filter((k) => !k.startsWith('_')).length}{' '}
                         {isPl ? 'pól wypełnionych' : 'fields pre-filled'}
                       </div>
@@ -168,7 +168,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleUse(tpl)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                         title={isPl ? 'Użyj szablonu' : 'Use template'}
                       >
                         <Copy size={12} />
@@ -180,14 +180,14 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                               setEditingTemplate(tpl);
                               setShowCreate(true);
                             }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                             title={isPl ? 'Edytuj' : 'Edit'}
                           >
                             <Edit3 size={12} />
                           </button>
                           <button
                             onClick={() => handleDelete(tpl.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                             title={isPl ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={12} />
@@ -352,7 +352,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-slate-600" />
           </button>
         </div>
 
@@ -387,7 +387,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 />
               ))}
               {editableFields.length === 0 && (
-                <p className="text-[10px] text-slate-400 italic">
+                <p className="text-[10px] text-slate-600 italic">
                   {isPl ? 'Brak edytowalnych pól' : 'No editable fields'}
                 </p>
               )}
@@ -608,17 +608,17 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
             onClick={onClose}
             className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <X size={11} className="text-slate-400" />
+            <X size={11} className="text-slate-600" />
           </button>
         </div>
 
         <div className="max-h-[260px] overflow-auto p-1.5">
           {loading ? (
             <div className="flex justify-center py-4">
-              <Loader2 size={14} className="animate-spin text-slate-400" />
+              <Loader2 size={14} className="animate-spin text-slate-600" />
             </div>
           ) : templates.length === 0 ? (
-            <p className="text-center py-4 text-[10px] text-slate-400">
+            <p className="text-center py-4 text-[10px] text-slate-600">
               {isPl ? 'Brak szablonów' : 'No templates'}
             </p>
           ) : (

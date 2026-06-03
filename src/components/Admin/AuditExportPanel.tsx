@@ -91,7 +91,7 @@ export const AuditExportPanel: React.FC = () => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
             Start Date
           </label>
           <input
@@ -102,7 +102,7 @@ export const AuditExportPanel: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">End Date</label>
+          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">End Date</label>
           <input
             type="date"
             value={dateRange.end}
@@ -113,7 +113,7 @@ export const AuditExportPanel: React.FC = () => {
       </div>
 
       <div>
-        <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+        <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
           Export Format
         </label>
         <div className="flex gap-3">

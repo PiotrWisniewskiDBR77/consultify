@@ -201,7 +201,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
                 </div>
 
                 {isDisabled && (
-                  <span className="absolute top-2 right-2 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="absolute top-2 right-2 text-xs text-slate-600 dark:text-slate-500">
                     {isPl ? 'Niedostępne' : 'Not available'}
                   </span>
                 )}
@@ -220,7 +220,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
 
           {/* Search */}
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
             <input
               type="text"
               value={searchQuery}

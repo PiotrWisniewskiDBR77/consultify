@@ -226,7 +226,7 @@ export const RACIMatrix: React.FC<RACIMatrixProps> = ({ projectId }) => {
                             ))}
                           </div>
                         ) : (
-                          <span className="text-gray-300 dark:text-gray-600">—</span>
+                          <span className="text-gray-600 dark:text-gray-600">—</span>
                         )}
                       </td>
                     );

@@ -144,7 +144,7 @@ const MetricCard: React.FC<{
       <div className={`text-2xl font-bold ${styles.value}`}>{value}</div>
       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{title}</div>
       {subtitle && (
-        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{subtitle}</div>
+        <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">{subtitle}</div>
       )}
     </motion.div>
   );
@@ -201,7 +201,7 @@ const AlertSection: React.FC<{
         </div>
         <ChevronRight
           size={16}
-          className={`text-slate-400 dark:text-slate-500 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+          className={`text-slate-600 dark:text-slate-500 transition-transform ${isOpen ? 'rotate-90' : ''}`}
         />
       </button>
 
@@ -370,7 +370,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
           <button
             onClick={() => fetchData(true)}
             disabled={refreshing}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           </button>
@@ -486,7 +486,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                     </span>
                   </div>
                   {d.ownerName && (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500">
                       Owner: {d.ownerName}
                     </span>
                   )}
@@ -516,7 +516,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                     </span>
                   </div>
                   {d.ownerName && (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500">
                       Owner: {d.ownerName}
                     </span>
                   )}
@@ -546,7 +546,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                       {owner.pendingCount} pending
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                  <span className="text-[10px] text-slate-600 dark:text-slate-500">
                     {owner.email}
                   </span>
                 </button>

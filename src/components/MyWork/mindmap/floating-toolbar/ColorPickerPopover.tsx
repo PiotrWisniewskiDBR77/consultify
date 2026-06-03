@@ -113,7 +113,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
     <div className="w-60 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl p-2">
       {/* Line style */}
       <div className="mb-2">
-        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1">
+        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1">
           {isPl ? 'Styl linii' : 'Line style'}
         </div>
         <div className="flex gap-1">
@@ -135,7 +135,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
 
       {/* Opacity */}
       <div className="mb-2">
-        <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1">
+        <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1">
           <span>{isPl ? 'Krycie' : 'Opacity'}</span>
           <span className="text-slate-500">{opacity}%</span>
         </div>
@@ -153,12 +153,12 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
       {/* Recommended */}
       <div className="mb-2">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+          <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
             {isPl ? 'Zalecane' : 'Recommended'}
           </span>
           <button
             onClick={handleRandomize}
-            className="flex items-center gap-1 text-[9px] text-slate-400 hover:text-primary-500 transition-colors"
+            className="flex items-center gap-1 text-[9px] text-slate-600 hover:text-primary-500 transition-colors"
           >
             <Shuffle size={10} /> {isPl ? 'Losuj' : 'Random'}
           </button>
@@ -181,7 +181,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
 
       {/* Full palette */}
       <div>
-        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1">
+        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1">
           {isPl ? 'Paleta' : 'Palette'}
         </div>
         <div className="grid grid-cols-10 gap-0.5">

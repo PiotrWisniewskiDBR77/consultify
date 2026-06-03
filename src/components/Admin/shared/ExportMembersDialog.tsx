@@ -196,7 +196,7 @@ export const ExportMembersDialog: React.FC<ExportMembersDialogProps> = ({
                   <Icon
                     size={24}
                     className={cn(
-                      format === fmt ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400'
+                      format === fmt ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600'
                     )}
                   />
                   <div className="text-left">
@@ -243,7 +243,7 @@ export const ExportMembersDialog: React.FC<ExportMembersDialogProps> = ({
                 {f === 'active' && t('admin.team.export.filterActive', 'Active')}
                 {f === 'inactive' && t('admin.team.export.filterInactive', 'Inactive')}
                 {f === 'pending' && t('admin.team.export.filterPending', 'Pending')}
-                <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+                <span className="ml-1.5 text-xs text-slate-600 dark:text-slate-500">
                   ({filteredCounts[f] || 0})
                 </span>
               </button>
@@ -264,7 +264,7 @@ export const ExportMembersDialog: React.FC<ExportMembersDialogProps> = ({
               >
                 {t('admin.team.export.selectAll', 'Select All')}
               </button>
-              <span className="text-slate-300">|</span>
+              <span className="text-slate-600">|</span>
               <button
                 onClick={deselectOptionalFields}
                 className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400"
@@ -292,7 +292,7 @@ export const ExportMembersDialog: React.FC<ExportMembersDialogProps> = ({
                 <span className="text-sm text-navy-900 dark:text-white flex items-center gap-1">
                   {field.label}
                   {field.required && (
-                    <span className="text-xs text-slate-400 dark:text-slate-500">*</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-500">*</span>
                   )}
                   {field.sensitive && (
                     <Tooltip

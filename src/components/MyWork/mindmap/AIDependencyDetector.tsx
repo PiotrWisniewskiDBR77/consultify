@@ -166,7 +166,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -175,7 +175,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {dependencies.length === 0 && !loading && (
             <div className="text-center py-8">
-              <GitMerge size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <GitMerge size={36} className="text-slate-600 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'Wykryj ukryte zależności między pomysłami.'
@@ -218,7 +218,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                       >
                         {isPl ? cfg.labelPl : cfg.label}
                       </span>
-                      <span className="text-[9px] text-slate-400">
+                      <span className="text-[9px] text-slate-600">
                         {Math.round(dep.confidence * 100)}%
                       </span>
                       {isApplied && (
@@ -231,14 +231,14 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                         <div className="font-medium text-slate-700 dark:text-slate-200 truncate">
                           {dep.sourceLabel}
                         </div>
-                        <div className="text-[9px] text-slate-400">{dep.sourceBranch}</div>
+                        <div className="text-[9px] text-slate-600">{dep.sourceBranch}</div>
                       </div>
                       <ArrowRight size={14} style={{ color: cfg.color }} className="shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-slate-700 dark:text-slate-200 truncate">
                           {dep.targetLabel}
                         </div>
-                        <div className="text-[9px] text-slate-400">{dep.targetBranch}</div>
+                        <div className="text-[9px] text-slate-600">{dep.targetBranch}</div>
                       </div>
                     </div>
 

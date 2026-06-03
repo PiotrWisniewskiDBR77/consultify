@@ -118,7 +118,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Palette size={12} className="text-slate-400" />
+          <Palette size={12} className="text-slate-600" />
           <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             {isPl ? 'Kolorowanie wierszy' : 'Row coloring'}
           </span>
@@ -133,7 +133,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
       </div>
 
       {rules.length === 0 && (
-        <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-3">
+        <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center py-3">
           {isPl ? 'Brak reguł kolorowania' : 'No coloring rules'}
         </div>
       )}
@@ -178,7 +178,7 @@ export const RowColoringConfig: React.FC<RowColoringConfigProps> = ({
               {/* Delete */}
               <button
                 onClick={() => removeRule(rule.id)}
-                className="p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors"
+                className="p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 hover:text-rose-500 transition-colors"
               >
                 <Trash2 size={12} />
               </button>

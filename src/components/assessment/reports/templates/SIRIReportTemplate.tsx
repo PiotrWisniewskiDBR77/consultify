@@ -415,7 +415,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {dimensionsWithGaps
                 .filter((d) => d.gap > 0)
                 .slice(0, 8)

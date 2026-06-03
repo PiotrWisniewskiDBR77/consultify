@@ -186,7 +186,7 @@ export const SessionManagementPanel: React.FC = () => {
           <div className="relative">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -214,7 +214,7 @@ export const SessionManagementPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg">
             <Activity size={16} className="text-emerald-400" />
-            <span className="text-sm text-slate-300">{sessions.length} Active</span>
+            <span className="text-sm text-slate-600">{sessions.length} Active</span>
           </div>
           <button
             onClick={fetchSessions}
@@ -223,7 +223,7 @@ export const SessionManagementPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
         </div>
@@ -235,7 +235,7 @@ export const SessionManagementPanel: React.FC = () => {
           <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredSessions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-600 dark:text-slate-500">
           <Users size={48} className="mb-4 opacity-50" />
           <p>No active sessions found</p>
         </div>
@@ -259,21 +259,21 @@ export const SessionManagementPanel: React.FC = () => {
                         {firstSession.user_first_name}{' '}
                         {firstSession.user_last_name || firstSession.user_email}
                       </p>
-                      <p className="text-sm text-slate-400 dark:text-slate-500">
+                      <p className="text-sm text-slate-600 dark:text-slate-500">
                         {firstSession.user_email}
                       </p>
                     </div>
                     {firstSession.organization_name && (
                       <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 rounded-full">
-                        <Building2 size={12} className="text-slate-400 dark:text-slate-500" />
-                        <span className="text-xs text-slate-300">
+                        <Building2 size={12} className="text-slate-600 dark:text-slate-500" />
+                        <span className="text-xs text-slate-600">
                           {firstSession.organization_name}
                         </span>
                       </div>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-slate-400 dark:text-slate-500">
+                    <span className="text-sm text-slate-600 dark:text-slate-500">
                       {userSessions.length} session(s)
                     </span>
                     {userSessions.length > 1 && (
@@ -298,7 +298,7 @@ export const SessionManagementPanel: React.FC = () => {
                       className="flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-slate-900/50 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                        <div className="w-10 h-10 rounded-lg bg-slate-900/50 flex items-center justify-center text-slate-600 dark:text-slate-500">
                           {getDeviceIcon(session.device_type)}
                         </div>
                         <div>
@@ -307,7 +307,7 @@ export const SessionManagementPanel: React.FC = () => {
                               {session.browser || 'Unknown Browser'}
                             </span>
                             <span className="text-slate-500 dark:text-slate-400">•</span>
-                            <span className="text-slate-400 dark:text-slate-500">
+                            <span className="text-slate-600 dark:text-slate-500">
                               {session.os || 'Unknown OS'}
                             </span>
                           </div>
@@ -328,7 +328,7 @@ export const SessionManagementPanel: React.FC = () => {
 
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <div className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500">
+                          <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-500">
                             <Clock size={14} />
                             <span>Active {formatTimeAgo(session.last_activity)}</span>
                           </div>
@@ -339,7 +339,7 @@ export const SessionManagementPanel: React.FC = () => {
                         <button
                           onClick={() => handleTerminateSession(session.id)}
                           disabled={terminatingIds.has(session.id)}
-                          className="p-2 hover:bg-rose-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-2 hover:bg-rose-500/10 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-50"
                           title="Terminate Session"
                         >
                           {terminatingIds.has(session.id) ? (

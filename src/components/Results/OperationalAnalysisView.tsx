@@ -26,13 +26,13 @@ import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
   below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
-  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
+  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };
 
 const TREND_ICON: Record<KPITrend, { Icon: typeof ArrowUp; color: string }> = {
   up: { Icon: ArrowUp, color: 'text-emerald-400' },
   down: { Icon: ArrowDown, color: 'text-rose-400' },
-  stable: { Icon: ArrowRight, color: 'text-slate-400' },
+  stable: { Icon: ArrowRight, color: 'text-slate-600' },
 };
 
 type SortOption = 'worst' | 'best' | 'recent';
@@ -175,7 +175,7 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
   if (effectiveLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-slate-400">
+        <div className="flex items-center gap-3 text-slate-600">
           <BarChart3 size={20} className="animate-pulse" />
           <span className="text-sm">{t('common.loading', 'Loading...')}</span>
         </div>
@@ -189,7 +189,7 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Target size={16} className="text-slate-400" />
+            <Target size={16} className="text-slate-600" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.operational.totalTracked', 'Total KPIs Tracked')}
             </span>
@@ -216,7 +216,7 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
         </div>
         <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <BarChart3 size={16} className="text-slate-400" />
+            <BarChart3 size={16} className="text-slate-600" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.operational.needsEntry', 'Needs entry')}
             </span>
@@ -237,7 +237,7 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               filterProject === p
                 ? 'bg-primary-500/20 text-primary-400 border border-primary-500/40'
-                : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-navy-500'
+                : 'bg-navy-800 text-slate-600 border border-navy-600 hover:border-navy-500'
             }`}
           >
             {p}
@@ -250,7 +250,7 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               filterOwner === o
                 ? 'bg-primary-500/20 text-primary-400 border border-primary-500/40'
-                : 'bg-navy-800 text-slate-400 border border-navy-600 hover:border-navy-500'
+                : 'bg-navy-800 text-slate-600 border border-navy-600 hover:border-navy-500'
             }`}
           >
             {o}
@@ -278,7 +278,7 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               sortBy === opt
                 ? 'bg-primary-500/20 text-primary-400'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 hover:text-white'
             }`}
           >
             {t(
@@ -296,14 +296,14 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
       {/* Trend chart section (sparklines per KPI) */}
       {filteredKpis.length > 0 && (
         <div className="rounded-xl bg-navy-900 border border-navy-700 p-4">
-          <h3 className="text-sm font-medium text-slate-300 mb-3">
+          <h3 className="text-sm font-medium text-slate-600 mb-3">
             {t('results.operational.trends', 'KPI Trends')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredKpis.slice(0, 6).map((kpi) => (
               <div key={kpi.id} className="p-3 rounded-lg bg-navy-800/50 border border-navy-700/50">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-300 truncate">{kpi.name}</span>
+                  <span className="text-xs font-medium text-slate-600 truncate">{kpi.name}</span>
                   <span
                     className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] ${STATUS_STYLES[kpi.status].bg} ${STATUS_STYLES[kpi.status].text}`}
                   >
@@ -343,7 +343,7 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredKpis.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center py-16 text-slate-500">
-            <Target size={32} className="text-slate-400 mb-2" />
+            <Target size={32} className="text-slate-600 mb-2" />
             <span>{t('results.emptyState', 'No KPIs found')}</span>
           </div>
         ) : (

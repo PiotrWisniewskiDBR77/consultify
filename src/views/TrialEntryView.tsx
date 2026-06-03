@@ -156,7 +156,7 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
           <button
             type="button"
             onClick={() => navigate(ROUTES.WELCOME)}
-            className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors group"
+            className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors group"
           >
             <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
             Wróć na stronę główną
@@ -230,7 +230,7 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-500 group-focus-within:text-brand-500 transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-600 dark:text-slate-500 group-focus-within:text-brand-500 transition-colors">
                 <Lock size={20} />
               </div>
               <input
@@ -284,8 +284,8 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
           </form>
 
           <div className="pt-8 grid grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl border border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
-              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
+              <div className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest mb-1">
                 Dla Konsultantów
               </div>
               <button
@@ -300,8 +300,8 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
                 />
               </button>
             </div>
-            <div className="p-4 rounded-xl border border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
-              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
+              <div className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest mb-1">
                 Ecosystem
               </div>
               <button

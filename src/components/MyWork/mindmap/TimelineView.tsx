@@ -74,7 +74,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         <h2 className="text-sm font-bold text-slate-800 dark:text-white">
           {isPl ? 'Widok osi czasu' : 'Timeline View'}
         </h2>
-        <span className="text-[10px] text-slate-400 ml-auto">
+        <span className="text-[10px] text-slate-600 ml-auto">
           {nodes.length} {isPl ? 'elementów' : 'items'}
         </span>
       </div>
@@ -98,7 +98,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 capitalize">
                       {status.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-[9px] text-slate-400 font-medium">({items.length})</span>
+                    <span className="text-[9px] text-slate-600 font-medium">({items.length})</span>
                   </div>
 
                   {/* Nodes */}
@@ -112,11 +112,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                         <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
                           {node.label}
                         </div>
-                        <div className="text-[9px] text-slate-400 mt-0.5">{node.branchKey}</div>
+                        <div className="text-[9px] text-slate-600 mt-0.5">{node.branchKey}</div>
                       </button>
                     ))}
                     {items.length === 0 && (
-                      <div className="text-center py-4 text-[10px] text-slate-400">
+                      <div className="text-center py-4 text-[10px] text-slate-600">
                         {isPl ? 'Brak elementów' : 'No items'}
                       </div>
                     )}
@@ -127,7 +127,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 {idx < STATUS_ORDER.length - 1 && (
                   <div className="flex items-center pt-3 px-2">
                     <div className="w-8 h-0.5 bg-slate-300 dark:bg-navy-600" />
-                    <ArrowRight size={12} className="text-slate-400 -ml-1" />
+                    <ArrowRight size={12} className="text-slate-600 -ml-1" />
                   </div>
                 )}
               </React.Fragment>

@@ -61,7 +61,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
           >
             <X size={16} />
           </button>

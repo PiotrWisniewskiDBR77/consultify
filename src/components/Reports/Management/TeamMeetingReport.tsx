@@ -228,7 +228,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
       {/* Project Breakdown (for portfolio reports) */}
       {content.projectBreakdown && content.projectBreakdown.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700">
             <h3 className="font-semibold text-navy-900 dark:text-white">Project Breakdown</h3>
           </div>
           <div className="overflow-x-auto">
@@ -252,7 +252,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {content.projectBreakdown.map((project) => (
                   <tr key={project.projectId} className="hover:bg-slate-50 dark:hover:bg-white/5">
                     <td className="px-4 py-3 font-medium text-navy-900 dark:text-white">

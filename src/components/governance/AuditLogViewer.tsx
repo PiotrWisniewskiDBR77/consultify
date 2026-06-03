@@ -180,7 +180,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         {/* Filters */}
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+            <Filter className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
             <select
               value={filters.action}
               onChange={(e) => setFilters({ ...filters, action: e.target.value })}
@@ -213,14 +213,14 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           </select>
 
           <div className="flex items-center gap-1">
-            <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+            <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
             <input
               type="date"
               value={filters.startDate}
               onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
               className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
             />
-            <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">—</span>
+            <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">—</span>
             <input
               type="date"
               value={filters.endDate}
@@ -292,7 +292,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+                      <User className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
                       <span className="text-sm text-gray-900 dark:text-white">
                         {entry.actorId?.slice(0, 8) || 'System'}
                       </span>
@@ -312,7 +312,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+                      <Activity className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
                       <span className="text-sm text-gray-900 dark:text-gray-200">
                         {entry.resourceType}
                       </span>

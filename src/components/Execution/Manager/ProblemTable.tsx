@@ -110,7 +110,7 @@ function ActionsMenu({
         }}
         className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
       >
-        <MoreVertical size={14} className="text-slate-400" />
+        <MoreVertical size={14} className="text-slate-600" />
       </button>
       {open && (
         <div className="absolute right-0 top-8 z-50 min-w-[180px] py-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg">
@@ -235,7 +235,7 @@ export function ProblemTable({
         {/* Search toggle */}
         {searchOpen ? (
           <div className="flex items-center gap-1 h-9 px-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800">
-            <Search size={14} className="text-slate-400 shrink-0" />
+            <Search size={14} className="text-slate-600 shrink-0" />
             <input
               autoFocus
               value={searchQuery}
@@ -250,7 +250,7 @@ export function ProblemTable({
                 setSearchOpen(false);
               }}
             >
-              <X size={14} className="text-slate-400 hover:text-slate-600" />
+              <X size={14} className="text-slate-600 hover:text-slate-600" />
             </button>
           </div>
         ) : (
@@ -259,13 +259,13 @@ export function ProblemTable({
             onClick={() => setSearchOpen(true)}
             className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <Search size={14} className="text-slate-400" />
+            <Search size={14} className="text-slate-600" />
           </button>
         )}
       </div>
 
       {/* Table header */}
-      <div className="grid grid-cols-[auto_2fr_1fr_1fr_80px_80px_1fr_40px] gap-0 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+      <div className="grid grid-cols-[auto_2fr_1fr_1fr_80px_80px_1fr_40px] gap-0 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <div className="w-8" />
         <div className="px-2">{t('manager.col.problem', 'Problem')}</div>
         <div className="px-2">{t('manager.col.type', 'Type')}</div>
@@ -285,7 +285,7 @@ export function ProblemTable({
         )}
 
         {!loading && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-400 dark:text-slate-500">
+          <div className="flex flex-col items-center justify-center h-32 text-slate-600 dark:text-slate-500">
             <AlertTriangle size={20} className="mb-2 opacity-40" />
             <p className="text-xs">
               {emptyMessage || t('manager.noProblems', 'No problems detected — on track.')}
@@ -303,7 +303,7 @@ export function ProblemTable({
                 tabIndex={-1}
                 onClick={() => onSelect(row)}
                 onDoubleClick={() => onDoubleClick?.(row)}
-                className={`grid grid-cols-[auto_2fr_1fr_1fr_80px_80px_1fr_40px] gap-0 px-3 items-center cursor-pointer border-b border-slate-100 dark:border-navy-800 transition-colors ${
+                className={`grid grid-cols-[auto_2fr_1fr_1fr_80px_80px_1fr_40px] gap-0 px-3 items-center cursor-pointer border-b border-slate-200 dark:border-navy-800 transition-colors ${
                   SEVERITY_BORDER[row.severity]
                 } ${SEVERITY_HOVER[row.severity]} ${
                   isSelected
@@ -322,7 +322,7 @@ export function ProblemTable({
                   <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
                     {row.title}
                   </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500 truncate mt-0.5">
                     {row.rootCause}
                   </p>
                 </div>
@@ -344,11 +344,11 @@ export function ProblemTable({
                       {row.daysOverdue}d
                     </span>
                   ) : row.daysOverdue !== null && row.daysOverdue < 0 ? (
-                    <span className="text-xs tabular-nums text-slate-400">
+                    <span className="text-xs tabular-nums text-slate-600">
                       in {Math.abs(row.daysOverdue)}d
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-600">—</span>
                   )}
                 </div>
 
@@ -359,7 +359,7 @@ export function ProblemTable({
                       {row.impactCount} ↓
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-600">—</span>
                   )}
                 </div>
 
@@ -380,7 +380,7 @@ export function ProblemTable({
       </div>
 
       {/* Footer counter */}
-      <div className="flex items-center justify-between px-3 py-1.5 text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+      <div className="flex items-center justify-between px-3 py-1.5 text-[10px] text-slate-600 dark:text-slate-500 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <span>
           {filtered.length} / {rows.length} {t('manager.problems', 'problems')}
         </span>

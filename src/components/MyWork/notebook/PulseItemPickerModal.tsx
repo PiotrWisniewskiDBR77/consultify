@@ -177,7 +177,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
     >
       <div className="flex flex-col gap-4 min-h-0">
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             type="text"
             value={search}
@@ -190,7 +190,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
         <div className="flex-1 overflow-y-auto min-h-[280px] max-h-[50vh] space-y-1.5 pr-1">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 size={24} className="animate-spin text-slate-400" />
+              <Loader2 size={24} className="animate-spin text-slate-600" />
             </div>
           ) : items.length === 0 ? (
             <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">

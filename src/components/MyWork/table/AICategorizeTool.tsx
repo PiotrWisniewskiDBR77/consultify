@@ -174,7 +174,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
@@ -210,14 +210,14 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           <div className="flex items-center gap-1 px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
             <button
               onClick={() => setActiveTab('clusters')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600'}`}
             >
               <Layers size={10} className="inline mr-1" />
               {isPl ? 'Klastry' : 'Clusters'} ({clusters.length})
             </button>
             <button
               onClick={() => setActiveTab('duplicates')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600'}`}
             >
               <GitMerge size={10} className="inline mr-1" />
               {isPl ? 'Duplikaty' : 'Duplicates'} ({duplicates.length})
@@ -229,8 +229,8 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
         <div className="flex-1 overflow-auto p-5">
           {categories.length === 0 && duplicates.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Sparkles size={24} className="text-slate-300 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">
+              <Sparkles size={24} className="text-slate-600 mx-auto mb-2" />
+              <p className="text-xs text-slate-600">
                 {isPl
                   ? 'Kliknij "Analizuj" aby AI pogrupowało pomysły'
                   : 'Click "Analyze" to let AI group your ideas'}
@@ -253,7 +253,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                     <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                       {clusterName}
                     </span>
-                    <span className="text-[9px] text-slate-400 ml-auto">
+                    <span className="text-[9px] text-slate-600 ml-auto">
                       {clusterNodes.length} {isPl ? 'elementów' : 'items'}
                     </span>
                   </div>
@@ -298,7 +298,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           {activeTab === 'duplicates' && (
             <div className="space-y-2">
               {duplicates.length === 0 && (
-                <p className="text-xs text-slate-400 text-center py-4">
+                <p className="text-xs text-slate-600 text-center py-4">
                   {isPl ? 'Nie znaleziono duplikatów' : 'No duplicates found'}
                 </p>
               )}
@@ -314,7 +314,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                     <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
                       {getNodeLabel(dup.nodeA)}
                     </span>
-                    <span className="text-[9px] text-slate-400">↔</span>
+                    <span className="text-[9px] text-slate-600">↔</span>
                     <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate text-right">
                       {getNodeLabel(dup.nodeB)}
                     </span>

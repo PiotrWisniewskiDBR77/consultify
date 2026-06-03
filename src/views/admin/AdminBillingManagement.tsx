@@ -395,7 +395,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-slate-400 dark:text-slate-500">
+      <div className="p-8 text-center text-slate-600 dark:text-slate-500">
         {t('common.loading', 'Loading...')}
       </div>
     );
@@ -494,7 +494,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               <div>
                 <div className="flex justify-between text-sm mb-1.5">
                   <span className="text-slate-500 dark:text-slate-400">AI Tokens</span>
-                  <span className="text-slate-300">
+                  <span className="text-slate-600">
                     {formatUsagePair(usageData?.tokens?.used, usageData?.tokens?.limit)}
                   </span>
                 </div>
@@ -510,7 +510,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               <div>
                 <div className="flex justify-between text-sm mb-1.5">
                   <span className="text-slate-500 dark:text-slate-400">Storage</span>
-                  <span className="text-slate-300">
+                  <span className="text-slate-600">
                     {typeof usageData?.storage?.used_gb === 'number' &&
                     typeof usageData?.storage?.limit_gb === 'number'
                       ? `${usageData.storage.used_gb} GB / ${usageData.storage.limit_gb} GB`
@@ -598,7 +598,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       <div className="admin-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-navy-900 dark:text-white flex items-center gap-2">
-            <FileText size={20} className="text-slate-400 dark:text-slate-500" />
+            <FileText size={20} className="text-slate-600 dark:text-slate-500" />
             {t('admin.billing.contactInfo', 'Billing Information')}
           </h3>
           <button
@@ -611,7 +611,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <Mail className="w-5 h-5 text-slate-600 dark:text-slate-500" />
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
@@ -624,7 +624,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <UserIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <UserIcon className="w-5 h-5 text-slate-600 dark:text-slate-500" />
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
@@ -637,7 +637,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <Building2 className="w-5 h-5 text-slate-600 dark:text-slate-500" />
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
@@ -650,7 +650,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <MapPin className="w-5 h-5 text-slate-600 dark:text-slate-500" />
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
@@ -669,13 +669,13 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       {/* Payment Method - Moved/Updated */}
       <div className="admin-card p-6">
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-          <CreditCard size={20} className="text-slate-400 dark:text-slate-500" />
+          <CreditCard size={20} className="text-slate-600 dark:text-slate-500" />
           {t('admin.billing.paymentMethod', 'Payment Method')}
         </h3>
         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-navy-700 rounded-xl">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-slate-300" />
+              <CreditCard className="w-6 h-6 text-slate-600" />
             </div>
             <div>
               <p className="font-medium text-navy-900 dark:text-white">•••• •••• •••• 4242</p>
@@ -705,7 +705,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                 </h3>
                 <button
                   onClick={() => setShowPlanModal(false)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+                  className="text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -746,11 +746,11 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                         </p>
                         <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-400">
                           <p className="flex items-center gap-2">
-                            <Zap size={14} className="text-slate-400 dark:text-slate-500" />
+                            <Zap size={14} className="text-slate-600 dark:text-slate-500" />
                             {(plan.token_limit / 1000).toFixed(0)}K tokens/month
                           </p>
                           <p className="flex items-center gap-2">
-                            <Building2 size={14} className="text-slate-400 dark:text-slate-500" />
+                            <Building2 size={14} className="text-slate-600 dark:text-slate-500" />
                             {plan.storage_limit_gb} GB storage
                           </p>
                         </div>
@@ -856,7 +856,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     setShowAddonsModal(false);
                     setSelectedAddon(null);
                   }}
-                  className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+                  className="text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -912,7 +912,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                           </div>
                           <ChevronRight
                             size={16}
-                            className="text-slate-400 dark:text-slate-500 group-hover:text-[var(--admin-accent)] transition-colors"
+                            className="text-slate-600 dark:text-slate-500 group-hover:text-[var(--admin-accent)] transition-colors"
                           />
                         </div>
                       ))}
@@ -1031,7 +1031,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                 </h3>
                 <button
                   onClick={() => setShowBillingModal(false)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+                  className="text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -1049,7 +1049,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-1.5">
                       Billing Name
                     </label>
                     <input
@@ -1063,7 +1063,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-1.5">
                       Billing Email
                     </label>
                     <input
@@ -1077,7 +1077,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-1.5">
                       Tax ID
                     </label>
                     <input
@@ -1089,7 +1089,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-1.5">
                       VAT Number
                     </label>
                     <input

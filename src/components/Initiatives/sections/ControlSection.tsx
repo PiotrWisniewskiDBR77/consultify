@@ -53,7 +53,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
         {/* Module & Status */}
         <div className="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-navy-800 dark:to-navy-900/50 border border-slate-200/80 dark:border-navy-700/80">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
               {isPolish ? 'Aktualny moduł' : 'Current Module'}
             </span>
             <a
@@ -75,13 +75,13 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
               <p className={`text-sm font-semibold ${moduleConfig.textColor}`}>
                 {isPolish ? moduleConfig.labelPl : moduleConfig.label}
               </p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-600">
                 {isPolish ? moduleConfig.descriptionPl : moduleConfig.description}
               </p>
             </div>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
               Status
             </span>
           </div>
@@ -94,7 +94,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
             <div className="flex-1">
               <p className={`text-sm font-semibold ${statusMeta.color}`}>{statusMeta.label}</p>
               {statusMeta.description && (
-                <p className="text-[10px] text-slate-400">{statusMeta.description}</p>
+                <p className="text-[10px] text-slate-600">{statusMeta.description}</p>
               )}
             </div>
           </div>
@@ -115,7 +115,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
                 {isPolish ? priorityConfig.labelPl : priorityConfig.label}
               </span>
             </div>
-            <ChevronDown size={14} className="text-slate-400" />
+            <ChevronDown size={14} className="text-slate-600" />
           </button>
           <AnimatePresence>
             {showPriorityDropdown && (

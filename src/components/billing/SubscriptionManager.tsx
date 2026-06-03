@@ -322,14 +322,14 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                         {value === true || value === 'true' ? (
                           <Check className="w-4 h-4 text-green-500" />
                         ) : value === false || value === 'false' ? (
-                          <X className="w-4 h-4 text-slate-300" />
+                          <X className="w-4 h-4 text-slate-600" />
                         ) : (
                           <Shield className="w-4 h-4 text-blue-500" />
                         )}
                         <span
                           className={
                             value === false || value === 'false'
-                              ? 'text-slate-400 dark:text-slate-500 line-through'
+                              ? 'text-slate-600 dark:text-slate-500 line-through'
                               : ''
                           }
                         >
@@ -408,7 +408,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                   </span>
                   <div className="text-right">
                     {discount?.valid && (
-                      <span className="text-sm text-slate-400 dark:text-slate-500 line-through mr-2">
+                      <span className="text-sm text-slate-600 dark:text-slate-500 line-through mr-2">
                         ${selectedPlan.price_monthly}
                       </span>
                     )}
@@ -426,7 +426,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
                 </label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500" />
                     <input
                       type="text"
                       value={discountCode}

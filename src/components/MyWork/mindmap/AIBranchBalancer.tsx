@@ -83,7 +83,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
           </span>
           <button
             onClick={() => setDismissed(true)}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded-lg text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={12} />
           </button>
@@ -104,7 +104,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
                   style={{ width: `${Math.max(5, b.percentage)}%` }}
                 />
               </div>
-              <span className="text-[9px] text-slate-400 w-4 text-right">{b.count}</span>
+              <span className="text-[9px] text-slate-600 w-4 text-right">{b.count}</span>
             </div>
           ))}
 

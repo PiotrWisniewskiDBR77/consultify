@@ -296,7 +296,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT':
-        return 'bg-slate-500/20 text-slate-400';
+        return 'bg-slate-500/20 text-slate-600';
       case 'PLANNING':
         return 'bg-blue-500/20 text-blue-400';
       case 'REVIEW':
@@ -310,7 +310,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
       case 'DONE':
         return 'bg-green-500/20 text-green-400';
       default:
-        return 'bg-slate-500/20 text-slate-400';
+        return 'bg-slate-500/20 text-slate-600';
     }
   };
 
@@ -536,7 +536,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 uppercase mb-2 block">
+                  <label className="text-xs font-semibold text-slate-600 uppercase mb-2 block">
                     Symptom
                   </label>
                   <input
@@ -557,7 +557,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 uppercase mb-2 block">
+                  <label className="text-xs font-semibold text-slate-600 uppercase mb-2 block">
                     Root Cause
                   </label>
                   <input
@@ -578,7 +578,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 uppercase mb-2 block">
+                  <label className="text-xs font-semibold text-slate-600 uppercase mb-2 block">
                     Cost of Inaction
                   </label>
                   <input
@@ -609,7 +609,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             {/* Summary */}
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center gap-2 mb-3">
-                <FileText size={16} className="text-slate-400" />
+                <FileText size={16} className="text-slate-600" />
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                   Summary
                 </span>

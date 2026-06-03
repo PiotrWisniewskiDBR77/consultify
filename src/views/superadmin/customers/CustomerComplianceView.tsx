@@ -239,7 +239,7 @@ const CustomerComplianceView: React.FC = () => {
                   {items.map((item) => (
                     <tr
                       key={item.org_id}
-                      className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
+                      className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
                     >
                       <td className="py-3 text-slate-900 dark:text-white font-medium">
                         {item.org_name}

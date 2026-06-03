@@ -184,7 +184,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
             className={`p-1.5 rounded-lg transition-colors ${
               animationsEnabled
                 ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
             }`}
             title={t(
               animationsEnabled

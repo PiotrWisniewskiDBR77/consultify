@@ -41,7 +41,7 @@ import type { KpiDrawerSection, KPIStatus, KPITrend, ResultsKPI } from './kpiDom
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
   below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
-  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
+  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };
 
 const TREND_LABELS: Record<KPITrend, string> = {
@@ -217,7 +217,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         label: t('common.type', 'Type'),
         width: '8%',
         render: () => (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-600">
             KPI
           </span>
         ),
@@ -312,7 +312,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         render: (row: TableRow) => {
           const k = row._raw as ResultsKPI;
           return (
-            <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-400">
+            <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-600">
               {TREND_LABELS[k.trend] || '—'}
             </span>
           );
@@ -346,7 +346,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         filterable: true,
         filterOptions: freqFilterOptions,
         render: (row: TableRow) => (
-          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-400">
+          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-600">
             {String(row.measurementFrequency || '—')
               .toLowerCase()
               .replace(/^\w/, (c) => c.toUpperCase())}

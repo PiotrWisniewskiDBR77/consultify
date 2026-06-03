@@ -385,7 +385,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
       {/* Footer Status */}
       <div className="px-5 py-2.5">
         <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-400 dark:text-slate-500">
+          <span className="text-slate-600 dark:text-slate-500">
             {t('executive.health.lastUpdated', 'Last updated')}:{' '}
             {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
           </span>

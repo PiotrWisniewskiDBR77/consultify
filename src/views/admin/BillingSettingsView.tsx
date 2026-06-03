@@ -375,7 +375,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                       }
                       className="w-4 h-4 rounded border-slate-600 bg-transparent text-[var(--admin-accent)]"
                     />
-                    <span className="text-sm text-slate-300">Tax Exempt</span>
+                    <span className="text-sm text-slate-600">Tax Exempt</span>
                   </label>
                 </div>
               </div>
@@ -531,19 +531,19 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
             <div className="grid gap-4 md:grid-cols-3">
               <div className="bg-navy-900/50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-primary-400 mb-1">15%</div>
-                <div className="text-sm text-slate-400 dark:text-slate-500">
+                <div className="text-sm text-slate-600 dark:text-slate-500">
                   Standard discount for referred customers
                 </div>
               </div>
               <div className="bg-navy-900/50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-emerald-400 mb-1">12 mo</div>
-                <div className="text-sm text-slate-400 dark:text-slate-500">
+                <div className="text-sm text-slate-600 dark:text-slate-500">
                   Typical discount duration
                 </div>
               </div>
               <div className="bg-navy-900/50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-blue-400 mb-1">24/7</div>
-                <div className="text-sm text-slate-400 dark:text-slate-500">
+                <div className="text-sm text-slate-600 dark:text-slate-500">
                   Priority support from partner
                 </div>
               </div>
@@ -677,7 +677,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                          <Mail size={14} className="text-slate-400 dark:text-slate-500" />
+                          <Mail size={14} className="text-slate-600 dark:text-slate-500" />
                         </div>
                         <div>
                           <p className="text-sm text-white">
@@ -841,7 +841,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                 <h3 className="text-lg font-medium text-white">Add Billing Contact</h3>
                 <button
                   onClick={() => setShowAddContact(false)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+                  className="text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>

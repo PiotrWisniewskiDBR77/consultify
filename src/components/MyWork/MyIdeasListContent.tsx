@@ -502,7 +502,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   onClick={() => handleDeleteFolder(f.id)}
                   title={isPolish ? 'Usuń folder' : 'Delete folder'}
                   aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
-                  className="ml-0.5 rounded-full p-0.5 text-slate-400 hover:text-rose-500"
+                  className="ml-0.5 rounded-full p-0.5 text-slate-600 hover:text-rose-500"
                 >
                   <X size={12} />
                 </button>
@@ -540,7 +540,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       {/* "Recently opened" rail (localStorage-backed, per device) */}
       {recentIdeas.length > 0 && (
         <div className="px-4 pt-3" data-testid="ideas-recents-rail">
-          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
             {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -555,7 +555,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   title={idea.title || ''}
                   className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
                 >
-                  <ToolIcon size={13} className="text-slate-400" />
+                  <ToolIcon size={13} className="text-slate-600" />
                   <span className="max-w-[160px] truncate">
                     {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                   </span>
@@ -1147,7 +1147,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           </span>
         ))}
         {ideaTags.length > max && (
-          <span className="text-[9px] text-slate-400">+{ideaTags.length - max}</span>
+          <span className="text-[9px] text-slate-600">+{ideaTags.length - max}</span>
         )}
       </div>
     );
@@ -1207,7 +1207,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <button
             onClick={() => setConvertIdea(null)}
             disabled={converting}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
           >
             <X size={16} />
           </button>
@@ -1300,7 +1300,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <button
             onClick={() => setTagModalOpen(false)}
             disabled={bulkBusy}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
           >
             <X size={16} />
           </button>
@@ -1503,7 +1503,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       className={`rounded p-0.5 transition-opacity ${
                         isFavorite(idea.id)
                           ? 'text-amber-400 opacity-100'
-                          : 'text-slate-300 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-600'
+                          : 'text-slate-600 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-600'
                       }`}
                     >
                       <Star
@@ -1653,9 +1653,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 className="w-full flex items-center gap-2.5 px-4 py-3 bg-slate-50/80 dark:bg-navy-900/50 hover:bg-slate-100/80 dark:hover:bg-navy-800/50 transition-colors text-left"
               >
                 {isCollapsed ? (
-                  <ChevronRight size={14} className="text-slate-400" />
+                  <ChevronRight size={14} className="text-slate-600" />
                 ) : (
-                  <ChevronDown size={14} className="text-slate-400" />
+                  <ChevronDown size={14} className="text-slate-600" />
                 )}
                 <Tag size={14} className="text-amber-500" />
                 <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -1667,7 +1667,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               </button>
 
               {!isCollapsed && (
-                <div className="divide-y divide-slate-100 dark:divide-navy-800/50">
+                <div className="divide-y divide-slate-200 dark:divide-navy-800/50">
                   {groupIdeas.map((idea) => {
                     const stage = (idea.stage || 'spark') as IdeaStage;
                     const tc = getToolConfig(idea.preferredTool);
@@ -1707,7 +1707,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             className={`rounded p-0.5 transition-colors ${
                               isFavorite(idea.id)
                                 ? 'text-amber-400'
-                                : 'text-slate-300 hover:text-amber-400 dark:text-slate-600'
+                                : 'text-slate-600 hover:text-amber-400 dark:text-slate-600'
                             }`}
                           >
                             <Star
@@ -1729,7 +1729,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             <Workflow size={10} />
                             Flow
                           </button>
-                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                          <span className="text-[10px] text-slate-600 whitespace-nowrap">
                             {idea.updatedAt
                               ? new Date(idea.updatedAt).toLocaleDateString()
                               : idea.createdAt

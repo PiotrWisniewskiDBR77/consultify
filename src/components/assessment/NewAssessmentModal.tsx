@@ -244,7 +244,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
             <h2 id="modal-title" className="text-lg font-semibold text-white">
               {step === 1 ? 'Select Framework' : 'New Assessment'}
             </h2>
-            <p className="text-sm text-slate-400 mt-0.5">
+            <p className="text-sm text-slate-600 mt-0.5">
               {step === 1
                 ? 'Choose an assessment framework to get started'
                 : `Creating ${selectedFrameworkData?.shortName} assessment`}
@@ -252,7 +252,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-navy-700 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-white hover:bg-navy-700 transition-colors"
             aria-label="Close modal"
           >
             <X size={20} />
@@ -291,7 +291,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                       </span>
                       <span className="text-white font-medium">{framework.name}</span>
                     </div>
-                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                    <p className="text-sm text-slate-600 mt-1 line-clamp-2">
                       {framework.description}
                     </p>
                   </div>
@@ -334,12 +334,12 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                     >
                       {selectedFrameworkData.shortName}
                     </div>
-                    <div className="text-sm text-slate-300">{selectedFrameworkData.name}</div>
+                    <div className="text-sm text-slate-600">{selectedFrameworkData.name}</div>
                   </div>
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="ml-auto text-sm text-slate-400 hover:text-white transition-colors"
+                    className="ml-auto text-sm text-slate-600 hover:text-white transition-colors"
                   >
                     Change
                   </button>
@@ -350,7 +350,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
               <div>
                 <label
                   htmlFor="assessment-name"
-                  className="block text-sm font-medium text-slate-300 mb-2"
+                  className="block text-sm font-medium text-slate-600 mb-2"
                 >
                   Assessment Name
                 </label>
@@ -385,7 +385,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
               <div>
                 <label
                   htmlFor="assessment-description"
-                  className="block text-sm font-medium text-slate-300 mb-2"
+                  className="block text-sm font-medium text-slate-600 mb-2"
                 >
                   Description <span className="text-slate-500">(optional)</span>
                 </label>
@@ -430,7 +430,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   onClick={handleBack}
                   className="
                     px-4 py-2.5 rounded-lg text-sm font-medium
-                    text-slate-400 hover:text-white
+                    text-slate-600 hover:text-white
                     border border-navy-600 hover:bg-navy-800
                     transition-colors
                   "
@@ -469,7 +469,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
           <div className="px-6 py-4 border-t border-navy-700 bg-navy-950/50">
             <button
               onClick={onClose}
-              className="w-full py-2.5 text-sm text-slate-400 hover:text-white transition-colors"
+              className="w-full py-2.5 text-sm text-slate-600 hover:text-white transition-colors"
             >
               Cancel
             </button>

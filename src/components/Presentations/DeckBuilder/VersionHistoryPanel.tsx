@@ -54,20 +54,20 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
   return (
     <div className="absolute right-0 top-0 bottom-0 w-72 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl z-40 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-navy-800">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-800">
         <div className="flex items-center gap-2">
           <Clock size={14} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-700 dark:text-white">
             {t('presentations.builder.versionHistory.title', 'Version History')}
           </h3>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+        <button onClick={onClose} className="text-slate-600 hover:text-slate-600">
           <X size={14} />
         </button>
       </div>
 
       {/* Save status */}
-      <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+      <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-800">
         <div className="flex items-center gap-2 text-[10px]">
           {hasUnsavedChanges ? (
             <span className="flex items-center gap-1 text-amber-500">
@@ -81,13 +81,13 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             </span>
           )}
           {lastSavedAt && (
-            <span className="text-slate-400 ml-auto">{formatTimeAgo(lastSavedAt)}</span>
+            <span className="text-slate-600 ml-auto">{formatTimeAgo(lastSavedAt)}</span>
           )}
         </div>
       </div>
 
       {/* Manual checkpoint */}
-      <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+      <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-800">
         <div className="flex gap-1.5">
           <input
             value={checkpointName}
@@ -109,7 +109,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       {/* Version list */}
       <div className="flex-1 overflow-y-auto">
         {versions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-400 text-xs">
+          <div className="flex flex-col items-center justify-center h-32 text-slate-600 text-xs">
             <Clock size={16} className="mb-2 opacity-40" />
             <p>No versions yet</p>
           </div>
@@ -152,7 +152,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         {version.type}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
+                    <p className="text-[10px] text-slate-600 mt-0.5">
                       {formatTime(version.timestamp)} · {version.summary}
                     </p>
                   </div>
@@ -163,7 +163,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                     className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-xs ${
                       restoreConfirm === version.id
                         ? 'bg-rose-500 text-white opacity-100'
-                        : 'text-slate-400 hover:text-primary-500 hover:bg-primary-50'
+                        : 'text-slate-600 hover:text-primary-500 hover:bg-primary-50'
                     }`}
                     title={restoreConfirm === version.id ? 'Click again to confirm' : 'Restore'}
                   >

@@ -180,7 +180,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             placeholder={isPolish ? 'Treść notatki...' : 'Note content...'}
           />
           <div className="flex justify-between items-center">
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-600">
               {activeCategory && (
                 <>
                   {isPolish ? 'Kategoria:' : 'Category:'}{' '}
@@ -267,7 +267,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                   <div className="flex items-start justify-between p-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <FileText size={14} className="text-slate-400 shrink-0" />
+                        <FileText size={14} className="text-slate-600 shrink-0" />
                         <h4 className="text-sm font-medium text-navy-900 dark:text-white truncate">
                           {note.title}
                         </h4>
@@ -279,7 +279,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                      <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                         {new Date(note.updatedAt).toLocaleString()}
                       </p>
                     </div>
@@ -290,7 +290,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
                           onClick={() => setShowMenuId(showMenuId === note.id ? null : note.id)}
                           className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
                         >
-                          <MoreVertical size={16} className="text-slate-400" />
+                          <MoreVertical size={16} className="text-slate-600" />
                         </button>
 
                         {showMenuId === note.id && (
@@ -331,7 +331,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
         {/* Empty State */}
         {filteredNotes.length === 0 && !showNewNote && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+            <FileText className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-3" />
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
               {isPolish ? 'Brak notatek' : 'No notes yet'}
             </p>

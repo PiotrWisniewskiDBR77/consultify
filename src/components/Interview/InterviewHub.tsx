@@ -4630,7 +4630,7 @@ export const InterviewHub: React.FC = () => {
                                 {col.label}
                               </span>
                               {alwaysVisible ? (
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                <span className="text-[10px] text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Wymagane' : 'Required'}
                                 </span>
                               ) : null}
@@ -4949,7 +4949,7 @@ export const InterviewHub: React.FC = () => {
     if (filteredTemplates.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <FileText size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
+          <FileText size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {isPolish ? 'Brak szablonów' : 'No templates found'}
           </p>
@@ -5058,7 +5058,7 @@ export const InterviewHub: React.FC = () => {
                       </span>
                     ))}
                     {areaTags.length > 4 && (
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-500">
                         +{areaTags.length - 4}
                       </span>
                     )}
@@ -5066,7 +5066,7 @@ export const InterviewHub: React.FC = () => {
                 )}
               </div>
 
-              <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+              <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-800 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
                 <span>
                   {template.questionCount} {isPolish ? 'pytań' : 'questions'}
                 </span>
@@ -5716,9 +5716,9 @@ Return ONLY the answer text (no markdown fences).`;
         case 'medium':
           return 'text-amber-400';
         case 'low':
-          return 'text-slate-400';
+          return 'text-slate-600';
         default:
-          return 'text-slate-400';
+          return 'text-slate-600';
       }
     };
 
@@ -6081,7 +6081,7 @@ Return ONLY the answer text (no markdown fences).`;
                             key={col.id}
                             className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
                               alwaysVisible || col.disabled
-                                ? 'cursor-default text-slate-400 dark:text-slate-500'
+                                ? 'cursor-default text-slate-600 dark:text-slate-500'
                                 : 'cursor-pointer text-slate-700 dark:text-slate-200'
                             }`}
                           >
@@ -6859,7 +6859,7 @@ Return ONLY the answer text (no markdown fences).`;
                 groupEntriesSorted.map(([groupName, groupInsights]) => (
                   <div key={groupName}>
                     <div className="flex items-center gap-2 mb-2 px-1">
-                      <FileText size={14} className="text-slate-400" />
+                      <FileText size={14} className="text-slate-600" />
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {groupName}
                       </span>
@@ -7174,7 +7174,7 @@ Return ONLY the answer text (no markdown fences).`;
                                     {column.label}
                                   </span>
                                   {alwaysVisible ? (
-                                    <span className="text-[10px] font-medium text-slate-400">
+                                    <span className="text-[10px] font-medium text-slate-600">
                                       {isPolish ? 'Wymagane' : 'Required'}
                                     </span>
                                   ) : null}
@@ -7310,7 +7310,7 @@ Return ONLY the answer text (no markdown fences).`;
                               {String(initiative.priority).toLowerCase()}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-slate-400">—</span>
+                            <span className="text-[11px] text-slate-600">—</span>
                           )}
                         </td>
                       ) : null}
@@ -7332,7 +7332,7 @@ Return ONLY the answer text (no markdown fences).`;
                               {isPolish ? 'Insight' : 'Insight'}
                             </button>
                           ) : (
-                            <span className="text-[11px] text-slate-400">—</span>
+                            <span className="text-[11px] text-slate-600">—</span>
                           )}
                         </td>
                       ) : null}
@@ -8057,7 +8057,7 @@ Return ONLY the answer text (no markdown fences).`;
         return (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             {renderDegradedBanner()}
-            <AlertTriangle size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
+            <AlertTriangle size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
             <p className="text-lg font-medium text-slate-900 dark:text-white">
               {isPolish ? 'Brak wniosków do przeglądu' : 'No insights pending review'}
             </p>
@@ -8855,7 +8855,7 @@ Return ONLY the answer text (no markdown fences).`;
                     <div key={template.id} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <FileText size={14} className="text-blue-400" />
-                        <span className="text-sm text-slate-300">{template.name}</span>
+                        <span className="text-sm text-slate-600">{template.name}</span>
                       </div>
                       <span className="text-xs text-slate-500">
                         {template.questionCount} {isPolish ? 'pytań' : 'questions'}

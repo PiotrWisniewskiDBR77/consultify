@@ -277,7 +277,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
@@ -310,7 +310,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
         {/* Preview info */}
         <div className="px-5 py-3 border-t border-slate-200/30 dark:border-white/[0.04] bg-slate-50/50 dark:bg-navy-900/30">
           <div className="flex items-center gap-2">
-            <FileImage size={12} className="text-slate-400" />
+            <FileImage size={12} className="text-slate-600" />
             <span className="text-[10px] text-slate-500">
               {slides.filter((s) => s.enabled).length} {isPl ? 'slajdów' : 'slides'} •{' '}
               {nodes.length} {isPl ? 'pomysłów' : 'ideas'}

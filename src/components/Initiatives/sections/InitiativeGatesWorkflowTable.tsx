@@ -1023,7 +1023,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
                       )}
                     </td>
 
@@ -1048,7 +1048,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             className={`text-xs truncate italic ${
                               isCurrent
                                 ? 'text-amber-600 dark:text-amber-400'
-                                : 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-600 dark:text-slate-500'
                             }`}
                           >
                             {roleLabel}
@@ -1061,7 +1061,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
                       )}
                     </td>
 
@@ -1092,7 +1092,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           </span>
                         )
                       ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
                       )}
                     </td>
 
@@ -1110,13 +1110,13 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                             {isPolish ? statusUi.label.pl : statusUi.label.en}
                           </span>
                           {decisionStatus === 'PENDING' && daysWaiting > 0 && (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                            <span className="text-[10px] text-slate-600 dark:text-slate-500">
                               {daysWaiting}d
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
                       )}
                     </td>
 
@@ -1303,7 +1303,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                     </div>
                     <button
                       onClick={() => setEditingStageId(null)}
-                      className="p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                      className="p-2 rounded-xl text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                     >
                       <X size={18} />
                     </button>

@@ -254,7 +254,7 @@ export const DeviceManagementView: React.FC = () => {
                           onClick={() => handleBlockDevice(device.id, 'Admin action')}
                           disabled
                           aria-label={`Block device ${device.id}`}
-                          className="text-slate-400 cursor-not-allowed opacity-60"
+                          className="text-slate-600 cursor-not-allowed opacity-60"
                           title={blockUnavailableMessage}
                         >
                           <Ban size={18} />

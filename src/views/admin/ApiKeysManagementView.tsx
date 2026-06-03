@@ -302,7 +302,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         </div>
       ) : apiKeys.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-          <Key className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <Key className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No API Keys</h3>
           <p className="text-slate-500 dark:text-slate-400 mt-1 mb-4">
             Create your first API key to get started with integrations

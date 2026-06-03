@@ -449,7 +449,7 @@ Help leaders develop change management competencies.`,
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">LLM Management</h1>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Manage AI behavior, providers, and system health
               </p>
             </div>
@@ -473,7 +473,7 @@ Help leaders develop change management competencies.`,
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.id
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
             <tab.icon size={16} />
@@ -596,7 +596,7 @@ Help leaders develop change management competencies.`,
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">Ollama Local Models</h3>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
                     Connect to local Ollama for privacy-focused AI
                   </p>
                 </div>
@@ -628,7 +628,7 @@ Help leaders develop change management competencies.`,
 
               {ollamaConnected === true && ollamaModels.length > 0 && (
                 <div className="bg-navy-950/50 rounded-lg p-4">
-                  <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3">
                     Available Models (click to add)
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -667,14 +667,14 @@ Help leaders develop change management competencies.`,
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-bold text-white">LLM Providers</h2>
-                <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+                <p className="text-slate-600 dark:text-slate-500 text-sm mt-1">
                   Configure AI models available to tenants
                 </p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowInactive(!showInactive)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${showInactive ? 'bg-white/10 border-white/20 text-white' : 'border-white/10 text-slate-400 dark:text-slate-500 hover:text-white'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${showInactive ? 'bg-white/10 border-white/20 text-white' : 'border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'}`}
                 >
                   {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
                   {showInactive ? 'Hide Inactive' : 'Show Inactive'}
@@ -732,8 +732,8 @@ Help leaders develop change management competencies.`,
                           className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
                         >
                           <td className="px-6 py-4 font-medium text-white">{p.name}</td>
-                          <td className="px-6 py-4 text-slate-300 capitalize">{p.provider}</td>
-                          <td className="px-6 py-4 font-mono text-xs text-slate-400 dark:text-slate-500">
+                          <td className="px-6 py-4 text-slate-600 capitalize">{p.provider}</td>
+                          <td className="px-6 py-4 font-mono text-xs text-slate-600 dark:text-slate-500">
                             {p.model_id}
                           </td>
                           <td className="px-6 py-4">
@@ -758,19 +758,19 @@ Help leaders develop change management competencies.`,
                                 onClick={() => handleTestConnection(p)}
                                 title="Test Connection"
                                 disabled={testingConnection}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-emerald-400 transition-colors"
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-600 dark:text-slate-500 hover:text-emerald-400 transition-colors"
                               >
                                 <Wifi size={16} />
                               </button>
                               <button
                                 onClick={() => handleEditProvider(p)}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-600 dark:text-slate-500 hover:text-white"
                               >
                                 <Edit size={16} />
                               </button>
                               <button
                                 onClick={() => handleDeleteProvider(p.id)}
-                                className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-400"
+                                className="p-2 hover:bg-rose-500/20 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-400"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -791,7 +791,7 @@ Help leaders develop change management competencies.`,
             <div className="max-w-3xl mx-auto">
               <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Model Routing per Tier</h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
+                <p className="text-sm text-slate-600 dark:text-slate-500 mb-6">
                   Define which LLM model to use for different complexity levels.
                 </p>
 
@@ -934,14 +934,14 @@ Help leaders develop change management competencies.`,
                       key={idx}
                       className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
                     >
-                      <span className="text-sm text-slate-300">{check.name}</span>
+                      <span className="text-sm text-slate-600">{check.name}</span>
                       <span
                         className={`text-sm ${
                           check.status === 'OK'
                             ? 'text-emerald-400'
                             : check.status === 'MISSING'
                               ? 'text-amber-400'
-                              : 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-600 dark:text-slate-500'
                         }`}
                       >
                         {check.status || check.value}
@@ -983,7 +983,7 @@ Help leaders develop change management competencies.`,
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-white">Global AI Settings</h2>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
                     Platform-wide AI configuration. These settings apply to all organizations.
                   </p>
                 </div>
@@ -1012,7 +1012,7 @@ Help leaders develop change management competencies.`,
                   >
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                        <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                           Default Provider
                         </label>
                         <select
@@ -1035,7 +1035,7 @@ Help leaders develop change management competencies.`,
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                             Failure Threshold
                           </label>
                           <input
@@ -1054,7 +1054,7 @@ Help leaders develop change management competencies.`,
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                             Cooldown (seconds)
                           </label>
                           <input
@@ -1121,7 +1121,7 @@ Help leaders develop change management competencies.`,
 
                       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
                         <div>
-                          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                             Requests per Minute
                           </label>
                           <input
@@ -1137,7 +1137,7 @@ Help leaders develop change management competencies.`,
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                             Requests per Hour
                           </label>
                           <input
@@ -1165,7 +1165,7 @@ Help leaders develop change management competencies.`,
                   >
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                        <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                           PII Detection Sensitivity
                         </label>
                         <div className="flex gap-2">
@@ -1179,7 +1179,7 @@ Help leaders develop change management competencies.`,
                                                                   globalSettings.piiDetectionSensitivity ===
                                                                   level
                                                                     ? 'bg-primary-500/20 border-primary-500 text-primary-300'
-                                                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 dark:text-slate-500 hover:border-slate-600'
+                                                                    : 'bg-slate-800/50 border-slate-700 text-slate-600 dark:text-slate-500 hover:border-slate-600'
                                                                 }
                                                             `}
                             >
@@ -1203,7 +1203,7 @@ Help leaders develop change management competencies.`,
                       />
 
                       <div>
-                        <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                        <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                           Data Residency
                         </label>
                         <select
@@ -1246,7 +1246,7 @@ Help leaders develop change management competencies.`,
               ) : (
                 <div className="text-center py-12">
                   <RefreshCw className="w-8 h-8 text-slate-600 dark:text-slate-400 mx-auto mb-3 animate-spin" />
-                  <p className="text-slate-400 dark:text-slate-500">Loading global settings...</p>
+                  <p className="text-slate-600 dark:text-slate-500">Loading global settings...</p>
                 </div>
               )}
             </div>
@@ -1264,7 +1264,7 @@ Help leaders develop change management competencies.`,
               </h2>
               <button
                 onClick={() => setShowProviderModal(false)}
-                className="text-slate-400 dark:text-slate-500 hover:text-white"
+                className="text-slate-600 dark:text-slate-500 hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -1272,7 +1272,7 @@ Help leaders develop change management competencies.`,
             <form onSubmit={handleProviderSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                     Display Name
                   </label>
                   <input
@@ -1283,7 +1283,7 @@ Help leaders develop change management competencies.`,
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                     Provider Type
                   </label>
                   <select
@@ -1314,7 +1314,7 @@ Help leaders develop change management competencies.`,
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                   API Key
                 </label>
                 <input
@@ -1328,7 +1328,7 @@ Help leaders develop change management competencies.`,
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                     Model ID
                   </label>
                   <input
@@ -1339,7 +1339,7 @@ Help leaders develop change management competencies.`,
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                     Endpoint (Optional)
                   </label>
                   <input
@@ -1353,7 +1353,7 @@ Help leaders develop change management competencies.`,
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                     Visibility
                   </label>
                   <select
@@ -1378,7 +1378,7 @@ Help leaders develop change management competencies.`,
                       }
                       className="w-4 h-4 rounded bg-navy-950 border-white/10"
                     />
-                    <span className="text-sm text-slate-300">Active</span>
+                    <span className="text-sm text-slate-600">Active</span>
                   </label>
                 </div>
               </div>
@@ -1387,7 +1387,7 @@ Help leaders develop change management competencies.`,
                 <button
                   type="button"
                   onClick={() => setShowProviderModal(false)}
-                  className="px-4 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 text-slate-300 rounded"
+                  className="px-4 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 text-slate-600 rounded"
                 >
                   Cancel
                 </button>

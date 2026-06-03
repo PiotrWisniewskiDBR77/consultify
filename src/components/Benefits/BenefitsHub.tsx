@@ -326,7 +326,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
           return (
             <div className="flex items-center gap-2">
               <Target size={14} className="text-green-400" />
-              <span className="font-mono text-xs font-bold text-slate-300">{code}</span>
+              <span className="font-mono text-xs font-bold text-slate-600">{code}</span>
             </div>
           );
         },
@@ -379,7 +379,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
               : row.costCapex >= 1000
                 ? `${(row.costCapex / 1000).toFixed(0)}k`
                 : row.costCapex;
-          return <span className="text-slate-300 text-sm">{formatted} PLN</span>;
+          return <span className="text-slate-600 text-sm">{formatted} PLN</span>;
         },
       },
       {
@@ -497,7 +497,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <TrendingUp className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-600">
                   {t('benefits.kpiCards.onTarget', 'On Target')}
                 </p>
                 <p className="text-2xl font-bold text-green-400">{kpiStats.onTarget}</p>

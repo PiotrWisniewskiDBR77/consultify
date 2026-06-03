@@ -318,7 +318,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                 </button>
               );
             })}
-            <span className="text-xs text-gray-400 ml-2">
+            <span className="text-xs text-gray-600 ml-2">
               {question.scaleMin || 1} = {t('survey.scaleLow', 'Low')} — {question.scaleMax || 5} ={' '}
               {t('survey.scaleHigh', 'High')}
             </span>
@@ -392,7 +392,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                       <span className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 flex-shrink-0" />
                     )}
                     <span className="truncate">{section.title[language] || section.title.en}</span>
-                    <span className="ml-auto text-xs text-gray-400">
+                    <span className="ml-auto text-xs text-gray-600">
                       {sectionAnswered}/{sectionTotal}
                     </span>
                   </button>
@@ -429,7 +429,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-gray-600 text-center">
                 {answeredCount} / {allQuestions.length}
               </p>
             </div>
@@ -528,17 +528,17 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
           </h3>
           <div className="space-y-3 text-sm">
             <div>
-              <span className="text-gray-400 text-xs">{t('survey.progress', 'Progress')}</span>
+              <span className="text-gray-600 text-xs">{t('survey.progress', 'Progress')}</span>
               <p className="font-medium text-gray-700 dark:text-gray-300">{progressPct}%</p>
             </div>
             <div>
-              <span className="text-gray-400 text-xs">{t('survey.answered', 'Answered')}</span>
+              <span className="text-gray-600 text-xs">{t('survey.answered', 'Answered')}</span>
               <p className="font-medium text-gray-700 dark:text-gray-300">
                 {answeredCount} / {allQuestions.length}
               </p>
             </div>
             <div>
-              <span className="text-gray-400 text-xs">{t('survey.required', 'Required')}</span>
+              <span className="text-gray-600 text-xs">{t('survey.required', 'Required')}</span>
               <p className="font-medium text-gray-700 dark:text-gray-300">
                 {allQuestions.filter((q) => q.required && answers.has(q.id)).length} /{' '}
                 {totalRequired}
@@ -546,7 +546,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
             </div>
             {estimatedMinutes && (
               <div>
-                <span className="text-gray-400 text-xs">
+                <span className="text-gray-600 text-xs">
                   {t('survey.estimatedTime', 'Est. time')}
                 </span>
                 <p className="font-medium text-gray-700 dark:text-gray-300">
@@ -555,7 +555,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
               </div>
             )}
             <div>
-              <span className="text-gray-400 text-xs">{t('survey.language', 'Language')}</span>
+              <span className="text-gray-600 text-xs">{t('survey.language', 'Language')}</span>
               <p className="font-medium text-gray-700 dark:text-gray-300">
                 {language.toUpperCase()}
               </p>

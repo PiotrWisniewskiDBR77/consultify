@@ -48,7 +48,7 @@ function HealthIcon({ status }: { status?: HealthStatus }) {
     case 'unhealthy':
       return <XCircle size={14} className="text-rose-400" />;
     default:
-      return <Server size={14} className="text-slate-400" />;
+      return <Server size={14} className="text-slate-600" />;
   }
 }
 
@@ -379,7 +379,7 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
                   </div>
                   <button
                     onClick={() => selectedPurpose && loadAssignments(selectedPurpose)}
-                    className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                    className="p-2 text-slate-600 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                   >
                     <RefreshCw size={16} />
                   </button>
@@ -402,7 +402,7 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
                           value={assignment}
                           className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl cursor-grab active:cursor-grabbing"
                         >
-                          <GripVertical size={16} className="text-slate-400 shrink-0" />
+                          <GripVertical size={16} className="text-slate-600 shrink-0" />
                           <span className="text-xs font-mono text-slate-500 dark:text-slate-400 w-6 shrink-0">
                             #{index + 1}
                           </span>
@@ -420,7 +420,7 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
 
                           {/* Fallback selector */}
                           <div className="flex items-center gap-2 shrink-0">
-                            <Link2 size={12} className="text-slate-400" />
+                            <Link2 size={12} className="text-slate-600" />
                             <select
                               value={assignment.fallbackModelId || ''}
                               onChange={(e) => handleSetFallback(assignment, e.target.value)}
@@ -444,7 +444,7 @@ export const PurposeAssignmentsEditor: React.FC<PurposeAssignmentsEditorProps> =
                               e.stopPropagation();
                               handleRemove(assignment);
                             }}
-                            className="p-2 text-slate-400 hover:text-rose-400 transition-colors shrink-0"
+                            className="p-2 text-slate-600 hover:text-rose-400 transition-colors shrink-0"
                           >
                             <Trash2 size={16} />
                           </button>

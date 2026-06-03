@@ -280,12 +280,12 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                     {a.accepted ? (
                       <CheckSquare size={16} className="text-emerald-500" />
                     ) : (
-                      <Square size={16} className="text-slate-400" />
+                      <Square size={16} className="text-slate-600" />
                     )}
                   </button>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-700 dark:text-slate-300">{a.text}</p>
-                    <span className="text-[10px] text-slate-400 uppercase">{a.source}</span>
+                    <span className="text-[10px] text-slate-600 uppercase">{a.source}</span>
                   </div>
                 </div>
               ))}
@@ -579,7 +579,7 @@ export const ToolWizardShell: React.FC<ToolWizardShellProps> = ({
                     className={`px-2 py-0.5 text-[10px] font-medium rounded ${
                       output.status === 'created'
                         ? 'bg-emerald-500/20 text-emerald-400'
-                        : 'bg-slate-500/20 text-slate-400'
+                        : 'bg-slate-500/20 text-slate-600'
                     }`}
                   >
                     {output.status}

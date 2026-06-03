@@ -448,7 +448,7 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
           >
             {/* Search Input */}
             <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-200 dark:border-navy-700">
-              <Search size={20} className="text-slate-400 dark:text-slate-500 flex-shrink-0" />
+              <Search size={20} className="text-slate-600 dark:text-slate-500 flex-shrink-0" />
               <input
                 ref={inputRef}
                 type="text"
@@ -458,7 +458,7 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
                 placeholder="Search commands..."
                 className="flex-1 bg-transparent text-navy-900 dark:text-white placeholder-slate-400 outline-none text-base"
               />
-              <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-white/5 rounded-lg">
+              <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-white/5 rounded-lg">
                 <Command size={12} />K
               </kbd>
             </div>
@@ -466,7 +466,7 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
             {/* Results */}
             <div ref={listRef} className="max-h-[50vh] overflow-y-auto py-2">
               {filteredCommands.length === 0 ? (
-                <div className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">
+                <div className="px-4 py-8 text-center text-slate-600 dark:text-slate-500">
                   No commands found for "{query}"
                 </div>
               ) : (
@@ -476,7 +476,7 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
                   return (
                     <div key={category} className="mb-2">
                       {/* Category Header */}
-                      <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                         {categoryIcons[category]}
                         {categoryLabels[category]}
                       </div>
@@ -503,20 +503,20 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
                             `}
                           >
                             <span
-                              className={`flex-shrink-0 ${isSelected ? '' : 'text-slate-400 dark:text-slate-500'}`}
+                              className={`flex-shrink-0 ${isSelected ? '' : 'text-slate-600 dark:text-slate-500'}`}
                             >
                               {cmd.icon || <FileText size={18} />}
                             </span>
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">{cmd.label}</div>
                               {cmd.description && (
-                                <div className="text-sm text-slate-400 dark:text-slate-500 truncate">
+                                <div className="text-sm text-slate-600 dark:text-slate-500 truncate">
                                   {cmd.description}
                                 </div>
                               )}
                             </div>
                             {cmd.shortcut && (
-                              <kbd className="flex-shrink-0 px-2 py-0.5 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-white/5 rounded">
+                              <kbd className="flex-shrink-0 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-white/5 rounded">
                                 {cmd.shortcut}
                               </kbd>
                             )}
@@ -534,7 +534,7 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-2 border-t border-slate-200 dark:border-navy-700 text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex items-center justify-between px-4 py-2 border-t border-slate-200 dark:border-navy-700 text-xs text-slate-600 dark:text-slate-500">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
                   <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-white/5 rounded">↑↓</kbd>

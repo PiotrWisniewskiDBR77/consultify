@@ -2396,7 +2396,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Co można twierdzić' : 'Safe claims'}
                   </div>
                   <div className="mt-3 space-y-2">
@@ -2434,7 +2434,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                       {isPolish ? 'Blokery publish/handoff' : 'Publish/handoff blockers'}
                     </div>
                     <button
@@ -2467,7 +2467,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                       {isPolish ? 'Sprzeczności' : 'Contradictions'}
                     </div>
                     <button
@@ -2523,7 +2523,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Official answers' : 'Official answers'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -2531,7 +2531,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Issues / Risks' : 'Issues / risks'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -2539,7 +2539,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Signals / Opportunities' : 'Signals / opportunities'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -2594,7 +2594,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Official Answers' : 'Official Answers'}
                   </div>
                   {officialAnswers.length > 0 ? (
@@ -2617,7 +2617,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Issues / Risks' : 'Issues / Risks'}
                   </div>
                   {issuesReadout.length > 0 ? (
@@ -2642,7 +2642,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Signals / Opportunities' : 'Signals / Opportunities'}
                   </div>
                   {uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).length > 0 ? (
@@ -2701,7 +2701,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Wynik' : 'Score'}
                       </div>
                       <div className={`mt-1 text-2xl font-semibold ${postureColor}`}>
@@ -2709,7 +2709,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Jakość odpowiedzi' : 'Answer quality'}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2717,7 +2717,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Pokrycie' : 'Coverage'}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2725,7 +2725,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Sesje / respondenci' : 'Sessions / respondents'}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2740,7 +2740,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {isPolish ? 'Ograniczenia materiału' : 'Material limitations'}
                       </h4>
                       {quality.limitations.length > 0 ? (
-                        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                        <ul className="mt-3 space-y-2 text-sm text-slate-600">
                           {quality.limitations.map((item) => (
                             <li key={item} className="flex gap-2">
                               <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-400" />
@@ -2761,7 +2761,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       <h4 className="text-sm font-semibold text-white">
                         {isPolish ? 'Braki i follow-up' : 'Gaps and follow-up'}
                       </h4>
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
                         <div>
                           {isPolish ? 'Cienkie odpowiedzi' : 'Thin answers'}:{' '}
                           <span className="text-slate-200">{quality.thin_answer_count}</span>
@@ -2780,7 +2780,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
                       </div>
                       {quality.recommended_followups.length > 0 && (
-                        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                        <ul className="mt-3 space-y-2 text-sm text-slate-600">
                           {quality.recommended_followups.map((item) => (
                             <li key={item} className="flex gap-2">
                               <MessageSquare size={15} className="mt-0.5 shrink-0 text-blue-400" />
@@ -2794,7 +2794,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Role w materiale' : 'Roles covered'}
                       </div>
                       <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
@@ -2806,7 +2806,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Działy w materiale' : 'Departments covered'}
                       </div>
                       <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
@@ -2873,7 +2873,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Kompletność' : 'Completeness'}
                       </div>
                       <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -2881,7 +2881,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Arkusze' : 'Worksheets'}
                       </div>
                       <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -2889,7 +2889,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Gotowe / częściowe' : 'Generated / partial'}
                       </div>
                       <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
@@ -2897,7 +2897,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Zdegradowane' : 'Degraded'}
                       </div>
                       <div
@@ -3236,7 +3236,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Sesje' : 'Sessions'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3244,7 +3244,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Fragmenty' : 'Fragments'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3252,7 +3252,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Aktywne dowody' : 'Active evidence'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3260,7 +3260,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Stan' : 'State'}
                   </div>
                   <div
@@ -3283,7 +3283,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Readback OK' : 'Readback OK'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
@@ -3291,7 +3291,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Zakwestionowane' : 'Challenged'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
@@ -3299,7 +3299,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Potrzeba evidence' : 'Needs evidence'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
@@ -3307,7 +3307,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Niepotwierdzone' : 'Unresolved'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3448,7 +3448,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Posture' : 'Posture'}
                   </div>
                   <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -3466,7 +3466,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Sesje źródłowe' : 'Source sessions'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3474,7 +3474,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Lenses' : 'Lenses'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3482,7 +3482,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Consensus' : 'Consensus'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3563,7 +3563,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Consensus topics' : 'Consensus topics'}
                   </div>
                   {consensusTopics.length > 0 ? (
@@ -3592,7 +3592,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Local-only signals' : 'Local-only signals'}
                   </div>
                   {localOnlyTopics.length > 0 ? (
@@ -3622,7 +3622,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {analysisLensMode === 'stakeholder'
                       ? isPolish
                         ? 'Stakeholder lenses'
@@ -3707,13 +3707,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <table className="min-w-full text-sm">
                       <thead>
                         <tr className="bg-white/70 dark:bg-navy-900/30">
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Temat' : 'Topic'}
                           </th>
                           {activeAnalysisColumns.map((column) => (
                             <th
                               key={column.id}
-                              className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500"
+                              className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500"
                             >
                               {column.label}
                             </th>
@@ -3967,7 +3967,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
                                 </p>
                               )}
@@ -4232,7 +4232,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
                                 </p>
                               )}
@@ -4479,7 +4479,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
                                 </p>
                               )}
@@ -4814,7 +4814,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Kandydaci' : 'Candidates'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -4822,7 +4822,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Ready' : 'Ready'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
@@ -4830,7 +4830,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Braki evidence' : 'Needs evidence'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
@@ -4838,7 +4838,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Do rozbicia' : 'Needs split'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
@@ -4938,7 +4938,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3 space-y-3">
                             <div className="flex items-center justify-between gap-3">
                               <div>
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Client readback' : 'Client readback'}
                                 </div>
                                 <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
@@ -4951,7 +4951,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               {readbackLoadingId === linkedFinding.id && (
                                 <Loader2
                                   size={14}
-                                  className="animate-spin text-slate-400 flex-shrink-0"
+                                  className="animate-spin text-slate-600 flex-shrink-0"
                                 />
                               )}
                             </div>
@@ -5231,7 +5231,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         )}
 
                         <div className="space-y-3">
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Wspierane tematy' : 'Supported topics'}
                           </div>
                           {supportedTopics.length > 0 ? (
@@ -5293,7 +5293,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                         {localSupportedTopics.length > 0 && (
                           <div className="space-y-2">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                               {isPolish ? 'Lokalne sygnały' : 'Local signals'}
                             </div>
                             <div className="flex flex-wrap gap-1.5">
@@ -5384,7 +5384,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Official answers' : 'Official answers'}
                           </div>
                           {summary.facts.length > 0 ? (
@@ -5397,14 +5397,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               </div>
                             ))
                           ) : (
-                            <div className="text-sm text-slate-400 dark:text-slate-500">
+                            <div className="text-sm text-slate-600 dark:text-slate-500">
                               {isPolish ? 'Brak zebranych faktów' : 'No facts captured'}
                             </div>
                           )}
                         </div>
 
                         <div className="space-y-2">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Gaps / constraints' : 'Gaps / constraints'}
                           </div>
                           {uniqueNonEmpty([
@@ -5427,7 +5427,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 </div>
                               ))
                           ) : (
-                            <div className="text-sm text-slate-400 dark:text-slate-500">
+                            <div className="text-sm text-slate-600 dark:text-slate-500">
                               {isPolish ? 'Brak luk lub ograniczeń' : 'No gaps or constraints'}
                             </div>
                           )}
@@ -5440,7 +5440,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       key={sessionId}
                       className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 border border-dashed border-slate-300 dark:border-navy-600 px-4 py-4"
                     >
-                      <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
+                      <div className="flex items-center gap-3 text-slate-600 dark:text-slate-500">
                         <Link2 size={16} className="opacity-50" />
                         <div>
                           <div className="text-sm font-medium">
@@ -5537,7 +5537,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <FileText size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
+                  <FileText size={48} className="text-slate-600 dark:text-slate-600 mb-4" />
                   <p className="text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Brak treści' : 'No content'}
                   </p>
@@ -5551,7 +5551,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <div className="space-y-2">
               {sourceSessions.length === 0 ? (
-                <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+                <div className="text-center py-6 text-slate-600 dark:text-slate-500">
                   <MessageSquare size={24} className="mx-auto mb-2 opacity-50" />
                   <p className="text-sm">{isPolish ? 'Brak sesji' : 'No sessions'}</p>
                 </div>
@@ -5570,7 +5570,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           {session.name}
                         </p>
                         {session.templateName && (
-                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
                             {session.templateName}
                           </p>
                         )}
@@ -5905,7 +5905,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   setHandoffModalOpen(false);
                   setHandoffFinding(null);
                 }}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -5951,7 +5951,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       ))}
                     </ul>
                   ) : (
-                    <span className="text-xs italic text-slate-400">
+                    <span className="text-xs italic text-slate-600">
                       {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
                     </span>
                   )}

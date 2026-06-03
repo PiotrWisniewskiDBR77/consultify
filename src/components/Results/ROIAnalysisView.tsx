@@ -82,7 +82,7 @@ function normalizePortfolioSummary(
 }
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
-  'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
+  'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
   below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
@@ -248,7 +248,7 @@ const LockBadge: React.FC<{ lockState: ROILockState }> = ({ lockState }) => {
   }
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/15 text-slate-300"
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/15 text-slate-600"
       title={t(
         'results.roiAnalysis.lockedHint',
         'Assumptions are finalized and locked for editing'
@@ -463,7 +463,7 @@ export const ROIAnalysisView: React.FC = () => {
       {/* Lock / approval governance banner */}
       {(lockedCount > 0 || approvedCount > 0) && (
         <div className="rounded-xl bg-slate-50 dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-3 flex flex-wrap items-center gap-3">
-          <Lock size={16} className="text-slate-400 shrink-0" />
+          <Lock size={16} className="text-slate-600 shrink-0" />
           <span className="text-sm text-slate-600 dark:text-slate-300">
             {t(
               'results.roiAnalysis.lockBanner',
@@ -477,7 +477,7 @@ export const ROIAnalysisView: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <DollarSign size={16} className="text-slate-400" />
+            <DollarSign size={16} className="text-slate-600" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roiAnalysis.totalPlanned', 'Total Planned Value')}
             </span>
@@ -488,7 +488,7 @@ export const ROIAnalysisView: React.FC = () => {
         </div>
         <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Target size={16} className="text-slate-400" />
+            <Target size={16} className="text-slate-600" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roiAnalysis.totalRealized', 'Total Realized Value')}
             </span>
@@ -514,7 +514,7 @@ export const ROIAnalysisView: React.FC = () => {
                 ? 'text-emerald-400'
                 : totalVariance < 0
                   ? 'text-rose-400'
-                  : 'text-slate-400'
+                  : 'text-slate-600'
             }`}
           >
             {formatCurrency(totalVariance)} ({formatPercent(variancePct)})
@@ -530,7 +530,7 @@ export const ROIAnalysisView: React.FC = () => {
             <h4 className="text-sm font-medium text-amber-400">
               {t('results.roiAnalysis.anomalyTitle', 'AI-suggested insights')}
             </h4>
-            <p className="text-sm text-slate-300 mt-1">{anomalyMessage}</p>
+            <p className="text-sm text-slate-600 mt-1">{anomalyMessage}</p>
           </div>
         </div>
       )}
@@ -642,7 +642,7 @@ export const ROIAnalysisView: React.FC = () => {
                 <tr>
                   <td colSpan={8} className="px-4 py-16 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-2">
-                      <BarChart3 size={24} className="text-slate-400" />
+                      <BarChart3 size={24} className="text-slate-600" />
                       <span>{t('results.roi.emptyState', 'No initiatives with ROI data')}</span>
                     </div>
                   </td>
@@ -663,7 +663,7 @@ export const ROIAnalysisView: React.FC = () => {
                       ? 'text-emerald-400'
                       : varPct < 0
                         ? 'text-rose-400'
-                        : 'text-slate-400';
+                        : 'text-slate-600';
 
                   return (
                     <tr
@@ -744,7 +744,7 @@ export const ROIAnalysisView: React.FC = () => {
                                   className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
                                     editable
                                       ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
-                                      : 'text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                                      : 'text-slate-600 dark:text-slate-600 cursor-not-allowed'
                                   }`}
                                 >
                                   {editable ? <Plus size={14} /> : <Lock size={14} />}
