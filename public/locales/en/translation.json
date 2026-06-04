@@ -6420,8 +6420,10 @@
         "filesAddedMany": "Added {{count}} files",
         "cloudComingSoon": "Cloud integrations will be added soon",
         "openingProvider": "Opening {{provider}}…",
-        "redirectIntegrations": "Redirecting to integration settings"
-      }
+        "redirectIntegrations": "Redirecting to integration settings",
+        "recentReattached": "Re-attached \"{{name}}\""
+      },
+      "recentReupload": "re-upload to attach"
     },
     "cloudPicker": {
       "demoMode": "Demo mode",

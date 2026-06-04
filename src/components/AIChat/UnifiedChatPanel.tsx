@@ -85,6 +85,7 @@ import {
   isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
+import { pushRecentAttachment } from './chatRecentAttachments';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
@@ -2293,6 +2294,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               }))
           : [];
 
+      // Re-attached docs from the Recent flyout (A5): already uploaded, so they
+      // carry an existing docId and skip the upload loop — just add to RAG scope.
+      const reattachedDocIds: string[] = Array.isArray(attachments)
+        ? attachments
+            .filter((a: any) => a && a.kind === 'doc' && a.docId)
+            .map((a: any) => String(a.docId))
+        : [];
+
       const uploadedAttachments: Array<{
         docId: string;
         filename: string;
@@ -2369,6 +2378,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             size: file.size,
             kind: 'file',
           });
+          // A5: upgrade the Recent entry with the real docId so it can be
+          // re-attached later without re-uploading.
+          pushRecentAttachment({ name: file.name, docId, mimeType: file.type || undefined });
           toast.success(
             t('aiChat.attachments.uploadSuccess', 'Załącznik "{{name}}" przetworzony.', {
               name: file.name,
@@ -2506,7 +2518,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       const attachmentDocIds = Array.from(
-        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
+        new Set([
+          ...existingAttachmentDocIds,
+          ...reattachedDocIds,
+          ...uploadedAttachments.map((a) => a.docId),
+        ])
       );
 
       const canvasContextPacket = buildCanvasContextPacket(

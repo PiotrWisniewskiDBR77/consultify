@@ -105,6 +105,14 @@ type ComposerAttachment =
       kind?: 'url';
       url: string;
       name?: string;
+    }
+  // Already-uploaded doc re-attached from the "Recent" flyout — carries the
+  // existing server docId, so the send pipeline includes it in RAG scope
+  // without re-uploading. (Composer audit A5.)
+  | {
+      kind: 'doc';
+      docId: string;
+      name: string;
     };
 
 // ============================================================================
@@ -891,6 +899,16 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     setAttachments((prev) => [...prev, ...files]);
   }, []);
 
+  // Re-attach an already-uploaded doc from the Recent flyout (A5). No re-upload:
+  // the docId rides through onSend and the parent adds it to the RAG scope.
+  const handleRecentReattach = useCallback((recent: { name: string; docId?: string }) => {
+    if (!recent.docId) return;
+    setAttachments((prev) => [
+      ...prev,
+      { kind: 'doc', docId: recent.docId as string, name: recent.name },
+    ]);
+  }, []);
+
   const handleUrlAdd = useCallback((url: string) => {
     const clean = String(url || '').trim();
     if (!clean) return;
@@ -978,21 +996,22 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2 px-1">
           {attachments.map((att, idx) => {
-            const isUrlAttachment =
-              typeof att === 'object' &&
-              !(att instanceof File) &&
-              (att as { kind?: string }).kind === 'url';
-            const label =
-              typeof att === 'object' && !(att instanceof File)
-                ? att.name || att.url
-                : att.name || att.type;
+            const isFileAtt = att instanceof File;
+            const attKind = !isFileAtt ? (att as { kind?: string }).kind : 'file';
+            const isUrlAttachment = attKind === 'url';
+            const label = isFileAtt
+              ? att.name || att.type
+              : (att as { name?: string; url?: string }).name ||
+                (att as { url?: string }).url ||
+                'attachment';
+            const badge = isUrlAttachment ? 'Link' : 'File';
             return (
               <div
                 key={idx}
                 className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
               >
                 <span className="inline-flex items-center gap-1">
-                  <span>{isUrlAttachment ? 'Link' : 'File'}:</span>
+                  <span>{badge}:</span>
                   <span className="max-w-[220px] truncate">{label}</span>
                 </span>
                 <button
@@ -1124,6 +1143,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               <AddFilesMenu
                 onFileSelect={handleFileSelect}
                 onUrlAdd={handleUrlAdd}
+                onRecentSelect={handleRecentReattach}
                 onCloudFileSelect={handleCloudFileSelect}
                 onConnectCloud={handleConnectCloud}
                 connectedProviders={connectedProviderIds}

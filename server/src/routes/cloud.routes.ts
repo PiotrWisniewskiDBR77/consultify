@@ -387,26 +387,52 @@ router.post('/sources/:id/sync', verifyToken, async (req: AuthRequest, res: Resp
  * GET /api/cloud/providers
  * List supported cloud storage providers
  */
-router.get('/providers', verifyToken, async (_req: AuthRequest, res: Response) => {
+router.get('/providers', verifyToken, async (req: AuthRequest, res: Response) => {
+  // Real connection state: a provider is "connected" when the org has at least
+  // one configured cloud source for it. Previously this endpoint returned a
+  // STATIC list with underscore ids (`google_drive`) and no `connected` flag,
+  // so the in-chat cloud rows (which filter on hyphenated id + connected) never
+  // rendered even after the user linked a provider. (Composer audit A4.)
+  const organizationId = req.organizationId;
+  const connected = new Set<string>();
+  try {
+    if (organizationId) {
+      const { listCloudSources } = await import('../services/cloudDataService.js');
+      const sources = await listCloudSources(organizationId);
+      for (const s of sources || []) {
+        const p = String((s as any)?.provider || '')
+          .toLowerCase()
+          .replace(/_/g, '-');
+        if (p) connected.add(p);
+      }
+    }
+  } catch (err: any) {
+    // Non-fatal — fall back to "nothing connected" rather than 500.
+    logger.warn('[CloudRoutes] providers connection-state lookup failed:', err?.message);
+  }
+  const isConnected = (id: string) => connected.has(id) || connected.has(id.replace(/-/g, '_'));
   return res.json({
     providers: [
       {
-        id: 'google_drive',
+        id: 'google-drive',
         name: 'Google Drive',
         authType: 'oauth2',
         capabilities: ['list', 'download', 'upload', 'search'],
+        connected: isConnected('google-drive'),
       },
       {
         id: 'onedrive',
         name: 'OneDrive / SharePoint',
         authType: 'oauth2',
         capabilities: ['list', 'download', 'upload'],
+        connected: isConnected('onedrive'),
       },
       {
         id: 'dropbox',
         name: 'Dropbox',
         authType: 'oauth2',
         capabilities: ['list', 'download', 'upload'],
+        connected: isConnected('dropbox'),
       },
     ],
   });

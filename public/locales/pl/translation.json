@@ -6971,8 +6971,10 @@
         "filesAddedMany": "Dodano {{count}} plików",
         "cloudComingSoon": "Integracje z chmurą zostaną dodane wkrótce",
         "openingProvider": "Otwieranie {{provider}}…",
-        "redirectIntegrations": "Przekierowanie do ustawień integracji"
-      }
+        "redirectIntegrations": "Przekierowanie do ustawień integracji",
+        "recentReattached": "Ponownie dołączono „{{name}}\""
+      },
+      "recentReupload": "wgraj ponownie, by dołączyć"
     },
     "cloudPicker": {
       "demoMode": "Tryb demonstracyjny",
