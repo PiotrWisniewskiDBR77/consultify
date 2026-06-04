@@ -47,7 +47,6 @@ import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
-// import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
 import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useChatActions } from '../../hooks/useChatActions';
@@ -92,7 +91,6 @@ import { detectDocumentIntent, detectPresentationIntent } from './documentIntent
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 import { detectMindmapIntent } from './mindmapIntentDetector';
-// import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { OutputToolSelector } from './OutputToolSelector';
 import { PrivateModeDetails } from './PrivateModeDetails';
 import { detectProcessFlowIntent } from './processFlowIntentDetector';
@@ -643,9 +641,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     aiInteractionsLimit,
     consumeAIInteraction,
   } = useDemoSession();
-
-  // Organization Memory — disabled (panel removed)
-  // const orgMemory = useOrgMemory();
 
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
