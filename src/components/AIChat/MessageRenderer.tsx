@@ -472,7 +472,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   return (
     <div
       key={msg.id}
-      className={`mx-auto w-full max-w-4xl flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+      className={`mx-auto w-full max-w-5xl flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
       onMouseEnter={() => setHoveredMessageId(msg.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
     >

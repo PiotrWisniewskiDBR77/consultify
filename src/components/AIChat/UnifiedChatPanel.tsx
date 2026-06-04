@@ -4740,7 +4740,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           {/* Typing indicator */}
           {isBotTyping && !streamedContent && (
-            <div className="mx-auto w-full max-w-4xl flex gap-2 justify-start">
+            <div className="mx-auto w-full max-w-5xl flex gap-2 justify-start">
               <div
                 className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
               >
@@ -4766,83 +4766,87 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             id="chat-input"
             className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} border-t border-slate-200 bg-slate-50 dark:border-navy-800 dark:bg-navy-950`}
           >
-            {!!lastError && !isStreaming && (
-              <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
-                <div className="text-xs text-amber-800 dark:text-amber-200">
-                  {t('aiChat.streamError', 'Last request failed. You can retry.')}
+            <div className="mx-auto w-full max-w-5xl">
+              {!!lastError && !isStreaming && (
+                <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                  <div className="text-xs text-amber-800 dark:text-amber-200">
+                    {t('aiChat.streamError', 'Last request failed. You can retry.')}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => retryLastStream()}
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
+                    >
+                      {t('common.tryAgain', 'Try again')}
+                    </button>
+                    <button
+                      onClick={() => clearLastError()}
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+                    >
+                      {t('common.dismiss', 'Dismiss')}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => retryLastStream()}
-                    className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
-                  >
-                    {t('common.tryAgain', 'Try again')}
-                  </button>
-                  <button
-                    onClick={() => clearLastError()}
-                    className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
-                  >
-                    {t('common.dismiss', 'Dismiss')}
-                  </button>
+              )}
+              {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
+                <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+                  {quickPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      onClick={() => handleSendMessage(prompt)}
+                      className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
                 </div>
-              </div>
-            )}
-            {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
-              <div className="flex flex-wrap gap-1.5 px-3 pb-2">
-                {quickPrompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => handleSendMessage(prompt)}
-                    className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            )}
-            {!isCompact && latestAiMessageText && !isStreaming && (
-              <div className="flex items-center gap-2 px-3 pb-2">
-                <TeresaTTSPlayer text={latestAiMessageText} language={chatLanguage} />
-              </div>
-            )}
-            <EnhancedChatInput
-              onSend={handleSendMessage}
-              onNewChat={handleNewChat}
-              onStopGenerating={() => {
-                const hadPartial = abortStream();
-                setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
-                setTimeout(() => setAbortFeedback(null), 3000);
-              }}
-              onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
-              teresaVoiceStatus={teresaVoice.voiceStatus}
-              teresaVoiceAvailable={teresaVoice.voiceAvailable}
-              teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
-              teresaVoiceMuted={teresaVoice.isMuted}
-              onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
-              isStreaming={isStreaming}
-              disabled={isDisabled}
-              placeholder={
-                workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
-                  ? t('aiChat.teresaContextPlaceholder', {
-                      defaultValue: 'How can Teresa help with {{context}}?',
-                      context: workspaceContext.entityName,
-                    })
-                  : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
-              }
-              voiceModeEnabled={voiceModeEnabled}
-              onVoiceModeChange={setVoiceModeEnabled}
-              chatLanguage={chatLanguage}
-              voiceState={voiceState}
-              startVoiceListening={startListening}
-              stopVoiceListening={stopListening}
-            />
-            {chatSuggestions.length > 0 && (
-              <ChatSmartSuggestions
-                suggestions={chatSuggestions}
-                onSuggestionClick={handleSuggestionClick}
-                className="pt-2"
+              )}
+              {!isCompact && latestAiMessageText && !isStreaming && (
+                <div className="flex items-center gap-2 px-3 pb-2">
+                  <TeresaTTSPlayer text={latestAiMessageText} language={chatLanguage} />
+                </div>
+              )}
+              <EnhancedChatInput
+                onSend={handleSendMessage}
+                onNewChat={handleNewChat}
+                onStopGenerating={() => {
+                  const hadPartial = abortStream();
+                  setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
+                  setTimeout(() => setAbortFeedback(null), 3000);
+                }}
+                onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
+                teresaVoiceStatus={teresaVoice.voiceStatus}
+                teresaVoiceAvailable={teresaVoice.voiceAvailable}
+                teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
+                teresaVoiceMuted={teresaVoice.isMuted}
+                onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
+                isStreaming={isStreaming}
+                disabled={isDisabled}
+                placeholder={
+                  workspaceContext &&
+                  workspaceContext.type !== 'empty' &&
+                  workspaceContext.entityName
+                    ? t('aiChat.teresaContextPlaceholder', {
+                        defaultValue: 'How can Teresa help with {{context}}?',
+                        context: workspaceContext.entityName,
+                      })
+                    : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
+                }
+                voiceModeEnabled={voiceModeEnabled}
+                onVoiceModeChange={setVoiceModeEnabled}
+                chatLanguage={chatLanguage}
+                voiceState={voiceState}
+                startVoiceListening={startListening}
+                stopVoiceListening={stopListening}
               />
-            )}
+              {chatSuggestions.length > 0 && (
+                <ChatSmartSuggestions
+                  suggestions={chatSuggestions}
+                  onSuggestionClick={handleSuggestionClick}
+                  className="pt-2"
+                />
+              )}
+            </div>
           </div>
         )}
 
