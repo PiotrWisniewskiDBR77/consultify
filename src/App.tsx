@@ -28,6 +28,7 @@ import { User } from './types';
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicReportBuilderView'));
+const SharedConversationView = React.lazy(() => import('./views/SharedConversationView'));
 // Sprint 13 — read-only Subscriber Dashboard (Bearer-token auth, no JWT).
 // Lives next to the other public, lazy-loaded routes so the main app's
 // auth-bootstrapping path does not gate the page on a logged-in
@@ -429,6 +430,21 @@ function AppContent() {
               }
             >
               <PublicReportBuilderView />
+            </React.Suspense>
+          }
+        />
+        {/* F4: public, read-only shared conversation viewer */}
+        <Route
+          path="/share/:token"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <SharedConversationView />
             </React.Suspense>
           }
         />

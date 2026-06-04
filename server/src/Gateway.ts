@@ -89,6 +89,7 @@ import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import contextRoutes from './routes/context.routes.js';
 import conversationsRoutes from './routes/conversations.routes.js';
+import shareRoutes from './routes/share.routes.js';
 import coreDocsRoutes from './routes/core-docs.routes.js';
 import cvMatchingRoutes from './routes/cv-matching.routes.js';
 import dailyBriefRoutes from './routes/daily-brief.routes.js';
@@ -457,6 +458,11 @@ export class ApiGateway {
       // no org context = personal chat). Closes the stale-token tenancy gap on chat routes.
       app.use('/api/conversations', gatewayVerifyToken, orgMembershipGuard, conversationsRoutes);
       app.use('/api/chat-projects', gatewayVerifyToken, orgMembershipGuard, chatProjectsRoutes);
+      // Conversation share links (F4). Mounted AFTER conversations so its
+      // /conversations/:id/share handlers don't shadow the main routes. Carries
+      // its own auth (authenticate for manage, optionalAuth for the public
+      // /share/:token viewer) — so it must NOT sit behind the gateway guard.
+      app.use('/api', shareRoutes);
       mountStub('/api/daily-brief', dailyBriefRoutes, 'dailyBriefRoutes');
       mountStub('/api/pinned-prompts', pinnedPromptsRoutes, 'pinnedPromptsRoutes');
       mountStub('/api/task-advisor', taskAdvisorRoutes, 'taskAdvisorRoutes');

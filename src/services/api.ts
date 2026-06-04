@@ -11771,6 +11771,39 @@ export const Api = {
     );
     return handleResponse(res, 'Failed to move conversation to folder');
   },
+  /** Create (or return existing) a public share link for a conversation (F4). */
+  shareConversation: async (
+    conversationId: string,
+    opts?: { title?: string; expiresIn?: number }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/share`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(opts || {}),
+    });
+    return handleResponse(res, 'Failed to create share link');
+  },
+  /** Get an existing share for a conversation (F4). */
+  getConversationShare: async (conversationId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/share`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load share');
+  },
+  /** Revoke a conversation's share link (F4). */
+  revokeConversationShare: async (conversationId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/share`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to revoke share');
+  },
+  /** Public, unauthenticated fetch of a shared conversation by token (F4). */
+  getPublicShare: async (token: string, password?: string) => {
+    const qs = password ? `?password=${encodeURIComponent(password)}` : '';
+    const res = await fetch(`${API_URL}/share/${encodeURIComponent(token)}${qs}`);
+    return handleResponse(res, 'Failed to load shared conversation');
+  },
   /** Fork a conversation from a message into a new conversation (composer #4). */
   branchConversation: async (conversationId: string, forkMessageId: string) => {
     const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/branch`, {

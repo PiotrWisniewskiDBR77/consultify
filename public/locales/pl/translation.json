@@ -6768,7 +6768,8 @@
       "unarchive": "Przywróć z archiwum",
       "delete": "Usuń",
       "addToProject": "Dodaj do folderu",
-      "moveProject": "Zmień folder"
+      "moveProject": "Zmień folder",
+      "shareLink": "Udostępnij link"
     },
     "feedback": {
       "thankYou": "Dziękujemy za opinię!",
@@ -7119,6 +7120,11 @@
       "fileAdded": "Dodano plik do projektu",
       "uploadFailed": "Nie udało się wgrać",
       "deleteFailed": "Nie udało się usunąć"
+    },
+    "share": {
+      "creating": "Tworzę link…",
+      "copied": "Skopiowano link do schowka",
+      "failed": "Nie udało się utworzyć linku"
     }
   },
   "agentAudit": {

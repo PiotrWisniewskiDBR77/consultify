@@ -12,9 +12,21 @@ import crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDb } from '../database/connection.js';
-import { authenticate, optionalAuth } from '../middleware/auth.js';
+import { optionalAuth, verifyToken as authenticate } from '../middleware/auth.middleware.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+
+// The original `../database/connection.js` (getDb with .get/.run/.query) no longer
+// exists — that's why this router was orphaned. Shim the same shape over the
+// canonical DbPromise helpers so the handlers work unchanged.
+function getDb() {
+  return {
+    get: (sql: string, params?: unknown[]) => dbGet(sql, params as any),
+    run: (sql: string, params?: unknown[]) => dbRun(sql, params as any),
+    all: (sql: string, params?: unknown[]) => dbAll(sql, params as any),
+    query: (sql: string, params?: unknown[]) => dbAll(sql, params as any),
+  };
+}
 
 const router = Router();
 
@@ -52,6 +64,44 @@ function generateShareToken(): string {
   return crypto.randomBytes(16).toString('base64url');
 }
 
+// DB_MANAGED_SCHEMA may be off, so migration 283 might not have run. Ensure the
+// sharing tables exist lazily (idempotent). Runs once per process.
+let _shareTablesReady: boolean | null = null;
+async function ensureShareTables() {
+  if (_shareTablesReady !== null) return _shareTablesReady;
+  try {
+    const db = getDb();
+    await db.run(`CREATE TABLE IF NOT EXISTS conversation_shares (
+      id TEXT PRIMARY KEY,
+      conversation_id TEXT NOT NULL,
+      share_token TEXT UNIQUE NOT NULL,
+      created_by TEXT NOT NULL,
+      title TEXT,
+      description TEXT,
+      expires_at TIMESTAMP,
+      view_count INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      settings JSON DEFAULT '{}',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    await db.run(`CREATE TABLE IF NOT EXISTS conversation_share_views (
+      id TEXT PRIMARY KEY,
+      share_id TEXT NOT NULL,
+      viewer_ip TEXT,
+      viewer_agent TEXT,
+      referrer TEXT,
+      viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    await db.run('CREATE INDEX IF NOT EXISTS idx_shares_token ON conversation_shares(share_token)');
+    _shareTablesReady = true;
+  } catch (e: any) {
+    logger.warn(`[Share] ensure tables failed: ${e?.message}`);
+    _shareTablesReady = false;
+  }
+  return _shareTablesReady;
+}
+
 function hashPasscode(passcode: string): string {
   return crypto.createHash('sha256').update(passcode).digest('hex');
 }
@@ -68,6 +118,7 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
 
   try {
     const db = getDb();
+    await ensureShareTables();
 
     const conversation = await db.get(
       `SELECT * FROM conversations WHERE id = ? AND (user_id = ? OR organization_id IN (
@@ -190,6 +241,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
 
   try {
     const db = getDb();
+    await ensureShareTables();
 
     const share = await db.get('SELECT * FROM conversation_shares WHERE share_token = ?', [token]);
 

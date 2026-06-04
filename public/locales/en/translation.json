@@ -6217,7 +6217,8 @@
       "unarchive": "Unarchive",
       "delete": "Delete",
       "addToProject": "Add to folder",
-      "moveProject": "Change folder"
+      "moveProject": "Change folder",
+      "shareLink": "Share link"
     },
     "feedback": {
       "thankYou": "Thank you for your feedback!",
@@ -6568,6 +6569,11 @@
       "fileAdded": "File added to project",
       "uploadFailed": "Could not upload",
       "deleteFailed": "Could not delete"
+    },
+    "share": {
+      "creating": "Creating share link…",
+      "copied": "Share link copied to clipboard",
+      "failed": "Could not create link"
     }
   },
   "agentAudit": {
