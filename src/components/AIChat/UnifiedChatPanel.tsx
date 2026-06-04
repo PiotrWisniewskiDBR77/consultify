@@ -3398,6 +3398,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [setActiveConversation]
   );
 
+  // Welcome "mode" tiles (composer audit #6): a tile is a real mode, not just a
+  // prompt prefill. It atomically (1) applies the matching aiConfig preset
+  // (marketResearch+webSearch / analyst style / consultant persona / deep
+  // thinking) and (2) seeds the composer with the kickoff prompt. The user then
+  // sends — so the freshly-applied flags are live on that send (config flows to
+  // the send via React closures, which only refresh after this state update).
+  const handleModeTile = useCallback(
+    (preset: Record<string, unknown> | undefined, prompt: string) => {
+      if (preset && Object.keys(preset).length > 0) {
+        setAIConfig(preset as any);
+      }
+      try {
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(
+            'consultify.teresa.pendingPrompt',
+            JSON.stringify({ prompt, ts: Date.now() })
+          );
+          window.dispatchEvent(new Event('consultify:teresa-pending-prompt'));
+        }
+      } catch {
+        /* non-critical: prefill is best-effort */
+      }
+    },
+    [setAIConfig]
+  );
+
   const handleCopyMessage = useCallback(
     async (content: string, messageId: string) => {
       try {
@@ -4577,6 +4603,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.market.kickoff',
                       'Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań.'
                     ),
+                    // Market analysis = web-backed market research mode.
+                    preset: { marketResearch: true, webSearch: true },
                     color: 'text-primary-500',
                     bg: 'bg-primary-50 dark:bg-primary-900/20',
                   },
@@ -4588,6 +4616,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.finance.kickoff',
                       'Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy.'
                     ),
+                    // Financial analysis = data/metrics/tables-first answer style.
+                    preset: { responseStyle: 'analyst' },
                     color: 'text-emerald-500',
                     bg: 'bg-emerald-50 dark:bg-emerald-900/20',
                   },
@@ -4599,6 +4629,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.consulting.kickoff',
                       'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
                     ),
+                    // Classic consulting = multi-consultant persona system prompt.
+                    preset: { coThinkerMode: 'multi_consultant' },
                     color: 'text-amber-500',
                     bg: 'bg-amber-50 dark:bg-amber-900/20',
                   },
@@ -4613,6 +4645,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.digital.kickoff',
                       'Chcę ocenić gotowość do transformacji cyfrowej. Jakie obszary mamy ocenić i jakie są kryteria? Zadaj mi 5 pytań i zaproponuj szybki plan diagnozy.'
                     ),
+                    // Digital transformation = multi-step deep-thinking diagnosis.
+                    preset: { deepResearch: true },
                     color: 'text-blue-500',
                     bg: 'bg-blue-50 dark:bg-blue-900/20',
                   },
@@ -4620,7 +4654,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   <button
                     key={cap.label}
                     type="button"
-                    onClick={() => handleSendMessage(cap.prompt)}
+                    onClick={() => handleModeTile(cap.preset, cap.prompt)}
                     className="group flex flex-col items-start gap-1.5 rounded-lg border border-slate-200/60 bg-white/60 p-2.5 text-left transition-all duration-200 hover:border-slate-300 hover:bg-white dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/10 dark:hover:bg-white/5"
                   >
                     <div className={`rounded-md p-1.5 ${cap.bg}`}>
