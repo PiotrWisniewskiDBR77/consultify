@@ -237,7 +237,7 @@ export const ChatSignalsPanel: React.FC<ChatSignalsPanelProps> = ({ open, onClos
 
                     <button
                       onClick={() => handleSaveToIdeas(n)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2.5 py-1.5 text-xs font-medium hover:bg-amber-500/20"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500/12 text-primary-700 dark:text-primary-300 px-2.5 py-1.5 text-xs font-medium hover:bg-primary-500/18"
                     >
                       <BookOpen size={14} />
                       {t('aiChat.signals.saveIdeas', 'Save to My Ideas')}
