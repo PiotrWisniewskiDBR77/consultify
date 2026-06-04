@@ -1790,6 +1790,15 @@ if (startServer && shouldStartHttpServer) {
       } catch (err: any) {
         logger.warn('[Server] Org Context Realtime not available:', err?.message);
       }
+
+      // History F4b: Chat projects realtime (Socket.IO /chat-projects namespace)
+      try {
+        const { chatProjectsRealtime } = await import('./realtime/chatProjectsRealtime.js');
+        chatProjectsRealtime.init(io);
+        logger.info('[Server] Chat Projects Realtime (Socket.IO /chat-projects) initialized');
+      } catch (err: any) {
+        logger.warn('[Server] Chat Projects Realtime not available:', err?.message);
+      }
     } catch (err: any) {
       logger.warn('[Server] Table Platform Realtime not available:', err?.message);
     }

@@ -16,6 +16,7 @@ import { z } from 'zod';
 
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { emitChatProjectsChanged } from '../realtime/chatProjectsRealtime.js';
 import { checkChatPermission } from '../services/chatPermissionService.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
@@ -401,6 +402,7 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
     };
 
     logger.info(`[ChatProjects] Created ${scope} project: ${id} by user ${userId}`);
+    if (scope === 'team') emitChatProjectsChanged(orgId);
     res.status(201).json(project);
   } catch (error: any) {
     logger.error('[ChatProjects] Create error:', error);
@@ -541,6 +543,7 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
     await db.run(`UPDATE chat_projects SET ${fields.join(', ')} WHERE id = ?`, values);
 
     logger.info(`[ChatProjects] Updated project: ${id}`);
+    if (existing.scope === 'team') emitChatProjectsChanged(existing.organization_id || orgId);
     res.json({ success: true });
   } catch (error: any) {
     logger.error('[ChatProjects] Update error:', error);
@@ -656,6 +659,7 @@ router.post('/:id/members', verifyToken, async (req: Request, res: Response) => 
        ON CONFLICT (project_id, user_id) DO UPDATE SET role = EXCLUDED.role`,
       [id, target.id, newRole, userId, now]
     );
+    emitChatProjectsChanged((req as any).organizationId);
     return res.status(201).json({ success: true, userId: target.id, role: newRole });
   } catch (error: any) {
     logger.error('[ChatProjects] Add member error:', error?.message);
@@ -688,6 +692,7 @@ router.patch('/:id/members/:memberUserId', verifyToken, async (req: Request, res
       id,
       memberUserId,
     ]);
+    emitChatProjectsChanged((req as any).organizationId);
     return res.json({ success: true });
   } catch (error: any) {
     logger.error('[ChatProjects] Update member role error:', error?.message);
@@ -726,6 +731,7 @@ router.delete('/:id/members/:memberUserId', verifyToken, async (req: Request, re
       id,
       memberUserId,
     ]);
+    emitChatProjectsChanged((req as any).organizationId);
     return res.json({ success: true });
   } catch (error: any) {
     logger.error('[ChatProjects] Remove member error:', error?.message);
@@ -899,6 +905,7 @@ router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
     await db.run(`DELETE FROM chat_projects WHERE id = ?`, [id]);
 
     logger.info(`[ChatProjects] Deleted project: ${id}`);
+    emitChatProjectsChanged((req as any).organizationId);
     res.json({ success: true });
   } catch (error: any) {
     logger.error('[ChatProjects] Delete error:', error);
@@ -973,6 +980,7 @@ router.post(
       ]);
 
       logger.info(`[ChatProjects] Moved conversation ${conversationId} to project ${id}`);
+      emitChatProjectsChanged((req as any).organizationId);
       res.json({ success: true });
     } catch (error: any) {
       logger.error('[ChatProjects] Move conversation error:', error);

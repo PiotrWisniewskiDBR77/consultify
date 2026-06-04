@@ -53,6 +53,7 @@ import { CONVERSATION_DND_TYPE, ConversationItem } from './ConversationItem';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
 import { ProjectMembersModal } from './ProjectMembersModal';
+import { useChatProjectsRealtime } from './useChatProjectsRealtime';
 
 interface ChatHistorySidebarProps {
   projectId?: string;
@@ -599,6 +600,24 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
   // Team-project members modal (F2)
   const [membersModalProject, setMembersModalProject] = useState<ChatProject | null>(null);
+
+  // F4b: live-refresh the sidebar when a teammate changes a shared folder.
+  const currentUser = useAppStore((s) => s.currentUser);
+  const realtimeRefetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleRealtimeChanged = useCallback(() => {
+    if (realtimeRefetchTimer.current) clearTimeout(realtimeRefetchTimer.current);
+    realtimeRefetchTimer.current = setTimeout(() => {
+      // Read fetchers from the stores at call time (avoids closure-ordering on the
+      // destructured values, which are declared lower in this component).
+      void useChatProjectStore.getState().fetchProjects({ force: true });
+      void useConversationStore.getState().fetchConversations();
+    }, 400);
+  }, []);
+  useChatProjectsRealtime(
+    (currentUser as any)?.organizationId,
+    (currentUser as any)?.id,
+    handleRealtimeChanged
+  );
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
