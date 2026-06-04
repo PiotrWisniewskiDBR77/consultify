@@ -4208,7 +4208,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       style={rootStyle}
     >
       <div
-        className={`flex min-w-0 flex-col h-full transition-[width] duration-200 ${
+        className={`group/composer flex min-w-0 flex-col h-full transition-[width] duration-200 ${
           showWorkPanel ? 'w-full lg:w-[calc(100%_-_var(--work-canvas-width))]' : 'w-full'
         }`}
       >

@@ -1103,9 +1103,20 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                     `}
         />
 
-        {/* Action Bar */}
+        {/*
+          Action Bar — "less is more": hidden by default, fades in when the
+          user actually engages with the chat (hovers the chat panel, focuses
+          the input, has typed something, or while a stream is running so the
+          Stop button is always reachable). The `group/composer` class lives on
+          the chat-panel flex column in UnifiedChatPanel so hovering anywhere
+          in the answers OR over the input reveals the row.
+        */}
         <div
-          className={`flex items-center justify-between gap-2 min-w-0 px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'}`}
+          className={`flex items-center justify-between gap-2 min-w-0 px-3 ${variant === 'compact' ? 'pb-2' : 'pb-3'} transition-opacity duration-200 ${
+            isFocused || value.length > 0 || isStreaming
+              ? 'opacity-100'
+              : 'opacity-0 pointer-events-none group-hover/composer:opacity-100 group-hover/composer:pointer-events-auto'
+          }`}
         >
           {/* Left Actions */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
