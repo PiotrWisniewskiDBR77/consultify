@@ -46,6 +46,7 @@ import { CitationList, CitationMarker } from './CitationList';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ThinkingIndicator } from './Messages/InlineThinkingStream';
+import { ReasoningTrace } from './Messages/ReasoningTrace';
 import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
@@ -501,6 +502,16 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
         {/* Message Bubble */}
         <div className="flex flex-col max-w-[85%]">
+          {/* Reasoning trace ("Tok rozumowania") — above the answer, like Grok/OpenAI.
+              Expanded while streaming, collapsed once complete; persisted via metadata. */}
+          {msg.role === 'ai' && (msg as any).metadata?.reasoning && (
+            <ReasoningTrace
+              reasoning={String((msg as any).metadata.reasoning)}
+              isStreaming={!!msg.isStreaming}
+              isCompact={isCompact}
+              isRtl={isRtlChatLanguage}
+            />
+          )}
           {/* Author name for team messages */}
           {msg.role === 'user' && msg.authorName && (
             <span

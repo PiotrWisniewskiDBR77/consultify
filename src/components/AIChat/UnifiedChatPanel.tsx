@@ -975,6 +975,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     clearLastError,
     isStreaming,
     streamedContent,
+    reasoning: streamedReasoning,
     policyDecision,
     policyNotices,
     memoryCandidate,
@@ -1027,7 +1028,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 meta?.policyDecision ||
                 (meta?.policyNotices && meta.policyNotices.length) ||
                 meta?.trustBundle ||
-                meta?.proposal
+                meta?.proposal ||
+                meta?.reasoning
                   ? {
                       ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
                         ? {
@@ -1057,6 +1059,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       // depending on a refetch for live hydration.
                       ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
                       ...(meta?.proposal ? { proposal: meta.proposal } : {}),
+                      // Persist the model's chain-of-thought so the per-message
+                      // "Tok rozumowania" trace survives reload.
+                      ...(meta?.reasoning ? { reasoning: meta.reasoning } : {}),
                     }
                   : undefined,
             }),
@@ -1494,6 +1499,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             policyNotices,
             memoryCandidate,
             ...(teresaProposal ? { proposal: teresaProposal } : {}),
+            ...(streamedReasoning ? { reasoning: streamedReasoning } : {}),
           },
         },
       ];
@@ -1505,6 +1511,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     customMessages,
     isStreaming,
     streamedContent,
+    streamedReasoning,
     thinkingSteps,
     deepThinkingState,
     researchProgress,

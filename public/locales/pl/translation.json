@@ -6516,6 +6516,9 @@
         "editor": "Redaktor",
         "marketResearcher": "Badacz rynku"
       }
+    },
+    "reasoning": {
+      "title": "Tok rozumowania"
     }
   },
   "aiChat": {

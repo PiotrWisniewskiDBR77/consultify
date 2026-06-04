@@ -5965,6 +5965,9 @@
         "editor": "Editor",
         "marketResearcher": "Market Researcher"
       }
+    },
+    "reasoning": {
+      "title": "Reasoning"
     }
   },
   "aiChat": {
