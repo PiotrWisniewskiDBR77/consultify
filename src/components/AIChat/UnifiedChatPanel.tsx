@@ -4612,7 +4612,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 <img
                   src="/assets/logos/logo-light.svg?v=20260319"
                   alt="Consultify"
-                  className="h-20 w-auto opacity-35 dark:hidden sm:h-24 md:h-28"
+                  className="h-20 w-auto opacity-50 dark:hidden sm:h-24 md:h-28"
                   draggable={false}
                 />
                 <p className="-mt-0.5 text-center text-[11px] uppercase tracking-[0.25em] text-slate-600 dark:text-slate-400">
