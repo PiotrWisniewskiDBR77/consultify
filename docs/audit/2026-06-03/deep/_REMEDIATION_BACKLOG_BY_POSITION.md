@@ -53,10 +53,10 @@
 ### Moduł 01 — Czat
 | ID | Pozycja | Stan | Akcja | P | Wysiłek | Pliki |
 |---|---|---|---|---|---|---|
-| FIX-001 | `/task` `/decision` fetch bez AbortController/timeout (silent hang) | ⏳ | Dodać AbortController + 20s timeout jak w innych fetchach | P1 | S | `src/components/AIChat/UnifiedChatPanel.tsx:1722` |
-| FIX-002 | `useAIStream` brak `finally` przy abort (spinner-freeze) | ⏳ | Dodać `finally` resetujący stan streamingu | P1 | S | `src/hooks/useAIStream.ts:1228-1238` |
-| FIX-003 | Wave5–9 dead panele lazy-imported | ⏳ | Usunąć martwe importy/Route | P2 | S | `src/routes/AppRoutes.tsx:191-213` |
-| FIX-004 | `OrganizationMemoryPanel`/`useOrgMemory` disabled (mock) | ⏳ | Włączyć lub usunąć martwy panel (memory injektuje się server-side) | P2 | M | `src/components/AIChat/UnifiedChatPanel.tsx:50,95,648` |
+| FIX-001 | `/task` `/decision` fetch bez AbortController/timeout (silent hang) | ✅ | AbortController + 20s timeout (commit 9a2953d949) | P1 | S | `src/components/AIChat/UnifiedChatPanel.tsx` |
+| FIX-002 | `useAIStream` brak resetu stanu przy abort (spinner-freeze) | ✅ | Reset isStreaming/isBotTyping w gałęzi abort (commit 8119360f2a) | P1 | S | `src/hooks/useAIStream.ts` |
+| FIX-003 | Wave5–9 panele lazy-imported | ✅ NOT-A-BUG | Realne komponenty (548/565 linii), podpięte do tras AI_OS + nawigowalne z menuConfig/AIOSHub — nie martwe | P2 | — | `src/routes/AppRoutes.tsx` |
+| FIX-004 | `OrganizationMemoryPanel`/`useOrgMemory` disabled | ✅ | Usunięto martwy zakomentowany kod (commit b885db0de3). Re-surface panelu = decyzja produktowa Piotra (placement) | P2 | S | `src/components/AIChat/UnifiedChatPanel.tsx` |
 
 ### Moduł 02 — Moja Praca
 | ID | Pozycja | Stan | Akcja | P | Wysiłek | Pliki |

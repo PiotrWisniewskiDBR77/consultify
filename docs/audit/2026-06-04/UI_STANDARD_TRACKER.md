@@ -24,7 +24,7 @@
 
 | # | Moduł | Architektura (shell + komponenty) | Kolory (Light/Dark) | Braki do przeprowadzenia | Status |
 |---|---|---|---|---|---|
-| 1 | **Czat / Teresa** | Powierzchnia konwersacyjna (nie ModuleHub — OK). Composer, sidebar historii, Voice overlay. Niska gęstość tabel (poprawne) | L/D kontrast **OK**. 73× indigo na borderach/ikonach/cieniach; 4× hex navy `[#15213b]` (WorkCanvasDocumentPanel) | indigo→primary; hex→token navy; 15× `fixed inset-0`→Modal | 🟡 MINOR |
+| 1 | **Czat / Teresa** | Powierzchnia konwersacyjna (nie ModuleHub — OK). Composer, sidebar historii, Voice overlay. ChatExportModal→Modal primitive | L/D kontrast **OK**. ✅ 146× indigo→primary (chat-core); ✅ 4× hex navy→navy-800 token | ✅ indigo zsweepowane; ✅ hex→token; modale: 1 skonwertowany, reszta świadomy wyjątek (lightbox/viewer/backdrop/drawer/portal-aria/testowane) | 🟢 PASS |
 | 2 | **My Work** | Hub = **Golden Standard** (Menu 1/2/3, FilterableTable, ResizableTable, RowActionsMenu, chip-system, Empty/Error naprawione). Detale słabsze | L: OK po contrast-codemod. 200× indigo leftover (część inline-style legit: user.color); hardcoded `#334155`/`#e0e7ff` fallbacki | indigo→primary; 130× `fixed inset-0`→Modal; 129× raw `<select>`→SelectField (TaskDetailView/DecisionDetailView po 11) | 🔴 NEEDS-WORK *(objętość)* |
 | 3 | **Wywiad** | ModuleHub + Menu 3 OK; sesje/insights/initiatives z error-flagami | 2× indigo (InterviewSummary:246); 3× hex navy | error card hand-rolled amber (InterviewHub:6488)→ErrorState; indigo→primary; hex→token | 🟡 MINOR |
 | 4 | **Decyzje** | **Wzorzec**: ModuleHub-like + kanon. DecisionInbox:288 = referencja ErrorState+retry | Czysto (1× indigo DecisionCard:81) | 1× indigo; 2× raw select (kosmetyka) | 🟢 PASS |

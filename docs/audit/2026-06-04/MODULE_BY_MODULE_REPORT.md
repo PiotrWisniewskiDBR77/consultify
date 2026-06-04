@@ -6,7 +6,7 @@ Legenda: **a)** komponenty graficzne · **b)** kolory (light+dark) · **c)** uwa
 ## Tabela werdyktów
 | # | Moduł | Werdykt | Główny dług |
 |---|---|---|---|
-| 1 | Czat / Teresa | MINOR | 73× indigo leftover, 15 raw modali |
+| 1 | Czat / Teresa | **PASS** | indigo→primary done, hex→token done, modals reclassified (1 converted, rest justified) |
 | 2 | My Work | NEEDS-WORK (objętość) | 130 raw overlay, 129 raw select, 200 indigo |
 | 3 | Wywiad | MINOR | error card hand-rolled (nie ErrorState), 2 indigo |
 | 4 | Decyzje | **PASS** | wzorzec (1 trywialne indigo) |

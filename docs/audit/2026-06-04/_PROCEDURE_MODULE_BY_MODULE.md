@@ -93,7 +93,7 @@ Moduł jest domknięty gdy **łącznie**:
 ## Log postępu (uzupełniany przy zamknięciu każdego modułu)
 | Func # | Moduł | Func status | UI status | Data | Commit zamknięcia |
 |---|---|---|---|---|---|
-| 01 | Czat | — | — | — | — |
+| 01 | Czat | ✅ 100% (FIX-001/002/004 done, 003 not-a-bug) | 🟢 PASS (indigo+hex+modals) | 2026-06-04 | (multi: 9a2953d949…875550398e) |
 | 02 | Moja Praca | — | — | — | — |
 | 03 | Wywiad | — | — | — | — |
 | 04 | Narzędzia | — | — | — | — |
