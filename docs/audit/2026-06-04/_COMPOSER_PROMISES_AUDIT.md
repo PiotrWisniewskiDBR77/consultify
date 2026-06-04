@@ -1,5 +1,17 @@
 # Chat Composer Promises — Honesty Audit (2026-06-04)
 
+> **STATUS 2026-06-04 — ALL FLAGGED ITEMS RESOLVED.** Every PARTIAL/STUB/N/A
+> item below has been fixed; honesty score is now effectively 10/10.
+> - A4 cloud rows (real connected state + hyphenated ids) · A5 Recent re-attach
+>   (real docId) · A3 SPA nav — commit `b44248938e`
+> - D3 mode tiles apply real aiConfig presets — commit `75abb69074`
+> - D1 "Auto" pill relabeled as OUTPUT routing (+ "not model selection" tooltip)
+>   · C6 Market Researcher now a first-class persona prompt (symmetric) —
+>   commit `bcef38ec35`
+> Plus benchmark adds shipped: slash personas `945b48792b`, branch/fork
+> `742db54b95`, per-project instructions `1d40682c38`.
+
+
 Builds on `_CHAT_COMPOSER_MENUS_VERIFICATION.md` (same folder) and extends it
 to the **welcome surface** promises (Auto pill, starter chips, mode tiles,
 mic / voice / "?" cluster). Every claim below was code-traced; nothing relies
