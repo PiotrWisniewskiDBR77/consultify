@@ -4372,7 +4372,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-3" />
               <p
-                className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-500`}
+                className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}
               >
                 {t('aiChat.loadingConversation', 'Loading conversation…')}
               </p>
@@ -4396,7 +4396,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 )}
               </h3>
               <p
-                className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-slate-500 dark:text-slate-400`}
+                className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-slate-600 dark:text-slate-300`}
               >
                 {t(
                   'aiChat.teresaWelcomeSubtitle',
@@ -4513,7 +4513,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     key={item.label}
                     type="button"
                     onClick={() => handleSendMessage(item.prompt)}
-                    className="rounded-full border border-slate-200/70 bg-white/60 px-3 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 dark:hover:border-primary-700/60 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
+                    className="rounded-full border border-slate-200/70 bg-white/60 px-3 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:border-primary-700/60 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
                   >
                     {item.label}
                   </button>
@@ -4586,7 +4586,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       <div className="text-[11px] font-semibold text-navy-900 transition-colors group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
                         {cap.label}
                       </div>
-                      <div className="mt-0.5 text-[9px] leading-tight text-slate-600 dark:text-slate-500">
+                      <div className="mt-0.5 text-[9px] leading-tight text-slate-700 dark:text-slate-400">
                         {cap.desc}
                       </div>
                     </div>
