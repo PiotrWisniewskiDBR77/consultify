@@ -4538,9 +4538,10 @@ router.post(
                 const memSvc = (memMod as any).default || memMod;
                 if (memSvc?.updateUserMemoryAfterInteraction) {
                   // Extract a rough topic from the user message (first 50 chars)
-                  const roughTopic = typeof message === 'string'
-                    ? message.slice(0, 50).replace(/\n/g, ' ').trim() || undefined
-                    : undefined;
+                  const roughTopic =
+                    typeof message === 'string'
+                      ? message.slice(0, 50).replace(/\n/g, ' ').trim() || undefined
+                      : undefined;
                   memSvc
                     .updateUserMemoryAfterInteraction(req.userId, roughTopic, 1)
                     .catch((err: unknown) =>

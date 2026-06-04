@@ -1212,7 +1212,9 @@ export class BillingCommandService {
       const isProd = process.env.NODE_ENV === 'production';
       const allowMock = !isProd || process.env.ALLOW_MOCK_BILLING === 'true';
       if (!allowMock) {
-        throw new Error('Billing is not configured (Stripe unavailable). Cannot create setup intent.');
+        throw new Error(
+          'Billing is not configured (Stripe unavailable). Cannot create setup intent.'
+        );
       }
       return {
         clientSecret: `mock_secret_${deps.uuidv4()}`,

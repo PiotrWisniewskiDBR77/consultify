@@ -1,5 +1,5 @@
-import { send as sendEmail } from '../emailService.js';
 import logger from '../../utils/Logger.js';
+import { send as sendEmail } from '../emailService.js';
 
 /**
  * InvitationSendingService

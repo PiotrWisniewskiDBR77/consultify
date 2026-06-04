@@ -350,7 +350,9 @@ export const AIContextBuilder = {
     } catch (err: any) {
       // SECURITY: fail CLOSED — on governance error, strip sensitive categories rather than
       // leaking unfiltered context. This prevents policy‑bypass on transient DB errors.
-      logger.warn(`[AIContextBuilder] Context policy enforcement failed — applying restrictive defaults: ${err?.message}`);
+      logger.warn(
+        `[AIContextBuilder] Context policy enforcement failed — applying restrictive defaults: ${err?.message}`
+      );
       try {
         const restrictivePolicy: any = {
           categories: {
@@ -366,14 +368,18 @@ export const AIContextBuilder = {
           retention: 'strict',
         };
         const govFallback = (await import('./ai/contextGovernance.js')) as any;
-        const fallbackFilter = govFallback.filterContextByPolicy || govFallback.default?.filterContextByPolicy;
+        const fallbackFilter =
+          govFallback.filterContextByPolicy || govFallback.default?.filterContextByPolicy;
         if (typeof fallbackFilter === 'function') {
           filteredContext = fallbackFilter(filteredContext as any, restrictivePolicy) as any;
         }
       } catch {
         // Last resort: strip everything sensitive manually
         const org = (filteredContext as any)?.organization;
-        if (org) { delete org.topPatterns; delete org.orgPatterns; }
+        if (org) {
+          delete org.topPatterns;
+          delete org.orgPatterns;
+        }
         delete (filteredContext as any).financialData;
         delete (filteredContext as any).securityPosture;
       }

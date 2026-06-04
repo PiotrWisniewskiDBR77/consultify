@@ -32,10 +32,10 @@ const DEFAULT_POLICY: OrgContextPolicy = {
   categories: {
     ORG_PROFILE: true,
     ORG_TERMINOLOGY: true,
-    ORG_PATTERNS: true,           // Teresa needs org patterns for cross‑session learning
+    ORG_PATTERNS: true, // Teresa needs org patterns for cross‑session learning
     ORG_STRATEGY: true,
-    ORG_SECURITY_POSTURE: false,  // keep restricted — security data stays opt‑in
-    ORG_FINANCIAL_SUMMARY: true,  // Teresa needs financial context for meaningful advice
+    ORG_SECURITY_POSTURE: false, // keep restricted — security data stays opt‑in
+    ORG_FINANCIAL_SUMMARY: true, // Teresa needs financial context for meaningful advice
     ORG_DOCUMENTS: true,
   },
   piiRedaction: 'inherit',

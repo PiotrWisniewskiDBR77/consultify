@@ -1017,7 +1017,7 @@ export class AIPipeline {
     // When the client sends no history but we have a conversationId, load the recent
     // turns from conversation_messages so Teresa keeps in-conversation memory even on
     // fresh page loads / API clients that don't replay history.
-    if ((!history || history.length === 0)) {
+    if (!history || history.length === 0) {
       const conversationId =
         (request.context as any)?.conversationId ||
         (request as any)?.conversationId ||
@@ -1240,7 +1240,9 @@ export class AIPipeline {
         settingsParts.push(`- Proactivity: ${s.proactivity_mode || s.proactivityMode}`);
       }
       if (s.custom_instructions || s.customInstructions) {
-        settingsParts.push(`- Additional instructions: ${s.custom_instructions || s.customInstructions}`);
+        settingsParts.push(
+          `- Additional instructions: ${s.custom_instructions || s.customInstructions}`
+        );
       }
       if (settingsParts.length > 0) {
         parts.push(`## PREFERENCJE AI UŻYTKOWNIKA (from Settings)\n${settingsParts.join('\n')}`);
