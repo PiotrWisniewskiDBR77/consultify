@@ -22,13 +22,13 @@
     /* Brand accent — HBS Crimson (#85182F) */
     --accent: 347 69% 31%; /* crimson-600 #85182F — HBS official */
     --accent-foreground: 0 0% 100%; /* white text on crimson */
-    --accent-hover: 350 71% 30%; /* crimson-700 #851627 */
+    --accent-hover: 347 69% 25%; /* crimson-700 #6D1427 — darker than base */
     --accent-surface: 354 73% 97%; /* crimson-50 #FDF2F3 */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 358 71% 38%; /* focus ring = crimson-600 */
+    --ring: 347 69% 31%; /* focus ring = crimson-600 #85182F */
     --radius: 0.75rem; /* hig-md = 12px, global default */
 
     /* ========================================================================
@@ -49,8 +49,8 @@
     --c-text-secondary: #475569; /* secondary text */
     --c-text-muted: #64748b; /* muted / placeholder */
     --c-accent: #85182f; /* Harvard Crimson — SOLE brand accent */
-    --c-accent-soft: rgba(165, 28, 48, 0.08); /* accent tint (selected bg) */
-    --c-focus: rgba(165, 28, 48, 0.35); /* focus ring (was violet) */
+    --c-accent-soft: rgba(133, 24, 47, 0.08); /* accent tint (selected bg) */
+    --c-focus: rgba(133, 24, 47, 0.35); /* focus ring (was violet) */
     /* Status tokens — Harvard complementary anchors (light mode).
      * Each value is the DARK family member (HBS "1") so text-on-white is AA.
      * Approx contrast on #ffffff:
@@ -105,7 +105,7 @@
     --c-text-muted: #64748b; /* muted / placeholder */
     --c-accent: #c8324a; /* crimson lifted for dark contrast */
     --c-accent-soft: rgba(200, 50, 74, 0.14); /* accent tint (selected bg) */
-    --c-focus: rgba(165, 28, 48, 0.35); /* focus ring */
+    --c-focus: rgba(133, 24, 47, 0.35); /* focus ring */
     /* Status tokens — Harvard complementary lifted for dark backgrounds.
      * Each value is the LIGHT/mid family member so contrast on navy is good.
      *   success #9EC44D (HBS Green 3)  — lifted from #026833

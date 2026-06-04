@@ -73,9 +73,9 @@ export default {
           200: '#F6B8BE',
           300: '#EF8A94',
           400: '#E45868',
-          500: '#D42B3D', // accessible on white, WCAG AA
+          500: '#A82D49', // accessible on white, WCAG AA
           600: '#85182F', // brand canonical (#85182F)
-          700: '#851627',
+          700: '#6D1427',
           800: '#651120',
           900: '#450C16',
           950: '#2B070D',
@@ -106,17 +106,17 @@ export default {
         // Reversible: restore violet hexes here to revert.
         primary: {
           DEFAULT: '#85182F', // was #7C3AED
-          hover: '#851627', // was #6D28D9
-          light: '#D42B3D', // was #8B5CF6
-          surface: 'rgba(165, 28, 48, 0.1)', // was rgba(124,58,237,.1)
+          hover: '#6D1427', // was #6D28D9
+          light: '#A82D49', // was #8B5CF6
+          surface: 'rgba(133, 24, 47, 0.1)', // was rgba(124,58,237,.1)
           50: '#FDF2F3',
           100: '#FBDDE0',
           200: '#F6B8BE',
           300: '#EF8A94',
           400: '#E45868',
-          500: '#D42B3D',
+          500: '#A82D49',
           600: '#85182F',
-          700: '#851627',
+          700: '#6D1427',
           800: '#651120',
           900: '#450C16',
           950: '#2B070D',
@@ -185,16 +185,16 @@ export default {
         // current brand accent. Reversible: restore violet hexes to revert.
         brand: {
           DEFAULT: '#85182F', // was #7C3AED
-          hover: '#851627', // was #6D28D9
-          surface: 'rgba(165, 28, 48, 0.1)', // was rgba(124,58,237,.1)
+          hover: '#6D1427', // was #6D28D9
+          surface: 'rgba(133, 24, 47, 0.1)', // was rgba(124,58,237,.1)
           50: '#FDF2F3', // was #F5F3FF
           100: '#FBDDE0', // was #EDE9FE
           200: '#F6B8BE', // was #DDD6FE
           300: '#EF8A94', // was #C4B5FD
           400: '#E45868', // was #A78BFA
-          500: '#D42B3D', // was #8B5CF6
+          500: '#A82D49', // was #8B5CF6
           600: '#85182F', // was #7C3AED
-          700: '#851627', // was #6D28D9
+          700: '#6D1427', // was #6D28D9
           800: '#651120', // was #5B21B6
           900: '#450C16', // was #4C1D95
           950: '#2B070D', // was #2E1065
@@ -574,8 +574,8 @@ export default {
       },
       boxShadow: {
         // Legacy shadows — brand glow re-pointed violet → crimson
-        glow: '0 0 20px -5px rgba(165, 28, 48, 0.3)',
-        'glow-lg': '0 0 40px -10px rgba(165, 28, 48, 0.5)',
+        glow: '0 0 20px -5px rgba(133, 24, 47, 0.3)',
+        'glow-lg': '0 0 40px -10px rgba(133, 24, 47, 0.5)',
         glass: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         panel: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15)',
         'inner-light': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
@@ -601,14 +601,14 @@ export default {
         'hig-hover': '0 8px 16px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.06)',
         'hig-hover-dark': '0 8px 16px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3)',
         // Focus ring — crimson brand (was violet rgba(124,58,237,.3))
-        'hig-focus': '0 0 0 3px rgba(165, 28, 48, 0.3)',
+        'hig-focus': '0 0 0 3px rgba(133, 24, 47, 0.3)',
         'hig-focus-danger': '0 0 0 3px rgba(220, 38, 38, 0.3)',
         // ----------------------------------------
         // Semantic shadow tokens — canonical names for shared primitives
         // ----------------------------------------
         'token-card': '0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06)',
         'token-card-hover': '0 8px 16px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.06)',
-        'token-focus': '0 0 0 3px rgba(165, 28, 48, 0.30)', // crimson brand focus ring
+        'token-focus': '0 0 0 3px rgba(133, 24, 47, 0.30)', // crimson brand focus ring
       },
       backgroundImage: {
         // Legacy gradients
@@ -646,7 +646,7 @@ export default {
         // Accent CTAs — solid crimson (was violet→violet gradient).
         // Demote violet → crimson sole accent; no gradient per brand spec.
         'hig-primary': 'linear-gradient(135deg, #85182F 0%, #85182F 100%)',
-        'hig-primary-hover': 'linear-gradient(135deg, #851627 0%, #851627 100%)',
+        'hig-primary-hover': 'linear-gradient(135deg, #6D1427 0%, #6D1427 100%)',
       },
       // ========================================
       // APPLE HIG SPACING SCALE
