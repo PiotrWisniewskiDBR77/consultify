@@ -1,8 +1,9 @@
-import { Download, FileJson, FileText, X } from 'lucide-react';
+import { Download, FileJson, FileText } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '../ui';
+import { Modal } from '../ui/primitives';
 
 interface ChatExportModalProps {
   isOpen: boolean;
@@ -33,21 +34,14 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
-          <h3 className="font-bold text-navy-900 dark:text-white">
-            {t('aiChat.export.title', 'Export Conversation')}
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-3">
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={t('aiChat.export.title', 'Export Conversation')}
+      size="sm"
+    >
+      <div>
+        <div className="space-y-3">
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             {t(
               'aiChat.export.description',
@@ -116,13 +110,13 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({
           </button>
         </div>
 
-        <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-b-2xl">
+        <div className="pt-4 mt-1">
           <Button variant="outline" fullWidth onClick={onClose} disabled={isExporting}>
             {t('common.cancel', 'Cancel')}
           </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 
