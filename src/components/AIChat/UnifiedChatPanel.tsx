@@ -75,6 +75,7 @@ import type {
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { notifyBargeIn } from '../../utils/bargeInToast';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
+import { detectMessageLanguage } from '../../utils/detectMessageLanguage';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
@@ -1703,6 +1704,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     async (content: string, attachments?: any[]) => {
       if (!content.trim() || isDisabled) return;
 
+      // ──────────────────────────────────────────────────────────────────────
+      // Language follows the message: reply in the language the user writes in.
+      // Detection wins ONLY when confident; otherwise we keep the existing
+      // chatLanguage resolution (explicit selector / conversation / UI). This is
+      // the "respond in the language I start speaking to the chat" rule.
+      // ──────────────────────────────────────────────────────────────────────
+      const detectedMessageLanguage = detectMessageLanguage(content);
+      const effectiveChatLanguage = detectedMessageLanguage || chatLanguage;
+      // eslint-disable-next-line no-console
+      console.info('[CHATDBG] language', {
+        detected: detectedMessageLanguage,
+        memoChatLanguage: chatLanguage,
+        effective: effectiveChatLanguage,
+      });
+
       // M2: Chat commands for MyWork actions
       const text = content.trim();
       if (text.startsWith('/task ') || text.startsWith('/decision ')) {
@@ -2144,7 +2160,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             detail: {
               prompt: content,
               mode: canvasStreamMode,
-              language: chatLanguage,
+              language: effectiveChatLanguage,
               canvasContextPacket: canvasStreamPacket,
               history: canvasStreamHistory,
             },
@@ -2244,6 +2260,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         activeMessagesNow: useConversationStore.getState().activeMessages.length,
         hasCustomMessages: !!customMessages,
       });
+      // Persist the detected language onto the conversation so the whole thread
+      // (and the chatLanguage memo on subsequent renders) follows the language
+      // the user opened the conversation in.
+      if (detectedMessageLanguage && conversationId) {
+        const storedLang =
+          useConversationStore.getState().chatLanguageByConversationId[conversationId];
+        if (storedLang !== detectedMessageLanguage) {
+          useConversationStore
+            .getState()
+            .setConversationChatLanguage(conversationId, detectedMessageLanguage);
+        }
+      }
       const sourceMessages = customMessages || useConversationStore.getState().activeMessages;
 
       // Conversation-scoped attachments: upload supported files to Knowledge Base and
@@ -2663,7 +2691,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               }
             : null,
         conversationId,
-        conversationLanguage: chatLanguage,
+        conversationLanguage: effectiveChatLanguage,
         virtualWorkerSlug: 'teresa',
       };
 
@@ -2721,7 +2749,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           },
           focusMode,
           roleName,
-          chatLanguage
+          effectiveChatLanguage
         );
 
         onMessageSent?.(content);
@@ -2739,7 +2767,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             systemPrompt,
             context,
             roleName,
-            chatLanguage,
+            effectiveChatLanguage,
             {
               deepResearch: aiConfig?.deepResearch,
               webSearch: aiConfig?.webSearch,
@@ -2769,7 +2797,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             const suggestRes = await Api.agentAuditSuggest({
               decisionContext,
               userIntent: 'validate',
-              language: chatLanguage,
+              language: effectiveChatLanguage,
               maxAgents: 3,
             });
             suggestedAgentsSet = (suggestRes as any)?.suggested || null;
@@ -2879,7 +2907,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         context,
         focusMode,
         roleName,
-        chatLanguage
+        effectiveChatLanguage
       );
 
       // Callback
