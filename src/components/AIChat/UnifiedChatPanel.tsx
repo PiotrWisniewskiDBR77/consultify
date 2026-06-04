@@ -1632,19 +1632,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       );
     }
 
-    items.push({
-      id: 'open-tools',
-      label: t('chat.suggestions.openTools', 'Open Tools hub'),
-      type: 'tool',
-      action: { type: 'NAVIGATE', targetModule: 'tools' },
-    });
-
-    items.push({
-      id: 'go-results',
-      label: t('chat.suggestions.goResults', 'View Results'),
-      type: 'results',
-      action: { type: 'NAVIGATE', targetModule: 'results' },
-    });
+    // Removed always-on "Open Tools hub" / "View Results" nav chips (declutter —
+    // those destinations live in the sidebar). Suggestions now show only when
+    // contextually relevant (initiative/insight/artifact).
 
     const lastContent = String(
       (displayMessages[displayMessages.length - 1] as any)?.content || ''
@@ -4801,11 +4791,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   ))}
                 </div>
               )}
-              {!isCompact && latestAiMessageText && !isStreaming && (
-                <div className="flex items-center gap-2 px-3 pb-2">
-                  <TeresaTTSPlayer text={latestAiMessageText} language={chatLanguage} />
-                </div>
-              )}
+              {/* "Read aloud" pill removed (declutter) — per-message Speak lives in the
+                  response action row. */}
               <EnhancedChatInput
                 onSend={handleSendMessage}
                 onNewChat={handleNewChat}
