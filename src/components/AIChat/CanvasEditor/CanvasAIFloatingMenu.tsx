@@ -41,6 +41,51 @@ const QUICK_ACTIONS = [
     labelPl: 'Przepisz',
     prompt: 'Rewrite this text to be clearer and more professional.',
   },
+  // C5 — parity-with-ChatGPT-Canvas presets. Each is a single prompt the
+  // backend already handles via /chat/quick; the value is in the labels (the
+  // user shouldn't need to know the exact phrasing).
+  {
+    id: 'final_polish',
+    labelEn: 'Final polish',
+    labelPl: 'Doszlifuj',
+    prompt:
+      'Polish this text: fix grammar and spelling, smooth awkward phrasing, keep meaning + tone identical, preserve markdown structure.',
+  },
+  {
+    id: 'length_concise',
+    labelEn: 'Length: concise',
+    labelPl: 'Długość: zwięzła',
+    prompt:
+      'Compress this text by about 40%. Keep every key fact and the structure. Cut filler and redundancy.',
+  },
+  {
+    id: 'length_detailed',
+    labelEn: 'Length: detailed',
+    labelPl: 'Długość: rozbudowana',
+    prompt:
+      'Expand this text by about 60%. Add concrete examples, supporting detail, and clearer transitions. Do not invent facts.',
+  },
+  {
+    id: 'level_exec',
+    labelEn: 'For: executive',
+    labelPl: 'Dla: zarządu',
+    prompt:
+      'Rewrite for an executive reader: scannable, decision-oriented, lead with the so-what, drop jargon, max 1 idea per sentence.',
+  },
+  {
+    id: 'level_expert',
+    labelEn: 'For: expert',
+    labelPl: 'Dla: eksperta',
+    prompt:
+      'Rewrite for a domain expert: precise terminology, mention trade-offs and assumptions, avoid over-simplifying.',
+  },
+  {
+    id: 'level_beginner',
+    labelEn: 'For: beginner',
+    labelPl: 'Dla: laika',
+    prompt:
+      'Rewrite for someone new to this topic: explain terms, use analogies, short paragraphs, friendly tone.',
+  },
   {
     id: 'translate_en',
     labelEn: 'Translate → EN',
