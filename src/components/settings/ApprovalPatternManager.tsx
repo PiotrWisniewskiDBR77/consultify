@@ -29,6 +29,9 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
+
 import api from '../../services/api';
 
 // ============================================================================
@@ -329,18 +332,16 @@ export const ApprovalPatternManager: React.FC = () => {
         </h3>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw size={24} className="animate-spin text-slate-600 dark:text-slate-500" />
-          </div>
+          <LoadingState variant="spinner" />
         ) : patterns.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50 dark:bg-navy-900/30 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
-            <Brain size={40} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400">
-              {language === 'pl'
+          <EmptyState
+            icon={<Brain />}
+            title={
+              language === 'pl'
                 ? 'Brak nauczonych wzorców. Zatwierdzaj lub odrzucaj propozycje AI, aby system się uczył.'
-                : 'No learned patterns yet. Approve or reject AI proposals to teach the system.'}
-            </p>
-          </div>
+                : 'No learned patterns yet. Approve or reject AI proposals to teach the system.'
+            }
+          />
         ) : (
           <div className="space-y-2">
             {patterns.map((pattern) => (

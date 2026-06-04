@@ -29,6 +29,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 
@@ -215,11 +218,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -319,20 +318,14 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
 
       {/* Devices List */}
       {devices.length === 0 ? (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-            <Smartphone className="w-8 h-8 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
-          </div>
-          <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-            {t('security.devices.noDevices', 'No Trusted Devices')}
-          </h4>
-          <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            {t(
-              'security.devices.noDevicesDesc',
-              'When you verify 2FA and choose to trust a device, it will appear here. Trusted devices can skip 2FA for the trust duration.'
-            )}
-          </p>
-        </div>
+        <EmptyState
+          icon={<Smartphone />}
+          title={t('security.devices.noDevices', 'No Trusted Devices')}
+          description={t(
+            'security.devices.noDevicesDesc',
+            'When you verify 2FA and choose to trust a device, it will appear here. Trusted devices can skip 2FA for the trust duration.'
+          )}
+        />
       ) : (
         <div className="space-y-3">
           {devices.map((device) => (
@@ -363,9 +356,10 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                         {device.name}
                       </h4>
                       {device.isCurrent && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full">
-                          {t('security.devices.current', 'Current Device')}
-                        </span>
+                        <StatusChip
+                          tone="success"
+                          label={t('security.devices.current', 'Current Device')}
+                        />
                       )}
                       {isExpiringSoon(device.expiresAt) && !device.isCurrent && (
                         <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full flex items-center gap-1">

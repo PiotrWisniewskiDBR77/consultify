@@ -7,7 +7,6 @@ import {
   Eye,
   Home,
   LayoutDashboard,
-  Loader2,
   MessageSquare,
   Minimize2,
   RefreshCw,
@@ -17,6 +16,9 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Banner } from '@/components/shared/Banner';
+import { LoadingState } from '@/components/ui/primitives';
 
 import { invalidateDashboardPreferencesCache } from '../../hooks/useDashboardPreferences';
 import { Api } from '../../services/api';
@@ -218,11 +220,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
   }, [persistPreferences, t]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-primary-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   const landingPageOptions = [
@@ -320,14 +318,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
         <DegradedState title="Dashboard preferences unavailable" description={loadError} />
       )}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {!loadError && (
         <>

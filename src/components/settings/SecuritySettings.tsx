@@ -22,6 +22,8 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
@@ -399,9 +401,10 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                         {session.deviceInfo || 'Unknown Device'}
                       </p>
                       {session.isCurrent && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full">
-                          {t('settings.security.currentSession', 'Current')}
-                        </span>
+                        <StatusChip
+                          tone="success"
+                          label={t('settings.security.currentSession', 'Current')}
+                        />
                       )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-0.5">

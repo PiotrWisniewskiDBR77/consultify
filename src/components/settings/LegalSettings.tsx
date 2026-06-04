@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { EmptyState } from '@/components/ui/composed';
+
 import { Api } from '../../services/api';
 import { LegalDocType, LegalDocument, User } from '../../types';
 import { DegradedState } from '../Admin/AdminState';
@@ -189,9 +191,10 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
         })}
 
         {!loadError && documents.length === 0 && (
-          <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-            {t('legal.noDocuments', 'No legal documents available.')}
-          </div>
+          <EmptyState
+            preset="noData"
+            title={t('legal.noDocuments', 'No legal documents available.')}
+          />
         )}
       </div>
 

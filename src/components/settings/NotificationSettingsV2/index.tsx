@@ -20,13 +20,15 @@ import {
   ChevronRight,
   Clock,
   Eye,
-  Loader2,
   Mail,
   Settings,
   Smartphone,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { EmptyState } from '@/components/ui/composed';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 
 import { useUserIntegrations } from '../../../hooks/useUserIntegrations';
 import { useUserNotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
@@ -131,27 +133,19 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({
   // Render active tab content
   const renderTabContent = () => {
     if (loading) {
-      return (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-brand" />
-        </div>
-      );
+      return <LoadingState variant="spinner" />;
     }
 
     if (error) {
-      return (
-        <div className="flex items-center justify-center py-12 text-rose-500">
-          <AlertCircle className="w-5 h-5 mr-2" />
-          {error}
-        </div>
-      );
+      return <ErrorState message={error} />;
     }
 
     if (!preferences) {
       return (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-          {t('settings.notifications.noPreferences', 'No preferences found')}
-        </div>
+        <EmptyState
+          preset="noData"
+          title={t('settings.notifications.noPreferences', 'No preferences found')}
+        />
       );
     }
 

@@ -27,6 +27,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { shouldFallbackToLegacySync, V8SyncApi } from '../../../services/api/v8/sync';
 import { User } from '../../../types';
@@ -289,11 +293,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -305,14 +305,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
         <DegradedState title="Integration health unavailable" description={loadError} />
       )}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -521,10 +514,10 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       )}
 
       {integrations.length === 0 && !loadError && (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-          <Activity size={48} className="mx-auto mb-4 opacity-30" />
-          <p>{t('integrations.health.noIntegrations', 'No integrations connected')}</p>
-        </div>
+        <EmptyState
+          icon={<Activity />}
+          title={t('integrations.health.noIntegrations', 'No integrations connected')}
+        />
       )}
     </div>
   );

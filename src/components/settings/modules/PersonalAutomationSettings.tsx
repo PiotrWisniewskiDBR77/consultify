@@ -16,7 +16,6 @@ import {
   Copy,
   Edit2,
   Filter,
-  Loader2,
   Pause,
   Play,
   Plus,
@@ -27,6 +26,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
@@ -250,11 +251,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-amber-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (

@@ -22,6 +22,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
+
 import {
   type Provider,
   type UserIntegration,
@@ -942,9 +946,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
             {t('settings.integrations.appsTitle', 'Connected Apps')}
           </h3>
         </div>
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-brand" />
-        </div>
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -983,14 +985,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       </div>
 
       {/* Search */}
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
@@ -1034,21 +1029,11 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       </div>
 
       {/* Error */}
-      {error && (
-        <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
+      {error && <Banner variant="danger" title={error} />}
 
       {/* App cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
-          <Search className="w-8 h-8 text-slate-600 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('settings.integrations.noResults', 'No apps found')}
-          </p>
-        </div>
+        <EmptyState preset="search" title={t('settings.integrations.noResults', 'No apps found')} />
       ) : (
         Object.entries(CATEGORY_META)
           .filter(([catId]) => selectedCategory === 'all' || selectedCategory === catId)

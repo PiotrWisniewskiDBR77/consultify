@@ -12,7 +12,6 @@ import {
   Download,
   ExternalLink,
   LayoutGrid,
-  Loader2,
   Pencil,
   Presentation,
   Trash2,
@@ -22,6 +21,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -550,10 +550,7 @@ export const PresentationsHub: React.FC = () => {
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full min-h-[200px]">
-          <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <span>{t('presentations.loading', 'Loading decks...')}</span>
-          </div>
+          <LoadingState variant="spinner" label={t('presentations.loading', 'Loading decks...')} />
         </div>
       );
     }

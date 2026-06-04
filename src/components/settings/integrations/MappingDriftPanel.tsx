@@ -22,6 +22,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { v8Get } from '../../../services/api/v8/client';
 import { V8SyncApi, V8SyncMappingData } from '../../../services/api/v8/sync';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -199,11 +203,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
   // ─── Overview mode ─────────────────────────────────────────────────────────
   if (!selectedId) {
     if (overviewLoading) {
-      return (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-brand" />
-        </div>
-      );
+      return <LoadingState variant="spinner" />;
     }
 
     if (loadError) {
@@ -212,12 +212,10 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
 
     if (overview.length === 0) {
       return (
-        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
-          <GitMerge className="w-8 h-8 text-slate-600 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('integrations.mappings.noIntegrations', 'No integrations with mappings found.')}
-          </p>
-        </div>
+        <EmptyState
+          icon={<GitMerge />}
+          title={t('integrations.mappings.noIntegrations', 'No integrations with mappings found.')}
+        />
       );
     }
 
@@ -286,11 +284,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
 
   // ─── Detail mode ───────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   if (!data) {
@@ -308,9 +302,13 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
         {loadError ? (
           <DegradedState title="Mapping data unavailable" description={loadError} />
         ) : (
-          <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl text-slate-500 dark:text-slate-400 text-sm">
-            {t('integrations.mappings.noData', 'No mapping data available for this integration.')}
-          </div>
+          <EmptyState
+            preset="noData"
+            title={t(
+              'integrations.mappings.noData',
+              'No mapping data available for this integration.'
+            )}
+          />
         )}
       </div>
     );
@@ -354,14 +352,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
         <ArrowLeft size={14} /> {t('common.back', 'Back to overview')}
       </button>
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       <div className="bg-white dark:bg-navy-800/40 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex border-b border-slate-200 dark:border-navy-700 overflow-x-auto">

@@ -26,6 +26,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 
@@ -179,11 +181,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
     'w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all resize-none font-mono text-sm';
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (

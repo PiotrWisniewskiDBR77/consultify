@@ -30,6 +30,10 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+import { MetaChip, StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
@@ -431,14 +435,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
       {loadError && <DegradedState title="Webhooks unavailable" description={loadError} />}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* New Webhook Form */}
       {showNew && !loadError && (
@@ -550,12 +547,10 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
       {/* Webhooks List */}
       <div className="space-y-4">
         {webhooks.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
-            <Webhook className="w-12 h-12 mx-auto text-slate-700 dark:text-slate-600 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400">
-              {t('settings.webhooks.empty', 'No webhooks configured')}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Webhook />}
+            title={t('settings.webhooks.empty', 'No webhooks configured')}
+          />
         ) : (
           webhooks.map((webhook) => {
             const isExpanded = selectedWebhook === webhook.id;
@@ -578,19 +573,11 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                           {webhook.name || t('settings.webhooks.unnamed', 'Unnamed Webhook')}
                         </h4>
                         {webhook.active ? (
-                          <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full">
-                            {t('common.active', 'Active')}
-                          </span>
+                          <StatusChip tone="success" label={t('common.active', 'Active')} />
                         ) : (
-                          <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 dark:bg-navy-800/40 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400 rounded-full">
-                            {t('common.inactive', 'Inactive')}
-                          </span>
+                          <StatusChip tone="neutral" label={t('common.inactive', 'Inactive')} />
                         )}
-                        {webhook.version && (
-                          <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
-                            v{webhook.version}
-                          </span>
-                        )}
+                        {webhook.version && <MetaChip label={`v${webhook.version}`} />}
                       </div>
                       <code className="text-sm text-slate-600 dark:text-slate-300 font-mono break-all">
                         {webhook.url}

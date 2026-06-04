@@ -33,6 +33,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
@@ -297,11 +300,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-slate-600 dark:text-slate-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -366,10 +365,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         </div>
 
         {apiKeys.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-            <Key size={32} className="mx-auto mb-2 opacity-50" />
-            <p>{t('settings.advanced.noKeys', 'No API keys created yet')}</p>
-          </div>
+          <EmptyState
+            icon={<Key />}
+            title={t('settings.advanced.noKeys', 'No API keys created yet')}
+          />
         ) : (
           <div className="space-y-3">
             {apiKeys.map((apiKey) => (

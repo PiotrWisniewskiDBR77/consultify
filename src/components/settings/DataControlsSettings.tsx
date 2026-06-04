@@ -36,6 +36,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { useDemo } from '../../hooks/useDemo';
 import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
@@ -410,14 +412,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       <div className="space-y-6">
         {loadError && <DegradedState title="Data controls unavailable" description={loadError} />}
 
-        {actionError && (
-          <div
-            role="alert"
-            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-          >
-            {actionError}
-          </div>
-        )}
+        {actionError && <Banner variant="danger" title={actionError} />}
 
         {!loadError && (
           <>

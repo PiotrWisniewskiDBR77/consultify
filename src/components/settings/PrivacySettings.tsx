@@ -15,6 +15,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
@@ -222,14 +224,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
           <DegradedState title="Privacy preferences unavailable" description={loadError} />
         )}
 
-        {saveError && (
-          <div
-            role="alert"
-            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-          >
-            {saveError}
-          </div>
-        )}
+        {saveError && <Banner variant="danger" title={saveError} />}
 
         {!loadError && (
           <>

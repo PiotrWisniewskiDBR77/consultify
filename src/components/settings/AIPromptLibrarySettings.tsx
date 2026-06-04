@@ -16,6 +16,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -355,9 +357,11 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
               {/* Prompt List */}
               <div className="space-y-2">
                 {filteredPrompts.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 text-sm">
-                    {t('settings.ai.noPrompts', 'No prompts in this category.')}
-                  </div>
+                  <EmptyState
+                    compact
+                    preset="noData"
+                    title={t('settings.ai.noPrompts', 'No prompts in this category.')}
+                  />
                 ) : (
                   filteredPrompts.map((prompt) => (
                     <div

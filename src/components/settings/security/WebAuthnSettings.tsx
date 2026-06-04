@@ -22,6 +22,9 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { api } from '../../../services/api';
 
 interface WebAuthnCredential {
@@ -308,19 +311,13 @@ const WebAuthnSettings: React.FC = () => {
 
       {/* Credentials List */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-primary-500" size={32} />
-        </div>
+        <LoadingState variant="spinner" />
       ) : credentials.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
-          <Key className="mx-auto text-gray-500 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
-            No passkeys registered
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Add a passkey to enable passwordless login
-          </p>
-        </div>
+        <EmptyState
+          icon={<Key />}
+          title="No passkeys registered"
+          description="Add a passkey to enable passwordless login"
+        />
       ) : (
         <div className="space-y-3">
           {credentials.map((credential) => (

@@ -13,6 +13,7 @@ import { useParams } from 'react-router-dom';
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 import {
@@ -871,28 +872,21 @@ export const DeckBuilder: React.FC = () => {
     if (!loadingDeck && loadError) {
       return (
         <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950 px-6">
-          <div className="max-w-md rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6 text-center shadow-xl">
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {t('presentations.builder.loadFailed', 'Failed to load deck')}
-            </h1>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{loadError}</p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 inline-flex rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-            >
-              {t('common.retry', 'Retry')}
-            </button>
-          </div>
+          <ErrorState
+            title={t('presentations.builder.loadFailed', 'Failed to load deck')}
+            message={loadError}
+            retry={() => window.location.reload()}
+          />
         </div>
       );
     }
 
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
-        <div className="animate-pulse text-slate-600">
-          {t('presentations.builder.loading', 'Loading deck...')}
-        </div>
+        <LoadingState
+          variant="spinner"
+          label={t('presentations.builder.loading', 'Loading deck...')}
+        />
       </div>
     );
   }

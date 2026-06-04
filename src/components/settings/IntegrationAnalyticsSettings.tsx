@@ -40,6 +40,9 @@ import {
   YAxis,
 } from 'recharts';
 
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 
 interface IntegrationAnalyticsSettingsProps {
@@ -222,11 +225,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
   };
 
   if (loading && !stats) {
-    return (
-      <div className={`flex items-center justify-center h-48 ${className}`}>
-        <Loader2 className="w-6 h-6 animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className={className} />;
   }
 
   return (
@@ -301,15 +300,13 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
       )}
 
       {!selectedIntegration && integrations.length === 0 && (
-        <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
-          <BarChart3 className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">
-            {t(
-              'settings.analytics.noIntegrations',
-              'No integrations available. Connect an integration to see analytics.'
-            )}
-          </p>
-        </div>
+        <EmptyState
+          icon={<BarChart3 />}
+          title={t(
+            'settings.analytics.noIntegrations',
+            'No integrations available. Connect an integration to see analytics.'
+          )}
+        />
       )}
 
       {selectedIntegration && stats && (

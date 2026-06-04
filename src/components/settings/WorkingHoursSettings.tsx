@@ -13,6 +13,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { DaySchedule, User, WorkingHours } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -200,11 +203,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
     'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6';
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -239,14 +238,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
 
       {loadError && <DegradedState title="Working hours unavailable" description={loadError} />}
 
-      {saveError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {saveError}
-        </div>
-      )}
+      {saveError && <Banner variant="danger" title={saveError} />}
 
       {!loadError && (
         <>

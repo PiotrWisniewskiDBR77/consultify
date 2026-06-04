@@ -29,6 +29,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { Project, User } from '../../types';
 import { ReadOnlyState } from '../Admin/AdminState';
@@ -166,11 +168,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (

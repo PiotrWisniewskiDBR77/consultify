@@ -13,6 +13,8 @@ import React from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { StatusChip } from '@/components/ui/primitives';
+
 import { User } from '../../types';
 import { ReadOnlyState } from '../Admin/AdminState';
 
@@ -225,9 +227,10 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-slate-900 dark:text-white">{device.name}</p>
                     {device.is_current && (
-                      <span className="px-2 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 text-xs rounded-full">
-                        {t('settings.recovery.current', 'This device')}
-                      </span>
+                      <StatusChip
+                        tone="success"
+                        label={t('settings.recovery.current', 'This device')}
+                      />
                     )}
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">

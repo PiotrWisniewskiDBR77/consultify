@@ -17,6 +17,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -112,7 +113,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <LoadingState variant="spinner" />
       </div>
     );
   }

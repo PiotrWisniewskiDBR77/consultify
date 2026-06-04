@@ -38,6 +38,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 
@@ -214,15 +217,11 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
     switch (severity) {
       case 'critical':
         return (
-          <span className="px-2 py-0.5 text-xs font-medium bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 rounded-full">
-            {t('security.events.severityCritical', 'Critical')}
-          </span>
+          <StatusChip tone="danger" label={t('security.events.severityCritical', 'Critical')} />
         );
       case 'warning':
         return (
-          <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full">
-            {t('security.events.severityWarning', 'Warning')}
-          </span>
+          <StatusChip tone="warning" label={t('security.events.severityWarning', 'Warning')} />
         );
       default:
         return null;
@@ -432,25 +431,21 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
 
       {/* Events List */}
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-        </div>
+        <LoadingState variant="spinner" />
       ) : filteredEvents.length === 0 ? (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-            <Activity className="w-8 h-8 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
-          </div>
-          <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-            {searchQuery || filter !== 'all'
+        <EmptyState
+          icon={<Activity />}
+          title={
+            searchQuery || filter !== 'all'
               ? t('security.events.noResults', 'No matching events')
-              : t('security.events.noEvents', 'No Security Events')}
-          </h4>
-          <p className="text-slate-500 dark:text-slate-400">
-            {searchQuery || filter !== 'all'
+              : t('security.events.noEvents', 'No Security Events')
+          }
+          description={
+            searchQuery || filter !== 'all'
               ? t('security.events.noResultsDesc', 'Try adjusting your search or filters')
-              : t('security.events.noEventsDesc', 'Security events will appear here as they occur')}
-          </p>
-        </div>
+              : t('security.events.noEventsDesc', 'Security events will appear here as they occur')
+          }
+        />
       ) : (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="divide-y divide-slate-200 dark:divide-white/5">

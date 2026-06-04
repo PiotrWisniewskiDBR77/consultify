@@ -2,9 +2,12 @@
  * SettingsHistory - Audit log of all settings changes
  */
 
-import { ChevronDown, Clock, History, Loader2, RotateCcw, Search } from 'lucide-react';
+import { ChevronDown, Clock, History, RotateCcw, Search } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { Banner } from '@/components/shared/Banner';
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
@@ -143,11 +146,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -166,14 +165,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
 
       {loadError && <DegradedState title="Settings history unavailable" description={loadError} />}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {!loadError && (
         <>

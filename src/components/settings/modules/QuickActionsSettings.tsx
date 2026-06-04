@@ -7,6 +7,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
@@ -65,11 +67,7 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (

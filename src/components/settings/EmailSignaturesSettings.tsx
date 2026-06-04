@@ -18,6 +18,9 @@ import { Check, Copy, Edit2, FileSignature, Plus, Star, Trash2 } from 'lucide-re
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
@@ -316,27 +319,21 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
 
       {loadError && <DegradedState title="Email signatures unavailable" description={loadError} />}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Signatures List */}
       {signatures.length === 0 && !loadError ? (
         <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileSignature className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 text-center">
-              {t('settings.signatures.empty', 'No signatures yet')}
-            </p>
-            <Button variant="outline" className="mt-4" onClick={() => openEditDialog()}>
-              <Plus className="w-4 h-4 mr-2" />
-              {t('settings.signatures.createFirst', 'Create your first signature')}
-            </Button>
+          <CardContent className="p-0">
+            <EmptyState
+              icon={<FileSignature />}
+              title={t('settings.signatures.empty', 'No signatures yet')}
+              action={{
+                label: t('settings.signatures.createFirst', 'Create your first signature'),
+                onClick: () => openEditDialog(),
+                variant: 'secondary',
+              }}
+            />
           </CardContent>
         </Card>
       ) : !loadError ? (

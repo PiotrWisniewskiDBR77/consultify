@@ -2,10 +2,13 @@
  * CalendarSyncSettings - Calendar synchronization settings
  */
 
-import { Calendar, Check, ExternalLink, Loader2, RefreshCw, X } from 'lucide-react';
+import { Calendar, Check, ExternalLink, RefreshCw, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Banner } from '@/components/shared/Banner';
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -164,11 +167,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-6 h-6 animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -197,14 +196,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
 
       {loadError && <DegradedState title="Calendar sync unavailable" description={loadError} />}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Calendar Services */}
       {!loadError && (

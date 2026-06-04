@@ -4,10 +4,12 @@
  * Connected to backend API for persistence.
  */
 
-import { Loader2, MessageSquare, Save, Sparkles } from 'lucide-react';
+import { MessageSquare, Save, Sparkles } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { InfoButton } from '../shared/InfoButton';
@@ -65,11 +67,7 @@ export const AIPersonalitySettings: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (

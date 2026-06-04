@@ -37,6 +37,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -553,13 +555,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                   {t('settings.security.twoFactor', 'Two-Factor Authentication')}
                 </h3>
                 {currentUser.mfaEnabled ? (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full">
-                    Enabled
-                  </span>
+                  <StatusChip tone="success" label="Enabled" />
                 ) : (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full">
-                    Not enabled
-                  </span>
+                  <StatusChip tone="warning" label="Not enabled" />
                 )}
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -645,9 +643,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                               {session.browser && ` - ${session.browser}`}
                             </p>
                             {(session.current || session.isCurrent) && (
-                              <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full">
-                                Current
-                              </span>
+                              <StatusChip tone="success" label="Current" />
                             )}
                           </div>
                           <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-0.5">

@@ -12,13 +12,14 @@ import {
   Check,
   CheckCircle2,
   Database,
-  Loader2,
   MessageSquare,
   Plug,
   RefreshCw,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Provider, UserIntegration, useUserIntegrations } from '../../../hooks/useUserIntegrations';
 import { InfoButton } from '../../shared/InfoButton';
@@ -130,11 +131,7 @@ export const UserIntegrations: React.FC<UserIntegrationsProps> = ({ className = 
   };
 
   if (loading) {
-    return (
-      <div className={`flex items-center justify-center py-12 ${className}`}>
-        <Loader2 className="w-8 h-8 animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className={className} />;
   }
 
   return (

@@ -22,7 +22,6 @@ import {
   Fingerprint,
   Globe,
   Key,
-  Loader2,
   Lock,
   Monitor,
   RefreshCw,
@@ -36,6 +35,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
@@ -253,11 +254,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
