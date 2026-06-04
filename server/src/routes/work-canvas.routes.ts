@@ -3796,8 +3796,14 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const { organizationId, userId } = authContext(req);
   const target = String(req.body?.target || '') as WorkspaceTarget;
-  if (!['idea', 'note', 'initiative'].includes(target)) {
-    return res.status(400).json({ error: 'target must be idea, note, or initiative' });
+  // C3 — `decision` is fully implemented in createWorkspaceResource (real
+  // INSERT into decisions). This guard was the only thing keeping the chat-
+  // shell from being able to send to it; ecosystem audit flagged it as a
+  // 1-line fix.
+  if (!['idea', 'note', 'initiative', 'decision'].includes(target)) {
+    return res
+      .status(400)
+      .json({ error: 'target must be idea, note, initiative, or decision' });
   }
 
   try {

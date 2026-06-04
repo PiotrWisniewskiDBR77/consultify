@@ -5109,13 +5109,15 @@ export const Api = {
 
   workCanvasSaveToWorkspace: async (
     draftId: string,
-    payload: { target: 'idea' | 'note' | 'initiative' }
+    // C3 — 'decision' now accepted (backend was already implemented in
+    // createWorkspaceResource; only the runtime guard had been excluding it).
+    payload: { target: 'idea' | 'note' | 'initiative' | 'decision' }
   ): Promise<{
     success: boolean;
     data: {
       draft: any;
       linkedResource: {
-        type: 'idea' | 'note' | 'initiative';
+        type: 'idea' | 'note' | 'initiative' | 'decision';
         id: string;
         title: string;
         url?: string;

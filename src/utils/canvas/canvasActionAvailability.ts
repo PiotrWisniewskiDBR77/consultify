@@ -19,6 +19,9 @@ const actionGroups: Record<CanvasActionId, CanvasActionGroup> = {
   'send-to-idea': 'workspace',
   'save-as-note': 'workspace',
   'create-initiative': 'workspace',
+  // C3 — converged actions surfaced from WorkCanvasShell.
+  'create-decision': 'workspace',
+  'create-task': 'workspace',
 };
 
 const actionLabels: Record<CanvasActionId, string> = {
@@ -34,6 +37,9 @@ const actionLabels: Record<CanvasActionId, string> = {
   'send-to-idea': 'Send to idea',
   'save-as-note': 'Save as note',
   'create-initiative': 'Create initiative',
+  // C3
+  'create-decision': 'Capture decision',
+  'create-task': 'Create task',
 };
 
 function availability(
@@ -111,6 +117,23 @@ export function getCanvasActionAvailability(
       actionId,
       'disabled_missing_runtime',
       'Initiative creation runtime is unavailable.'
+    );
+  }
+
+  // C3 — new workspace targets surfaced by the converged shell.
+  if (actionId === 'create-decision' && !capabilities.canCreateDecision) {
+    return availability(
+      actionId,
+      'disabled_missing_runtime',
+      'Decision capture runtime is unavailable.'
+    );
+  }
+
+  if (actionId === 'create-task' && !capabilities.canCreateTask) {
+    return availability(
+      actionId,
+      'disabled_missing_runtime',
+      'Task creation runtime is unavailable.'
     );
   }
 

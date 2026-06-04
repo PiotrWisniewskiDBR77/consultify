@@ -6,6 +6,7 @@ import {
   Download,
   FileText,
   FolderInput,
+  Gavel,
   Lightbulb,
   MoreHorizontal,
   Plus,
@@ -15,6 +16,7 @@ import {
   RotateCcw,
   Save,
   Share2,
+  Sparkles,
   StickyNote,
   Table2,
   Upload,
@@ -294,6 +296,10 @@ const menuWorkspaceActionIds: CanvasActionId[] = [
   'send-to-idea',
   'save-as-note',
   'create-initiative',
+  // C3 — converge with WorkCanvasShell vocabulary. Decision was backend-ready
+  // for ages; only the guard at /save-to-workspace and this menu list blocked
+  // the chat-shell from exposing it.
+  'create-decision',
 ];
 
 const menuOutputActionIds: CanvasActionId[] = [
@@ -311,6 +317,8 @@ const defaultCanvasRuntimeCapabilities: CanvasRuntimeCapabilities = {
   canSendToIdea: isVitestRuntime,
   canSaveAsNote: isVitestRuntime,
   canCreateInitiative: isVitestRuntime,
+  // C3 — new actions; defaults follow the same vitest-runtime gate as siblings.
+  canCreateDecision: isVitestRuntime,
   canShare: false,
 };
 
@@ -320,10 +328,13 @@ const richEditorDecision = {
   migrationHint: 'TipTap/ProseMirror stays feature-flagged until Stage 54 execution.',
 } as const;
 
-const workspaceTargets: Partial<Record<CanvasActionId, 'idea' | 'note' | 'initiative'>> = {
+const workspaceTargets: Partial<
+  Record<CanvasActionId, 'idea' | 'note' | 'initiative' | 'decision'>
+> = {
   'send-to-idea': 'idea',
   'save-as-note': 'note',
   'create-initiative': 'initiative',
+  'create-decision': 'decision',
 };
 
 const outputTargets: Partial<Record<CanvasActionId, 'presentation' | 'table' | 'report'>> = {
@@ -421,6 +432,12 @@ const actionIcons: Record<CanvasActionId, React.ComponentType<{ size?: number }>
   'send-to-idea': Lightbulb,
   'save-as-note': StickyNote,
   'create-initiative': Rocket,
+  // C3 — "Capture decision" mirrors the Decisions module icon family.
+  'create-decision': Gavel,
+  // C3 — placeholder so Record<CanvasActionId,…> stays exhaustive; the actual
+  // "create-task" wiring lands in C4 (the chat-shell never exposes it yet, so
+  // the icon never renders). Sparkles is the existing platform task accent.
+  'create-task': Sparkles,
 };
 
 const toolbarGroupClass =
@@ -830,6 +847,8 @@ export function WorkCanvasDocumentPanel({
       ['canSendToIdea', 'canvas.convert.idea'],
       ['canSaveAsNote', 'canvas.convert.note'],
       ['canCreateInitiative', 'canvas.convert.initiative'],
+      // C3 — new capability; backend permission key follows the same family.
+      ['canCreateDecision', 'canvas.convert.decision'],
       ['canShare', 'canvas.share'],
     ];
 
@@ -1720,7 +1739,7 @@ export function WorkCanvasDocumentPanel({
 
   const runWorkspaceAction = async (
     actionId: CanvasActionId,
-    target: 'idea' | 'note' | 'initiative'
+    target: 'idea' | 'note' | 'initiative' | 'decision'
   ) => {
     setActiveActionId(actionId);
     setStatusFeedback(`Saving Canvas to ${target}...`);
@@ -1742,7 +1761,9 @@ export function WorkCanvasDocumentPanel({
             ? `/my-work?tab=notebook`
             : target === 'initiative'
               ? `/initiatives`
-              : null;
+              : target === 'decision'
+                ? `/decisions/${encodeURIComponent(linked.id)}`
+                : null;
       setStatusFeedback(
         targetPath
           ? `${linked.title} saved to ${linked.type}. [Open →](${targetPath})`
