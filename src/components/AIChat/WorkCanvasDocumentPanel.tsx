@@ -2324,8 +2324,22 @@ export function WorkCanvasDocumentPanel({
             {menuOutputActionIds.map((actionId) => renderCommandButton(actionId))}
           </div>
 
-          <div className={toolbarGroupClass} data-testid="canvas-workspace-actions">
-            {menuWorkspaceActionIds.map((actionId) => renderCommandButton(actionId))}
+          {/* C4.5 — Promote strip. The workspace-actions cluster IS the
+              differentiator: one-click promotion of Canvas content into Tasks,
+              Decisions, Initiatives, Ideas, Notes. ChatGPT/Claude/Gemini Canvas
+              have no equivalent. Surfacing the label makes the unique value
+              discoverable rather than hidden behind icons. */}
+          <div
+            className="flex items-center gap-2 rounded-full border border-crimson-200/70 bg-crimson-50/40 px-2 py-0.5 dark:border-crimson-700/40 dark:bg-crimson-950/30"
+            data-testid="canvas-promote-strip"
+            title="Promote Canvas content into platform entities"
+          >
+            <span className="select-none px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-crimson-700 dark:text-crimson-300">
+              Promote
+            </span>
+            <div className="flex items-center gap-1" data-testid="canvas-workspace-actions">
+              {menuWorkspaceActionIds.map((actionId) => renderCommandButton(actionId))}
+            </div>
           </div>
 
           <div className={toolbarGroupClass} data-testid="canvas-file-actions">
