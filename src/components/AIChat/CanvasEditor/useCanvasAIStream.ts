@@ -9,6 +9,7 @@
 import type { Editor } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { hasPendingAiDiff } from './canvasDiffOps';
 import { htmlToMarkdown } from './canvasMarkdownConversion';
 
 export interface UseCanvasAIStreamOptions {
@@ -80,6 +81,18 @@ export function useCanvasAIStream({
       streamContext?: CanvasStreamContext
     ) => {
       if (!editor || isStreaming) return;
+
+      // W2-T1 — refuse to start a stream while a previous AI suggestion is
+      // still unresolved (aiAdded/aiRemoved marks present). Starting now would
+      // interleave new content into the marked spans and the user could no
+      // longer accept/reject the prior diff cleanly. Caller sees the error
+      // via onError so it can surface "resolve the previous suggestion first".
+      if (hasPendingAiDiff(editor)) {
+        onError?.(
+          'Resolve the previous AI suggestion (accept or reject) before starting a new edit.'
+        );
+        return;
+      }
 
       const abortController = new AbortController();
       abortControllerRef.current = abortController;

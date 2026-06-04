@@ -18,7 +18,7 @@ import { acceptAiDiff, applyAiDiff, rejectAiDiff } from './canvasDiffOps';
 import { getCanvasEditorExtensions } from './canvasEditorExtensions';
 import { CanvasEditorToolbar } from './CanvasEditorToolbar';
 import { htmlToMarkdown, markdownToHtml } from './canvasMarkdownConversion';
-import { recordProvenanceEvent } from './canvasProvenanceLog';
+import { migrateProvenanceLog, recordProvenanceEvent } from './canvasProvenanceLog';
 
 export interface CanvasSelection {
   selectedText: string;
@@ -69,12 +69,55 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
   const [aiProcessing, setAiProcessing] = useState(false);
   const [hasPendingDiff, setHasPendingDiff] = useState(false);
 
+  // W2-T2 — give onUpdate access to the live pending-diff state via a ref so
+  // the debounced save can skip while a suggestion is unresolved. State-only
+  // closes over a stale value (the useEditor callback captures the first
+  // render's hasPendingDiff and never sees the toggle).
+  const hasPendingDiffRef = useRef(false);
+  hasPendingDiffRef.current = hasPendingDiff;
+
+  // W2-T4 — provenance scope fallback. A fresh canvas mounts before the
+  // backend has assigned a draftId, so the first AI edits would have logged
+  // under `undefined` and been dropped. We synthesize a session-scoped temp
+  // id on first AI activity and migrate the log onto the real draftId the
+  // moment the parent passes it in. Stable across renders, never sent to the
+  // backend, never persisted as the canonical id.
+  const fallbackScopeRef = useRef<string | null>(null);
+  const ensureFallbackScope = useCallback((): string => {
+    if (fallbackScopeRef.current) return fallbackScopeRef.current;
+    let id: string;
+    try {
+      id = `tmp-${crypto.randomUUID()}`;
+    } catch {
+      id = `tmp-${Date.now()}-${Math.floor(Math.random() * 1e9).toString(36)}`;
+    }
+    fallbackScopeRef.current = id;
+    return id;
+  }, []);
+  const effectiveProvenanceScope =
+    provenanceScope && provenanceScope.length > 0 ? provenanceScope : null;
+  // When the real draftId arrives, hand the events accrued under the temp
+  // scope over to it so the audit log stays continuous.
+  useEffect(() => {
+    if (effectiveProvenanceScope && fallbackScopeRef.current) {
+      migrateProvenanceLog(fallbackScopeRef.current, effectiveProvenanceScope);
+      fallbackScopeRef.current = null;
+    }
+  }, [effectiveProvenanceScope]);
+
   const editor = useEditor({
     extensions,
     editable,
     content: markdownToHtml(contentMd),
     onUpdate: ({ editor: ed }) => {
       if (isExternalUpdateRef.current) return;
+
+      // W2-T2 — refuse to autosave while a pending AI diff lives in the doc.
+      // Reason: Turndown has no rule for the aiAdded/aiRemoved marks, so
+      // serializing now strips them silently — and the user can no longer
+      // accept or reject the diff against the persisted markdown. Save
+      // resumes after accept/reject (both call onContentChangeRef directly).
+      if (hasPendingDiffRef.current) return;
 
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
@@ -131,6 +174,12 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
   const handleAIRequest = useCallback(
     async (prompt: string, selectedText: string): Promise<string | null> => {
       if (!editor || !selection) return null;
+      // W2-T1/T3 — refuse to start a floating-menu AI request while Teresa
+      // is already streaming OR while a previous suggestion is unresolved.
+      // Either case would interleave content with content the user can no
+      // longer attribute to one mode or the other.
+      if (isStreaming) return null;
+      if (hasPendingDiff) return null;
       setAiProcessing(true);
 
       try {
@@ -167,18 +216,19 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
         // C6 — record the apply event so the per-span provenance audit (the
         // differentiator vs Claude/ChatGPT/Gemini/Antigravity) has the prompt
-        // + original + replacement attached to this draft.
-        if (provenanceScope) {
-          recordProvenanceEvent(provenanceScope, {
-            kind: 'apply',
-            at: Date.now(),
-            prompt,
-            originalExcerpt: selectedText,
-            replacementExcerpt: replacement,
-            selectionFrom: selection.from,
-            selectionTo: selection.to,
-          });
-        }
+        // + original + replacement attached to this draft. W2-T4 — fall back
+        // to a session-scoped temp id when the real draftId hasn't been
+        // assigned yet so the first edits on a fresh canvas are not dropped.
+        const scope = effectiveProvenanceScope ?? ensureFallbackScope();
+        recordProvenanceEvent(scope, {
+          kind: 'apply',
+          at: Date.now(),
+          prompt,
+          originalExcerpt: selectedText,
+          replacementExcerpt: replacement,
+          selectionFrom: selection.from,
+          selectionTo: selection.to,
+        });
 
         setHasPendingDiff(true);
         setAiProcessing(false);
@@ -188,7 +238,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         return null;
       }
     },
-    [editor, selection, provenanceScope]
+    [editor, selection, effectiveProvenanceScope, ensureFallbackScope, isStreaming, hasPendingDiff]
   );
 
   // Accept AI suggestion: delete the original (aiRemoved) text, keep the
@@ -198,8 +248,9 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
     acceptAiDiff(editor);
 
-    if (provenanceScope) {
-      recordProvenanceEvent(provenanceScope, { kind: 'accept', at: Date.now() });
+    const acceptScope = effectiveProvenanceScope ?? fallbackScopeRef.current;
+    if (acceptScope) {
+      recordProvenanceEvent(acceptScope, { kind: 'accept', at: Date.now() });
     }
 
     setHasPendingDiff(false);
@@ -207,7 +258,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
     const md = htmlToMarkdown(editor.getHTML());
     onContentChangeRef.current(md);
-  }, [editor, provenanceScope]);
+  }, [editor, effectiveProvenanceScope]);
 
   // Reject AI suggestion: delete the inserted (aiAdded) text, restore the
   // original by stripping its aiRemoved marker. Persist for parity with accept
@@ -217,8 +268,9 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
     rejectAiDiff(editor);
 
-    if (provenanceScope) {
-      recordProvenanceEvent(provenanceScope, { kind: 'reject', at: Date.now() });
+    const rejectScope = effectiveProvenanceScope ?? fallbackScopeRef.current;
+    if (rejectScope) {
+      recordProvenanceEvent(rejectScope, { kind: 'reject', at: Date.now() });
     }
 
     setHasPendingDiff(false);
@@ -226,7 +278,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
     const md = htmlToMarkdown(editor.getHTML());
     onContentChangeRef.current(md);
-  }, [editor, provenanceScope]);
+  }, [editor, effectiveProvenanceScope]);
 
   const editorClassName = useMemo(
     () =>
@@ -255,8 +307,11 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
       <div className="flex-1 overflow-y-auto relative">
         <EditorContent editor={editor} className={editorClassName} />
 
-        {/* AI floating menu on selection */}
-        {!hasPendingDiff && selection && editable && (
+        {/* AI floating menu on selection. W2-T3 — also hide while Teresa is
+            streaming, so the user cannot fire a parallel /chat/quick request
+            that would race with the SSE stream and produce interleaved chunks
+            the user can no longer accept/reject coherently. */}
+        {!hasPendingDiff && !isStreaming && selection && editable && (
           <CanvasAIFloatingMenu
             editor={editor}
             selection={selection}

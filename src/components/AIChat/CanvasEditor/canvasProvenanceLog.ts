@@ -76,3 +76,26 @@ export function clearProvenanceLog(scope: string): void {
     /* ignore */
   }
 }
+
+/**
+ * W2-T4 — move events from a temporary client-side scope key onto the
+ * server-assigned draftId. A fresh canvas has no draftId until the first
+ * autosave round-trips; without this, every AI edit between editor mount and
+ * first save was lost from the audit log. Caller invokes this once the real
+ * draftId arrives; idempotent (a same-scope no-op short-circuits) and
+ * non-destructive (merges with whatever already lives at the target key).
+ */
+export function migrateProvenanceLog(fromScope: string, toScope: string): void {
+  if (typeof window === 'undefined') return;
+  if (!fromScope || !toScope || fromScope === toScope) return;
+  try {
+    const fromLog = readProvenanceLog(fromScope);
+    if (fromLog.length === 0) return;
+    const toLog = readProvenanceLog(toScope);
+    const merged = [...toLog, ...fromLog].slice(-MAX_EVENTS_PER_DRAFT);
+    window.localStorage.setItem(storageKey(toScope), JSON.stringify(merged));
+    window.localStorage.removeItem(storageKey(fromScope));
+  } catch {
+    /* localStorage quota / SSR — non-fatal */
+  }
+}

@@ -26,6 +26,30 @@ export interface DocRange {
  * Collect contiguous position ranges of inline text nodes carrying `markName`,
  * merging adjacent/overlapping runs so deletion offsets stay coherent.
  */
+/**
+ * W2-T1/T2 — true iff the editor currently carries any AI diff marks
+ * (aiAdded or aiRemoved). Used to gate stream-start, floating-menu start,
+ * and the debounced autosave: each of those operations would corrupt or
+ * collide with an unresolved suggestion if it ran while a diff was pending.
+ *
+ * Cheap — short-circuits on the first match via a stopping descendant walk.
+ */
+export function hasPendingAiDiff(editor: Editor): boolean {
+  let found = false;
+  editor.state.doc.descendants((node) => {
+    if (found) return false;
+    if (
+      node.isText &&
+      node.marks.some((m) => m.type.name === AI_ADDED_MARK || m.type.name === AI_REMOVED_MARK)
+    ) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+  return found;
+}
+
 export function collectMarkedRanges(editor: Editor, markName: string): DocRange[] {
   const ranges: DocRange[] = [];
   editor.state.doc.descendants((node, pos) => {
