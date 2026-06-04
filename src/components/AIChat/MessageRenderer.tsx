@@ -1521,10 +1521,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 ) : null;
               })()}
 
-            {/* Hover Actions */}
-            {isHovered && !msg.isStreaming && (
+            {/* Hover Actions — user messages only (AI actions live in the unified
+                bottom feedback row to avoid duplicate feedback surfaces). */}
+            {isHovered && !msg.isStreaming && msg.role === 'user' && (
               <div
-                className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-slate-50 dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
+                className={`absolute -left-2 -translate-x-full top-0 flex items-center gap-0.5 bg-slate-50 dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
               >
                 {/* Copy */}
                 <button
@@ -1567,37 +1568,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </button>
                 )}
 
-                {/* View Artifacts */}
-                {msg.role === 'ai' && hasArtifacts && (
-                  <button
-                    onClick={() => handleViewArtifacts(msg.artifacts!)}
-                    className="p-1 rounded-md text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-                    title={t('chat.actions.viewArtifacts', 'View Artifacts')}
-                  >
-                    <FileCode size={12} />
-                  </button>
-                )}
-
-                {/* Speak */}
-                {msg.role === 'ai' && (
-                  <button
-                    onClick={() => {
-                      // Replay behavior: always restart reading from the beginning.
-                      stopSpeaking();
-                      setTimeout(() => {
-                        speak(userVisibleContent);
-                      }, 60);
-                    }}
-                    className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
-                    title={
-                      voiceState.isSpeaking
-                        ? t('chat.actions.stop', 'Stop')
-                        : t('chat.actions.speak', 'Speak')
-                    }
-                  >
-                    <Volume2 size={12} />
-                  </button>
-                )}
+                {/* AI-only actions (View Artifacts, Speak) moved to the unified bottom
+                    feedback row to avoid a duplicate hover toolbar. */}
               </div>
             )}
           </div>
@@ -1683,9 +1655,39 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           </div>
         )}
 
-      {/* Unified Feedback Block (AI only): compact, opt-in actions panel */}
+      {/* Unified Feedback Block (AI only): single action row (no duplicate hover toolbar) */}
       {msg.role === 'ai' && !msg.isStreaming && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex items-center gap-1.5`}>
+          {/* Copy — always visible */}
+          <button
+            onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
+            className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            title={t('chat.actions.copy', 'Copy')}
+            aria-label={t('chat.actions.copy', 'Copy')}
+          >
+            {isCopied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+          </button>
+          {/* Speak — always visible */}
+          <button
+            onClick={() => {
+              stopSpeaking();
+              setTimeout(() => speak(userVisibleContent), 60);
+            }}
+            className={`p-1 rounded-md transition-colors ${
+              voiceState.isSpeaking
+                ? 'text-rose-500'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+            }`}
+            title={
+              voiceState.isSpeaking
+                ? t('chat.actions.stop', 'Stop')
+                : t('chat.actions.speak', 'Speak')
+            }
+            aria-label={t('chat.actions.speak', 'Speak')}
+          >
+            <Volume2 size={12} />
+          </button>
+          {/* More (feedback / save / sources) */}
           <button
             onClick={() =>
               setShowCompactActions((v) => {
@@ -1695,8 +1697,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               })
             }
             className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300/50 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
-            title={t('chat.actions.toggleResponseActions', 'Toggle response actions')}
-            aria-label={t('chat.actions.toggleResponseActions', 'Toggle response actions')}
+            title={t('chat.actions.toggleResponseActions', 'More actions')}
+            aria-label={t('chat.actions.toggleResponseActions', 'More actions')}
           >
             {showCompactActions ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
           </button>
@@ -1727,6 +1729,27 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               >
                 <Lightbulb size={12} />
               </button>
+              {canSaveToContext && (
+                <button
+                  onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
+                  disabled={isContextSaveBusy || isContextSaved}
+                  className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={
+                    isContextSaved
+                      ? t('chat.actions.savedToContext', 'Saved to Context OS')
+                      : t('chat.actions.saveToContext', 'Save to Context OS')
+                  }
+                  aria-label={t('chat.actions.saveToContext', 'Save to Context OS')}
+                >
+                  {isContextSaveBusy ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : isContextSaved ? (
+                    <CheckCircle2 size={12} className="text-emerald-500" />
+                  ) : (
+                    <Database size={12} />
+                  )}
+                </button>
+              )}
               <button
                 onClick={() => setShowSourcesDetails((v) => !v)}
                 className={`p-1 rounded-md transition-colors ${
