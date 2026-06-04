@@ -500,8 +500,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           )}
         </div>
 
-        {/* Message Bubble */}
-        <div className="flex flex-col max-w-[85%]">
+        {/* Message Bubble column. Wider than the old 85% so the bubble can hug
+            short content tightly (ChatGPT/Claude pattern) and stretch up to a
+            comfortable ~80% of the conversation width for long messages instead
+            of being squeezed into a narrow ribbon. */}
+        <div className="flex flex-col max-w-full md:max-w-[80%]">
           {/* Reasoning trace ("Tok rozumowania") — above the answer, like Grok/OpenAI.
               Expanded while streaming, collapsed once complete; persisted via metadata. */}
           {msg.role === 'ai' && (msg as any).metadata?.reasoning && (
@@ -523,10 +526,17 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             </span>
           )}
           <div
-            className={`relative rounded-xl px-3 py-2 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
+            className={`relative rounded-2xl px-4 py-2.5 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
               msg.role === 'user'
-                ? 'max-w-[85%] bg-primary-50 text-primary-900 border border-primary-100 rounded-tr-none dark:bg-primary-900/25 dark:text-primary-50 dark:border-primary-800/40'
-                : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
+                ? // User bubble: fully rounded (no "chat tail"), subtle crimson
+                  // tint, light border. Matches ChatGPT/Claude/Gemini, where the
+                  // sender is just the right-aligned bubble + avatar, not a
+                  // messaging-app speech balloon.
+                  'bg-primary-50 text-primary-900 border border-primary-100 dark:bg-primary-900/25 dark:text-primary-50 dark:border-primary-800/40'
+                : // AI bubble: softer border (/70) so the answer feels like
+                  // flowing content, not a hard-edged card. Still has a subtle
+                  // surface tint to distinguish from the page background.
+                  'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-navy-700/70'
             } ${isRtlChatLanguage ? 'text-right' : 'text-left'}`}
             dir={isRtlChatLanguage ? 'rtl' : 'ltr'}
           >
@@ -1344,21 +1354,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col">
-                    <span>{userVisibleContent}</span>
-                    {msg.role === 'user' && !msg.isStreaming && editingMessageId !== msg.id && (
-                      <div className="flex justify-end mt-2">
-                        <button
-                          onClick={() => handleStartEditMessage(msg.id)}
-                          title={t('chat.actions.editAndResend', 'Edit & Resend')}
-                          aria-label={t('chat.actions.editAndResend', 'Edit & Resend')}
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/15 text-white/75 hover:text-white hover:bg-white/10 transition-colors"
-                        >
-                          <Pencil size={12} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  // Plain user content. Edit is hover-revealed in the floating
+                  // toolbar (single, discoverable affordance — no duplicate pencil
+                  // crammed into the bubble corner). Matches Claude/Grok/Gemini.
+                  <span>{userVisibleContent}</span>
                 )}
               </>
             )}
