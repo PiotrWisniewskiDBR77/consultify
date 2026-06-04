@@ -79,15 +79,28 @@ function requireTablePlatform(req: Request, res: Response, next: () => void) {
     return res.status(404).json({ error: 'Table platform is not enabled' });
   }
   // Check schema readiness (async but non-blocking for perf after first check)
-  checkSchemaReady().then((ready) => {
-    if (!ready) {
-      return res.status(503).json({
-        error: 'Table platform schema is not initialized. Migrations may be pending.',
-        code: 'SCHEMA_NOT_READY',
-      });
-    }
-    next();
-  });
+  checkSchemaReady()
+    .then((ready) => {
+      if (!ready) {
+        return res.status(503).json({
+          error: 'Table platform schema is not initialized. Migrations may be pending.',
+          code: 'SCHEMA_NOT_READY',
+        });
+      }
+      next();
+    })
+    .catch((err: unknown) => {
+      // Without this catch a rejected readiness check left the request hanging
+      // forever (no response, no next()). Fail closed with a clear 503.
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn(`[TablePlatform] schema readiness check failed: ${msg}`);
+      if (!res.headersSent) {
+        res.status(503).json({
+          error: 'Table platform schema readiness check failed.',
+          code: 'SCHEMA_CHECK_FAILED',
+        });
+      }
+    });
 }
 
 const tablePlatformLimiter = rateLimit({
