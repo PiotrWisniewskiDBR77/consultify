@@ -2257,7 +2257,7 @@ export function WorkCanvasDocumentPanel({
               <Plus size={15} />
             </button>
             {isNewCanvasMenuOpen ? (
-              <div className="absolute left-0 z-20 mt-2 w-[280px] rounded-2xl border border-slate-200 bg-white p-2 text-xs shadow-xl dark:border-white/10 dark:bg-[#15213b]">
+              <div className="absolute left-0 z-20 mt-2 w-[280px] rounded-2xl border border-slate-200 bg-white p-2 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800">
                 <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                   New Canvas from template
                 </div>
@@ -2318,7 +2318,7 @@ export function WorkCanvasDocumentPanel({
 
           {pendingDataset ? (
             <div
-              className="absolute right-5 top-16 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-[#15213b]"
+              className="absolute right-5 top-16 z-10 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
               data-testid="canvas-dataset-actions"
             >
               <div className="font-semibold text-slate-900 dark:text-white">
@@ -2370,7 +2370,7 @@ export function WorkCanvasDocumentPanel({
             </button>
             {isDiagnosticsOpen ? (
               <div
-                className="absolute right-0 z-20 mt-2 max-h-[80vh] w-[360px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-[#15213b]"
+                className="absolute right-0 z-20 mt-2 max-h-[80vh] w-[360px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
                 data-testid="canvas-diagnostics-menu"
               >
                 <div className="space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
@@ -3456,7 +3456,7 @@ export function WorkCanvasDocumentPanel({
             {isHydrating ? (
               <div
                 data-testid="canvas-loading-skeleton"
-                className="min-h-[680px] flex-1 animate-pulse rounded-[1.35rem] border border-white/10 bg-[#15213b] p-10"
+                className="min-h-[680px] flex-1 animate-pulse rounded-[1.35rem] border border-white/10 bg-navy-800 p-10"
               >
                 <div className="h-8 w-2/3 rounded bg-white/10" />
                 <div className="mt-8 h-4 w-full rounded bg-white/10" />
