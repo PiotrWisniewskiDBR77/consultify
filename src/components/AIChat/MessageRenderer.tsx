@@ -20,6 +20,7 @@ import {
   Download,
   FileCode,
   FileText,
+  GitBranch,
   Lightbulb,
   Loader2,
   Pencil,
@@ -271,6 +272,7 @@ export interface MessageRendererProps {
   // Handlers
   handleCopyMessage: (content: string, messageId: string) => void;
   handleStartEditMessage: (messageId: string) => void;
+  handleBranchFromMessage?: (messageId: string) => void;
   handleCancelEditMessage: () => void;
   handleCommitEditMessage: () => void;
   handleViewArtifacts: (artifacts: Artifact[]) => void;
@@ -359,6 +361,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   voiceState,
   handleCopyMessage,
   handleStartEditMessage,
+  handleBranchFromMessage,
   handleCancelEditMessage,
   handleCommitEditMessage,
   handleViewArtifacts,
@@ -1549,6 +1552,18 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 )}
               </button>
             )}
+
+            {/* Branch / Fork (composer #4) — copy the thread up to here into a
+                new conversation. Hidden for not-yet-persisted local messages. */}
+            {handleBranchFromMessage && !String(msg.id || '').startsWith('local-') && (
+              <button
+                onClick={() => handleBranchFromMessage(msg.id)}
+                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+                title={t('chat.actions.branch', 'Branch from here')}
+              >
+                <GitBranch size={12} />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1693,6 +1708,16 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   compact
                   thumbsOnly
                 />
+                {handleBranchFromMessage && !String(msg.id || '').startsWith('local-') && (
+                  <button
+                    onClick={() => handleBranchFromMessage(msg.id)}
+                    className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                    title={t('chat.actions.branch', 'Branch from here')}
+                    aria-label={t('chat.actions.branch', 'Branch from here')}
+                  >
+                    <GitBranch size={12} />
+                  </button>
+                )}
                 <button
                   onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
                   className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"

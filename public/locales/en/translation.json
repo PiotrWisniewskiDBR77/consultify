@@ -5951,7 +5951,8 @@
       "recordKpi": {
         "label": "Record KPI",
         "description": "Record KPI time-series value"
-      }
+      },
+      "branch": "Branch from here"
     },
     "coThinker": {
       "title": "Co-Thinker",
@@ -6515,6 +6516,12 @@
     },
     "onboarding": {
       "hint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis"
+    },
+    "branch": {
+      "working": "Creating a branch…",
+      "done": "Branched into a new conversation",
+      "failed": "Could not create a branch.",
+      "unavailable": "Send the message first, then branch."
     }
   },
   "agentAudit": {

@@ -6502,7 +6502,8 @@
       "recordKpi": {
         "label": "Zapisz KPI",
         "description": "Zapisz wartość KPI w szeregu czasowym"
-      }
+      },
+      "branch": "Rozgałęź stąd"
     },
     "coThinker": {
       "title": "Co-Thinker",
@@ -7066,6 +7067,12 @@
     },
     "onboarding": {
       "hint": "Tip: Wypróbuj tryb głosowy, załącz pliki lub włącz Deep Thinking dla wieloetapowej analizy"
+    },
+    "branch": {
+      "working": "Tworzę gałąź…",
+      "done": "Rozgałęziono do nowej rozmowy",
+      "failed": "Nie udało się utworzyć gałęzi.",
+      "unavailable": "Najpierw wyślij wiadomość, potem rozgałęź."
     }
   },
   "agentAudit": {

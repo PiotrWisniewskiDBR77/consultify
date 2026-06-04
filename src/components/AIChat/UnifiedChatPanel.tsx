@@ -3626,6 +3626,33 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     setEditingText('');
   }, []);
 
+  // Branch/Fork (composer #4): copy this conversation up to a given message into
+  // a fresh conversation and switch to it — explore a "what-if" without losing
+  // the original thread (ChatGPT "Branch in new chat" / Claude edit-branch).
+  const handleBranchFromMessage = useCallback(
+    async (messageId: string) => {
+      const sourceId = useConversationStore.getState().activeConversationId;
+      if (!sourceId || !messageId || String(messageId).startsWith('local-')) {
+        toast.error(t('aiChat.branch.unavailable', 'Send the message first, then branch.'));
+        return;
+      }
+      const tid = toast.loading(t('aiChat.branch.working', 'Creating a branch…'));
+      try {
+        const res: any = await Api.branchConversation(sourceId, messageId);
+        const newId = res?.conversation?.id;
+        if (!newId) throw new Error('No conversation id returned');
+        const store = useConversationStore.getState();
+        await store.fetchConversations?.();
+        await store.setActiveConversation(newId);
+        toast.success(t('aiChat.branch.done', 'Branched into a new conversation'), { id: tid });
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Branch failed:', err);
+        toast.error(t('aiChat.branch.failed', 'Could not create a branch.'), { id: tid });
+      }
+    },
+    [t]
+  );
+
   const handleCommitEditMessage = useCallback(async () => {
     if (!editingMessageId) return;
     const newText = editingText.trim();
@@ -4059,6 +4086,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       voiceState={voiceState}
       handleCopyMessage={handleCopyMessage}
       handleStartEditMessage={handleStartEditMessage}
+      handleBranchFromMessage={handleBranchFromMessage}
       handleCancelEditMessage={handleCancelEditMessage}
       handleCommitEditMessage={handleCommitEditMessage}
       handleViewArtifacts={handleViewArtifacts}

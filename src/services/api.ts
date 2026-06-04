@@ -11692,6 +11692,15 @@ export const Api = {
     );
     return handleResponse(res, 'Failed to move conversation to folder');
   },
+  /** Fork a conversation from a message into a new conversation (composer #4). */
+  branchConversation: async (conversationId: string, forkMessageId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/branch`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ forkMessageId }),
+    });
+    return handleResponse(res, 'Failed to branch conversation');
+  },
   // Analytics Reports - connected to real API
   getAnalyticsReports: async (filters?: any): Promise<any[]> => {
     const params = new URLSearchParams();

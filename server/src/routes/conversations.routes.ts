@@ -32,6 +32,7 @@ import {
 import { checkChatPermission } from '../services/chatPermissionService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -2174,6 +2175,130 @@ router.post(
           )
         );
     }
+  })
+);
+
+/**
+ * POST /api/conversations/:id/branch
+ *
+ * Fork a conversation from a given message (composer feature #4 — branch/fork,
+ * like ChatGPT "Branch in new chat" / Claude edit-branch). Copies every message
+ * up to and including `forkMessageId` into a fresh conversation so the user can
+ * explore an alternative path without losing the original thread.
+ *
+ * Column-defensive + Postgres-safe (no datetime('now'); fresh id per copied row,
+ * unlike the legacy conversationBranchingService which collided primary keys).
+ */
+router.post(
+  '/:id/branch',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const organizationId = req.organizationId || null;
+    const sourceId = String(req.params.id);
+    const forkMessageId = String(req.body?.forkMessageId || req.body?.messageId || '').trim();
+
+    // Ownership: the caller's personal conversation, or one in their org.
+    const source = (await dbGet(
+      `SELECT * FROM conversations
+       WHERE id = ? AND (user_id = ? OR (organization_id IS NOT NULL AND organization_id = ?))`,
+      [sourceId, userId, organizationId]
+    )) as any;
+    if (!source) return res.status(404).json({ error: 'Conversation not found' });
+
+    // Cutoff = the fork message's created_at (inclusive). Without one, branch all.
+    let cutoffCreatedAt: string | null = null;
+    if (forkMessageId) {
+      const fork = (await dbGet(
+        `SELECT created_at FROM conversation_messages WHERE id = ? AND conversation_id = ?`,
+        [forkMessageId, sourceId]
+      )) as any;
+      if (!fork) return res.status(404).json({ error: 'Fork message not found' });
+      cutoffCreatedAt = String(fork.created_at);
+    }
+
+    const now = new Date().toISOString();
+    const newId = uuidv4();
+
+    // --- New conversation (column-defensive) ---
+    const convCols = await getTableColumns('conversations');
+    const cCols: string[] = [];
+    const cVals: string[] = [];
+    const cParams: any[] = [];
+    const cAdd = (col: string, val: any) => {
+      if (!convCols.has(col)) return;
+      cCols.push(col);
+      cVals.push('?');
+      cParams.push(val);
+    };
+    cAdd('id', newId);
+    cAdd('user_id', source.user_id || userId);
+    cAdd('organization_id', source.organization_id || organizationId);
+    cAdd('project_id', source.project_id || null);
+    cAdd('chat_project_id', source.chat_project_id || null);
+    cAdd('created_by', userId);
+    cAdd('title', `${String(source.title || 'Conversation').slice(0, 180)} (Branch)`);
+    cAdd('title_source', 'auto');
+    cAdd('language', source.language || 'en');
+    cAdd('parent_conversation_id', sourceId);
+    cAdd('created_at', now);
+    cAdd('updated_at', now);
+    await dbRun(
+      `INSERT INTO conversations (${cCols.join(', ')}) VALUES (${cVals.join(', ')})`,
+      cParams
+    );
+
+    // --- Copy messages up to the cutoff, each with a fresh id + monotonic seq ---
+    const rows = (await dbAll(
+      cutoffCreatedAt
+        ? `SELECT * FROM conversation_messages
+           WHERE conversation_id = ? AND created_at <= ?
+           ORDER BY seq ASC, created_at ASC`
+        : `SELECT * FROM conversation_messages
+           WHERE conversation_id = ? ORDER BY seq ASC, created_at ASC`,
+      cutoffCreatedAt ? [sourceId, cutoffCreatedAt] : [sourceId]
+    )) as any[];
+
+    const msgCols = await getTableColumns('conversation_messages');
+    let seq = 0;
+    for (const m of rows || []) {
+      seq += 1;
+      const mCols: string[] = [];
+      const mVals: string[] = [];
+      const mParams: any[] = [];
+      const mAdd = (col: string, val: any) => {
+        if (!msgCols.has(col)) return;
+        mCols.push(col);
+        mVals.push('?');
+        mParams.push(val);
+      };
+      mAdd('id', uuidv4());
+      mAdd('conversation_id', newId);
+      mAdd('role', m.role);
+      mAdd('content', m.content);
+      mAdd('message_type', m.message_type || 'text');
+      mAdd('metadata', m.metadata || '{}');
+      mAdd('token_count', m.token_count ?? null);
+      mAdd('model_used', m.model_used ?? null);
+      mAdd('author_user_id', m.author_user_id ?? null);
+      mAdd('seq', seq);
+      mAdd('created_at', m.created_at || now);
+      await dbRun(
+        `INSERT INTO conversation_messages (${mCols.join(', ')}) VALUES (${mVals.join(', ')})`,
+        mParams
+      );
+    }
+
+    const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [newId]);
+    logger.info(
+      `[Conversations] Branched ${sourceId} -> ${newId} (${(rows || []).length} messages copied)`
+    );
+    return res.status(201).json({
+      conversation,
+      branchedFrom: sourceId,
+      copiedMessages: (rows || []).length,
+    });
   })
 );
 
