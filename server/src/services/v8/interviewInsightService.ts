@@ -11,8 +11,41 @@ import logger from '../../utils/Logger.js';
 
 export { default } from '../InterviewInsightService.js';
 export { create, deleteInsight, getById, list, regenerate } from '../InterviewInsightService.js';
+import { create as createInsightCore } from '../InterviewInsightService.js';
 
 const LOG_PREFIX = '[V8:InterviewInsight]';
+
+/**
+ * Teresa last-mile (backlog #3): create a REAL interview insight from a handoff.
+ *
+ * `teresaCopilotService.handleInterviewHandoff` looks for `generateInsight`/`createInsight`,
+ * but the service only exported `create` — a name mismatch that forced a synthetic ref.
+ * These aliases map the handoff payload onto the canonical `create`, returning `{ id }`.
+ * Note: `create` requires at least one eligible session; with none it rejects and the
+ * handoff degrades gracefully to a deeplink (unchanged behaviour).
+ */
+export async function createInsight(params: {
+  organizationId: string;
+  action?: unknown;
+  session_ids?: unknown;
+  title?: unknown;
+  source?: string;
+  proposalId?: string;
+}): Promise<{ id: string }> {
+  const sessionIds = Array.isArray(params.session_ids)
+    ? (params.session_ids as unknown[]).map((s) => String(s)).filter(Boolean)
+    : [];
+  const insight: any = await createInsightCore({
+    organizationId: params.organizationId,
+    title: String(params.title || 'Teresa interview insight').slice(0, 500),
+    sessionIds,
+    promptType: 'summary',
+    createdBy: 'teresa',
+  } as any);
+  return { id: String(insight?.id || '') };
+}
+
+export const generateInsight = createInsight;
 
 /**
  * Returns the count of completed interview sessions that have no

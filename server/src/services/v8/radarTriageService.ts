@@ -453,6 +453,60 @@ export async function createTriageSignal(params: {
   return signal;
 }
 
+/**
+ * Teresa last-mile (backlog #2): create a REAL radar signal from a Teresa handoff.
+ *
+ * `teresaCopilotService.handleRadarHandoff` looks for `createSignal` on this module;
+ * it did not exist, so the handoff fell back to a synthetic ref (`real_entity:false`).
+ * This normalizes the loosely-typed handoff payload into the frozen triage shape and
+ * delegates to `createTriageSignal` (full ranking + dedup), returning `{ id }`.
+ */
+export async function createSignal(params: {
+  organizationId: string;
+  why_now?: unknown;
+  evidence_pointers?: unknown;
+  user_intent?: unknown;
+  source?: string;
+  proposalId?: string;
+}): Promise<{ id: string }> {
+  const whyNowRaw = (params.why_now || {}) as Record<string, unknown>;
+  const rationaleText =
+    String(
+      whyNowRaw.rationaleText || params.why_now || params.user_intent || 'Teresa-raised signal'
+    ).slice(0, 1000) || 'Teresa-raised signal';
+  const timeWindow = (['next_24h', 'this_week', 'this_month'] as const).includes(
+    whyNowRaw.timeWindow as any
+  )
+    ? (whyNowRaw.timeWindow as TimeWindow)
+    : 'this_week';
+  const primaryDriver = (
+    ['deadline', 'blocker', 'variance', 'escalation', 'opportunity'] as const
+  ).includes(whyNowRaw.primaryDriver as any)
+    ? (whyNowRaw.primaryDriver as PrimaryDriver)
+    : 'opportunity';
+
+  const evidencePointers = Array.isArray(params.evidence_pointers)
+    ? (params.evidence_pointers as any[]).map((p) => ({
+        type: String((p && p.type) || 'reference'),
+        ref: String((p && (p.ref ?? p)) || ''),
+      }))
+    : [];
+
+  const signal = await createTriageSignal({
+    organizationId: params.organizationId,
+    category: 'decision_alignment',
+    bands: { impact: 2, urgency: 2, scope: 1, confidence: 2, freshness: 3, actionability: 1 },
+    whyNow: { rationaleText, timeWindow, primaryDriver },
+    evidence: {
+      evidencePointers,
+      lastObservedAt: new Date().toISOString(),
+      sourceCoverage: 'partial',
+    },
+    handoffPayload: { source: params.source || 'teresa', proposalId: params.proposalId },
+  });
+  return { id: signal.signalId };
+}
+
 export async function getTriageSignals(
   organizationId: string,
   filters?: { category?: RadarCategory; priorityLevel?: PriorityLevel; triageState?: TriageState }

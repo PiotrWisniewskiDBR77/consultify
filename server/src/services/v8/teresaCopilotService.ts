@@ -1699,7 +1699,8 @@ async function performHandoff(params: {
   handoffContext: TeresaHandoffContext;
   targetPayload: Record<string, unknown>;
 }): Promise<Record<string, unknown>> {
-  const { proposalId, organizationId, targetModule, handoffContext, targetPayload } = params;
+  const { proposalId, organizationId, userId, targetModule, handoffContext, targetPayload } =
+    params;
 
   // Each target module has its own write lane.
   // Teresa initiates, module writes — per P08_WRITE_OWNERSHIP.
@@ -1709,7 +1710,7 @@ async function performHandoff(params: {
     case 'initiatives':
       return handleInitiativesHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'calendar':
-      return handleCalendarHandoff(proposalId, organizationId, handoffContext, targetPayload);
+      return handleCalendarHandoff(proposalId, organizationId, handoffContext, targetPayload, userId);
     case 'notebook':
       return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'interview':
@@ -1822,26 +1823,35 @@ async function handleCalendarHandoff(
   proposalId: string,
   organizationId: string,
   context: TeresaHandoffContext,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  userId?: string
 ): Promise<Record<string, unknown>> {
   const fallbackRef = randomUUID();
   let realCalRef: string | null = null;
 
-  const calMod = await tryImport('./calendarInteropService.js');
+  // Teresa last-mile (backlog #4): wire directly to the real meetings write path
+  // (`meetingService.createMeeting`) instead of a non-existent `calendarInteropService.createEvent`.
+  const calMod = await tryImport('../meetingService.js');
   if (calMod) {
     try {
-      const create = calMod.createEvent ?? calMod.default?.createEvent ?? calMod.default?.create;
+      const create = calMod.createMeeting ?? calMod.default?.createMeeting;
       const intent = (payload.calendar_intent || {}) as Record<string, unknown>;
+      const whenRaw = intent.when ? String(intent.when) : '';
+      const parsed = new Date(whenRaw);
+      const startAt = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
       const result = await create?.({
         organizationId,
-        title: intent.what || context.user_intent,
-        when: intent.when,
-        source: 'teresa',
-        proposalId,
+        createdBy: userId || 'teresa',
+        title: String(intent.what || context.user_intent || 'Teresa meeting').slice(0, 300),
+        startAt,
+        endAt: startAt,
+        attendees: [],
+        agenda: [],
+        decisions: [],
       });
       realCalRef = result?.id || result?.eventId || null;
     } catch {
-      logger.warn(`${LOG_PREFIX} Calendar service call failed, using fallback ref`);
+      logger.warn(`${LOG_PREFIX} Calendar/meeting service call failed, using fallback ref`);
     }
   }
 
