@@ -25,6 +25,7 @@ import {
   Folder,
   FolderPlus,
   MoreHorizontal,
+  Pencil,
   Search,
   Trash2,
   Users,
@@ -69,6 +70,8 @@ interface FolderSectionProps {
   onToggleExpanded: (id: string) => void;
   onSelectConversation: (id: string) => void;
   onDeleteProject: (id: string) => void;
+  /** Rename / recolor a folder (F1 — surface the existing PATCH). */
+  onUpdateProject?: (id: string, updates: { name?: string; color?: string }) => void;
   onCreateProject: (name: string) => void;
   createButtonLabel: string;
   emptyLabel: string;
@@ -86,6 +89,18 @@ interface FolderSectionProps {
 /** Max folders visible before "Show more" is displayed */
 const MAX_VISIBLE_FOLDERS = 4;
 
+/** Quick folder color palette (F1). Crimson-first, on brand. */
+const FOLDER_COLORS = [
+  '#85182F',
+  '#A82D49',
+  '#2563EB',
+  '#059669',
+  '#D97706',
+  '#7C3AED',
+  '#0891B2',
+  '#64748B',
+];
+
 const FolderSection: React.FC<FolderSectionProps> = ({
   title,
   icon,
@@ -96,6 +111,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
   onToggleExpanded,
   onSelectConversation,
   onDeleteProject,
+  onUpdateProject,
   onCreateProject,
   createButtonLabel,
   emptyLabel,
@@ -109,6 +125,8 @@ const FolderSection: React.FC<FolderSectionProps> = ({
   const [name, setName] = useState('');
   const [menuId, setMenuId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
   const handleFolderDragOver = useCallback((e: React.DragEvent, folderId: string) => {
@@ -248,18 +266,42 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                         {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                       </button>
                       <Folder size={13} className="shrink-0" style={{ color: project.color }} />
-                      <span
-                        className="flex-1 text-[13px] text-slate-700 dark:text-slate-300 truncate hover:text-primary-600 dark:hover:text-primary-400"
-                        onClick={(e) => {
-                          if (onFolderClick) {
-                            e.stopPropagation();
-                            onFolderClick(project.id);
-                          }
-                        }}
-                        title={t('aiChat.openFolder', 'Open folder')}
-                      >
-                        {project.name}
-                      </span>
+                      {editingId === project.id ? (
+                        <input
+                          autoFocus
+                          value={renameDraft}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setRenameDraft(e.target.value)}
+                          onBlur={() => {
+                            const v = renameDraft.trim();
+                            if (v && v !== project.name) onUpdateProject?.(project.id, { name: v });
+                            setEditingId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const v = renameDraft.trim();
+                              if (v && v !== project.name)
+                                onUpdateProject?.(project.id, { name: v });
+                              setEditingId(null);
+                            }
+                            if (e.key === 'Escape') setEditingId(null);
+                          }}
+                          className="flex-1 min-w-0 bg-white dark:bg-navy-950 border border-primary-400 rounded px-1.5 py-0.5 text-[13px] text-slate-800 dark:text-slate-100 outline-none"
+                        />
+                      ) : (
+                        <span
+                          className="flex-1 text-[13px] text-slate-700 dark:text-slate-300 truncate hover:text-primary-600 dark:hover:text-primary-400"
+                          onClick={(e) => {
+                            if (onFolderClick) {
+                              e.stopPropagation();
+                              onFolderClick(project.id);
+                            }
+                          }}
+                          title={t('aiChat.openFolder', 'Open folder')}
+                        >
+                          {project.name}
+                        </span>
+                      )}
                       <span className="text-[10px] tabular-nums text-slate-600 dark:text-slate-500">
                         {project.conversationCount}
                       </span>
@@ -276,7 +318,49 @@ const FolderSection: React.FC<FolderSectionProps> = ({
 
                         {/* Project Menu */}
                         {menuId === project.id && (
-                          <div className="absolute right-0 top-full mt-1 z-50 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1">
+                            {onUpdateProject && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingId(project.id);
+                                  setRenameDraft(project.name);
+                                  setMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+                              >
+                                <Pencil size={13} />
+                                {t('aiChat.actions.rename', 'Rename')}
+                              </button>
+                            )}
+                            {onUpdateProject && (
+                              <div className="px-3 py-1.5">
+                                <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-1">
+                                  {t('aiChat.folderColor', 'Color')}
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {FOLDER_COLORS.map((c) => (
+                                    <button
+                                      key={c}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onUpdateProject(project.id, { color: c });
+                                        setMenuId(null);
+                                      }}
+                                      className={`w-4 h-4 rounded-full border transition-transform hover:scale-110 ${
+                                        project.color === c
+                                          ? 'border-slate-900 dark:border-white'
+                                          : 'border-transparent'
+                                      }`}
+                                      style={{ backgroundColor: c }}
+                                      title={c}
+                                      aria-label={c}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -406,6 +490,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     fetchProjects,
     createProject,
     deleteProject,
+    updateProject,
     toggleProjectExpanded,
     getConversationsByProjectId,
     getPersonalProjects,
@@ -586,6 +671,16 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       }
     },
     [deleteProject, projects, t]
+  );
+
+  // F1: rename / recolor a folder (surfaces the existing PATCH /chat-projects/:id).
+  const handleUpdateProject = useCallback(
+    (id: string, updates: { name?: string; color?: string }) => {
+      void updateProject(id, updates).catch((err: any) => {
+        console.error('[ChatHistorySidebar] Failed to update folder:', err);
+      });
+    },
+    [updateProject]
   );
 
   // DnD: move conversation to a folder
@@ -801,6 +896,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     onToggleExpanded={toggleProjectExpanded}
                     onSelectConversation={handleSelectConversation}
                     onDeleteProject={handleDeleteProject}
+                    onUpdateProject={handleUpdateProject}
                     onCreateProject={handleCreatePersonalProject}
                     createButtonLabel={t('aiChat.newPersonalFolder', 'New personal folder')}
                     emptyLabel={t('aiChat.createFolder', 'Create folder')}
@@ -822,6 +918,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     onToggleExpanded={toggleProjectExpanded}
                     onSelectConversation={handleSelectConversation}
                     onDeleteProject={handleDeleteProject}
+                    onUpdateProject={handleUpdateProject}
                     onCreateProject={handleCreateTeamProject}
                     createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
                     emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
