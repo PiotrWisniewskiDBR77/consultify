@@ -258,7 +258,6 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     const currentValue = aiConfig[modeId as keyof typeof aiConfig];
     const newValue = !currentValue;
     setAIConfig({ [modeId]: newValue });
-    if (modeId === 'showReasoning') setAIConfig({ maxMode: newValue });
 
     const label = t(`aiChat.menu.modes.${modeId}.label`, modeId);
     const icon = modeId === 'textToSpeech' ? '🔊' : '✓';

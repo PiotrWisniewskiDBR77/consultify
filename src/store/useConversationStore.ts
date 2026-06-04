@@ -752,10 +752,26 @@ export const useConversationStore = create<ConversationState>()(
         // UI kept showing whatever was previously active, so users experienced
         // "click does nothing" on conversation items.
         const current = get().activeConversationId;
+        // eslint-disable-next-line no-console
+        console.info('[CHATDBG] fetchConversation ENTER', {
+          requestedId: id,
+          currentActive: current,
+          willWipeUpfront: current !== id,
+          activeMessagesNow: get().activeMessages.length,
+          pendingLocalNow: get().activeMessages.filter((m) =>
+            String(m.id || '').startsWith('local-')
+          ).length,
+        });
         if (current !== id) {
+          // Preserve not-yet-persisted optimistic messages belonging to THIS id even on the
+          // up-front sync wipe — otherwise a fetch fired mid-send (route-sync / polling) drops
+          // the user's just-sent bubble before the full-fetch merge path can run.
+          const carriedLocal = get().activeMessages.filter(
+            (m) => String(m.id || '').startsWith('local-') && m.conversationId === id
+          );
           set({
             activeConversationId: id,
-            activeMessages: [],
+            activeMessages: carriedLocal,
             _activeConversationState: null,
             _activeConversationStateMessage: null,
           });
@@ -768,8 +784,29 @@ export const useConversationStore = create<ConversationState>()(
           // stuck in "Loading conversation…" after it eagerly set isLoading=true.
           const cachedMessages = _conversationMessagesCache[id];
           if (cachedMessages && get().activeConversationId === id) {
+            // Merge any pending optimistic (local-*) messages on top of the cached snapshot,
+            // so the dedupe shortcut cannot drop a just-sent user bubble that the cache (taken
+            // before the send) doesn't yet contain.
+            const cachedKeys = new Set(
+              cachedMessages.map(
+                (m: ConversationMessage) => `${m.role}|${String(m.content || '').trim()}`
+              )
+            );
+            const pendingLocal = get().activeMessages.filter(
+              (m) =>
+                String(m.id || '').startsWith('local-') &&
+                m.conversationId === id &&
+                !cachedKeys.has(`${m.role}|${String(m.content || '').trim()}`)
+            );
+            // eslint-disable-next-line no-console
+            console.info('[CHATDBG] fetchConversation DEDUPE', {
+              id,
+              cachedCount: cachedMessages.length,
+              pendingLocalCarried: pendingLocal.length,
+            });
             set({
-              activeMessages: cachedMessages,
+              activeMessages:
+                pendingLocal.length > 0 ? [...cachedMessages, ...pendingLocal] : cachedMessages,
               isLoading: false,
             });
           } else {
@@ -840,6 +877,14 @@ export const useConversationStore = create<ConversationState>()(
             );
             const nextMessages =
               pendingLocal.length > 0 ? [...messages, ...pendingLocal] : messages;
+            // eslint-disable-next-line no-console
+            console.info('[CHATDBG] fetchConversation FULL-FETCH', {
+              id,
+              serverCount: messages.length,
+              existingActive: existingActiveMessages.length,
+              pendingLocalCarried: pendingLocal.length,
+              nextCount: nextMessages.length,
+            });
             _conversationMessagesCache[id] = nextMessages;
             set((state) => {
               const fromApiRaw = result?.language;
@@ -1048,6 +1093,14 @@ export const useConversationStore = create<ConversationState>()(
         set((state) => {
           // Only append to activeMessages if this conversation is currently active
           const shouldAppend = state.activeConversationId === conversationId;
+          // eslint-disable-next-line no-console
+          console.info('[CHATDBG] addMessage', {
+            role: message.role,
+            msgConversationId: conversationId,
+            activeConversationId: state.activeConversationId,
+            shouldAppend,
+            activeMessagesBefore: state.activeMessages.length,
+          });
           return {
             activeMessages: shouldAppend
               ? [...state.activeMessages, optimisticMessage]

@@ -1005,6 +1005,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // AI reply ("Chat nie pamięta rozmów").
       const liveActiveConversationId =
         useConversationStore.getState().activeConversationId || activeConversationId;
+      // eslint-disable-next-line no-console
+      console.info('[CHATDBG] onStreamDone AI-append', {
+        liveActiveConversationId,
+        storeActive: useConversationStore.getState().activeConversationId,
+        closureActive: activeConversationId,
+        activeMessagesNow: useConversationStore.getState().activeMessages.length,
+      });
 
       let savedAiMessageId: string | null = null;
       // Save AI response to conversation store
@@ -2230,6 +2237,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (useConversationStore.getState().activeConversationId !== conversationId) {
         setActiveConversation(conversationId);
       }
+      // eslint-disable-next-line no-console
+      console.info('[CHATDBG] send RESOLVED', {
+        resolvedConversationId: conversationId,
+        activeAfterAlign: useConversationStore.getState().activeConversationId,
+        activeMessagesNow: useConversationStore.getState().activeMessages.length,
+        hasCustomMessages: !!customMessages,
+      });
       const sourceMessages = customMessages || useConversationStore.getState().activeMessages;
 
       // Conversation-scoped attachments: upload supported files to Knowledge Base and
@@ -3328,6 +3342,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   );
 
   const handleNewChat = useCallback(async () => {
+    // eslint-disable-next-line no-console
+    console.info('[CHATDBG] handleNewChat START', {
+      activeBefore: useConversationStore.getState().activeConversationId,
+      activeMessagesBefore: useConversationStore.getState().activeMessages.length,
+    });
     clearActiveChat();
     // BUG 1a fix: also clear the legacy global chat store (useAppStore.activeChatMessages).
     // clearActiveChat() only resets the conversation store; without this, embedded views
@@ -3340,6 +3359,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     try {
       const conv = await createConversation();
       setActiveConversation(conv.id);
+      // eslint-disable-next-line no-console
+      console.info('[CHATDBG] handleNewChat CREATED', {
+        newId: conv.id,
+        activeAfter: useConversationStore.getState().activeConversationId,
+        activeMessagesAfter: useConversationStore.getState().activeMessages.length,
+      });
     } catch (err) {
       console.error('[UnifiedChatPanel] Failed to create new chat:', err);
       toast.error(getTeresaStartFailureMessage(i18n.language));
