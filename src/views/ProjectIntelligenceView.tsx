@@ -41,6 +41,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { useDemoSession } from '@/hooks/useDemoSession';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { INSIGHT_DETECTION_PROMPT, INTERVIEW_SYSTEM_PROMPT } from '@/services/ai/intelligence';
@@ -504,9 +505,7 @@ export const ProjectIntelligenceView: React.FC = () => {
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-            </div>
+            <LoadingState variant="spinner" className="h-64" />
           ) : activeTab === 'interview' ? (
             <InterviewTabContent projectId={currentProjectId} onInsightCreated={fetchData} />
           ) : activeTab === 'knowledge' ? (

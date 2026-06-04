@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { PartnerCodeInput } from '../../components/Admin/PartnerCodeInput';
+import { LoadingState } from '../../components/ui/primitives';
 import { useAppStore } from '../../store/useAppStore';
 
 interface TaxSettings {
@@ -226,11 +227,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 text-slate-500 dark:text-slate-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

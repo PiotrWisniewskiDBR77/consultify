@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card } from '../../../components/Admin/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -127,11 +128,7 @@ const CustomerComplianceView: React.FC = () => {
   }, [fetchData]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   const compliantCount = items.filter((i) => i.gdpr_compliant && i.dpa_signed).length;

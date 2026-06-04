@@ -40,6 +40,8 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
 
+import { LoadingState } from '../../../components/ui/primitives';
+
 interface SettlementsSummary {
   totalPendingCommissions: number;
   totalPendingPayouts: number;
@@ -353,11 +355,7 @@ export const PartnerSettlementsView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-12" />;
   }
 
   return (

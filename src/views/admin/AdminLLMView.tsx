@@ -33,6 +33,7 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import type { LLMProviderConfig } from '../../types';
 
@@ -399,9 +400,7 @@ export const AdminLLMView: React.FC = () => {
           {providerLoadError ? (
             <DegradedState title="LLM providers unavailable" description={providerLoadError} />
           ) : loading ? (
-            <div className="flex items-center justify-center py-12">
-              <RefreshCw className="h-6 w-6 animate-spin text-slate-600" />
-            </div>
+            <LoadingState variant="spinner" className="py-12" />
           ) : (
             <>
               <ReadOnlyState

@@ -28,6 +28,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '../../components/ui/primitives';
 import Api from '../../services/api';
 
 interface ContentPerformanceData {
@@ -197,14 +198,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-primary-500 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">{t.loading[lang]}</p>
-        </div>
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-96" label={t.loading[lang]} />;
   }
 
   if (error) {

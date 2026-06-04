@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
 
+import { LoadingState } from '../../../../components/ui/primitives';
 import { Api } from '../../../../services/api';
 
 interface Document {
@@ -265,11 +266,7 @@ export const DocumentsRAGTab: React.FC = () => {
   });
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   if (loadError) {

@@ -23,6 +23,7 @@ import { DegradedState } from '@/components/Admin/AdminState';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { Card } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
 interface Report {
@@ -391,11 +392,7 @@ const SavedReportsView: React.FC = () => {
   const controlsDisabled = !!loadError;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

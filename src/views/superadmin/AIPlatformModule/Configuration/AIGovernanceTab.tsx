@@ -4,6 +4,8 @@ import { toast } from 'react-hot-toast';
 
 import { Api } from '@/services/api';
 
+import { LoadingState } from '../../../../components/ui/primitives';
+
 type ContextCategory =
   | 'ORG_PROFILE'
   | 'ORG_TERMINOLOGY'
@@ -210,11 +212,7 @@ export const AIGovernanceTab: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

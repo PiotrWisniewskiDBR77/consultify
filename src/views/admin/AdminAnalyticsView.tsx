@@ -41,6 +41,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
 // Removed mock data generators - using real API data only
@@ -137,11 +138,7 @@ export const AdminAnalyticsView: React.FC = () => {
   const failureData = stats?.topFailureModes?.length > 0 ? stats.topFailureModes : [];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

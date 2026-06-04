@@ -27,6 +27,7 @@ import { toast } from 'react-hot-toast';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { SubscriptionAnalytics } from '../../components/billing';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { EMPTY_VALUE, safeDate, safeMoney, safeNumber, safePercent } from '../../utils/safeFormat';
 import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
@@ -242,11 +243,7 @@ const OverviewTab: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   const totalPlanSubscriptions =

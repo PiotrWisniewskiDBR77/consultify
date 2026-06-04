@@ -36,6 +36,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import { InitiativeCompletenessChecker } from '../components/PMO/InitiativeCompletenessChecker';
@@ -333,29 +335,19 @@ export const InitiativeManagementView: React.FC = () => {
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-          </div>
+          <LoadingState variant="spinner" className="h-64" />
         ) : filteredInitiatives.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 flex items-center justify-center mb-4">
-              {activeTab === 'review' ? (
-                <Send className="w-8 h-8 text-slate-600 dark:text-slate-500" />
-              ) : (
-                <CheckCircle2 className="w-8 h-8 text-slate-600 dark:text-slate-500" />
-              )}
-            </div>
-            <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {activeTab === 'review'
-                ? 'No initiatives awaiting review'
-                : 'No approved initiatives'}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {activeTab === 'review'
+          <EmptyState
+            icon={activeTab === 'review' ? <Send /> : <CheckCircle2 />}
+            title={
+              activeTab === 'review' ? 'No initiatives awaiting review' : 'No approved initiatives'
+            }
+            description={
+              activeTab === 'review'
                 ? 'Initiatives submitted for review will appear here'
-                : 'Approved initiatives ready for roadmap will appear here'}
-            </p>
-          </div>
+                : 'Approved initiatives ready for roadmap will appear here'
+            }
+          />
         ) : (
           <div className="grid gap-4">
             {filteredInitiatives.map((initiative) => (

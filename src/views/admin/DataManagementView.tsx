@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { LoadingState } from '../../components/ui/primitives';
 import { useAppStore } from '../../store/useAppStore';
 
 interface DataCategory {
@@ -242,11 +243,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
   const totalRecords = dataCategories.reduce((sum, cat) => sum + cat.recordCount, 0);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

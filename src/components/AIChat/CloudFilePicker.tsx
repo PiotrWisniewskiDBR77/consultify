@@ -7,23 +7,15 @@
  * @version 1.0.0
  */
 
-import {
-  ChevronRight,
-  File,
-  FileText,
-  Folder,
-  Image,
-  Loader2,
-  Search,
-  Table,
-  X,
-} from 'lucide-react';
+import { ChevronRight, File, FileText, Folder, Image, Search, Table, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type { CloudFile, CloudProviderId } from '../../hooks/useCloudIntegrations';
 import { Api } from '../../services/api';
+import { EmptyState } from '../ui/composed/EmptyState';
+import { LoadingState } from '../ui/primitives';
 import {
   isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
@@ -243,14 +235,14 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
         {/* File List */}
         <div className="flex-1 overflow-y-auto min-h-[300px]">
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 size={32} className="animate-spin text-primary-500" />
-            </div>
+            <LoadingState variant="spinner" className="h-full justify-center" />
           ) : filteredFiles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
-              <Folder size={48} className="mb-2 opacity-50" />
-              <p>{t('aiChat.cloudPicker.noFiles', 'Brak plików')}</p>
-            </div>
+            <EmptyState
+              className="h-full justify-center"
+              icon={<Folder />}
+              title={t('aiChat.cloudPicker.noFiles', 'Brak plików')}
+              description=""
+            />
           ) : (
             <div className="divide-y divide-slate-200 dark:divide-navy-700">
               {filteredFiles.map((file) => (

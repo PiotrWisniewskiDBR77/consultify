@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { InfoButton } from '../../components/shared/InfoButton';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
 type FeedbackStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
@@ -1787,9 +1788,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin text-blue-500">Loading...</div>
-        </div>
+        <LoadingState variant="spinner" className="py-12" />
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs text-slate-600 dark:text-slate-400">

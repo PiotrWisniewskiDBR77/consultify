@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
@@ -1189,9 +1190,7 @@ const SCIMProvisioningView: React.FC = () => {
         </div>
       )}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-primary-500" size={32} />
-        </div>
+        <LoadingState variant="spinner" className="py-12" />
       ) : loadError ? (
         <div className="rounded-xl border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 p-6 text-rose-700 dark:text-rose-300">
           <div className="flex items-center gap-2 font-medium">

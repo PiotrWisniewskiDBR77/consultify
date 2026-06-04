@@ -227,26 +227,48 @@ export const REPORT_TYPE_META: Record<
   custom: { label: 'Custom', labelPl: 'Własny', color: 'text-slate-600', dotColor: 'bg-slate-400' },
 };
 
+export type StatusChipTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+
 export const REPORT_STATUS_META: Record<
   ReportStatus,
-  { label: string; labelPl: string; dotColor: string }
+  { label: string; labelPl: string; dotColor: string; tone: StatusChipTone }
 > = {
-  draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400' },
-  ready: { label: 'Ready', labelPl: 'Gotowy', dotColor: 'bg-emerald-400' },
-  exported: { label: 'Exported', labelPl: 'Wyeksportowany', dotColor: 'bg-blue-400' },
-  archived: { label: 'Archived', labelPl: 'Zarchiwizowany', dotColor: 'bg-slate-500' },
+  draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400', tone: 'neutral' },
+  ready: { label: 'Ready', labelPl: 'Gotowy', dotColor: 'bg-emerald-400', tone: 'success' },
+  exported: {
+    label: 'Exported',
+    labelPl: 'Wyeksportowany',
+    dotColor: 'bg-blue-400',
+    tone: 'info',
+  },
+  archived: {
+    label: 'Archived',
+    labelPl: 'Zarchiwizowany',
+    dotColor: 'bg-slate-500',
+    tone: 'neutral',
+  },
 };
 
 export const PRESENTATION_STATUS_META: Record<
   PresentationStatus,
-  { label: string; labelPl: string; dotColor: string }
+  { label: string; labelPl: string; dotColor: string; tone: StatusChipTone }
 > = {
-  draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400' },
-  generated: { label: 'Generated', labelPl: 'Wygenerowana', dotColor: 'bg-blue-400' },
-  editing: { label: 'Editing', labelPl: 'Edycja', dotColor: 'bg-amber-400' },
-  ready: { label: 'Ready', labelPl: 'Gotowa', dotColor: 'bg-emerald-400' },
-  shared: { label: 'Shared', labelPl: 'Udostępniona', dotColor: 'bg-blue-400' },
-  archived: { label: 'Archived', labelPl: 'Zarchiwizowana', dotColor: 'bg-slate-500' },
+  draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400', tone: 'neutral' },
+  generated: {
+    label: 'Generated',
+    labelPl: 'Wygenerowana',
+    dotColor: 'bg-blue-400',
+    tone: 'info',
+  },
+  editing: { label: 'Editing', labelPl: 'Edycja', dotColor: 'bg-amber-400', tone: 'warning' },
+  ready: { label: 'Ready', labelPl: 'Gotowa', dotColor: 'bg-emerald-400', tone: 'success' },
+  shared: { label: 'Shared', labelPl: 'Udostępniona', dotColor: 'bg-blue-400', tone: 'info' },
+  archived: {
+    label: 'Archived',
+    labelPl: 'Zarchiwizowana',
+    dotColor: 'bg-slate-500',
+    tone: 'neutral',
+  },
 };
 
 export const SOURCE_TYPE_META: Record<
@@ -270,10 +292,20 @@ export const TEMPLATE_TYPE_META: Record<
 
 export const TEMPLATE_STATUS_META: Record<
   TemplateStatus,
-  { label: string; labelPl: string; dotColor: string }
+  { label: string; labelPl: string; dotColor: string; tone: StatusChipTone }
 > = {
-  active: { label: 'Active', labelPl: 'Aktywny', dotColor: 'bg-emerald-400' },
-  draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400' },
-  deprecated: { label: 'Deprecated', labelPl: 'Wycofany', dotColor: 'bg-amber-500' },
-  archived: { label: 'Archived', labelPl: 'Zarchiwizowany', dotColor: 'bg-slate-500' },
+  active: { label: 'Active', labelPl: 'Aktywny', dotColor: 'bg-emerald-400', tone: 'success' },
+  draft: { label: 'Draft', labelPl: 'Szkic', dotColor: 'bg-slate-400', tone: 'neutral' },
+  deprecated: {
+    label: 'Deprecated',
+    labelPl: 'Wycofany',
+    dotColor: 'bg-amber-500',
+    tone: 'warning',
+  },
+  archived: {
+    label: 'Archived',
+    labelPl: 'Zarchiwizowany',
+    dotColor: 'bg-slate-500',
+    tone: 'neutral',
+  },
 };

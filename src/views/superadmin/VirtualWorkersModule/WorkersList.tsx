@@ -2,6 +2,7 @@ import { Globe, Mic, Monitor, MoreVertical, Plus, RefreshCw } from 'lucide-react
 import React, { useEffect, useState } from 'react';
 
 import TeresaMark from '../../../components/shared/TeresaMark';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 interface VirtualWorker {
   id: string;
@@ -63,11 +64,7 @@ export const WorkersList: React.FC<WorkersListProps> = ({ onSelectWorker }) => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

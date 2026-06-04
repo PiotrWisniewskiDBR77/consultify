@@ -28,7 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/primitives';
+import { Button, ErrorState, LoadingState } from '@/components/ui/primitives';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
@@ -644,30 +644,16 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const itemIds = filteredData.map((i) => i.id);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={24} className="animate-spin text-slate-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   if (error && rows.length === 0 && !searchQuery && activeFilters.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
-          <div className="text-lg font-semibold text-slate-900 dark:text-white">
-            {t('rap.errors.outputsRegistryTitle', 'Outputs library source needs attention')}
-          </div>
-          <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
-          <button
-            type="button"
-            onClick={onRefresh}
-            className="mt-4 inline-flex h-9 items-center gap-2 rounded-xl border border-amber-300/70 bg-white/70 px-4 text-sm font-medium text-amber-900 transition-colors hover:bg-white dark:border-amber-400/30 dark:bg-white/[0.04] dark:text-amber-100 dark:hover:bg-white/[0.08]"
-          >
-            {t('rap.error.retry', 'Retry')}
-          </button>
-        </div>
-      </div>
+      <ErrorState
+        title={t('rap.errors.outputsRegistryTitle', 'Outputs library source needs attention')}
+        message={error}
+        retry={onRefresh}
+      />
     );
   }
 

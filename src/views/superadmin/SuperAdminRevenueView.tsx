@@ -11,6 +11,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { EMPTY_VALUE, safeMoney, safeNumber, safePercent } from '../../utils/safeFormat';
 
@@ -136,11 +137,7 @@ export const SuperAdminRevenueView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   const totalPlanSubscriptions =

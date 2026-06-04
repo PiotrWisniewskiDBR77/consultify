@@ -24,6 +24,7 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import TeresaMark from '../../components/shared/TeresaMark';
+import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 
@@ -1263,9 +1264,7 @@ const AIBudgetsView: React.FC = () => {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-primary-500" size={32} />
-        </div>
+        <LoadingState variant="spinner" className="py-12" />
       ) : loadError ? (
         <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">
           <DegradedState title="AI budget controls unavailable" description={loadError} />

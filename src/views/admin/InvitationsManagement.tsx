@@ -12,6 +12,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import InviteUserModal from '../../components/InviteUserModal';
+import { LoadingState } from '../../components/ui/primitives';
 import { useAppStore } from '../../store/useAppStore';
 import { Invitation, InvitationEvent, InvitationStatus, InvitationType } from '../../types';
 
@@ -243,10 +244,7 @@ const InvitationsManagement: React.FC<InvitationsManagementProps> = ({ organizat
 
       {/* Invitations Table */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-6 h-6 animate-spin text-indigo-600" />
-          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading invitations...</span>
-        </div>
+        <LoadingState variant="spinner" className="py-12" label="Loading invitations..." />
       ) : invitations.length === 0 ? (
         <div className="text-center py-12">
           <Mail className="w-12 h-12 text-gray-600 mx-auto mb-4" />

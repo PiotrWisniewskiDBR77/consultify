@@ -4,19 +4,12 @@
  * Connected to /api/presentations/decks backend
  */
 
-import {
-  Archive,
-  Download,
-  Edit,
-  ExternalLink,
-  Loader2,
-  MessageCircle,
-  Share2,
-} from 'lucide-react';
+import { Archive, Download, Edit, ExternalLink, MessageCircle, Share2 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
 import {
@@ -148,14 +141,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         ],
         render: (row: PresentationItem) => {
           const meta = PRESENTATION_STATUS_META[row.status] || PRESENTATION_STATUS_META.draft;
-          return (
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-500/10">
-              <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                {isPolish ? meta.labelPl : meta.label}
-              </span>
-            </div>
-          );
+          return <StatusChip label={isPolish ? meta.labelPl : meta.label} tone={meta.tone} />;
         },
       },
       {
@@ -315,11 +301,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       previewItem.governance.publishState !== 'private_draft');
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={24} className="animate-spin text-slate-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   if (error && presentations.length === 0 && !searchQuery && activeFilters.length === 0) {

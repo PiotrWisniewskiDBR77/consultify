@@ -25,6 +25,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Card } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
 interface Widget {
@@ -365,11 +366,7 @@ const DashboardBuilderView: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

@@ -28,6 +28,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '../../components/ui/BaseCard';
+import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 
 interface Permission {
@@ -673,9 +674,7 @@ const CustomRolesBuilder: React.FC = () => {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-primary-500" size={32} />
-        </div>
+        <LoadingState variant="spinner" className="py-12" />
       ) : loadError ? (
         <Card className="p-6 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10">
           <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300 font-medium">

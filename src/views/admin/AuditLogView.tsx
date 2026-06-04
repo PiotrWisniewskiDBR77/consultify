@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { OrganizationContextWorkerOperationsPanel } from './OrganizationContextWorkerOperationsPanel';
@@ -441,11 +442,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
   });
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

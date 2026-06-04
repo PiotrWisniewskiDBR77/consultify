@@ -17,6 +17,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
 interface ObservabilityMetrics {
@@ -127,11 +128,7 @@ const AIObservabilityDashboard: React.FC = () => {
   }, [fetchData]);
 
   if (loading && !metrics) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin text-blue-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   if (!metrics) {

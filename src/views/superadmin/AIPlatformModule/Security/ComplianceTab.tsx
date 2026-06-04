@@ -21,6 +21,8 @@ import { DegradedState } from '@/components/Admin/AdminState';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
+import { LoadingState } from '../../../../components/ui/primitives';
+
 interface ComplianceCheck {
   id: string;
   name: string;
@@ -255,11 +257,7 @@ export const ComplianceTab: React.FC = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

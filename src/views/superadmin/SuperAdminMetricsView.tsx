@@ -14,6 +14,7 @@ import { toast } from 'react-hot-toast';
 import { Button } from '../../components/Admin/shared/Button';
 import { Card, Section } from '../../components/Admin/shared/Card';
 import { SectionHeader } from '../../components/Admin/shared/PageHeader';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
 export const SuperAdminMetricsView: React.FC = () => {
@@ -54,10 +55,7 @@ export const SuperAdminMetricsView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-        <Loader2 className="animate-spin mr-2" size={20} />
-        <span className="text-sm">Loading conversion intelligence...</span>
-      </div>
+      <LoadingState variant="spinner" className="h-64" label="Loading conversion intelligence..." />
     );
   }
 

@@ -15,6 +15,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
 interface AIStats {
@@ -100,11 +101,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

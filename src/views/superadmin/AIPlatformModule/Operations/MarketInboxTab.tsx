@@ -14,6 +14,8 @@ import { DegradedState } from '@/components/Admin/AdminState';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
+import { LoadingState } from '../../../../components/ui/primitives';
+
 type InboxRow = {
   id: string;
   source: string;
@@ -194,11 +196,7 @@ export const MarketInboxTab: React.FC = () => {
   }, [load]);
 
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

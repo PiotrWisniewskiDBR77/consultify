@@ -16,6 +16,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
 import { PlaybookEditorView } from './PlaybookEditorView';
@@ -315,9 +316,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
 
       {/* Template List */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400"></div>
-        </div>
+        <LoadingState variant="spinner" className="py-12" />
       ) : filteredTemplates.length === 0 ? (
         <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 p-12 text-center">
           <FileText className="mx-auto h-12 w-12 text-slate-600 dark:text-slate-400 mb-4" />

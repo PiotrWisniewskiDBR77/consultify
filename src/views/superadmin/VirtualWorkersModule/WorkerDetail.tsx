@@ -1,6 +1,7 @@
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { ConversationBrowser } from './ConversationBrowser';
 import { EvaluationsPanel } from './EvaluationsPanel';
@@ -73,11 +74,7 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({ workerId, activeTab,
   }, [workerId]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   if (!worker) {

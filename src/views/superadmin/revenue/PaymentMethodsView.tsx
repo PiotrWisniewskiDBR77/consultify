@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 
 interface PaymentMethod {
@@ -162,11 +163,7 @@ export const PaymentMethodsView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

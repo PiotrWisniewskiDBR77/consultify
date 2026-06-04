@@ -36,6 +36,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import { LoadingState } from '../../components/ui/primitives';
 import { useAppStore } from '../../store/useAppStore';
 
 interface CostCenter {
@@ -324,11 +325,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 text-slate-500 dark:text-slate-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

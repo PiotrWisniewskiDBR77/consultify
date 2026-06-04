@@ -29,6 +29,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { BillingAddress, Invoice, OrganizationOwnership } from '../../types';
@@ -713,9 +714,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
               <div className="p-6 overflow-y-auto">
                 {loadingPlans ? (
-                  <div className="flex items-center justify-center py-12">
-                    <RefreshCw className="w-6 h-6 text-slate-500 dark:text-slate-400 animate-spin" />
-                  </div>
+                  <LoadingState variant="spinner" className="py-12" />
                 ) : plansLoadError ? (
                   <DegradedState title="Plans unavailable" description={plansLoadError} />
                 ) : (

@@ -45,6 +45,8 @@ import {
   groupConversations,
   useConversationStore,
 } from '../../store/useConversationStore';
+import { EmptyState } from '../ui/composed/EmptyState';
+import { LoadingState } from '../ui/primitives';
 import { CONVERSATION_DND_TYPE, ConversationItem } from './ConversationItem';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
@@ -719,20 +721,16 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           {/* Main scrollable area: Folders + Conversations — bounded scroll container (C3.1) */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-              </div>
+              <LoadingState variant="spinner" className="py-8" />
             ) : activeFolderId && folderGroups ? (
               /* C3.3: Folder-scoped view — show only this folder's conversations */
               folderConversations.length === 0 ? (
-                <div className="text-center py-12 px-4">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                    <Folder size={20} className="text-slate-600 dark:text-slate-500" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                    {t('aiChat.noFolderConversations', 'No conversations in this folder')}
-                  </p>
-                </div>
+                <EmptyState
+                  compact
+                  icon={<Folder />}
+                  title={t('aiChat.noFolderConversations', 'No conversations in this folder')}
+                  description=""
+                />
               ) : (
                 <div className="px-3">
                   <ConversationList
@@ -752,14 +750,12 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   </span>
                 </div>
               ) : visibleGroups.length === 0 && !searchPartial ? (
-                <div className="text-center py-12 px-4">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                    <Search size={20} className="text-slate-600 dark:text-slate-500" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                    {t('aiChat.noResults', 'No conversations found')}
-                  </p>
-                </div>
+                <EmptyState
+                  compact
+                  icon={<Search />}
+                  title={t('aiChat.noResults', 'No conversations found')}
+                  description=""
+                />
               ) : (
                 <div className="px-3">
                   {/* Degraded posture: partial results indicator (§2.3.5 E2/E8) */}
@@ -857,17 +853,12 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   {unassignedConversations.length === 0 &&
                   personalProjects.length === 0 &&
                   teamProjects.length === 0 ? (
-                    <div className="text-center py-12 px-4">
-                      <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                        <Search size={20} className="text-slate-600 dark:text-slate-500" />
-                      </div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                        {t('aiChat.noConversations', 'No conversations yet')}
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
-                        {t('aiChat.startNewChat', 'Start a new chat to begin')}
-                      </p>
-                    </div>
+                    <EmptyState
+                      compact
+                      icon={<Search />}
+                      title={t('aiChat.noConversations', 'No conversations yet')}
+                      description={t('aiChat.startNewChat', 'Start a new chat to begin')}
+                    />
                   ) : (
                     <ConversationList
                       groups={unassignedGroups}

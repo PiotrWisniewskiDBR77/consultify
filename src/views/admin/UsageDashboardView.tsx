@@ -36,6 +36,7 @@ import {
 } from 'recharts';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { LoadingState } from '../../components/ui/primitives';
 import { useAppStore } from '../../store/useAppStore';
 import { getOrganizationContextQuotaCopy } from '../../utils/organizationContextQuotaCopy';
 
@@ -205,11 +206,7 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
   const organizationContextQuota = getOrganizationContextQuotaCopy(usage?.storage.percentage || 0);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 text-slate-500 dark:text-slate-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

@@ -2,6 +2,8 @@ import { CheckCircle, ChevronRight, Clock, Pause, Play, XCircle } from 'lucide-r
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { EmptyState } from '../../components/ui/composed/EmptyState';
+import { LoadingState } from '../../components/ui/primitives';
 import { PlaybookTemplateVersion, TemplateStatus } from '../../types';
 
 interface PlaybookRun {
@@ -108,16 +110,14 @@ export const PlaybookRunsView: React.FC = () => {
 
       {/* Published Templates */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        </div>
+        <LoadingState variant="spinner" className="py-12" />
       ) : templates.length === 0 ? (
-        <div className="bg-white dark:bg-navy-900 rounded-lg border border-gray-200 p-12 text-center">
-          <Play className="mx-auto h-12 w-12 text-gray-600 dark:text-gray-500 dark:text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Published Templates</h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            Contact an administrator to publish playbook templates.
-          </p>
+        <div className="bg-white dark:bg-navy-900 rounded-lg border border-gray-200">
+          <EmptyState
+            icon={<Play />}
+            title="No Published Templates"
+            description="Contact an administrator to publish playbook templates."
+          />
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
