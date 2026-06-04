@@ -4740,7 +4740,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           {/* Typing indicator */}
           {isBotTyping && !streamedContent && (
-            <div className="flex gap-2 justify-start">
+            <div className="mx-auto w-full max-w-4xl flex gap-2 justify-start">
               <div
                 className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
               >

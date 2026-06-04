@@ -472,7 +472,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   return (
     <div
       key={msg.id}
-      className={`flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+      className={`mx-auto w-full max-w-4xl flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
       onMouseEnter={() => setHoveredMessageId(msg.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
     >
@@ -526,7 +526,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           <div
             className={`relative rounded-xl px-3 py-2 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
               msg.role === 'user'
-                ? 'bg-primary-600 text-white rounded-tr-none'
+                ? 'max-w-[85%] bg-primary-50 text-primary-900 border border-primary-100 rounded-tr-none dark:bg-primary-900/25 dark:text-primary-50 dark:border-primary-800/40'
                 : 'bg-slate-50 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
             } ${isRtlChatLanguage ? 'text-right' : 'text-left'}`}
             dir={isRtlChatLanguage ? 'rtl' : 'ltr'}
