@@ -752,16 +752,6 @@ export const useConversationStore = create<ConversationState>()(
         // UI kept showing whatever was previously active, so users experienced
         // "click does nothing" on conversation items.
         const current = get().activeConversationId;
-        // eslint-disable-next-line no-console
-        console.info('[CHATDBG] fetchConversation ENTER', {
-          requestedId: id,
-          currentActive: current,
-          willWipeUpfront: current !== id,
-          activeMessagesNow: get().activeMessages.length,
-          pendingLocalNow: get().activeMessages.filter((m) =>
-            String(m.id || '').startsWith('local-')
-          ).length,
-        });
         if (current !== id) {
           // Preserve not-yet-persisted optimistic messages belonging to THIS id even on the
           // up-front sync wipe — otherwise a fetch fired mid-send (route-sync / polling) drops
@@ -798,12 +788,6 @@ export const useConversationStore = create<ConversationState>()(
                 m.conversationId === id &&
                 !cachedKeys.has(`${m.role}|${String(m.content || '').trim()}`)
             );
-            // eslint-disable-next-line no-console
-            console.info('[CHATDBG] fetchConversation DEDUPE', {
-              id,
-              cachedCount: cachedMessages.length,
-              pendingLocalCarried: pendingLocal.length,
-            });
             set({
               activeMessages:
                 pendingLocal.length > 0 ? [...cachedMessages, ...pendingLocal] : cachedMessages,
@@ -877,14 +861,6 @@ export const useConversationStore = create<ConversationState>()(
             );
             const nextMessages =
               pendingLocal.length > 0 ? [...messages, ...pendingLocal] : messages;
-            // eslint-disable-next-line no-console
-            console.info('[CHATDBG] fetchConversation FULL-FETCH', {
-              id,
-              serverCount: messages.length,
-              existingActive: existingActiveMessages.length,
-              pendingLocalCarried: pendingLocal.length,
-              nextCount: nextMessages.length,
-            });
             _conversationMessagesCache[id] = nextMessages;
             set((state) => {
               const fromApiRaw = result?.language;
@@ -1093,14 +1069,6 @@ export const useConversationStore = create<ConversationState>()(
         set((state) => {
           // Only append to activeMessages if this conversation is currently active
           const shouldAppend = state.activeConversationId === conversationId;
-          // eslint-disable-next-line no-console
-          console.info('[CHATDBG] addMessage', {
-            role: message.role,
-            msgConversationId: conversationId,
-            activeConversationId: state.activeConversationId,
-            shouldAppend,
-            activeMessagesBefore: state.activeMessages.length,
-          });
           return {
             activeMessages: shouldAppend
               ? [...state.activeMessages, optimisticMessage]

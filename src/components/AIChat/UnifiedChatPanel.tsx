@@ -1006,13 +1006,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // AI reply ("Chat nie pamięta rozmów").
       const liveActiveConversationId =
         useConversationStore.getState().activeConversationId || activeConversationId;
-      // eslint-disable-next-line no-console
-      console.info('[CHATDBG] onStreamDone AI-append', {
-        liveActiveConversationId,
-        storeActive: useConversationStore.getState().activeConversationId,
-        closureActive: activeConversationId,
-        activeMessagesNow: useConversationStore.getState().activeMessages.length,
-      });
 
       let savedAiMessageId: string | null = null;
       // Save AI response to conversation store
@@ -1712,12 +1705,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // ──────────────────────────────────────────────────────────────────────
       const detectedMessageLanguage = detectMessageLanguage(content);
       const effectiveChatLanguage = detectedMessageLanguage || chatLanguage;
-      // eslint-disable-next-line no-console
-      console.info('[CHATDBG] language', {
-        detected: detectedMessageLanguage,
-        memoChatLanguage: chatLanguage,
-        effective: effectiveChatLanguage,
-      });
 
       // M2: Chat commands for MyWork actions
       const text = content.trim();
@@ -2253,13 +2240,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (useConversationStore.getState().activeConversationId !== conversationId) {
         setActiveConversation(conversationId);
       }
-      // eslint-disable-next-line no-console
-      console.info('[CHATDBG] send RESOLVED', {
-        resolvedConversationId: conversationId,
-        activeAfterAlign: useConversationStore.getState().activeConversationId,
-        activeMessagesNow: useConversationStore.getState().activeMessages.length,
-        hasCustomMessages: !!customMessages,
-      });
       // Persist the detected language onto the conversation so the whole thread
       // (and the chatLanguage memo on subsequent renders) follows the language
       // the user opened the conversation in.
@@ -3370,11 +3350,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   );
 
   const handleNewChat = useCallback(async () => {
-    // eslint-disable-next-line no-console
-    console.info('[CHATDBG] handleNewChat START', {
-      activeBefore: useConversationStore.getState().activeConversationId,
-      activeMessagesBefore: useConversationStore.getState().activeMessages.length,
-    });
     clearActiveChat();
     // BUG 1a fix: also clear the legacy global chat store (useAppStore.activeChatMessages).
     // clearActiveChat() only resets the conversation store; without this, embedded views
@@ -3387,12 +3362,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     try {
       const conv = await createConversation();
       setActiveConversation(conv.id);
-      // eslint-disable-next-line no-console
-      console.info('[CHATDBG] handleNewChat CREATED', {
-        newId: conv.id,
-        activeAfter: useConversationStore.getState().activeConversationId,
-        activeMessagesAfter: useConversationStore.getState().activeMessages.length,
-      });
     } catch (err) {
       console.error('[UnifiedChatPanel] Failed to create new chat:', err);
       toast.error(getTeresaStartFailureMessage(i18n.language));
