@@ -6562,6 +6562,34 @@
         "new": {
           "label": "Nowa rozmowa",
           "desc": "Rozpocznij nową rozmowę"
+        },
+        "private": {
+          "label": "Tryb prywatny",
+          "desc": "Pomiń logowanie, pamięć i audyt dla następnej wiadomości"
+        },
+        "agents": {
+          "label": "Multi-agent",
+          "desc": "Sprawdź odpowiedź w pokoju decyzyjnym CFO/CTO/CHRO/COO"
+        },
+        "consultant": {
+          "label": "Konsultant",
+          "desc": "Ramy strategiczne i rekomendacje gotowe do decyzji"
+        },
+        "ideas": {
+          "label": "Twórca pomysłów",
+          "desc": "Generuj opcje, warianty i kreatywne ścieżki"
+        },
+        "analyst": {
+          "label": "Analityk",
+          "desc": "Założenia, metryki i scenariusze porównawcze"
+        },
+        "auditor": {
+          "label": "Audytor",
+          "desc": "Podważaj ryzyko, zgodność i luki w dowodach"
+        },
+        "editor": {
+          "label": "Redaktor",
+          "desc": "Popraw strukturę, jasność i czytelność dla zarządu"
         }
       }
     },
