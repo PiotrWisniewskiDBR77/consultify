@@ -14,7 +14,7 @@
 ## Definicja standardu satysfakcjonującego (DoD per moduł)
 1. **Shell/Menu**: ModuleHub + ModuleNavBar (Menu 2 bez `+`/Help) + Menu 3 (justify-between, AI w prawym slocie) — lub świadomy wyjątek (studio/wizard/marketing).
 2. **Komponenty**: zero przypadkowych elementów — chipy=chip-system, stany=LoadingState/EmptyState/ErrorState, modale=Modal/Drawer, tabele=FilterableTable/DataTable, formularze=SelectField/Switch/Toggle, akcje wierszy=RowActionsMenu, banery=Banner.
-3. **Kolory**: akcent = **HBS Crimson `#A41034`** (oficjalny, NIE #A51C30/#C90016) „lekko"; zero off-brand (indigo/violet/fuchsia/purple); zero hardcoded hex poza tokenami; neutrale = navy/slate. Patrz `_DESIGN_STANDARD.md`.
+3. **Kolory**: akcent = **Burgundy Crimson `#85182F`** (locked; skala 500 #A82D49 / 600 #85182F / 700 #6D1427) „lekko"; zero off-brand (indigo/violet/fuchsia/purple); zero hardcoded hex poza tokenami; neutrale = navy/slate. **Ramki:** slate-200 floor (light) / white/10 (dark), kolorowy border tylko crimson active/focus. Patrz `_DESIGN_STANDARD.md`.
 4. **Light + Dark (kontrast WCAG)**: light — body = **slate-700**, secondary = **slate-600** min, muted = slate-500 floor, **slate-400 ZAKAZANY dla tekstu** (~2.5:1 FAIL AA); dark — body ≥ slate-300, secondary ≥ slate-400. Patrz tabela w `_DESIGN_STANDARD.md`.
 5. **Empty ≠ Error**: awaria ładowania → ErrorState z retry (nie pusty stan).
 

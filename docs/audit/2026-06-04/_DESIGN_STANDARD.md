@@ -5,18 +5,20 @@
 
 ---
 
-## 1. Kolor akcentu marki — HBS Crimson `#A41034`
+## 1. Kolor akcentu marki — Burgundy Crimson `#85182F`
 
-**Jedyny akcent marki = `#A41034`** (rgb 164,16,52, Pantone 187U/1807C) — **oficjalny HBS Identity Guidelines** (identity.hbs.edu). Głębszy/ciemniejszy niż ogólny Harvard `#A51C30`; buduje zaufanie, „Harvard/HBS style".
+**Jedyny akcent marki = `#85182F`** (rgb 133,24,47, HSL 347 69% 31%) — **deep burgundy crimson, „klasyczny Harvard"**, zaakceptowany przez właściciela. Świadomie ciemniejszy niż oficjalny HBS `#A41034` (który dla nas czytał za jasno) — buduje zaufanie, dojrzały, mniej krzykliwy.
 
-- **Token:** `primary` (Tailwind) / `--primary` / `--accent` (shadcn HSL) = `#A41034`.
-  - Light HSL: `345 82% 35%`. Dark (lifted): `345 72% 60%`.
-- **Skala:** 50–500 = jaśniejsze tinty, 600 = `#A41034` (baza), 700–950 = ciemniejsze.
+Progresja (historia decyzji): `#A51C30` (Harvard ogólny, za jasny) → `#A41034` (HBS oficjalny, wciąż za jasny) → **`#85182F` (locked)**.
+
+- **Token:** `primary` (Tailwind) / `--primary` / `--accent` (shadcn HSL) = `#85182F`.
+  - Light HSL: `347 69% 31%`. Dark (lifted): `347 60% 55%`.
+- **Skala (spójna):** 500 `#A82D49` → 600 `#85182F` (baza) → 700 `#6D1427`. Hover/pressed = 700 (wyraźnie ciemniejszy od bazy).
 - **Zasada „lekko":** crimson TYLKO na CTA / active/selected / Teresa / momenty brandowe. Struktura = neutralne (navy/slate). NIE jako dekoracja ani tła całych sekcji.
-- **ZAKAZANE jako akcent:** indigo / violet / fuchsia / purple / `#7C3AED` / `#C90016` (jaskrawa nazwa‑web, NIE HBS). Sweepujemy → `primary`.
-- **Źródło prawdy:** `tailwind.config.js` (primary/brand/crimson scale + `hig-primary`), `src/index.css` (`--primary`, `--accent`, `--c-accent`).
+- **ZAKAZANE jako akcent:** indigo / violet / fuchsia / purple / `#7C3AED` / `#C90016`. Sweepujemy → `primary`.
+- **Źródło prawdy:** `tailwind.config.js` (primary/brand/crimson scale + `hig-primary`), `src/index.css` (`--primary`, `--accent`, `--c-accent`, `--c-focus`, `--ring`).
 
-> Pomiar live (po remapie): `.bg-primary-600` = `rgb(164 16 52)` ✓.
+> Pomiar live (locked): `.bg-primary-600` = `rgb(133 24 47)` ✓; 500 `rgb(168 45 73)`, 700 `rgb(109 20 39)`.
 
 ## 2. Kontrast tekstu (light mode) — twarda reguła WCAG
 
@@ -37,6 +39,22 @@ Zmierzone realne kolory slate w apce, kontrast względem białego tła (#FFFFFF)
 - **`slate-400` (i jaśniejsze) ZAKAZANE dla czytelnego tekstu w light** — wolno tylko: placeholder inputów, disabled, ikony‑dekoracja, hairline.
 
 **Reguła (dark mode):** body ≥ `slate-300` (#CBD5E1), secondary ≥ `slate-400` (#94A3B8 daje ~6:1 na navy‑900 — OK). `dark:text-slate-500/600` dla treści = za ciemne → bump.
+
+## 2b. Ramki (borders) — standard + moja opinia
+
+**Tokeny (źródło prawdy `src/index.css`):**
+| Token | Light | Dark | Użycie |
+|---|---|---|---|
+| `--c-border` | `#e2e5e9` (≈ slate‑200) | `rgba(255,255,255,.10)` | domyślny border karty/panelu |
+| `--c-border-subtle` | `#eef0f2` (≈ slate‑100) | `rgba(255,255,255,.06)` | hairline / divider |
+
+**Reguła:**
+- **Light:** border domyślny = `slate-200` (#E2E8F0) / `--c-border`; hairline = `slate-100` / `--c-border-subtle`. **NIE jaśniej niż slate‑200** dla elementów strukturalnych (zakaz `border-slate-200/50`, `border-slate-100` na kartach — znikają na białym).
+- **Dark:** domyślny = `white/10`; hairline = `white/5`. Nie słabiej.
+- **Active / selected / focus:** **jedyny kolorowy border = crimson** (`primary-500` / `--c-focus`/`--ring` #85182F). Zero off‑brand (indigo/violet) na borderach.
+- **Spójność:** koniec miksu `border-slate-200` + `/70` + `border-white/5/10` + hardcoded rgba w jednym widoku — jeden system (slate‑200/100 light, white/10/5 dark).
+
+**Moja opinia (szczerze):** kierunek Apple/OpenAI/Google 2026 = **minimalne ramki**, definicja przez **warstwy tła** (karta nieco inny `bg` niż strona), nie przez grube obrysy — i to jest dobre, zostawmy. ALE w light mode obecne bordery bywają **odrobinę za słabe na białym** (karty „pływają"). Dla „Harvard = struktura, zaufanie" rekomenduję: bordery **subtelne, ale widoczne** (slate‑200 floor, nie słabiej) + tam gdzie karta jest na białym tle bez różnicy warstwy — delikatny `--c-border`, nie hairline. Nie pogrubiamy (to nie „enterprise 2010"); pilnujemy tylko, by nie znikały. Tła/wypełnienia zostawiamy bez zmian (zaakceptowane).
 
 ## 3. Reguły sweepu (co zmieniać, czego NIE ruszać)
 
