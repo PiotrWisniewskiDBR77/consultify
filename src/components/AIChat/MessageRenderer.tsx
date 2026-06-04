@@ -476,20 +476,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       onMouseEnter={() => setHoveredMessageId(msg.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
     >
-      {/* Minimal streaming state: one "Thinking..." with 3 dots only */}
-      {msg.role === 'ai' &&
-        msg.isStreaming &&
-        isLastMessage &&
-        (thinkingSteps.length > 0 || !msg.content?.trim()) && (
-          <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-            <ThinkingIndicator
-              isActive
-              label={t('thinking.processing', 'Thinking...') as string}
-              className={isCompact ? 'text-[11px]' : ''}
-            />
-          </div>
-        )}
-
+      {/* Streaming "thinking" state is rendered INSIDE the bubble below (single
+          avatar-aligned row), so no standalone indented indicator here. */}
       <div
         className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
       >
@@ -1364,12 +1352,21 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               </>
             )}
 
-            {/* Streaming indicator — inline cursor */}
-            {msg.isStreaming && (
-              <span className="inline-flex items-center gap-0.5 ml-1 align-baseline">
-                <span className="w-[3px] h-4 bg-primary-500 rounded-sm animate-pulse" />
-              </span>
-            )}
+            {/* Streaming indicator:
+                - no content yet  → "Thinking…" dots (single avatar-aligned row)
+                - content flowing → inline blinking cursor at the end of the text */}
+            {msg.isStreaming &&
+              (!msg.content?.trim() ? (
+                <ThinkingIndicator
+                  isActive
+                  label={t('thinking.processing', 'Thinking...') as string}
+                  className={isCompact ? 'text-[11px]' : ''}
+                />
+              ) : (
+                <span className="inline-flex items-center gap-0.5 ml-1 align-baseline">
+                  <span className="w-[3px] h-4 bg-primary-500 rounded-sm animate-pulse" />
+                </span>
+              ))}
 
             {/* Retry info — transparent communication during auto-retry */}
             {msg.isStreaming && retryInfo && (

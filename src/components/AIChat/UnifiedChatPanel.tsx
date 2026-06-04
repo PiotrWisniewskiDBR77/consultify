@@ -4790,8 +4790,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             </>
           )}
 
-          {/* Typing indicator */}
-          {isBotTyping && !streamedContent && (
+          {/* Typing indicator — only for non-streaming flows (e.g. file analysis).
+              During a normal stream the AI bubble already shows the "Thinking…"
+              state inline, so this would otherwise render a duplicate avatar/row. */}
+          {isBotTyping && !streamedContent && !isStreaming && (
             <div className="mx-auto w-full max-w-5xl flex gap-2 justify-start">
               <div
                 className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
