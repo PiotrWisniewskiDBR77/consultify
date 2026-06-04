@@ -110,3 +110,37 @@ Capability levels: `FULL_BUILD` (create/edit real artifacts end-to-end) · `PART
 - **PARTIAL:** 6 (Tasks, Decisions, Notebook, Interview, Meetings, Radar).
 - **ADVISORY:** 9 (Assessment, Initiatives, Execution, Results, Finanse, Outputs, Organizacja, Table/Table Studio, Enterprise Connectors).
 - **NONE:** 8+ (Mind Map, Process Flow, Whiteboard, Ideas, Narzędzia, Admin, Ustawienia, Prezentacje, Document Studio, Partner).
+
+---
+
+## 5. Last-mile implementation status (2026-06-04, this session)
+
+The backlog was implemented in priority order. Each "done" item closes the gap so the
+handoff/executor/tool path that already *called* a create-function now reaches one that
+**really writes** (graceful fallback retained → wrong shapes degrade, never crash).
+
+| # | Item | Status | Where | Note |
+|---|---|---|---|---|
+| 1 | Initiatives `createInitiative` | ✅ DONE | `initiativeGenerationService.ts` (named export → canonical `InitiativeService`) | handoff now `real_entity:true` |
+| 2 | Radar `createSignal` | ✅ DONE | `v8/radarTriageService.ts` (wraps `createTriageSignal`) | normalizes loose payload + valid enum defaults |
+| 3 | Interview `createInsight`/`generateInsight` | ✅ DONE | `v8/interviewInsightService.ts` (alias over real `create`) | needs ≥1 eligible session else graceful deeplink |
+| 4 | Calendar → real meeting | ✅ DONE | `v8/teresaCopilotService.ts` `handleCalendarHandoff` → `meetingService.createMeeting` (+userId threaded) | replaced missing `createEvent` |
+| 5 | Tasks executor real INSERT | ✅ DONE | `ai/actionExecutors/taskExecutor.ts` | mirrors live-proven column-defensive chat-actions INSERT (PG-safe) |
+| 6 | `create_task`/`update_task`/`create_decision` tools | ✅ DONE | `services/ai/toolDefinitions.ts` | real-write executors; exposed via `getAvailableTools` (agents surface now) |
+| 12 | Playbook `create_entity`/`update_entity` | ✅ DONE | `ai/actionExecutors/playbookExecutor.ts` | delegates to the #6 tool writers (task/decision); others degrade gracefully |
+| 11 | Route approved proposals → real writes | ✅ SUPERSEDED | — | the dead `executeProposedAction` (SQLite `datetime('now')`, PG-unsafe) is replaced by the #5/#6 write paths; not revived |
+| 7 | Persist `generate_report_section` | ⏸ DEFERRED (product decision) | — | `reportService.createReport` is a *structured/scheduled* report (reportType/filters/columns), not a free-text section. Needs a decision: persist generated sections as Notebook note, Document, or a new `report_sections` entity. Recommended: Notebook note (proven write) as the v1 sink. |
+| 8 | Persist finance/KPI scenarios | ⏸ DEFERRED (needs entity) | — | `calculate_financial`/`run_monte_carlo` compute only. Needs a `finance_scenarios`/results entity + `persist:true` arg. Low risk once the table exists. |
+| 9 | Table Studio write lane | ⏸ DEFERRED (new service) | — | excele handoff is deeplink-only. Needs a real Table Studio create service (workbook/sheet/rows) before wiring. |
+| 10 | Function-calling tool-loop in the **streaming** chat | ⏸ DEFERRED (risk-gated) | — | The live Teresa chat (`LLMController` stream) has **no** tool loop (only the non-streaming `llmService.generateText` does). Adding one to the stream is the single biggest lever but **must be user-tested** — deferred to avoid destabilizing the just-stabilized chat while the owner is away. Tools from #6 are ready to plug in. |
+| 13 | Authoring for Mind Map / Process Flow / Whiteboard / Ideas / Presentations / Document Studio | ⏸ DEFERRED (large new surfaces) | — | These are net-new authoring features (create services + handoff targets + proposal emission), not "wiring." Scoped as a separate epic. |
+
+### Post-implementation capability shift
+- **Real end-to-end build (handoff/executor reaches a real write):** Tasks, Decisions, Initiatives, Radar, Interview, Meetings, Notebook, + playbook task/decision steps. (Was: Tasks/Decisions slash + Notebook only.)
+- **Remaining ADVISORY/NONE** are gated on a product decision (#7/#8), a new service (#9/#13), or user-tested stream surgery (#10).
+
+### #10 concrete plan (when the owner can test)
+1. In the streaming path (`LLMController` / `ai.routes.ts` chat stream), before/after the text turn, run a bounded tool-call loop using `getAvailableTools()` + `executeToolCall(name,args,{userId,organizationId,conversationId})`.
+2. Stream tool-call + tool-result events (reuse the existing `thought`/proposal SSE envelope) so the UI shows "Teresa created task X".
+3. Keep write tools behind the existing governed-mutation guard (refuse silent mutations) and surface a confirmation chip for destructive ops.
+4. Gate behind a flag; verify on `localhost:3000` with a real account before default-on.

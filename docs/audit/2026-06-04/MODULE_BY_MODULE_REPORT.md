@@ -41,7 +41,9 @@ Trzeci wymiar rozwoju modułu (obok a/b/c UI i funkcjonalności): **czy Teresa p
 
 Poziomy: `FULL` (twórz/edytuj realne artefakty end-to-end) · `PARTIAL` (część realnych zapisów, luki) · `ADVISORY` (czyta/proponuje) · `NONE`.
 
-**Werdykt ogólny: ~ADVISORY-plus.** Teresa świetnie czyta i *proponuje*, ale „ostatnia mila" egzekucji jest zerwana: `performHandoff` szuka per-moduł funkcji `create*`, których serwisy nie eksportują → cichy fallback na syntetyczny ref (`real_entity:false`). Realne „zbudowała to" działa tylko dla **Tasks + Decisions** (slash `/task` `/decision`, bez LLM) oraz **Notebook** (handoff). FULL_BUILD: 0 · PARTIAL: 6 · ADVISORY: 9 · NONE: 8+.
+**Werdykt ogólny (audyt): ~ADVISORY-plus.** Teresa świetnie czyta i *proponuje*, ale „ostatnia mila" egzekucji była zerwana: `performHandoff` szukał per-moduł funkcji `create*`, których serwisy nie eksportowały → cichy fallback na syntetyczny ref (`real_entity:false`). FULL_BUILD: 0 · PARTIAL: 6 · ADVISORY: 9 · NONE: 8+.
+
+> **STATUS 2026-06-04 — last-mile WDROŻONY (commity `b8219a32`, `af76c5c2`).** Realne tworzenie encji działa teraz dla **Tasks, Decisions, Initiatives, Radar, Interview, Meetings, Notebook** + kroki playbooków (task/decision). Dodane narzędzia LLM `create_task`/`update_task`/`create_decision` (powierzchnia agentów; gotowe do podpięcia do czatu). Odłożone (świadomie): persist report-section/finance (#7/#8 — decyzja produktowa/encja), Table write-lane (#9), pętla function-calling w **streamingowym** czacie (#10 — ryzyko, wymaga testu właściciela), authoring Mind Map/Whiteboard/Process Flow/Ideas/Prezentacje/Document Studio (#13 — nowe powierzchnie). Szczegóły + plan: sekcja 5 w [`_TERESA_MODULE_INTEGRATION_MAP.md`](./_TERESA_MODULE_INTEGRATION_MAP.md).
 
 | # | Moduł | Teresa | Mechanizm (skrót) | Główna luka |
 |---|---|---|---|---|
