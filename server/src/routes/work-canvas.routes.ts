@@ -3314,6 +3314,38 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
     ],
     { fallback: false }
   );
+
+  // C1.1 — autosave now snapshots a version on a sensible cadence. Without this,
+  // PUT /drafts/:id (the only route the rich editor hits) never produced a
+  // version, so the Versions panel and Restore were decorative — restore would
+  // jump the user back to a potentially pre-historic state from /operations or
+  // /restore. Cadence: every 5 minutes OR after ~500 chars of net change.
+  try {
+    const { userId } = authContext(req);
+    const oldMd = String(draft.contentMd || '');
+    const newMd = String(updated.contentMd || '');
+    if (oldMd !== newMd) {
+      const lastVersion = (await dbGet(
+        `SELECT created_at, content_md FROM work_canvas_versions
+         WHERE draft_id = ? ORDER BY created_at DESC LIMIT 1`,
+        [updated.id]
+      )) as { created_at?: string; content_md?: string } | null;
+      const sinceMs = lastVersion?.created_at
+        ? Date.now() - new Date(lastVersion.created_at).getTime()
+        : Number.POSITIVE_INFINITY;
+      const baselineMd = lastVersion?.content_md ?? oldMd;
+      const charDelta = Math.abs(newMd.length - String(baselineMd || '').length);
+      const FIVE_MIN = 5 * 60 * 1000;
+      if (sinceMs >= FIVE_MIN || charDelta >= 500) {
+        const summary = lastVersion ? 'Autosave snapshot' : 'Initial autosave';
+        await createVersionSnapshot(updated, 'autosave', summary, userId);
+      }
+    }
+  } catch (err: any) {
+    // Non-fatal: a failed snapshot must not break the save.
+    logger.warn('[WorkCanvas] autosave snapshot failed', { error: err?.message });
+  }
+
   return res.json(envelope(updated, { auditEventId: `ae-${randomUUID()}` }));
 });
 

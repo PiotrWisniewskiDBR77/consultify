@@ -7,7 +7,7 @@
  */
 
 import type { Editor } from '@tiptap/react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { htmlToMarkdown } from './canvasMarkdownConversion';
 
@@ -45,12 +45,32 @@ export function useCanvasAIStream({
 }: UseCanvasAIStreamOptions): UseCanvasAIStreamReturn {
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  // C1.2: the position where the NEXT chunk should be inserted. Advanced after
+  // each chunk so Teresa's output stays contiguous even if the user clicks into
+  // the doc mid-stream. Previously `insertContent(chunk)` went to the live
+  // selection, so any click fragmented the output.
   const insertPositionRef = useRef<number | null>(null);
+  // C1.3: editor flag to restore on cleanup.
+  const wasEditableRef = useRef<boolean | null>(null);
 
   const stopStream = useCallback(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    if (editor && wasEditableRef.current !== null) {
+      editor.setEditable(wasEditableRef.current);
+      wasEditableRef.current = null;
+    }
     setIsStreaming(false);
+  }, [editor]);
+
+  // C1.3: closing the panel mid-stream MUST abort the SSE fetch so chunks don't
+  // fire into a destroyed editor and the "Writing in document…" bubble doesn't
+  // stay orphaned.
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+    };
   }, []);
 
   const streamToCanvas = useCallback(
@@ -87,6 +107,11 @@ export function useCanvasAIStream({
         }
       }
       insertPositionRef.current = editor.state.selection.to;
+
+      // C1.2: lock the editor while Teresa is writing so user clicks can't move
+      // the cursor between chunks. We track and restore the prior editable flag.
+      wasEditableRef.current = editor.isEditable;
+      editor.setEditable(false);
 
       // Give Teresa document awareness via systemInstruction (the /chat/stream
       // handler appends it to the workspace prompt). The structured packet
@@ -160,7 +185,11 @@ export function useCanvasAIStream({
               if (data.content || data.text || data.delta) {
                 const chunk = data.content || data.text || data.delta;
                 if (chunk && editor && !abortController.signal.aborted) {
-                  editor.commands.insertContent(chunk);
+                  // C1.2: insert at the CAPTURED position (advanced after each
+                  // chunk), not the live selection — see insertPositionRef.
+                  const pos: number = insertPositionRef.current ?? editor.state.selection.to;
+                  editor.commands.insertContentAt(pos, chunk);
+                  insertPositionRef.current = pos + String(chunk).length;
                 }
               }
 
@@ -177,7 +206,10 @@ export function useCanvasAIStream({
                 editor &&
                 !abortController.signal.aborted
               ) {
-                editor.commands.insertContent(dataStr);
+                // C1.2: same position-aware insertion as the structured chunks above.
+                const pos: number = insertPositionRef.current ?? editor.state.selection.to;
+                editor.commands.insertContentAt(pos, dataStr);
+                insertPositionRef.current = pos + dataStr.length;
               }
             }
           }
@@ -186,6 +218,11 @@ export function useCanvasAIStream({
         // Stream complete
         setIsStreaming(false);
         abortControllerRef.current = null;
+        // C1.2: restore editability we locked during streaming.
+        if (editor && wasEditableRef.current !== null) {
+          editor.setEditable(wasEditableRef.current);
+          wasEditableRef.current = null;
+        }
 
         if (!abortController.signal.aborted) {
           // 'replace' marked the original selection as aiRemoved and streamed the
@@ -211,6 +248,11 @@ export function useCanvasAIStream({
         }
         setIsStreaming(false);
         abortControllerRef.current = null;
+        // C1.2: restore editability on error too.
+        if (editor && wasEditableRef.current !== null) {
+          editor.setEditable(wasEditableRef.current);
+          wasEditableRef.current = null;
+        }
       }
     },
     [editor, isStreaming, onComplete, onError]

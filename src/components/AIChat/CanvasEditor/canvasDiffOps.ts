@@ -84,13 +84,33 @@ export function applyAiDiff(editor: Editor, range: DocRange, replacement: string
   return insertedSpan;
 }
 
+// C1.5: strip a mark over ONLY the ranges that actually carry it, restoring the
+// selection afterwards. The previous selectAll().unsetMark() ran a full-document
+// scan for every accept/reject — quadratic for inline edits and disruptive
+// because it stomped on the user's cursor.
+function unsetMarkOverRanges(editor: Editor, markName: string, ranges: DocRange[]): void {
+  if (ranges.length === 0) return;
+  const { from: savedFrom, to: savedTo } = editor.state.selection;
+  let chain = editor.chain();
+  // Order matters less here than for deletes because unsetMark doesn't shift
+  // document positions; iterate forward for readability.
+  for (const r of ranges) {
+    chain = chain.setTextSelection({ from: r.from, to: r.to }).unsetMark(markName);
+  }
+  // Restore the original selection so the cursor doesn't jump after accept/reject.
+  chain.setTextSelection({ from: savedFrom, to: savedTo }).run();
+}
+
 /**
  * Accept the pending diff: delete the original (aiRemoved) text and keep the
  * inserted (aiAdded) text with its marker stripped.
  */
 export function acceptAiDiff(editor: Editor): void {
-  deleteRangesInReverse(editor, collectMarkedRanges(editor, AI_REMOVED_MARK));
-  editor.chain().selectAll().unsetMark(AI_ADDED_MARK).run();
+  const removedRanges = collectMarkedRanges(editor, AI_REMOVED_MARK);
+  deleteRangesInReverse(editor, removedRanges);
+  // Re-collect AI_ADDED_MARK ranges AFTER the deletes — the previous positions
+  // are invalidated by the doc-size delta.
+  unsetMarkOverRanges(editor, AI_ADDED_MARK, collectMarkedRanges(editor, AI_ADDED_MARK));
 }
 
 /**
@@ -98,6 +118,7 @@ export function acceptAiDiff(editor: Editor): void {
  * original by stripping its aiRemoved marker.
  */
 export function rejectAiDiff(editor: Editor): void {
-  deleteRangesInReverse(editor, collectMarkedRanges(editor, AI_ADDED_MARK));
-  editor.chain().selectAll().unsetMark(AI_REMOVED_MARK).run();
+  const addedRanges = collectMarkedRanges(editor, AI_ADDED_MARK);
+  deleteRangesInReverse(editor, addedRanges);
+  unsetMarkOverRanges(editor, AI_REMOVED_MARK, collectMarkedRanges(editor, AI_REMOVED_MARK));
 }

@@ -543,11 +543,14 @@ export const RefineTextRequestSchema = z.object({
 // Non-streaming single-shot transform of a selected fragment.
 // Consumed by src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx.
 export const ChatQuickRequestSchema = z.object({
-  message: z.string().min(1, 'Message is required'),
+  // C1.4: cap message + selectedText. /chat/quick is the cheap path the canvas
+  // floating menu calls; without a length cap, a "select entire 200KB doc and
+  // Improve" turn is fully chargeable. Floating-menu copy is short by design.
+  message: z.string().min(1, 'Message is required').max(8000, 'Message too long'),
   context: z
     .object({
       source: z.string().optional(),
-      selectedText: z.string().optional(),
+      selectedText: z.string().max(16000, 'Selection too long').optional(),
     })
     .passthrough()
     .optional(),
