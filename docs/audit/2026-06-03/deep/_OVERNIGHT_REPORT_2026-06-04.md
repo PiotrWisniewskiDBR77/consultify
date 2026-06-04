@@ -25,6 +25,7 @@ Google Drive **wznowił się sam** w nocy (auto‑restart procesu, ~92% CPU). To
 |---|---|
 | `tsc --noEmit` (frontend, zmergowany HEAD) | **0 błędów** |
 | `npm run build` (pełny prod build) | **✓ built in 56s** (tylko warningi o rozmiarze chunków — nieblokujące) |
+| Backend boot (tsx, mock DB) | **✓ READY w ~14s** — LLM Config, AI routing, Health Monitor, Redis wstają czysto z moimi zmianami serwera |
 | Testy krytyczne (billing/permission/security) | **198 passed** |
 | Test A5 (initiative-generator integration) | **passed** |
 | Test A4 (toolAiActions) | **2 passed** |
