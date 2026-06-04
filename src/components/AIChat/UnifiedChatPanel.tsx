@@ -1717,6 +1717,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         const isTask = text.startsWith('/task ');
         const title = text.replace(/^\/(task|decision)\s+/, '').trim();
         if (title) {
+          // FIX-001: guard the slash-command action fetch with an AbortController +
+          // 20s timeout so a hung server can't freeze the composer indefinitely.
+          const actionController = new AbortController();
+          const actionTimeout = setTimeout(() => actionController.abort(), 20000);
           try {
             const token = localStorage.getItem('token');
             const resp = await fetch('/api/my-work/chat-actions', {
@@ -1726,6 +1730,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 action: isTask ? 'create_task' : 'create_decision',
                 payload: { title },
               }),
+              signal: actionController.signal,
             });
             if (resp.ok) {
               const confirmMsg: ChatMessage = {
@@ -1751,7 +1756,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               return;
             }
           } catch {
-            /* fall through to normal send */
+            /* timeout/abort or network error — fall through to normal send */
+          } finally {
+            clearTimeout(actionTimeout);
           }
         }
       }
