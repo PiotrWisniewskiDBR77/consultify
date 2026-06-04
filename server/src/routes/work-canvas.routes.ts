@@ -2097,8 +2097,20 @@ async function createWorkspaceResource(
   organizationId: string
 ) {
   const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas document');
-  const summary = markdownSummary(draft.contentMd, 5000);
+  // W2-E5 — cap below the canonical TaskService Zod limit (5000) to leave
+  // headroom for multibyte expansion in the persisted summary.
+  const summary = markdownSummary(draft.contentMd, 4900);
   const now = new Date().toISOString();
+
+  // W2-E6 — validate projectId is a UUID before passing to services that
+  // Zod-enforce it (TaskService.createTask, decisionService.createDecision).
+  // work_canvas_drafts can carry slug-style projectIds; pass null on mismatch.
+  const validUuidProjectId =
+    draft.projectId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      draft.projectId
+    )
+      ? draft.projectId
+      : null;
 
   if (target === 'idea') {
     const ideaId = `idea-${Date.now()}-${randomUUID().slice(0, 8)}`;
@@ -2121,7 +2133,34 @@ async function createWorkspaceResource(
       ['id']
     );
 
+    // W2-E10 — seed the Mind Map from the Canvas markdown sections instead of
+    // an empty graph. One central root node + one node per H2 section, with
+    // edges from root to each. The user opens the idea and sees the structure
+    // of their Canvas, not a blank slate.
     const mapId = `map-${Date.now()}-${randomUUID().slice(0, 8)}`;
+    const sections = markdownSections(draft.contentMd).slice(0, 8);
+    const nodes = [
+      {
+        id: 'root',
+        label: title,
+        x: 0,
+        y: 0,
+        kind: 'idea',
+      },
+      ...sections.map((section, i) => ({
+        id: `s${i}`,
+        label: section.heading.slice(0, 80) || `Section ${i + 1}`,
+        x: 280,
+        y: (i - (sections.length - 1) / 2) * 90,
+        kind: 'thought',
+        note: markdownSummary(section.body, 280),
+      })),
+    ];
+    const edges = sections.map((_, i) => ({
+      id: `e${i}`,
+      source: 'root',
+      target: `s${i}`,
+    }));
     await insertDynamic(
       'my_idea_maps',
       {
@@ -2129,10 +2168,14 @@ async function createWorkspaceResource(
         idea_id: ideaId,
         user_id: userId,
         organization_id: organizationId,
-        nodes_json: '[]',
-        edges_json: '[]',
+        nodes_json: JSON.stringify(nodes),
+        edges_json: JSON.stringify(edges),
         schema_version: 3,
-        extensions_json: JSON.stringify({ source: 'work_canvas', draftId: draft.id }),
+        extensions_json: JSON.stringify({
+          source: 'work_canvas',
+          draftId: draft.id,
+          seededFromSections: sections.length,
+        }),
         created_at: now,
         updated_at: now,
       },
@@ -2143,89 +2186,80 @@ async function createWorkspaceResource(
       type: 'idea' as const,
       id: ideaId,
       title,
-      url: `/my-work/ideas/${ideaId}`,
-      readBack: { target, ideaId, mapId, status: 'created' },
+      // W2-E2 — back-link uses the panel's existing My Work query-string shape,
+      // so frontend and backend agree on a single URL contract.
+      url: `/my-work?ideaId=${encodeURIComponent(ideaId)}`,
+      readBack: { target, ideaId, mapId, status: 'created', nodeCount: nodes.length },
     };
   }
 
   if (target === 'note') {
-    const noteId = randomUUID();
-    await insertDynamic(
-      'notebook_pages',
-      {
-        id: noteId,
-        owner_user_id: userId,
-        user_id: userId,
-        organization_id: organizationId,
-        visibility: 'private',
-        title,
-        content_json: JSON.stringify({
-          type: 'doc',
-          content: [{ type: 'paragraph', text: draft.contentMd }],
-        }),
-        content_text: draft.contentMd,
-        tags_json: JSON.stringify(['work-canvas']),
-        icon: 'FileText',
-        maturity: 'seed',
-        status: 'active',
-        capture_source: 'work_canvas',
-        capture_metadata: JSON.stringify({ sourceType: 'work_canvas', sourceId: draft.id }),
-        created_at: now,
-        updated_at: now,
+    // W2-E7 — route notes through the canonical notebookService.ingest path so
+    // markdown becomes a proper TipTap document tree (textToBlocks projects
+    // headings/lists/tables/code into real ProseMirror nodes). Previously we
+    // hand-rolled `content_json = {type:doc, content:[{type:paragraph, text:<entire markdown>}]}`
+    // which collapsed every heading and table to plain text on read-back.
+    const { default: notebookService } = await import('../services/notebookService.js');
+    const ingest = await notebookService.ingest(organizationId, userId, {
+      title,
+      contentText: draft.contentMd,
+      source: 'api_import',
+      tags: ['work-canvas'],
+      projectId: validUuidProjectId || undefined,
+      metadata: {
+        sourceType: 'work_canvas',
+        sourceId: draft.id,
+        sourceConversationId: draft.conversationId,
       },
-      ['id']
-    );
+    });
     return {
       type: 'note' as const,
-      id: noteId,
-      title,
-      url: `/my-work/notebook/${noteId}`,
-      readBack: { target, noteId, status: 'created' },
+      id: ingest.pageId,
+      title: ingest.title,
+      url: `/my-work/notebook/${ingest.pageId}`,
+      readBack: { target, noteId: ingest.pageId, status: 'created' },
     };
   }
 
   if (target === 'decision') {
-    const decisionId = randomUUID();
-    // decisions.project_id is nullable; required NOT NULL cols are id,
-    // organization_id, title, type, decision_maker_id, created_by.
-    await insertDynamic(
-      'decisions',
-      {
-        id: decisionId,
-        organization_id: organizationId,
-        project_id: null,
-        title,
-        description: summary,
-        type: 'strategic',
-        decision_maker_id: userId,
-        decision_owner_id: userId,
-        status: 'pending',
-        created_by: userId,
-        created_at: now,
-        updated_at: now,
-      },
-      ['id']
-    );
+    // W2-E1 — route decisions through the canonical decisionService.createDecision
+    // (same path commitProposalToDomain uses). Previously we wrote
+    // `type: 'strategic'` directly to the table — but the enum is
+    // 'GO_NO_GO' | 'APPROVAL' | 'RESOURCE_ALLOCATION' | 'OTHER' and every read
+    // branch on type fell through. Canonical path also seeds options, sets
+    // the escalation deadline, writes a history record, and notifies the
+    // decision_maker — all of which the direct insert silently skipped.
+    const { default: decisionService } = await import('../services/decisionService.js');
+    const decision = await decisionService.createDecision({
+      organizationId,
+      projectId: validUuidProjectId || undefined,
+      title,
+      description: summary,
+      type: 'APPROVAL',
+      decisionMakerId: userId,
+      createdBy: userId,
+    });
     return {
       type: 'decision' as const,
-      id: decisionId,
-      title,
-      url: `/decisions/${decisionId}`,
-      readBack: { target, decisionId, status: 'created' },
+      id: decision.id,
+      title: decision.title,
+      // W2-E2 — entity-detail route, not the list redirect (`/decisions/:id`
+      // gets stripped to the list by AppRoutes; `/my-work/decisions/:id` works).
+      url: `/my-work/decisions/${decision.id}`,
+      readBack: { target, decisionId: decision.id, status: 'created' },
     };
   }
 
   if (target === 'task') {
-    // C4.1 — Tasks bridge. Uses the canonical TaskService.createTask path (the
-    // same one commitProposalToDomain('task') uses), so a "Send to Tasks" or an
-    // approved task proposal produces a real tasks row. Lazy-imported to keep
-    // the module's load surface tight.
+    // C4.1 / W2-E6 — Tasks bridge through canonical TaskService.createTask.
+    // The projectId is UUID-validated above so Zod doesn't 500 the request
+    // when a draft carries a slug-style projectId.
     const { TaskService } = await import('../services/TaskService.js');
     const { getDatabase } = await import('../database/index.js');
     const taskService = new TaskService(getDatabase() as any);
     const task = await taskService.createTask(
       {
-        projectId: draft.projectId || null,
+        projectId: validUuidProjectId,
         title,
         description: summary,
         status: 'todo',
@@ -2244,34 +2278,30 @@ async function createWorkspaceResource(
     };
   }
 
-  const initiativeId = randomUUID();
-  await insertDynamic(
-    'initiatives',
-    {
-      id: initiativeId,
-      organization_id: organizationId,
-      user_id: userId,
-      created_by: userId,
-      owner_id: userId,
-      owner_execution_id: userId,
-      name: title,
-      title,
-      summary,
-      description: summary,
-      status: 'DRAFT',
-      source_type: 'work_canvas',
-      source_id: draft.id,
-      created_at: now,
-      updated_at: now,
-    },
-    ['id']
-  );
+  // W2-E8 — route initiatives through canonical initiativeService.createInitiative
+  // (same as commitProposalToDomain). Previously we wrote a hand-rolled INSERT
+  // that took a union of both competing initiatives schemas (`name`/`title`,
+  // `summary`/`description`, `created_by`/`owner_execution_id`) and let
+  // `insertDynamic` drop unknown columns silently — so depending on which
+  // ensure-schema ran first, part of what we thought we persisted was gone.
+  const { default: initiativeService } = await import('../services/initiativeService.js');
+  const initiative = await initiativeService.createInitiative({
+    organization_id: organizationId,
+    project_id: validUuidProjectId || undefined,
+    title,
+    summary,
+    status: 'DRAFT',
+    owner_id: userId,
+    market_context: `Created from Work Canvas draft ${draft.id}`,
+  } as any);
   return {
     type: 'initiative' as const,
-    id: initiativeId,
-    title,
-    url: `/initiatives/${initiativeId}`,
-    readBack: { target, initiativeId, status: 'created' },
+    id: initiative.id,
+    title: initiative.title || title,
+    // W2-E2 — entity-detail route. `/initiatives/:id` only exists as a list
+    // path; My Work uses query-string entity selection consistently.
+    url: `/my-work?initiativeId=${encodeURIComponent(initiative.id)}`,
+    readBack: { target, initiativeId: initiative.id, status: 'created' },
   };
 }
 
@@ -2374,19 +2404,38 @@ async function createOutputResource(
       createdAt: now,
       lifecycleState: 'draft',
     });
+    // W2-E9 — map to canonical presentation_decks columns. The previous insert
+    // wrote `created_by`, `source_id`, `source_refs_json` — none of which exist
+    // in the canonical schema (`568_presentations_brand_kits_templates.sql`).
+    // `insertDynamic` silently dropped them, so the deck row had no creator
+    // attribution and the outputMetadata payload returned to the client was a
+    // fiction. Canonical columns are `generated_by` + `source_artifacts`; the
+    // rich metadata lives in `outline_json` alongside the slide structure.
     await insertDynamic(
       'presentation_decks',
       {
         id: deckId,
         organization_id: organizationId,
-        created_by: userId,
+        generated_by: userId,
         title: `Presentation: ${title}`,
         deck_type: 'custom',
         theme: 'modern',
         slide_count: slides.length,
         status: 'draft',
-        source_id: draft.id,
-        source_refs_json: JSON.stringify(metadata),
+        source_artifacts: JSON.stringify([
+          {
+            type: 'work_canvas_draft',
+            id: draft.id,
+            versionId: sourceVersionId || null,
+            title,
+          },
+        ]),
+        outline_json: JSON.stringify({
+          source: 'work_canvas',
+          sourceDraftId: draft.id,
+          canvasMetadata: metadata,
+          slides,
+        }),
         created_at: now,
         updated_at: now,
       },
@@ -2537,8 +2586,13 @@ async function createOutputResource(
         title,
         markdownExcerpt: String(draft.contentMd || '').slice(0, 4000),
       };
+      // W2-E4 — `CANVAS_REPORT` is not in `report_invocation_profiles` enum
+      // (R1|R2|R3|R4|custom + legacy GENERAL|ASSESSMENT). Use the recognized
+      // 'custom' discriminant and stash the Canvas hint in config_json so the
+      // builder UI can light up Canvas-specific affordances when it ships.
       const config = {
         canvasOutput: true,
+        canvasReport: true,
         outputDraftId,
         sourceDraftId: draft.id,
       };
@@ -2558,7 +2612,7 @@ async function createOutputResource(
           'work_canvas',
           `Report: ${title}`,
           'Generated from Work Canvas draft.',
-          'CANVAS_REPORT',
+          'custom',
           null,
           JSON.stringify(config),
           JSON.stringify(companyContext),
@@ -2574,7 +2628,10 @@ async function createOutputResource(
         type: outputType,
         id: reportId,
         title: outputDraft.title,
-        url: `/reports/${encodeURIComponent(reportId)}`,
+        // W2-E2 — Reports module migrated to /presentations (AppRoutes.tsx has
+        // `reports_ui_moved_to_presentations` placeholder). `/reports/:id`
+        // 404s; the canonical mount is /presentations?reportId=...
+        url: `/presentations?reportId=${encodeURIComponent(reportId)}`,
         metadata,
         readBack: {
           outputType,

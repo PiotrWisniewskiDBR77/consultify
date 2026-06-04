@@ -1177,13 +1177,18 @@ export function WorkCanvasDocumentPanel({
       }
       // Materialize a durable artifact via the export route (markdown is always supported).
       await Api.workCanvasExportDraft(draft.draftId, 'markdown');
-      setStatusFeedback('Saved to Outputs Library. Opening…');
-      // SPA navigation to the Outputs Library (canonical route).
-      // Fixed: was navigating to /presentations (wrong module + full reload).
-      // /outputs is the correct Outputs/EE hub.
+      setStatusFeedback('Saved to Outputs. Opening…');
+      // W2-E3 — `/outputs` does not exist in AppRoutes.tsx (the previous
+      // assignment 404'd). The Outputs aggregate tab lives inside the
+      // Presentations module — landing the user there with the source draft
+      // as a query string lets the aggregator surface this Canvas's
+      // downstream entries (decks, reports) without a fake hub.
+      const draftIdForRedirect = draft.draftId;
       if (typeof window !== 'undefined') {
         window.setTimeout(() => {
-          window.location.assign('/outputs');
+          window.location.assign(
+            `/presentations?tab=outputs&source=canvas&draftId=${encodeURIComponent(draftIdForRedirect)}`
+          );
         }, 600);
       }
     } catch (error) {
@@ -1761,18 +1766,12 @@ export function WorkCanvasDocumentPanel({
           saveState: 'saved',
         })
       );
+      // W2-E2 — trust the backend-returned `linked.url`. Previously the
+      // frontend reconstructed its own paths and diverged from the backend
+      // (`/decisions/:id` stripped the id at AppRoutes; `/initiatives` ignored
+      // the id; note went to a tab not the page). One contract, one fix site.
       const targetPath =
-        target === 'idea'
-          ? `/my-work?ideaId=${encodeURIComponent(linked.id)}`
-          : target === 'note'
-            ? `/my-work?tab=notebook`
-            : target === 'initiative'
-              ? `/initiatives`
-              : target === 'decision'
-                ? `/decisions/${encodeURIComponent(linked.id)}`
-                : target === 'task'
-                  ? `/my-work?taskId=${encodeURIComponent(linked.id)}`
-                  : null;
+        typeof linked.url === 'string' && linked.url.length > 0 ? linked.url : null;
       setStatusFeedback(
         targetPath
           ? `${linked.title} saved to ${linked.type}. [Open →](${targetPath})`
