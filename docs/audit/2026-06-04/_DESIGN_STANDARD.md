@@ -76,6 +76,17 @@ Crimson `#85182F` jest akcentem „lekko" — to znaczy: **wiodący dla akcji g�
 - **Amber/orange ZAKAZANY na przyciskach akcji** — tylko jako status‑warning (badge/tekst), nie jako tło przycisku. (Naprawione: voice connecting/unavailable były amber → crimson.)
 - **Ikony kategorii zostają kolorowe** (różnicowanie), ale akcent interakcji (hover/active) = crimson.
 
+## 2d. Minimalizm tekstu — „czym mniej, tym więcej" (PLATFORMOWE)
+
+Zasada nadrzędna UX: **mniej słów = więcej**. Platforma w wielu miejscach robi nadmiar opisówki — tniemy.
+
+- **Menu / listy akcji:** pozycja = **ikona + krótka etykieta**. BEZ drugiej linii opisu (chyba że naprawdę niezbędna do rozróżnienia). Wzorzec = AI MODES (ToolsMenu): same etykiety, kompaktowo.
+- **Kierunek otwierania menu w composerze:** **do góry** (`bottom-full mb-2`), spójnie dla wszystkich 3 przycisków (+, AI modes, co‑thinker).
+- **Podpowiedzi/hinty:** jedna krótka linia max; bez „Supported: PDF, TXT, MD, CSV, JSON" rozpisanego — skrót lub tooltip.
+- **Karty/kafle:** tytuł + max 1 linia. Bez akapitów.
+- **Nagłówki sekcji:** rzeczownikowe, krótkie. Bez zdań‑wstępów.
+- **Reguła sweepu:** przy każdym module — szukać wielolinijkowych opisów pod akcjami/menu/kaflami → skracać do etykiety (+ ewentualnie tooltip). Nie usuwać informacji krytycznej; usuwać redundancję.
+
 ## 3. Reguły sweepu (co zmieniać, czego NIE ruszać)
 
 **Zmieniamy (text → ciemniej):**
