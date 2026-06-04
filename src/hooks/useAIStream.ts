@@ -1225,9 +1225,14 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           }
         }
 
-        // If aborted, don't surface as an error
+        // If aborted, don't surface as an error — but DO release the streaming
+        // state (FIX-002). Returning early without this left the typing spinner
+        // frozen after an aborted/stopped stream.
         const err = error as any;
         if (abortRef.current.aborted || err?.name === 'AbortError') {
+          retryCountRef.current = 0;
+          setIsStreaming(false);
+          setIsBotTyping(false);
           return;
         }
 
