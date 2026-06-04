@@ -48,3 +48,25 @@ Centralize as CSS variables in `src/index.css` `:root` / `.dark`, mapped to a Ta
 
 ## D. What changes look like (verification)
 P0/P1/P2 change the app's color centrally — after reload: crimson CTAs/active/focus, neutral surfaces, on-brand LP. Owner visual review recommended after P1/P2.
+
+---
+
+## E. ROLLOUT STATUS (updated 2026-06-04, overnight session)
+**Done & committed (branch feat/wave1-foundations):**
+- ✅ **P0 palette foundation** — semantic `--c-*` tokens (light+dark) + Tailwind `c.*` namespace.
+- ✅ **P1 central recolor** — `primary`(violet)→crimson, `hig-*`/focus→crimson, shadcn `--primary`/`--ring` blue→crimson, legacy `brand` violet→crimson.
+- ✅ **P2 Landing Page** — fully de-violeted → crimson+navy.
+- ✅ **Harvard complementary palette (HBS)** — 8 `hbs-*` scales; central remap of Tailwind accent families (blue/green/teal/orange/gold/purple/magenta/red) → official HBS hues; status tokens re-anchored to legible HBS darks; chart palettes → HBS categorical; +8 residual violet gradients → crimson.
+- ✅ **Light-mode contrast** — codemod 7,579 replacements / 1,440 files (`text-slate-400`→`-600` etc.); dark mode provably untouched; script `scripts/codemods/light-mode-contrast.cjs`.
+- ✅ **P3 — 7 canonical components built + barrel-wired**: chip-system (Status/Priority/Meta/Tool/Due), Banner, AIActionSlot, OnboardingBanner, TableSettingsPopover, SelectField/Switch/Toggle, Menu3Row (23 tests).
+- ✅ **P4 enforcement** — ESLint warn rules (off-brand gradients, raw shadcn select/switch) atop existing hex/inline-style/Admin-fork bans. Full-repo `eslint . --quiet` = 0.
+- ✅ **States+chips rollout (P5 partial)** — batches 1-4 across ~16 module groups + 70 admin/superadmin views: ~190 LoadingState, ~13 ErrorState, ~30 EmptyState, ~40 chips (per-site judgment; force-fits skipped).
+- ✅ **FIX-3** — Ideas shows ErrorState (retry) on load failure instead of empty "garden".
+- ✅ Gates: frontend `tsc --noEmit` = 0, production build = 0, `eslint . --quiet` = 0.
+
+**Remaining (needs visual review / structural — deferred):**
+- ⏳ **Modal consolidation** (453 `fixed inset-0` → Modal) — structural, do with visual checkpoints.
+- ⏳ **slate→token mass migration** (structural neutrals; central tokens already exist, call-site sweep is cosmetic/large — do with review).
+- ⏳ **Raw `<button>` audit** (9,394; many legitimately raw — selective, not blind).
+- ⏳ Studios (Document/Table/Presentation) per their own UX docs 26/27; shared/ canonical internals.
+- ⏳ Owner visual review of the crimson + Harvard palette + light-mode contrast (light & dark).
