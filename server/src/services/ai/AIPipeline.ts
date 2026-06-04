@@ -812,6 +812,36 @@ export class AIPipeline {
           }
         }
 
+        // Per-project brief (composer #5): if this conversation belongs to a chat
+        // project with custom instructions, append them to Teresa's system prompt.
+        // Applied regardless of private mode — it's task framing the user explicitly
+        // set on the project, not inferred personal memory.
+        try {
+          const convIdForProject =
+            (request.context as any)?.conversationId ||
+            (request as any)?.conversationId ||
+            (request.options as any)?.conversationId ||
+            null;
+          if (convIdForProject) {
+            const { get: dbGet } = await import('../../utils/DbPromise.js');
+            const row = (await dbGet(
+              `SELECT p.custom_instructions AS ci
+               FROM conversations c
+               JOIN chat_projects p ON p.id = c.chat_project_id
+               WHERE c.id = ?`,
+              [convIdForProject]
+            )) as { ci?: string } | null;
+            const projectCi = row?.ci ? String(row.ci).trim().slice(0, 2000) : '';
+            if (projectCi) {
+              customInstructions = customInstructions
+                ? `${customInstructions}\n\n[Project brief] ${projectCi}`
+                : `[Project brief] ${projectCi}`;
+            }
+          }
+        } catch {
+          // chat_projects.custom_instructions may not exist yet — skip silently.
+        }
+
         // Resolve authoritative UI language for this request.
         // Order of precedence (i18n-teresa fix 2026-04-18):
         //   1. request.options.language / request.context.language    (explicit UI locale)

@@ -11666,7 +11666,13 @@ export const Api = {
   },
   updateChatProject: async (
     id: string,
-    data: { name?: string; description?: string; color?: string; icon?: string }
+    data: {
+      name?: string;
+      description?: string;
+      color?: string;
+      icon?: string;
+      customInstructions?: string | null;
+    }
   ) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'PATCH',

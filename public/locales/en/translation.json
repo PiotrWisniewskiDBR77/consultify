@@ -1204,7 +1204,8 @@
     "periodStart": "Period start",
     "periodEnd": "Period end",
     "noOrganizations": "No organizations found",
-    "retry": "Try again"
+    "retry": "Try again",
+    "saved": "Saved"
   },
   "superadmin": {
     "confirm": {
@@ -6522,6 +6523,12 @@
       "done": "Branched into a new conversation",
       "failed": "Could not create a branch.",
       "unavailable": "Send the message first, then branch."
+    },
+    "projectBrief": {
+      "title": "Project instructions",
+      "hint": "Teresa follows this in every chat in this project (tone, context, goals).",
+      "placeholder": "e.g. We are a B2B SaaS in fintech. Be concise, cite sources, prefer EU regulations…",
+      "saveFailed": "Could not save instructions."
     }
   },
   "agentAudit": {

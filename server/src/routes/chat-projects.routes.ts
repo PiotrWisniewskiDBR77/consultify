@@ -27,6 +27,23 @@ const isMissingSqliteTable = (error: any, tableName: string): boolean => {
   return code === 'SQLITE_ERROR' && msg.includes(`no such table: ${tableName}`.toLowerCase());
 };
 
+// Per-project custom instructions (composer #5). DB_MANAGED_SCHEMA may be off in
+// dev, so a migration alone won't apply — ensure the column exists lazily with an
+// idempotent, additive, nullable ALTER (Postgres `IF NOT EXISTS`). Runs once.
+let _ciColumnReady: boolean | null = null;
+async function ensureCustomInstructionsColumn(): Promise<boolean> {
+  if (_ciColumnReady !== null) return _ciColumnReady;
+  try {
+    const db = getDatabase();
+    await db.run('ALTER TABLE chat_projects ADD COLUMN IF NOT EXISTS custom_instructions TEXT');
+    _ciColumnReady = true;
+  } catch (e: any) {
+    logger.warn(`[ChatProjects] ensure custom_instructions column failed: ${e?.message}`);
+    _ciColumnReady = false;
+  }
+  return _ciColumnReady;
+}
+
 const dbGetOne = (db: any, sql: string, params: unknown[]) => {
   const getOne = typeof db.get === 'function' ? db.get : db.queryOne;
   return getOne.call(db, sql, params);
@@ -55,6 +72,8 @@ const UpdateProjectSchema = z.object({
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .optional(),
   icon: z.string().max(50).optional(),
+  /** Per-project brief injected into Teresa's system prompt (composer #5). */
+  customInstructions: z.string().max(4000).optional().nullable(),
 });
 
 // ==================== GET ALL PROJECTS ====================
@@ -70,6 +89,7 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
     }
 
     const db = getDatabase();
+    await ensureCustomInstructionsColumn();
 
     let whereClause: string;
     const params: string[] = [];
@@ -345,6 +365,13 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
     if (updates.icon !== undefined) {
       fields.push('icon = ?');
       values.push(updates.icon);
+    }
+    if (updates.customInstructions !== undefined) {
+      const ok = await ensureCustomInstructionsColumn();
+      if (ok) {
+        fields.push('custom_instructions = ?');
+        values.push(updates.customInstructions ? String(updates.customInstructions).slice(0, 4000) : null);
+      }
     }
 
     fields.push('updated_at = ?');

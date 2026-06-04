@@ -92,7 +92,8 @@
     "periodStart": "Okres od",
     "periodEnd": "Okres do",
     "noOrganizations": "Nie znaleziono organizacji",
-    "retry": "Spróbuj ponownie"
+    "retry": "Spróbuj ponownie",
+    "saved": "Zapisano"
   },
   "superadmin": {
     "confirm": {
@@ -7073,6 +7074,12 @@
       "done": "Rozgałęziono do nowej rozmowy",
       "failed": "Nie udało się utworzyć gałęzi.",
       "unavailable": "Najpierw wyślij wiadomość, potem rozgałęź."
+    },
+    "projectBrief": {
+      "title": "Instrukcje projektu",
+      "hint": "Teresa stosuje to w każdej rozmowie w tym projekcie (ton, kontekst, cele).",
+      "placeholder": "np. Jesteśmy B2B SaaS w fintech. Bądź zwięzła, podawaj źródła, preferuj regulacje UE…",
+      "saveFailed": "Nie udało się zapisać instrukcji."
     }
   },
   "agentAudit": {

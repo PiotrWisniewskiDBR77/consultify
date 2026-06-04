@@ -40,6 +40,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
     isLoading,
     fetchProjects,
     createProject,
+    updateProject,
     moveConversationToProject,
     getPersonalProjects,
     getTeamProjects,
@@ -51,6 +52,9 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newScope, setNewScope] = useState<'personal' | 'team'>('personal');
+  const [instructions, setInstructions] = useState('');
+  const [instructionsBusy, setInstructionsBusy] = useState(false);
+  const [instructionsSaved, setInstructionsSaved] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -67,6 +71,27 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
     if (!id) return null;
     return projects.find((p) => p.id === id) || null;
   }, [conversation?.chatProjectId, projects]);
+
+  // Sync the instructions editor whenever the active project changes.
+  useEffect(() => {
+    setInstructions(currentProject?.customInstructions || '');
+    setInstructionsSaved(false);
+  }, [currentProject?.id, currentProject?.customInstructions]);
+
+  const handleSaveInstructions = async () => {
+    if (!currentProject) return;
+    setInstructionsBusy(true);
+    setError(null);
+    try {
+      await updateProject(currentProject.id, { customInstructions: instructions.trim() });
+      setInstructionsSaved(true);
+      setTimeout(() => setInstructionsSaved(false), 2000);
+    } catch (e: any) {
+      setError(e?.message || t('aiChat.projectBrief.saveFailed', 'Could not save instructions.'));
+    } finally {
+      setInstructionsBusy(false);
+    }
+  };
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredPersonal = useMemo(() => {
@@ -199,6 +224,55 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
                 <X size={14} />
                 {t('aiChat.removeFromFolder', 'Remove from folder')}
               </button>
+            )}
+
+            {/* Per-project custom instructions (composer #5). Shown only when the
+                conversation belongs to a project — this brief is injected into
+                Teresa's system prompt for every chat in that project. */}
+            {currentProject && (
+              <div className="mt-3 rounded-xl border border-slate-200 dark:border-navy-700 p-3 bg-slate-50/60 dark:bg-navy-950/40">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
+                    {t('aiChat.projectBrief.title', 'Project instructions')}
+                  </div>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-500">
+                    {instructions.length}/4000
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  {t(
+                    'aiChat.projectBrief.hint',
+                    'Teresa follows this in every chat in this project (tone, context, goals).'
+                  )}
+                </p>
+                <textarea
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value.slice(0, 4000))}
+                  rows={3}
+                  placeholder={t(
+                    'aiChat.projectBrief.placeholder',
+                    'e.g. We are a B2B SaaS in fintech. Be concise, cite sources, prefer EU regulations…'
+                  )}
+                  className="mt-2 w-full resize-none rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                />
+                <div className="mt-2 flex items-center justify-end gap-2">
+                  {instructionsSaved && (
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                      {t('common.saved', 'Saved')}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => void handleSaveInstructions()}
+                    disabled={
+                      instructionsBusy ||
+                      instructions.trim() === (currentProject.customInstructions || '').trim()
+                    }
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white transition-colors"
+                  >
+                    {instructionsBusy ? t('common.saving', 'Saving…') : t('common.save', 'Save')}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 

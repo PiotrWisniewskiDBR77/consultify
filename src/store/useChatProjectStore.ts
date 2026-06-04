@@ -74,6 +74,8 @@ export interface ChatProject {
   /** 'personal' (default) or 'team' - team projects are shared with org members */
   scope: ChatProjectScope;
   conversationCount: number;
+  /** Per-project brief injected into Teresa's system prompt (composer #5). */
+  customInstructions?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -114,7 +116,9 @@ interface ChatProjectState {
   }) => Promise<ChatProject>;
   updateProject: (
     id: string,
-    updates: Partial<Pick<ChatProject, 'name' | 'description' | 'color' | 'icon'>>
+    updates: Partial<
+      Pick<ChatProject, 'name' | 'description' | 'color' | 'icon' | 'customInstructions'>
+    >
   ) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
 
@@ -358,6 +362,7 @@ function mapApiProject(api: any): ChatProject {
     icon: api.icon || 'folder',
     scope: api.scope || 'personal',
     conversationCount: api.conversation_count || api.conversationCount || 0,
+    customInstructions: api.custom_instructions ?? api.customInstructions ?? undefined,
     createdAt: new Date(api.created_at || api.createdAt),
     updatedAt: new Date(api.updated_at || api.updatedAt),
   };
