@@ -11674,6 +11674,7 @@ export const Api = {
       icon?: string;
       customInstructions?: string | null;
       visibility?: 'org' | 'private';
+      parentId?: string | null;
     }
   ) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {

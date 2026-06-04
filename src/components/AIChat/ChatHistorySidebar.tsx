@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ChevronRight,
   Folder,
+  FolderInput,
   FolderPlus,
   MoreHorizontal,
   Pencil,
@@ -71,8 +72,11 @@ interface FolderSectionProps {
   onToggleExpanded: (id: string) => void;
   onSelectConversation: (id: string) => void;
   onDeleteProject: (id: string) => void;
-  /** Rename / recolor a folder (F1 — surface the existing PATCH). */
-  onUpdateProject?: (id: string, updates: { name?: string; color?: string }) => void;
+  /** Rename / recolor / re-parent a folder (F1 + F4c). */
+  onUpdateProject?: (
+    id: string,
+    updates: { name?: string; color?: string; parentId?: string | null }
+  ) => void;
   /** F2 — manage members of a team folder (only passed for the team section). */
   onManageMembers?: (project: ChatProject) => void;
   onCreateProject: (name: string) => void;
@@ -131,7 +135,24 @@ const FolderSection: React.FC<FolderSectionProps> = ({
   const [showAll, setShowAll] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
+  const [movePickerId, setMovePickerId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+
+  // F4c: descendants of a folder (to exclude as move targets — no loops).
+  const descendantsOf = (rootId: string): Set<string> => {
+    const out = new Set<string>();
+    const stack = [rootId];
+    while (stack.length) {
+      const cur = stack.pop() as string;
+      for (const p of projects) {
+        if (p.parentId === cur && !out.has(p.id)) {
+          out.add(p.id);
+          stack.push(p.id);
+        }
+      }
+    }
+    return out;
+  };
 
   const handleFolderDragOver = useCallback((e: React.DragEvent, folderId: string) => {
     if (e.dataTransfer.types.includes(CONVERSATION_DND_TYPE)) {
@@ -167,8 +188,25 @@ const FolderSection: React.FC<FolderSectionProps> = ({
     setShowInput(false);
   };
 
-  const visibleProjects = showAll ? projects : projects.slice(0, MAX_VISIBLE_FOLDERS);
-  const hasMore = projects.length > MAX_VISIBLE_FOLDERS;
+  // F4c: nested folders — render the flat list as a tree (pre-order, descending
+  // only into expanded folders), each row carrying its depth for indentation.
+  const idSet = new Set(projects.map((p) => p.id));
+  const childrenOf = (pid: string | null) =>
+    projects.filter((p) => {
+      const par = p.parentId && idSet.has(p.parentId) ? p.parentId : null;
+      return par === pid;
+    });
+  const roots = childrenOf(null);
+  const visibleRoots = showAll ? roots : roots.slice(0, MAX_VISIBLE_FOLDERS);
+  const orderedFolders: Array<{ project: ChatProject; depth: number }> = [];
+  const walkFolders = (list: ChatProject[], depth: number) => {
+    for (const p of list) {
+      orderedFolders.push({ project: p, depth });
+      if (expandedProjectIds.includes(p.id)) walkFolders(childrenOf(p.id), depth + 1);
+    }
+  };
+  walkFolders(visibleRoots, 0);
+  const hasMore = roots.length > MAX_VISIBLE_FOLDERS;
 
   return (
     <div className="px-2.5 pb-1">
@@ -243,14 +281,15 @@ const FolderSection: React.FC<FolderSectionProps> = ({
           {/* Project List */}
           {projects.length > 0 ? (
             <div>
-              {visibleProjects.map((project) => {
+              {orderedFolders.map(({ project, depth }) => {
                 const isExpanded = expandedProjectIds.includes(project.id);
                 const projectConversations = getConversationsByProjectId(project.id);
 
                 return (
                   <div key={project.id}>
                     <div
-                      className={`group flex items-center gap-1.5 px-2 py-1 rounded-md cursor-pointer transition-colors ${
+                      style={{ paddingLeft: 8 + depth * 12 }}
+                      className={`group flex items-center gap-1.5 pr-2 py-1 rounded-md cursor-pointer transition-colors ${
                         dropTargetId === project.id
                           ? 'bg-primary-100 dark:bg-primary-900/30 ring-1 ring-primary-400/50'
                           : 'hover:bg-slate-100 dark:hover:bg-navy-800'
@@ -376,6 +415,72 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                 <Users size={13} />
                                 {t('aiChat.members.manage', 'Members & sharing')}
                               </button>
+                            )}
+                            {/* F4c: move into another folder */}
+                            {onUpdateProject && (
+                              <div className="px-3 py-1.5">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMovePickerId(
+                                      movePickerId === project.id ? null : project.id
+                                    );
+                                  }}
+                                  className="w-full flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
+                                >
+                                  <FolderInput size={13} />
+                                  {t('aiChat.moveToFolderShort', 'Move to folder')}
+                                </button>
+                                {movePickerId === project.id && (
+                                  <div className="mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 dark:border-navy-700">
+                                    {project.parentId && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onUpdateProject(project.id, { parentId: null });
+                                          setMovePickerId(null);
+                                          setMenuId(null);
+                                        }}
+                                        className="w-full text-left px-2 py-1 text-[12px] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                                      >
+                                        {t('aiChat.moveToTopLevel', '↥ Top level')}
+                                      </button>
+                                    )}
+                                    {(() => {
+                                      const excluded = descendantsOf(project.id);
+                                      const targets = projects.filter(
+                                        (p) =>
+                                          p.id !== project.id &&
+                                          p.scope === project.scope &&
+                                          !excluded.has(p.id) &&
+                                          p.id !== project.parentId
+                                      );
+                                      if (targets.length === 0) {
+                                        return (
+                                          <div className="px-2 py-1 text-[11px] text-slate-500 italic">
+                                            {t('aiChat.noTargetFolders', 'No other folders')}
+                                          </div>
+                                        );
+                                      }
+                                      return targets.map((tp) => (
+                                        <button
+                                          key={tp.id}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onUpdateProject(project.id, { parentId: tp.id });
+                                            setMovePickerId(null);
+                                            setMenuId(null);
+                                          }}
+                                          className="w-full flex items-center gap-1.5 text-left px-2 py-1 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+                                        >
+                                          <Folder size={11} style={{ color: tp.color }} />
+                                          <span className="truncate">{tp.name}</span>
+                                        </button>
+                                      ));
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
                             )}
                             <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
                             <button

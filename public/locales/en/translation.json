@@ -6574,7 +6574,10 @@
       "creating": "Creating share link…",
       "copied": "Share link copied to clipboard",
       "failed": "Could not create link"
-    }
+    },
+    "moveToFolderShort": "Move to folder",
+    "moveToTopLevel": "↥ Top level",
+    "noTargetFolders": "No other folders"
   },
   "agentAudit": {
     "title": "Agent Audit Layer",

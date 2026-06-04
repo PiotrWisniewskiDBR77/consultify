@@ -54,6 +54,8 @@ async function ensureProjectRbacSchema(): Promise<boolean> {
   try {
     const db = getDatabase();
     await db.run("ALTER TABLE chat_projects ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'org'");
+    // F4c: nested folders.
+    await db.run('ALTER TABLE chat_projects ADD COLUMN IF NOT EXISTS parent_id TEXT');
     await db.run(`CREATE TABLE IF NOT EXISTS chat_project_members (
       project_id TEXT NOT NULL,
       user_id    TEXT NOT NULL,
@@ -116,6 +118,8 @@ const CreateProjectSchema = z.object({
   scope: z.enum(['personal', 'team']).optional().default('personal'),
   /** F2: team-project visibility. 'org' = whole org · 'private' = invited members only. */
   visibility: z.enum(['org', 'private']).optional(),
+  /** F4c: parent folder id for nesting (null/omit = top level). */
+  parentId: z.string().optional().nullable(),
 });
 
 const UpdateProjectSchema = z.object({
@@ -130,6 +134,8 @@ const UpdateProjectSchema = z.object({
   customInstructions: z.string().max(4000).optional().nullable(),
   /** F2: team-project visibility (owner-only). */
   visibility: z.enum(['org', 'private']).optional(),
+  /** F4c: move folder under another (null = move to top level). */
+  parentId: z.string().nullable().optional(),
 });
 
 // ==================== GET ALL PROJECTS ====================
@@ -300,7 +306,7 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
       });
     }
 
-    const { name, description, color, icon, scope, visibility } = validation.data;
+    const { name, description, color, icon, scope, visibility, parentId } = validation.data;
 
     // Team projects require an organization and create_project permission
     if (scope === 'team') {
@@ -355,6 +361,10 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
       insertCols.push('visibility');
       insertVals.push(effectiveVisibility);
     }
+    if (rbacReady && cols.has('parent_id') && parentId) {
+      insertCols.push('parent_id');
+      insertVals.push(String(parentId));
+    }
     await db.run(
       `INSERT INTO chat_projects (${insertCols.join(', ')}) VALUES (${insertCols.map(() => '?').join(', ')})`,
       insertVals
@@ -383,6 +393,7 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
       icon,
       scope,
       visibility: effectiveVisibility,
+      parent_id: parentId || null,
       my_role: scope === 'team' ? 'owner' : undefined,
       conversation_count: 0,
       created_at: now,
@@ -490,6 +501,32 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
         values.push(updates.visibility);
       } else if (!isOwner) {
         return res.status(403).json({ error: 'Only the project owner can change visibility' });
+      }
+    }
+    if (updates.parentId !== undefined) {
+      const ok = await ensureProjectRbacSchema();
+      const newParent = updates.parentId ? String(updates.parentId) : null;
+      if (newParent === id) {
+        return res.status(400).json({ error: 'A folder cannot be its own parent' });
+      }
+      // Cycle guard: the new parent must not be a descendant of this folder.
+      if (ok && newParent) {
+        let cursor: string | null = newParent;
+        let depth = 0;
+        while (cursor && depth < 50) {
+          if (cursor === id) {
+            return res.status(400).json({ error: 'That move would create a folder loop' });
+          }
+          const prow = (await dbGetOne(db, `SELECT parent_id FROM chat_projects WHERE id = ?`, [
+            cursor,
+          ])) as any;
+          cursor = prow?.parent_id || null;
+          depth++;
+        }
+      }
+      if (ok) {
+        fields.push('parent_id = ?');
+        values.push(newParent);
       }
     }
 

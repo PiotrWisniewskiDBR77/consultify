@@ -80,6 +80,8 @@ export interface ChatProject {
   visibility?: 'org' | 'private';
   /** F2: the current user's role on this project, if a team project. */
   myRole?: 'owner' | 'editor' | 'viewer' | null;
+  /** F4c: parent folder id for nesting (null = top level). */
+  parentId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -122,7 +124,10 @@ interface ChatProjectState {
   updateProject: (
     id: string,
     updates: Partial<
-      Pick<ChatProject, 'name' | 'description' | 'color' | 'icon' | 'customInstructions'>
+      Pick<
+        ChatProject,
+        'name' | 'description' | 'color' | 'icon' | 'customInstructions' | 'visibility' | 'parentId'
+      >
     >
   ) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
@@ -370,6 +375,7 @@ function mapApiProject(api: any): ChatProject {
     customInstructions: api.custom_instructions ?? api.customInstructions ?? undefined,
     visibility: api.visibility ?? undefined,
     myRole: api.my_role ?? api.myRole ?? undefined,
+    parentId: api.parent_id ?? api.parentId ?? null,
     createdAt: new Date(api.created_at || api.createdAt),
     updatedAt: new Date(api.updated_at || api.updatedAt),
   };

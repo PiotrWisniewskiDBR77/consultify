@@ -7125,7 +7125,10 @@
       "creating": "Tworzę link…",
       "copied": "Skopiowano link do schowka",
       "failed": "Nie udało się utworzyć linku"
-    }
+    },
+    "moveToFolderShort": "Przenieś do folderu",
+    "moveToTopLevel": "↥ Najwyższy poziom",
+    "noTargetFolders": "Brak innych folderów"
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
