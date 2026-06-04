@@ -5111,13 +5111,14 @@ export const Api = {
     draftId: string,
     // C3 — 'decision' now accepted (backend was already implemented in
     // createWorkspaceResource; only the runtime guard had been excluding it).
-    payload: { target: 'idea' | 'note' | 'initiative' | 'decision' }
+    // C4.1 — 'task' added (canonical TaskService.createTask path).
+    payload: { target: 'idea' | 'note' | 'initiative' | 'decision' | 'task' }
   ): Promise<{
     success: boolean;
     data: {
       draft: any;
       linkedResource: {
-        type: 'idea' | 'note' | 'initiative' | 'decision';
+        type: 'idea' | 'note' | 'initiative' | 'decision' | 'task';
         id: string;
         title: string;
         url?: string;

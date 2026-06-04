@@ -1,5 +1,6 @@
 import type { Editor as TiptapEditor } from '@tiptap/react';
 import {
+  CheckSquare,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -16,7 +17,6 @@ import {
   RotateCcw,
   Save,
   Share2,
-  Sparkles,
   StickyNote,
   Table2,
   Upload,
@@ -300,6 +300,9 @@ const menuWorkspaceActionIds: CanvasActionId[] = [
   // for ages; only the guard at /save-to-workspace and this menu list blocked
   // the chat-shell from exposing it.
   'create-decision',
+  // C4.1 — Tasks bridge through TaskService.createTask. Same one-click path as
+  // the other workspace actions; runs through runWorkspaceAction('task').
+  'create-task',
 ];
 
 const menuOutputActionIds: CanvasActionId[] = [
@@ -319,6 +322,8 @@ const defaultCanvasRuntimeCapabilities: CanvasRuntimeCapabilities = {
   canCreateInitiative: isVitestRuntime,
   // C3 — new actions; defaults follow the same vitest-runtime gate as siblings.
   canCreateDecision: isVitestRuntime,
+  // C4.1
+  canCreateTask: isVitestRuntime,
   canShare: false,
 };
 
@@ -329,12 +334,14 @@ const richEditorDecision = {
 } as const;
 
 const workspaceTargets: Partial<
-  Record<CanvasActionId, 'idea' | 'note' | 'initiative' | 'decision'>
+  Record<CanvasActionId, 'idea' | 'note' | 'initiative' | 'decision' | 'task'>
 > = {
   'send-to-idea': 'idea',
   'save-as-note': 'note',
   'create-initiative': 'initiative',
   'create-decision': 'decision',
+  // C4.1
+  'create-task': 'task',
 };
 
 const outputTargets: Partial<Record<CanvasActionId, 'presentation' | 'table' | 'report'>> = {
@@ -434,10 +441,8 @@ const actionIcons: Record<CanvasActionId, React.ComponentType<{ size?: number }>
   'create-initiative': Rocket,
   // C3 — "Capture decision" mirrors the Decisions module icon family.
   'create-decision': Gavel,
-  // C3 — placeholder so Record<CanvasActionId,…> stays exhaustive; the actual
-  // "create-task" wiring lands in C4 (the chat-shell never exposes it yet, so
-  // the icon never renders). Sparkles is the existing platform task accent.
-  'create-task': Sparkles,
+  // C4.1 — Tasks bridge through TaskService.createTask.
+  'create-task': CheckSquare,
 };
 
 const toolbarGroupClass =
@@ -849,6 +854,8 @@ export function WorkCanvasDocumentPanel({
       ['canCreateInitiative', 'canvas.convert.initiative'],
       // C3 — new capability; backend permission key follows the same family.
       ['canCreateDecision', 'canvas.convert.decision'],
+      // C4.1
+      ['canCreateTask', 'canvas.convert.task'],
       ['canShare', 'canvas.share'],
     ];
 
@@ -1739,7 +1746,7 @@ export function WorkCanvasDocumentPanel({
 
   const runWorkspaceAction = async (
     actionId: CanvasActionId,
-    target: 'idea' | 'note' | 'initiative' | 'decision'
+    target: 'idea' | 'note' | 'initiative' | 'decision' | 'task'
   ) => {
     setActiveActionId(actionId);
     setStatusFeedback(`Saving Canvas to ${target}...`);
@@ -1763,7 +1770,9 @@ export function WorkCanvasDocumentPanel({
               ? `/initiatives`
               : target === 'decision'
                 ? `/decisions/${encodeURIComponent(linked.id)}`
-                : null;
+                : target === 'task'
+                  ? `/my-work?taskId=${encodeURIComponent(linked.id)}`
+                  : null;
       setStatusFeedback(
         targetPath
           ? `${linked.title} saved to ${linked.type}. [Open →](${targetPath})`

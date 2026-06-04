@@ -32,7 +32,7 @@ type DraftKind =
   | 'sheet'
   | 'deck';
 type ProposalStatus = 'proposed' | 'approved' | 'rejected';
-type WorkspaceTarget = 'idea' | 'note' | 'initiative' | 'decision';
+type WorkspaceTarget = 'idea' | 'note' | 'initiative' | 'decision' | 'task';
 
 // Proposal targets that approval can MATERIALIZE into a real entity. Targets
 // outside this set (project_brief, research_report, client_deliverable, task —
@@ -43,6 +43,10 @@ const MATERIALIZABLE_TARGETS: ReadonlySet<string> = new Set([
   'note',
   'initiative',
   'decision',
+  // C4.1 — Tasks bridge. createWorkspaceResource now has a 'task' branch that
+  // uses TaskService.createTask (same canonical path commitProposalToDomain uses),
+  // so approve/save-to-workspace produce a real tasks row instead of 422.
+  'task',
 ]);
 type OutputType = 'presentation' | 'table' | 'report';
 type ExportFormat = 'markdown' | 'csv' | 'json' | 'pdf' | 'docx' | 'xlsx' | 'pptx';
@@ -2211,6 +2215,35 @@ async function createWorkspaceResource(
     };
   }
 
+  if (target === 'task') {
+    // C4.1 — Tasks bridge. Uses the canonical TaskService.createTask path (the
+    // same one commitProposalToDomain('task') uses), so a "Send to Tasks" or an
+    // approved task proposal produces a real tasks row. Lazy-imported to keep
+    // the module's load surface tight.
+    const { TaskService } = await import('../services/TaskService.js');
+    const { getDatabase } = await import('../database/index.js');
+    const taskService = new TaskService(getDatabase() as any);
+    const task = await taskService.createTask(
+      {
+        projectId: draft.projectId || null,
+        title,
+        description: summary,
+        status: 'todo',
+        priority: 'medium',
+        assigneeId: undefined,
+        tags: ['work-canvas', 'ai'],
+      } as any,
+      userId
+    );
+    return {
+      type: 'task' as const,
+      id: task.id,
+      title: task.title,
+      url: `/my-work?taskId=${encodeURIComponent(task.id)}`,
+      readBack: { target, taskId: task.id, status: 'created' },
+    };
+  }
+
   const initiativeId = randomUUID();
   await insertDynamic(
     'initiatives',
@@ -3800,10 +3833,12 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
   // INSERT into decisions). This guard was the only thing keeping the chat-
   // shell from being able to send to it; ecosystem audit flagged it as a
   // 1-line fix.
-  if (!['idea', 'note', 'initiative', 'decision'].includes(target)) {
+  // C4.1 — `task` added: createWorkspaceResource now has a task branch using
+  // TaskService.createTask (canonical path).
+  if (!['idea', 'note', 'initiative', 'decision', 'task'].includes(target)) {
     return res
       .status(400)
-      .json({ error: 'target must be idea, note, initiative, or decision' });
+      .json({ error: 'target must be idea, note, initiative, decision, or task' });
   }
 
   try {
