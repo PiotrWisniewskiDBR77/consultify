@@ -15,9 +15,9 @@ Dopiero gdy moduł jest 100/100, przechodzimy do następnego. Nie otwieramy kole
 | Func # | Moduł funkcjonalny | Wiersz(e) w UI trackerze |
 |---|---|---|
 | 01 | Czat | UI 1 Czat/Teresa |
-| 02 | Moja Praca | UI 2 My Work + UI 4 Decyzje + UI 5 Assessment |
+| 02 | Moja Praca | UI 2 My Work + UI 4 Decyzje (8 tabów: Home/Radar, Ideas+4 narzędzia, Notebook, Inbox, Calendar, Tasks, Decisions, Manager — dekompozycja w `_MODULE_02_MYWORK_DECOMPOSITION.md`). **Assessment NIE należy do My Work** (jest pod Tools→moduł 04) |
 | 03 | Wywiad | UI 3 Wywiad |
-| 04 | Narzędzia | UI 6 Narzędzia |
+| 04 | Narzędzia | UI 6 Narzędzia + UI 5 Assessment (Assessment jest pod Tools menu) |
 | 05 | Inicjatywy | UI 7 Inicjatywy |
 | 06 | Realizacja | UI 8 Realizacja |
 | 07 | Rezultaty | UI 9 Rezultaty |
