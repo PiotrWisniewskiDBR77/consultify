@@ -822,14 +822,24 @@ export const useConversationStore = create<ConversationState>()(
             const existingActiveMessages = get().activeMessages.filter(
               (message) => message.conversationId === id
             );
-            const shouldKeepLocalMessages =
-              messages.length === 0 &&
-              existingActiveMessages.some(
-                (message) =>
-                  String(message.id || '').startsWith('local-') ||
-                  Date.now() - new Date(message.createdAt).getTime() < 30_000
-              );
-            const nextMessages = shouldKeepLocalMessages ? existingActiveMessages : messages;
+            // Preserve NOT-YET-PERSISTED optimistic messages (local-* ids) that the server
+            // snapshot doesn't include yet. Previously a fetch mid-send blindly replaced
+            // activeMessages with the server list, DROPPING the user's just-sent bubble
+            // whenever the conversation already had prior messages (server list non-empty).
+            // The store replaces a local-* id with the real id once the POST is acked, so any
+            // remaining local-* message is genuinely pending and must survive the merge.
+            const serverKeys = new Set(
+              messages.map(
+                (m: ConversationMessage) => `${m.role}|${String(m.content || '').trim()}`
+              )
+            );
+            const pendingLocal = existingActiveMessages.filter(
+              (m: ConversationMessage) =>
+                String(m.id || '').startsWith('local-') &&
+                !serverKeys.has(`${m.role}|${String(m.content || '').trim()}`)
+            );
+            const nextMessages =
+              pendingLocal.length > 0 ? [...messages, ...pendingLocal] : messages;
             _conversationMessagesCache[id] = nextMessages;
             set((state) => {
               const fromApiRaw = result?.language;
