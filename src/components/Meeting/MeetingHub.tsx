@@ -78,6 +78,10 @@ export const MeetingHub: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [notesTranscript, setNotesTranscript] = useState('');
+  const [generatingNotes, setGeneratingNotes] = useState(false);
+  const [generatedNote, setGeneratedNote] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<MeetingItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [operatorBrief, setOperatorBrief] = useState<any>(null);
@@ -524,6 +528,32 @@ export const MeetingHub: React.FC = () => {
     }
   };
 
+  const handleGenerateNotes = async () => {
+    if (!activeMeeting || !notesTranscript.trim()) return;
+    setGeneratingNotes(true);
+    setGeneratedNote(null);
+    try {
+      const response = await (Api as any).generateMeetingNotes?.(activeMeeting.id, {
+        transcript: notesTranscript.trim(),
+        language: isPolish ? 'pl' : 'en',
+      });
+      const note = response?.note;
+      if (!note) throw new Error('No notes returned');
+      setGeneratedNote(note);
+      // The route persisted decisions/follow-ups; refresh the meeting in the list.
+      const meeting = response?.meeting as MeetingItem | undefined;
+      if (meeting) {
+        setMeetings((prev) => prev.map((item) => (item.id === activeMeeting.id ? meeting : item)));
+      }
+      toast.success(t('meeting.notes.notifications.generated', 'AI notes generated'));
+    } catch (error) {
+      console.error('Failed to generate meeting notes:', error);
+      toast.error(t('meeting.notes.errors.generateFailed', 'Failed to generate notes'));
+    } finally {
+      setGeneratingNotes(false);
+    }
+  };
+
   const handleToggleFollowUpStatus = async (meetingId: string, followUpId: string) => {
     const meeting = meetings.find((item) => item.id === meetingId);
     const followUp = meeting?.followUps.find((item) => item.id === followUpId);
@@ -606,6 +636,11 @@ export const MeetingHub: React.FC = () => {
             onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
             onAddDecision={() => setShowDecisionModal(true)}
             onAddFollowUp={() => setShowFollowUpModal(true)}
+            onGenerateNotes={() => {
+              setGeneratedNote(null);
+              setNotesTranscript('');
+              setShowNotesModal(true);
+            }}
             onToggleFollowUpStatus={(followUpId) =>
               handleToggleFollowUpStatus(activeMeeting.id, followUpId)
             }
@@ -883,6 +918,129 @@ export const MeetingHub: React.FC = () => {
           </div>
         </div>
       ) : null}
+      {showNotesModal && activeMeeting ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white inline-flex items-center gap-2">
+                  <Sparkles size={16} className="text-[#A51C30]" />
+                  {isPolish ? 'Notatki AI ze spotkania' : 'AI Meeting Notes'}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {activeMeeting.title}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNotesModal(false)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="space-y-4 p-5">
+              {!generatedNote ? (
+                <Field
+                  label={isPolish ? 'Wklej transkrypcję spotkania' : 'Paste the meeting transcript'}
+                >
+                  <textarea
+                    className="w-full min-h-[180px] rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                    placeholder={
+                      isPolish
+                        ? 'Wklej tu transkrypcję — Teresa wyciągnie podsumowanie, decyzje i zadania...'
+                        : 'Paste the transcript — Teresa will extract a summary, decisions, and action items...'
+                    }
+                    value={notesTranscript}
+                    onChange={(e) => setNotesTranscript(e.target.value)}
+                  />
+                </Field>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Podsumowanie' : 'Summary'}
+                    </div>
+                    <p className="text-sm text-slate-700 dark:text-slate-200">
+                      {generatedNote.summary}
+                    </p>
+                  </div>
+                  {Array.isArray(generatedNote.keyPoints) && generatedNote.keyPoints.length > 0 && (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                        {isPolish ? 'Kluczowe punkty' : 'Key points'}
+                      </div>
+                      <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                        {generatedNote.keyPoints.map((kp: string, i: number) => (
+                          <li key={i}>{kp}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(generatedNote.decisions) && generatedNote.decisions.length > 0 && (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                        {isPolish ? 'Decyzje (zapisane)' : 'Decisions (saved)'}
+                      </div>
+                      <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                        {generatedNote.decisions.map((d: any, i: number) => (
+                          <li key={i}>{d?.decision || String(d)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(generatedNote.actionItems) &&
+                    generatedNote.actionItems.length > 0 && (
+                      <div>
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish
+                            ? 'Zadania (zapisane jako follow-up)'
+                            : 'Action items (saved as follow-ups)'}
+                        </div>
+                        <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                          {generatedNote.actionItems.map((a: any, i: number) => (
+                            <li key={i}>
+                              {a?.task || String(a)}
+                              {a?.owner ? (
+                                <span className="text-slate-400"> — {a.owner}</span>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+              <button
+                type="button"
+                onClick={() => setShowNotesModal(false)}
+                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+              >
+                {generatedNote ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
+              </button>
+              {!generatedNote && (
+                <button
+                  type="button"
+                  onClick={handleGenerateNotes}
+                  disabled={generatingNotes || !notesTranscript.trim()}
+                  className="h-9 px-4 rounded-full bg-[#A51C30] text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:bg-[#8a1828]"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {generatingNotes
+                    ? isPolish
+                      ? 'Generuję...'
+                      : 'Generating...'
+                    : isPolish
+                      ? 'Wygeneruj notatki'
+                      : 'Generate notes'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
       {deleteTarget ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
@@ -944,6 +1102,7 @@ const MeetingDetailView: React.FC<{
   onToggleStatus: () => void;
   onAddDecision: () => void;
   onAddFollowUp: () => void;
+  onGenerateNotes: () => void;
   onToggleFollowUpStatus: (followUpId: string) => void;
 }> = ({
   meeting,
@@ -956,6 +1115,7 @@ const MeetingDetailView: React.FC<{
   onToggleStatus,
   onAddDecision,
   onAddFollowUp,
+  onGenerateNotes,
   onToggleFollowUpStatus,
 }) => (
   <div className="p-4 lg:p-6">
@@ -1013,6 +1173,19 @@ const MeetingDetailView: React.FC<{
             className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
           >
             {isPolish ? 'Dodaj follow-up' : 'Add follow-up'}
+          </button>
+          <button
+            type="button"
+            onClick={onGenerateNotes}
+            className="h-9 px-4 rounded-full bg-[#A51C30] text-white text-sm font-medium inline-flex items-center gap-1.5 hover:bg-[#8a1828]"
+            title={
+              isPolish
+                ? 'Wygeneruj notatki AI z transkrypcji (Teresa)'
+                : 'Generate AI notes from transcript (Teresa)'
+            }
+          >
+            <Sparkles className="w-4 h-4" />
+            {isPolish ? 'Notatki AI' : 'AI Notes'}
           </button>
           <button
             type="button"

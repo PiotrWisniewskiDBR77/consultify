@@ -3209,6 +3209,21 @@ export const Api = {
     return handleResponse(res, 'Failed to add decision');
   },
 
+  // Module 13: turn a meeting transcript into structured AI notes (summary, key
+  // points, decisions, action items). Persists extracted decisions/action items
+  // as meeting decisions/follow-ups unless persist:false is passed.
+  generateMeetingNotes: async (
+    meetingId: string,
+    data: { transcript: string; language?: string; persist?: boolean }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/generate-notes`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data || {}),
+    });
+    return handleResponse(res, 'Failed to generate meeting notes');
+  },
+
   updateMeetingFollowUpStatus: async (
     meetingId: string,
     followUpId: string,
