@@ -9494,7 +9494,9 @@
     "auto": "Auto",
     "documents": "Documents",
     "tables": "Tables",
-    "presentations": "Presentations"
+    "presentations": "Presentations",
+    "groupLabel": "Output",
+    "autoTooltip": "Auto: Teresa routes the output to a Document/Table/Presentation when relevant. This is NOT model selection."
   },
   "v8": {
     "artifactRun": {

@@ -57,10 +57,25 @@ export const OutputToolSelector: React.FC = () => {
 
   return (
     <div className="flex items-center gap-1 mb-2">
+      {/* Leading group label so the pills read as OUTPUT routing, not model
+          selection — the bare "Auto" pill was being misread as "AI picks the
+          best model" (composer audit D1). */}
+      <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 select-none">
+        {t('chatOutputTool.groupLabel', isPolish ? 'Wynik' : 'Output')}
+      </span>
       {TOOLS.map((tool) => {
         const Icon = tool.icon;
         const isActive = chatOutputTool === tool.id;
         const label = t(tool.labelKey, isPolish ? tool.fallbackPl : tool.fallback);
+        const title =
+          tool.id === 'auto'
+            ? t(
+                'chatOutputTool.autoTooltip',
+                isPolish
+                  ? 'Auto: Teresa sama wybiera format wyniku (Dokument/Tabela/Prezentacja), gdy pasuje. To NIE jest wybór modelu.'
+                  : 'Auto: Teresa routes the output to a Document/Table/Presentation when relevant. This is NOT model selection.'
+              )
+            : label;
         return (
           <button
             key={tool.id}
@@ -70,7 +85,7 @@ export const OutputToolSelector: React.FC = () => {
                 ? 'bg-brand/15 text-brand ring-1 ring-brand/30 dark:bg-brand/20'
                 : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
-            title={label}
+            title={title}
           >
             <Icon size={14} />
             <span className="hidden sm:inline">{label}</span>

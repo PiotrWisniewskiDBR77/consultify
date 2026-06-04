@@ -10196,7 +10196,9 @@
     "auto": "Auto",
     "documents": "Dokumenty",
     "tables": "Tabele",
-    "presentations": "Prezentacje"
+    "presentations": "Prezentacje",
+    "groupLabel": "Wynik",
+    "autoTooltip": "Auto: Teresa sama wybiera format wyniku (Dokument/Tabela/Prezentacja), gdy pasuje. To NIE jest wybór modelu."
   },
   "vector": {
     "hero": {

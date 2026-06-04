@@ -34,7 +34,8 @@ const PERSONAS: Array<{
     | 'idea_maker'
     | 'competitive_analyst'
     | 'risk_challenger'
-    | 'executive_editor';
+    | 'executive_editor'
+    | 'market_researcher';
 }> = [
   {
     id: 'consultant',
@@ -88,6 +89,7 @@ const PERSONAS: Array<{
     fallbackLabel: 'Market Researcher',
     descKey: 'chat.coThinker.personas.marketResearcherDesc',
     fallbackDesc: 'Prioritizes web-backed market signals and external context.',
+    mapToCoThinkerMode: 'market_researcher',
   },
 ];
 
@@ -177,10 +179,12 @@ export const CoThinkerMenu: React.FC<{
     }
 
     if (persona === 'market_researcher') {
+      // C6: Market Researcher now uses the same coThinkerMode system-prompt
+      // mechanism as the other 5 personas (symmetric), AND keeps the live-web
+      // flags as a secondary effect so answers stay grounded in real data.
       setAIConfig({
-        coThinkerMode: null,
+        coThinkerMode: 'market_researcher',
         marketResearch: true,
-        // research persona benefits from web search by default
         webSearch: true,
       } as any);
       return;
