@@ -76,6 +76,10 @@ export interface ChatProject {
   conversationCount: number;
   /** Per-project brief injected into Teresa's system prompt (composer #5). */
   customInstructions?: string;
+  /** F2: team-project visibility ('org' whole-org | 'private' invited-only). */
+  visibility?: 'org' | 'private';
+  /** F2: the current user's role on this project, if a team project. */
+  myRole?: 'owner' | 'editor' | 'viewer' | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -113,6 +117,7 @@ interface ChatProjectState {
     color?: string;
     icon?: string;
     scope?: ChatProjectScope;
+    visibility?: 'org' | 'private';
   }) => Promise<ChatProject>;
   updateProject: (
     id: string,
@@ -363,6 +368,8 @@ function mapApiProject(api: any): ChatProject {
     scope: api.scope || 'personal',
     conversationCount: api.conversation_count || api.conversationCount || 0,
     customInstructions: api.custom_instructions ?? api.customInstructions ?? undefined,
+    visibility: api.visibility ?? undefined,
+    myRole: api.my_role ?? api.myRole ?? undefined,
     createdAt: new Date(api.created_at || api.createdAt),
     updatedAt: new Date(api.updated_at || api.updatedAt),
   };

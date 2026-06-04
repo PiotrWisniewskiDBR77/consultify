@@ -51,6 +51,7 @@ import { LoadingState } from '../ui/primitives';
 import { CONVERSATION_DND_TYPE, ConversationItem } from './ConversationItem';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
+import { ProjectMembersModal } from './ProjectMembersModal';
 
 interface ChatHistorySidebarProps {
   projectId?: string;
@@ -72,6 +73,8 @@ interface FolderSectionProps {
   onDeleteProject: (id: string) => void;
   /** Rename / recolor a folder (F1 — surface the existing PATCH). */
   onUpdateProject?: (id: string, updates: { name?: string; color?: string }) => void;
+  /** F2 — manage members of a team folder (only passed for the team section). */
+  onManageMembers?: (project: ChatProject) => void;
   onCreateProject: (name: string) => void;
   createButtonLabel: string;
   emptyLabel: string;
@@ -112,6 +115,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
   onSelectConversation,
   onDeleteProject,
   onUpdateProject,
+  onManageMembers,
   onCreateProject,
   createButtonLabel,
   emptyLabel,
@@ -360,6 +364,19 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                 </div>
                               </div>
                             )}
+                            {onManageMembers && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onManageMembers(project);
+                                  setMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+                              >
+                                <Users size={13} />
+                                {t('aiChat.members.manage', 'Members & sharing')}
+                              </button>
+                            )}
                             <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
                             <button
                               onClick={(e) => {
@@ -474,6 +491,9 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+
+  // Team-project members modal (F2)
+  const [membersModalProject, setMembersModalProject] = useState<ChatProject | null>(null);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -1007,6 +1027,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     onSelectConversation={handleSelectConversation}
                     onDeleteProject={handleDeleteProject}
                     onUpdateProject={handleUpdateProject}
+                    onManageMembers={setMembersModalProject}
                     onCreateProject={handleCreateTeamProject}
                     createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
                     emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
@@ -1079,6 +1100,16 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
             </button>
           </div>
         </div>
+      )}
+
+      {/* F2: team-project members & sharing */}
+      {membersModalProject && (
+        <ProjectMembersModal
+          isOpen={!!membersModalProject}
+          onClose={() => setMembersModalProject(null)}
+          projectId={membersModalProject.id}
+          projectName={membersModalProject.name}
+        />
       )}
     </>
   );

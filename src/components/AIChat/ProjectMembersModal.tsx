@@ -1,0 +1,296 @@
+/**
+ * ProjectMembersModal (F2)
+ *
+ * Manage a team project's sharing: visibility (org-wide vs invited-only),
+ * members and their roles (owner / editor / viewer). Mirrors Claude/ChatGPT
+ * team-project sharing. Role gates are enforced server-side; the UI only
+ * exposes what the current user (myRole) is allowed to do.
+ */
+import { Crown, Loader2, Shield, Trash2, UserPlus, X } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { useChatProjectStore } from '../../store/useChatProjectStore';
+
+type Role = 'owner' | 'editor' | 'viewer';
+interface Member {
+  user_id: string;
+  role: Role;
+  name?: string;
+  email?: string;
+}
+
+interface ProjectMembersModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  projectId: string;
+  projectName: string;
+}
+
+export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
+  isOpen,
+  onClose,
+  projectId,
+  projectName,
+}) => {
+  const { t } = useTranslation();
+  const { updateProject, fetchProjects, projects } = useChatProjectStore();
+  const project = projects.find((p) => p.id === projectId);
+
+  const [members, setMembers] = useState<Member[]>([]);
+  const [myRole, setMyRole] = useState<Role | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<Role>('viewer');
+  const [busy, setBusy] = useState(false);
+  const [visibility, setVisibility] = useState<'org' | 'private'>(project?.visibility || 'org');
+
+  const isOwner = myRole === 'owner';
+  const canManage = myRole === 'owner' || myRole === 'editor';
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res: any = await Api.getProjectMembers(projectId);
+      setMembers(Array.isArray(res?.members) ? res.members : []);
+      setMyRole(res?.myRole ?? null);
+    } catch {
+      /* surfaced via empty state */
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setInviteEmail('');
+    setInviteRole('viewer');
+    setVisibility(project?.visibility || 'org');
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, projectId]);
+
+  const handleSetVisibility = async (v: 'org' | 'private') => {
+    if (!isOwner || v === visibility) return;
+    setVisibility(v);
+    try {
+      await updateProject(projectId, { visibility: v } as any);
+      await fetchProjects();
+    } catch (e: any) {
+      setVisibility((prev) => (prev === v ? project?.visibility || 'org' : prev));
+      toast.error(
+        e?.message || t('aiChat.members.visibilityFailed', 'Could not change visibility')
+      );
+    }
+  };
+
+  const handleInvite = async () => {
+    const email = inviteEmail.trim();
+    if (!email) return;
+    setBusy(true);
+    try {
+      await Api.addProjectMember(projectId, { email, role: inviteRole });
+      setInviteEmail('');
+      await load();
+      void fetchProjects();
+      toast.success(t('aiChat.members.added', 'Member added'));
+    } catch (e: any) {
+      toast.error(e?.message || t('aiChat.members.addFailed', 'Could not add member'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRole = async (userId: string, role: Role) => {
+    try {
+      await Api.updateProjectMemberRole(projectId, userId, role);
+      setMembers((prev) => prev.map((m) => (m.user_id === userId ? { ...m, role } : m)));
+    } catch (e: any) {
+      toast.error(e?.message || t('aiChat.members.roleFailed', 'Could not change role'));
+    }
+  };
+
+  const handleRemove = async (userId: string) => {
+    try {
+      await Api.removeProjectMember(projectId, userId);
+      setMembers((prev) => prev.filter((m) => m.user_id !== userId));
+      void fetchProjects();
+    } catch (e: any) {
+      toast.error(e?.message || t('aiChat.members.removeFailed', 'Could not remove member'));
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const roleIcon = (r: Role) =>
+    r === 'owner' ? <Crown size={12} /> : r === 'editor' ? <Shield size={12} /> : null;
+
+  const modal = (
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="bg-white dark:bg-navy-900 rounded-2xl w-[460px] max-w-[94vw] shadow-2xl border border-slate-200 dark:border-navy-700">
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-navy-900 dark:text-white truncate">
+              {t('aiChat.members.title', 'Share project')}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{projectName}</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-navy-800"
+            title={t('common.close', 'Close')}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Visibility */}
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1.5">
+              {t('aiChat.members.visibility', 'Visibility')}
+            </div>
+            <div className="flex gap-2">
+              {(['org', 'private'] as const).map((v) => (
+                <button
+                  key={v}
+                  disabled={!isOwner}
+                  onClick={() => void handleSetVisibility(v)}
+                  className={`flex-1 rounded-xl border px-3 py-2 text-left transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                    visibility === v
+                      ? 'border-primary-300 bg-primary-50 dark:border-primary-800 dark:bg-primary-900/20'
+                      : 'border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800'
+                  }`}
+                >
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                    {v === 'org'
+                      ? t('aiChat.members.visOrg', 'Whole organization')
+                      : t('aiChat.members.visPrivate', 'Invited members only')}
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {v === 'org'
+                      ? t('aiChat.members.visOrgDesc', 'Everyone in your org can see it')
+                      : t('aiChat.members.visPrivateDesc', 'Only people you add below')}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Invite */}
+          {canManage && (
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1.5">
+                {t('aiChat.members.invite', 'Add member')}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleInvite();
+                  }}
+                  placeholder={t('aiChat.members.emailPlaceholder', 'name@company.com')}
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-sm outline-none focus:border-primary-500"
+                />
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as Role)}
+                  className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-2 text-xs"
+                >
+                  <option value="viewer">{t('aiChat.members.viewer', 'Viewer')}</option>
+                  <option value="editor">{t('aiChat.members.editor', 'Editor')}</option>
+                  <option value="owner">{t('aiChat.members.owner', 'Owner')}</option>
+                </select>
+                <button
+                  onClick={() => void handleInvite()}
+                  disabled={busy || !inviteEmail.trim()}
+                  className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white px-3 py-2 text-xs font-semibold"
+                >
+                  <UserPlus size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Members */}
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1.5">
+              {t('aiChat.members.list', 'Members')} ({members.length})
+            </div>
+            {loading ? (
+              <div className="py-6 flex justify-center">
+                <Loader2 size={18} className="animate-spin text-slate-400" />
+              </div>
+            ) : members.length === 0 ? (
+              <div className="py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                {t('aiChat.members.empty', 'No members yet')}
+              </div>
+            ) : (
+              <div className="max-h-64 overflow-y-auto space-y-1">
+                {members.map((m) => (
+                  <div
+                    key={m.user_id}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-navy-800"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-medium text-slate-800 dark:text-slate-100 truncate flex items-center gap-1">
+                        {roleIcon(m.role)}
+                        {m.name || m.email || m.user_id}
+                      </div>
+                      {m.email && m.name && (
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                          {m.email}
+                        </div>
+                      )}
+                    </div>
+                    {isOwner ? (
+                      <select
+                        value={m.role}
+                        onChange={(e) => void handleRole(m.user_id, e.target.value as Role)}
+                        className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-1.5 py-1 text-[11px]"
+                      >
+                        <option value="viewer">{t('aiChat.members.viewer', 'Viewer')}</option>
+                        <option value="editor">{t('aiChat.members.editor', 'Editor')}</option>
+                        <option value="owner">{t('aiChat.members.owner', 'Owner')}</option>
+                      </select>
+                    ) : (
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">
+                        {m.role}
+                      </span>
+                    )}
+                    {isOwner && (
+                      <button
+                        onClick={() => void handleRemove(m.user_id)}
+                        className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                        title={t('aiChat.members.remove', 'Remove')}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (typeof document === 'undefined' || !document.body) return modal;
+  return createPortal(modal, document.body);
+};
+
+export default ProjectMembersModal;

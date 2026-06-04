@@ -11656,6 +11656,7 @@ export const Api = {
     color?: string;
     icon?: string;
     scope?: 'personal' | 'team';
+    visibility?: 'org' | 'private';
   }) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
       method: 'POST',
@@ -11672,6 +11673,7 @@ export const Api = {
       color?: string;
       icon?: string;
       customInstructions?: string | null;
+      visibility?: 'org' | 'private';
     }
   ) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
@@ -11680,6 +11682,49 @@ export const Api = {
       body: JSON.stringify(data),
     });
     return handleResponse(res, 'Failed to update chat folder');
+  },
+  // F2: team-project membership (RBAC).
+  getProjectMembers: async (projectId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/members`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load project members');
+  },
+  addProjectMember: async (
+    projectId: string,
+    data: { email?: string; memberUserId?: string; role?: 'owner' | 'editor' | 'viewer' }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/members`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to add member');
+  },
+  updateProjectMemberRole: async (
+    projectId: string,
+    memberUserId: string,
+    role: 'owner' | 'editor' | 'viewer'
+  ) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/chat-projects/${projectId}/members/${memberUserId}`,
+      {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ role }),
+      }
+    );
+    return handleResponse(res, 'Failed to update member role');
+  },
+  removeProjectMember: async (projectId: string, memberUserId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/chat-projects/${projectId}/members/${memberUserId}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to remove member');
   },
   deleteChatProject: async (id: string) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {

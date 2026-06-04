@@ -6533,6 +6533,28 @@
     "bulk": {
       "select": "Select",
       "selected": "{{count}} selected"
+    },
+    "members": {
+      "manage": "Members & sharing",
+      "title": "Share project",
+      "visibility": "Visibility",
+      "visOrg": "Whole organization",
+      "visOrgDesc": "Everyone in your org can see it",
+      "visPrivate": "Invited members only",
+      "visPrivateDesc": "Only people you add below",
+      "invite": "Add member",
+      "emailPlaceholder": "name@company.com",
+      "list": "Members",
+      "empty": "No members yet",
+      "viewer": "Viewer",
+      "editor": "Editor",
+      "owner": "Owner",
+      "remove": "Remove",
+      "added": "Member added",
+      "addFailed": "Could not add member",
+      "roleFailed": "Could not change role",
+      "removeFailed": "Could not remove member",
+      "visibilityFailed": "Could not change visibility"
     }
   },
   "agentAudit": {

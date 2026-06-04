@@ -7084,6 +7084,28 @@
     "bulk": {
       "select": "Zaznacz",
       "selected": "Zaznaczono: {{count}}"
+    },
+    "members": {
+      "manage": "Członkowie i udostępnianie",
+      "title": "Udostępnij projekt",
+      "visibility": "Widoczność",
+      "visOrg": "Cała organizacja",
+      "visOrgDesc": "Wszyscy w organizacji to widzą",
+      "visPrivate": "Tylko zaproszeni",
+      "visPrivateDesc": "Tylko osoby dodane poniżej",
+      "invite": "Dodaj członka",
+      "emailPlaceholder": "imie@firma.com",
+      "list": "Członkowie",
+      "empty": "Brak członków",
+      "viewer": "Podgląd",
+      "editor": "Edytor",
+      "owner": "Właściciel",
+      "remove": "Usuń",
+      "added": "Dodano członka",
+      "addFailed": "Nie udało się dodać",
+      "roleFailed": "Nie udało się zmienić roli",
+      "removeFailed": "Nie udało się usunąć",
+      "visibilityFailed": "Nie udało się zmienić widoczności"
     }
   },
   "agentAudit": {
