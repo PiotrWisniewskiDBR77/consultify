@@ -6529,6 +6529,10 @@
       "hint": "Teresa follows this in every chat in this project (tone, context, goals).",
       "placeholder": "e.g. We are a B2B SaaS in fintech. Be concise, cite sources, prefer EU regulations…",
       "saveFailed": "Could not save instructions."
+    },
+    "bulk": {
+      "select": "Select",
+      "selected": "{{count}} selected"
     }
   },
   "agentAudit": {

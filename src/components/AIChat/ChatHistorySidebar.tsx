@@ -467,7 +467,45 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     setSearchQuery,
     toggleShowArchived,
     clearActiveChat,
+    bulkOperation,
   } = useConversationStore();
+
+  // Bulk-select (F1)
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const exitSelectMode = useCallback(() => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  const runBulk = useCallback(
+    async (action: 'archive' | 'delete') => {
+      const ids = Array.from(selectedIds);
+      if (ids.length === 0) return;
+      if (action === 'delete' && !window.confirm(`Delete ${ids.length} conversation(s)?`)) return;
+      setBulkBusy(true);
+      try {
+        await bulkOperation(ids, action);
+        exitSelectMode();
+      } catch (err) {
+        console.error('[ChatHistorySidebar] Bulk operation failed:', err);
+      } finally {
+        setBulkBusy(false);
+      }
+    },
+    [selectedIds, bulkOperation, exitSelectMode]
+  );
 
   // Fully unmount when closed to avoid any invisible click-blocking strip on some layouts/breakpoints.
   const [shouldRenderSidebar, setShouldRenderSidebar] = useState(isSidebarOpen);
@@ -785,6 +823,50 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
             >
               {t('aiChat.newChat', 'Nowy czat')}
             </button>
+
+            {/* Bulk-select toolbar (F1) */}
+            {!selectMode ? (
+              <button
+                onClick={() => setSelectMode(true)}
+                className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+              >
+                {t('aiChat.bulk.select', 'Select')}
+              </button>
+            ) : (
+              <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 px-2 py-1.5">
+                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">
+                  {String(
+                    t('aiChat.bulk.selected', '{{count}} selected', {
+                      count: selectedIds.size,
+                    } as any)
+                  )}
+                </span>
+                <div className="flex-1" />
+                <button
+                  onClick={() => void runBulk('archive')}
+                  disabled={bulkBusy || selectedIds.size === 0}
+                  title={t('aiChat.actions.archive', 'Archive')}
+                  className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 disabled:opacity-40"
+                >
+                  <Archive size={14} />
+                </button>
+                <button
+                  onClick={() => void runBulk('delete')}
+                  disabled={bulkBusy || selectedIds.size === 0}
+                  title={t('common.delete', 'Delete')}
+                  className="p-1 rounded text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 disabled:opacity-40"
+                >
+                  <Trash2 size={14} />
+                </button>
+                <button
+                  onClick={exitSelectMode}
+                  title={t('common.cancel', 'Cancel')}
+                  className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Search — compact */}
@@ -832,6 +914,9 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     groups={folderGroups}
                     activeId={activeConversationId}
                     onSelect={handleSelectConversation}
+                    selectMode={selectMode}
+                    selectedIds={selectedIds}
+                    onToggleSelect={toggleSelect}
                   />
                 </div>
               )
@@ -877,6 +962,9 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     groups={displayGroups}
                     activeId={activeConversationId}
                     onSelect={handleSelectConversation}
+                    selectMode={selectMode}
+                    selectedIds={selectedIds}
+                    onToggleSelect={toggleSelect}
                   />
                 </div>
               )
@@ -961,6 +1049,9 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                       groups={unassignedGroups}
                       activeId={activeConversationId}
                       onSelect={handleSelectConversation}
+                      selectMode={selectMode}
+                      selectedIds={selectedIds}
+                      onToggleSelect={toggleSelect}
                     />
                   )}
                 </div>

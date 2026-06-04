@@ -23,6 +23,10 @@ interface ConversationListProps {
   groups: Record<string, any[]>;
   activeId?: string | null;
   onSelect: (id: string) => void;
+  /** Bulk-select mode (F1) — forwarded to each ConversationItem. */
+  selectMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 interface GroupConfig {
@@ -35,6 +39,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   groups,
   activeId,
   onSelect,
+  selectMode = false,
+  selectedIds,
+  onToggleSelect,
 }) => {
   const { t } = useTranslation();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -137,6 +144,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                       conversation={conv}
                       isActive={activeId === conv.id}
                       onSelect={onSelect}
+                      selectMode={selectMode}
+                      selected={!!selectedIds?.has(conv.id)}
+                      onToggleSelect={onToggleSelect}
                     />
                   ))}
                 </div>

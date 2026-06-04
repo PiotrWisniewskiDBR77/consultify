@@ -16,6 +16,10 @@ interface ConversationItemProps {
   onSelect: (id: string) => void;
   /** Compact mode for nested-in-folder display */
   compact?: boolean;
+  /** Bulk-select mode (F1): show a checkbox; clicking toggles selection. */
+  selectMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 // Entity type -> icon, color, and label mappings
@@ -59,6 +63,9 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   conversation,
   isActive,
   onSelect,
+  selectMode = false,
+  selected = false,
+  onToggleSelect,
 }) => {
   const entityType = useMemo(() => getConversationEntityType(conversation), [conversation]);
   const { renameConversation } = useConversationStore();
@@ -137,19 +144,35 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 
   return (
     <div
-      draggable={!isRenaming}
+      draggable={!isRenaming && !selectMode}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onClick={() => !isRenaming && onSelect(conversation.id)}
+      onClick={() => {
+        if (isRenaming) return;
+        if (selectMode) onToggleSelect?.(conversation.id);
+        else onSelect(conversation.id);
+      }}
       className={`
         group relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all
         ${
-          isActive
-            ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-200'
-            : 'hover:bg-slate-100/70 dark:hover:bg-navy-800/70 text-slate-600 dark:text-slate-400'
+          selectMode && selected
+            ? 'bg-primary-500/15 dark:bg-primary-500/20 ring-1 ring-primary-400/40'
+            : isActive
+              ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-200'
+              : 'hover:bg-slate-100/70 dark:hover:bg-navy-800/70 text-slate-600 dark:text-slate-400'
         }
       `}
     >
+      {selectMode && (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggleSelect?.(conversation.id)}
+          onClick={(e) => e.stopPropagation()}
+          className="shrink-0 h-3.5 w-3.5 accent-primary-600 cursor-pointer"
+          aria-label="Select conversation"
+        />
+      )}
       <IconComponent size={14} className={`shrink-0 ${iconColor}`} />
 
       {isRenaming ? (

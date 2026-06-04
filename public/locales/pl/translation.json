@@ -7080,6 +7080,10 @@
       "hint": "Teresa stosuje to w każdej rozmowie w tym projekcie (ton, kontekst, cele).",
       "placeholder": "np. Jesteśmy B2B SaaS w fintech. Bądź zwięzła, podawaj źródła, preferuj regulacje UE…",
       "saveFailed": "Nie udało się zapisać instrukcji."
+    },
+    "bulk": {
+      "select": "Zaznacz",
+      "selected": "Zaznaczono: {{count}}"
     }
   },
   "agentAudit": {
