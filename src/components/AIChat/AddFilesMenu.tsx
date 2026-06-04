@@ -326,20 +326,17 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className="absolute left-0 top-full mt-2 z-50 w-[250px] py-1.5
+          className="absolute left-0 bottom-full mb-2 z-50 w-[250px] py-1.5
             bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
-            animate-in fade-in-0 slide-in-from-top-2 duration-150"
+            animate-in fade-in-0 slide-in-from-bottom-2 duration-150"
         >
           {/* Upload file */}
           <MenuItem
             onClick={() => fileInputRef.current?.click()}
             icon={<Upload size={15} className="text-slate-500 dark:text-slate-400" />}
             label={t('aiChat.menu.uploadFile', 'Upload file')}
-            description={t('aiChat.menu.supportedLocalTypes', 'Supported: {{types}}', {
-              types: SUPPORTED_CHAT_ATTACHMENT_LABEL,
-            })}
           />
 
           {/* Add URL */}
@@ -351,7 +348,6 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
               }}
               icon={<Link2 size={15} className="text-slate-500 dark:text-slate-400" />}
               label={t('aiChat.menu.addLink', 'Add link')}
-              description={t('aiChat.menu.addLinkHint', 'Paste a URL to read and cite')}
             />
           )}
 
@@ -370,21 +366,11 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
           ) : (
             <>
               <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
-              <div className="px-3.5 py-2">
-                <p className="text-[12px] leading-5 text-slate-500 dark:text-slate-400">
-                  {t(
-                    'aiChat.menu.cloudSetupHint',
-                    'Cloud files are available only from sources already connected in Integrations.'
-                  )}
-                </p>
-                <button
-                  type="button"
-                  onClick={openIntegrationsSettings}
-                  className="mt-2 text-[12px] font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-                >
-                  {t('aiChat.menu.manageIntegrations', 'Manage cloud sources')}
-                </button>
-              </div>
+              <MenuItem
+                onClick={openIntegrationsSettings}
+                icon={<Link2 size={15} className="text-slate-500 dark:text-slate-400" />}
+                label={t('aiChat.menu.manageIntegrations', 'Manage cloud sources')}
+              />
             </>
           )}
 

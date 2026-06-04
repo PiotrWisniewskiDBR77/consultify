@@ -276,19 +276,14 @@ export const CoThinkerMenu: React.FC<{
                   size={16}
                   className={`shrink-0 ${isActive ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'}`}
                 />
-                <span className="flex-1 min-w-0">
-                  <span
-                    className={`block text-[13px] ${
-                      isActive
-                        ? 'text-primary-700 dark:text-primary-300 font-medium'
-                        : 'text-slate-700 dark:text-slate-200'
-                    }`}
-                  >
-                    {label}
-                  </span>
-                  <span className="block text-[11px] leading-snug text-slate-500 dark:text-slate-400 mt-0.5">
-                    {t(p.descKey, p.fallbackDesc)}
-                  </span>
+                <span
+                  className={`flex-1 min-w-0 text-[13px] ${
+                    isActive
+                      ? 'text-primary-700 dark:text-primary-300 font-medium'
+                      : 'text-slate-700 dark:text-slate-200'
+                  }`}
+                >
+                  {label}
                 </span>
                 {isActive && <Check size={16} className="shrink-0 text-primary-500" />}
               </button>
