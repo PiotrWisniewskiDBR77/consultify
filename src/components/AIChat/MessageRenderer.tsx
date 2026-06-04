@@ -1721,7 +1721,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               </button>
               <button
                 onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
-                className="p-1 rounded-md text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                 title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
                 aria-label={t('myWork.ideas.saveAsIdea', 'Save as idea')}
               >
@@ -1731,8 +1731,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 onClick={() => setShowSourcesDetails((v) => !v)}
                 className={`p-1 rounded-md transition-colors ${
                   showSourcesDetails
-                    ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/25'
-                    : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/25'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
                 }`}
                 title={t('chat.sources.details', 'Sources details')}
                 aria-label={t('chat.sources.details', 'Sources details')}
