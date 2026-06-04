@@ -180,7 +180,7 @@ export const ImplementationIdeasSection: React.FC<ImplementationIdeasSectionProp
                 <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                   <Lightbulb
                     size={32}
-                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish ? 'Brak pomysłów' : 'No ideas yet'}

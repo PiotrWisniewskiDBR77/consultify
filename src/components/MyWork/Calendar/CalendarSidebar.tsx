@@ -167,10 +167,10 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                 disabled={!isAvailable}
                 className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
                   !isAvailable
-                    ? 'cursor-not-allowed text-slate-600 dark:text-slate-600 opacity-70'
+                    ? 'cursor-not-allowed text-slate-600 dark:text-slate-400 opacity-70'
                     : active
                       ? 'text-slate-800 dark:text-white'
-                      : 'text-slate-600 dark:text-slate-600 line-through'
+                      : 'text-slate-600 dark:text-slate-400 line-through'
                 } hover:bg-slate-100 dark:hover:bg-navy-800`}
               >
                 <span

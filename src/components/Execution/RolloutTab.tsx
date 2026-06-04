@@ -424,7 +424,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           />
           {kpis.length === 0 ? (
             <EmptyBox
-              icon={<Target className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
+              icon={<Target className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
               message={t(
                 'execution.rollout.kpi.empty',
                 'No KPIs tracked yet. Add your first KPI to start monitoring rollout performance.'
@@ -541,7 +541,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           />
           {risks.length === 0 ? (
             <EmptyBox
-              icon={<AlertOctagon className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
+              icon={<AlertOctagon className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
               message={t('execution.rollout.risks.empty', 'No risks logged.')}
             />
           ) : (
@@ -625,7 +625,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           />
           {changes.length === 0 ? (
             <EmptyBox
-              icon={<Sparkles className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
+              icon={<Sparkles className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
               message={t('execution.rollout.change.empty', 'No change requests logged.')}
             />
           ) : (
@@ -698,7 +698,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           />
           {closures.length === 0 ? (
             <EmptyBox
-              icon={<CheckSquare className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
+              icon={<CheckSquare className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
               message={t('execution.rollout.closure.empty', 'No closure items yet.')}
             />
           ) : (
@@ -888,7 +888,7 @@ const RolloutPlanView: React.FC<{
       />
       {initiatives.length === 0 ? (
         <EmptyBox
-          icon={<ClipboardList className="w-8 h-8 text-slate-600 dark:text-slate-600" />}
+          icon={<ClipboardList className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
           message={t('execution.rollout.plan.empty', 'No initiatives scheduled for rollout yet.')}
         />
       ) : (

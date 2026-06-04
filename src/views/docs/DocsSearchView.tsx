@@ -91,7 +91,7 @@ export const DocsSearchView: React.FC = () => {
           ))
         ) : !query ? (
           <div className="text-center py-12">
-            <Search size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
+            <Search size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {t('docs.search.emptyPromptTitle', 'Enter a search query')}
             </h3>
@@ -101,7 +101,7 @@ export const DocsSearchView: React.FC = () => {
           </div>
         ) : results?.length === 0 ? (
           <div className="text-center py-12">
-            <Book size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
+            <Book size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {t('docs.search.noResultsTitle', 'No results found')}
             </h3>

@@ -741,7 +741,7 @@ export const Sidebar: React.FC = () => {
               {isLocked && <Lock size={12} className="text-slate-600 dark:text-slate-500" />}
               {hasSubItems && (
                 <span
-                  className={`text-slate-600 dark:text-slate-600 transition-transform ${activeFloating?.id === item.id ? 'translate-x-1' : ''}`}
+                  className={`text-slate-600 dark:text-slate-400 transition-transform ${activeFloating?.id === item.id ? 'translate-x-1' : ''}`}
                 >
                   <div className="rtl:rotate-180">
                     <ChevronRight size={14} />

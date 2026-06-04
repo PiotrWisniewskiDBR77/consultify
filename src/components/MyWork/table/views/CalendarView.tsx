@@ -333,7 +333,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         ? 'text-primary-600 dark:text-primary-400'
                         : cell.isCurrentMonth
                           ? 'text-slate-500 dark:text-slate-400'
-                          : 'text-slate-600 dark:text-slate-600'
+                          : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     {cell.day}

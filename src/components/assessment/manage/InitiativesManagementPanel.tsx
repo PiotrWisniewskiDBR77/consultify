@@ -577,7 +577,7 @@ const InitiativeRow: FC<{
               <TrendingUp size={12} className="text-emerald-500" />
               <span className="text-slate-600 dark:text-slate-400">{initiative.impact}</span>
             </div>
-            <span className="text-slate-700 dark:text-slate-600">/</span>
+            <span className="text-slate-700 dark:text-slate-400">/</span>
             <div className="flex items-center gap-1 text-xs">
               <Target size={12} className="text-blue-500" />
               <span className="text-slate-600 dark:text-slate-400">{initiative.effort}</span>

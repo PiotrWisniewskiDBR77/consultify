@@ -137,7 +137,7 @@ export const DocsArticleView: React.FC = () => {
   if (error || !article) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <Book size={64} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
+        <Book size={64} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
         <h1 className="text-2xl font-bold mb-2">
           {t('docs.article.notFoundTitle', 'Article Not Found')}
         </h1>

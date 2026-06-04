@@ -184,7 +184,7 @@ export const ShareAnalyticsPanel: React.FC<ShareAnalyticsPanelProps> = ({
             {/* No data */}
             {data.summary.total_views === 0 && (
               <div className="flex flex-col items-center justify-center py-6 text-center">
-                <Eye size={28} className="text-slate-600 dark:text-slate-600 mb-2" />
+                <Eye size={28} className="text-slate-600 dark:text-slate-400 mb-2" />
                 <p className="text-xs text-slate-600">
                   {t(
                     'presentations.analytics.noViews',

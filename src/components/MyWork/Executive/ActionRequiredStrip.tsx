@@ -261,7 +261,7 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
                 </span>
               )}
               {criticalCount > 0 && highCount > 0 && (
-                <span className="text-slate-600 dark:text-slate-600"> · </span>
+                <span className="text-slate-600 dark:text-slate-400"> · </span>
               )}
               {highCount > 0 && (
                 <span className="text-amber-600 dark:text-amber-400 font-medium">

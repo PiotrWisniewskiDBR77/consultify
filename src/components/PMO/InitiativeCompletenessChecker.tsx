@@ -295,7 +295,7 @@ export const InitiativeCompletenessChecker: React.FC<InitiativeCompletenessCheck
                     key={field.field}
                     className="flex items-center gap-2 px-2 py-1 bg-slate-50 dark:bg-navy-800/50 rounded text-xs text-slate-500 dark:text-slate-400"
                   >
-                    <Circle size={10} className="text-slate-600 dark:text-slate-600" />
+                    <Circle size={10} className="text-slate-600 dark:text-slate-400" />
                     <span>{field.label}</span>
                   </div>
                 ))}

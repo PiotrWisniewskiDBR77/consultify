@@ -80,7 +80,7 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
       >
         <span className="flex items-center gap-2">
           <span
-            className="inline-flex items-center text-slate-600 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing"
+            className="inline-flex items-center text-slate-600 dark:text-slate-400 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing"
             onClick={(e) => e.stopPropagation()}
             {...attributes}
             {...listeners}

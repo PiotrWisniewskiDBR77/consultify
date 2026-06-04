@@ -170,7 +170,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
           {icon}
           {title}
           {projects.length > 0 && (
-            <span className="text-[9px] text-slate-600 dark:text-slate-600 font-normal tabular-nums">
+            <span className="text-[9px] text-slate-600 dark:text-slate-400 font-normal tabular-nums">
               {projects.length}
             </span>
           )}
@@ -710,7 +710,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               >
                 {t('aiChat.allConversations', 'All')}
               </button>
-              <ChevronRight size={10} className="text-slate-600 dark:text-slate-600" />
+              <ChevronRight size={10} className="text-slate-600 dark:text-slate-400" />
               <div className="flex items-center gap-1 text-[11px] font-medium text-slate-700 dark:text-slate-300">
                 <Folder size={11} style={{ color: activeFolder.color }} />
                 <span className="truncate">{activeFolder.name}</span>

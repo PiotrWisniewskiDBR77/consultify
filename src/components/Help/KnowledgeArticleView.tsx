@@ -164,7 +164,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
   if (error || !article) {
     return (
       <div className="text-center py-12">
-        <BookOpen size={40} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
+        <BookOpen size={40} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
         <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('help.knowledge.contentMoved', 'This content has been moved or removed.')}
         </p>

@@ -582,7 +582,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                       </span>
                       {event.ip && (
                         <>
-                          <span className="text-slate-700 dark:text-slate-300 dark:text-slate-600">
+                          <span className="text-slate-700 dark:text-slate-300 dark:text-slate-400">
                             •
                           </span>
                           <span className="text-xs text-slate-500 dark:text-slate-400">

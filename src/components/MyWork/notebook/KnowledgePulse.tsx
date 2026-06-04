@@ -168,7 +168,7 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
           </div>
         ) : items.length === 0 ? (
           <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-3">
-            <HeartPulse size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-600" />
+            <HeartPulse size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
             <p className="font-medium">{pl ? 'Brak powiązań' : 'No connections found'}</p>
             <p className="mt-1">
               {pl

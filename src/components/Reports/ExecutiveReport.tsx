@@ -313,7 +313,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       {/* Empty State */}
       {!report && !loading && (
         <div className="p-12 text-center">
-          <FileText size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-600" />
+          <FileText size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-400" />
           <h3 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-2">
             No Report Generated
           </h3>

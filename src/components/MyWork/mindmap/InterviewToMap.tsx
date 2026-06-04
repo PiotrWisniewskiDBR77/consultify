@@ -147,7 +147,7 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
             <div className="text-center py-8">
               <MessageSquare
                 size={32}
-                className="text-slate-600 dark:text-slate-600 mx-auto mb-3"
+                className="text-slate-600 dark:text-slate-400 mx-auto mb-3"
               />
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {isPl ? 'Brak insightów do zaimportowania' : 'No insights to import'}

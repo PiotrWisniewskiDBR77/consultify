@@ -670,7 +670,7 @@ const AGING_STYLES = {
 
 // ── SLA pill ──
 const slaPill = (sla: InboxItem['sla']): { label: string; className: string; title?: string } => {
-  if (!sla) return { label: '-', className: 'text-slate-600 dark:text-slate-600' };
+  if (!sla) return { label: '-', className: 'text-slate-600 dark:text-slate-400' };
   const abs = Math.abs(sla.remainingMs);
   const days = Math.floor(abs / 86400000);
   const hours = Math.floor((abs % 86400000) / 3600000);

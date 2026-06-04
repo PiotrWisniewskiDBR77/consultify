@@ -290,7 +290,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           </span>
           <ChevronRight
             size={14}
-            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors shrink-0"
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-400 group-hover:text-primary-500 transition-colors shrink-0"
           />
         </div>
       </motion.div>
@@ -329,7 +329,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           </div>
           <ChevronRight
             size={14}
-            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-400 group-hover:text-primary-500 transition-colors"
           />
         </div>
 

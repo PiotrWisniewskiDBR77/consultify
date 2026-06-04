@@ -580,7 +580,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               key={n}
               type="button"
               onClick={() => setPulseRating(n)}
-              className={`p-1.5 rounded-lg transition-colors ${pulseRating >= n ? 'text-amber-400' : 'text-slate-600 dark:text-slate-600'}`}
+              className={`p-1.5 rounded-lg transition-colors ${pulseRating >= n ? 'text-amber-400' : 'text-slate-600 dark:text-slate-400'}`}
             >
               <Star size={24} fill={pulseRating >= n ? 'currentColor' : 'none'} />
             </button>

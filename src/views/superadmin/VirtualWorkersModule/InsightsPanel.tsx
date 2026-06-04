@@ -149,7 +149,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
         </div>
       ) : insights.length === 0 ? (
         <div className="text-center py-16">
-          <Sparkles className="w-10 h-10 mx-auto text-slate-600 dark:text-slate-600 mb-3" />
+          <Sparkles className="w-10 h-10 mx-auto text-slate-600 dark:text-slate-400 mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             No insights yet. Click "Generate Insights" to analyze recent conversations.
           </p>

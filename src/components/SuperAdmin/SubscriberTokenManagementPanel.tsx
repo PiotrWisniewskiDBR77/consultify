@@ -363,7 +363,7 @@ const SubscriberTokenManagementPanel: React.FC<SubscriberTokenManagementPanelPro
                             <Ban size={10} /> Revoke
                           </button>
                         ) : (
-                          <span className="text-slate-600 dark:text-slate-600">—</span>
+                          <span className="text-slate-600 dark:text-slate-400">—</span>
                         )}
                       </td>
                     </tr>

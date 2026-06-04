@@ -347,7 +347,7 @@ export function ProblemTable({
                       in {Math.abs(row.daysOverdue)}d
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-600 dark:text-slate-600">—</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
                   )}
                 </div>
 
@@ -358,7 +358,7 @@ export function ProblemTable({
                       {row.impactCount} ↓
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-600 dark:text-slate-600">—</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
                   )}
                 </div>
 

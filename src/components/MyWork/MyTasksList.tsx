@@ -314,7 +314,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
       <div className="flex-1 overflow-y-auto">
         {!hasAnyTasks ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <CheckCircle2 size={48} className="text-slate-600 dark:text-slate-600 mb-4" />
+            <CheckCircle2 size={48} className="text-slate-600 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {t('myWork.emptyState.title', 'No tasks yet')}
             </h3>

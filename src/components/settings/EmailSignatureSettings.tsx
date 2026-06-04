@@ -288,7 +288,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
       {/* Signatures List */}
       {signatures.length === 0 && !isCreating ? (
         <div className={cardClass + ' p-8 text-center'}>
-          <FileText className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-4" />
+          <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             No signatures yet
           </h3>

@@ -5538,7 +5538,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <FileText size={48} className="text-slate-600 dark:text-slate-600 mb-4" />
+                  <FileText size={48} className="text-slate-600 dark:text-slate-400 mb-4" />
                   <p className="text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Brak treści' : 'No content'}
                   </p>

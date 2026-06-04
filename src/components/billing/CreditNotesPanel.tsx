@@ -353,7 +353,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
           </div>
         ) : filteredNotes.length === 0 ? (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-600 mb-4" />
+            <FileText className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
               No Credit Notes
             </h3>

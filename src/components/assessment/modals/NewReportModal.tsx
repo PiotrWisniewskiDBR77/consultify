@@ -259,7 +259,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
             </div>
           ) : assessments.length === 0 ? (
             <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-3" />
+              <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
               <p className="text-slate-500 dark:text-slate-400 font-medium">
                 Brak zatwierdzonych assessmentów
               </p>

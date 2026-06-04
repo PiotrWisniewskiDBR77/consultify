@@ -978,7 +978,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           {initiative.strategicFit?.axisAlign ? (
                             <CheckCircle size={14} className="text-green-500" />
                           ) : (
-                            <X size={14} className="text-slate-600 dark:text-slate-600" />
+                            <X size={14} className="text-slate-600 dark:text-slate-400" />
                           )}
                         </div>
                         <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
@@ -988,7 +988,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           {initiative.strategicFit?.goalAlign ? (
                             <CheckCircle size={14} className="text-green-500" />
                           ) : (
-                            <X size={14} className="text-slate-600 dark:text-slate-600" />
+                            <X size={14} className="text-slate-600 dark:text-slate-400" />
                           )}
                         </div>
                         <div className="flex items-center justify-between p-2 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700">
@@ -998,7 +998,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           {initiative.strategicFit?.painPointAlign ? (
                             <CheckCircle size={14} className="text-green-500" />
                           ) : (
-                            <X size={14} className="text-slate-600 dark:text-slate-600" />
+                            <X size={14} className="text-slate-600 dark:text-slate-400" />
                           )}
                         </div>
                         <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-500/10 rounded border border-blue-100 dark:border-blue-500/20">

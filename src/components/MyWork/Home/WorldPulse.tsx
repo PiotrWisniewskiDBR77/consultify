@@ -181,7 +181,7 @@ const ArticleCard: React.FC<{
             e.stopPropagation();
             onSave();
           }}
-          className="text-[11px] text-slate-500 dark:text-slate-600 hover:text-slate-300 flex items-center gap-1 transition-colors"
+          className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-300 flex items-center gap-1 transition-colors"
         >
           <Bookmark size={11} />
           {isPolish ? 'Zapisz do notatnika' : 'Save to notebook'}
@@ -191,7 +191,7 @@ const ArticleCard: React.FC<{
             e.stopPropagation();
             onShare();
           }}
-          className="text-[11px] text-slate-500 dark:text-slate-600 hover:text-slate-300 flex items-center gap-1 transition-colors"
+          className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-300 flex items-center gap-1 transition-colors"
         >
           <Share2 size={11} />
           {isPolish ? 'Udostępnij' : 'Share'}

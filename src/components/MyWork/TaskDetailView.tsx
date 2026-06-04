@@ -2445,7 +2445,7 @@ Return ONLY the final comment text.`;
                 <div className="py-10 text-center">
                   <CheckSquare
                     size={28}
-                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish
@@ -2492,7 +2492,7 @@ Return ONLY the final comment text.`;
                         <span
                           className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${
                             done
-                              ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600'
+                              ? 'text-slate-700 dark:text-slate-300 dark:text-slate-400'
                               : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
                           }`}
                         >
@@ -2605,7 +2605,7 @@ Return ONLY the final comment text.`;
                   <div className="py-8 text-center">
                     <Lightbulb
                       size={28}
-                      className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                      className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                     />
                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish
@@ -5169,7 +5169,7 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <Scale
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak powiązanych decyzji' : 'No related decisions'}
@@ -5696,7 +5696,7 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <CheckSquare
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak elementów' : 'No items'}
@@ -5805,7 +5805,7 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <History
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak historii' : 'No activity yet'}

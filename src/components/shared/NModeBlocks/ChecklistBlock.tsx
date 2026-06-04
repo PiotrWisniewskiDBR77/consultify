@@ -107,7 +107,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
               onMouseLeave={() => setHoveredId(null)}
             >
               {/* Number */}
-              <span className="w-5 text-right text-[10px] font-mono text-slate-600 dark:text-slate-600 flex-shrink-0">
+              <span className="w-5 text-right text-[10px] font-mono text-slate-600 dark:text-slate-400 flex-shrink-0">
                 {idx + 1}.
               </span>
               {/* Checkbox */}

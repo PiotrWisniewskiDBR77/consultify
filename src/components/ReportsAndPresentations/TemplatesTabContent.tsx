@@ -361,7 +361,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
 
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 max-w-2xl mx-auto">
-        <BookTemplate size={40} className="text-slate-600 dark:text-slate-600 mb-4" />
+        <BookTemplate size={40} className="text-slate-600 dark:text-slate-400 mb-4" />
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
           {t('rap.empty.templatesOnboarding', 'Biblioteka wzorców')}
         </h3>

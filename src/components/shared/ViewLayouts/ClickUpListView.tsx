@@ -60,7 +60,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           </span>
         </span>
       ) : (
-        <span className="text-xs text-slate-600 dark:text-slate-600">—</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
       );
     case 'dueDate':
       return item.dueDate ? (
@@ -72,7 +72,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           {item.dueDate}
         </span>
       ) : (
-        <span className="text-xs text-slate-600 dark:text-slate-600">—</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
       );
     case 'indicator':
       return item.indicator !== undefined && item.indicator > 0 ? (
@@ -86,7 +86,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           {item.secondaryLabel}
         </span>
       ) : (
-        <span className="text-xs text-slate-600 dark:text-slate-600">—</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
       );
     case 'tertiaryLabel':
       return item.tertiaryLabel ? (
@@ -94,7 +94,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           {item.tertiaryLabel}
         </span>
       ) : (
-        <span className="text-xs text-slate-600 dark:text-slate-600">—</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
       );
     default:
       return null;

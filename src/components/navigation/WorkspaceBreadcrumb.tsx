@@ -279,7 +279,7 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
           return (
             <React.Fragment key={`${segment.role}-${idx}`}>
               {idx > 0 && (
-                <li aria-hidden className="text-slate-600 dark:text-slate-600 select-none">
+                <li aria-hidden className="text-slate-600 dark:text-slate-400 select-none">
                   ›
                 </li>
               )}

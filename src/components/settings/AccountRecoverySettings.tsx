@@ -242,7 +242,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                 <button
                   disabled
                   title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-                  className="p-2 text-slate-600 dark:text-slate-600 rounded-lg disabled:cursor-not-allowed"
+                  className="p-2 text-slate-600 dark:text-slate-400 rounded-lg disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

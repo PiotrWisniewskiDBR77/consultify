@@ -691,7 +691,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                                 {String(log.newValue || 'empty').substring(0, 20)}
                               </span>
                             </div>
-                            <div className="mt-1 text-[10px] text-slate-500 dark:text-slate-600">
+                            <div className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
                               {new Date(log.changedAt).toLocaleString()}
                             </div>
                           </div>
@@ -710,7 +710,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
           {/* Footer */}
           <div className="p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex justify-between items-center shrink-0">
-            <div className="text-[10px] text-slate-500 dark:text-slate-600">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400">
               {task.updatedAt ? `Last updated: ${new Date(task.updatedAt).toLocaleString()}` : ''}
             </div>
             <div className="flex gap-3">

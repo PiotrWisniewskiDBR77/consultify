@@ -396,7 +396,7 @@ export const PricingView: React.FC = () => {
                             className={`flex-shrink-0 ${
                               tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-600 dark:text-slate-600'
+                                : 'text-slate-600 dark:text-slate-400'
                             }`}
                           />
                         )}

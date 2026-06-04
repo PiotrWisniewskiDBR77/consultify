@@ -274,7 +274,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {!preview && !loading && (
             <div className="text-center py-6">
-              <Upload size={36} className="text-slate-600 dark:text-slate-600 mx-auto mb-3" />
+              <Upload size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'Importuj mapę z pliku .mm (FreeMind), .xmind (XMind) lub .opml (OPML).'

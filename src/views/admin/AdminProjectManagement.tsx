@@ -176,7 +176,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
         </div>
       ) : filteredProjects.length === 0 ? (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-16 text-center space-y-4">
-          <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto text-slate-600 dark:text-slate-600">
+          <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto text-slate-600 dark:text-slate-400">
             <Layers size={32} />
           </div>
           <div>
@@ -240,7 +240,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               )}
 
               {!p.description && (
-                <p className="text-sm text-slate-600 dark:text-slate-600 italic mb-4 h-10">
+                <p className="text-sm text-slate-600 dark:text-slate-400 italic mb-4 h-10">
                   No description provided.
                 </p>
               )}
@@ -274,7 +274,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
                   </div>
                   <span className="text-slate-600 dark:text-slate-400 capitalize">{p.status}</span>
                 </div>
-                <span className="text-slate-600 dark:text-slate-600">
+                <span className="text-slate-600 dark:text-slate-400">
                   {new Date(p.createdAt || (p as any).created_at).toLocaleDateString()}
                 </span>
               </div>

@@ -117,7 +117,7 @@ const EventItem = React.memo(function EventItem({
       {onClick && (
         <ChevronRight
           size={12}
-          className="text-slate-600 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0"
+          className="text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0"
         />
       )}
     </button>

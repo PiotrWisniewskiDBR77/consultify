@@ -140,7 +140,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto space-y-4">
           {webhooks.length === 0 && (
             <div className="text-center py-6">
-              <Bell size={28} className="text-slate-600 dark:text-slate-600 mx-auto mb-2" />
+              <Bell size={28} className="text-slate-600 dark:text-slate-400 mx-auto mb-2" />
               <p className="text-[10px] text-slate-600 mb-3">
                 {isPl ? 'Brak skonfigurowanych webhooków.' : 'No webhooks configured.'}
               </p>

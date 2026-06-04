@@ -433,7 +433,7 @@ function DynamicSwotOutputs({
         <div className="p-5">
           {allInitiatives.length === 0 ? (
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
-              <Rocket className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-600" />
+              <Rocket className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? 'Brak inicjatyw. Wróć do kroku "Synthesis & Insights" i utwórz inicjatywy z rekomendacji.'
@@ -629,7 +629,7 @@ function DynamicSwotOutputs({
               isPolish={isPolish}
             />
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 px-8 py-6 dark:border-navy-700">
-              <BookOpen className="h-8 w-8 text-slate-600 dark:text-slate-600" />
+              <BookOpen className="h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="text-center text-sm text-slate-500 dark:text-slate-400">
                 {reportSections.size} {isPolish ? 'sekcji wybranych' : 'sections selected'}
               </div>
@@ -673,7 +673,7 @@ function DynamicSwotOutputs({
               isPolish={isPolish}
             />
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 px-8 py-6 dark:border-navy-700">
-              <Presentation className="h-8 w-8 text-slate-600 dark:text-slate-600" />
+              <Presentation className="h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="text-center text-sm text-slate-500 dark:text-slate-400">
                 {presSections.size} {isPolish ? 'sekcji wybranych' : 'sections selected'}
               </div>
@@ -720,7 +720,7 @@ function DynamicSwotOutputs({
             if (!hasIdeas) {
               return (
                 <div className="rounded-xl border-2 border-dashed border-slate-200 p-6 text-center dark:border-navy-700">
-                  <Lightbulb className="mx-auto h-7 w-7 text-slate-600 dark:text-slate-600" />
+                  <Lightbulb className="mx-auto h-7 w-7 text-slate-600 dark:text-slate-400" />
                   <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                     {isPolish
                       ? 'Oznacz inicjatywy jako "Jako idea" w tabeli powyżej, aby dodać je tutaj.'

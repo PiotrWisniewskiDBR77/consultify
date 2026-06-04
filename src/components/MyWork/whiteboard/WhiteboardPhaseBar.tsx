@@ -65,7 +65,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
               {idx > 0 && (
                 <ChevronRight
                   size={10}
-                  className={`shrink-0 ${idx <= currentIdx ? 'text-primary-500' : 'text-slate-600 dark:text-slate-600'}`}
+                  className={`shrink-0 ${idx <= currentIdx ? 'text-primary-500' : 'text-slate-600 dark:text-slate-400'}`}
                 />
               )}
               <button

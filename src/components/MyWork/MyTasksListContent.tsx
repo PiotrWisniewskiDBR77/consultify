@@ -681,7 +681,7 @@ const TaskTableRow: React.FC<{
           <div
             className={`flex items-center gap-1.5 text-xs cursor-pointer hover:underline decoration-dotted ${
               !task.dueDate
-                ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600 italic'
+                ? 'text-slate-700 dark:text-slate-300 dark:text-slate-400 italic'
                 : overdue
                   ? 'text-rose-700 dark:text-rose-300 font-medium'
                   : 'text-slate-600 dark:text-slate-400'
@@ -731,12 +731,12 @@ const TaskTableRow: React.FC<{
                 {assigneeInitial}
               </div>
             ) : (
-              <User size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-600" />
+              <User size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-400" />
             )}
             <span
               className={`text-xs truncate max-w-[120px] ${
                 assigneeName === 'Unassigned'
-                  ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600 italic'
+                  ? 'text-slate-700 dark:text-slate-300 dark:text-slate-400 italic'
                   : 'text-slate-600 dark:text-slate-400'
               }`}
             >

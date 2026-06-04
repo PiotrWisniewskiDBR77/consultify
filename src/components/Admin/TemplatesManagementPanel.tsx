@@ -804,7 +804,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
             </div>
           ) : (
             <div className="text-center py-12">
-              <Layout className="mx-auto text-slate-600 dark:text-slate-600 mb-4" size={48} />
+              <Layout className="mx-auto text-slate-600 dark:text-slate-400 mb-4" size={48} />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                 {t('admin.templates.selectToEdit', 'Select a Template')}
               </h3>

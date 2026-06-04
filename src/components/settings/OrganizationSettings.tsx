@@ -189,7 +189,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
           <Building2
             size={48}
-            className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-4"
+            className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-400 mb-4"
           />
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
             No Organization Found

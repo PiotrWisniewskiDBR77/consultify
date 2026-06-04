@@ -258,7 +258,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           <LoadingState variant="spinner" className="h-64" />
         ) : filteredAssessments.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <FileOutput className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-3" />
+            <FileOutput className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
             <p className="text-slate-500 dark:text-slate-400 mb-4">
               {searchQuery
                 ? t('assessment.emptyState.noMatch', 'No assessments match your search')

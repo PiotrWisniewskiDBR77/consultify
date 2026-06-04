@@ -587,7 +587,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <UserCircle size={64} className="text-slate-600 dark:text-slate-600" />
+                  <UserCircle size={64} className="text-slate-600 dark:text-slate-400" />
                 )}
               </div>
               <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

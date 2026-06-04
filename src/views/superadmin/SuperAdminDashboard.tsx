@@ -121,7 +121,7 @@ const ActionChip: React.FC<{
     )}
     <ChevronRight
       size={12}
-      className="text-slate-600 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors"
+      className="text-slate-600 dark:text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors"
     />
   </button>
 );
@@ -172,7 +172,7 @@ const ActivityRow: React.FC<{ activity: ActivityItem }> = ({ activity }) => {
       <span className="text-xs text-slate-600 dark:text-slate-500 truncate flex-1">
         {activity.entity_name || activity.entity_id?.slice(0, 8) || ''}
       </span>
-      <span className="text-[10px] text-slate-600 dark:text-slate-600 ml-auto whitespace-nowrap tabular-nums">
+      <span className="text-[10px] text-slate-600 dark:text-slate-400 ml-auto whitespace-nowrap tabular-nums">
         {formatTimeAgo(activity.created_at)}
       </span>
     </div>
@@ -349,7 +349,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       {s.message || 'No details'}
                     </p>
                   </div>
-                  <span className="text-[10px] text-slate-600 dark:text-slate-600 whitespace-nowrap tabular-nums shrink-0">
+                  <span className="text-[10px] text-slate-600 dark:text-slate-400 whitespace-nowrap tabular-nums shrink-0">
                     {formatTimeAgo(s.created_at ?? undefined)}
                   </span>
                 </div>

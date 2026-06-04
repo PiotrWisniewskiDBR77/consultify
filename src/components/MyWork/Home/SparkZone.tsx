@@ -114,7 +114,7 @@ const IdeaCard: React.FC<{ item: SparkItem; onClick: () => void }> = ({ item, on
     <p className="text-xs text-slate-500 dark:text-slate-500 leading-relaxed line-clamp-2 mb-3">
       {item.snippet}
     </p>
-    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-600">
+    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
       <span className="flex items-center gap-1">
         <Clock size={11} />
         {item.updatedAt}
@@ -144,7 +144,7 @@ const NoteCard: React.FC<{ item: SparkItem; onClick: () => void; isPolish: boole
     <p className="text-xs text-slate-500 dark:text-slate-500 leading-relaxed line-clamp-2">
       {item.snippet}
     </p>
-    <span className="text-[11px] text-slate-500 dark:text-slate-600 mt-2 block">
+    <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 block">
       {isPolish ? 'Zaktualizowano' : 'Updated'} {item.updatedAt}
     </span>
   </button>

@@ -4407,7 +4407,7 @@ Please return:
                           <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
                             {report.cadence}
                           </span>
-                          <span className="text-[10px] text-slate-600 dark:text-slate-600">·</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400">·</span>
                           <span className="text-[10px] text-slate-600 dark:text-slate-500">
                             {report.audience}
                           </span>
@@ -4416,7 +4416,7 @@ Please return:
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-slate-600 dark:text-slate-600 transition-transform group-hover:text-primary-500"
+                      className="text-slate-600 dark:text-slate-400 transition-transform group-hover:text-primary-500"
                     />
                   </div>
 

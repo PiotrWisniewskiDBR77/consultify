@@ -49,7 +49,7 @@ const PhaseIndicator: React.FC<{ currentPhase: DiscoveryPhase }> = ({ currentPha
               <span className="md:hidden">{index + 1}</span>
             </div>
             {index < mainPhases.length - 1 && (
-              <ChevronRight size={14} className="text-slate-600 dark:text-slate-600" />
+              <ChevronRight size={14} className="text-slate-600 dark:text-slate-400" />
             )}
           </React.Fragment>
         );

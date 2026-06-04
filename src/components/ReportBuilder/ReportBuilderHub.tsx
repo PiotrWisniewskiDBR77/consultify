@@ -413,7 +413,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredReports.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-600 mb-4" />
+          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {t('rbHub.emptyReports.title', 'Brak raportów')}
           </h3>
@@ -504,7 +504,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (r1r4Reports.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <Layout className="w-14 h-14 text-slate-500 dark:text-slate-600 mb-4" />
+          <Layout className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {t('rbHub.emptyR1R4.title', 'Brak raportów R1–R4')}
           </h3>
@@ -612,7 +612,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredTemplates.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-600 mb-4" />
+          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {t('rbHub.emptyTemplates.title', 'Brak szablonów')}
           </h3>
@@ -679,7 +679,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredSchedules.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <Clock className="w-14 h-14 text-slate-500 dark:text-slate-600 mb-4" />
+          <Clock className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {t('rbHub.emptySchedules.title', 'Brak harmonogramów')}
           </h3>

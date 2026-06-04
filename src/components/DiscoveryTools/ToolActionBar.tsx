@@ -60,7 +60,7 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
             flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
             ${
               isFirstStep
-                ? 'text-slate-600 dark:text-slate-600 cursor-not-allowed'
+                ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
             }
           `}

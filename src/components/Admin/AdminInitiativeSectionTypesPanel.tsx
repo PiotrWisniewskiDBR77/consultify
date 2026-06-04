@@ -753,7 +753,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                     <div className="flex flex-col items-center justify-center h-32 rounded-lg bg-slate-50 dark:bg-navy-900/50 border border-dashed border-slate-200 dark:border-navy-700">
                                       <Sparkles
                                         size={20}
-                                        className="text-slate-600 dark:text-slate-600 mb-2"
+                                        className="text-slate-600 dark:text-slate-400 mb-2"
                                       />
                                       <p className="text-xs text-slate-600">
                                         No AI prompt template configured

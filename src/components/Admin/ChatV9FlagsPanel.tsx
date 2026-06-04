@@ -843,7 +843,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                 return (
                   <p
                     data-testid={`chat-v9-flag-docs-empty-${flag.id}`}
-                    className="mt-1 text-[10px] italic text-slate-600 dark:text-slate-600"
+                    className="mt-1 text-[10px] italic text-slate-600 dark:text-slate-400"
                   >
                     — no spec docs
                   </p>

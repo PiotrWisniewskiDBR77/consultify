@@ -87,7 +87,7 @@ export const ProblemDefinitionSection: React.FC<InitiativeSectionProps> = ({
     >
       {filledCount === 0 && (
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl mb-4">
-          <AlertTriangle size={32} className="mx-auto mb-3 text-slate-600 dark:text-slate-600" />
+          <AlertTriangle size={32} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             {isPolish ? 'Brak zdefiniowanego problemu' : 'No problem definition yet'}
           </p>

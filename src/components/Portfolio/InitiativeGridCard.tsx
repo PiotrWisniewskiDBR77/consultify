@@ -98,7 +98,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
         )}
         {sponsor && (
           <>
-            <span className="text-slate-600 dark:text-slate-600 text-[10px]">/</span>
+            <span className="text-slate-600 dark:text-slate-400 text-[10px]">/</span>
             <div className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
                 {sponsor.avatarUrl ? (

@@ -817,11 +817,11 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       {/* ── Empty state ─────────────────────────────────────────────────── */}
       {items.length === 0 && (
         <div className="py-6 text-center rounded-xl border border-dashed border-slate-300/50 dark:border-navy-600/50 bg-slate-50/10 dark:bg-navy-900/10">
-          <AlertTriangle size={20} className="mx-auto mb-2 text-slate-600 dark:text-slate-600" />
+          <AlertTriangle size={20} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-1">
             {isPolish ? 'Brak elementów RAID.' : 'No RAID items yet.'}
           </p>
-          <p className="text-xs text-slate-600 dark:text-slate-600">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {isPolish
               ? 'Kliknij „Analizuj RAID" aby AI wygenerował pełną analizę RAID (Ryzyka, Założenia, Problemy, Zależności).'
               : 'Click "Analyze RAID" to let AI generate a full RAID analysis (Risks, Assumptions, Issues, Dependencies).'}

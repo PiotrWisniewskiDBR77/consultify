@@ -211,7 +211,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                       {action.description}
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-600" />
+                  <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                 </button>
               );
             })}

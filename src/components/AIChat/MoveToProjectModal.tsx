@@ -376,7 +376,7 @@ const Section: React.FC<{
           {icon}
           {title}
         </div>
-        <div className="ml-auto text-[10px] text-slate-600 dark:text-slate-600">{items.length}</div>
+        <div className="ml-auto text-[10px] text-slate-600 dark:text-slate-400">{items.length}</div>
       </div>
       <div className="space-y-1">
         {visibleItems.map((p) => {

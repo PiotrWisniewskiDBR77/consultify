@@ -377,7 +377,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             <span className="text-green-600 dark:text-green-400 font-medium">
               {metrics.onTrack} on track
             </span>
-            <span className="text-slate-600 dark:text-slate-600">|</span>
+            <span className="text-slate-600 dark:text-slate-400">|</span>
             <span className="text-amber-600 dark:text-amber-400 font-medium">
               {metrics.atRisk} at risk
             </span>

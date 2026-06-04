@@ -202,7 +202,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
         </div>
       ) : (
         <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center">
-          <Link2 className="w-8 h-8 text-slate-600 dark:text-slate-600 mx-auto mb-3" />
+          <Link2 className="w-8 h-8 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
           <p className="text-slate-500 dark:text-slate-400 mb-2">
             {isPolish ? 'Brak wygenerowanych korelacji' : 'No correlations generated yet'}
           </p>

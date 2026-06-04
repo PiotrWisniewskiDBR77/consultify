@@ -249,7 +249,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                   {idx < funnelData.length - 1 && (
                     <ChevronRight
                       size={14}
-                      className="text-slate-600 dark:text-slate-600 flex-shrink-0"
+                      className="text-slate-600 dark:text-slate-400 flex-shrink-0"
                     />
                   )}
                 </React.Fragment>

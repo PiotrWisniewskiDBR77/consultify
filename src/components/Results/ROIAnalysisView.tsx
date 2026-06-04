@@ -744,7 +744,7 @@ export const ROIAnalysisView: React.FC = () => {
                                   className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
                                     editable
                                       ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
-                                      : 'text-slate-600 dark:text-slate-600 cursor-not-allowed'
+                                      : 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
                                   }`}
                                 >
                                   {editable ? <Plus size={14} /> : <Lock size={14} />}

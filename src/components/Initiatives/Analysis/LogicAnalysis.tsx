@@ -105,7 +105,7 @@ interface LogicAnalysisProps {
 /* ------------------------------------------------------------------ */
 
 const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col, cur, dir }) => {
-  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-600" />;
+  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-400" />;
   return dir === 'asc' ? (
     <ArrowUp size={11} className="text-primary-500" />
   ) : (
@@ -1128,7 +1128,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                   </div>
                   {idx < sequenceSteps.length - 1 && (
                     <div className="flex items-center px-1">
-                      <ArrowRight size={18} className="text-slate-600 dark:text-slate-600" />
+                      <ArrowRight size={18} className="text-slate-600 dark:text-slate-400" />
                     </div>
                   )}
                 </React.Fragment>

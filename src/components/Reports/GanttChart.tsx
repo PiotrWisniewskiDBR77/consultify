@@ -360,7 +360,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       <div
         className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-12 text-center ${className}`}
       >
-        <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-600 dark:text-slate-600" />
+        <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-600 dark:text-slate-400" />
         <p className="text-lg font-medium text-navy-900 dark:text-white">No schedule data</p>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Add phases to your roadmap to see the Gantt chart

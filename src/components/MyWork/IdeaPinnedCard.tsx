@@ -242,7 +242,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
               title={advanceBlocked || undefined}
               className={`text-[10px] font-bold transition-colors ${
                 advanceBlocked
-                  ? 'text-slate-600 dark:text-slate-600 cursor-not-allowed'
+                  ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
                   : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'
               }`}
             >

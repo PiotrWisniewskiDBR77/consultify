@@ -118,7 +118,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
               {days.map((day) => (
                 <div
                   key={day.date}
-                  className={`w-8 h-8 rounded-md ${INTENSITY_COLORS[day.intensity]} flex items-center justify-center text-[8px] font-medium transition-colors cursor-default ${day.count > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-600'}`}
+                  className={`w-8 h-8 rounded-md ${INTENSITY_COLORS[day.intensity]} flex items-center justify-center text-[8px] font-medium transition-colors cursor-default ${day.count > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}
                   title={`${day.date}: ${day.count} ${isPl ? 'akcji' : 'actions'}`}
                 >
                   {day.dayLabel}

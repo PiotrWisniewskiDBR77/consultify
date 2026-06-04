@@ -193,7 +193,7 @@ const TemplateCard: FC<{
             <div className="px-4 pb-3 space-y-0.5">
               {template.sections.map((s, i) => (
                 <div key={s.key || i} className="flex items-center gap-2 text-[10px]">
-                  <span className="text-slate-500 dark:text-slate-600 w-4 text-right">
+                  <span className="text-slate-500 dark:text-slate-400 w-4 text-right">
                     {i + 1}.
                   </span>
                   <span

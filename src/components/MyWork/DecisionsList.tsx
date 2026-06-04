@@ -134,7 +134,7 @@ const DecisionCard: React.FC<{
         </div>
         <ChevronRight
           size={14}
-          className="text-slate-600 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
+          className="text-slate-600 dark:text-slate-400 group-hover:text-primary-500 transition-colors"
         />
       </div>
 

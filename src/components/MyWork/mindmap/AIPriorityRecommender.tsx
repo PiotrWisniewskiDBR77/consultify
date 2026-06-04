@@ -158,7 +158,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {recommendations.length === 0 && !loading && (
             <div className="text-center py-8">
-              <ArrowUpDown size={36} className="text-slate-600 dark:text-slate-600 mx-auto mb-3" />
+              <ArrowUpDown size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'AI przeanalizuje priorytety Twoich pomysłów.'

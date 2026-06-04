@@ -2165,7 +2165,7 @@ const ReportSlideOverContent: React.FC<{
                     ) : (
                       <Download
                         size={14}
-                        className="text-slate-600 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
+                        className="text-slate-600 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300 transition-colors"
                       />
                     )}
                   </div>
@@ -2223,7 +2223,7 @@ const ReportSlideOverContent: React.FC<{
             </div>
             <ArrowRight
               size={14}
-              className="text-slate-600 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors shrink-0"
+              className="text-slate-600 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300 transition-colors shrink-0"
             />
           </button>
         </div>

@@ -194,7 +194,7 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-3 p-8">
         <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-          <Image size={28} className="text-slate-600 dark:text-slate-600" />
+          <Image size={28} className="text-slate-600 dark:text-slate-400" />
         </div>
         <span className="text-sm font-medium">{isPl ? 'Brak elementów' : 'No records'}</span>
         <span className="text-xs text-slate-600/70">

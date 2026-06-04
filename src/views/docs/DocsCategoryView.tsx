@@ -84,7 +84,7 @@ export const DocsCategoryView: React.FC = () => {
           ))
         ) : articles.length === 0 ? (
           <div className="text-center py-12">
-            <Book size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
+            <Book size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {t('docs.category.emptyTitle', 'No articles found')}
             </h3>

@@ -196,7 +196,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                   ) : (
                     <Circle
                       size={16}
-                      className="text-slate-600 dark:text-slate-600 flex-shrink-0"
+                      className="text-slate-600 dark:text-slate-400 flex-shrink-0"
                     />
                   )}
                   <span className="text-xs text-slate-700 dark:text-slate-200 truncate">
@@ -411,7 +411,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
 
       {published.length === 0 && (
         <div className="text-center py-8">
-          <Rocket size={28} className="mx-auto text-slate-600 dark:text-slate-600 mb-2" />
+          <Rocket size={28} className="mx-auto text-slate-600 dark:text-slate-400 mb-2" />
           <div className="text-sm text-slate-600 dark:text-slate-300">
             {t('help.onboarding.empty', 'No onboarding playbooks available yet.')}
           </div>

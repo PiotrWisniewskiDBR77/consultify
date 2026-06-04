@@ -140,7 +140,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                             ? 'bg-emerald-100 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-600 dark:text-emerald-400'
                             : isSelected
                               ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                              : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-600'
+                              : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                         }`}
                       >
                         {isScored ? <CheckCircle2 size={10} /> : idx + 1}

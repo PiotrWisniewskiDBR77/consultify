@@ -799,7 +799,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-500/30'
                 : speechSupported
                   ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-200'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-600 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 cursor-not-allowed'
             } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={
               !speechSupported

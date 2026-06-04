@@ -160,7 +160,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                 className={`text-3xl font-bold ${
                   level.level <= data.maturityLevel
                     ? `text-${level.color}-600`
-                    : 'text-slate-700 dark:text-slate-300 dark:text-slate-600'
+                    : 'text-slate-700 dark:text-slate-300 dark:text-slate-400'
                 }`}
               >
                 {level.level}

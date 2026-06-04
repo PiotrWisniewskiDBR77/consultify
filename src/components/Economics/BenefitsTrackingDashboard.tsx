@@ -343,7 +343,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
 
         {benefits.length === 0 ? (
           <div className="p-12 text-center">
-            <Target size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-600" />
+            <Target size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-400" />
             <h4 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
               No measurements
             </h4>

@@ -1238,14 +1238,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
         >
           {t('auth.privacyLink', 'Polityka prywatności')}
         </a>
-        <span className="text-slate-600 dark:text-slate-600 mx-2">•</span>
+        <span className="text-slate-600 dark:text-slate-400 mx-2">•</span>
         <a
           href={ROUTES.LEGAL.TERMS}
           className="text-xs text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           {t('auth.termsLink', 'Regulamin')}
         </a>
-        <span className="text-slate-600 dark:text-slate-600 mx-2">•</span>
+        <span className="text-slate-600 dark:text-slate-400 mx-2">•</span>
         <a
           href={ROUTES.LEGAL.CENTER}
           className="text-xs text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"

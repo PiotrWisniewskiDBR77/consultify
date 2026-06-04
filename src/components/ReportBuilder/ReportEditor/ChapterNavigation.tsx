@@ -209,7 +209,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
   return (
     <div ref={setNodeRef} style={style} className="flex items-center group">
       <button
-        className="p-0.5 text-slate-600 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
+        className="p-0.5 text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
         {...attributes}
         {...listeners}
       >

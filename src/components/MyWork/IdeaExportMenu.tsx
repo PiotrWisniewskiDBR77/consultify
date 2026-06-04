@@ -614,7 +614,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
                   </div>
                   <Code2
                     size={14}
-                    className="text-slate-600 dark:text-slate-600 group-hover:text-primary-400 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 group-hover:text-primary-400 transition-colors"
                   />
                 </button>
               );

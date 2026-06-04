@@ -376,7 +376,7 @@ export const ChatMenu: React.FC<ChatMenuProps> = ({
                             ${
                               activeConversationId
                                 ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
-                                : 'text-slate-600 dark:text-slate-600 cursor-not-allowed'
+                                : 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
                             }
                             transition-colors
                         `}

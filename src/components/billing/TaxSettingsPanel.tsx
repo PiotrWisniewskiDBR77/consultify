@@ -318,7 +318,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
               </div>
             ) : filteredRates.length === 0 ? (
               <div className="text-center py-12">
-                <Percent className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-600 mb-4" />
+                <Percent className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-400 mb-4" />
                 <p className="text-slate-500 dark:text-slate-400">No tax rates found</p>
               </div>
             ) : (

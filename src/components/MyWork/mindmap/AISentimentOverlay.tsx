@@ -120,7 +120,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {results.length === 0 && !loading && (
             <div className="text-center py-8">
-              <SmilePlus size={36} className="text-slate-600 dark:text-slate-600 mx-auto mb-3" />
+              <SmilePlus size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'AI oceni sentyment pomysłów na podstawie danych firmy.'

@@ -83,7 +83,7 @@ const DIM_ORDER: Record<DimColor, number> = { red: 0, amber: 1, green: 2 };
 /* ------------------------------------------------------------------ */
 
 const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col, cur, dir }) => {
-  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-600" />;
+  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-400" />;
   return dir === 'asc' ? (
     <ArrowUp size={11} className="text-primary-500" />
   ) : (

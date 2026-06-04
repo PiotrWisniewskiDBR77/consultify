@@ -287,7 +287,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
             {!isLoading && query.length >= 2 && results.length === 0 && (
               <div className="py-8 px-6">
                 <div className="text-center mb-6">
-                  <Search size={36} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
+                  <Search size={36} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
                   <p className="text-slate-500 dark:text-slate-400">
                     {t('help.search.noResults', 'No results for')} <strong>"{query}"</strong>
                   </p>

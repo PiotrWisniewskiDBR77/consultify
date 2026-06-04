@@ -530,7 +530,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <ArrowRight
                 size={14}
                 className={`shrink-0 ${
-                  isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-600'
+                  isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-400'
                 }`}
               />
             </motion.button>
@@ -607,7 +607,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   </>
                 ) : (
                   <div className="py-8 text-center">
-                    <Search size={32} className="mx-auto mb-2 text-slate-600 dark:text-slate-600" />
+                    <Search size={32} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                       {t('command.noResults', 'No results found')}
                     </p>

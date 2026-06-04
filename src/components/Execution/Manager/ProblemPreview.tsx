@@ -151,7 +151,7 @@ export function ProblemPreview({
             </div>
             <ExternalLink
               size={12}
-              className="text-slate-600 dark:text-slate-600 group-hover:text-blue-500 transition-colors shrink-0"
+              className="text-slate-600 dark:text-slate-400 group-hover:text-blue-500 transition-colors shrink-0"
             />
           </button>
         </div>
@@ -218,7 +218,7 @@ export function ProblemPreview({
                   </span>
                   <ChevronRight
                     size={12}
-                    className="text-slate-600 dark:text-slate-600 group-hover:text-blue-500 shrink-0"
+                    className="text-slate-600 dark:text-slate-400 group-hover:text-blue-500 shrink-0"
                   />
                 </button>
               ))}

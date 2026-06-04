@@ -482,7 +482,7 @@ const EventRow: React.FC<{ event: any }> = ({ event }) => {
             minute: '2-digit',
           })}
         </p>
-        <p className="text-[9px] text-slate-500 dark:text-slate-600 mt-0.5">
+        <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
           {new Date(event.created_at).toLocaleDateString()}
         </p>
       </div>

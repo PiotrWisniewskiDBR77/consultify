@@ -2283,7 +2283,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         />
                         {/* Tags inline */}
                         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                          <Tag size={11} className="text-slate-600 dark:text-slate-600 shrink-0" />
+                          <Tag size={11} className="text-slate-600 dark:text-slate-400 shrink-0" />
                           {pageTags.map((tag) => (
                             <span
                               key={tag}

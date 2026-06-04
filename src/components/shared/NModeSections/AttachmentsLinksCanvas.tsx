@@ -788,7 +788,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       >
         {filteredAttachments.length === 0 ? (
           <EmptyState
-            icon={<Paperclip size={20} className="text-slate-600 dark:text-slate-600" />}
+            icon={<Paperclip size={20} className="text-slate-600 dark:text-slate-400" />}
             message={isPolish ? 'Brak załączników.' : 'No attachments yet.'}
           />
         ) : (
@@ -889,7 +889,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       >
         {externalItems.length === 0 ? (
           <EmptyState
-            icon={<Globe size={20} className="text-slate-600 dark:text-slate-600" />}
+            icon={<Globe size={20} className="text-slate-600 dark:text-slate-400" />}
             message={isPolish ? 'Brak linków zewnętrznych.' : 'No external links yet.'}
           />
         ) : (
@@ -1004,7 +1004,7 @@ Write a clear, professional comment explaining why this link exists and its sign
       >
         {internalItems.length === 0 ? (
           <EmptyState
-            icon={<LinkIcon size={20} className="text-slate-600 dark:text-slate-600" />}
+            icon={<LinkIcon size={20} className="text-slate-600 dark:text-slate-400" />}
             message={isPolish ? 'Brak powiązań wewnętrznych.' : 'No internal links yet.'}
           />
         ) : (
@@ -1479,7 +1479,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-600 dark:text-slate-500 flex items-center gap-1.5">
                       <MessageSquare size={11} />
                       {isPolish ? 'Komentarz' : 'Comment'}
-                      <span className="text-[9px] font-normal text-slate-600 dark:text-slate-600 ml-1">
+                      <span className="text-[9px] font-normal text-slate-600 dark:text-slate-400 ml-1">
                         ({isPolish ? 'opcjonalny' : 'optional'})
                       </span>
                     </label>
@@ -1629,12 +1629,12 @@ Write a clear, professional comment explaining why this link exists and its sign
                         <div className="mt-4 text-center py-4">
                           <Search
                             size={20}
-                            className="mx-auto text-secondary-400 dark:text-slate-600 mb-2"
+                            className="mx-auto text-secondary-400 dark:text-slate-400 mb-2"
                           />
                           <p className="text-sm text-secondary-500">
                             {isPolish ? 'Brak wyników.' : 'No results found.'}
                           </p>
-                          <p className="text-[11px] text-secondary-400 dark:text-slate-600 mt-0.5">
+                          <p className="text-[11px] text-secondary-400 dark:text-slate-400 mt-0.5">
                             {isPolish ? 'Spróbuj innej frazy' : 'Try a different search term'}
                           </p>
                         </div>

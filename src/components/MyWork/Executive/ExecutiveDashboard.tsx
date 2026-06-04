@@ -905,7 +905,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               ))
             ) : !loading ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Zap size={20} className="text-slate-600 dark:text-slate-600 mb-2" />
+                <Zap size={20} className="text-slate-600 dark:text-slate-400 mb-2" />
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('executive.signals.empty', 'No signals')}
                 </p>
@@ -965,7 +965,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Folder size={24} className="text-slate-600 dark:text-slate-600 mb-2" />
+                <Folder size={24} className="text-slate-600 dark:text-slate-400 mb-2" />
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('executive.initiatives.empty', 'No active initiatives')}
                 </p>

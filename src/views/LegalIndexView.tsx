@@ -179,7 +179,7 @@ const DocumentCard: React.FC<{ doc: LegalDocumentCard }> = ({ doc }) => (
           {doc.description}
         </p>
       </div>
-      <ArrowRight className="w-5 h-5 text-slate-600 dark:text-slate-600 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+      <ArrowRight className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
     </div>
   </Link>
 );

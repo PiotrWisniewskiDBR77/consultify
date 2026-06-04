@@ -204,7 +204,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                           </span>
                           <span className={`text-lg font-bold ${getScoreColor(data?.actual ?? 0)}`}>
                             {data?.actual?.toFixed(1) || '0.0'}{' '}
-                            <span className="text-xs text-slate-600 dark:text-slate-600 font-normal">
+                            <span className="text-xs text-slate-600 dark:text-slate-400 font-normal">
                               / 7.0
                             </span>
                           </span>

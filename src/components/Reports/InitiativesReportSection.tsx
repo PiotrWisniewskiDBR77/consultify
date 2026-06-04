@@ -432,7 +432,7 @@ export const InitiativesReportSection: React.FC<InitiativesReportSectionProps> =
   if (initiatives.length === 0) {
     return (
       <div className="bg-slate-50 dark:bg-navy-800/50 rounded-lg p-8 text-center">
-        <Lightbulb className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-4" />
+        <Lightbulb className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
         <p className="text-slate-600 dark:text-slate-400">
           {isPolish ? 'Brak inicjatyw do wyświetlenia' : 'No initiatives to display'}
         </p>

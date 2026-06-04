@@ -69,7 +69,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
         </div>
       ) : (
         <div className="w-20 h-20 rounded-xl bg-slate-100 dark:bg-navy-900 flex items-center justify-center mb-6">
-          <Sparkles size={40} className="text-slate-600 dark:text-slate-600" />
+          <Sparkles size={40} className="text-slate-600 dark:text-slate-400" />
         </div>
       )}
 
@@ -137,7 +137,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
                   </div>
                   <ArrowRight
                     size={16}
-                    className="text-slate-600 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 group-hover:text-primary-500 transition-colors"
                   />
                 </button>
               );

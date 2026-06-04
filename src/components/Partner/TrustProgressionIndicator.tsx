@@ -188,7 +188,7 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                 <ChevronRight
                   size={20}
                   className={`absolute -right-3 top-1/2 -translate-y-1/2 ${
-                    isCompleted ? 'text-emerald-500' : 'text-slate-600 dark:text-slate-600'
+                    isCompleted ? 'text-emerald-500' : 'text-slate-600 dark:text-slate-400'
                   }`}
                 />
               )}

@@ -156,7 +156,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                     <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
                       {report.cadence}
                     </span>
-                    <span className="text-[10px] text-slate-600 dark:text-slate-600">·</span>
+                    <span className="text-[10px] text-slate-600 dark:text-slate-400">·</span>
                     <span className="text-[10px] text-slate-600 dark:text-slate-500">
                       {report.dataQuality?.freshnessLabel ?? 'Live'}
                     </span>
@@ -393,7 +393,7 @@ const ExportButton: React.FC<{
     {loading ? (
       <Loader2 size={14} className="animate-spin text-slate-600" />
     ) : (
-      <ChevronRight size={14} className="text-slate-600 dark:text-slate-600" />
+      <ChevronRight size={14} className="text-slate-600 dark:text-slate-400" />
     )}
   </button>
 );

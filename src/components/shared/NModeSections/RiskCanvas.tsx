@@ -218,7 +218,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       {/* Empty state */}
       {risks.length === 0 ? (
         <div className="py-8 text-center">
-          <AlertTriangle size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-600" />
+          <AlertTriangle size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
           <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
             {isPolish ? 'Brak zidentyfikowanych ryzyk.' : 'No risks identified.'}
           </p>

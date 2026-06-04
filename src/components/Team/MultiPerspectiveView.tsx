@@ -231,7 +231,7 @@ export const MultiPerspectiveView: React.FC<MultiPerspectiveViewProps> = ({
   if (axes.length === 0) {
     return (
       <div className={`text-center py-12 ${className}`}>
-        <MessageSquare size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-600" />
+        <MessageSquare size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-400" />
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
           Jeszcze nie ma perspektyw do porównania
         </h3>

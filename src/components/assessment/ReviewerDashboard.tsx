@@ -326,7 +326,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
 
         {filteredReviews.length === 0 ? (
           <div className="text-center py-12">
-            <ClipboardCheck className="w-12 h-12 text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+            <ClipboardCheck className="w-12 h-12 text-slate-700 dark:text-slate-300 dark:text-slate-400 mx-auto mb-4" />
             <p className="text-slate-500 dark:text-slate-400">
               {activeTab === 'pending' && 'No pending reviews'}
               {activeTab === 'in_progress' && 'No reviews in progress'}

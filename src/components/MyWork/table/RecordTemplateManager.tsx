@@ -138,7 +138,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
             </div>
           ) : templates.length === 0 ? (
             <div className="text-center py-12">
-              <FileText size={32} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
+              <FileText size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
               <p className="text-[11px] text-slate-600">
                 {isPl
                   ? 'Brak szablonów. Utwórz pierwszy szablon, aby szybko dodawać rekordy.'

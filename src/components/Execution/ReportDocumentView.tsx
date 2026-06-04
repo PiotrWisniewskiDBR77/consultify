@@ -309,7 +309,7 @@ const ActionCards: React.FC<{ actions: ReportAiRecommendation[] }> = ({ actions 
           <div className="text-[12px] font-semibold text-slate-900 dark:text-white">{a.action}</div>
           <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-500">
             <span>{a.owner}</span>
-            <span className="text-slate-600 dark:text-slate-600">·</span>
+            <span className="text-slate-600 dark:text-slate-400">·</span>
             <span>{a.dueLabel}</span>
           </div>
           <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -1773,9 +1773,9 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
               </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-500">
                 <span>{safeReport.audience}</span>
-                <span className="text-slate-600 dark:text-slate-600">·</span>
+                <span className="text-slate-600 dark:text-slate-400">·</span>
                 <span>{safeReport.cadence}</span>
-                <span className="text-slate-600 dark:text-slate-600">·</span>
+                <span className="text-slate-600 dark:text-slate-400">·</span>
                 <span>{safeReport.dataQuality.freshnessLabel}</span>
               </div>
             </div>

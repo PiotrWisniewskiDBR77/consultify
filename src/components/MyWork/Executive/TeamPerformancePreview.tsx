@@ -239,7 +239,7 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Users size={32} className="text-slate-600 dark:text-slate-600 mb-2" />
+            <Users size={32} className="text-slate-600 dark:text-slate-400 mb-2" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t('executive.team.noMembers', 'No team members found')}
             </p>

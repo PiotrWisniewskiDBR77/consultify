@@ -185,7 +185,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-600 dark:text-slate-600">-</span>
+                          <span className="text-slate-600 dark:text-slate-400">-</span>
                         )}
                       </div>
 
@@ -201,7 +201,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-600 dark:text-slate-600">-</span>
+                          <span className="text-slate-600 dark:text-slate-400">-</span>
                         )}
                       </div>
                     </div>

@@ -263,7 +263,7 @@ export const FormView: React.FC<FormViewProps> = ({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-3 p-8">
         <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-          <FileText size={28} className="text-slate-600 dark:text-slate-600" />
+          <FileText size={28} className="text-slate-600 dark:text-slate-400" />
         </div>
         <span className="text-sm font-medium">{isPl ? 'Brak rekordów' : 'No records'}</span>
         {onRecordCreate && (

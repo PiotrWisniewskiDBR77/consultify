@@ -251,7 +251,7 @@ export const ReviewFeedbackPanel: React.FC<ReviewFeedbackPanelProps> = ({
                           className={`transition-colors ${
                             star <= (hoverRating || rating)
                               ? 'text-amber-400 fill-amber-400'
-                              : 'text-slate-700 dark:text-slate-300 dark:text-slate-600'
+                              : 'text-slate-700 dark:text-slate-300 dark:text-slate-400'
                           }`}
                         />
                       </button>

@@ -235,7 +235,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                           : `${row.delta.pct > 0 ? '+' : ''}${row.delta.pct.toFixed(1)}%`}
                       </span>
                     ) : (
-                      <span className="text-[10px] text-slate-600 dark:text-slate-600">—</span>
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400">—</span>
                     )}
                   </div>
                 </>

@@ -591,7 +591,7 @@ const DecisionTableRow: React.FC<{
               <span className="truncate max-w-[100px]">{decision.projectName}</span>
             </div>
           ) : (
-            <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-600">
+            <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-400">
               -
             </span>
           )}

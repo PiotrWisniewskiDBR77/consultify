@@ -276,7 +276,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
           </table>
         ) : reports.length === 0 ? (
           <div className="p-8 text-center">
-            <FileText size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
+            <FileText size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
             <p className="text-slate-500 dark:text-slate-400">No reports found.</p>
             <p className="text-sm text-slate-600 dark:text-slate-500">
               Generate your first report to see it here.

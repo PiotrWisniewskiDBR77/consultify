@@ -1007,7 +1007,10 @@ export const MeetingHub: React.FC = () => {
                             <li key={i}>
                               {a?.task || String(a)}
                               {a?.owner ? (
-                                <span className="text-slate-400"> — {a.owner}</span>
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  {' '}
+                                  — {a.owner}
+                                </span>
                               ) : null}
                             </li>
                           ))}
@@ -1541,7 +1544,7 @@ const MeetingCalendarView: React.FC<{
                       ? 'bg-primary-600 font-semibold text-white'
                       : inMonth
                         ? 'text-slate-600 dark:text-slate-300'
-                        : 'text-slate-600 dark:text-slate-600'
+                        : 'text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   {date.getDate()}

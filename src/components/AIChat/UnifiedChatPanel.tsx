@@ -4592,7 +4592,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 ))}
               </div>
 
-              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-600">
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
                 <Sparkles size={11} />
                 {t(
                   'aiChat.onboarding.hint',
@@ -4613,7 +4613,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   className="h-20 w-auto opacity-35 dark:hidden sm:h-24 md:h-28"
                   draggable={false}
                 />
-                <p className="-mt-0.5 text-center text-[11px] uppercase tracking-[0.25em] text-slate-600 dark:text-slate-600">
+                <p className="-mt-0.5 text-center text-[11px] uppercase tracking-[0.25em] text-slate-600 dark:text-slate-400">
                   <span className="text-primary-600 dark:text-primary-400">DBR77</span>{' '}
                   <span>Industrial Intelligence</span>
                 </p>

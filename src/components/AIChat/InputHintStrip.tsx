@@ -87,7 +87,7 @@ export const InputHintStrip: React.FC<InputHintStripProps> = ({
       {HINTS.map((hint, idx) => (
         <React.Fragment key={hint.id}>
           {idx > 0 && (
-            <span aria-hidden className="mx-1.5 text-slate-600 dark:text-slate-600 select-none">
+            <span aria-hidden className="mx-1.5 text-slate-600 dark:text-slate-400 select-none">
               ·
             </span>
           )}

@@ -908,7 +908,7 @@ export const RolesManagementPanel: React.FC<RolesManagementPanelProps> = ({ clas
             </div>
           ) : (
             <div className="text-center py-12">
-              <Shield className="mx-auto text-slate-600 dark:text-slate-600 mb-4" size={48} />
+              <Shield className="mx-auto text-slate-600 dark:text-slate-400 mb-4" size={48} />
               <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
                 {t('admin.roles.selectToEdit', 'Select a Role')}
               </h3>

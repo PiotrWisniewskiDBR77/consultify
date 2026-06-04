@@ -318,7 +318,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
           </div>
         ) : filteredComments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageCircle className="w-10 h-10 text-slate-600 dark:text-slate-600 mx-auto mb-2" />
+            <MessageCircle className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {isPl ? 'Brak komentarzy' : 'No comments yet'}
             </p>

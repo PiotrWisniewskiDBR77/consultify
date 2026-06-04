@@ -471,7 +471,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         {/* Empty State */}
         {filteredEvidence.length === 0 && !showAddType && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Paperclip className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-3" />
+            <Paperclip className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
               {isPolish ? 'Brak załączników' : 'No evidence yet'}
             </p>

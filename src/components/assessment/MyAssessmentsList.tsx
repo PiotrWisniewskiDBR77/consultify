@@ -390,7 +390,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
       {/* Assessments List */}
       {filteredAssessments.length === 0 ? (
         <div className="text-center py-12">
-          <FileText className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-4" />
+          <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
           <p className="text-slate-500 dark:text-slate-400">
             {searchQuery || statusFilter !== 'ALL' || typeFilter !== 'ALL'
               ? 'No assessments match your criteria'

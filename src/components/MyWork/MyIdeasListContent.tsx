@@ -1517,7 +1517,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       className={`rounded p-0.5 transition-opacity ${
                         isFavorite(idea.id)
                           ? 'text-amber-400 opacity-100'
-                          : 'text-slate-600 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-600'
+                          : 'text-slate-600 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-400'
                       }`}
                     >
                       <Star
@@ -1721,7 +1721,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             className={`rounded p-0.5 transition-colors ${
                               isFavorite(idea.id)
                                 ? 'text-amber-400'
-                                : 'text-slate-600 hover:text-amber-400 dark:text-slate-600'
+                                : 'text-slate-600 hover:text-amber-400 dark:text-slate-400'
                             }`}
                           >
                             <Star

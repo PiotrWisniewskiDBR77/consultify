@@ -153,7 +153,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <Zap size={20} className="text-slate-600 dark:text-slate-600" />
+            <Zap size={20} className="text-slate-600 dark:text-slate-400" />
             <span className="text-xs text-slate-500 dark:text-slate-400">
               {isPl ? 'Brak akcji do wyodrębnienia' : 'No action items found'}
             </span>

@@ -1619,7 +1619,7 @@ export function SWOTInsightsPhase({
           {/* True empty state — no data at all */}
           {items.length === 0 && keyInsights.length === 0 && tensions.length === 0 && (
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
-              <Lightbulb className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-600" />
+              <Lightbulb className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? 'Dodaj czynniki SWOT w poprzednich krokach, aby wygenerować wnioski strategiczne.'
@@ -1797,7 +1797,7 @@ export function SWOTInsightsPhase({
           {/* True empty state */}
           {items.length === 0 && activeMoves.length === 0 && (
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
-              <ArrowRight className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-600" />
+              <ArrowRight className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? 'Dodaj czynniki SWOT w poprzednich krokach, aby wygenerować rekomendacje.'

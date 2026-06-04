@@ -74,7 +74,7 @@ const SortIcon: React.FC<{ column: SortColumn; currentCol: SortColumn; currentDi
   currentDir,
 }) => {
   if (column !== currentCol)
-    return <ArrowUpDown size={12} className="text-slate-600 dark:text-slate-600" />;
+    return <ArrowUpDown size={12} className="text-slate-600 dark:text-slate-400" />;
   return currentDir === 'asc' ? (
     <ArrowUp size={12} className="text-primary-500" />
   ) : (

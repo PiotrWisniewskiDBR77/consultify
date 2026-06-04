@@ -351,7 +351,7 @@ export const AuditComplianceTab: React.FC = () => {
       {/* Usage Audit Log - DBR77 Compatible */}
       {activeSubTab === 'usage' && (
         <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center shadow-sm dark:shadow-none">
-          <Activity className="w-12 h-12 text-slate-600 dark:text-slate-600 mx-auto mb-4" />
+          <Activity className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-navy-900 dark:text-white">Usage Audit Log</h3>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
             Detailed log of all AI requests and responses
@@ -670,7 +670,7 @@ export const AuditComplianceTab: React.FC = () => {
             </div>
           ) : (
             <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 border-dashed rounded-xl p-12 text-center shadow-sm dark:shadow-none">
-              <FileText size={48} className="mx-auto text-slate-600 dark:text-slate-600 mb-4" />
+              <FileText size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
               <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
                 No Custom Templates
               </h3>

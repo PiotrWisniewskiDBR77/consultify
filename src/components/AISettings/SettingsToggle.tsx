@@ -79,7 +79,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
         </div>
         {description && (
           <p
-            className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-600 dark:text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}
+            className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}
           >
             {description}
           </p>

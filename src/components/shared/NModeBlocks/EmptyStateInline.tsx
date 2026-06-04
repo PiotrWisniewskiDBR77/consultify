@@ -50,9 +50,9 @@ export const EmptyStateInline: React.FC<EmptyStateInlineProps> = ({
         dashed ? 'border-dashed' : ''
       } border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-8 text-center ${className}`}
     >
-      <Icon size={28} className="mx-auto mb-3 text-slate-600 dark:text-slate-600" />
+      <Icon size={28} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
       <p className="text-sm text-slate-600 dark:text-slate-500 mb-1">{message}</p>
-      {hint && <p className="text-xs text-slate-600 dark:text-slate-600 mb-3">{hint}</p>}
+      {hint && <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">{hint}</p>}
       {action && (
         <button
           onClick={action.onClick}

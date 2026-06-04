@@ -388,7 +388,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           onClick={(e) => e.stopPropagation()}
           className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
-          <GripVertical size={14} className="text-slate-600 dark:text-slate-600" />
+          <GripVertical size={14} className="text-slate-600 dark:text-slate-400" />
         </div>
 
         {/* Type Badge & Completion Toggle */}

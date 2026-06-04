@@ -133,7 +133,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
                         </div>
                       )}
                     </div>
-                    <span className="text-[10px] font-mono uppercase tracking-wide text-slate-600 dark:text-slate-600">
+                    <span className="text-[10px] font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       {entry.type}
                     </span>
                   </div>

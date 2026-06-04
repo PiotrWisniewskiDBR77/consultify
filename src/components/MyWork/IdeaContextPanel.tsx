@@ -1224,7 +1224,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                             {onInsertToCanvas && (
                               <GripVertical
                                 size={12}
-                                className="text-slate-600 dark:text-slate-600 mt-0.5 shrink-0"
+                                className="text-slate-600 dark:text-slate-400 mt-0.5 shrink-0"
                               />
                             )}
                             <div className="flex-1 min-w-0">

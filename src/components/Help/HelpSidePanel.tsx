@@ -702,7 +702,7 @@ export const HelpSidePanel: React.FC = () => {
                 <div className="text-center py-8">
                   <HelpCircle
                     size={32}
-                    className="mx-auto text-slate-600 dark:text-slate-600 mb-3"
+                    className="mx-auto text-slate-600 dark:text-slate-400 mb-3"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {searchQuery

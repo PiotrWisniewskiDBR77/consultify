@@ -473,7 +473,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     ? new Date(task.dueDate) < new Date() && !isDone
                       ? 'text-rose-500'
                       : 'text-slate-600 dark:text-slate-500'
-                    : 'text-slate-600 dark:text-slate-600'
+                    : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
                 <Calendar size={10} />
@@ -503,7 +503,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                 className={`flex items-center gap-1 text-[10px] ${
                   task.assignee
                     ? 'text-slate-500 dark:text-slate-400'
-                    : 'text-slate-600 dark:text-slate-600'
+                    : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
                 <User size={10} />

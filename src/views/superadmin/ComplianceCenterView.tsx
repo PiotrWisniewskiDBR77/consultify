@@ -995,7 +995,7 @@ export const ComplianceCenterView: React.FC = () => {
     if (frameworks.length === 0) {
       return (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-10 text-center">
-          <Shield size={40} className="mx-auto mb-3 text-slate-600 dark:text-slate-600" />
+          <Shield size={40} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
           <p className="text-slate-900 dark:text-white font-semibold">No compliance frameworks</p>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl mx-auto">
             This section lists available compliance standards (e.g., SOC 2, GDPR, HIPAA) so you can

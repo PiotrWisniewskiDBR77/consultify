@@ -237,7 +237,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           </div>
         ) : topics.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center px-3">
-            <Sparkles size={24} className="text-slate-600 dark:text-slate-600" />
+            <Sparkles size={24} className="text-slate-600 dark:text-slate-400" />
             <span className="text-xs text-slate-500 dark:text-slate-400">
               {error
                 ? isPl

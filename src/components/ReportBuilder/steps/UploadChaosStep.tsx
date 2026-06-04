@@ -312,7 +312,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                       e.stopPropagation();
                       removeFile(idx);
                     }}
-                    className="text-slate-600 hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400"
+                    className="text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-400"
                   >
                     <X className="w-4 h-4" />
                   </button>

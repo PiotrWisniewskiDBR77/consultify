@@ -955,7 +955,7 @@ export const NotificationsHub: React.FC<NotificationsHubProps> = ({
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
             <Bell
               size={40}
-              className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-3"
+              className="text-slate-700 dark:text-slate-300 dark:text-slate-400 mb-3"
             />
             <p className="text-[13px] text-slate-500 dark:text-slate-400">
               {t('myWork.noNotifications', 'No notifications')}

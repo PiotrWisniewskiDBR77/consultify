@@ -216,7 +216,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
           </div>
         ) : filteredComments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageSquare className="w-10 h-10 mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-2" />
+            <MessageSquare className="w-10 h-10 mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-400 mb-2" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               No comments yet. Start a discussion about this axis.
             </p>

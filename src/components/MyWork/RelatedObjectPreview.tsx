@@ -209,7 +209,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
                   <span>{initiative.ownerName || initiative.owner_business_name}</span>
                 </div>
               )}
-              {initiative.category && <span className="text-slate-600 dark:text-slate-600">•</span>}
+              {initiative.category && <span className="text-slate-600 dark:text-slate-400">•</span>}
               {initiative.category && <span>{initiative.category}</span>}
             </div>
           </div>
@@ -217,7 +217,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
           {onNavigate && (
             <ArrowRight
               size={16}
-              className="shrink-0 text-slate-600 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
+              className="shrink-0 text-slate-600 dark:text-slate-400 group-hover:text-primary-500 transition-colors"
             />
           )}
         </div>
@@ -276,7 +276,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
               )}
               {dueDate && (
                 <>
-                  {assignee && <span className="text-slate-600 dark:text-slate-600">•</span>}
+                  {assignee && <span className="text-slate-600 dark:text-slate-400">•</span>}
                   <div className="flex items-center gap-1">
                     <Calendar size={12} />
                     <span>{formatDate(dueDate)}</span>
@@ -289,7 +289,7 @@ export const RelatedObjectPreview: React.FC<RelatedObjectPreviewProps> = ({
           {onNavigate && (
             <ArrowRight
               size={16}
-              className="shrink-0 text-slate-600 dark:text-slate-600 group-hover:text-blue-500 transition-colors"
+              className="shrink-0 text-slate-600 dark:text-slate-400 group-hover:text-blue-500 transition-colors"
             />
           )}
         </div>

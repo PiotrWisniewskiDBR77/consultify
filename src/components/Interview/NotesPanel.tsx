@@ -327,7 +327,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
         {/* Empty State */}
         {filteredNotes.length === 0 && !showNewNote && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="w-12 h-12 text-slate-600 dark:text-slate-600 mb-3" />
+            <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
               {isPolish ? 'Brak notatek' : 'No notes yet'}
             </p>

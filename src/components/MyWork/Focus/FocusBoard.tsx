@@ -193,7 +193,7 @@ const FocusTaskCard: React.FC<{
       <div className="flex items-start gap-3 p-4">
         {/* Drag Handle */}
         <div className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-          <GripVertical size={16} className="text-slate-600 dark:text-slate-600" />
+          <GripVertical size={16} className="text-slate-600 dark:text-slate-400" />
         </div>
 
         {/* Completion Toggle */}

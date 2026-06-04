@@ -530,7 +530,7 @@ const CloudMenuItem: React.FC<{
       className={`shrink-0 transition-all duration-150 ${
         connected
           ? 'text-emerald-500 dark:text-emerald-400 opacity-100'
-          : 'text-slate-600 dark:text-slate-600 opacity-0 group-hover:opacity-100'
+          : 'text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100'
       }`}
     />
   </button>

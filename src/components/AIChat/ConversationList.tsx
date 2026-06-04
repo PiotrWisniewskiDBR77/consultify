@@ -122,7 +122,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider flex-1">
                 {config.label}
               </span>
-              <span className="text-[9px] tabular-nums text-slate-600 dark:text-slate-600">
+              <span className="text-[9px] tabular-nums text-slate-600 dark:text-slate-400">
                 {conversations.length}
               </span>
             </div>

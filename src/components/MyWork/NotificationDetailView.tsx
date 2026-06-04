@@ -1679,7 +1679,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 <div className="py-10 text-center">
                   <TeresaMark
                     size={28}
-                    className="mx-auto mb-2 text-slate-600 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Brak danych do analizy' : 'No data for analysis'}
@@ -1777,7 +1777,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <div className="py-8 text-center">
                     <CheckSquare
                       size={24}
-                      className="mx-auto mb-2 text-slate-600 dark:text-slate-600"
+                      className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
                     />
                     <p className="text-xs text-slate-600 dark:text-slate-500">
                       {isPolish
@@ -1838,7 +1838,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                             )}
                           </button>
                           <span
-                            className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${done ? 'text-slate-600 dark:text-slate-600' : 'text-slate-600 dark:text-slate-500'}`}
+                            className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${done ? 'text-slate-600 dark:text-slate-400' : 'text-slate-600 dark:text-slate-500'}`}
                           >
                             {idx + 1}.
                           </span>
@@ -1923,7 +1923,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 <div className="py-10 text-center">
                   <MessageCircle
                     size={28}
-                    className="mx-auto mb-2 text-slate-600 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-600 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
                     {isPolish ? 'Brak komentarzy' : 'No comments yet'}
@@ -2121,7 +2121,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </div>
               ) : allEntries.length === 0 ? (
                 <div className="py-10 text-center">
-                  <History size={28} className="mx-auto mb-2 text-slate-600 dark:text-slate-600" />
+                  <History size={28} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
                   <p className="text-sm text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Brak aktywności' : 'No activity yet'}
                   </p>

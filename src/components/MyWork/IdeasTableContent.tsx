@@ -1206,7 +1206,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                                 : 'Star'
                           }
                           aria-pressed={isFavorite?.(idea.id) ?? false}
-                          className="shrink-0 rounded p-0.5 text-slate-600 transition-colors hover:text-amber-400 dark:text-slate-600"
+                          className="shrink-0 rounded p-0.5 text-slate-600 transition-colors hover:text-amber-400 dark:text-slate-400"
                         >
                           <Star
                             size={14}

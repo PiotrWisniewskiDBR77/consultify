@@ -1015,7 +1015,7 @@ Rules:
                                   className={
                                     question.confidenceScore >= score
                                       ? 'text-amber-400 fill-amber-400'
-                                      : 'text-slate-600 dark:text-slate-600'
+                                      : 'text-slate-600 dark:text-slate-400'
                                   }
                                 />
                               ))}

@@ -502,7 +502,7 @@ export const KnowledgeLibrary: React.FC<KnowledgeLibraryProps> = ({ onArticleCli
           </div>
         ) : (
           <div className="text-center py-12">
-            <BookOpen size={40} className="mx-auto text-slate-600 dark:text-slate-600 mb-3" />
+            <BookOpen size={40} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {searchQuery
                 ? t('help.knowledge.noSearchResults', 'No articles found for your search.')

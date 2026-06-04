@@ -32,7 +32,7 @@ export const HistorySection: React.FC<InitiativeSectionProps> = ({
     >
       {history.length === 0 ? (
         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
-          <History size={32} className="mx-auto mb-3 text-slate-600 dark:text-slate-600" />
+          <History size={32} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             {isPolish ? 'Brak historii aktywności' : 'No activity history yet'}
           </p>

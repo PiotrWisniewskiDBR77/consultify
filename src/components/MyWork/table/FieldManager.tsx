@@ -309,7 +309,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
                   {!locked && !searchQuery && (
                     <GripVertical
                       size={12}
-                      className="text-slate-600 dark:text-slate-600 cursor-grab flex-shrink-0"
+                      className="text-slate-600 dark:text-slate-400 cursor-grab flex-shrink-0"
                     />
                   )}
                   <div className="w-6 h-6 rounded-md flex items-center justify-center bg-slate-100 dark:bg-navy-800 flex-shrink-0">
