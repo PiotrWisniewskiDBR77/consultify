@@ -83,7 +83,7 @@ const getActionIcon = (actionType: string) => {
     case 'ANALYZE_RISKS':
       return <AlertTriangle size={12} className="text-rose-500" />;
     default:
-      return <Zap size={12} className="text-indigo-500" />;
+      return <Zap size={12} className="text-primary-500" />;
   }
 };
 

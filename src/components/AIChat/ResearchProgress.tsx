@@ -343,14 +343,14 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-800 dark:to-indigo-900/20 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
+      className={`bg-gradient-to-br from-slate-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
     >
       {/* Header */}
       <button
         onClick={toggleExpand}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 dark:hover:bg-navy-700/50 transition-colors"
       >
-        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
+        <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400">
           <Search size={18} />
         </div>
 
@@ -360,7 +360,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
               {t('research.deepResearch', 'Deep Research')}
             </h4>
             {researchType && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium capitalize">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium capitalize">
                 {researchType.replace(/_/g, ' ')}
               </span>
             )}
@@ -420,7 +420,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
                   activeTab === tab
-                    ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500'
+                    ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
@@ -530,11 +530,11 @@ export const ResearchStatusBadge: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/70 transition-colors"
+      className="flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium hover:bg-primary-200 dark:hover:bg-primary-900/70 transition-colors"
     >
       <Search size={12} className="animate-pulse" />
       <span>{t('research.researching', 'Researching')}</span>
-      <span className="text-indigo-500">
+      <span className="text-primary-500">
         {queriesCompleted}/{totalQueries}
       </span>
       {sourcesCount && sourcesCount > 0 && (

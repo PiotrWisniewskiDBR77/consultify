@@ -1427,10 +1427,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               agentAuditState?.state &&
               agentAuditState.state !== 'done' &&
               agentAuditState.state !== 'error' && (
-                <div className="mt-3 p-2.5 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+                <div className="mt-3 p-2.5 bg-primary-50/50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-800 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                    <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                    <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+                    <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
                       {agentAuditState.state === 'reviewing'
                         ? t('agentAudit.streaming.reviewing', 'Multi-Agent Review in Progress')
                         : agentAuditState.state === 'aggregating'
@@ -1438,7 +1438,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           : t('agentAudit.streaming.processing', 'Agent Audit Processing')}
                     </span>
                     {agentAuditState.agentsTotal && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
                         {Object.keys(agentReviewProgressByAgentId || {}).length}/
                         {agentAuditState.agentsTotal} agents
                       </span>
@@ -1891,15 +1891,15 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         interimInsight &&
         interimInsight.paths.length > 0 && (
           <div
-            className={`${isCompact ? 'ml-7' : 'ml-9'} mt-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg`}
+            className={`${isCompact ? 'ml-7' : 'ml-9'} mt-2 p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 rounded-lg`}
           >
-            <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-200 mb-2 flex items-center gap-1.5">
-              <BrainCircuit size={14} className="text-indigo-500" />
+            <p className="text-xs font-semibold text-primary-800 dark:text-primary-200 mb-2 flex items-center gap-1.5">
+              <BrainCircuit size={14} className="text-primary-500" />
               {t('deepThinking.interimInsight', 'Preliminary insight — dominant paths emerging:')}
             </p>
             <ul className="space-y-1 mb-2">
               {interimInsight.paths.map((p) => (
-                <li key={p.id} className="text-xs text-indigo-700 dark:text-indigo-300">
+                <li key={p.id} className="text-xs text-primary-700 dark:text-primary-300">
                   <span className="font-medium">{p.label}</span>
                   {p.summary ? ` — ${p.summary}` : ''}
                 </li>
@@ -1910,13 +1910,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 onClick={() =>
                   handleSendMessage(t('deepThinking.narrowFocus', 'Narrow focus on the first path'))
                 }
-                className="px-3 py-1 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white transition-colors"
               >
                 {t('deepThinking.narrowFocusBtn', 'Narrow focus')}
               </button>
               <button
                 onClick={() => handleSendMessage(t('deepThinking.goDeeper', 'Go deeper'))}
-                className="px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 transition-colors"
               >
                 {t('deepThinking.continueDeeper', 'Continue to full report')}
               </button>

@@ -119,10 +119,10 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
   if (loading) {
     return (
       <div
-        className={`bg-gradient-to-br from-crimson-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800/50 p-4 ${className}`}
+        className={`bg-gradient-to-br from-crimson-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800/50 p-4 ${className}`}
       >
         <div className="flex items-center gap-3">
-          <Loader2 size={18} className="animate-spin text-indigo-500" />
+          <Loader2 size={18} className="animate-spin text-primary-500" />
           <span className="text-sm text-slate-600 dark:text-slate-300">
             {t('research.preparingQuestions', 'Preparing research scope...')}
           </span>
@@ -150,12 +150,12 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-crimson-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800/50 overflow-hidden ${className}`}
+      className={`bg-gradient-to-br from-crimson-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800/50 overflow-hidden ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-indigo-100 dark:border-indigo-800/30">
-        <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg">
-          <HelpCircle size={16} className="text-indigo-600 dark:text-indigo-400" />
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-primary-100 dark:border-primary-800/30">
+        <div className="p-1.5 bg-primary-100 dark:bg-primary-900/50 rounded-lg">
+          <HelpCircle size={16} className="text-primary-600 dark:text-primary-400" />
         </div>
         <div>
           <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -169,7 +169,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
           </p>
         </div>
         {researchType && (
-          <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium capitalize">
+          <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium capitalize">
             {researchType.replace(/_/g, ' ')}
           </span>
         )}
@@ -189,8 +189,8 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
                   onClick={() => handleOptionSelect(q.id, option)}
                   className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
                     answers[q.id] === option
-                      ? 'bg-indigo-100 dark:bg-indigo-900/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 font-medium shadow-sm'
-                      : 'bg-white dark:bg-navy-700 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:border-indigo-200 dark:hover:border-indigo-800'
+                      ? 'bg-primary-100 dark:bg-primary-900/50 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300 font-medium shadow-sm'
+                      : 'bg-white dark:bg-navy-700 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:border-primary-200 dark:hover:border-primary-800'
                   }`}
                 >
                   {option}
@@ -202,7 +202,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-indigo-100 dark:border-indigo-800/30 bg-white/50 dark:bg-navy-900/30">
+      <div className="flex items-center justify-between px-4 py-3 border-t border-primary-100 dark:border-primary-800/30 bg-white/50 dark:bg-navy-900/30">
         <button
           onClick={onCancel}
           className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -224,7 +224,7 @@ export const ResearchClarification: React.FC<ResearchClarificationProps> = ({
             disabled={!allAnswered}
             className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
               allAnswered
-                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm'
                 : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >

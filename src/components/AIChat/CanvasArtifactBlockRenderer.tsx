@@ -563,7 +563,7 @@ function ChartBlockView({
     >
       <BlockHeader block={block} onCopy={onCopy} />
       {spec ? (
-        <div className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950 dark:border-indigo-400/20 dark:bg-indigo-400/10 dark:text-indigo-100">
+        <div className="mt-4 rounded-2xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-950 dark:border-primary-400/20 dark:bg-primary-400/10 dark:text-primary-100">
           <div className="text-xs font-semibold uppercase tracking-[0.16em]">Vega-Lite runtime</div>
           <div className="mt-2">Status: {vegaStatus}</div>
           <div className="mt-2 text-xs opacity-80">

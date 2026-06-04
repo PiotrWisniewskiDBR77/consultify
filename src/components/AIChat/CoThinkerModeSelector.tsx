@@ -37,8 +37,8 @@ const MODES: ModeConfig[] = [
     icon: Users,
     labelKey: 'chat.coThinker.multiConsultant',
     descKey: 'chat.coThinker.multiConsultantDesc',
-    color: 'text-indigo-600 dark:text-indigo-400',
-    bgColor: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800',
+    color: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800',
   },
   {
     id: 'idea_maker',

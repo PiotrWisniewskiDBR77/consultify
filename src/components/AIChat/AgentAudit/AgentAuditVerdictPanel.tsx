@@ -432,7 +432,7 @@ const SourceItem: React.FC<{ source: SourceUsed; index: number }> = ({ source, i
   if (source.type === 'web_source' && source.url) {
     return (
       <div className="text-[11px] flex items-center gap-1.5">
-        <ExternalLink size={12} className="flex-shrink-0 text-indigo-500" />
+        <ExternalLink size={12} className="flex-shrink-0 text-primary-500" />
         <a
           href={source.url}
           target="_blank"
@@ -514,7 +514,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
         className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/50 dark:hover:bg-navy-800/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400">
             <Shield size={18} />
           </div>
           <div className="text-left">
