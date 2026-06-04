@@ -3459,6 +3459,27 @@ router.post(
       const attachmentDocIds = Array.isArray(attachmentDocIdsRaw)
         ? Array.from(new Set(attachmentDocIdsRaw.map((x: any) => String(x)).filter(Boolean)))
         : [];
+
+      // F3: merge the conversation's PROJECT knowledge files into the RAG scope so
+      // Teresa can retrieve from project-shared documents. Guarded — table may not
+      // exist yet. Only widens retrieval; never throws.
+      try {
+        if (conversationId) {
+          const { all: dbAll } = await import('../utils/DbPromise.js');
+          const kRows = (await dbAll(
+            `SELECT k.doc_id FROM conversations c
+             JOIN project_knowledge k ON k.project_id = c.chat_project_id
+             WHERE c.id = ? AND k.kind = 'file' AND k.doc_id IS NOT NULL`,
+            [conversationId]
+          )) as Array<{ doc_id?: string }>;
+          for (const r of kRows || []) {
+            const d = String(r.doc_id || '').trim();
+            if (d && !attachmentDocIds.includes(d)) attachmentDocIds.push(d);
+          }
+        }
+      } catch {
+        /* project_knowledge may not exist yet — skip */
+      }
       const failedAttachments = Array.isArray((context as any)?.failedAttachments)
         ? (context as any).failedAttachments
             .map((a: any) => ({

@@ -6555,6 +6555,19 @@
       "roleFailed": "Could not change role",
       "removeFailed": "Could not remove member",
       "visibilityFailed": "Could not change visibility"
+    },
+    "knowledge": {
+      "title": "Project knowledge",
+      "hint": "Teresa uses this in every chat in the project (files are searched, notes are added to context).",
+      "uploadFile": "Upload file",
+      "notePlaceholderTitle": "Note title (optional)",
+      "notePlaceholder": "Add a note Teresa should always know in this project…",
+      "empty": "No project knowledge yet",
+      "delete": "Remove",
+      "addFailed": "Could not add",
+      "fileAdded": "File added to project",
+      "uploadFailed": "Could not upload",
+      "deleteFailed": "Could not delete"
     }
   },
   "agentAudit": {

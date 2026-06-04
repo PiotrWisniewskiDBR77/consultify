@@ -67,6 +67,18 @@ async function ensureProjectRbacSchema(): Promise<boolean> {
     await db.run(
       'ALTER TABLE conversations ADD COLUMN IF NOT EXISTS shared_to_project BOOLEAN DEFAULT FALSE'
     );
+    // F3: per-project knowledge (text snippets + uploaded files) shared with members.
+    await db.run(`CREATE TABLE IF NOT EXISTS project_knowledge (
+      id         TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      kind       TEXT NOT NULL DEFAULT 'text',
+      title      TEXT,
+      content    TEXT,
+      doc_id     TEXT,
+      added_by   TEXT,
+      added_at   TEXT
+    )`);
+    await db.run('CREATE INDEX IF NOT EXISTS idx_pk_project ON project_knowledge(project_id)');
     // Backfill creator-as-owner for team projects missing it.
     await db.run(`INSERT INTO chat_project_members (project_id, user_id, role, added_by, added_at)
       SELECT cp.id, cp.user_id, 'owner', cp.user_id, NOW()::TEXT
@@ -681,6 +693,124 @@ router.delete('/:id/members/:memberUserId', verifyToken, async (req: Request, re
   } catch (error: any) {
     logger.error('[ChatProjects] Remove member error:', error?.message);
     return res.status(500).json({ error: 'Failed to remove member' });
+  }
+});
+
+// ==================== PROJECT KNOWLEDGE (F3) ====================
+
+// Determine if a user can see a project (member, creator, or org-visible team).
+async function canSeeProject(db: any, project: any, userId: string, orgId: string | null) {
+  if (!project) return false;
+  if (project.user_id === userId) return true;
+  const role = await getProjectRole(db, project.id, userId);
+  if (role) return true;
+  if (
+    project.scope === 'team' &&
+    project.organization_id === orgId &&
+    (project.visibility !== 'private' || !project.visibility)
+  ) {
+    return true;
+  }
+  return project.scope !== 'team' && project.user_id === userId;
+}
+
+router.get('/:id/knowledge', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const db = getDatabase();
+    await ensureProjectRbacSchema();
+    const project = (await dbGetOne(
+      db,
+      `SELECT id, user_id, scope, organization_id, visibility FROM chat_projects WHERE id = ?`,
+      [id]
+    )) as any;
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (!(await canSeeProject(db, project, userId, orgId))) {
+      return res.status(403).json({ error: 'No access to this project' });
+    }
+    const rows = (await db.query(
+      `SELECT id, kind, title, content, doc_id, added_by, added_at
+       FROM project_knowledge WHERE project_id = ? ORDER BY added_at DESC`,
+      [id]
+    )) as any;
+    return res.json({ knowledge: Array.isArray(rows) ? rows : rows?.rows || [] });
+  } catch (error: any) {
+    logger.error('[ChatProjects] List knowledge error:', error?.message);
+    return res.status(500).json({ error: 'Failed to load knowledge' });
+  }
+});
+
+router.post('/:id/knowledge', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId || (req as any).user?.id;
+    const { id } = req.params;
+    const { kind, title, content, docId } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const db = getDatabase();
+    await ensureProjectRbacSchema();
+    const project = (await dbGetOne(db, `SELECT id, user_id, scope FROM chat_projects WHERE id = ?`, [
+      id,
+    ])) as any;
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    // Owner/editor (team) or the personal-project owner may add knowledge.
+    const role = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    const canWrite = role === 'owner' || role === 'editor' || project.user_id === userId;
+    if (!canWrite) return res.status(403).json({ error: 'No permission to add knowledge' });
+
+    const itemKind = kind === 'file' ? 'file' : 'text';
+    if (itemKind === 'text' && !String(content || '').trim()) {
+      return res.status(400).json({ error: 'content is required for a text item' });
+    }
+    if (itemKind === 'file' && !String(docId || '').trim()) {
+      return res.status(400).json({ error: 'docId is required for a file item' });
+    }
+    const kid = uuidv4();
+    const now = new Date().toISOString();
+    await db.run(
+      `INSERT INTO project_knowledge (id, project_id, kind, title, content, doc_id, added_by, added_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        kid,
+        id,
+        itemKind,
+        title ? String(title).slice(0, 300) : null,
+        itemKind === 'text' ? String(content).slice(0, 8000) : null,
+        itemKind === 'file' ? String(docId) : null,
+        userId,
+        now,
+      ]
+    );
+    return res
+      .status(201)
+      .json({ id: kid, kind: itemKind, title: title || null, doc_id: docId || null, added_at: now });
+  } catch (error: any) {
+    logger.error('[ChatProjects] Add knowledge error:', error?.message);
+    return res.status(500).json({ error: 'Failed to add knowledge' });
+  }
+});
+
+router.delete('/:id/knowledge/:knowledgeId', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId || (req as any).user?.id;
+    const { id, knowledgeId } = req.params;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const db = getDatabase();
+    await ensureProjectRbacSchema();
+    const project = (await dbGetOne(db, `SELECT user_id FROM chat_projects WHERE id = ?`, [
+      id,
+    ])) as any;
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const role = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    const canWrite = role === 'owner' || role === 'editor' || project.user_id === userId;
+    if (!canWrite) return res.status(403).json({ error: 'No permission' });
+    await db.run(`DELETE FROM project_knowledge WHERE id = ? AND project_id = ?`, [knowledgeId, id]);
+    return res.json({ success: true });
+  } catch (error: any) {
+    logger.error('[ChatProjects] Delete knowledge error:', error?.message);
+    return res.status(500).json({ error: 'Failed to delete knowledge' });
   }
 });
 

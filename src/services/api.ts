@@ -11726,6 +11726,34 @@ export const Api = {
     );
     return handleResponse(res, 'Failed to remove member');
   },
+  // F3: project knowledge (text snippets + uploaded files shared with members).
+  getProjectKnowledge: async (projectId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/knowledge`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load project knowledge');
+  },
+  addProjectKnowledge: async (
+    projectId: string,
+    data: { kind: 'text' | 'file'; title?: string; content?: string; docId?: string }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/knowledge`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to add knowledge');
+  },
+  deleteProjectKnowledge: async (projectId: string, knowledgeId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/chat-projects/${projectId}/knowledge/${knowledgeId}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete knowledge');
+  },
   deleteChatProject: async (id: string) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'DELETE',

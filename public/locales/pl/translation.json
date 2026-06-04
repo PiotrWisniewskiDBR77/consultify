@@ -7106,6 +7106,19 @@
       "roleFailed": "Nie udało się zmienić roli",
       "removeFailed": "Nie udało się usunąć",
       "visibilityFailed": "Nie udało się zmienić widoczności"
+    },
+    "knowledge": {
+      "title": "Wiedza projektu",
+      "hint": "Teresa używa tego w każdej rozmowie w projekcie (pliki są przeszukiwane, notatki trafiają do kontekstu).",
+      "uploadFile": "Wgraj plik",
+      "notePlaceholderTitle": "Tytuł notatki (opcjonalnie)",
+      "notePlaceholder": "Dodaj notatkę, którą Teresa ma zawsze znać w tym projekcie…",
+      "empty": "Brak wiedzy projektu",
+      "delete": "Usuń",
+      "addFailed": "Nie udało się dodać",
+      "fileAdded": "Dodano plik do projektu",
+      "uploadFailed": "Nie udało się wgrać",
+      "deleteFailed": "Nie udało się usunąć"
     }
   },
   "agentAudit": {

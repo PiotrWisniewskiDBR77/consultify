@@ -837,6 +837,36 @@ export class AIPipeline {
                 ? `${customInstructions}\n\n[Project brief] ${projectCi}`
                 : `[Project brief] ${projectCi}`;
             }
+
+            // F3: append the project's TEXT knowledge snippets (file knowledge is
+            // handled as RAG scope in the chat route). Capped so the prompt stays sane.
+            try {
+              const { all: dbAll } = await import('../../utils/DbPromise.js');
+              const kRows = (await dbAll(
+                `SELECT k.title, k.content
+                 FROM conversations c
+                 JOIN project_knowledge k ON k.project_id = c.chat_project_id
+                 WHERE c.id = ? AND k.kind = 'text' AND k.content IS NOT NULL
+                 ORDER BY k.added_at DESC
+                 LIMIT 12`,
+                [convIdForProject]
+              )) as Array<{ title?: string; content?: string }>;
+              const snippets = (kRows || [])
+                .map((r) => {
+                  const body = String(r.content || '').trim();
+                  if (!body) return '';
+                  const ttl = r.title ? `${String(r.title).trim()}: ` : '';
+                  return `- ${ttl}${body}`;
+                })
+                .filter(Boolean)
+                .join('\n')
+                .slice(0, 4000);
+              if (snippets) {
+                customInstructions = `${customInstructions || ''}\n\n[Project knowledge]\n${snippets}`.trim();
+              }
+            } catch {
+              // project_knowledge may not exist yet — skip silently.
+            }
           }
         } catch {
           // chat_projects.custom_instructions may not exist yet — skip silently.

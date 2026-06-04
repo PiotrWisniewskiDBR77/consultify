@@ -6,8 +6,8 @@
  * team-project sharing. Role gates are enforced server-side; the UI only
  * exposes what the current user (myRole) is allowed to do.
  */
-import { Crown, Loader2, Shield, Trash2, UserPlus, X } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Crown, FileText, Loader2, Plus, Shield, Trash2, Upload, UserPlus, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -48,8 +48,24 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
   const [busy, setBusy] = useState(false);
   const [visibility, setVisibility] = useState<'org' | 'private'>(project?.visibility || 'org');
 
+  // F3: project knowledge
+  const [knowledge, setKnowledge] = useState<any[]>([]);
+  const [snippet, setSnippet] = useState('');
+  const [snippetTitle, setSnippetTitle] = useState('');
+  const [knBusy, setKnBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
   const isOwner = myRole === 'owner';
   const canManage = myRole === 'owner' || myRole === 'editor';
+
+  const loadKnowledge = useCallback(async () => {
+    try {
+      const res: any = await Api.getProjectKnowledge(projectId);
+      setKnowledge(Array.isArray(res?.knowledge) ? res.knowledge : []);
+    } catch {
+      /* ignore */
+    }
+  }, [projectId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,7 +78,53 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+    void loadKnowledge();
+  }, [projectId, loadKnowledge]);
+
+  const handleAddSnippet = async () => {
+    const content = snippet.trim();
+    if (!content) return;
+    setKnBusy(true);
+    try {
+      await Api.addProjectKnowledge(projectId, {
+        kind: 'text',
+        title: snippetTitle.trim() || undefined,
+        content,
+      });
+      setSnippet('');
+      setSnippetTitle('');
+      await loadKnowledge();
+    } catch (e: any) {
+      toast.error(e?.message || t('aiChat.knowledge.addFailed', 'Could not add'));
+    } finally {
+      setKnBusy(false);
+    }
+  };
+
+  const handleUploadFile = async (file: File) => {
+    setKnBusy(true);
+    try {
+      const up: any = await Api.uploadChatAttachment(file);
+      const docId = String(up?.docId || '');
+      if (!docId) throw new Error('Upload failed');
+      await Api.addProjectKnowledge(projectId, { kind: 'file', title: file.name, docId });
+      await loadKnowledge();
+      toast.success(t('aiChat.knowledge.fileAdded', 'File added to project'));
+    } catch (e: any) {
+      toast.error(e?.message || t('aiChat.knowledge.uploadFailed', 'Could not upload'));
+    } finally {
+      setKnBusy(false);
+    }
+  };
+
+  const handleDeleteKnowledge = async (kid: string) => {
+    try {
+      await Api.deleteProjectKnowledge(projectId, kid);
+      setKnowledge((prev) => prev.filter((k) => k.id !== kid));
+    } catch (e: any) {
+      toast.error(e?.message || t('aiChat.knowledge.deleteFailed', 'Could not delete'));
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -277,6 +339,112 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                         title={t('aiChat.members.remove', 'Remove')}
                       >
                         <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Project knowledge (F3) — text + files shared with members, fed to Teresa */}
+          <div className="border-t border-slate-200 dark:border-navy-700 pt-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+                {t('aiChat.knowledge.title', 'Project knowledge')}
+              </div>
+              {canManage && (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={knBusy}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-primary-600 hover:text-primary-500 disabled:opacity-50"
+                >
+                  <Upload size={12} />
+                  {t('aiChat.knowledge.uploadFile', 'Upload file')}
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+              {t(
+                'aiChat.knowledge.hint',
+                'Teresa uses this in every chat in the project (files are searched, notes are added to context).'
+              )}
+            </p>
+            <input
+              ref={fileRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleUploadFile(f);
+                e.target.value = '';
+              }}
+            />
+
+            {canManage && (
+              <div className="mb-2 space-y-1.5">
+                <input
+                  value={snippetTitle}
+                  onChange={(e) => setSnippetTitle(e.target.value)}
+                  placeholder={t('aiChat.knowledge.notePlaceholderTitle', 'Note title (optional)')}
+                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-xs outline-none focus:border-primary-500"
+                />
+                <div className="flex items-end gap-2">
+                  <textarea
+                    value={snippet}
+                    onChange={(e) => setSnippet(e.target.value)}
+                    rows={2}
+                    placeholder={t(
+                      'aiChat.knowledge.notePlaceholder',
+                      'Add a note Teresa should always know in this project…'
+                    )}
+                    className="flex-1 resize-none rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2.5 py-1.5 text-xs outline-none focus:border-primary-500"
+                  />
+                  <button
+                    onClick={() => void handleAddSnippet()}
+                    disabled={knBusy || !snippet.trim()}
+                    className="rounded-lg bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white p-2"
+                    title={t('common.add', 'Add')}
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {knowledge.length === 0 ? (
+              <div className="py-2 text-center text-[11px] text-slate-500 dark:text-slate-400">
+                {t('aiChat.knowledge.empty', 'No project knowledge yet')}
+              </div>
+            ) : (
+              <div className="max-h-40 overflow-y-auto space-y-1">
+                {knowledge.map((k) => (
+                  <div
+                    key={k.id}
+                    className="flex items-start gap-2 rounded-lg px-2 py-1.5 bg-slate-50 dark:bg-navy-950/40"
+                  >
+                    {k.kind === 'file' ? (
+                      <FileText size={13} className="shrink-0 mt-0.5 text-primary-500" />
+                    ) : (
+                      <FileText size={13} className="shrink-0 mt-0.5 text-slate-400" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-medium text-slate-800 dark:text-slate-100 truncate">
+                        {k.title || (k.kind === 'file' ? 'File' : 'Note')}
+                      </div>
+                      {k.kind === 'text' && k.content && (
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                          {k.content}
+                        </div>
+                      )}
+                    </div>
+                    {canManage && (
+                      <button
+                        onClick={() => void handleDeleteKnowledge(k.id)}
+                        className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                        title={t('aiChat.knowledge.delete', 'Remove')}
+                      >
+                        <Trash2 size={12} />
                       </button>
                     )}
                   </div>
