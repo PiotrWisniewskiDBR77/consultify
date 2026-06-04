@@ -35,6 +35,48 @@ Legenda: **a)** komponenty graficzne · **b)** kolory (light+dark) · **c)** uwa
 
 ---
 
+## Wymiar: budowanie przez Teresę (audyt 2026-06-04)
+
+Trzeci wymiar rozwoju modułu (obok a/b/c UI i funkcjonalności): **czy Teresa potrafi realnie ZBUDOWAĆ/OBSŁUŻYĆ moduł**, a nie tylko o nim rozmawiać. Pełna mapa z dowodami file:line: [`_TERESA_MODULE_INTEGRATION_MAP.md`](./_TERESA_MODULE_INTEGRATION_MAP.md).
+
+Poziomy: `FULL` (twórz/edytuj realne artefakty end-to-end) · `PARTIAL` (część realnych zapisów, luki) · `ADVISORY` (czyta/proponuje) · `NONE`.
+
+**Werdykt ogólny: ~ADVISORY-plus.** Teresa świetnie czyta i *proponuje*, ale „ostatnia mila" egzekucji jest zerwana: `performHandoff` szuka per-moduł funkcji `create*`, których serwisy nie eksportują → cichy fallback na syntetyczny ref (`real_entity:false`). Realne „zbudowała to" działa tylko dla **Tasks + Decisions** (slash `/task` `/decision`, bez LLM) oraz **Notebook** (handoff). FULL_BUILD: 0 · PARTIAL: 6 · ADVISORY: 9 · NONE: 8+.
+
+| # | Moduł | Teresa | Mechanizm (skrót) | Główna luka |
+|---|---|---|---|---|
+| 1 | Czat / Teresa | host | — | sam czat nie uruchamia `AI_TOOLS`; tylko proposale handoff |
+| 2 | My Work — Tasks | **PARTIAL** | slash `/task`→`chat-actions` (realny INSERT); ścieżka LLM = stub | LLM nie tworzy; brak edit/assign/due; `task_type='personal'` |
+| 2 | My Work — Decisions | **PARTIAL** | slash `/decision`→`chat-actions` (realny INSERT) | LLM nie tworzy; brak opcji/kryteriów/scoring/resolve |
+| 2 | My Work — Mind Map / Process Flow / Whiteboard / Ideas | **NONE** | — | brak jakiejkolwiek ścieżki zapisu |
+| 2 | My Work — Notebook | **PARTIAL→FULL** | handoff `notebook`→`createNote` (realny) | tylko przez handoff execute; tool = proposal-only |
+| 3 | Wywiad / Interview | **PARTIAL** | handoff `interview` (mismatch nazwy fn) | szuka `generateInsight`/`createInsight`, eksport to `create` → ryzyko synth ref |
+| 4 | Decyzje | **PARTIAL** | jak 2-Decisions | jw. |
+| 5 | Assessment | **ADVISORY** | `get_assessment_data`, `compare_benchmarks` (read) | brak tworzenia/edycji oceny; nie uruchomi assessmentu |
+| 6 | Narzędzia | **NONE** | — | brak generowania/obsługi narzędzi |
+| 7 | Inicjatywy | **ADVISORY** | `create_initiative_draft`→proposal; handoff fallback | serwis to klasa, nie `createInitiative` fn → `real_entity:false` |
+| 8 | Realizacja | **ADVISORY** | `update_status` istnieje, nieosiągalny z czatu | żadna ścieżka czatu nie woła `executeProposedAction` |
+| 9 | Rezultaty | **ADVISORY** | `query_structured_data`, `calculate_financial` | brak tworzenia/edycji KPI/ROI |
+| 10 | Finanse | **ADVISORY** | `calculate_financial`, `run_monte_carlo` (compute) | kalkulatory; wyniki nie zapisywane do encji |
+| 11 | Spotkania | **PARTIAL** | `schedule_meeting`=proposal; realny `createMeeting` tylko przez adapter | nie podpięty do czatu/handoff; calendar szuka `createEvent` (brak) |
+| 12 | Outputs / Reports | **ADVISORY** | `generate_report_section` (treść, bez zapisu) | sekcja nigdy nie utrwalona do encji raportu |
+| 13 | Organizacja | **ADVISORY** | read KB/structured | brak create/edit org/competency/profile |
+| 14 | Admin | **NONE** | tylko persona emphasis | brak akcji admina |
+| 15 | Ustawienia | **NONE** | — | brak mutacji ustawień |
+| 16 | Prezentacje | **NONE** | — | Teresa nie tworzy deck/slajdów |
+| 17 | Document Studio | **NONE** | — | Teresa nie tworzy dokumentów |
+| 18 | Table Studio | **ADVISORY** | read-only text→SQL | brak zapisu tabel/wierszy |
+| 19 | Partner | **NONE** | — | brak operacji na katalogu partnerów |
+| x | Radar | **PARTIAL** | handoff `radar`→`createSignal` (brak eksportu) | fallback synth ref |
+
+**5 największych luk (last-mile):** (1) Inicjatywy — handoff woła nieistniejące `createInitiative`; (2) Radar — `createSignal` nieeksportowany; (3) Spotkania — realny `createMeeting` niepodpięty do czatu; (4) Tasks — `TaskExecutor.execute` to rzucający stub, choć działający INSERT istnieje w `actionProposalEngine.executeProposedAction`; (5) główny czat ↔ `AI_TOOLS` rozłączone (`AI_TOOLS` tylko przez `/api/ai-agents`). Pełny 13-punktowy backlog w docu mapy.
+
+## Wymiar: Canvas na poziomie czatu (audyt 2026-06-04)
+
+Pełna analiza: [`_CANVAS_CHAT_LEVEL_ANALYSIS.md`](./_CANVAS_CHAT_LEVEL_ANALYSIS.md). **Ocena doskonałości: 62/100** — działający, shipping-grade, ale nie world-class. Realny TipTap v3, markdown-kanon, inline accept/reject diff, streaming pisania Teresy do dokumentu, autosave z 409-retry, wersje serwerowe + restore. Najmocniejsze: persystencja/wersjonowanie (78). Najsłabsze: floating menu (52), streaming UX (48). **Kluczowa asymetria:** „mądra" ścieżka (pełny context packet `canvas-context/v1` przez `/chat/stream`) NIE ma diff/accept-reject, a „bezpieczna" ścieżka (floating menu z accept/reject) jest pozbawiona kontekstu (cheap `/chat/quick`, sam zaznaczony tekst). P0 = ujednolicić obie ścieżki + dodać diff do streamingu.
+
+---
+
 ## Szczegóły per moduł
 
 ### 1. Czat / Teresa — MINOR
