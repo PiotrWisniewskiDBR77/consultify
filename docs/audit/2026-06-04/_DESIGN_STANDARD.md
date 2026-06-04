@@ -56,6 +56,26 @@ Zmierzone realne kolory slate w apce, kontrast względem białego tła (#FFFFFF)
 
 **Moja opinia (szczerze):** kierunek Apple/OpenAI/Google 2026 = **minimalne ramki**, definicja przez **warstwy tła** (karta nieco inny `bg` niż strona), nie przez grube obrysy — i to jest dobre, zostawmy. ALE w light mode obecne bordery bywają **odrobinę za słabe na białym** (karty „pływają"). Dla „Harvard = struktura, zaufanie" rekomenduję: bordery **subtelne, ale widoczne** (slate‑200 floor, nie słabiej) + tam gdzie karta jest na białym tle bez różnicy warstwy — delikatny `--c-border`, nie hairline. Nie pogrubiamy (to nie „enterprise 2010"); pilnujemy tylko, by nie znikały. Tła/wypełnienia zostawiamy bez zmian (zaakceptowane).
 
+## 2c. Przyciski i ikony — gdzie crimson jest WIODĄCY (kluczowy standard)
+
+Crimson `#85182F` jest akcentem „lekko" — to znaczy: **wiodący dla akcji głównych i stanu aktywnego, ale NIE dla wszystkiego**. Czerwień (rose) jest osobna i semantyczna (stop/nagrywanie). Macierz:
+
+| Element | Kolor | Token | Przykłady |
+|---|---|---|---|
+| **Akcja główna / CTA / submit** | **crimson** | `bg-primary-600` (hover 500) | Send, „New conversation", Start trial, primary buttons, start/connect voice |
+| **Stan aktywny / selected / brand** | **crimson** | `primary-600` / `text-primary-600` | aktywna zakładka, aktywna ikona sidebara, „Piotr"/TERESA/DBR77 akcent, focus ring |
+| **Disabled akcji głównej** | **przygaszony crimson** | `bg-primary-600/40` | voice gdy unavailable (NIE amber/slate) |
+| **Stop / destrukcja / nagrywanie LIVE** | **rose/red** (NIE crimson) | `bg-rose-600` / `bg-rose-500` | Stop generating, live voice recording, dictation active, Delete |
+| **Akcja drugorzędna / ghost / toolbar** | **neutral** | `text-slate-600` hover `text-primary-600`/`bg-primary-50` | +, pen, people, mic‑dictation, ikony narzędziowe |
+| **Status (semantyczne)** | green/amber/red/blue | `--c-success/warning/danger/info` | success ✓, warning ⚠, error, info — NIGDY crimson dla statusu |
+| **Ikony kategorii / narzędzi** | własne kolory kategorii | (np. Market=red, Finance=green, Digital=blue) | kafle „Market/Financial/Classic/Digital" — celowo różne, NIE brand |
+
+**Reguły rozstrzygające:**
+- **Crimson ≠ czerwień‑danger.** Crimson = marka/akcja/aktywność. Rose/red = stop/nagrywanie/usuwanie. Nie mieszać (crimson nigdy jako „delete", red nigdy jako „submit").
+- **Jedna akcja główna na widok** dostaje crimson; reszta = neutral/ghost (zasada „lekko").
+- **Amber/orange ZAKAZANY na przyciskach akcji** — tylko jako status‑warning (badge/tekst), nie jako tło przycisku. (Naprawione: voice connecting/unavailable były amber → crimson.)
+- **Ikony kategorii zostają kolorowe** (różnicowanie), ale akcent interakcji (hover/active) = crimson.
+
 ## 3. Reguły sweepu (co zmieniać, czego NIE ruszać)
 
 **Zmieniamy (text → ciemniej):**
@@ -72,10 +92,17 @@ Zmierzone realne kolory slate w apce, kontrast względem białego tła (#FFFFFF)
 
 **Jak weryfikować:** po sweepie per‑moduł — `preview_inspect` koloru tekstu na próbce + porównanie z tabelą. Build zielony.
 
-## 4. Status wdrożenia (uzupełniać)
-- [x] Crimson `#A51C30` → `#A41034` centralnie (commit `05cca2d93b`).
-- [x] Standard zapisany (ten plik) + DoD trackera zaktualizowany.
+## 4. Status wdrożenia
+
+> ✅ **PALETA ZAAKCEPTOWANA przez właściciela (Piotr) 2026-06-04 — light + dark.**
+> Dotyczy ekranu Czatu/Teresa jako wzorca: crimson `#85182F`, neutrale navy/slate, kontrast tekstu, ramki, tła/wypełnienia. Kolejne elementy graficzne (poza paletą) — do omówienia osobno.
+
+- [x] Crimson `#A51C30` → `#A41034` → **`#85182F` (locked)** centralnie (commity `05cca2d93b`, `e3bc80289f`, `6eed5b0d3b`).
+- [x] Skala crimson spójna (500/600/700) — commit `6eed5b0d3b`.
+- [x] Standard kontrastu tekstu + ramek + przycisków/ikon zapisany; DoD trackera zaktualizowany.
+- [x] Wordmark Czatu przyciemniony (`5466e88684`); voice button on-brand crimson (`27f76417c1`).
 - [ ] Sweep kontrastu tekstu per‑moduł (01→19) — w toku przy każdym module.
+- [ ] Egzekwowanie standardu przycisków/ikon per‑moduł (amber→crimson na akcjach, slate→crimson na active).
 
 ---
 
