@@ -3562,6 +3562,9 @@ export function WorkCanvasDocumentPanel({
                   isStreaming={isStreaming}
                   onStopStream={stopStream}
                   editable={true}
+                  // C6 — per-span AI provenance audit keyed by draft id. localStorage
+                  // foundation; server-side persistence deferred.
+                  provenanceScope={documentState.draftId ?? undefined}
                 />
                 {documentState.blocks?.length ? (
                   <div className="mt-4 px-6 pb-6" data-testid="canvas-artifact-blocks">

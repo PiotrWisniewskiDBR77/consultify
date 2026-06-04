@@ -18,6 +18,7 @@ import { acceptAiDiff, applyAiDiff, rejectAiDiff } from './canvasDiffOps';
 import { getCanvasEditorExtensions } from './canvasEditorExtensions';
 import { CanvasEditorToolbar } from './CanvasEditorToolbar';
 import { htmlToMarkdown, markdownToHtml } from './canvasMarkdownConversion';
+import { recordProvenanceEvent } from './canvasProvenanceLog';
 
 export interface CanvasSelection {
   selectedText: string;
@@ -35,6 +36,8 @@ interface CanvasRichEditorProps {
   className?: string;
   isStreaming?: boolean;
   onStopStream?: () => void;
+  /** C6 — scope key for the provenance log (typically the draft id). */
+  provenanceScope?: string;
 }
 
 const SAVE_DEBOUNCE_MS = 300;
@@ -49,6 +52,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
   className,
   isStreaming = false,
   onStopStream,
+  provenanceScope,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -161,6 +165,21 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         // never `to + string.length`, which breaks on multi-node replacements.
         applyAiDiff(editor, { from: selection.from, to: selection.to }, replacement);
 
+        // C6 — record the apply event so the per-span provenance audit (the
+        // differentiator vs Claude/ChatGPT/Gemini/Antigravity) has the prompt
+        // + original + replacement attached to this draft.
+        if (provenanceScope) {
+          recordProvenanceEvent(provenanceScope, {
+            kind: 'apply',
+            at: Date.now(),
+            prompt,
+            originalExcerpt: selectedText,
+            replacementExcerpt: replacement,
+            selectionFrom: selection.from,
+            selectionTo: selection.to,
+          });
+        }
+
         setHasPendingDiff(true);
         setAiProcessing(false);
         return replacement;
@@ -169,7 +188,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         return null;
       }
     },
-    [editor, selection]
+    [editor, selection, provenanceScope]
   );
 
   // Accept AI suggestion: delete the original (aiRemoved) text, keep the
@@ -179,12 +198,16 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
     acceptAiDiff(editor);
 
+    if (provenanceScope) {
+      recordProvenanceEvent(provenanceScope, { kind: 'accept', at: Date.now() });
+    }
+
     setHasPendingDiff(false);
     setSelection(null);
 
     const md = htmlToMarkdown(editor.getHTML());
     onContentChangeRef.current(md);
-  }, [editor]);
+  }, [editor, provenanceScope]);
 
   // Reject AI suggestion: delete the inserted (aiAdded) text, restore the
   // original by stripping its aiRemoved marker. Persist for parity with accept
@@ -194,12 +217,16 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
     rejectAiDiff(editor);
 
+    if (provenanceScope) {
+      recordProvenanceEvent(provenanceScope, { kind: 'reject', at: Date.now() });
+    }
+
     setHasPendingDiff(false);
     setSelection(null);
 
     const md = htmlToMarkdown(editor.getHTML());
     onContentChangeRef.current(md);
-  }, [editor]);
+  }, [editor, provenanceScope]);
 
   const editorClassName = useMemo(
     () =>
