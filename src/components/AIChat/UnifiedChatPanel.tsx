@@ -2223,13 +2223,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           return;
         }
       }
-      const liveConversationMessages =
-        useConversationStore.getState().activeConversationId === conversationId
-          ? useConversationStore.getState().activeMessages
-          : [];
-      const sourceMessages =
-        customMessages ||
-        (activeConversationId === conversationId ? messages : liveConversationMessages);
+      // BUG 1b/2 fix: align the conversation store to THIS resolved id before building
+      // history or appending the user bubble. Eliminates stale-render-closure bleed
+      // (old thread sent as history) and guarantees the optimistic user message appends
+      // (store guard: shouldAppend = activeConversationId === conversationId).
+      if (useConversationStore.getState().activeConversationId !== conversationId) {
+        setActiveConversation(conversationId);
+      }
+      const sourceMessages = customMessages || useConversationStore.getState().activeMessages;
 
       // Conversation-scoped attachments: upload supported files to Knowledge Base and
       // pass doc filters to the backend so RAG only searches within these attachments.
@@ -3328,6 +3329,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const handleNewChat = useCallback(async () => {
     clearActiveChat();
+    // BUG 1a fix: also clear the legacy global chat store (useAppStore.activeChatMessages).
+    // clearActiveChat() only resets the conversation store; without this, embedded views
+    // rendering customMessages={activeChatMessages} leak the entire previous thread.
+    try {
+      useAppStore.getState().clearChat();
+    } catch {
+      /* non-critical */
+    }
     try {
       const conv = await createConversation();
       setActiveConversation(conv.id);
