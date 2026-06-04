@@ -228,6 +228,7 @@
 | FIX-305 | RAG bez pgvector (brute-force JS cosine) | ⏳ | Migracja do pgvector | P2 | L | `ragService.ts:691` |
 | FIX-306 | Design-system: pełny token sweep slate→navy | ⏳ | Codemod + visual review (część zrobiona) | P2 | L | (cross-cutting) |
 | FIX-307 | **Google Drive sync na folderze repo** (cofa edycje, churn .git) | ⏳ | Przenieść repo poza Google Drive (`~/dev/consultify`) | P0 | S | (środowisko) |
+| FIX-308 | **EPIC: Panel synchronizacji MCP / praca z innymi środowiskami i urządzeniami** (decyzja właściciela 2026-06-04) | ⏳ EPIC | Zbudować całą formułę MCP sync z zewn. środowiskami. Obejmuje: (a) cloud provider rows BROKEN — contract mismatch `cloud.routes.ts:390` brak pola `connected` + id `google_drive` vs hook `google-drive`; (b) composer „Recent" attachments = stub („cannot be reattached") → realna reattachacja; (c) „Manage cloud sources" SPA nav zamiast `window.location.assign`; (d) szerszy panel sync multi-device | P2 | XL | `cloud.routes.ts`, `useCloudIntegrations.ts`, `AddFilesMenu.tsx`, (nowy panel) |
 
 ---
 
