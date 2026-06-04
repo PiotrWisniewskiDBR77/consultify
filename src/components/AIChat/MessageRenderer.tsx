@@ -1596,21 +1596,24 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
-      {/* TRUST T-TR1 — compact summary chip. Render whenever the backend
-          provides real citations; empty/missing citations stay silent. */}
-      {msg.role === 'ai' && !msg.isStreaming && hasVisibleCitations && (
-        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
-          <TrustBadge
-            citations={visibleCitations}
-            modelUsed={
-              typeof (msg as { metadata?: { modelUsed?: unknown } }).metadata?.modelUsed ===
-              'string'
-                ? ((msg as { metadata?: { modelUsed?: string } }).metadata?.modelUsed as string)
-                : null
-            }
-          />
-        </div>
-      )}
+      {/* TRUST T-TR1 — compact sources chip, revealed on hover (clean default).
+          Render whenever the backend provides real citations; empty/missing stay silent. */}
+      {msg.role === 'ai' &&
+        !msg.isStreaming &&
+        hasVisibleCitations &&
+        (isHovered || isLastMessage || showCompactActions || showSourcesDetails) && (
+          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
+            <TrustBadge
+              citations={visibleCitations}
+              modelUsed={
+                typeof (msg as { metadata?: { modelUsed?: unknown } }).metadata?.modelUsed ===
+                'string'
+                  ? ((msg as { metadata?: { modelUsed?: string } }).metadata?.modelUsed as string)
+                  : null
+              }
+            />
+          </div>
+        )}
 
       {/* Citations */}
       {msg.role === 'ai' && hasVisibleCitations && showCompactActions && showSourcesDetails && (
@@ -1655,118 +1658,122 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           </div>
         )}
 
-      {/* Unified Feedback Block (AI only): single action row (no duplicate hover toolbar) */}
-      {msg.role === 'ai' && !msg.isStreaming && (
-        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex items-center gap-1.5`}>
-          {/* Copy — always visible */}
-          <button
-            onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
-            className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-            title={t('chat.actions.copy', 'Copy')}
-            aria-label={t('chat.actions.copy', 'Copy')}
-          >
-            {isCopied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-          </button>
-          {/* Speak — always visible */}
-          <button
-            onClick={() => {
-              stopSpeaking();
-              setTimeout(() => speak(userVisibleContent), 60);
-            }}
-            className={`p-1 rounded-md transition-colors ${
-              voiceState.isSpeaking
-                ? 'text-rose-500'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
-            }`}
-            title={
-              voiceState.isSpeaking
-                ? t('chat.actions.stop', 'Stop')
-                : t('chat.actions.speak', 'Speak')
-            }
-            aria-label={t('chat.actions.speak', 'Speak')}
-          >
-            <Volume2 size={12} />
-          </button>
-          {/* More (feedback / save / sources) */}
-          <button
-            onClick={() =>
-              setShowCompactActions((v) => {
-                const next = !v;
-                if (!next) setShowSourcesDetails(false);
-                return next;
-              })
-            }
-            className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300/50 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
-            title={t('chat.actions.toggleResponseActions', 'More actions')}
-            aria-label={t('chat.actions.toggleResponseActions', 'More actions')}
-          >
-            {showCompactActions ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-          </button>
+      {/* Unified Feedback Block (AI only): single action row, revealed on hover.
+          Stays visible while the user has expanded actions/sources so it doesn't
+          vanish mid-interaction; the last message keeps it visible for discovery. */}
+      {msg.role === 'ai' &&
+        !msg.isStreaming &&
+        (isHovered || isLastMessage || showCompactActions || showSourcesDetails) && (
+          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex items-center gap-1.5`}>
+            {/* Copy — always visible */}
+            <button
+              onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
+              className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              title={t('chat.actions.copy', 'Copy')}
+              aria-label={t('chat.actions.copy', 'Copy')}
+            >
+              {isCopied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+            </button>
+            {/* Speak — always visible */}
+            <button
+              onClick={() => {
+                stopSpeaking();
+                setTimeout(() => speak(userVisibleContent), 60);
+              }}
+              className={`p-1 rounded-md transition-colors ${
+                voiceState.isSpeaking
+                  ? 'text-rose-500'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+              }`}
+              title={
+                voiceState.isSpeaking
+                  ? t('chat.actions.stop', 'Stop')
+                  : t('chat.actions.speak', 'Speak')
+              }
+              aria-label={t('chat.actions.speak', 'Speak')}
+            >
+              <Volume2 size={12} />
+            </button>
+            {/* More (feedback / save / sources) */}
+            <button
+              onClick={() =>
+                setShowCompactActions((v) => {
+                  const next = !v;
+                  if (!next) setShowSourcesDetails(false);
+                  return next;
+                })
+              }
+              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300/50 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+              title={t('chat.actions.toggleResponseActions', 'More actions')}
+              aria-label={t('chat.actions.toggleResponseActions', 'More actions')}
+            >
+              {showCompactActions ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            </button>
 
-          {showCompactActions && (
-            <div className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-900/40">
-              <InlineResponseFeedback
-                messageId={msg.id}
-                conversationId={activeConversationId || undefined}
-                responseLength={userVisibleContent.length}
-                onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
-                compact
-                thumbsOnly
-              />
-              <button
-                onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
-                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                title={t('myWork.notebook.saveAsNote', 'Save as note')}
-                aria-label={t('myWork.notebook.saveAsNote', 'Save as note')}
-              >
-                <Bookmark size={12} />
-              </button>
-              <button
-                onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
-                className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
-                aria-label={t('myWork.ideas.saveAsIdea', 'Save as idea')}
-              >
-                <Lightbulb size={12} />
-              </button>
-              {canSaveToContext && (
+            {showCompactActions && (
+              <div className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-900/40">
+                <InlineResponseFeedback
+                  messageId={msg.id}
+                  conversationId={activeConversationId || undefined}
+                  responseLength={userVisibleContent.length}
+                  onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
+                  compact
+                  thumbsOnly
+                />
                 <button
-                  onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
-                  disabled={isContextSaveBusy || isContextSaved}
-                  className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={
-                    isContextSaved
-                      ? t('chat.actions.savedToContext', 'Saved to Context OS')
-                      : t('chat.actions.saveToContext', 'Save to Context OS')
-                  }
-                  aria-label={t('chat.actions.saveToContext', 'Save to Context OS')}
+                  onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
+                  className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  title={t('myWork.notebook.saveAsNote', 'Save as note')}
+                  aria-label={t('myWork.notebook.saveAsNote', 'Save as note')}
                 >
-                  {isContextSaveBusy ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : isContextSaved ? (
-                    <CheckCircle2 size={12} className="text-emerald-500" />
-                  ) : (
-                    <Database size={12} />
-                  )}
+                  <Bookmark size={12} />
                 </button>
-              )}
-              <button
-                onClick={() => setShowSourcesDetails((v) => !v)}
-                className={`p-1 rounded-md transition-colors ${
-                  showSourcesDetails
-                    ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/25'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
-                }`}
-                title={t('chat.sources.details', 'Sources details')}
-                aria-label={t('chat.sources.details', 'Sources details')}
-              >
-                <ShieldCheck size={12} />
-              </button>
-              <span className="mx-0.5 h-3 w-px bg-slate-200 dark:bg-navy-700" />
-            </div>
-          )}
-        </div>
-      )}
+                <button
+                  onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
+                  className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+                  aria-label={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+                >
+                  <Lightbulb size={12} />
+                </button>
+                {canSaveToContext && (
+                  <button
+                    onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
+                    disabled={isContextSaveBusy || isContextSaved}
+                    className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={
+                      isContextSaved
+                        ? t('chat.actions.savedToContext', 'Saved to Context OS')
+                        : t('chat.actions.saveToContext', 'Save to Context OS')
+                    }
+                    aria-label={t('chat.actions.saveToContext', 'Save to Context OS')}
+                  >
+                    {isContextSaveBusy ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : isContextSaved ? (
+                      <CheckCircle2 size={12} className="text-emerald-500" />
+                    ) : (
+                      <Database size={12} />
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowSourcesDetails((v) => !v)}
+                  className={`p-1 rounded-md transition-colors ${
+                    showSourcesDetails
+                      ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/25'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+                  }`}
+                  title={t('chat.sources.details', 'Sources details')}
+                  aria-label={t('chat.sources.details', 'Sources details')}
+                >
+                  <ShieldCheck size={12} />
+                </button>
+                <span className="mx-0.5 h-3 w-px bg-slate-200 dark:bg-navy-700" />
+              </div>
+            )}
+          </div>
+        )}
 
       {/* AI-suggested Deep Thinking activation hint */}
       {msg.role === 'ai' &&
