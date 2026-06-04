@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { getDatabase } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { checkChatPermission } from '../services/chatPermissionService.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -44,6 +45,45 @@ async function ensureCustomInstructionsColumn(): Promise<boolean> {
   return _ciColumnReady;
 }
 
+// F2: Team projects RBAC schema (visibility + members + per-chat sharing).
+// Lazy, idempotent, additive — defaults preserve current behaviour (visibility
+// 'org'). Backfills creator-as-owner for existing team projects.
+let _rbacReady: boolean | null = null;
+async function ensureProjectRbacSchema(): Promise<boolean> {
+  if (_rbacReady !== null) return _rbacReady;
+  try {
+    const db = getDatabase();
+    await db.run("ALTER TABLE chat_projects ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'org'");
+    await db.run(`CREATE TABLE IF NOT EXISTS chat_project_members (
+      project_id TEXT NOT NULL,
+      user_id    TEXT NOT NULL,
+      role       TEXT NOT NULL DEFAULT 'viewer',
+      added_by   TEXT,
+      added_at   TEXT,
+      PRIMARY KEY (project_id, user_id)
+    )`);
+    await db.run('CREATE INDEX IF NOT EXISTS idx_cpm_user ON chat_project_members(user_id)');
+    await db.run('CREATE INDEX IF NOT EXISTS idx_cpm_project ON chat_project_members(project_id)');
+    await db.run(
+      'ALTER TABLE conversations ADD COLUMN IF NOT EXISTS shared_to_project BOOLEAN DEFAULT FALSE'
+    );
+    // Backfill creator-as-owner for team projects missing it.
+    await db.run(`INSERT INTO chat_project_members (project_id, user_id, role, added_by, added_at)
+      SELECT cp.id, cp.user_id, 'owner', cp.user_id, NOW()::TEXT
+      FROM chat_projects cp
+      WHERE cp.scope = 'team' AND cp.user_id IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM chat_project_members m
+          WHERE m.project_id = cp.id AND m.user_id = cp.user_id
+        )`);
+    _rbacReady = true;
+  } catch (e: any) {
+    logger.warn(`[ChatProjects] ensure RBAC schema failed: ${e?.message}`);
+    _rbacReady = false;
+  }
+  return _rbacReady;
+}
+
 const dbGetOne = (db: any, sql: string, params: unknown[]) => {
   const getOne = typeof db.get === 'function' ? db.get : db.queryOne;
   return getOne.call(db, sql, params);
@@ -62,6 +102,8 @@ const CreateProjectSchema = z.object({
   icon: z.string().max(50).optional().default('folder'),
   /** 'personal' (default) or 'team' */
   scope: z.enum(['personal', 'team']).optional().default('personal'),
+  /** F2: team-project visibility. 'org' = whole org · 'private' = invited members only. */
+  visibility: z.enum(['org', 'private']).optional(),
 });
 
 const UpdateProjectSchema = z.object({
@@ -74,6 +116,8 @@ const UpdateProjectSchema = z.object({
   icon: z.string().max(50).optional(),
   /** Per-project brief injected into Teresa's system prompt (composer #5). */
   customInstructions: z.string().max(4000).optional().nullable(),
+  /** F2: team-project visibility (owner-only). */
+  visibility: z.enum(['org', 'private']).optional(),
 });
 
 // ==================== GET ALL PROJECTS ====================
@@ -90,9 +134,18 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
 
     const db = getDatabase();
     await ensureCustomInstructionsColumn();
+    const rbacReady = await ensureProjectRbacSchema();
 
     let whereClause: string;
     const params: string[] = [];
+
+    // F2: a team project is visible to a user when it's org-wide ('org'/legacy
+    // NULL) OR the user is an explicit member. Personal projects are unaffected.
+    const teamVisible = (): string => {
+      if (!rbacReady) return '';
+      params.push(userId);
+      return ` AND (cp.visibility <> 'private' OR cp.visibility IS NULL OR EXISTS (SELECT 1 FROM chat_project_members m WHERE m.project_id = cp.id AND m.user_id = ?))`;
+    };
 
     if (scopeFilter === 'personal') {
       // Only personal projects owned by this user
@@ -105,15 +158,17 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
       }
       whereClause = `WHERE cp.scope = 'team' AND cp.organization_id = ?`;
       params.push(orgId);
+      whereClause += teamVisible();
     } else {
-      // All: personal + team
-      whereClause = `WHERE cp.user_id = ?`;
+      // All: personal (owned) + visible team projects.
+      whereClause = `WHERE (cp.user_id = ?`;
       params.push(userId);
       if (orgId) {
-        whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
         params.push(orgId);
+        const tv = teamVisible(); // pushes userId (member check) AFTER orgId
+        whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?${tv})`;
       }
-      whereClause = `WHERE (${whereClause.replace('WHERE ', '')})`;
+      whereClause += `)`;
     }
 
     const projectsResult = await db.query(
@@ -233,7 +288,7 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
       });
     }
 
-    const { name, description, color, icon, scope } = validation.data;
+    const { name, description, color, icon, scope, visibility } = validation.data;
 
     // Team projects require an organization and create_project permission
     if (scope === 'team') {
@@ -252,27 +307,59 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
 
     const id = uuidv4();
     const now = new Date().toISOString();
+    // F2: team projects get a visibility (default 'org' = current behaviour);
+    // personal projects are always effectively private to the owner.
+    const effectiveVisibility = scope === 'team' ? visibility || 'org' : 'org';
 
     const db = getDatabase();
+    const rbacReady = await ensureProjectRbacSchema();
 
+    const cols = await getTableColumns('chat_projects');
+    const insertCols = [
+      'id',
+      'user_id',
+      'organization_id',
+      'name',
+      'description',
+      'color',
+      'icon',
+      'scope',
+      'created_at',
+      'updated_at',
+    ];
+    const insertVals = [
+      id,
+      userId,
+      scope === 'team' ? orgId : orgId || null,
+      name,
+      description || null,
+      color,
+      icon,
+      scope,
+      now,
+      now,
+    ];
+    if (rbacReady && cols.has('visibility')) {
+      insertCols.push('visibility');
+      insertVals.push(effectiveVisibility);
+    }
     await db.run(
-      `
-            INSERT INTO chat_projects (id, user_id, organization_id, name, description, color, icon, scope, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-      [
-        id,
-        userId,
-        scope === 'team' ? orgId : orgId || null,
-        name,
-        description || null,
-        color,
-        icon,
-        scope,
-        now,
-        now,
-      ]
+      `INSERT INTO chat_projects (${insertCols.join(', ')}) VALUES (${insertCols.map(() => '?').join(', ')})`,
+      insertVals
     );
+
+    // F2: creator becomes the project owner member.
+    if (rbacReady && scope === 'team') {
+      try {
+        await db.run(
+          `INSERT INTO chat_project_members (project_id, user_id, role, added_by, added_at)
+           VALUES (?, ?, 'owner', ?, ?)`,
+          [id, userId, userId, now]
+        );
+      } catch (e: any) {
+        logger.warn(`[ChatProjects] owner membership insert failed: ${e?.message}`);
+      }
+    }
 
     const project = {
       id,
@@ -283,6 +370,8 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
       color,
       icon,
       scope,
+      visibility: effectiveVisibility,
+      my_role: scope === 'team' ? 'owner' : undefined,
       conversation_count: 0,
       created_at: now,
       updated_at: now,
@@ -373,6 +462,28 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
         values.push(updates.customInstructions ? String(updates.customInstructions).slice(0, 4000) : null);
       }
     }
+    if (updates.visibility !== undefined) {
+      // Only the project owner may change visibility (F2).
+      const ok = await ensureProjectRbacSchema();
+      const ownerRow = ok
+        ? ((await dbGetOne(
+            db,
+            `SELECT role FROM chat_project_members WHERE project_id = ? AND user_id = ?`,
+            [id, userId]
+          )) as any)
+        : null;
+      const isOwner = ownerRow?.role === 'owner' || existing.user_id === userId;
+      if (ok && isOwner) {
+        fields.push('visibility = ?');
+        values.push(updates.visibility);
+      } else if (!isOwner) {
+        return res.status(403).json({ error: 'Only the project owner can change visibility' });
+      }
+    }
+
+    if (fields.length === 0) {
+      return res.json({ success: true, noop: true });
+    }
 
     fields.push('updated_at = ?');
     values.push(new Date().toISOString());
@@ -385,6 +496,191 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error('[ChatProjects] Update error:', error);
     res.status(500).json({ error: 'Failed to update project' });
+  }
+});
+
+// ==================== TEAM PROJECT MEMBERS (F2) ====================
+
+/** Resolve the requester's role on a project, or null if not a member. */
+async function getProjectRole(
+  db: any,
+  projectId: string,
+  userId: string
+): Promise<'owner' | 'editor' | 'viewer' | null> {
+  try {
+    const row = (await dbGetOne(
+      db,
+      `SELECT role FROM chat_project_members WHERE project_id = ? AND user_id = ?`,
+      [projectId, userId]
+    )) as any;
+    return (row?.role as any) || null;
+  } catch {
+    return null;
+  }
+}
+
+// List members of a team project.
+router.get('/:id/members', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
+    const { id } = req.params;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const db = getDatabase();
+    await ensureProjectRbacSchema();
+
+    const project = (await dbGetOne(
+      db,
+      `SELECT id, user_id, scope, organization_id, visibility FROM chat_projects WHERE id = ?`,
+      [id]
+    )) as any;
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    // Must be a member, the creator, or (for org-visible team projects) an org member.
+    const myRole = await getProjectRole(db, id, userId);
+    const orgVisible =
+      project.scope === 'team' &&
+      project.organization_id === orgId &&
+      (project.visibility !== 'private' || !project.visibility);
+    if (!myRole && project.user_id !== userId && !orgVisible) {
+      return res.status(403).json({ error: 'Not a member of this project' });
+    }
+
+    const rows = (await db.query(
+      `SELECT m.user_id, m.role, m.added_at,
+              COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email) AS name,
+              u.email AS email
+       FROM chat_project_members m
+       LEFT JOIN users u ON u.id = m.user_id
+       WHERE m.project_id = ?
+       ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END, m.added_at`,
+      [id]
+    )) as any;
+    const members = Array.isArray(rows) ? rows : rows?.rows || [];
+    return res.json({ members, myRole: myRole || (project.user_id === userId ? 'owner' : null) });
+  } catch (error: any) {
+    logger.error('[ChatProjects] List members error:', error?.message);
+    return res.status(500).json({ error: 'Failed to list members' });
+  }
+});
+
+// Add a member (by email or userId). Owner/editor only; same org.
+router.post('/:id/members', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
+    const { id } = req.params;
+    const { email, memberUserId, role } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const db = getDatabase();
+    await ensureProjectRbacSchema();
+
+    const project = (await dbGetOne(
+      db,
+      `SELECT id, user_id, scope, organization_id FROM chat_projects WHERE id = ?`,
+      [id]
+    )) as any;
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (project.scope !== 'team') {
+      return res.status(400).json({ error: 'Members apply to team projects only' });
+    }
+    const myRole = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    if (myRole !== 'owner' && myRole !== 'editor') {
+      return res.status(403).json({ error: 'Only owners or editors can add members' });
+    }
+
+    // Resolve the target user (by id or email) within the same org.
+    let target: any = null;
+    if (memberUserId) {
+      target = (await dbGetOne(db, `SELECT id FROM users WHERE id = ?`, [memberUserId])) as any;
+    } else if (email) {
+      target = (await dbGetOne(db, `SELECT id FROM users WHERE LOWER(email) = LOWER(?)`, [
+        String(email).trim(),
+      ])) as any;
+    }
+    if (!target?.id) return res.status(404).json({ error: 'User not found' });
+
+    const newRole = ['owner', 'editor', 'viewer'].includes(role) ? role : 'viewer';
+    const now = new Date().toISOString();
+    await db.run(
+      `INSERT INTO chat_project_members (project_id, user_id, role, added_by, added_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (project_id, user_id) DO UPDATE SET role = EXCLUDED.role`,
+      [id, target.id, newRole, userId, now]
+    );
+    return res.status(201).json({ success: true, userId: target.id, role: newRole });
+  } catch (error: any) {
+    logger.error('[ChatProjects] Add member error:', error?.message);
+    return res.status(500).json({ error: 'Failed to add member' });
+  }
+});
+
+// Change a member's role. Owner only.
+router.patch('/:id/members/:memberUserId', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId || (req as any).user?.id;
+    const { id, memberUserId } = req.params;
+    const { role } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!['owner', 'editor', 'viewer'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    const db = getDatabase();
+    await ensureProjectRbacSchema();
+    const project = (await dbGetOne(db, `SELECT user_id FROM chat_projects WHERE id = ?`, [
+      id,
+    ])) as any;
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const myRole = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    if (myRole !== 'owner') {
+      return res.status(403).json({ error: 'Only the owner can change roles' });
+    }
+    await db.run(`UPDATE chat_project_members SET role = ? WHERE project_id = ? AND user_id = ?`, [
+      role,
+      id,
+      memberUserId,
+    ]);
+    return res.json({ success: true });
+  } catch (error: any) {
+    logger.error('[ChatProjects] Update member role error:', error?.message);
+    return res.status(500).json({ error: 'Failed to update role' });
+  }
+});
+
+// Remove a member. Owner removes anyone; a member may remove themselves (leave).
+router.delete('/:id/members/:memberUserId', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId || (req as any).user?.id;
+    const { id, memberUserId } = req.params;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const db = getDatabase();
+    await ensureProjectRbacSchema();
+    const project = (await dbGetOne(db, `SELECT user_id FROM chat_projects WHERE id = ?`, [
+      id,
+    ])) as any;
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const myRole = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    const isSelf = memberUserId === userId;
+    if (myRole !== 'owner' && !isSelf) {
+      return res.status(403).json({ error: 'Only the owner can remove members' });
+    }
+    // Never leave a project ownerless: block removing the last owner.
+    const tgt = (await getProjectRole(db, id, memberUserId)) as any;
+    if (tgt === 'owner') {
+      const owners = (await db.query(
+        `SELECT COUNT(*) AS cnt FROM chat_project_members WHERE project_id = ? AND role = 'owner'`,
+        [id]
+      )) as any;
+      const cnt = Number((Array.isArray(owners) ? owners[0] : owners?.rows?.[0])?.cnt || 0);
+      if (cnt <= 1) return res.status(400).json({ error: 'Cannot remove the last owner' });
+    }
+    await db.run(`DELETE FROM chat_project_members WHERE project_id = ? AND user_id = ?`, [
+      id,
+      memberUserId,
+    ]);
+    return res.json({ success: true });
+  } catch (error: any) {
+    logger.error('[ChatProjects] Remove member error:', error?.message);
+    return res.status(500).json({ error: 'Failed to remove member' });
   }
 });
 
