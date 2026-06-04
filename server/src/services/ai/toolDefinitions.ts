@@ -438,6 +438,73 @@ export const AI_TOOLS: ToolDefinition[] = [
       },
     },
   },
+  // -------------------------------------------------------------------------
+  // Teresa last-mile (backlog #6): direct My Work writes (Tasks / Decisions).
+  // These persist immediately (no proposal envelope) — same low-risk personal
+  // entities the hard-coded /task and /decision slash commands already create.
+  // -------------------------------------------------------------------------
+  {
+    type: 'function',
+    function: {
+      name: 'create_task',
+      description:
+        "Create a real task in the user's My Work. Use when the user asks you to add/create a task, action item, or to-do. Persists immediately.",
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Short task title' },
+          description: { type: 'string', description: 'Optional details' },
+          priority: {
+            type: 'string',
+            enum: ['low', 'medium', 'high'],
+            description: 'Task priority (default medium)',
+          },
+          due_date: { type: 'string', description: 'Optional ISO date (YYYY-MM-DD)' },
+          assignee_id: { type: 'string', description: 'Optional assignee user id; defaults to self' },
+        },
+        required: ['title'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'update_task',
+      description:
+        'Update an existing task (status, title, priority, or due date). Use when the user asks to change/complete/reprioritize a task.',
+      parameters: {
+        type: 'object',
+        properties: {
+          task_id: { type: 'string', description: 'The id of the task to update' },
+          status: {
+            type: 'string',
+            enum: ['todo', 'in_progress', 'done', 'blocked'],
+            description: 'New status',
+          },
+          title: { type: 'string', description: 'New title' },
+          priority: { type: 'string', enum: ['low', 'medium', 'high'], description: 'New priority' },
+          due_date: { type: 'string', description: 'New due date (ISO)' },
+        },
+        required: ['task_id'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'create_decision',
+      description:
+        "Create a real decision record in the user's My Work. Use when the user asks to log/track a decision to be made. Persists immediately.",
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'The decision to be made' },
+          description: { type: 'string', description: 'Optional context / options' },
+        },
+        required: ['title'],
+      },
+    },
+  },
 ];
 
 // ==========================================
@@ -576,6 +643,12 @@ export async function executeToolCall(
           return JSON.stringify({ error: `Text-to-SQL query failed: ${err?.message}` });
         }
       }
+      case 'create_task':
+        return await executeCreateTask(args, context);
+      case 'update_task':
+        return await executeUpdateTask(args, context);
+      case 'create_decision':
+        return await executeCreateDecision(args, context);
       default:
         return JSON.stringify({ error: `Unknown tool: ${toolName}` });
     }
@@ -583,6 +656,89 @@ export async function executeToolCall(
     logger.error(`[ToolExecutor] Error executing ${toolName}: ${err.message}`);
     return JSON.stringify({ error: err.message });
   }
+}
+
+// ==========================================
+// Teresa My Work writers (backlog #6) — real, column-defensive, Postgres-safe.
+// ==========================================
+
+async function executeCreateTask(args: any, ctx: ToolExecutionContext): Promise<string> {
+  const { default: TaskExecutor } = await import('../../ai/actionExecutors/taskExecutor.js');
+  const result = await TaskExecutor.execute(
+    {
+      title: args.title,
+      description: args.description,
+      priority: args.priority,
+      due_date: args.due_date,
+      assignee_id: args.assignee_id,
+    },
+    { userId: ctx.userId, organizationId: ctx.organizationId }
+  );
+  return JSON.stringify(
+    result.success
+      ? { type: 'created', entity: 'task', ...(result.result as object) }
+      : { error: result.error || 'Failed to create task' }
+  );
+}
+
+async function executeUpdateTask(args: any, ctx: ToolExecutionContext): Promise<string> {
+  const taskId = String(args.task_id || '').trim();
+  if (!taskId) return JSON.stringify({ error: 'task_id is required' });
+  const { getTableColumns } = await import('../../utils/dbSchema.js');
+  const queryHelpers = await import('../../utils/queryHelpers.js');
+  const cols = await getTableColumns('tasks');
+  const sets: string[] = [];
+  const params: any[] = [];
+  const set = (col: string, val: any) => {
+    if (!cols.has(col) || val === undefined) return;
+    sets.push(`${col} = ?`);
+    params.push(val);
+  };
+  set('status', args.status);
+  set('title', args.title ? String(args.title).slice(0, 500) : undefined);
+  set('priority', args.priority);
+  set('due_date', args.due_date);
+  if (cols.has('updated_at')) sets.push('updated_at = CURRENT_TIMESTAMP');
+  if (sets.length === 0) return JSON.stringify({ error: 'No updatable fields provided' });
+  params.push(taskId, ctx.organizationId);
+  const res = await queryHelpers.queryRun(
+    `UPDATE tasks SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
+    params
+  );
+  const changed = (res as any)?.changes ?? (res as any)?.rowCount ?? 0;
+  return JSON.stringify(
+    changed > 0
+      ? { type: 'updated', entity: 'task', taskId }
+      : { error: 'Task not found or not in your organization' }
+  );
+}
+
+async function executeCreateDecision(args: any, ctx: ToolExecutionContext): Promise<string> {
+  const { v4: uuidv4 } = await import('uuid');
+  const { getTableColumns } = await import('../../utils/dbSchema.js');
+  const queryHelpers = await import('../../utils/queryHelpers.js');
+  const id = uuidv4();
+  const cols = await getTableColumns('decisions');
+  const insertCols: string[] = ['id'];
+  const insertVals: string[] = ['?'];
+  const insertParams: any[] = [id];
+  const add = (col: string, val: any) => {
+    if (!cols.has(col)) return;
+    insertCols.push(col);
+    insertVals.push('?');
+    insertParams.push(val);
+  };
+  add('organization_id', ctx.organizationId);
+  add('title', String(args.title || 'New Decision').slice(0, 500));
+  add('description', args.description || null);
+  add('status', 'pending');
+  add('created_by', ctx.userId);
+  add('decision_maker_id', ctx.userId);
+  await queryHelpers.queryRun(
+    `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+    insertParams
+  );
+  return JSON.stringify({ type: 'created', entity: 'decision', id, title: args.title });
 }
 
 // ==========================================
