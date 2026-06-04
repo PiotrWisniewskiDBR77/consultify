@@ -63,18 +63,18 @@ export default {
         // ========================================
         // BRAND ACCENT — Harvard Crimson
         // Canonical CTA / brand accent (replaces violet primary for CTAs).
-        // #A51C30 = 600/DEFAULT brand value. NO Harvard logo usage.
+        // #A41034 = 600/DEFAULT brand value. NO Harvard logo usage.
         // See: docs/plans/cross-cutting/PLAN_X1_design_system.md
         // ========================================
         crimson: {
-          DEFAULT: '#A51C30', // brand canonical — key CTAs, Teresa, brand moments
+          DEFAULT: '#A41034', // brand canonical — key CTAs, Teresa, brand moments
           50: '#FDF2F3',
           100: '#FBDDE0',
           200: '#F6B8BE',
           300: '#EF8A94',
           400: '#E45868',
           500: '#D42B3D', // accessible on white, WCAG AA
-          600: '#A51C30', // brand canonical (#A51C30)
+          600: '#A41034', // brand canonical (#A41034)
           700: '#851627',
           800: '#651120',
           900: '#450C16',
@@ -105,7 +105,7 @@ export default {
         // Spec: _DESIGN_SYSTEM_STANDARDIZATION_PLAN.md §A "demote violet".
         // Reversible: restore violet hexes here to revert.
         primary: {
-          DEFAULT: '#A51C30', // was #7C3AED
+          DEFAULT: '#A41034', // was #7C3AED
           hover: '#851627', // was #6D28D9
           light: '#D42B3D', // was #8B5CF6
           surface: 'rgba(165, 28, 48, 0.1)', // was rgba(124,58,237,.1)
@@ -115,7 +115,7 @@ export default {
           300: '#EF8A94',
           400: '#E45868',
           500: '#D42B3D',
-          600: '#A51C30',
+          600: '#A41034',
           700: '#851627',
           800: '#651120',
           900: '#450C16',
@@ -142,7 +142,7 @@ export default {
 
         // DANGER - Harvard Red (TYLKO: błędy, usuwanie, alarm)
         // Re-anchored to HBS Red. 700 #910A28 = AA text on white; kept distinct
-        // from Crimson #A51C30 so error never reads as brand. was emerald/rose mix.
+        // from Crimson #A41034 so error never reads as brand. was emerald/rose mix.
         danger: {
           DEFAULT: '#E80538', // was #DC2626 (HBS Red 2)
           hover: '#C1042F', // was #B91C1C
@@ -184,7 +184,7 @@ export default {
         // so any leftover `bg-brand-*` / `text-brand-*` call sites render the
         // current brand accent. Reversible: restore violet hexes to revert.
         brand: {
-          DEFAULT: '#A51C30', // was #7C3AED
+          DEFAULT: '#A41034', // was #7C3AED
           hover: '#851627', // was #6D28D9
           surface: 'rgba(165, 28, 48, 0.1)', // was rgba(124,58,237,.1)
           50: '#FDF2F3', // was #F5F3FF
@@ -193,7 +193,7 @@ export default {
           300: '#EF8A94', // was #C4B5FD
           400: '#E45868', // was #A78BFA
           500: '#D42B3D', // was #8B5CF6
-          600: '#A51C30', // was #7C3AED
+          600: '#A41034', // was #7C3AED
           700: '#851627', // was #6D28D9
           800: '#651120', // was #5B21B6
           900: '#450C16', // was #4C1D95
@@ -311,7 +311,7 @@ export default {
           400: '#ED5541', // HBS Red 3 (official)
           500: '#E80538', // HBS Red 2 (official mid)
           600: '#C1042F',
-          700: '#910A28', // dark variant (AA on white) — keep distinct from crimson #A51C30
+          700: '#910A28', // dark variant (AA on white) — keep distinct from crimson #A41034
           800: '#6D081E',
           900: '#490514',
           950: '#26020A',
@@ -536,7 +536,7 @@ export default {
         },
 
         // rose / red → HBS Red
-        // NOTE: kept distinct from Harvard Crimson (#A51C30) brand accent so
+        // NOTE: kept distinct from Harvard Crimson (#A41034) brand accent so
         // "danger" never reads as "brand". 700 = #910A28 for AA text on white.
         rose: {
           50: '#FDF1ED',
@@ -645,7 +645,7 @@ export default {
           'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%)',
         // Accent CTAs — solid crimson (was violet→violet gradient).
         // Demote violet → crimson sole accent; no gradient per brand spec.
-        'hig-primary': 'linear-gradient(135deg, #A51C30 0%, #A51C30 100%)',
+        'hig-primary': 'linear-gradient(135deg, #A41034 0%, #A41034 100%)',
         'hig-primary-hover': 'linear-gradient(135deg, #851627 0%, #851627 100%)',
       },
       // ========================================

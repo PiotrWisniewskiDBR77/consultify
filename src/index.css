@@ -13,14 +13,14 @@
     /* shadcn --primary re-pointed crimson (was blue 221.2/83.2/53.3) so any
      * raw shadcn `bg-primary` / `text-primary-foreground` consumers match the
      * Tailwind primary scale + brand. */
-    --primary: 358 71% 38%; /* crimson-600 #A51C30 (was blue 221.2 83.2% 53.3%) */
+    --primary: 345 82% 35%; /* crimson-600 #A41034 — HBS official (was 358 71% 38% #A51C30) */
     --primary-foreground: 0 0% 100%; /* white on crimson */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    /* Brand accent — Harvard Crimson (#A51C30) */
-    --accent: 358 71% 38%; /* crimson-600 #A51C30 */
+    /* Brand accent — HBS Crimson (#A41034) */
+    --accent: 345 82% 35%; /* crimson-600 #A41034 — HBS official */
     --accent-foreground: 0 0% 100%; /* white text on crimson */
     --accent-hover: 350 71% 30%; /* crimson-700 #851627 */
     --accent-surface: 354 73% 97%; /* crimson-50 #FDF2F3 */
@@ -35,7 +35,7 @@
      * CANONICAL SEMANTIC PALETTE — single source of truth (light mode)
      * Spec: docs/audit/2026-06-03/_DESIGN_SYSTEM_STANDARDIZATION_PLAN.md §A
      *       + COLOR_PALETTE_AUDIT_AND_PROPOSAL.md
-     * Brand: Apple/Google/OpenAI "2026 tech" — Harvard Crimson (#A51C30) as the
+     * Brand: Apple/Google/OpenAI "2026 tech" — Harvard Crimson (#A41034) as the
      * SINGLE accent (used LIGHTLY); navy/neutral structural surfaces.
      * Consumed via Tailwind `c.*` namespace (see tailwind.config.js).
      * Reversible: change values here to recolor the whole app.
@@ -48,7 +48,7 @@
     --c-text: #0f172a; /* primary text */
     --c-text-secondary: #475569; /* secondary text */
     --c-text-muted: #64748b; /* muted / placeholder */
-    --c-accent: #a51c30; /* Harvard Crimson — SOLE brand accent */
+    --c-accent: #a41034; /* Harvard Crimson — SOLE brand accent */
     --c-accent-soft: rgba(165, 28, 48, 0.08); /* accent tint (selected bg) */
     --c-focus: rgba(165, 28, 48, 0.35); /* focus ring (was violet) */
     /* Status tokens — Harvard complementary anchors (light mode).
@@ -56,7 +56,7 @@
      * Approx contrast on #ffffff:
      *   success #026833 ≈ 7.0:1  (AAA)
      *   warning #AE6429 ≈ 4.4:1  (AA Large; borderline for body — OK for icons/badges)
-     *   danger  #E80538 ≈ 5.3:1  (AA)  — distinct from crimson #A51C30 brand
+     *   danger  #E80538 ≈ 5.3:1  (AA)  — distinct from crimson #A41034 brand
      *   info    #3B2883 ≈ 12.1:1 (AAA)
      */
     --c-success: #026833; /* was #059669 — HBS Green 1 */
@@ -74,14 +74,14 @@
     --popover-foreground: 210 40% 98%;
     /* shadcn --primary re-pointed crimson (was blue 217.2/91.2/59.8) — lifted
      * crimson for dark contrast. */
-    --primary: 354 72% 62%; /* crimson-400 #E45868 (was blue 217.2 91.2% 59.8%) */
+    --primary: 345 72% 60%; /* lifted HBS crimson #A41034 family for dark contrast (was 354 72% 62%) */
     --primary-foreground: 0 0% 100%; /* white on lifted crimson */
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    /* Brand accent — Crimson (lighter, readable in dark) */
-    --accent: 354 72% 62%; /* crimson-400 #E45868 */
+    /* Brand accent — HBS Crimson (lighter, readable in dark) */
+    --accent: 345 72% 60%; /* lifted HBS crimson #A41034 family */
     --accent-foreground: 0 0% 100%;
     --accent-hover: 354 65% 53%; /* crimson-500 #D42B3D */
     --accent-surface: 350 60% 13%; /* deep crimson surface */
