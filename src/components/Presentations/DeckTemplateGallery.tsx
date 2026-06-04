@@ -52,7 +52,7 @@ interface DeckTemplateGalleryProps {
 const DECK_TYPE_COLORS: Record<string, string> = {
   steering_committee: 'from-blue-500 to-indigo-500',
   program_update: 'from-emerald-500 to-blue-500',
-  valuation_pack: 'from-primary-500 to-pink-500',
+  valuation_pack: 'from-primary-500 to-crimson-500',
   tool_workshop: 'from-amber-500 to-amber-500',
   assessment_summary: 'from-blue-500 to-blue-500',
 };

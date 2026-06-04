@@ -352,7 +352,7 @@ const InitiativeCardItem: React.FC<{
       `}
     >
       {/* Top color accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-primary-500 to-indigo-500 opacity-60" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-primary-500 to-crimson-500 opacity-60" />
 
       {/* Index badge */}
       <div

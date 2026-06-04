@@ -135,7 +135,7 @@ export const GenericDomainStep: React.FC<GenericDomainStepProps> = ({
             type="button"
             onClick={handleAdd}
             disabled={!itemTitle.trim()}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#A51C30] text-white hover:bg-[#8e1729] disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-crimson text-white hover:bg-crimson-700 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
             {isPolish ? 'Dodaj' : 'Add'}

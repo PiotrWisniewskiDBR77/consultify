@@ -143,7 +143,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
           className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden"
         >
           {/* Header */}
-          <div className="relative bg-gradient-to-r from-primary-600 via-indigo-600 to-blue-600 px-6 py-8 text-white">
+          <div className="relative bg-gradient-to-r from-primary-600 via-crimson-600 to-blue-600 px-6 py-8 text-white">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div

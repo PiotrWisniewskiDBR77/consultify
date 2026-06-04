@@ -211,7 +211,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
           )}
 
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-indigo-500 to-primary-600 rounded-lg">
+            <div className="p-2 bg-gradient-to-br from-crimson-500 to-primary-600 rounded-lg">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -264,7 +264,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
           <button
             onClick={handleGeneratePDF}
             disabled={isGeneratingPDF || !reportId}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-primary-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-primary-700 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-crimson-600 to-primary-600 text-white text-sm font-medium rounded-lg hover:from-crimson-700 hover:to-primary-700 transition-all disabled:opacity-50"
           >
             {isGeneratingPDF ? (
               <Loader2 className="w-4 h-4 animate-spin" />

@@ -252,7 +252,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
 
   if (loading && !blocks.length) {
     return (
-      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#060B18]">
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#0B1220]">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
@@ -264,7 +264,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
 
   if (!blocks.length) {
     return (
-      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#060B18]">
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#0B1220]">
         <div className="w-full max-w-xl px-6">
           <EmptyStateInline
             message={t('myWork.radar.unavailable')}
@@ -288,7 +288,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-[#060B18]">
+    <div className="relative flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-[#0B1220]">
       <BgCanvas timeMode={screen.timeMode} ambientMotion={layout.ambientMotion} />
 
       <div className="relative z-10 flex items-center justify-between gap-4 px-4 md:px-5 pt-2.5 pb-1.5">
@@ -386,7 +386,7 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
         timeMode === 'morning' &&
           'bg-[radial-gradient(ellipse_80%_55%_at_50%_-8%,rgba(250,204,21,0.08),transparent)]',
         timeMode === 'liveDay' &&
-          'bg-[radial-gradient(ellipse_80%_55%_at_50%_-8%,rgba(139,92,246,0.08),transparent)]',
+          'bg-[radial-gradient(ellipse_80%_55%_at_50%_-8%,rgba(165,28,48,0.08),transparent)]',
         timeMode === 'eveningWrap' &&
           'bg-[radial-gradient(ellipse_80%_55%_at_50%_-8%,rgba(168,85,247,0.11),transparent)]'
       )}

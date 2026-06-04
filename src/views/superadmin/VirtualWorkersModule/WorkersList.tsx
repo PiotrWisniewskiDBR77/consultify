@@ -128,7 +128,7 @@ const WorkerCard: React.FC<{ worker: VirtualWorker; onClick: () => void }> = ({
   >
     <div className="flex items-start justify-between mb-3">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
           {worker.name.charAt(0)}
         </div>
         <div>

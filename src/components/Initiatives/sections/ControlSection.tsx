@@ -45,7 +45,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
       id="control"
       title={isPolish ? 'Sterowanie' : 'Control'}
       icon={<Layers size={18} className="text-primary-500 dark:text-primary-400" />}
-      iconBg="bg-gradient-to-br from-primary-500/10 to-pink-500/10 dark:from-primary-500/20 dark:to-pink-500/20"
+      iconBg="bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20"
       expanded={expanded}
       onToggle={onToggle}
     >

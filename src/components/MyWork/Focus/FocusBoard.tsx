@@ -578,7 +578,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <button
             onClick={handleAISuggestion}
             disabled={aiSuggesting || tasks.length >= MAX_FOCUS_TASKS}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white text-sm font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white text-sm font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {aiSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             <span className="hidden sm:inline">{t('myWork.focus.aiSuggest', 'AI Suggest')}</span>
@@ -646,9 +646,9 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200/50 dark:border-primary-800/30 p-8 text-center"
+            className="bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200/50 dark:border-primary-800/30 p-8 text-center"
           >
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500 to-crimson-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
               <Target size={32} className="text-white" />
             </div>
             <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
@@ -666,7 +666,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               <button
                 onClick={handleAISuggestion}
                 disabled={aiSuggesting}
-                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50"
               >
                 {aiSuggesting ? (
                   <Loader2 size={18} className="animate-spin" />

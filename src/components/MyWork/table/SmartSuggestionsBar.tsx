@@ -236,7 +236,7 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
   const IconComp = ICON_MAP[current.icon || 'lightbulb'] || Lightbulb;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-500/5 via-indigo-500/5 to-primary-500/5 border-t border-primary-500/10 dark:border-primary-500/20">
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-primary-500/5 via-crimson-500/5 to-primary-500/5 border-t border-primary-500/10 dark:border-primary-500/20">
       {/* Sparkle icon */}
       <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-primary-500/10 flex-shrink-0">
         {loading ? (

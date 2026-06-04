@@ -1289,7 +1289,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
 
     return (
       <div className="mx-auto max-w-5xl space-y-4">
-        <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.18),transparent_24%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
+        <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.18),transparent_24%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
           <div className="border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">

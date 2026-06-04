@@ -282,7 +282,7 @@ export const DemoSessionManager: React.FC = () => {
         duration: 5000,
         icon: '🎉',
         style: {
-          background: 'linear-gradient(135deg, #6366F1 0%, #6366F1 100%)',
+          background: 'linear-gradient(135deg, #A51C30 0%, #A51C30 100%)',
           color: 'white',
           fontWeight: '500',
         },
@@ -522,7 +522,7 @@ const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
           )}
           <button
             onClick={onContactSales}
-            className="flex-1 py-3 px-6 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-primary-500/25"
+            className="flex-1 py-3 px-6 bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-primary-500/25"
           >
             {actionLabel}
           </button>

@@ -185,7 +185,7 @@ export const PartnerLifecycleCanonPanel: React.FC<PartnerLifecycleCanonPanelProp
               <div className="mt-2 flex items-center gap-3">
                 <div className="h-2 flex-1 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500"
+                    className="h-full rounded-full bg-gradient-to-r from-primary-500 to-crimson-500"
                     style={{ width: `${progress}%` }}
                   />
                 </div>

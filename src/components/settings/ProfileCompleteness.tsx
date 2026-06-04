@@ -251,7 +251,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
   // Compact version for sidebar or card display
   if (compact) {
     return (
-      <div className="p-4 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-500/10 dark:to-indigo-500/10 rounded-lg border border-primary-100 dark:border-primary-500/20">
+      <div className="p-4 bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-500/10 dark:to-crimson-500/10 rounded-lg border border-primary-100 dark:border-primary-500/20">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             Profile Completion
@@ -287,7 +287,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
   return (
     <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       {/* Header with Progress */}
-      <div className="p-6 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-500/10 dark:to-indigo-500/10 border-b border-primary-100 dark:border-primary-500/20">
+      <div className="p-6 bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-500/10 dark:to-crimson-500/10 border-b border-primary-100 dark:border-primary-500/20">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">

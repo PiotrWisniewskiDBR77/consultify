@@ -54,6 +54,7 @@ interface VisualSettings {
 }
 
 const accentColors = [
+  { id: 'crimson', color: '#A51C30', name: 'Crimson' },
   { id: 'violet', color: '#6366F1', name: 'Violet' },
   { id: 'purple', color: '#A855F7', name: 'Purple' },
   { id: 'indigo', color: '#6366F1', name: 'Indigo' },
@@ -81,7 +82,7 @@ const fontFamilies = [
 
 const defaultSettings: VisualSettings = {
   theme: 'system',
-  accentColor: '#6366F1',
+  accentColor: '#A51C30',
   fontSize: 'medium',
   fontFamily: 'system-ui, -apple-system, sans-serif',
   density: 'comfortable',

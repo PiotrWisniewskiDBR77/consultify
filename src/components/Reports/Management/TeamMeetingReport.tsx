@@ -84,7 +84,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
 
       {/* AI Narrative */}
       {report.aiNarrative && (
-        <div className="bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-4">
+        <div className="bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles size={16} className="text-primary-500" />
             <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">

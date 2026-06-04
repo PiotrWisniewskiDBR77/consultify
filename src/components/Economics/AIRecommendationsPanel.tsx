@@ -171,7 +171,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
           <button
             onClick={generateRecommendations}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary-500 to-indigo-500 hover:from-primary-600 hover:to-indigo-600 text-white rounded-xl font-medium mx-auto"
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary-500 to-crimson-500 hover:from-primary-600 hover:to-crimson-600 text-white rounded-xl font-medium mx-auto"
           >
             {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
             {isGenerating ? 'Generating...' : 'Wygeneruj recommendations'}
@@ -184,10 +184,10 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({
   return (
     <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-primary-500/10 to-indigo-500/10 border-b border-primary-200 dark:border-primary-500/20">
+      <div className="p-4 bg-gradient-to-r from-primary-500/10 to-crimson-500/10 border-b border-primary-200 dark:border-primary-500/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-500 flex items-center justify-center">
               <Sparkles className="text-white" size={20} />
             </div>
             <div>

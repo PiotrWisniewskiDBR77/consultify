@@ -216,8 +216,8 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
           width: position.width,
           height: position.height,
           borderRadius: 8,
-          border: '2px solid rgba(139, 92, 246, 0.8)',
-          boxShadow: '0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 20px rgba(139, 92, 246, 0.4)',
+          border: '2px solid rgba(165,28,48, 0.8)',
+          boxShadow: '0 0 0 4px rgba(165,28,48, 0.2), 0 0 20px rgba(165,28,48, 0.4)',
         }}
       />
 
@@ -235,7 +235,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
         className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden pointer-events-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-500 to-indigo-500 text-white">
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-500 to-crimson-500 text-white">
           <div className="flex items-center gap-2">
             <Lightbulb size={18} />
             <span className="font-semibold">{title[lang]}</span>

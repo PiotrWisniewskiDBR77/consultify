@@ -1755,7 +1755,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             position: { x: 120, y: 80 },
             width: 260,
             height: 320,
-            bgColor: 'rgba(139, 92, 246, 0.08)',
+            bgColor: 'rgba(165,28,48, 0.08)',
           });
           make('frame', {
             label: t('myWork.whiteboard.quickStart.affinity.themeB'),

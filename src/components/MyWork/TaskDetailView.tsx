@@ -4828,7 +4828,7 @@ Return ONLY the final comment text.`;
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/5 to-blue-500/5 dark:from-blue-500/10 dark:to-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-primary-500/5 to-pink-500/5 dark:from-primary-500/10 dark:to-pink-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-primary-500/5 to-crimson-500/5 dark:from-primary-500/10 dark:to-crimson-500/10 rounded-full blur-3xl" />
       </div>
 
       {/* Content - Two columns */}

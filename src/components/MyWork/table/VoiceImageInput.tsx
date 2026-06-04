@@ -366,7 +366,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           <button
             onClick={handleParse}
             disabled={loading || (mode === 'voice' ? !transcript : !imagePreview)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-indigo-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-crimson-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-crimson-500/20 transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Mic size={12} />}
             {loading

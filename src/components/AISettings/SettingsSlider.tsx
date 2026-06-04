@@ -90,7 +90,7 @@ export const SettingsSlider: React.FC<SettingsSliderProps> = ({
             <div className="flex items-center gap-2">
               <motion.span
                 key={value}
-                initial={{ scale: 1.2, color: '#a78bfa' }}
+                initial={{ scale: 1.2, color: '#E45868' }}
                 animate={{ scale: 1, color: '#e2e8f0' }}
                 className="text-sm font-mono text-slate-200 bg-slate-800 px-2 py-0.5 rounded"
               >

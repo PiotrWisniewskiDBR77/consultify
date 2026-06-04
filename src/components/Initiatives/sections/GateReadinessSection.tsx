@@ -996,7 +996,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
       id="gateReadiness"
       title={isPolish ? 'Gotowość bramki i harmonogram' : 'Gate Readiness & Timeline'}
       icon={<Flag size={18} className="text-indigo-500 dark:text-indigo-400" />}
-      iconBg="bg-gradient-to-br from-indigo-500/10 to-primary-500/10 dark:from-indigo-500/20 dark:to-primary-500/20"
+      iconBg="bg-gradient-to-br from-crimson-500/10 to-primary-500/10 dark:from-crimson-500/20 dark:to-primary-500/20"
       expanded={expanded}
       onToggle={onToggle}
       badge={
@@ -2063,7 +2063,7 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
                 initial={{ width: 0 }}
                 animate={{ width: `${readinessPercent}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="h-full bg-gradient-to-r from-primary-500 to-indigo-500 rounded-full"
+                className="h-full bg-gradient-to-r from-primary-500 to-crimson-500 rounded-full"
               />
             </div>
           </div>

@@ -585,7 +585,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <div className="p-6 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
                 <Lock className="w-7 h-7 text-white" />
               </div>
               <div>
@@ -622,7 +622,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             <button
               onClick={startSetup}
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-primary-600 hover:from-indigo-500 hover:to-primary-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25"
+              className="w-full py-4 bg-gradient-to-r from-crimson-600 to-primary-600 hover:from-crimson-500 hover:to-primary-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

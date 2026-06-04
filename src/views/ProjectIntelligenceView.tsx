@@ -544,7 +544,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
   return (
     <div className="space-y-6">
       {/* Instructions Card */}
-      <div className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-primary-200/50 dark:border-primary-800/30">
+      <div className="bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl p-6 border border-primary-200/50 dark:border-primary-800/30">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-primary-100 dark:bg-primary-900/50 rounded-xl shrink-0">
             <MessageSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />

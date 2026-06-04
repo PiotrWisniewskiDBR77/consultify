@@ -195,7 +195,7 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 ${className}`}
+      className={`bg-gradient-to-br from-crimson-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 ${className}`}
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-indigo-200 dark:border-indigo-800">

@@ -321,7 +321,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 text-white">
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-600 to-crimson-600 text-white">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
             <TeresaMark size={18} />

@@ -91,7 +91,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-primary-200/30 dark:border-primary-800/30">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary-500/20 to-indigo-500/15 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary-500/20 to-crimson-500/15 flex items-center justify-center">
             <Sparkles size={12} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div>

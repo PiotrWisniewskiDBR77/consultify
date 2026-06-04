@@ -302,7 +302,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           className="
             absolute left-0 bottom-full mb-2 z-50
             w-[250px] py-1.5
-            bg-white/95 dark:bg-[#1a1d2e]/95 backdrop-blur-xl
+            bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
             animate-in fade-in-0 slide-in-from-bottom-2 duration-150
@@ -433,7 +433,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           {/* Panel */}
           <div
             className="relative w-full max-w-[540px] max-h-[85vh] overflow-y-auto
-            bg-white dark:bg-[#1a1d2e]
+            bg-white dark:bg-navy-900
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.2)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.6)]
             animate-in fade-in-0 zoom-in-95 duration-200"

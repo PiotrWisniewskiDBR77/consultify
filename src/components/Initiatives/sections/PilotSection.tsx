@@ -53,7 +53,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
       id="pilot"
       title="Pilot"
       icon={<Sparkle size={18} className="text-indigo-500 dark:text-indigo-400" />}
-      iconBg="bg-gradient-to-br from-indigo-500/10 to-primary-500/10 dark:from-indigo-500/20 dark:to-primary-500/20"
+      iconBg="bg-gradient-to-br from-crimson-500/10 to-primary-500/10 dark:from-crimson-500/20 dark:to-primary-500/20"
       expanded={expanded}
       onToggle={onToggle}
       badge={

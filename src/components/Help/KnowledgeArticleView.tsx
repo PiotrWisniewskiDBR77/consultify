@@ -486,7 +486,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
             const deepLink = `${window.location.origin}${window.location.pathname}?help_article=${encodeURIComponent(slug)}${moduleId ? `&help_module=${encodeURIComponent(moduleId)}` : ''}`;
             navigator.clipboard.writeText(deepLink).catch(() => {});
           }}
-          className="w-full py-3 px-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-medium rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-3 px-4 bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-medium rounded-xl hover:from-primary-700 hover:to-crimson-700 transition-all flex items-center justify-center gap-2 shadow-lg"
         >
           <Share2 size={16} />
           {t('help.knowledge.shareArticle', 'Share Article')}

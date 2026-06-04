@@ -2635,7 +2635,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-indigo-500/10 dark:from-primary-500/20 dark:to-indigo-500/20">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20">
                           <TeresaMark
                             size={18}
                             className="text-primary-500 dark:text-primary-400"
@@ -2972,7 +2972,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-indigo-500/10 dark:from-primary-500/20 dark:to-indigo-500/20">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20">
                           <Flag size={18} className="text-primary-500 dark:text-primary-400" />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">

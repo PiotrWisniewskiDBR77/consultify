@@ -91,7 +91,7 @@ export const AIOsProductMapSection: React.FC = () => {
           })}
         </div>
 
-        <div className="mt-8 rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-100 dark:bg-[#0F0A2B] px-6 py-5 text-center text-sm text-slate-600 dark:text-white/65">
+        <div className="mt-8 rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-100 dark:bg-[#0F172A] px-6 py-5 text-center text-sm text-slate-600 dark:text-white/65">
           {t(
             'landing.aiOs.footer',
             'The point is not more AI surfaces. The point is one coherent, governed AI operating environment across chat, execution, knowledge, and outputs.'

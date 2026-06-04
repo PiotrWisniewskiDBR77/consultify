@@ -106,7 +106,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
     return (
       <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-indigo-600 px-8 py-6 text-white">
+        <div className="bg-gradient-to-r from-primary-600 to-crimson-600 px-8 py-6 text-white">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <DynamicIcon name={module.icon} size={24} />

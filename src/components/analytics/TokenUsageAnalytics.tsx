@@ -135,7 +135,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
       {showHeader && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-slate-900 dark:text-white" />
             </div>
             <div>
@@ -265,7 +265,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
                 ? 'bg-rose-500'
                 : usagePercentage >= 75
                   ? 'bg-amber-500'
-                  : 'bg-gradient-to-r from-primary-500 to-indigo-500'
+                  : 'bg-gradient-to-r from-primary-500 to-crimson-500'
             }`}
             style={{ width: `${Math.min(100, usagePercentage)}%` }}
           />

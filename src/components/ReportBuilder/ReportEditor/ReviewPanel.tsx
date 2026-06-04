@@ -619,7 +619,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   onClick={() => toggleReviewer(u.id)}
                   className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] transition-colors ${sel ? 'bg-blue-900/40 text-blue-300' : 'hover:bg-slate-800 text-slate-600'}`}
                 >
-                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
                     {userName(u).charAt(0).toUpperCase()}
                   </div>
                   <span className="truncate flex-1">{userName(u)}</span>

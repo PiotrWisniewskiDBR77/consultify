@@ -169,7 +169,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
   );
 
   return (
-    <footer className="border-t border-slate-200/90 bg-slate-50/95 py-16 px-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#0B0A23]/95">
+    <footer className="border-t border-slate-200/90 bg-slate-50/95 py-16 px-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#0F172A]/95">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[1.45fr_repeat(5,minmax(0,0.9fr))] lg:gap-8 xl:gap-10">

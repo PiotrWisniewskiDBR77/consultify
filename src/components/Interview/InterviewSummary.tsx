@@ -107,7 +107,7 @@ export const InterviewSummary: React.FC<InterviewSummaryProps> = ({
   return (
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20">
+      <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20">
         <h3 className="font-bold text-navy-900 dark:text-white">Interview Summary</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           {completedCategories.length} of {CATEGORY_KEYS.length} categories completed

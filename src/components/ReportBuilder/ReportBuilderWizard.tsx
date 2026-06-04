@@ -401,7 +401,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                   transition-all duration-300
                   ${
                     isActive
-                      ? 'bg-gradient-to-br from-primary-500 to-indigo-600 text-white ring-4 ring-primary-100 dark:ring-primary-900/30 shadow-lg shadow-primary-200 dark:shadow-primary-900/20'
+                      ? 'bg-gradient-to-br from-primary-500 to-crimson-600 text-white ring-4 ring-primary-100 dark:ring-primary-900/30 shadow-lg shadow-primary-200 dark:shadow-primary-900/20'
                       : isCompleted
                         ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600 shadow-sm'
                         : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
@@ -657,7 +657,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               ${
                 canGoNext && !isLoading && !isGenerating
                   ? activeStepId === 3
-                    ? 'bg-gradient-to-r from-primary-500 to-indigo-500 hover:from-primary-600 hover:to-indigo-600 text-white shadow-md hover:shadow-lg'
+                    ? 'bg-gradient-to-r from-primary-500 to-crimson-500 hover:from-primary-600 hover:to-crimson-600 text-white shadow-md hover:shadow-lg'
                     : 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm'
                   : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
               }

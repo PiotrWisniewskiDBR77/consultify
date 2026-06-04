@@ -184,7 +184,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
               <button
                 onClick={detectDependencies}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/15 to-indigo-500/10 text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-indigo-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/15 to-crimson-500/10 text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-crimson-500/15 transition-all disabled:opacity-40"
               >
                 <Network size={14} />
                 {isPl ? 'Analizuj zależności' : 'Analyze dependencies'}

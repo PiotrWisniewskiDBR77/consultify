@@ -38,6 +38,7 @@ import { Language, User } from '../../types';
 
 // Accent color options
 const ACCENT_COLORS = [
+  { id: 'crimson', label: 'Crimson', value: '#A51C30', dark: '#E45868' },
   { id: 'purple', label: 'Purple', value: '#6366F1', dark: '#A78BFA' },
   { id: 'blue', label: 'Blue', value: '#3B82F6', dark: '#60A5FA' },
   { id: 'green', label: 'Green', value: '#10B981', dark: '#34D399' },
@@ -62,7 +63,7 @@ const ThemeSettings: React.FC<{
   toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
 }> = ({ theme, toggleTheme }) => {
   const { t } = useTranslation();
-  const [accentColor, setAccentColor] = useState('purple');
+  const [accentColor, setAccentColor] = useState('crimson');
 
   const themes = [
     { id: 'light', label: t('settings.theme.light', 'Light'), icon: '☀️' },

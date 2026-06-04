@@ -205,7 +205,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
     <div className="space-y-8">
       {/* Current Plan Card */}
       {currentPlan && (
-        <div className="bg-gradient-to-br from-primary-600 to-indigo-600 rounded-xl p-6 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-br from-primary-600 to-crimson-600 rounded-xl p-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <Crown className="w-32 h-32" />
           </div>

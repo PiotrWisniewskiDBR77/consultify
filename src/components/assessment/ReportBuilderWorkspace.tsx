@@ -438,7 +438,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             <button
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-700 hover:to-crimson-700 text-white font-medium rounded-lg transition-all disabled:opacity-50"
             >
               {isRegenerating ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

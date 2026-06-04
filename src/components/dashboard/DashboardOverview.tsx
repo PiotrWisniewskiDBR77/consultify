@@ -153,7 +153,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
       {/* Welcome/Start Section */}
       {!hasStarted && (
-        <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-primary-600 to-crimson-700 rounded-2xl p-8 text-white shadow-lg">
           <h2 className="text-2xl font-bold mb-2">Welcome to Your Transformation Dashboard</h2>
           <p className="text-primary-100 mb-6">
             Start your digital transformation journey by completing the initial assessment and
@@ -354,7 +354,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         {/* AI Insights */}
         <div className="lg:col-span-2 space-y-6">
           {dashPrefs.widgets.aiInsights && (
-            <div className="bg-gradient-to-br from-indigo-900 to-primary-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
+            <div className="bg-gradient-to-br from-crimson-900 to-primary-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
               <div className="absolute top-0 right-0 p-8 opacity-20">
                 <BrainCircuit size={180} />
               </div>

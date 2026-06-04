@@ -73,6 +73,7 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { ErrorState } from '@/components/ui/primitives';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -1537,6 +1538,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   const [data, setData] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [uncontrolledViewMode, setUncontrolledViewMode] = useState<InboxViewMode>('flat');
   const viewMode = controlledViewMode ?? uncontrolledViewMode;
   const setViewMode = useCallback(
@@ -1695,6 +1697,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const fetchInbox = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const status =
         statusTab === 'all'
           ? 'all'
@@ -1782,6 +1785,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       });
     } catch (e) {
       console.error('Failed to load inbox', e);
+      setLoadError(isPolish ? 'Nie udało się załadować Inbox' : 'Failed to load Inbox');
       toast.error(isPolish ? 'Nie udało się załadować Inbox' : 'Failed to load Inbox');
     } finally {
       setLoading(false);
@@ -3208,6 +3212,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               <Loader2 className="animate-spin mr-2" size={18} />
               {isPolish ? 'Ładowanie...' : 'Loading...'}
             </div>
+          ) : loadError ? (
+            <ErrorState message={loadError} retry={() => void fetchInbox()} />
           ) : filteredItems.length === 0 ? (
             <div className="py-16 text-center text-slate-600 dark:text-slate-300">
               {statusTab === 'done' ? (

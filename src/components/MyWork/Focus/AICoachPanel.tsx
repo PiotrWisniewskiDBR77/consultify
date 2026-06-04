@@ -53,7 +53,7 @@ export const AICoachPanel: React.FC = () => {
   if (!result && !loading) return null;
 
   return (
-    <div className="mx-4 mb-3 rounded-xl border border-primary-200/50 dark:border-primary-800/30 bg-gradient-to-r from-primary-50/60 to-indigo-50/60 dark:from-primary-950/15 dark:to-indigo-950/10 overflow-hidden">
+    <div className="mx-4 mb-3 rounded-xl border border-primary-200/50 dark:border-primary-800/30 bg-gradient-to-r from-primary-50/60 to-crimson-50/60 dark:from-primary-950/15 dark:to-crimson-950/10 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Brain size={16} className="text-primary-500" />

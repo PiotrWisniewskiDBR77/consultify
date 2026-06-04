@@ -41,7 +41,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Terms of Service',
     description: 'The main agreement governing your use of the Consultify platform.',
     icon: <Scale className="w-5 h-5" />,
-    iconBg: 'from-primary-500 to-indigo-600',
+    iconBg: 'from-primary-500 to-crimson-600',
     required: true,
     category: 'core',
   },
@@ -131,7 +131,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Customer Data Security',
     description: 'How we protect your data: encryption, isolation, and incident response.',
     icon: <ShieldCheck className="w-5 h-5" />,
-    iconBg: 'from-indigo-500 to-primary-600',
+    iconBg: 'from-crimson-500 to-primary-600',
     required: false,
     category: 'reference',
   },
@@ -140,7 +140,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Sub-processor List',
     description: 'Third-party services that process data on our behalf.',
     icon: <Users className="w-5 h-5" />,
-    iconBg: 'from-fuchsia-500 to-pink-600',
+    iconBg: 'from-hbs-magenta-500 to-hbs-magenta-700',
     required: false,
     category: 'reference',
   },
@@ -228,7 +228,7 @@ export const LegalIndexView: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <header className="relative bg-gradient-to-br from-slate-900 via-primary-900/90 to-indigo-900 text-white overflow-hidden">
+      <header className="relative bg-gradient-to-br from-slate-900 via-primary-900/90 to-crimson-900 text-white overflow-hidden">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div
@@ -322,7 +322,7 @@ export const LegalIndexView: React.FC = () => {
             title="Core Agreements"
             description="Fundamental documents for all users of Consultify."
             icon={<FileText className="w-6 h-6" />}
-            gradient="from-primary-500 to-indigo-600"
+            gradient="from-primary-500 to-crimson-600"
           />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {coreDocuments.map((doc) => (
@@ -382,7 +382,7 @@ export const LegalIndexView: React.FC = () => {
             <ContactCard
               label="Legal Inquiries"
               email="legal@dbr77.com"
-              gradient="from-primary-500 to-indigo-600"
+              gradient="from-primary-500 to-crimson-600"
             />
             <ContactCard
               label="Privacy Matters"

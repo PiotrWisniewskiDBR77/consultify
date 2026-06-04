@@ -375,7 +375,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       </div>
 
       {/* AI Recommendations */}
-      <div className="bg-gradient-to-r from-primary-900 to-indigo-900 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-primary-900 to-crimson-900 rounded-xl p-6 text-white">
         <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
           <Sparkles className="text-yellow-300" size={24} />
           AI Strategic Recommendations

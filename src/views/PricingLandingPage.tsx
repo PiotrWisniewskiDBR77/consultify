@@ -158,8 +158,8 @@ export const PricingLandingPage: React.FC = () => {
   return (
     <MarketingLayout>
       <section className="relative overflow-hidden px-6 pb-20 pt-20 text-center">
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(160deg,#0D0828,#0A0A1F,#12082E)]" />
-        <div className="absolute left-1/2 top-0 -z-10 h-[420px] w-[60%] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.22)_0%,transparent_65%)] blur-[80px]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(160deg,#0B1220,#0F172A,#0B1220)]" />
+        <div className="absolute left-1/2 top-0 -z-10 h-[420px] w-[60%] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(165,28,48,0.22)_0%,transparent_65%)] blur-[80px]" />
 
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -208,7 +208,7 @@ export const PricingLandingPage: React.FC = () => {
               key={pack.key}
               className={`flex h-full flex-col rounded-3xl border p-7 ${
                 (pack as { featured?: boolean }).featured
-                  ? 'border-primary-500/35 bg-primary-50 dark:bg-primary-500/10 shadow-[0_0_60px_-24px_rgba(124,58,237,0.45)]'
+                  ? 'border-primary-500/35 bg-primary-50 dark:bg-primary-500/10 shadow-[0_0_60px_-24px_rgba(165,28,48,0.45)]'
                   : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-sm dark:shadow-none'
               }`}
             >
@@ -380,7 +380,7 @@ export const PricingLandingPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-primary-500/20 bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-500/10 dark:to-blue-500/10 p-8 shadow-[0_0_80px_-32px_rgba(124,58,237,0.35)]">
+          <div className="rounded-3xl border border-primary-500/20 bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-500/10 dark:to-blue-500/10 p-8 shadow-[0_0_80px_-32px_rgba(165,28,48,0.35)]">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-white">
                 <Building2 size={22} />

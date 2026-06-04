@@ -269,8 +269,8 @@ export const PublicLandingPage: React.FC = () => {
                             bg-brand-600 hover:bg-brand-500
                             text-white font-semibold text-xl
                             px-10 p-4 rounded-xl
-                            shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)]
-                            hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.7)]
+                            shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)]
+                            hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)]
                             active:scale-[0.98]
                             transition-all duration-500 overflow-hidden
                         "
@@ -339,7 +339,7 @@ export const PublicLandingPage: React.FC = () => {
         className="fixed inset-0 pointer-events-none z-50 mix-blend-soft-light opacity-50"
         style={{
           background:
-            'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(124, 58, 237, 0.08), transparent 40%)',
+            'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(165,28,48, 0.08), transparent 40%)',
         }}
       />
     </div>

@@ -458,7 +458,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     disabled={isDemoLoading}
                     className={`relative w-10 h-5 rounded-full transition-colors disabled:opacity-50 ${
                       isDemoMode
-                        ? 'bg-gradient-to-r from-indigo-500 to-primary-500'
+                        ? 'bg-gradient-to-r from-crimson-500 to-primary-500'
                         : 'bg-slate-300 dark:bg-navy-700'
                     }`}
                     title={

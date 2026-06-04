@@ -72,7 +72,7 @@ const DOCUMENT_INFO: Record<
     title: 'Terms of Service',
     description: 'Main agreement governing your use of Consultify',
     icon: Scale,
-    color: 'from-primary-500 to-indigo-600',
+    color: 'from-primary-500 to-crimson-600',
   },
   PRIVACY: {
     title: 'Privacy Policy',
@@ -132,13 +132,13 @@ const DOCUMENT_INFO: Record<
     title: 'Customer Data Security',
     description: 'How we protect your data: encryption, isolation, incident response',
     icon: Shield,
-    color: 'from-indigo-500 to-primary-600',
+    color: 'from-crimson-500 to-primary-600',
   },
   SUBPROCESSORS: {
     title: 'Sub-processor List',
     description: 'Third parties who process data on our behalf',
     icon: Users,
-    color: 'from-fuchsia-500 to-pink-600',
+    color: 'from-hbs-magenta-500 to-hbs-magenta-700',
   },
 };
 
@@ -271,7 +271,7 @@ export const LegalDocumentView: React.FC = () => {
           </p>
           <Link
             to="/legal"
-            className="inline-flex items-center gap-2 p-4 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl hover:from-primary-500 hover:to-indigo-500 transition-all shadow-lg shadow-primary-500/25"
+            className="inline-flex items-center gap-2 p-4 py-2.5 bg-gradient-to-r from-primary-600 to-crimson-600 text-white rounded-xl hover:from-primary-500 hover:to-crimson-500 transition-all shadow-lg shadow-primary-500/25"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Legal Documents
@@ -285,7 +285,7 @@ export const LegalDocumentView: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* Header */}
       <header
-        className={`sticky top-0 z-50 bg-gradient-to-r ${docInfo?.color || 'from-primary-600 to-indigo-600'} text-white shadow-lg`}
+        className={`sticky top-0 z-50 bg-gradient-to-r ${docInfo?.color || 'from-primary-600 to-crimson-600'} text-white shadow-lg`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">

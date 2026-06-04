@@ -12,7 +12,7 @@ const DOC_CARDS = [
     icon: BookOpen,
     href: '/knowledge-base',
     gradient: 'from-primary-500 to-primary-600',
-    glow: 'rgba(139,92,246,0.25)',
+    glow: 'rgba(165,28,48,0.25)',
   },
   {
     titleKey: 'security',

@@ -66,7 +66,7 @@ export const AITextArea: React.FC<AITextAreaProps> = ({
             className="text-primary-500 group-hover/btn:text-primary-600 transition-colors"
           />
         )}
-        <span className="text-[10px] font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-indigo-600 group-hover/btn:from-primary-700 group-hover/btn:to-indigo-700">
+        <span className="text-[10px] font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-crimson-600 group-hover/btn:from-primary-700 group-hover/btn:to-crimson-700">
           {isRefining ? 'Refining...' : 'AI'}
         </span>
       </button>

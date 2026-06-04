@@ -45,7 +45,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
     <div
       className={`relative rounded-xl p-6 transition-all duration-300 ${
         isCurrentPlan
-          ? 'bg-gradient-to-br from-indigo-600 to-primary-600 text-white shadow-xl shadow-indigo-500/25 scale-105'
+          ? 'bg-gradient-to-br from-crimson-600 to-primary-600 text-white shadow-xl shadow-indigo-500/25 scale-105'
           : isPopular
             ? 'bg-white dark:bg-gray-800 border-2 border-indigo-500 shadow-lg'
             : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg'

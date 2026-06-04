@@ -192,7 +192,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
         {/* Progress bar */}
         <div className="h-1 bg-slate-100 dark:bg-navy-800">
           <div
-            className="h-full bg-gradient-to-r from-primary-500 to-indigo-500 transition-all duration-500 ease-out"
+            className="h-full bg-gradient-to-r from-primary-500 to-crimson-500 transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -372,7 +372,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                   disabled={!canProceed && step !== 'expertise'}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     canProceed || step === 'expertise'
-                      ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:scale-[1.02]'
+                      ? 'bg-gradient-to-r from-primary-600 to-crimson-600 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:scale-[1.02]'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                   }`}
                 >

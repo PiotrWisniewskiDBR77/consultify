@@ -346,7 +346,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
               'text-primary-400',
               platform,
               platform.length > 0 && (
-                <div className="mt-3 p-3 bg-gradient-to-r from-primary-600/10 to-indigo-600/5 border border-primary-500/20 rounded-lg">
+                <div className="mt-3 p-3 bg-gradient-to-r from-primary-600/10 to-crimson-600/5 border border-primary-500/20 rounded-lg">
                   <div className="flex items-start gap-3">
                     <Sparkles size={16} className="text-primary-400 flex-shrink-0 mt-0.5" />
                     <div>

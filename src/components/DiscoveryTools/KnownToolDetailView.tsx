@@ -526,7 +526,7 @@ export function KnownToolDetailView(props: {
           ? 'Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania.'
           : 'Dynamic SWOT is only strong when it ends in a decision, a move, or a credible bridge to action.',
         accent: 'bg-primary-600',
-        tone: 'from-primary-500/15 to-indigo-500/5',
+        tone: 'from-primary-500/15 to-crimson-500/5',
       },
     ];
 

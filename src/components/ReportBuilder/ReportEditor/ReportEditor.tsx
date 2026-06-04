@@ -2559,7 +2559,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     {/* Chapter Header */}
                     {chapter.key !== '__ungrouped__' && (
                       <div className="flex items-center gap-3 pt-6 pb-2 border-b-2 border-slate-300 dark:border-slate-600">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
                           {chapters.filter((c) => c.key !== '__ungrouped__').indexOf(chapter) + 1}
                         </div>
                         <h2 className="text-lg font-bold text-slate-800 dark:text-white flex-1">

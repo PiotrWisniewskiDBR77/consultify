@@ -34,7 +34,7 @@ import {
 } from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { LoadingState, StatusChip } from '@/components/ui/primitives';
+import { ErrorState, LoadingState, StatusChip } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';
@@ -73,6 +73,7 @@ export const MeetingHub: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [meetings, setMeetings] = useState<MeetingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -106,6 +107,7 @@ export const MeetingHub: React.FC = () => {
 
   const loadMeetings = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await (Api as any).getMeetings?.();
       const rows = Array.isArray(data) ? data : data?.meetings || [];
@@ -113,6 +115,7 @@ export const MeetingHub: React.FC = () => {
     } catch (error) {
       console.error('Failed to load meetings:', error);
       setMeetings([]);
+      setLoadError(t('meeting.errors.loadFailed', 'Failed to load meetings'));
       toast.error(t('meeting.errors.loadFailed', 'Failed to load meetings'));
     } finally {
       setLoading(false);
@@ -622,6 +625,8 @@ export const MeetingHub: React.FC = () => {
       >
         {loading ? (
           <LoadingState variant="spinner" className="h-full" />
+        ) : loadError ? (
+          <ErrorState message={loadError} retry={() => void loadMeetings()} />
         ) : activeMeeting ? (
           <MeetingDetailView
             meeting={activeMeeting}

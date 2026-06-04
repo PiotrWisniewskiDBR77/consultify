@@ -31,6 +31,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ErrorState } from '@/components/ui/primitives';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -1665,23 +1666,30 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         commandRowContent={hubCommandRowContent}
       >
         <div className="space-y-3">
-          {loadWarning && (
-            <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
-                  <p>{loadWarning}</p>
+          {loadWarning &&
+            !(activeTab === 'list' && !activeDocumentId && assessments.length === 0) && (
+              <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+                    <p>{loadWarning}</p>
+                  </div>
+                  <button
+                    onClick={() => refreshData()}
+                    className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
+                  >
+                    Retry
+                  </button>
                 </div>
-                <button
-                  onClick={() => refreshData()}
-                  className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
-                >
-                  Retry
-                </button>
               </div>
-            </div>
+            )}
+          {loadWarning && activeTab === 'list' && !activeDocumentId && assessments.length === 0 ? (
+            // Hard failure (no cached data): show ErrorState with retry instead of the
+            // empty-list CTA, which would falsely imply the user has 0 assessments.
+            <ErrorState message={loadWarning} retry={() => void refreshData()} />
+          ) : (
+            renderContent()
           )}
-          {renderContent()}
         </div>
       </ModuleHub>
 

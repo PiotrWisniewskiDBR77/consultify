@@ -372,7 +372,7 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
 
         {/* SECTION 5: AI Insights */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-gradient-to-br from-indigo-900 to-primary-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
+          <div className="bg-gradient-to-br from-crimson-900 to-primary-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
             <div className="absolute top-0 right-0 p-8 opacity-20">
               <BrainCircuit size={180} />
             </div>

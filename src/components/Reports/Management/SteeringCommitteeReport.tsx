@@ -48,7 +48,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
       />
 
       {/* Executive Summary */}
-      <div className="bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-6">
+      <div className="bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={18} className="text-primary-500" />
           <h2 className="text-lg font-semibold text-primary-900 dark:text-primary-100">

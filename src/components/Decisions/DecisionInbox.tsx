@@ -21,7 +21,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { LoadingState } from '@/components/ui/primitives';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
 
 import { Api } from '../../services/api';
@@ -62,6 +62,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
   const { t } = useTranslation();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('my');
   const [filterType, setFilterType] = useState<FilterType>('all');
@@ -80,6 +81,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
       try {
         if (isRefresh) setRefreshing(true);
         else setLoading(true);
+        setLoadError(null);
 
         const url = effectiveProjectId
           ? `/decisions?projectId=${effectiveProjectId}&includeAll=true`
@@ -107,12 +109,13 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
         setDecisions(enhanced);
       } catch (error) {
         console.error('Failed to fetch decisions:', error);
+        setLoadError(t('decisions.loadError', 'Failed to load decisions'));
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [effectiveProjectId]
+    [effectiveProjectId, t]
   );
 
   useEffect(() => {
@@ -279,6 +282,15 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
 
   if (loading) {
     return <LoadingState variant="spinner" className={`${embedded ? 'p-4' : 'p-8'} py-0`} />;
+  }
+
+  // Distinguish error from empty: a failed load should not look like "no decisions".
+  if (loadError) {
+    return (
+      <div className={embedded ? 'p-4' : 'p-8'}>
+        <ErrorState message={loadError} retry={() => fetchDecisions()} />
+      </div>
+    );
   }
 
   return (

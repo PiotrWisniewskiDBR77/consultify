@@ -411,7 +411,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
       title={isPl ? 'Sugestie AI' : 'AI Suggestions'}
       subtitle={isPl ? 'Kontekst firmy + AI' : 'Company context + AI'}
       icon={
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500/20 to-indigo-500/15 flex items-center justify-center">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500/20 to-crimson-500/15 flex items-center justify-center">
           <MessageSquareWarning size={14} className="text-primary-600 dark:text-primary-400" />
         </div>
       }

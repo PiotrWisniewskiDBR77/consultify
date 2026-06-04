@@ -1711,8 +1711,8 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 onClick={computeDiscoverDeps}
                 disabled={discoverRunning}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold
-                bg-gradient-to-r from-primary-600 to-indigo-600 text-white
-                hover:from-primary-700 hover:to-indigo-700
+                bg-gradient-to-r from-primary-600 to-crimson-600 text-white
+                hover:from-primary-700 hover:to-crimson-700
                 disabled:opacity-60 shadow-lg shadow-primary-500/20 transition-all"
               >
                 {discoverRunning ? (

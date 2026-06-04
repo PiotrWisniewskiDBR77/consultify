@@ -438,7 +438,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
       <MarketingLayout footerVariant="knowledge">
         <div className="relative">
           <div className="fixed inset-0 pointer-events-none z-0">
-            <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_45%,#0B1220_100%)]" />
           </div>
           <div className="relative z-10 max-w-4xl mx-auto px-6 py-24">
             <div className="animate-pulse space-y-6">
@@ -459,7 +459,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
       <MarketingLayout footerVariant="knowledge">
         <div className="relative">
           <div className="fixed inset-0 pointer-events-none z-0">
-            <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_45%,#0B1220_100%)]" />
           </div>
           <div className="relative z-10 flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
@@ -504,7 +504,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           className="h-full transition-[width] duration-100 ease-out"
           style={{
             width: `${scrollProgress * 100}%`,
-            background: 'linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
+            background: 'linear-gradient(90deg, #A51C30 0%, #851627 50%, #651120 100%)',
           }}
         />
       </div>
@@ -512,7 +512,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
       <div className="relative">
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_45%,#0B1220_100%)]" />
           <div className="absolute top-[-10%] left-[20%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.10)_0%,transparent_65%)] blur-[80px] dark:bg-[radial-gradient(circle,rgba(109,40,217,0.12)_0%,transparent_65%)]" />
         </div>
 
@@ -731,14 +731,14 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
                   prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline hover:prose-a:text-primary-300
 
-                  prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-blockquote:bg-primary-50 prose-blockquote:rounded-xl prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:my-8 prose-blockquote:text-slate-700 prose-blockquote:not-italic prose-blockquote:text-[1.1rem] prose-blockquote:font-medium prose-blockquote:leading-relaxed prose-blockquote:shadow-[inset_0_1px_0_rgba(139,92,246,0.12)] dark:prose-blockquote:bg-primary-950/30 dark:prose-blockquote:text-white/70 dark:prose-blockquote:shadow-[inset_0_1px_0_rgba(139,92,246,0.15)]
+                  prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-blockquote:bg-primary-50 prose-blockquote:rounded-xl prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:my-8 prose-blockquote:text-slate-700 prose-blockquote:not-italic prose-blockquote:text-[1.1rem] prose-blockquote:font-medium prose-blockquote:leading-relaxed prose-blockquote:shadow-[inset_0_1px_0_rgba(165,28,48,0.12)] dark:prose-blockquote:bg-primary-950/30 dark:prose-blockquote:text-white/70 dark:prose-blockquote:shadow-[inset_0_1px_0_rgba(165,28,48,0.15)]
 
                   prose-table:border-collapse
                   prose-th:bg-slate-100 prose-th:border-slate-200 prose-th:text-slate-700 prose-th:font-bold prose-th:text-sm dark:prose-th:bg-white/[0.04] dark:prose-th:border-white/[0.08] dark:prose-th:text-white/70
                   prose-td:border-slate-200 prose-td:text-slate-600 dark:prose-td:border-white/[0.06] dark:prose-td:text-white/55
 
                   prose-code:text-primary-700 prose-code:bg-primary-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm dark:prose-code:text-primary-300 dark:prose-code:bg-primary-900/20
-                  prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-200 prose-pre:rounded-xl dark:prose-pre:bg-[#0D0828] dark:prose-pre:border-white/[0.06]
+                  prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-200 prose-pre:rounded-xl dark:prose-pre:bg-[#0B1220] dark:prose-pre:border-white/[0.06]
 
                   prose-hr:border-slate-200 prose-hr:my-12 dark:prose-hr:border-white/[0.08]
                 "

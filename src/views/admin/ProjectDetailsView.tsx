@@ -143,7 +143,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-primary-600/5 blur-[100px] pointer-events-none"></div>
 
         <div className="flex gap-6 items-start z-10">
-          <div className="p-5 rounded-xl bg-white/20 dark:bg-gradient-to-br dark:from-primary-600 dark:to-indigo-600 text-white shadow-xl shadow-primary-900/20">
+          <div className="p-5 rounded-xl bg-white/20 dark:bg-gradient-to-br dark:from-primary-600 dark:to-crimson-600 text-white shadow-xl shadow-primary-900/20">
             <Layers size={32} />
           </div>
           <div>

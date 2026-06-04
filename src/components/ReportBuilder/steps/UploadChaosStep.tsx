@@ -335,7 +335,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
       {/* Knowledge Map Card */}
       {knowledgeMap && allDone && (
-        <div className="rounded-2xl border border-primary-200 dark:border-primary-800/50 bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 p-6 space-y-4">
+        <div className="rounded-2xl border border-primary-200 dark:border-primary-800/50 bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 p-6 space-y-4">
           <div className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-primary-500" />
             <h3 className="text-base font-bold text-slate-800 dark:text-white">
@@ -423,8 +423,8 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
               onClick={() => onChoosePath('B')}
               disabled={isLoading}
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
-                bg-gradient-to-r from-primary-500 to-indigo-500
-                hover:from-primary-600 hover:to-indigo-600
+                bg-gradient-to-r from-primary-500 to-crimson-500
+                hover:from-primary-600 hover:to-crimson-600
                 text-white font-semibold text-sm
                 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >

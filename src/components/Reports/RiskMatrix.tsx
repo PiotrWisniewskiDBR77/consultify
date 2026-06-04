@@ -67,7 +67,7 @@ const QUADRANTS = {
     descriptionPl: 'Wysoki wpływ, niskie prawdopodobieństwo',
     color: '#6366f1',
     bgColor: '#ede9fe',
-    darkBgColor: 'rgba(139, 92, 246, 0.1)',
+    darkBgColor: 'rgba(165,28,48, 0.1)',
     icon: Zap,
   },
   avoid: {

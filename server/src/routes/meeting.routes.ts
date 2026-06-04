@@ -238,7 +238,9 @@ router.post(
         title: meeting.title,
         scheduledTime: meeting.startAt,
         participants: Array.isArray(meeting.attendees)
-          ? meeting.attendees.map((a: any) => (typeof a === 'string' ? a : a?.name || '')).filter(Boolean)
+          ? meeting.attendees
+              .map((a: any) => (typeof a === 'string' ? a : a?.name || ''))
+              .filter(Boolean)
           : [],
         agenda: Array.isArray(meeting.agenda) ? meeting.agenda.join('\n') : undefined,
         organizationId: orgId,

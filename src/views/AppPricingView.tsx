@@ -238,7 +238,7 @@ export const AppPricingView: React.FC = () => {
 
             <h1 className="mt-6 text-3xl font-black tracking-tight text-navy-950 dark:text-white md:text-4xl">
               AI Strategic Consulting,{' '}
-              <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-crimson-600 bg-clip-text text-transparent">
                 skalowany dla Ciebie
               </span>
             </h1>

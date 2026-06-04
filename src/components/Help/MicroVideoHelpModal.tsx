@@ -106,7 +106,7 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
           ) : (
             <div className="px-5 py-5">
               {/* Thumbnail / preview */}
-              <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-indigo-100 dark:from-primary-900/30 dark:to-indigo-900/30 rounded-xl flex items-center justify-center mb-4 border border-slate-200 dark:border-navy-700">
+              <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-crimson-100 dark:from-primary-900/30 dark:to-crimson-900/30 rounded-xl flex items-center justify-center mb-4 border border-slate-200 dark:border-navy-700">
                 {video.thumbnailUrl ? (
                   <img
                     src={video.thumbnailUrl}

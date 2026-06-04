@@ -313,7 +313,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       <button
         onClick={handleGenerate}
         disabled={isGenerating || selectedSectionsCount === 0}
-        className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-primary-600 hover:from-indigo-500 hover:to-primary-500
+        className="w-full py-3 px-4 bg-gradient-to-r from-crimson-600 to-primary-600 hover:from-crimson-500 hover:to-primary-500
                     text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed
                     shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30"
       >

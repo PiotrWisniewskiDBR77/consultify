@@ -273,7 +273,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             className="hidden lg:block lg:col-span-1 lg:row-span-1 relative group cursor-pointer shadow-lg hover:shadow-2xl shadow-primary-500/20 hover:shadow-xl transition-all duration-500"
           >
             {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-600/30 to-indigo-600/30 rounded-xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-600/30 to-crimson-600/30 rounded-xl blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></div>
 
             {/* Content */}
             <div className="relative h-full px-8 py-8 rounded-xl border border-white/20 backdrop-blur-xl bg-black/60 shadow-2xl flex flex-col justify-center ring-2 ring-primary-500/40 group-hover:ring-primary-400/60 ring-inset transition-all duration-500 overflow-hidden">

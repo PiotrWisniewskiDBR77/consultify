@@ -480,7 +480,7 @@ export const HelpSidePanel: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary-500 to-indigo-600 rounded-xl text-white">
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary-500 to-crimson-600 rounded-xl text-white">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <PlayCircle size={24} />
                 </div>

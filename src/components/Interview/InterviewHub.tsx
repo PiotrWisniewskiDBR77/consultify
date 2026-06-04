@@ -767,6 +767,7 @@ export const InterviewHub: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUsingDemoData, setIsUsingDemoData] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [sessionsLoadError, setSessionsLoadError] = useState<string | null>(null);
   const [insightsLoadError, setInsightsLoadError] = useState<string | null>(null);
   const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
   const [assignmentsLoadError, setAssignmentsLoadError] = useState<string | null>(null);
@@ -1039,9 +1040,15 @@ export const InterviewHub: React.FC = () => {
 
       if (sessionsRes.status === 'fulfilled') {
         setSessions(Array.isArray(sessionsRes.value) ? sessionsRes.value : []);
+        setSessionsLoadError(null);
       } else {
         console.error('[InterviewHub] Failed to load sessions:', sessionsRes.reason);
         setSessions([]);
+        setSessionsLoadError(
+          isPolish
+            ? 'Nie udalo sie pobrac sesji. Sprobuj odswiezyc.'
+            : 'Failed to load sessions. Try refreshing.'
+        );
       }
 
       if (insightsRes.status === 'fulfilled') {
@@ -6504,6 +6511,7 @@ Return ONLY the answer text (no markdown fences).`;
     }
 
     const tabDegradedMessage = (() => {
+      if (activeTab === 'sessions') return sessionsLoadError;
       if (activeTab === 'insights') return insightsLoadError;
       if (activeTab === 'initiatives') return initiativesLoadError;
       if (
@@ -6537,6 +6545,7 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="h-full overflow-hidden">
+          {renderDegradedBanner()}
           {viewMode === 'table' ? (
             <TableWithPreviewLayout<InterviewSession & { title: string }>
               selectedId={previewSessionId}

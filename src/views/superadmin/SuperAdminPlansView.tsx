@@ -141,7 +141,7 @@ export const SuperAdminPlansView: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* New Plan Form */}
         {showNewForm && (
-          <div className="bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-indigo-900/20 dark:to-primary-900/20 rounded-xl p-6 border-2 border-dashed border-indigo-300 dark:border-indigo-600">
+          <div className="bg-gradient-to-br from-crimson-50 to-primary-50 dark:from-crimson-900/20 dark:to-primary-900/20 rounded-xl p-6 border-2 border-dashed border-indigo-300 dark:border-indigo-600">
             <PlanForm
               formData={formData}
               setFormData={setFormData}

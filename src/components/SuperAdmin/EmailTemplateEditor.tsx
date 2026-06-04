@@ -710,14 +710,14 @@ function getDefaultHtmlTemplate(): string {
 </head>
 <body style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f3f4f6;">
     <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="background: linear-gradient(135deg, #6366F1 0%, #6366F1 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
+        <div style="background: linear-gradient(135deg, #A51C30 0%, #A51C30 100%); border-radius: 16px 16px 0 0; padding: 32px; text-align: center;">
             <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">Email Title</h1>
         </div>
         <div style="background: white; border-radius: 0 0 16px 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
             <p style="font-size: 16px; color: #1F2937; margin-bottom: 24px;">Hi <strong>{{firstName}}</strong>,</p>
             <p style="margin-bottom: 24px;">Your email content goes here...</p>
             <div style="text-align: center; margin: 32px 0;">
-                <a href="{{actionUrl}}" style="display: inline-block; background: linear-gradient(135deg, #6366F1 0%, #6366F1 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">Call to Action</a>
+                <a href="{{actionUrl}}" style="display: inline-block; background: linear-gradient(135deg, #A51C30 0%, #A51C30 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">Call to Action</a>
             </div>
             <p style="margin-top: 24px;">Best regards,<br><strong>The Team</strong></p>
         </div>

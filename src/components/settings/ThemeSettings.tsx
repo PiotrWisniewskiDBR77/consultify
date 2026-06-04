@@ -29,7 +29,7 @@ type Theme = 'light' | 'dark' | 'system';
 type Density = 'compact' | 'comfortable' | 'spacious';
 
 const ACCENT_COLORS = [
-  { key: 'violet', name: 'Violet', value: '#6366f1', class: 'bg-primary-500' },
+  { key: 'crimson', name: 'Crimson', value: '#A51C30', class: 'bg-primary-500' },
   { key: 'blue', name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
   { key: 'emerald', name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
   { key: 'rose', name: 'Rose', value: '#f43f5e', class: 'bg-rose-500' },
@@ -41,10 +41,10 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
   const { t } = useTranslation();
   const theme = useAppStore((s) => s.theme) as Theme;
   const toggleTheme = useAppStore((s) => s.toggleTheme);
-  const [accentColor, setAccentColor] = useState('#6366f1');
+  const [accentColor, setAccentColor] = useState('#A51C30');
   const [density, setDensity] = useState<Density>('comfortable');
   const [originalTheme, setOriginalTheme] = useState<Theme>('system');
-  const [originalAccent, setOriginalAccent] = useState('#6366f1');
+  const [originalAccent, setOriginalAccent] = useState('#A51C30');
   const [originalDensity, setOriginalDensity] = useState<Density>('comfortable');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

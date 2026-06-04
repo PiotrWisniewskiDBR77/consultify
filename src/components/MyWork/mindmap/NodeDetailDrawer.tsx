@@ -720,7 +720,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             <button
               onClick={handleAIExpand}
               disabled={locked || aiExpanding}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/10 to-indigo-500/8 hover:from-primary-500/15 hover:to-indigo-500/12 transition-all disabled:opacity-40"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/10 to-crimson-500/8 hover:from-primary-500/15 hover:to-crimson-500/12 transition-all disabled:opacity-40"
             >
               {aiExpanding ? (
                 <Loader2 size={14} className="animate-spin text-primary-500" />

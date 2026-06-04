@@ -64,7 +64,7 @@ export const EmptyStateWithActions: React.FC<EmptyStateWithActionsProps> = ({
       {illustration ? (
         <img src={illustration} alt="" className="w-48 h-48 object-contain mb-6 opacity-80" />
       ) : Icon ? (
-        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary-100 to-indigo-100 dark:from-primary-900/30 dark:to-indigo-900/30 flex items-center justify-center mb-6">
+        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary-100 to-crimson-100 dark:from-primary-900/30 dark:to-crimson-900/30 flex items-center justify-center mb-6">
           <Icon size={40} className="text-primary-500 dark:text-primary-400" />
         </div>
       ) : (

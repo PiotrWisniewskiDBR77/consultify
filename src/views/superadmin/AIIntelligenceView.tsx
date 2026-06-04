@@ -107,7 +107,7 @@ export const AIIntelligenceView: React.FC = () => {
       <div className="shrink-0 px-8 py-6 border-b border-slate-200 dark:border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-pink-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
               <Brain className="text-white" size={24} />
             </div>
             <div>

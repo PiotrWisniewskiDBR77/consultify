@@ -278,7 +278,7 @@ export const AuditsShowcasePage: React.FC = () => {
           <h1 className="text-5xl lg:text-8xl font-black tracking-tight text-navy-950 dark:text-white mb-8 uppercase leading-[1] text-center">
             {t('showcase.audits.hero.title1')}
             <br />
-            <span className="bg-gradient-to-r from-primary-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary-600 via-crimson-600 to-crimson-600 bg-clip-text text-transparent">
               {t('showcase.audits.hero.title2')}
             </span>
           </h1>
@@ -318,7 +318,7 @@ export const AuditsShowcasePage: React.FC = () => {
       {/* Unified Bottom CTA */}
       <section className="relative z-10 py-32 px-4 bg-slate-900 dark:bg-black overflow-hidden">
         {/* Visual Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 via-pink-600 to-indigo-600" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-600 via-crimson-600 to-crimson-600" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary-600/10 rounded-full blur-[120px]" />
 
         <div className="max-w-5xl mx-auto text-center relative z-10">

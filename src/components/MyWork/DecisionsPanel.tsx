@@ -243,7 +243,7 @@ const NewDecisionModal: React.FC<{
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-pink-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center">
               <FileQuestion size={20} className="text-white" />
             </div>
             <h3 className="text-lg font-bold text-navy-900 dark:text-white">
@@ -1239,7 +1239,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-primary-500 to-pink-600 text-white rounded-lg shadow-sm">
+            <div className="p-2 bg-gradient-to-br from-primary-500 to-crimson-600 text-white rounded-lg shadow-sm">
               <FileQuestion size={20} />
             </div>
             <div>

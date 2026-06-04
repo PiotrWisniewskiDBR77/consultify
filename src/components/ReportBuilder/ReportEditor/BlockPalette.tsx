@@ -349,7 +349,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Rich initiative cards with strategy, effort, metrics',
     descriptionPl: 'Karty inicjatyw ze strategią, wysiłkiem, metrykami',
     icon: <Zap className="w-6 h-6" />,
-    color: 'from-indigo-500 to-primary-600',
+    color: 'from-crimson-500 to-primary-600',
     category: 'visual',
     renderKind: 'initiatives',
     defaultLength: 'long',

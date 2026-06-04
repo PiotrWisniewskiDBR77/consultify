@@ -56,7 +56,7 @@ export const AIInsightsCard: React.FC<AIInsightsCardProps> = ({ megatrends, load
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header / Context */}
-      <div className="bg-gradient-to-r from-primary-900 to-indigo-900 rounded-xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-primary-900 to-crimson-900 rounded-xl p-6 text-white shadow-lg">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <SparklesIcon /> Strategic AI Synthesis
         </h2>

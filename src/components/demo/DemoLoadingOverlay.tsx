@@ -85,7 +85,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
               transition={{ duration: 0.5 }}
               className="mb-12"
             >
-              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-2xl shadow-primary-500/30 mb-6">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary-500 to-crimson-600 rounded-xl flex items-center justify-center shadow-2xl shadow-primary-500/30 mb-6">
                 <img
                   src="/assets/logos/logo-icon.png"
                   alt="Consultify"
@@ -165,7 +165,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
                 initial={{ width: '0%' }}
                 animate={{ width: `${(completedSteps.length / LOADING_STEPS.length) * 100}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-indigo-500 rounded-full"
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-crimson-500 rounded-full"
               />
             </div>
           </div>

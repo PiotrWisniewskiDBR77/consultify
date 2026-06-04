@@ -55,7 +55,7 @@ const CERTIFICATION_INFO: Record<string, { label: string; description: string; c
   CONSULTIFY_CERTIFIED: {
     label: 'Consultify Certified Partner',
     description: 'Completed all required methodology modules',
-    color: 'from-primary-500 to-indigo-600',
+    color: 'from-primary-500 to-crimson-600',
   },
   CO_SELL_EXPERT: {
     label: 'Co-Sell Expert',
@@ -118,7 +118,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress Overview */}
-      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-primary-50 to-indigo-50 p-6 dark:border-navy-700 dark:from-primary-500/10 dark:to-indigo-500/10">
+      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-primary-50 to-crimson-50 p-6 dark:border-navy-700 dark:from-primary-500/10 dark:to-crimson-500/10">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-navy-900">
@@ -175,7 +175,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
           </div>
           <div className="h-3 overflow-hidden rounded-full bg-white/80 dark:bg-navy-900/60">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-crimson-500 transition-all duration-500"
               style={{ width: `${stats.progressPercent}%` }}
             />
           </div>

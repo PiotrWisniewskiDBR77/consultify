@@ -40,9 +40,9 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary: `
     text-white
     bg-gradient-to-br from-primary-500 to-primary-600
-    shadow-[0_4px_14px_rgba(124,58,237,0.25)]
+    shadow-[0_4px_14px_rgba(165,28,48,0.25)]
     hover:from-primary-600 hover:to-primary-700
-    hover:shadow-[0_6px_20px_rgba(124,58,237,0.35)]
+    hover:shadow-[0_6px_20px_rgba(165,28,48,0.35)]
     focus-visible:ring-primary-500/30
     dark:from-primary-500 dark:to-primary-600
   `,

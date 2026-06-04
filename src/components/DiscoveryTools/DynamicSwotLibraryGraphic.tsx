@@ -234,7 +234,7 @@ export function DynamicSwotLibraryGraphic({
       id: 5,
       title: labels.stage5,
       value: labels.stage5Value,
-      tone: 'from-primary-500/22 to-indigo-500/10',
+      tone: 'from-primary-500/22 to-crimson-500/10',
       accent: 'bg-primary-600',
       badge: labels.stage5Badge,
     },
@@ -276,7 +276,7 @@ export function DynamicSwotLibraryGraphic({
   ];
 
   return (
-    <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.1),transparent_24%),radial-gradient(circle_at_88%_12%,rgba(34,197,94,0.08),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.18),transparent_24%),radial-gradient(circle_at_88%_12%,rgba(16,185,129,0.12),transparent_20%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
+    <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.1),transparent_24%),radial-gradient(circle_at_88%_12%,rgba(34,197,94,0.08),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.18),transparent_24%),radial-gradient(circle_at_88%_12%,rgba(16,185,129,0.12),transparent_20%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
       <div className="border-b border-slate-200/70 px-5 py-5 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">

@@ -32,7 +32,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { LoadingState } from '@/components/ui/primitives';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import type {
@@ -325,6 +325,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
 }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [items, setItems] = useState<InboxItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -336,6 +337,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
   const loadInbox = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const res = await Api.get('/my-work/inbox');
       if (res?.items && res.items.length > 0) {
         setItems(res.items.filter((i: InboxItem) => !i.triaged));
@@ -345,6 +347,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
     } catch (error) {
       console.error('Failed to load inbox:', error);
       setItems([]);
+      setLoadError(t('myWork.inbox.error', 'Failed to load inbox'));
       toast.error(t('myWork.inbox.error', 'Failed to load inbox'));
     } finally {
       setLoading(false);
@@ -460,6 +463,11 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
 
   if (loading) {
     return <LoadingState variant="spinner" className="p-12" />;
+  }
+
+  // Distinguish a failed load from a genuinely empty inbox.
+  if (loadError) {
+    return <ErrorState message={loadError} retry={loadInbox} />;
   }
 
   return (

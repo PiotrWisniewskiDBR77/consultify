@@ -335,7 +335,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             <button
               onClick={handleExport}
               disabled={exporting || slides.filter((s) => s.enabled).length === 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-indigo-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-crimson-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-crimson-500/20 transition-colors disabled:opacity-50"
             >
               {exporting ? (
                 <Loader2 size={12} className="animate-spin" />

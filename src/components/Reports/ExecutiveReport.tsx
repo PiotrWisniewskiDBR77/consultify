@@ -155,7 +155,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       <div className="p-6 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-primary-600 text-white rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-crimson-500 to-primary-600 text-white rounded-xl shadow-lg">
               <FileText size={24} />
             </div>
             <div>

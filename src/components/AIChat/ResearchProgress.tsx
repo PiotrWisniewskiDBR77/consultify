@@ -401,7 +401,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
           </div>
           <div className="w-20 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-primary-500 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-crimson-500 to-primary-500 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>

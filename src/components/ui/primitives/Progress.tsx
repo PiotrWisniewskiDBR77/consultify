@@ -65,7 +65,7 @@ const colorStyles: Record<ProgressColor, { bar: string; track: string }> = {
 };
 
 const strokeColors: Record<ProgressColor, string> = {
-  primary: '#7C3AED',
+  primary: '#A51C30',
   success: '#059669',
   danger: '#DC2626',
 };

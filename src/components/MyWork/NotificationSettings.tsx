@@ -131,7 +131,7 @@ const SettingsSection: React.FC<{
     >
       <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-primary-500 to-indigo-600 text-white rounded-lg shadow-sm">
+          <div className="p-2 bg-gradient-to-br from-primary-500 to-crimson-600 text-white rounded-lg shadow-sm">
             {icon}
           </div>
           <div>

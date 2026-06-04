@@ -129,7 +129,7 @@ export const GlowWrapper: React.FC<GlowWrapperProps> = ({
   if (!isNew && !isAI) return <>{children}</>;
 
   const glowColor = isAI
-    ? 'shadow-[0_0_15px_rgba(139,92,246,0.3)] dark:shadow-[0_0_20px_rgba(139,92,246,0.4)]'
+    ? 'shadow-[0_0_15px_rgba(165,28,48,0.3)] dark:shadow-[0_0_20px_rgba(165,28,48,0.4)]'
     : 'shadow-[0_0_12px_rgba(251,191,36,0.3)] dark:shadow-[0_0_16px_rgba(251,191,36,0.4)]';
 
   return (

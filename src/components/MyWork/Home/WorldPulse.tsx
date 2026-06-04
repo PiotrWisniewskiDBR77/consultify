@@ -108,7 +108,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
 
         <div className="flex flex-col gap-4">
           {data.frameworkOfDay && (
-            <div className="p-6 bg-gradient-to-br from-primary-500/[0.08] to-indigo-500/[0.06] border border-primary-500/[0.12] rounded-2xl">
+            <div className="p-6 bg-gradient-to-br from-primary-500/[0.08] to-crimson-500/[0.06] border border-primary-500/[0.12] rounded-2xl">
               <div className="text-[10px] font-bold uppercase tracking-widest text-primary-400 mb-3">
                 {isPolish ? 'Framework dnia' : 'Framework of the Day'}
               </div>

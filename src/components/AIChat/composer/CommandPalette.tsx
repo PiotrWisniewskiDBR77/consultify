@@ -75,7 +75,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       className="
         absolute left-0 right-0 bottom-full mb-2 z-50
         py-1.5
-        bg-white/95 dark:bg-[#1a1d2e]/95 backdrop-blur-xl
+        bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
         border border-slate-200/40 dark:border-white/[0.08]
         rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
         animate-in fade-in-0 slide-in-from-bottom-2 duration-150

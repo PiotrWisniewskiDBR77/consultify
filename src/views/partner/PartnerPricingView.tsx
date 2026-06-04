@@ -128,7 +128,7 @@ export const PartnerPricingView: React.FC = () => {
 
                 <h1 className="mt-6 text-4xl font-black tracking-tight text-navy-950 dark:text-white md:text-5xl">
                   Program partnerski, który daje{' '}
-                  <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-primary-600 to-crimson-600 bg-clip-text text-transparent">
                     realny pipeline, wdrożenia i payout
                   </span>
                 </h1>

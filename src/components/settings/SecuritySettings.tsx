@@ -336,7 +336,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           <button
             onClick={handleChangePassword}
             disabled={!isPasswordValid || !currentPassword || isChangingPassword}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-medium hover:from-primary-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-medium hover:from-primary-500 hover:to-crimson-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isChangingPassword ? (
               <>

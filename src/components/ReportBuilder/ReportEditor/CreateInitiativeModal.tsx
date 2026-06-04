@@ -83,7 +83,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 bg-[#1a1d2e] border border-white/10 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg mx-4 bg-navy-900 border border-white/10 rounded-2xl shadow-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-white/5">
           <div className="p-2 rounded-lg bg-primary-500/10">

@@ -290,7 +290,7 @@ const BetaSuccessStories: React.FC = () => {
         ))}
       </div>
 
-      <div className="text-center p-4 bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+      <div className="text-center p-4 bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
         <p className="text-sm text-primary-700 dark:text-primary-300">
           <Rocket className="w-4 h-4 inline mr-2" />
           <span
@@ -565,7 +565,7 @@ const OnboardingChecklistSection: React.FC = () => {
       {/* Progress bar */}
       <div className="h-2 bg-slate-100 dark:bg-navy-700 rounded-full mb-6 overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-primary-500 to-indigo-500 rounded-full transition-all duration-500"
+          className="h-full bg-gradient-to-r from-primary-500 to-crimson-500 rounded-full transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -711,7 +711,7 @@ const CommissionCalculatorSection: React.FC = () => {
   const annualCommission = annualRevenue * tier.rate;
 
   return (
-    <div className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-800 p-6">
+    <div className="bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200 dark:border-primary-800 p-6">
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-2">
           <Calculator className="w-5 h-5" />
@@ -1007,7 +1007,7 @@ const ContactPartnerManagerSection: React.FC = () => {
 
       {/* Partner Manager Card */}
       <div className="flex flex-col items-center mb-6">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-primary-100 dark:ring-primary-900/50">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-primary-100 dark:ring-primary-900/50">
           BS
         </div>
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Bartosz Sotomski</h3>

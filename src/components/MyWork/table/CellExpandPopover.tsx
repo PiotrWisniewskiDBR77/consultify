@@ -353,7 +353,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
               </div>
               <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 transition-all"
+                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-crimson-500 transition-all"
                   style={{ width: `${Number(value) || 0}%` }}
                 />
               </div>

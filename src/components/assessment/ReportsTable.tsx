@@ -466,7 +466,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             )}
             <button
               onClick={() => navigate('/reports/builder?new=true')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
               title={isPolish ? 'Utwórz raport z pomocą AI' : 'Create AI-powered report'}
             >
               <Sparkles size={18} />

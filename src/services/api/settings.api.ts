@@ -186,7 +186,7 @@ const normalizeAppearancePreferences = (
   preferences: Record<string, unknown> = {}
 ): AppearancePreferences => ({
   theme: (preferences.theme as AppearancePreferences['theme']) || 'system',
-  accentColor: (preferences.accentColor as string) || '#6366f1',
+  accentColor: (preferences.accentColor as string) || '#A51C30',
   density:
     (preferences.density as AppearancePreferences['density']) ||
     ((preferences.uiDensity as AppearancePreferences['density']) ?? 'comfortable'),

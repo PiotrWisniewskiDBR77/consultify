@@ -87,7 +87,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                 {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
               <Link to="/docs" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center">
                   <Book size={16} className="text-white" />
                 </div>
                 <span className="hidden sm:inline">

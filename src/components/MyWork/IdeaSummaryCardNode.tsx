@@ -30,7 +30,7 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
         selected
           ? 'border-primary-400 ring-2 ring-primary-400/30 shadow-lg'
           : 'border-primary-200 dark:border-primary-800/40 shadow-md'
-      } bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20`}
+      } bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20`}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-primary-400 !-top-1" />
 

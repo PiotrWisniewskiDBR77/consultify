@@ -85,7 +85,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           borderColor: isConflict
             ? '#f43f5e'
             : e.status === 'ai_suggestion'
-              ? '#7c3aed'
+              ? '#A51C30'
               : 'transparent',
           classNames,
           editable: e.editAuthority !== 'none' && e.editAuthority !== undefined,

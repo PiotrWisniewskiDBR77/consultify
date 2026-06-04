@@ -160,7 +160,7 @@ const getBlockColor = (type: string) => {
     table: 'from-slate-500 to-slate-600',
     chart_bar: 'from-pink-500 to-pink-600',
     chart_pie: 'from-rose-500 to-rose-600',
-    initiatives: 'from-indigo-500 to-primary-600',
+    initiatives: 'from-crimson-500 to-primary-600',
     dashboard: 'from-blue-500 to-blue-600',
     scorecard: 'from-sky-500 to-sky-600',
     kpis: 'from-blue-500 to-blue-600',

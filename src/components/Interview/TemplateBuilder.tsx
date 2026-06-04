@@ -1595,7 +1595,7 @@ ${sourceText || '(none)'}`;
         }
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 h-10 border-b border-slate-200/60 dark:border-navy-700 shrink-0 bg-slate-100 dark:bg-[#1b2440] text-slate-800 dark:text-white">
+        <div className="flex items-center justify-between px-4 h-10 border-b border-slate-200/60 dark:border-navy-700 shrink-0 bg-slate-100 dark:bg-[#151E32] text-slate-800 dark:text-white">
           <div className="flex items-center gap-2 min-w-0">
             <FileText size={12} className="text-amber-600 dark:text-amber-300 shrink-0" />
             <div className="min-w-0">
@@ -2498,7 +2498,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     >
       {/* Header */}
       <div
-        className="flex items-center gap-2.5 px-3 h-8 cursor-pointer bg-slate-100 dark:bg-[#0b1324] hover:bg-slate-200 dark:hover:bg-[#111b31] border border-slate-200 dark:border-slate-800/70 rounded-md transition-colors"
+        className="flex items-center gap-2.5 px-3 h-8 cursor-pointer bg-slate-100 dark:bg-[#0F172A] hover:bg-slate-200 dark:hover:bg-[#151E32] border border-slate-200 dark:border-slate-800/70 rounded-md transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 shrink-0">

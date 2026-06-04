@@ -257,7 +257,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-primary-500/25">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center shadow-lg shadow-primary-500/25">
             <Activity className="w-6 h-6 text-slate-900 dark:text-white" />
           </div>
           <div>

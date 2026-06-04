@@ -17,7 +17,7 @@ const VALUE_MOMENT_CONFIG: Record<
   { icon: React.ElementType; colorClass: string }
 > = {
   report_generated: { icon: FileText, colorClass: 'from-emerald-500 to-blue-500' },
-  initiative_created: { icon: Rocket, colorClass: 'from-primary-500 to-indigo-500' },
+  initiative_created: { icon: Rocket, colorClass: 'from-primary-500 to-crimson-500' },
   tool_session_completed: { icon: Lightbulb, colorClass: 'from-amber-500 to-amber-500' },
   execution_signal_viewed: { icon: Zap, colorClass: 'from-blue-500 to-blue-500' },
   deck_exported: { icon: BarChart3, colorClass: 'from-rose-500 to-pink-500' },

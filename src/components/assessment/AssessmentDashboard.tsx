@@ -443,7 +443,7 @@ export const AssessmentDashboard: React.FC<AssessmentDashboardProps> = ({
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-br from-primary-600 to-crimson-700 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold mb-1">

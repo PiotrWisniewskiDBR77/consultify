@@ -333,9 +333,9 @@ const EDITOR_STYLES = `
   line-height: 1.8;
   font-size: 0.9375rem;
   color: #1e293b;
-  caret-color: #6366f1;
+  caret-color: #A51C30;
 }
-.dark .ProseMirror { color: #e2e8f0; caret-color: #818cf8; }
+.dark .ProseMirror { color: #e2e8f0; caret-color: #E45868; }
 .ProseMirror h1 { font-size: 1.625rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
 .ProseMirror h2 { font-size: 1.325rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
 .ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.3rem; }
@@ -376,7 +376,7 @@ const EDITOR_STYLES = `
   padding: 0.25rem 0;
 }
 .ProseMirror ul[data-type="taskList"] li label input[type="checkbox"] {
-  accent-color: #6366f1;
+  accent-color: #A51C30;
   margin-top: 0.35rem;
   width: 16px;
   height: 16px;
@@ -472,7 +472,7 @@ const EDITOR_STYLES = `
 }
 .ProseMirror code:not(pre code) {
   background: rgba(99,102,241,0.1);
-  color: #6366f1;
+  color: #A51C30;
   padding: 0.15em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
@@ -491,18 +491,18 @@ const EDITOR_STYLES = `
 
 /* Blockquote */
 .ProseMirror blockquote {
-  border-left: 3px solid #6366f1;
+  border-left: 3px solid #A51C30;
   padding-left: 1rem;
   margin: 0.75rem 0;
   color: #64748b;
   font-style: italic;
 }
-.dark .ProseMirror blockquote { border-left-color: #818cf8; color: #94a3b8; }
+.dark .ProseMirror blockquote { border-left-color: #E45868; color: #94a3b8; }
 
 /* Link */
 .ProseMirror .nb-link,
 .ProseMirror a {
-  color: #6366f1;
+  color: #A51C30;
   text-decoration: underline;
   text-decoration-color: rgba(99,102,241,0.3);
   text-underline-offset: 2px;
@@ -510,7 +510,7 @@ const EDITOR_STYLES = `
   cursor: pointer;
 }
 .ProseMirror .nb-link:hover,
-.ProseMirror a:hover { text-decoration-color: #6366f1; }
+.ProseMirror a:hover { text-decoration-color: #A51C30; }
 .dark .ProseMirror .nb-link,
 .dark .ProseMirror a { color: #a5b4fc; text-decoration-color: rgba(165,180,252,0.3); }
 .dark .ProseMirror .nb-link:hover,
@@ -526,8 +526,8 @@ const EDITOR_STYLES = `
 
 /* Lists */
 .ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; }
-.ProseMirror li::marker { color: #6366f1; }
-.dark .ProseMirror li::marker { color: #818cf8; }
+.ProseMirror li::marker { color: #A51C30; }
+.dark .ProseMirror li::marker { color: #E45868; }
 
 /* Focus ring on editor */
 .ProseMirror:focus { outline: none; }
@@ -1764,7 +1764,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </TooltipContent>
                 </Tooltip>
               ) : (
-                <div className="w-7 h-7 shrink-0 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shadow-sm">
+                <div className="w-7 h-7 shrink-0 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shadow-sm">
                   <BookOpen size={14} className="text-white" />
                 </div>
               )}
@@ -1939,7 +1939,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     key={p.id}
                     className={`group relative rounded-xl transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-r from-indigo-500/10 to-primary-500/8 border border-indigo-500/20 dark:border-indigo-400/15 shadow-sm'
+                        ? 'bg-gradient-to-r from-crimson-500/10 to-primary-500/8 border border-indigo-500/20 dark:border-indigo-400/15 shadow-sm'
                         : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] border border-transparent'
                     }`}
                   >
@@ -2131,7 +2131,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <div className="max-w-lg w-full">
                 {/* Welcome hero */}
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-primary-500 to-primary-600 shadow-lg shadow-indigo-500/20 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-crimson-500 via-primary-500 to-primary-600 shadow-lg shadow-indigo-500/20 mb-4">
                     <Pen size={28} className="text-white" />
                   </div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
@@ -2193,8 +2193,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 </div>
 
                 {/* AI suggestion prompt */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50 to-primary-50 dark:from-indigo-950/30 dark:to-primary-950/20 border border-indigo-200/50 dark:border-indigo-800/30">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-crimson-50 to-primary-50 dark:from-crimson-950/30 dark:to-primary-950/20 border border-indigo-200/50 dark:border-indigo-800/30">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shrink-0">
                     <Sparkles size={14} className="text-white" />
                   </div>
                   <div className="flex-1 min-w-0">

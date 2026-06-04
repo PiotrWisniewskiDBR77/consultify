@@ -730,7 +730,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       <div className="flex flex-col gap-3">
         <button
           onClick={handleDemoRedirectToForm}
-          className="w-full py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
         >
           {t('auth.signUpForDemo', 'Sign up for Demo')}
           <ArrowRight size={16} />

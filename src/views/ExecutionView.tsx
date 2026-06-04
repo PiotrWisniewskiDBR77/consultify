@@ -66,7 +66,7 @@ export const ExecutionView: React.FC = () => {
       </div>
 
       {/* Executive Summary */}
-      <div className="bg-gradient-to-r from-primary-600 to-indigo-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-primary-600 to-crimson-600 rounded-xl p-6 text-white">
         <h4 className="text-lg font-bold mb-4">Executive Summary</h4>
         <div className="grid grid-cols-4 gap-6">
           <div>

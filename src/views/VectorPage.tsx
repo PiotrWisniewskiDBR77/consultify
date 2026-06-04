@@ -189,8 +189,8 @@ export const VectorPage: React.FC = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                 style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                  boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)',
+                  background: 'linear-gradient(135deg, #A51C30, #651120)',
+                  boxShadow: '0 0 24px -8px rgba(165,28,48,0.60)',
                 }}
               >
                 <Download size={16} />
@@ -578,8 +578,8 @@ export const VectorPage: React.FC = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-white transition-all"
                 style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                  boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)',
+                  background: 'linear-gradient(135deg, #A51C30, #651120)',
+                  boxShadow: '0 0 24px -8px rgba(165,28,48,0.60)',
                 }}
               >
                 <Download size={16} />

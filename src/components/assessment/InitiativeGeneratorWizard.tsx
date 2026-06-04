@@ -658,7 +658,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
       ) : (
         <>
           {/* Summary */}
-          <div className="p-6 bg-gradient-to-r from-primary-600 to-indigo-600 rounded-xl text-white">
+          <div className="p-6 bg-gradient-to-r from-primary-600 to-crimson-600 rounded-xl text-white">
             <h4 className="text-lg font-semibold mb-4">Transfer Summary</h4>
             <div className="grid grid-cols-3 gap-6">
               <div>

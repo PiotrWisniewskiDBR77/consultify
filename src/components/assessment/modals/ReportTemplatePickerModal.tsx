@@ -594,7 +594,7 @@ export function ReportTemplatePickerModal(props: {
               className={
                 !selectedTemplate || submitting
                   ? 'px-5 py-2.5 rounded-lg bg-slate-300 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-sm font-medium cursor-not-allowed inline-flex items-center gap-2'
-                  : 'px-5 py-2.5 rounded-lg bg-gradient-to-r from-primary-500 to-indigo-500 hover:from-primary-600 hover:to-indigo-600 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2'
+                  : 'px-5 py-2.5 rounded-lg bg-gradient-to-r from-primary-500 to-crimson-500 hover:from-primary-600 hover:to-crimson-600 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2'
               }
             >
               {submitting ? (

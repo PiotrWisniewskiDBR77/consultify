@@ -146,7 +146,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
             {(currentStep === 1 || !session?.step1Completed) && (
               <button
                 onClick={onStartModule1}
-                className="w-full group flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white px-6 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-primary-500/30 transition-all transform hover:-translate-y-0.5"
+                className="w-full group flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-crimson-600 text-white px-6 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-primary-500/30 transition-all transform hover:-translate-y-0.5"
               >
                 <Play size={20} className="fill-current" />
                 Start with Expectations & Challenges
