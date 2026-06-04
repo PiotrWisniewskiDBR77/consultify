@@ -2522,6 +2522,77 @@ async function createOutputResource(
     { fallback: false }
   );
 
+  // C4.2 — for `report` outputs, ALSO write a real report_builder_reports row so
+  // Canvas → Report lands in the Reports module (not only as a sibling
+  // work_canvas_drafts kind='report'). The draft above stays as the editable
+  // working copy; the report row is the surface Outputs/Reports renders. Failure
+  // is non-fatal — the draft is still returned, audit log captures the gap.
+  if (outputType === 'report') {
+    try {
+      const reportId = randomUUID();
+      const companyContext = {
+        source: 'work_canvas',
+        sourceDraftId: draft.id,
+        sourceVersionId: sourceVersionId || null,
+        title,
+        markdownExcerpt: String(draft.contentMd || '').slice(0, 4000),
+      };
+      const config = {
+        canvasOutput: true,
+        outputDraftId,
+        sourceDraftId: draft.id,
+      };
+      await dbRun(
+        `INSERT INTO report_builder_reports (
+          id, organization_id, project_id, source_type, source_id, source_name, source_framework,
+          title, description, report_type, template_id, config_json, company_context_json, status,
+          created_by, created_at, updated_at, version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          reportId,
+          organizationId,
+          draft.projectId || null,
+          'UPLOAD_BUNDLE',
+          draft.id,
+          `Canvas: ${title}`,
+          'work_canvas',
+          `Report: ${title}`,
+          'Generated from Work Canvas draft.',
+          'CANVAS_REPORT',
+          null,
+          JSON.stringify(config),
+          JSON.stringify(companyContext),
+          'DRAFT',
+          userId,
+          now,
+          now,
+          1,
+        ],
+        { fallback: false }
+      );
+      return {
+        type: outputType,
+        id: reportId,
+        title: outputDraft.title,
+        url: `/reports/${encodeURIComponent(reportId)}`,
+        metadata,
+        readBack: {
+          outputType,
+          draftId: outputDraft.id,
+          reportId,
+          status: 'created',
+          metadata,
+        },
+      };
+    } catch (err) {
+      logger.warn('[work-canvas] canvas.report.materialize_failed', {
+        draftId: draft.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Fall through to draft-only return below — non-fatal, audit captured.
+    }
+  }
+
   return {
     type: outputType,
     id: outputDraft.id,
