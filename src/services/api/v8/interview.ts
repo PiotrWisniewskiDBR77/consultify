@@ -726,6 +726,23 @@ export const V8InterviewApi = {
     selectedContextDocumentIds?: string[];
   }) => v8Post<{ insight: V8InterviewInsight }>('/interview/insights', payload),
 
+  // #28e — Server-backed insight duplicate/similarity check (mirrors
+  // POST /initiatives/similarity-check). Informational only; never blocks.
+  checkInsightSimilarity: (payload: { title: string; summary?: string; themes?: string[] }) =>
+    v8Post<{
+      verdict: 'duplicate' | 'similar' | 'related' | 'new';
+      topScore: number;
+      matches: Array<{
+        id: string;
+        title: string;
+        score: number;
+        verdict: 'duplicate' | 'similar' | 'related' | 'new';
+      }>;
+      method: 'embeddings' | 'token-overlap';
+      comparedCount: number;
+      truncated: boolean;
+    }>('/interview/insights/similarity-check', payload),
+
   listContextDocuments: (params?: { scope?: 'project' | 'user' | 'all'; projectId?: string }) =>
     v8Get<{ documents: V8ContextDocument[] }>('/interview/context-documents', params),
 

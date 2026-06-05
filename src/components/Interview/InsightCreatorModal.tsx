@@ -107,15 +107,16 @@ interface InsightSourceBasket {
 }
 
 /**
- * #28e — Lightweight client-side duplicate/similarity hit. We compare the new
- * insight title against insights already loaded in scope (token overlap +
- * substring). A server-side semantic check (à la POST /initiatives/similarity-check)
- * does not yet exist for insights — see the TODO in checkSimilarInsights().
+ * #28e — Duplicate/similarity hit for the new insight. The primary source is now
+ * the server-backed semantic check (POST /interview/insights/similarity-check,
+ * mirroring POST /initiatives/similarity-check — embeddings cosine with a token
+ * Jaccard fallback). If that endpoint errors we gracefully fall back to a
+ * lightweight client-side title check (token overlap + substring).
  */
 interface SimilarInsightHit {
   id: string;
   title: string;
-  score: number; // 0..1 — fraction of shared significant tokens
+  score: number; // 0..1 — semantic/token similarity to an existing insight
 }
 
 interface InsightCreatorModalProps {
@@ -1125,41 +1126,83 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     [completedSessions]
   );
 
-  // #28e — Recompute the duplicate/similarity warning whenever the title or the
-  // loaded insight list changes. Pure client-side: token overlap + substring.
-  // TODO(server): add a semantic insight similarity endpoint (mirroring
-  // POST /initiatives/similarity-check) and prefer it over this heuristic.
+  // #28e — Client-side fallback duplicate check (token overlap + substring),
+  // used only when the server similarity endpoint is unavailable.
+  const computeClientSideHits = useCallback(
+    (rawTitle: string): SimilarInsightHit[] => {
+      const trimmed = rawTitle.trim();
+      if (trimmed.length < 4 || existingInsights.length === 0) return [];
+      const candidateTokens = tokenizeTitle(trimmed);
+      const candidateLower = trimmed.toLowerCase();
+      const hits: SimilarInsightHit[] = [];
+      for (const insight of existingInsights) {
+        const existingLower = insight.title.trim().toLowerCase();
+        if (!existingLower) continue;
+        const existingTokens = tokenizeTitle(insight.title);
+        let score = 0;
+        // Exact / substring containment is a strong signal.
+        if (existingLower === candidateLower) {
+          score = 1;
+        } else if (
+          existingLower.includes(candidateLower) ||
+          candidateLower.includes(existingLower)
+        ) {
+          score = 0.85;
+        } else if (candidateTokens.length > 0 && existingTokens.length > 0) {
+          const existingSet = new Set(existingTokens);
+          const shared = candidateTokens.filter((token) => existingSet.has(token)).length;
+          const union = new Set([...candidateTokens, ...existingTokens]).size;
+          score = union > 0 ? shared / union : 0;
+        }
+        if (score >= 0.5) hits.push({ id: insight.id, title: insight.title, score });
+      }
+      hits.sort((a, b) => b.score - a.score);
+      return hits.slice(0, 3);
+    },
+    [existingInsights]
+  );
+
+  // #28e — Recompute the duplicate/similarity warning whenever the title changes.
+  // Primary: server-backed semantic check (POST /interview/insights/
+  // similarity-check, mirroring POST /initiatives/similarity-check). Debounced,
+  // and gracefully falls back to the client-side heuristic on any error. The
+  // warning is non-blocking — generation always remains available.
   useEffect(() => {
     const trimmed = title.trim();
     setSimilarDismissed(false);
-    if (trimmed.length < 4 || existingInsights.length === 0) {
+    if (trimmed.length < 4) {
       setSimilarHits([]);
       return;
     }
-    const candidateTokens = tokenizeTitle(trimmed);
-    const candidateLower = trimmed.toLowerCase();
-    const hits: SimilarInsightHit[] = [];
-    for (const insight of existingInsights) {
-      const existingLower = insight.title.trim().toLowerCase();
-      if (!existingLower) continue;
-      const existingTokens = tokenizeTitle(insight.title);
-      let score = 0;
-      // Exact / substring containment is a strong signal.
-      if (existingLower === candidateLower) {
-        score = 1;
-      } else if (existingLower.includes(candidateLower) || candidateLower.includes(existingLower)) {
-        score = 0.85;
-      } else if (candidateTokens.length > 0 && existingTokens.length > 0) {
-        const existingSet = new Set(existingTokens);
-        const shared = candidateTokens.filter((token) => existingSet.has(token)).length;
-        const union = new Set([...candidateTokens, ...existingTokens]).size;
-        score = union > 0 ? shared / union : 0;
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await V8InterviewApi.checkInsightSimilarity({ title: trimmed });
+        if (cancelled) return;
+        // Surface only matches at/above the "similar" band so the chip stays
+        // meaningful (related-only matches are too weak to warn on).
+        const hits = (result?.matches || [])
+          .filter((match) => match.score >= 0.5)
+          .slice(0, 3)
+          .map((match) => ({ id: match.id, title: match.title, score: match.score }));
+        setSimilarHits(hits);
+      } catch (error) {
+        // Graceful fallback: server check unavailable → client-side heuristic.
+        if (cancelled) return;
+        console.error(
+          '[InsightCreatorModal] Server similarity check failed, using fallback:',
+          error
+        );
+        setSimilarHits(computeClientSideHits(trimmed));
       }
-      if (score >= 0.5) hits.push({ id: insight.id, title: insight.title, score });
-    }
-    hits.sort((a, b) => b.score - a.score);
-    setSimilarHits(hits.slice(0, 3));
-  }, [title, existingInsights]);
+    }, 450);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [title, computeClientSideHits]);
 
   useEffect(() => {
     const visibleSessionIds = new Set(filteredSessions.map((session) => session.id));

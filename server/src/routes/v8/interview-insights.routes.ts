@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { EmbeddingService } from '../../services/ai/embeddingService.js';
 import type { InsightStatus } from '../../services/InterviewInsightService.js';
 import { getById as getInsightById } from '../../services/InterviewInsightService.js';
 import notificationService from '../../services/notificationService.js';
@@ -47,6 +48,117 @@ export const V8_INTERVIEW_INSIGHTS_CONTRACT = 'interview_insights_p10_v1';
 
 function insightsMeta() {
   return { version: 'v8' as const, contract: V8_INTERVIEW_INSIGHTS_CONTRACT };
+}
+
+// ---------------------------------------------------------------------------
+// #28e — Insight similarity scoring (server-backed duplicate detection)
+//
+// Mirrors initiativeSimilarityService: primary semantic cosine similarity over
+// OpenAI embeddings, deterministic token-Jaccard fallback when embeddings are
+// unavailable / fail. The initiative service loads from the `initiatives` table
+// directly so it cannot be reused as-is for insights; we replicate the same
+// scoring primitives and verdict thresholds inline here.
+// ---------------------------------------------------------------------------
+
+const insightEmbeddingService = new EmbeddingService();
+
+// Cap comparison set to keep embedding cost / latency bounded.
+const MAX_EXISTING_INSIGHTS = 200;
+
+// Verdict thresholds (cosine similarity or normalized Jaccard, both 0..1).
+const SIMILARITY_DUPLICATE_THRESHOLD = 0.7;
+const SIMILARITY_SIMILAR_THRESHOLD = 0.5;
+const SIMILARITY_RELATED_THRESHOLD = 0.3;
+const SIMILARITY_MAX_MATCHES = 5;
+
+type SimilarityVerdict = 'duplicate' | 'similar' | 'related' | 'new';
+
+function similarityVerdictForScore(score: number): SimilarityVerdict {
+  if (score >= SIMILARITY_DUPLICATE_THRESHOLD) return 'duplicate';
+  if (score >= SIMILARITY_SIMILAR_THRESHOLD) return 'similar';
+  if (score >= SIMILARITY_RELATED_THRESHOLD) return 'related';
+  return 'new';
+}
+
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (!a.length || !b.length || a.length !== b.length) return 0;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  const sim = dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  if (sim < 0) return 0;
+  if (sim > 1) return 1;
+  return sim;
+}
+
+const SIMILARITY_STOPWORDS = new Set<string>([
+  // PL
+  'i',
+  'oraz',
+  'lub',
+  'w',
+  'na',
+  'do',
+  'dla',
+  'z',
+  'ze',
+  'o',
+  'aby',
+  'jako',
+  'przez',
+  'po',
+  'od',
+  'analiza',
+  'analizy',
+  'raport',
+  'wnioski',
+  'wniosek',
+  // EN
+  'the',
+  'this',
+  'and',
+  'or',
+  'of',
+  'to',
+  'for',
+  'with',
+  'in',
+  'on',
+  'an',
+  'by',
+  'as',
+  'at',
+  'analysis',
+  'insight',
+  'report',
+]);
+
+function similarityTokenize(text: string): Set<string> {
+  const tokens = text
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '') // strip diacritics so combining marks are removed
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((tok) => tok.length > 2 && !SIMILARITY_STOPWORDS.has(tok));
+  return new Set(tokens);
+}
+
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  for (const tok of a) {
+    if (b.has(tok)) intersection++;
+  }
+  const union = a.size + b.size - intersection;
+  if (union === 0) return 0;
+  return intersection / union;
 }
 
 const LIFECYCLE_ACTIONS: InsightLifecycleAction[] = [
@@ -1001,6 +1113,150 @@ router.post(
         initiative: initiativeRef,
         findingId,
         insightId,
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+// #28e — POST /v8/interview/insights/similarity-check
+// Org-scoped + auth. Given a prospective insight (title + optional summary +
+// themes), returns whether an existing insight in the org already duplicates /
+// closely resembles it. Informational only — never mutates state or blocks the
+// insight generator. Mirrors POST /initiatives/similarity-check.
+router.post(
+  '/insights/similarity-check',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { title, summary, themes } = req.body as {
+      title?: string;
+      summary?: string;
+      themes?: string[];
+    };
+
+    const candidateTitle = typeof title === 'string' ? title.trim() : '';
+    if (!candidateTitle) {
+      return res.status(400).json({
+        error: 'title is required',
+        code: 'P10_SIMILARITY_TITLE_REQUIRED',
+      });
+    }
+
+    const candidateText = [
+      candidateTitle,
+      typeof summary === 'string' ? summary.trim() : '',
+      Array.isArray(themes) ? themes.filter((t) => typeof t === 'string').join(' ') : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    // Load the org's existing insights (title + content snippet). Robust to a
+    // missing/odd schema: fall back to title-only on any query error.
+    interface ExistingInsightRow {
+      id?: string | null;
+      title?: string | null;
+      content?: string | null;
+    }
+    let rows: ExistingInsightRow[] = [];
+    try {
+      rows = await queryHelpers.queryAll<ExistingInsightRow>(
+        `SELECT id, title, content
+           FROM interview_insights
+          WHERE organization_id = ?
+            AND COALESCE(status, '') != 'failed'
+          ORDER BY updated_at DESC
+          LIMIT ?`,
+        [organizationId, MAX_EXISTING_INSIGHTS + 1]
+      );
+    } catch (err) {
+      logger.warn('[InsightSimilarity] content-select failed, retrying title-only', err);
+      try {
+        rows = await queryHelpers.queryAll<ExistingInsightRow>(
+          `SELECT id, title FROM interview_insights WHERE organization_id = ? LIMIT ?`,
+          [organizationId, MAX_EXISTING_INSIGHTS + 1]
+        );
+      } catch (err2) {
+        logger.warn('[InsightSimilarity] title-only select failed', err2);
+        rows = [];
+      }
+    }
+
+    const existing = rows
+      .map((row) => ({
+        id: String(row.id || ''),
+        title: String(row.title || 'Insight'),
+        text: [String(row.title || ''), String(row.content || '').slice(0, 2000)].join(' ').trim(),
+      }))
+      .filter((item) => item.id && item.text.length > 0);
+
+    const truncated = existing.length > MAX_EXISTING_INSIGHTS;
+    const comparison = truncated ? existing.slice(0, MAX_EXISTING_INSIGHTS) : existing;
+
+    // No existing insights → everything is "new" by definition.
+    if (comparison.length === 0) {
+      return res.json({
+        data: {
+          verdict: 'new' as SimilarityVerdict,
+          topScore: 0,
+          matches: [] as Array<{
+            id: string;
+            title: string;
+            score: number;
+            verdict: SimilarityVerdict;
+          }>,
+          method: 'token-overlap' as const,
+          comparedCount: 0,
+          truncated: false,
+        },
+        meta: insightsMeta(),
+      });
+    }
+
+    // Primary: embeddings cosine. Fallback: token Jaccard overlap.
+    let method: 'embeddings' | 'token-overlap';
+    let scoreFor: (existingIndex: number) => number;
+
+    try {
+      const [candidateEmbedding, existingEmbeddings] = await Promise.all([
+        insightEmbeddingService.generateEmbedding(candidateText),
+        Promise.all(comparison.map((item) => insightEmbeddingService.generateEmbedding(item.text))),
+      ]);
+      method = 'embeddings';
+      scoreFor = (ei) => cosineSimilarity(candidateEmbedding, existingEmbeddings[ei]);
+    } catch (embErr) {
+      logger.warn(
+        '[InsightSimilarity] embeddings unavailable, falling back to token overlap',
+        (embErr as Error)?.message
+      );
+      const candidateTokens = similarityTokenize(candidateText);
+      const existingTokens = comparison.map((item) => similarityTokenize(item.text));
+      method = 'token-overlap';
+      scoreFor = (ei) => jaccardSimilarity(candidateTokens, existingTokens[ei]);
+    }
+
+    const matches = comparison
+      .map((item, index) => ({
+        id: item.id,
+        title: item.title,
+        score: Number(scoreFor(index).toFixed(4)),
+      }))
+      .filter((match) => match.score >= SIMILARITY_RELATED_THRESHOLD)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, SIMILARITY_MAX_MATCHES)
+      .map((match) => ({ ...match, verdict: similarityVerdictForScore(match.score) }));
+
+    const topScore = matches.length > 0 ? matches[0].score : 0;
+
+    return res.json({
+      data: {
+        verdict: similarityVerdictForScore(topScore),
+        topScore,
+        matches,
+        method,
+        comparedCount: comparison.length,
+        truncated,
       },
       meta: insightsMeta(),
     });
