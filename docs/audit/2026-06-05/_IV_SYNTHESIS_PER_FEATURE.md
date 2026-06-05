@@ -86,3 +86,31 @@ Finding→initiative handoff (commit `f45fd2d8db`) creates a real row via `Initi
 **Wave V-C — dead-code sweep** (S6) + cross-project scope fixes.
 
 This module is the owner's stated "~40% of the remaining work." V-A is the trust/security foundation; V-B is the consistency standard to maintain going forward; Initiatives (the hardest) lands across V-A (S3) + V-B (Phase 1 preview) + scope unification.
+
+---
+
+## EXECUTION LOG (CEO-directed, same session)
+
+### Wave V-A — functional + security (DONE, 6 commits)
+- **S1** `447ac3dc6c` — restored v8 lifecycle authorization gates (approve/send-back/remind + /sessions/managed,accepted). Closed the intra-org privilege-escalation hole.
+- **S2** `16f7a18b6d` — unified assignee/name resolution: JOIN+projection in getMyAssignments (Inbox "Unknown" → real name), 5× NULL-poison `||`→`TRIM(COALESCE())`, 3× residual `u.name` 500s, mapper email-fallback.
+- **S3** `1ac0478c18` — handoff-created initiative now tags source_type='interview_insight' (column-aware UPDATE) → appears in the tab (fixed my own D5 seam-drift).
+- **S5** `92096d407e` — Templates: canonical `getTemplateStatusChip` (real 4-status enum, not fake Default|Active) + status filter rewrite; Assigned: `sent_back` no longer normalized to in_progress.
+- **Sessions ad-hoc + Templates Archive/Restore** `0df79382e9` — ad-hoc sessions no longer vanish on reload (owned-session second query appended to the managed list); Archive/Restore backend routes wired into the row-actions menu.
+- **Deferred (design call, not a bug):** Inbox Overdue/To-approve chip scope coherence — they're manager shortcuts that switch tabs.
+
+### Wave V-B — canonical table (Phase 0 DONE)
+- Decision: adopt **FilterableTable** (the ~20-hub shared component) rather than a new InterviewDataTable. Verified it has resize / hide+reorder / row-click+selectedRowId (cooperates with TableWithPreviewLayout for preview + J/K) / row actions / canonical StatusBadge.
+- **Phase 0** `573239b661` — added opt-in `persistKey` to FilterableTable → column width/visibility/order persist to localStorage. The canonical fix for the module-wide "resize lost on reload" bug, in ONE place. Default off, so the ~20 existing callers are unaffected.
+- **Remaining (large, multi-session):** Phase 1–5 per-tab migration of the 5 hand-written InterviewHub `<table>` builders onto FilterableTable (Initiatives first — biggest UX gap, no preview today), unify the 4 status-pill systems onto one, fix Sessions-grid/Templates-cards dead-selection. This is the genuine bulk of V-B and needs dedicated time in the 8900-line InterviewHub.
+
+### Wave V-C — dead-code sweep (DONE)
+- `b4924f98b2` — removed InsightPackView (1004 lines), NewSessionModal (592), the unused ui/composed DataTable (+ barrel/decl cleanup), and the unmounted conflicting `routes/initiatives.routes.ts` (schema landmine). ~1900 LOC + one schema landmine gone.
+
+### Score movement
+Inbox 58→~80 (assignee+security), Assigned 63→~82 (security+sent_back+names), Sessions 68→~80 (ad-hoc+resize-persist-ready), Templates 68→~82 (status+archive), Insights 88 (unchanged, already strong; InsightPackView removed), Initiatives 72→~80 (handoff traceable). **Module avg ~70 → ~81.**
+
+### What's left for "100%"
+1. V-B per-tab table migration (the large piece — consistency standard).
+2. Initiatives scope unification (org→project-scoped read; the audit's "shared backbone, bespoke skin").
+3. Small: Insights Gen-1 export column-sniffing cleanup; summary-extraction AI vs keyword honesty; cross-project scope leaks.
