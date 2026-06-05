@@ -800,6 +800,28 @@ router.post(
             market_context: `Created from interview finding ${findingId}`,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any);
+
+          // V-A S3 — tag the initiative with its interview-insight source so it
+          // appears in the Interview > Initiatives tab (which filters on
+          // source_type='interview_insight'). The canonical createInitiative
+          // INSERT doesn't write source_type/source_id, so set them in a
+          // column-aware follow-up UPDATE (the columns are optional — added by
+          // a later migration — so guard on their existence). Without this the
+          // handoff created a real-but-untraceable initiative invisible in the
+          // tab that's supposed to show it.
+          try {
+            const { getTableColumns } = await import('../../utils/dbSchema.js');
+            const cols = await getTableColumns('initiatives');
+            if (cols.has('source_type') && cols.has('source_id')) {
+              await queryHelpers.queryRun(
+                `UPDATE initiatives SET source_type = ?, source_id = ? WHERE id = ?`,
+                ['interview_insight', findingId, initiative.id]
+              );
+            }
+          } catch (tagErr) {
+            logger.warn('[InsightHandoff] source-tag UPDATE skipped', tagErr);
+          }
+
           initiativeRef = {
             id: initiative.id,
             type: 'created',
