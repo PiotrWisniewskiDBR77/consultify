@@ -61,14 +61,14 @@
 
 ### 2A. Insight detail (refactor na NModeLayout kanon)
 - [ ] **#23** Wszystkie sekcje na `NModeSectionWrapper` kanon (koniec różnych formatów per sekcja)
-- [ ] **#23b** Strip markdown w sub-tekstach (koniec surowego `## Executive Summary`)
+- [x] **#23b** Strip markdown w sub-tekstach ✅ (agent G: InsightViewer; agent I: Insights tabela)
 - [ ] **#22** Reorganizacja 20 sekcji → 5 grup (INSIGHT / BETWEEN THE LINES / EVIDENCE / DELIVERABLES / AUDIT)
 - [ ] **#23c** Merge sekcji: Material Quality+Truth→Quality&Trust · Source Pack+Sessions→Sources · Candidates+Traceability→Findings&Evidence · usunąć Full Analysis · Activity→header · Comments→drawer
 - [ ] **#22c** ⭐ 3 nowe sekcje „między wierszami": Consensus&Divergence Matrix · Implicit Assumptions · Silences
 - [ ] **#23d** 4 dalsze nowe: Cross-person Quote Comparison · Sentiment/Tone Map · Power Dynamics · Hypothesis Board
-- [ ] **#26** Toolbar kanon: 1 primary (Submit for Information) + Export/Convert/AI dropdowny (koniec tęczy)
-- [ ] **#26b** ⭐ Submit for Review → **Submit for Information** (bez gate'u, leci do inboxa managera/ownera)
-- [ ] **#20** Insights tabela: porządek graficzny (left bar, chipy) + kolumny (Exported to, AI Score, Findings count) + kebab (Convert/Edit/Share/View sources)
+- [x] **#26** Toolbar kanon: 1 primary + Export/AI dropdowny (koniec tęczy) ✅ (agent G)
+- [x] **#26b** ⭐ Submit for Review → **Submit for Information** (bez gate; notyfikacja managerów/ownerów) ✅ (agent G)
+- [x] **#20** Insights tabela: StatusPill + strip markdown + Source „—" + kolumna Exported to + kebab preview ✅ (agent I)
 - [ ] **#25** Mądry generator z preview-pane: tabela wyboru sekcji przy eksporcie (Report/Deck/Table/Idea/Note=fragmenty/Initiative)
 
 ### 2B. Initiative detail (szlif do kanonu — owner: „mały")
@@ -94,11 +94,11 @@
 
 ### 3C. Generator Inicjatyw ⭐⭐⭐
 - [ ] **#29** Konsolidacja 4 wizardów w 1 kanon
-- [ ] **#29b** Step 0 — wybór insightów (1-N, multi-select) [decyzja: 1:N lineage]
-- [ ] **#29c** Capacity check — „zespół ma X aktywnych, dodaj rozsądnie" (AI-suggested liczba)
+- [x] **#29b** Step 0 — wybór insightów (multi-select, 1:N lineage) ✅ (agent H)
+- [x] **#29c** Capacity check — GET /initiatives/capacity + banner „X aktywnych, sugerowane Y" + default count ✅ (agent H)
 - [x] **#29d** ⭐ similarity check (embeddings+Jaccard fallback): endpoint /initiatives/similarity-check + flagi NEW/SIMILAR/DUPLICATE/RELATED per kandydat w wizardzie ✅ (agent E)
 - [ ] **#29e** Merge/Extend/Create-anyway flow przy podobnych
-- [ ] **#29f** Bulk-create [decyzja: 1-3 inicjatywy] w stanie **DRAFT** [decyzja] z governance + lineage
+- [x] **#29f** Bulk-create 1-3 (soft limit) w stanie DRAFT + source tagging ✅ (agent H)
 - [~] **#29g** PL/EN: notatka konsultanta zlokalizowana (PL z diakrytykami + „Najważniejsze insighty") ✅ · Esc anuluje + root-cause isPolish=false do sprawdzenia
 - [ ] **#29h** Progresywne wypełnianie: wizard wypełnia rdzeń (Problem/Solution/Scope/KPI z insightu), reszta pusta z AI-assist
 
