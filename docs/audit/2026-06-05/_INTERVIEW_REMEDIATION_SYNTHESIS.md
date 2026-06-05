@@ -79,3 +79,31 @@ Suggested sequence:
 2. **Then:** pick Discovery revive OR Enterprise revive as a dedicated multi-day build (Discovery is the smaller of the two and has the more salvageable UI).
 
 Tell me which to take next and I'll run it the same way.
+
+---
+
+## UPDATE — CEO-directed execution (continued same session)
+
+The owner delegated sequencing ("you're CEO, act on logic and schedule"). Executed in order:
+
+### Phase 1 — core finish (done) — commit `436ecd0a72`
+- **I-P2** report-builder now reads the governed P10 findings layer (was bypassing it for the legacy summary model). Gateway stopped lying "deprecated" on the canonical authoring routes (the header would have 404'd any client that trusted it and migrated).
+- Structured core → **~90**.
+
+### Phase 2 — Discovery revive (DONE — dead demo → working capability)
+Two commits took Discovery from 14/100 to a working module:
+- **`86ddc2af75` (backend 1/2):** new `server/src/routes/discovery.routes.ts` — persistence (sessions survive reload), `convert-to-project` creates a **real** project + initiatives via the canonical services, `attach`, and a **real SPIN extraction endpoint** (`POST /discovery/extract`) via llmService with a zod-validated schema. Mounted at `/api/discovery` (verified: 401 with no auth, was 404).
+- **`fa3d0db1ad` (frontend 2/2):** `useDiscoverySync` now calls the backend extractor (the pipeline was inert — it waited for inline JSON blocks the chat AI never produced). Mounted `DiscoveryConsultantView` at `/discovery/canvas` (the component was fully built but never mounted).
+- End-to-end real now: create → persists; chat → canvas populates; "Start Project" → real project + initiatives.
+- Remaining Discovery polish (future, small): recommendation match-score engine, phase-progression wiring, link-to-existing-project picker.
+
+### Phase 3 — Enterprise revive (NOT started — explicit decision)
+**CEO call: do not half-start.** The full Enterprise revive is a genuine **multi-week** build:
+- The entire frontend is missing (zero UI).
+- The schema work is **risky**, not routine: migration `652` does `CREATE TABLE IF NOT EXISTS interview_sessions` / `interview_questions` — the **same tables the core module owns** — and extends them with enterprise columns. A careless lazy-ensure on a fresh DB could provision a wrong-shaped core table. This needs a deliberate, tested migration, not an autonomous inline ensure.
+- Zero current callers, so there is no user-facing 500 today (the routes are mounted but nothing hits them).
+
+This warrants explicit prioritization as its own dedicated effort — not a silent autonomous start mid-session. Flagged here; recommend scheduling it as a standalone multi-week block when multi-respondent surveys are a confirmed roadmap item.
+
+### Session tally (interview module)
+14 commits. Structured core 62→~90, ecosystem 54→~78, Discovery 14→working. Every commit green (tsc=0, esbuild clean, servers 200). Enterprise remains the one large dormant build, scoped and flagged.
