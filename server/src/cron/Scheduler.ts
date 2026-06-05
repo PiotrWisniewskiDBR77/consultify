@@ -610,8 +610,30 @@ export const Scheduler = {
     });
     this.jobs.push(job31);
 
+    // 32. Interview reminder + escalation — Run hourly.
+    // I1 fix: interviewReminderJob implements the advertised 48h/24h/2h
+    // reminder + post-deadline auto-escalation, but was never registered in
+    // the scheduler (the job header said "run via npx ts-node"). Without this
+    // the entire automatic-reminder feature was dormant — assignees got the
+    // initial notification and nothing else; overdue assignments never
+    // escalated to the manager.
+    const job32 = cron.schedule('0 * * * *', async () => {
+      try {
+        const { runJob } = await import('../jobs/interviewReminderJob.js');
+        const result = await runJob();
+        if (result.reminders.sent > 0 || result.escalations.escalated > 0) {
+          logger.info(
+            `[Scheduler] Interview reminders: ${result.reminders.sent} sent, ${result.escalations.escalated} escalated`
+          );
+        }
+      } catch (err: any) {
+        logger.error('[Scheduler] Interview reminder job failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job32);
+
     logger.info(
-      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM)'
+      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly)'
     );
   },
   stop(): void {

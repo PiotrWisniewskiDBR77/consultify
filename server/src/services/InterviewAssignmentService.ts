@@ -709,8 +709,13 @@ class InterviewAssignmentService {
    */
   async getTeamMembers(assignmentId: string): Promise<AssignmentMember[]> {
     const db = await this.getDb();
+    // I2 — the users table has first_name/last_name, NOT a `name` column. The
+    // previous `u.name` threw `column u.name does not exist` on Postgres,
+    // 500-ing the GET /assignments/:id/members route for every team assignment.
     const rows = await db.all<any>(
-      `SELECT m.*, u.name as user_name, u.email as user_email
+      `SELECT m.*,
+              TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name,
+              u.email as user_email
        FROM interview_assignment_members m
        LEFT JOIN users u ON u.id = m.user_id
        WHERE m.assignment_id = ?`,
@@ -1199,14 +1204,21 @@ class InterviewAssignmentService {
 
         // Email (skip for 2h reminder - too late for email)
         if (reminderType !== 'reminder_2h') {
-          const user = await db.get<{ email: string; name: string }>(
-            `SELECT email, name FROM users WHERE id = ?`,
-            [userId]
-          );
+          // I2 — first_name/last_name, not the non-existent `name` column.
+          // Previously this threw on Postgres and the reminder dispatch
+          // aborted in the outer catch (reinforcing the dormant-reminder bug),
+          // or greeted recipients "Hi undefined".
+          const user = await db.get<{
+            email: string;
+            first_name: string;
+            last_name: string;
+          }>(`SELECT email, first_name, last_name FROM users WHERE id = ?`, [userId]);
 
           if (user?.email) {
+            const userName =
+              `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email;
             await this.sendReminderEmail(user.email, {
-              userName: user.name,
+              userName,
               templateName,
               reminderType,
               dueAt: assignment.dueAt,
