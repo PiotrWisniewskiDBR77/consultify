@@ -32,6 +32,7 @@ import {
 } from '../../services/initiative/initiativeWizardService.js';
 import initiativeGenerationService from '../../services/initiativeGenerationService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
+import { checkSimilarInitiatives } from '../../services/initiativeSimilarityService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
 import {
   getCapacityTimeline,
@@ -289,6 +290,60 @@ router.post(
       candidateIds: Array.isArray(req.body.candidateIds) ? req.body.candidateIds : [],
     });
     return res.json({ ok: true, gate: result });
+  }
+);
+
+// ==========================================
+// SIMILARITY / DUPLICATE CHECK (AI Wizard)
+// ==========================================
+
+const SimilarityCheckSchema = z.object({
+  projectId: z.string().max(255).optional().nullable(),
+  candidates: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(2000),
+        description: z.string().max(20000).optional().nullable(),
+      })
+    )
+    .min(1)
+    .max(20),
+});
+
+/**
+ * POST /api/initiatives/similarity-check
+ * For each AI-proposed candidate, return whether an existing active initiative
+ * in the org (and project, if given) already duplicates / closely resembles it.
+ * Informational only — does not mutate state or block the wizard.
+ */
+router.post(
+  '/similarity-check',
+  requireOrgRole('user'),
+  validateBody(SimilarityCheckSchema),
+  async (req: any, res: any) => {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const result = await checkSimilarInitiatives({
+        orgId: String(orgId),
+        projectId: req.body?.projectId ? String(req.body.projectId) : null,
+        candidates: req.body.candidates,
+      });
+
+      return res.json(result);
+    } catch (err: any) {
+      return res
+        .status(500)
+        .json(
+          buildPmoInitiativesFailClosedError(
+            req,
+            500,
+            'PMO_INITIATIVES_SIMILARITY_CHECK_FAILED',
+            'Failed to run initiative similarity check.'
+          )
+        );
+    }
   }
 );
 

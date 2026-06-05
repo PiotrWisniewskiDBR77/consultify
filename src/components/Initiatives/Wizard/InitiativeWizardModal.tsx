@@ -127,6 +127,66 @@ type ExistingInitiativeMatch = Pick<PortfolioInitiative, 'id' | 'name' | 'status
   title?: string;
 };
 
+// ---- Initiative similarity / duplicate check (audit #29d) -------------------
+// Backend POST /initiatives/similarity-check verdict + top match per candidate.
+type SimilarityVerdict = 'duplicate' | 'similar' | 'related' | 'new';
+
+interface SimilarityMatch {
+  id: string;
+  title: string;
+  status: string;
+  owner?: string | null;
+  score: number;
+}
+
+interface SimilarityCandidateResult {
+  candidateIndex: number;
+  matches: SimilarityMatch[];
+  topScore: number;
+  verdict: SimilarityVerdict;
+}
+
+interface SimilarityCheckResponse {
+  results: SimilarityCandidateResult[];
+  method?: 'embeddings' | 'token-overlap';
+  comparedCount?: number;
+  truncated?: boolean;
+}
+
+type WizardLanguage = 'pl' | 'en';
+
+const SIMILARITY_CHIP_CONFIG: Record<
+  Exclude<SimilarityVerdict, 'new'> | 'new',
+  { className: string; label: Record<WizardLanguage, string> }
+> = {
+  new: {
+    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+    label: { pl: 'NOWA', en: 'NEW' },
+  },
+  related: {
+    className: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+    label: { pl: 'POWIĄZANA', en: 'RELATED' },
+  },
+  similar: {
+    className: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+    label: { pl: 'PODOBNA', en: 'SIMILAR' },
+  },
+  duplicate: {
+    className: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+    label: { pl: 'DUPLIKAT', en: 'DUPLICATE' },
+  },
+};
+
+const SIMILARITY_HINT: Record<WizardLanguage, string> = {
+  pl: 'podobna inicjatywa już istnieje',
+  en: 'a similar initiative already exists',
+};
+
+const SIMILARITY_TOP_MATCH_LABEL: Record<WizardLanguage, string> = {
+  pl: 'Najbliższa',
+  en: 'Closest',
+};
+
 interface InitiativeWizardModalProps {
   isOpen: boolean;
   projectId?: string | null;
@@ -140,6 +200,7 @@ interface InitiativeWizardModalProps {
   initialSourceBasket?: unknown[];
   creationSourceType?: string;
   creationSourceId?: string | null;
+  language?: WizardLanguage;
   onClose: () => void;
   onCreated: (created: PortfolioInitiative[]) => void;
 }
@@ -222,6 +283,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   initialSourceBasket = [],
   creationSourceType = 'initiative_wizard',
   creationSourceId,
+  language = 'pl',
   onClose,
   onCreated,
 }) => {
@@ -235,6 +297,11 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<WizardCandidate[]>([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  // Audit #29d: per-candidate duplicate/similarity verdict from the backend,
+  // keyed by candidate id. Informational only — never blocks selection.
+  const [similarityByCandidate, setSimilarityByCandidate] = useState<
+    Record<string, SimilarityCandidateResult>
+  >({});
   const [createdInitiatives, setCreatedInitiatives] = useState<PortfolioInitiative[]>([]);
   const [isWorking, setIsWorking] = useState(false);
   const [auditEvents, setAuditEvents] = useState<WizardAuditEvent[]>([]);
@@ -322,6 +389,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     setSessionId(null);
     setCandidates([]);
     setSelectedCandidateId(null);
+    setSimilarityByCandidate({});
     setCreatedInitiatives([]);
     setAuditEvents([]);
     setAuditError(null);
@@ -377,6 +445,38 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     );
   };
 
+  // Audit #29d: after candidates are generated, ask the backend whether any
+  // already-existing active initiative duplicates / closely resembles each one.
+  // Best-effort and non-blocking — failures leave the wizard fully usable.
+  const runSimilarityCheck = async (generated: WizardCandidate[]) => {
+    const payloadCandidates = generated.map((candidate) => ({
+      title: candidate.title || '',
+      description: [candidate.problemStatement, candidate.opportunityStatement]
+        .filter(Boolean)
+        .join(' '),
+    }));
+    if (payloadCandidates.length === 0) {
+      setSimilarityByCandidate({});
+      return;
+    }
+    try {
+      const response: SimilarityCheckResponse = await Api.post('/initiatives/similarity-check', {
+        projectId: projectId || undefined,
+        candidates: payloadCandidates,
+      });
+      const results = Array.isArray(response?.results) ? response.results : [];
+      const mapped: Record<string, SimilarityCandidateResult> = {};
+      for (const result of results) {
+        const candidate = generated[result.candidateIndex];
+        if (candidate) mapped[candidate.id] = result;
+      }
+      setSimilarityByCandidate(mapped);
+    } catch (error) {
+      console.error('[InitiativeWizardModal] Similarity check failed:', error);
+      setSimilarityByCandidate({});
+    }
+  };
+
   const startWizard = async () => {
     setIsWorking(true);
     try {
@@ -406,6 +506,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       setSelectedCandidateId(nextCandidates[0]?.id || null);
       setStep('candidates');
       toast.success('Kandydaci inicjatyw sa gotowi do triage.', { duration: 1800 });
+      void runSimilarityCheck(nextCandidates);
     } catch (error) {
       console.error('[InitiativeWizardModal] Failed to start wizard:', error);
       toast.error('Nie udalo sie uruchomic kreatora inicjatyw.');
@@ -634,6 +735,35 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     </div>
   );
 
+  // Audit #29d: render the duplicate/similarity verdict chip for a candidate.
+  const renderSimilarityChip = (candidate: WizardCandidate) => {
+    const similarity = similarityByCandidate[candidate.id];
+    if (!similarity) return null;
+    const config = SIMILARITY_CHIP_CONFIG[similarity.verdict];
+    const topMatch = similarity.matches[0];
+    const showTopMatch =
+      (similarity.verdict === 'similar' || similarity.verdict === 'duplicate') && topMatch;
+    return (
+      <div className="mt-1.5 space-y-1">
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${config.className}`}
+        >
+          {config.label[language]}
+        </span>
+        {showTopMatch && (
+          <div className="flex items-start gap-1 text-[11px] text-amber-600 dark:text-amber-300">
+            <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
+            <span className="min-w-0">
+              {SIMILARITY_HINT[language]} — {SIMILARITY_TOP_MATCH_LABEL[language]}:{' '}
+              <span className="font-medium">{topMatch.title}</span>
+              {topMatch.status ? ` (${topMatch.status})` : ''}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderCandidates = () => (
     <div className="grid min-h-[440px] grid-cols-[minmax(0,1fr)_360px] gap-3">
       <div className="space-y-1.5 overflow-auto pr-1">
@@ -679,7 +809,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   {STATUS_LABELS[candidate.triageStatus]}
                 </span>
               </div>
-              {match && (
+              {renderSimilarityChip(candidate)}
+              {!similarityByCandidate[candidate.id] && match && (
                 <div className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-300">
                   <AlertTriangle className="h-3 w-3" />
                   Podobna inicjatywa: {match.name || match.title}
