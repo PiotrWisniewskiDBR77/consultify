@@ -11,9 +11,13 @@
  */
 
 import { Settings2 } from 'lucide-react';
-import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { cn } from '@/utils/cn';
+
+const PANEL_WIDTH = 256; // w-64
+const GAP = 8; // mt-2
 
 export interface TableSettingsColumn {
   /** Stable column identifier. */
@@ -53,8 +57,10 @@ const TRIGGER_CLASS =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ' +
   'aria-expanded:bg-c-accent-soft aria-expanded:text-c-text';
 
+// Portaled to <body> with fixed positioning so it is NEVER clipped by an
+// ancestor's overflow (the table scroll container previously cut it off, #1).
 const PANEL_CLASS =
-  'absolute z-50 mt-2 w-64 rounded-xl border border-c-border bg-c-surface-raised ' +
+  'fixed z-[60] w-64 rounded-xl border border-c-border bg-c-surface-raised ' +
   'p-1.5 shadow-[0_8px_30px_rgba(15,23,42,0.12)] focus:outline-none';
 
 const ROW_CLASS =
@@ -82,15 +88,45 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
   align = 'right',
 }) => {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const descId = useId();
 
-  // Close on outside click.
+  // Compute fixed position from the trigger rect, with viewport clamping and
+  // auto-flip when there isn't enough room below.
+  const updatePosition = useCallback(() => {
+    const trigger = containerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const panelHeight = panelRef.current?.offsetHeight ?? 320;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const flipUp = spaceBelow < panelHeight + GAP && rect.top > spaceBelow;
+
+    let left = align === 'right' ? rect.right - PANEL_WIDTH : rect.left;
+    left = Math.max(8, Math.min(left, window.innerWidth - PANEL_WIDTH - 8));
+    const top = flipUp ? Math.max(8, rect.top - panelHeight - GAP) : rect.bottom + GAP;
+    setPos({ top, left });
+  }, [align]);
+
+  // Recompute on open, and keep aligned on scroll/resize.
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [open, updatePosition]);
+
+  // Close on outside click (trigger OR portaled panel).
   useEffect(() => {
     if (!open) return;
     const handlePointer = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (!containerRef.current?.contains(target) && !panelRef.current?.contains(target)) {
         setOpen(false);
       }
     };
@@ -140,49 +176,53 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
         <Settings2 size={14} />
       </button>
 
-      {open ? (
-        <div
-          ref={panelRef}
-          role="dialog"
-          aria-label={label}
-          tabIndex={-1}
-          className={cn(PANEL_CLASS, align === 'right' ? 'right-0' : 'left-0')}
-        >
-          <div className={HEADING_CLASS}>{columnsHeading}</div>
-          <div className="max-h-64 overflow-y-auto">
-            {columns.map((column) => (
-              <label key={column.id} className={ROW_CLASS}>
+      {open
+        ? createPortal(
+            <div
+              ref={panelRef}
+              role="dialog"
+              aria-label={label}
+              tabIndex={-1}
+              style={{ top: pos.top, left: pos.left }}
+              className={PANEL_CLASS}
+            >
+              <div className={HEADING_CLASS}>{columnsHeading}</div>
+              <div className="max-h-64 overflow-y-auto">
+                {columns.map((column) => (
+                  <label key={column.id} className={ROW_CLASS}>
+                    <input
+                      type="checkbox"
+                      className={CHECKBOX_CLASS}
+                      checked={column.visible}
+                      disabled={column.required}
+                      onChange={() => handleColumnToggle(column)}
+                    />
+                    <span className="min-w-0 flex-1 truncate">{column.label}</span>
+                    {column.required ? (
+                      <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
+                        Locked
+                      </span>
+                    ) : null}
+                  </label>
+                ))}
+              </div>
+
+              <div className="my-1 h-px bg-c-border-subtle" />
+
+              <label className={ROW_CLASS} htmlFor={descId}>
+                <span className="min-w-0 flex-1 truncate">{descriptionLabel}</span>
                 <input
+                  id={descId}
                   type="checkbox"
                   className={CHECKBOX_CLASS}
-                  checked={column.visible}
-                  disabled={column.required}
-                  onChange={() => handleColumnToggle(column)}
+                  checked={showDescription}
+                  onChange={(event) => onToggleDescription(event.target.checked)}
                 />
-                <span className="min-w-0 flex-1 truncate">{column.label}</span>
-                {column.required ? (
-                  <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                    Locked
-                  </span>
-                ) : null}
               </label>
-            ))}
-          </div>
-
-          <div className="my-1 h-px bg-c-border-subtle" />
-
-          <label className={ROW_CLASS} htmlFor={descId}>
-            <span className="min-w-0 flex-1 truncate">{descriptionLabel}</span>
-            <input
-              id={descId}
-              type="checkbox"
-              className={CHECKBOX_CLASS}
-              checked={showDescription}
-              onChange={(event) => onToggleDescription(event.target.checked)}
-            />
-          </label>
-        </div>
-      ) : null}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 };
