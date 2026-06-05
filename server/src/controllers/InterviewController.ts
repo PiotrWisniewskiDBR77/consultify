@@ -751,6 +751,10 @@ async function ensureInterviewTemplateV6Columns(): Promise<void> {
       name: 'language',
       sql: `ALTER TABLE interview_library_templates ADD COLUMN language VARCHAR(5) DEFAULT 'en'`,
     },
+    {
+      name: 'is_default',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN is_default INTEGER DEFAULT 0`,
+    },
   ];
 
   for (const column of missingColumns) {
@@ -4641,6 +4645,60 @@ export const InterviewController = {
       `UPDATE interview_library_templates SET status = 'draft', updated_at = ? WHERE id = ?`,
       [now, id]
     );
+
+    const updated = await queryHelpers.queryOne(
+      `SELECT t.*, (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count
+       FROM interview_library_templates t WHERE t.id = ?`,
+      [id]
+    );
+
+    res.json(buildTemplateResponse(updated));
+  }),
+
+  // #15 — Set / unset a template as the organization default. Single default per
+  // org: setting one clears the flag on every other template in the same org.
+  setTemplateDefault: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewTemplateV6Columns();
+
+    const isDefault = Boolean((req.body || {}).isDefault);
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
+    );
+    if (!existing || !canManageTemplate(existing, user)) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+
+    // Org-scoping: only org-owned templates can carry an org default flag. System
+    // templates have no organization_id, so they can't be the org default.
+    if ((existing as any).organization_id !== user.organizationId) {
+      res
+        .status(403)
+        .json({ error: 'Cannot change default for a template outside your organization' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    if (isDefault) {
+      // Single default per org: clear every OTHER org template first, then set this one.
+      await queryHelpers.queryRun(
+        `UPDATE interview_library_templates SET is_default = 0, updated_at = ? WHERE organization_id = ? AND id != ? AND is_default = 1`,
+        [now, user.organizationId, id]
+      );
+      await queryHelpers.queryRun(
+        `UPDATE interview_library_templates SET is_default = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [now, id, user.organizationId]
+      );
+    } else {
+      await queryHelpers.queryRun(
+        `UPDATE interview_library_templates SET is_default = 0, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [now, id, user.organizationId]
+      );
+    }
 
     const updated = await queryHelpers.queryOne(
       `SELECT t.*, (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count

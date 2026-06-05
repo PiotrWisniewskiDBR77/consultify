@@ -299,6 +299,13 @@ router.post(
   InterviewController.restoreTemplate
 );
 
+/** POST /interview/templates/:id/default - Set/unset template as org default */
+router.post(
+  '/templates/:id/default',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.setTemplateDefault
+);
+
 /** POST /interview/templates/:id/questions - Add template question */
 router.post(
   '/templates/:id/questions',

@@ -2561,23 +2561,42 @@ export const InterviewHub: React.FC = () => {
     [myAssignments, managedAssignments]
   );
 
-  // #15 — Set / unset a template as the org default. No backend route exists yet
-  // (no POST /interview/templates/:id/default), so this is a clearly-named local
-  // stub that surfaces an honest "not yet available" toast instead of faking a
-  // successful write. The kebab item is wired so the affordance is discoverable.
-  // TODO(#15): wire to backend POST /interview/templates/:id/default (set) and
-  // DELETE/POST .../default (unset) once the route lands; then refresh templates.
+  // #15 — Set / unset a template as the org default. Single default per org:
+  // setting one clears the flag on every other template (enforced server-side).
+  // POST /interview/templates/:id/default { isDefault } returns the updated row;
+  // we optimistically reconcile local state to keep the kebab label in sync.
   const handleToggleTemplateDefault = useCallback(
-    (template: InterviewTemplate) => {
-      toast(
-        isPolish
-          ? template.isDefault
-            ? 'Zmiana domyślnego szablonu będzie wkrótce dostępna'
-            : 'Ustawianie domyślnego szablonu będzie wkrótce dostępne'
-          : template.isDefault
-            ? 'Unsetting the default template is not yet available'
-            : 'Setting the default template is not yet available'
-      );
+    async (template: InterviewTemplate) => {
+      const nextDefault = !template.isDefault;
+      try {
+        await Api.post(`/interview/templates/${template.id}/default`, {
+          isDefault: nextDefault,
+        });
+        setTemplates((prev) =>
+          prev.map((t) => {
+            if (t.id === template.id) return { ...t, isDefault: nextDefault };
+            // Single default per org: clear any other default when setting one.
+            if (nextDefault && t.isDefault) return { ...t, isDefault: false };
+            return t;
+          })
+        );
+        toast.success(
+          isPolish
+            ? nextDefault
+              ? 'Ustawiono jako domyślny szablon'
+              : 'Usunięto status domyślnego szablonu'
+            : nextDefault
+              ? 'Set as default template'
+              : 'Default template unset'
+        );
+      } catch (error) {
+        toast.error(
+          isPolish
+            ? 'Nie udało się zmienić domyślnego szablonu'
+            : 'Failed to change default template'
+        );
+        console.error('[InterviewHub] Failed to toggle template default:', error);
+      }
     },
     [isPolish]
   );
@@ -6201,10 +6220,9 @@ export const InterviewHub: React.FC = () => {
                                 },
                               ]
                             : []),
-                          // #15 — Set / Unset default. No backend route yet, so the
-                          // handler is an honest "not yet available" stub (see
-                          // handleToggleTemplateDefault). Item stays visible so the
-                          // affordance is discoverable.
+                          // #15 — Set / Unset default. Wired to POST
+                          // /interview/templates/:id/default via
+                          // handleToggleTemplateDefault (single default per org).
                           ...(canAssign
                             ? [
                                 {
