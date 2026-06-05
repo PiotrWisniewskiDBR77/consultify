@@ -73,6 +73,31 @@ async function getOrgAdminUserIds(organizationId: string): Promise<string[]> {
   }
 }
 
+// #26b — managers + owners/admins. "Submit for Information" sends an insight
+// to the org's management circle as a notification. It does NOT change the
+// insight's lifecycle status and does NOT require any approval gate.
+async function getOrgManagerUserIds(organizationId: string): Promise<string[]> {
+  try {
+    const rows = await queryHelpers.queryAll(
+      `SELECT user_id, role FROM organization_members WHERE organization_id = ?`,
+      [organizationId]
+    );
+    const recipients = (rows || []).filter((r: any) => {
+      const role = String(r.role || '').toLowerCase();
+      return (
+        role === 'owner' ||
+        role === 'admin' ||
+        role === 'administrator' ||
+        role === 'manager' ||
+        role === 'lead'
+      );
+    });
+    return recipients.map((r: any) => String(r.user_id));
+  } catch {
+    return [];
+  }
+}
+
 function emitInsightLifecycleNotifications(
   organizationId: string,
   insightId: string,
@@ -265,6 +290,85 @@ router.post(
         newStatus: transition.targetStatus,
         action: typedAction,
         updatedAt: now,
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+// #26b — POST /v8/interview/insights/:insightId/submit-for-information
+// Org-scoped + auth. Sends the insight to the org's managers/owners (or a
+// single recipient passed in the body) as a notification. This is purely
+// informational: it does NOT lock the insight, change its status, or require
+// review/approval. Available to anyone who can view the insight.
+router.post(
+  '/insights/:insightId/submit-for-information',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+    const { recipientUserId, note } = req.body as {
+      recipientUserId?: string;
+      note?: string;
+    };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    // Resolve recipients: an explicit recipient (validated to be in the org) or
+    // all managers/owners/admins. The actor never notifies themselves.
+    let recipients: string[];
+    if (recipientUserId) {
+      const member = await queryHelpers.queryOne(
+        `SELECT user_id FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+        [organizationId, recipientUserId]
+      );
+      if (!member) {
+        return res.status(400).json({
+          error: 'Recipient is not a member of this organization',
+          code: 'P10_INVALID_RECIPIENT',
+        });
+      }
+      recipients = [recipientUserId];
+    } else {
+      recipients = await getOrgManagerUserIds(organizationId);
+    }
+    recipients = Array.from(new Set(recipients.filter((uid) => uid && uid !== userId)));
+
+    const trimmedNote = typeof note === 'string' ? note.trim().slice(0, 500) : '';
+
+    if (recipients.length > 0) {
+      const fire = async () => {
+        await Promise.allSettled(
+          recipients.map((uid) =>
+            notificationService.send({
+              userId: uid,
+              organizationId,
+              type: 'insight_shared_for_information',
+              title: 'Insight shared for your information',
+              body: trimmedNote
+                ? `Insight "${insight.title}" was shared with you for information: ${trimmedNote}`
+                : `Insight "${insight.title}" was shared with you for information.`,
+              entityType: 'interview_insight',
+              entityId: insightId,
+              actionUrl: `/interview?artifact=insight:${insightId}`,
+              priority: 'normal',
+              actorId: userId,
+              isActionable: false,
+            })
+          )
+        );
+      };
+      fireAndForget(fire(), 'InsightSubmitForInformation notification');
+    }
+
+    return res.json({
+      data: {
+        insightId,
+        recipientCount: recipients.length,
+        recipients,
       },
       meta: insightsMeta(),
     });

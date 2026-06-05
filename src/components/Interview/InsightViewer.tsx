@@ -248,6 +248,48 @@ function uniqueNonEmpty(items: Array<string | null | undefined>): string[] {
   return result;
 }
 
+/**
+ * #23b — Strip Markdown markup to clean plain text for PREVIEW sub-texts only.
+ * Conservative: removes leading heading hashes, bold/italic/strike markers,
+ * inline-code backticks, link/image syntax, leading list/quote markers, and
+ * collapses Markdown table rows (`| a | b |`) into a readable `a · b`.
+ * The full section bodies still render via ReactMarkdown — do NOT use this there.
+ */
+function stripMarkdownPreview(input?: string): string {
+  if (!input) return '';
+  return input
+    .split('\n')
+    .map((line) => {
+      let l = line.trim();
+      // Drop table separator rows like `| --- | :--: |`
+      if (/^\|?[\s:|-]+\|[\s:|-]*$/.test(l) && l.includes('-')) return '';
+      // Collapse table rows `| a | b |` → `a · b`
+      if (l.startsWith('|') || /\|.*\|/.test(l)) {
+        l = l
+          .replace(/^\||\|$/g, '')
+          .split('|')
+          .map((cell) => cell.trim())
+          .filter(Boolean)
+          .join(' · ');
+      }
+      // Strip leading heading hashes, blockquote `>` and list markers
+      l = l
+        .replace(/^#{1,6}\s+/, '')
+        .replace(/^>\s?/, '')
+        .replace(/^(?:[-*+]|\d+\.)\s+/, '');
+      return l;
+    })
+    .join(' ')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1') // images → alt text
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // links → label
+    .replace(/(\*\*|__)(.*?)\1/g, '$2') // bold
+    .replace(/(\*|_)(.*?)\1/g, '$2') // italic
+    .replace(/~~(.*?)~~/g, '$1') // strikethrough
+    .replace(/`([^`]+)`/g, '$1') // inline code
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function extractQuotedLines(content?: string): string[] {
   if (!content) return [];
   const blockQuotes = Array.from(content.matchAll(/(^>\s?.+$)/gm)).map((match) =>
@@ -515,6 +557,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [isExportingTools, setIsExportingTools] = useState(false);
   const [isExportingAssessment, setIsExportingAssessment] = useState(false);
   const [isExportingNotebook, setIsExportingNotebook] = useState(false);
+
+  // #26 toolbar — uniform outline dropdowns (Export ▾ / ✨ AI ▾)
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [aiMenuOpen, setAiMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
+  const aiMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // #26b — "Submit for Information" (no review/approval gate; just notifies)
+  const [submittingForInfo, setSubmittingForInfo] = useState(false);
 
   // Handoff modal state
   const [handoffModalOpen, setHandoffModalOpen] = useState(false);
@@ -820,6 +871,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
+  // #26 — close toolbar dropdowns on outside click / Escape (repo pattern)
+  useEffect(() => {
+    if (!exportMenuOpen && !aiMenuOpen) return;
+    const handlePointer = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (exportMenuOpen && exportMenuRef.current && !exportMenuRef.current.contains(target)) {
+        setExportMenuOpen(false);
+      }
+      if (aiMenuOpen && aiMenuRef.current && !aiMenuRef.current.contains(target)) {
+        setAiMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setExportMenuOpen(false);
+        setAiMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointer);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handlePointer);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [exportMenuOpen, aiMenuOpen]);
+
   useEffect(() => {
     const loadInsight = async () => {
       const applyDemoInsight = (id: string) => {
@@ -1055,7 +1132,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight?.content) return '';
     const firstParagraph = insight.content
       .split('\n\n')
-      .map((part) => part.replace(/^#+\s+/, '').trim())
+      .map((part) => stripMarkdownPreview(part))
       .find(Boolean);
     return firstParagraph || '';
   }, [insight?.content]);
@@ -1079,7 +1156,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       )
       .flatMap((section) => [...section.bullets, ...section.paragraphs]);
 
-    return uniqueNonEmpty([...fromSummaries, ...fromNarrative]).slice(0, 10);
+    return uniqueNonEmpty([...fromSummaries, ...fromNarrative])
+      .map(stripMarkdownPreview)
+      .filter(Boolean)
+      .slice(0, 10);
   }, [parsedInsightSections, sourceSessionSummaries, sourceSessions]);
 
   const opportunityReadout = useMemo(() => {
@@ -1091,7 +1171,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       )
       .flatMap((section) => [...section.bullets, ...section.paragraphs]);
 
-    return uniqueNonEmpty(fromNarrative).slice(0, 10);
+    return uniqueNonEmpty(fromNarrative).map(stripMarkdownPreview).filter(Boolean).slice(0, 10);
   }, [parsedInsightSections]);
 
   const hiddenSignals = useMemo(() => {
@@ -1103,11 +1183,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       )
       .flatMap((section) => [...section.bullets, ...section.paragraphs]);
 
-    return uniqueNonEmpty(fromNarrative).slice(0, 8);
+    return uniqueNonEmpty(fromNarrative).map(stripMarkdownPreview).filter(Boolean).slice(0, 8);
   }, [parsedInsightSections]);
 
   const evidenceQuotes = useMemo(
-    () => extractQuotedLines(insight?.content).slice(0, 6),
+    () =>
+      extractQuotedLines(insight?.content).map(stripMarkdownPreview).filter(Boolean).slice(0, 6),
     [insight?.content]
   );
 
@@ -1663,6 +1744,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setIsExportingNotebook(false);
     }
   };
+
+  // #26b — Submit for Information: notify org managers/owners; no review gate.
+  const handleSubmitForInformation = useCallback(async () => {
+    if (!insight) return;
+    setSubmittingForInfo(true);
+    try {
+      await Api.post(`/v8/interview/insights/${insight.id}/submit-for-information`, {});
+      toast.success(isPolish ? 'Wysłano do wiadomości' : 'Sent for information');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się wysłać' : 'Failed to send');
+    } finally {
+      setSubmittingForInfo(false);
+    }
+  }, [insight, isPolish]);
 
   const handleOpenHandoff = useCallback(
     (finding: {
@@ -5808,90 +5903,142 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
       renderActionBar={() => (
         <div className="flex items-center gap-2 flex-wrap">
+          {/* #26 — Primary action: Submit for Information (no review/approval gate) */}
           <button
-            onClick={handleRegenerate}
-            disabled={isRegenerating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-all disabled:opacity-50"
+            onClick={handleSubmitForInformation}
+            disabled={submittingForInfo || insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-xs font-semibold shadow-sm hover:from-primary-500 hover:to-indigo-500 transition-all disabled:opacity-50"
           >
-            <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-            {isPolish ? 'Regeneruj' : 'Regenerate'}
-          </button>
-
-          <button
-            onClick={handleExportToTools}
-            disabled={isExportingTools || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            {isExportingTools ? (
+            {submittingForInfo ? (
               <Loader2 size={14} className="animate-spin" />
             ) : (
-              <Target size={14} />
+              <Send size={14} />
             )}
-            {isPolish ? 'Do Tools' : 'Export Tools'}
-          </button>
-
-          <button
-            onClick={handleExportToAssessment}
-            disabled={isExportingAssessment || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            {isExportingAssessment ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <BarChart3 size={14} />
-            )}
-            {isPolish ? 'Do Assessment' : 'Export Assessment'}
-          </button>
-
-          <button
-            onClick={handleExportToNotebook}
-            disabled={isExportingNotebook || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            {isExportingNotebook ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <BookOpen size={14} />
-            )}
-            {isPolish ? 'Do Notatnika' : 'To Notebook'}
-          </button>
-
-          <button
-            onClick={handleExportMarkdown}
-            disabled={insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            <Download size={14} />
-            {isPolish ? 'Markdown' : 'Download MD'}
-          </button>
-
-          <button
-            onClick={handleCopy}
-            disabled={insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            <Copy size={14} />
-            {isPolish ? 'Kopiuj' : 'Copy'}
+            {isPolish ? 'Wyślij do wiadomości' : 'Submit for Information'}
           </button>
 
           <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
 
-          {(!insight?.reviewStatus || insight.reviewStatus === 'draft') &&
-            (insight?.status === 'completed' || insight?.status === 'failed') && (
-              <button
-                onClick={() => handleLifecycleTransition('submit_review')}
-                disabled={lifecycleTransitioning}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-              >
-                {lifecycleTransitioning ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Eye size={14} />
-                )}
-                {isPolish ? 'Wyślij do recenzji' : 'Submit for Review'}
-              </button>
+          {/* #26 — Export ▾ : uniform outline dropdown (all secondary exports) */}
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              onClick={() => {
+                setExportMenuOpen((v) => !v);
+                setAiMenuOpen(false);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 text-xs font-medium transition-all"
+            >
+              <ExternalLink size={14} />
+              {isPolish ? 'Eksport' : 'Export'}
+              <ChevronDown size={13} className={exportMenuOpen ? 'rotate-180' : ''} />
+            </button>
+            {exportMenuOpen && (
+              <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportToTools();
+                  }}
+                  disabled={isExportingTools || insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  {isExportingTools ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Target size={14} />
+                  )}
+                  {isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
+                </button>
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportToAssessment();
+                  }}
+                  disabled={isExportingAssessment || insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  {isExportingAssessment ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <BarChart3 size={14} />
+                  )}
+                  {isPolish ? 'Eksportuj do Assessment' : 'Export to Assessment'}
+                </button>
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportToNotebook();
+                  }}
+                  disabled={isExportingNotebook || insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  {isExportingNotebook ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <BookOpen size={14} />
+                  )}
+                  {isPolish ? 'Do Notatnika' : 'To Notebook'}
+                </button>
+                <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportMarkdown();
+                  }}
+                  disabled={insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <Download size={14} />
+                  {isPolish ? 'Pobierz Markdown' : 'Download MD'}
+                </button>
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleCopy();
+                  }}
+                  disabled={insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <Copy size={14} />
+                  {isPolish ? 'Kopiuj markdown' : 'Copy markdown'}
+                </button>
+              </div>
             )}
+          </div>
 
+          {/* #26 — ✨ AI ▾ : uniform outline dropdown (Regenerate) */}
+          <div className="relative" ref={aiMenuRef}>
+            <button
+              onClick={() => {
+                setAiMenuOpen((v) => !v);
+                setExportMenuOpen(false);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 text-xs font-medium transition-all"
+            >
+              <Sparkles size={14} />
+              {isPolish ? 'AI' : 'AI'}
+              <ChevronDown size={13} className={aiMenuOpen ? 'rotate-180' : ''} />
+            </button>
+            {aiMenuOpen && (
+              <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                <button
+                  onClick={() => {
+                    setAiMenuOpen(false);
+                    handleRegenerate();
+                  }}
+                  disabled={isRegenerating}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
+                  {isPolish ? 'Regeneruj' : 'Regenerate'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Legacy lifecycle controls — only surface for insights already in a
+              review/published state (older data). New insights use the
+              informational "Submit for Information" flow above (#26b). */}
           {insight?.reviewStatus === 'in_review' && (
             <>
               <button
