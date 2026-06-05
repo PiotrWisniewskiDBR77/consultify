@@ -159,6 +159,14 @@ const INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-initiatives-show-row-description';
 const INTERVIEW_CREATE_SESSION_TOAST_ID = 'interview-create-session';
 
+// V-B — column-width persistence storage keys (one per resizable table).
+const INTERVIEW_INBOX_COL_WIDTHS_KEY = 'consultify-interview-inbox-col-widths';
+const INTERVIEW_MANAGED_COL_WIDTHS_KEY = 'consultify-interview-managed-col-widths';
+const INTERVIEW_SESSIONS_COL_WIDTHS_KEY = 'consultify-interview-sessions-col-widths';
+const INTERVIEW_INSIGHTS_COL_WIDTHS_KEY = 'consultify-interview-insights-col-widths';
+const INTERVIEW_TEMPLATES_COL_WIDTHS_KEY = 'consultify-interview-templates-col-widths';
+const INTERVIEW_INITIATIVES_COL_WIDTHS_KEY = 'consultify-interview-initiatives-col-widths';
+
 const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
@@ -305,6 +313,38 @@ function saveHiddenColumns(storageKey: string, hiddenColumns: string[]) {
       storageKey,
       JSON.stringify(Array.from(new Set(hiddenColumns.filter((x) => typeof x === 'string'))))
     );
+  } catch {
+    /* ignore */
+  }
+}
+
+// V-B — column-width persistence for the hand-written Interview tables. Mirrors
+// the existing hidden-columns/boolean persistence so resizing survives reload
+// (the module-wide "resize lost on reload" bug the Sessions + Visual audits
+// flagged). Merges persisted widths onto the provided defaults so new columns
+// still get a sensible width.
+function loadColumnWidths(
+  storageKey: string,
+  defaults: Record<string, number>
+): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return { ...defaults };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return { ...defaults };
+    const merged: Record<string, number> = { ...defaults };
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof v === 'number' && v > 0) merged[k] = v;
+    }
+    return merged;
+  } catch {
+    return { ...defaults };
+  }
+}
+
+function saveColumnWidths(storageKey: string, widths: Record<string, number>) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(widths));
   } catch {
     /* ignore */
   }
@@ -624,9 +664,9 @@ export const InterviewHub: React.FC = () => {
   const [sessionsHiddenColumns, setSessionsHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
   );
-  const [sessionsColumnWidths, setSessionsColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS,
-  });
+  const [sessionsColumnWidths, setSessionsColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(INTERVIEW_SESSIONS_COL_WIDTHS_KEY, INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS)
+  );
   const [showSessionRowDescription, setShowSessionRowDescription] = useState(() =>
     loadBooleanSetting(INTERVIEW_SESSIONS_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
@@ -643,9 +683,9 @@ export const InterviewHub: React.FC = () => {
   const [templatesHiddenColumns, setTemplatesHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
   );
-  const [templatesColumnWidths, setTemplatesColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS,
-  });
+  const [templatesColumnWidths, setTemplatesColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS)
+  );
   const [showTemplateRowDescription, setShowTemplateRowDescription] = useState(() =>
     loadBooleanSetting(INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
@@ -677,9 +717,12 @@ export const InterviewHub: React.FC = () => {
   const [showInitiativeRowDescription, setShowInitiativeRowDescription] = useState(() =>
     loadBooleanSetting(INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
-  const [initiativesColumnWidths, setInitiativesColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_INITIATIVES_TABLE_DEFAULT_WIDTHS,
-  });
+  const [initiativesColumnWidths, setInitiativesColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(
+      INTERVIEW_INITIATIVES_COL_WIDTHS_KEY,
+      INTERVIEW_INITIATIVES_TABLE_DEFAULT_WIDTHS
+    )
+  );
   const [isInitiativesViewSettingsOpen, setIsInitiativesViewSettingsOpen] = useState(false);
   const initiativesViewSettingsRef = useRef<HTMLDivElement | null>(null);
   const [showInterviewInitiativeWizard, setShowInterviewInitiativeWizard] = useState(false);
@@ -688,9 +731,9 @@ export const InterviewHub: React.FC = () => {
   const [insightPreviewDetailsExpanded, setInsightPreviewDetailsExpanded] = useState(false);
   const [insightPreviewAiActiveId, setInsightPreviewAiActiveId] = useState<string | null>(null);
   const [insightTableFilters, setInsightTableFilters] = useState<TableFilters>({});
-  const [insightColumnWidths, setInsightColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS,
-  });
+  const [insightColumnWidths, setInsightColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(INTERVIEW_INSIGHTS_COL_WIDTHS_KEY, INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS)
+  );
   const [openInsightFilterId, setOpenInsightFilterId] = useState<string | null>(null);
 
   // Reset preview expansion state when changing selection (KANON v3: stabilny panel)
@@ -5327,9 +5370,9 @@ export const InterviewHub: React.FC = () => {
   const [inboxHiddenColumns, setInboxHiddenColumns] = useState<string[]>(() =>
     loadInterviewAssignmentsHiddenColumns(INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY, true)
   );
-  const [inboxAssignmentColumnWidths, setInboxAssignmentColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS,
-  });
+  const [inboxAssignmentColumnWidths, setInboxAssignmentColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(INTERVIEW_INBOX_COL_WIDTHS_KEY, INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS)
+  );
   const [showInboxAssignmentRowDescription, setShowInboxAssignmentRowDescription] = useState(() =>
     loadBooleanSetting(INTERVIEW_INBOX_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
@@ -5339,9 +5382,31 @@ export const InterviewHub: React.FC = () => {
       true
     )
   );
-  const [managedAssignmentColumnWidths, setManagedAssignmentColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS,
-  });
+  const [managedAssignmentColumnWidths, setManagedAssignmentColumnWidths] = useState<ColumnWidths>(
+    () =>
+      loadColumnWidths(INTERVIEW_MANAGED_COL_WIDTHS_KEY, INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS)
+  );
+
+  // V-B — persist every resizable table's column widths on change, so resizing
+  // survives reload (the module-wide bug). One effect per table.
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_SESSIONS_COL_WIDTHS_KEY, sessionsColumnWidths);
+  }, [sessionsColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, templatesColumnWidths);
+  }, [templatesColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_INSIGHTS_COL_WIDTHS_KEY, insightColumnWidths);
+  }, [insightColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_INITIATIVES_COL_WIDTHS_KEY, initiativesColumnWidths);
+  }, [initiativesColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_INBOX_COL_WIDTHS_KEY, inboxAssignmentColumnWidths);
+  }, [inboxAssignmentColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_MANAGED_COL_WIDTHS_KEY, managedAssignmentColumnWidths);
+  }, [managedAssignmentColumnWidths]);
   const [showManagedAssignmentRowDescription, setShowManagedAssignmentRowDescription] = useState(
     () => loadBooleanSetting(INTERVIEW_MANAGED_ASSIGNMENTS_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
