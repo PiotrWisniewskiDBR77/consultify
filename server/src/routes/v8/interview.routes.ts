@@ -1027,9 +1027,14 @@ router.post(
 
     if (!normalizedTitle) {
       try {
+        // Scope the title lookup by org as well. The id is already validated to
+        // belong to this org via `approvedRows` above, but adding the explicit
+        // organization_id guard keeps this defensive and mirrors sibling
+        // queries (so a future refactor of the validation can't turn this into
+        // a cross-org name leak).
         const sessionRow = await queryHelpers.queryOne(
-          `SELECT name FROM interview_sessions WHERE id = ?`,
-          [normalizedSessionIds[0]]
+          `SELECT name FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+          [normalizedSessionIds[0], organizationId]
         );
         const sessionName = String((sessionRow as any)?.name || '').trim();
         normalizedTitle = sessionName
@@ -1285,9 +1290,11 @@ router.post(
 
     if (existing?.target_id) {
       const column = target === 'tools' ? 'exported_to_tools' : 'exported_to_assessment';
+      // `id` is already org-validated above; the org guard mirrors sibling
+      // writes and keeps this defensive against future refactors.
       await queryHelpers.queryRun(
-        `UPDATE interview_insights SET ${column} = 1, updated_at = ? WHERE id = ?`,
-        [new Date().toISOString(), id]
+        `UPDATE interview_insights SET ${column} = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [new Date().toISOString(), id, organizationId]
       );
       void logInsightActivity({
         organizationId,
@@ -1385,8 +1392,8 @@ router.post(
 
       try {
         await queryHelpers.queryRun(
-          `UPDATE interview_insights SET exported_to_tools = 1, updated_at = ? WHERE id = ?`,
-          [now, id]
+          `UPDATE interview_insights SET exported_to_tools = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+          [now, id, organizationId]
         );
       } catch {
         /* ignore */
@@ -1477,8 +1484,8 @@ router.post(
 
     try {
       await queryHelpers.queryRun(
-        `UPDATE interview_insights SET exported_to_assessment = 1, updated_at = ? WHERE id = ?`,
-        [now, id]
+        `UPDATE interview_insights SET exported_to_assessment = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [now, id, organizationId]
       );
     } catch {
       /* ignore */

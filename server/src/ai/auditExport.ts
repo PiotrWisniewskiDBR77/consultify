@@ -111,30 +111,83 @@ const AuditExportService = {
   },
 
   /**
-   * Convert rows to CSV string.
+   * Escape a single CSV cell value.
+   *
+   * Hardened against:
+   * - null/undefined/object values (coerced to a safe string)
+   * - CSV/spreadsheet formula injection (leading =,+,-,@ — a classic
+   *   compliance-export risk since these files are opened in Excel/Sheets)
+   * - embedded commas, quotes, and newlines (RFC-4180 quoting)
+   * @private
+   */
+  _escapeCsvCell: (val: any): string => {
+    if (val === null || val === undefined) {
+      return '';
+    }
+    // Objects/arrays would otherwise stringify to "[object Object]"; serialize
+    // them deterministically so the column is at least inspectable.
+    let str =
+      typeof val === 'object'
+        ? (() => {
+            try {
+              return JSON.stringify(val);
+            } catch {
+              return String(val);
+            }
+          })()
+        : String(val);
+
+    // Neutralize formula-injection: a leading =,+,-,@ (optionally after
+    // whitespace) is treated as a formula by spreadsheet apps. Prefix with a
+    // single quote so it renders as literal text.
+    if (/^[\s]*[=+\-@]/.test(str)) {
+      str = "'" + str;
+    }
+
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+      str = '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  },
+
+  /**
+   * Convert rows to a CSV string.
+   *
+   * Column detection is the union of keys across ALL rows (not just the first),
+   * so irregular data — where early rows are missing fields that later rows
+   * have — never silently drops columns. Non-object / null rows are skipped
+   * defensively rather than crashing the export.
    * @private
    */
   _toCSV: (rows: any) => {
-    if (!rows || rows.length === 0) {
+    if (!Array.isArray(rows) || rows.length === 0) {
       return '';
     }
 
-    const headers = Object.keys(rows[0]);
-    const csvLines = [headers.join(',')];
+    // Build the header set from every row to tolerate heterogeneous shapes.
+    // Order: first-seen key order, which keeps the common case (uniform rows)
+    // stable and predictable.
+    const headerSet = new Set<string>();
+    for (const row of rows) {
+      if (row && typeof row === 'object' && !Array.isArray(row)) {
+        for (const key of Object.keys(row)) {
+          headerSet.add(key);
+        }
+      }
+    }
+    const headers = Array.from(headerSet);
+
+    // No usable columns (e.g. all rows null/primitive) → nothing to export.
+    if (headers.length === 0) {
+      return '';
+    }
+
+    const escape = AuditExportService._escapeCsvCell;
+    const csvLines = [headers.map(escape).join(',')];
 
     for (const row of rows) {
-      const values = headers.map((h) => {
-        let val = row[h];
-        if (val === null || val === undefined) {
-          return '';
-        }
-        val = String(val);
-        // Escape quotes and wrap in quotes if contains comma or quote
-        if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-          val = '"' + val.replace(/"/g, '""') + '"';
-        }
-        return val;
-      });
+      const record = row && typeof row === 'object' ? row : {};
+      const values = headers.map((h) => escape((record as any)[h]));
       csvLines.push(values.join(','));
     }
 

@@ -33,6 +33,19 @@ export interface EngagementSummaryRequest {
 export interface EngagementSummary {
   period: string;
   dateRange: { from: string; to: string };
+  /**
+   * How the narrative parts (executiveOverview, recommendations) were produced.
+   *
+   * HONESTY FLAG: this service composes its prose deterministically from
+   * aggregate metrics using fixed templates/heuristics — it does NOT call an
+   * LLM. It is mounted under the `/ai` route namespace, so without this flag a
+   * consumer could mistake the output for an AI-generated summary. The value is
+   * always `'deterministic'` today; it exists so the UI/consumer can label the
+   * report truthfully (e.g. "Auto-generated from metrics" rather than
+   * "AI summary"). If an LLM-backed path is ever added, set this to `'ai'` on
+   * that path only.
+   */
+  method: 'deterministic' | 'ai';
   executiveOverview: string;
   keyDecisions: Array<{
     title: string;
@@ -121,6 +134,8 @@ class EngagementSummaryService {
     return {
       period: request.period,
       dateRange: { from: dateFrom.slice(0, 10), to: dateTo.slice(0, 10) },
+      // Narrative is template/rule-based, not LLM-generated — see `method` doc.
+      method: 'deterministic',
       executiveOverview,
       keyDecisions: decisions,
       initiativeScorecard: initiativeStats,
@@ -195,6 +210,19 @@ class EngagementSummaryService {
       summary.recommendations.forEach((r, i) => {
         lines.push(`${i + 1}. ${r}`);
       });
+    }
+
+    // HONESTY FOOTER: be explicit that the prose is auto-composed from metrics
+    // (rule-based), not written by an AI model, so the artifact never
+    // misrepresents how it was generated.
+    if (summary.method === 'deterministic') {
+      lines.push('');
+      lines.push('---');
+      lines.push(
+        isPl
+          ? '_Raport wygenerowany automatycznie na podstawie metryk (reguły), bez modelu AI._'
+          : '_Report auto-generated from metrics (rule-based), not written by an AI model._'
+      );
     }
 
     return lines.join('\n');
