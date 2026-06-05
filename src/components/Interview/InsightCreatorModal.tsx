@@ -12,9 +12,12 @@ import {
   Lightbulb,
   Loader2,
   MessageSquare,
+  Package,
   Paperclip,
+  Save,
   Sparkles,
   Target,
+  Trash2,
   TrendingUp,
   Users,
   X,
@@ -79,6 +82,24 @@ interface CompletedSession {
   department?: string;
   answeredQuestions: number;
   totalQuestions: number;
+}
+
+/**
+ * Source Basket — a reusable saved set of source sessions (+ optional people
+ * filter) so the consultant builds the selection once and reuses it across many
+ * insights/lenses ("z jednych źródeł różne insighty pod różnym kątem").
+ * Backed by /interview/insight-baskets (insightSourceBasketService).
+ */
+interface InsightSourceBasket {
+  id: string;
+  name: string;
+  description?: string | null;
+  sessionIds: string[];
+  projectId?: string | null;
+  peopleFilter?: { respondentIds?: string[] } | null;
+  filterCriteria?: Record<string, unknown> | null;
+  usageCount: number;
+  lastUsedAt?: string | null;
 }
 
 interface InsightCreatorModalProps {
@@ -516,6 +537,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Source baskets — reusable saved source selections
+  const [baskets, setBaskets] = useState<InsightSourceBasket[]>([]);
+  const [activeBasketId, setActiveBasketId] = useState<string>('');
+  const [isSavingBasket, setIsSavingBasket] = useState(false);
+  const [showSaveBasket, setShowSaveBasket] = useState(false);
+  const [basketNameDraft, setBasketNameDraft] = useState('');
+
   const fetchContextDocuments = useCallback(async () => {
     setIsLoadingContextDocuments(true);
     try {
@@ -536,6 +564,121 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setIsLoadingContextDocuments(false);
     }
   }, [isPolish]);
+
+  // --- Source baskets ---------------------------------------------------------
+  const fetchBaskets = useCallback(async () => {
+    try {
+      const res = await Api.get('/interview/insight-baskets');
+      // Api.get returns a payload proxy; the route responds { baskets: [...] }.
+      const payload = (res as { data?: { baskets?: InsightSourceBasket[] } })?.data ?? res;
+      const list = Array.isArray((payload as { baskets?: InsightSourceBasket[] })?.baskets)
+        ? (payload as { baskets: InsightSourceBasket[] }).baskets
+        : [];
+      setBaskets(list);
+    } catch (error) {
+      // Non-fatal: the wizard still works without saved baskets.
+      console.error('[InsightCreatorModal] Failed to load source baskets:', error);
+    }
+  }, []);
+
+  // Apply an existing basket: pre-fill the source sessions (and people filter
+  // when present) into the wizard's existing state. Additive — the user can
+  // still tweak the selection afterwards.
+  const applyBasket = (basketId: string) => {
+    setActiveBasketId(basketId);
+    if (!basketId) return;
+    const basket = baskets.find((b) => b.id === basketId);
+    if (!basket) return;
+    sessionSelectionTouchedRef.current = true;
+    const validIds = new Set(completedSessions.map((s) => s.id));
+    const nextSessions = basket.sessionIds.filter((id) => validIds.has(id));
+    setSelectedSessions(nextSessions);
+    const respondentIds = basket.peopleFilter?.respondentIds;
+    if (Array.isArray(respondentIds)) {
+      const validRespondents = new Set(
+        completedSessions.map((s) => s.respondentId).filter(Boolean) as string[]
+      );
+      setSelectedRespondents(respondentIds.filter((id) => validRespondents.has(id)));
+    }
+    if (nextSessions.length < basket.sessionIds.length) {
+      toast(
+        isPolish
+          ? 'Niektóre sesje z koszyka nie są już dostępne i zostały pominięte.'
+          : 'Some sessions from the basket are no longer available and were skipped.'
+      );
+    }
+  };
+
+  // Save the current source selection as a reusable basket.
+  const handleSaveBasket = async () => {
+    const name = basketNameDraft.trim();
+    if (!name) {
+      toast.error(isPolish ? 'Podaj nazwę koszyka' : 'Enter a basket name');
+      return;
+    }
+    if (selectedSessions.length === 0) {
+      toast.error(isPolish ? 'Wybierz przynajmniej jedną sesję' : 'Select at least one session');
+      return;
+    }
+    setIsSavingBasket(true);
+    try {
+      const projectIds = Array.from(
+        new Set(
+          completedSessions
+            .filter((s) => selectedSessions.includes(s.id) && s.projectId)
+            .map((s) => String(s.projectId))
+        )
+      );
+      const res = await Api.post('/interview/insight-baskets', {
+        name,
+        sessionIds: selectedSessions,
+        projectId: projectIds.length === 1 ? projectIds[0] : null,
+        peopleFilter:
+          selectedRespondents.length > 0 ? { respondentIds: selectedRespondents } : null,
+      });
+      const payload = (res as { data?: { basket?: InsightSourceBasket } })?.data ?? res;
+      const created = (payload as { basket?: InsightSourceBasket })?.basket;
+      await fetchBaskets();
+      if (created?.id) setActiveBasketId(created.id);
+      setShowSaveBasket(false);
+      setBasketNameDraft('');
+      toast.success(isPolish ? 'Koszyk zapisany' : 'Basket saved');
+    } catch (error) {
+      console.error('[InsightCreatorModal] Failed to save source basket:', error);
+      toast.error(isPolish ? 'Nie udało się zapisać koszyka' : 'Failed to save basket');
+    } finally {
+      setIsSavingBasket(false);
+    }
+  };
+
+  const handleDeleteBasket = async (basketId: string) => {
+    try {
+      await Api.delete(`/interview/insight-baskets/${basketId}`);
+      if (activeBasketId === basketId) setActiveBasketId('');
+      await fetchBaskets();
+      toast.success(isPolish ? 'Koszyk usunięty' : 'Basket deleted');
+    } catch (error) {
+      console.error('[InsightCreatorModal] Failed to delete source basket:', error);
+      toast.error(isPolish ? 'Nie udało się usunąć koszyka' : 'Failed to delete basket');
+    }
+  };
+
+  const defaultBasketName = (): string => {
+    const projectName = completedSessions.find(
+      (s) => selectedSessions.includes(s.id) && s.projectId
+    )?.projectId;
+    const base = projectName ? String(projectName) : isPolish ? 'Wybrane' : 'Selected';
+    return isPolish ? `${base} — sesje` : `${base} sessions`;
+  };
+
+  const openSaveBasket = () => {
+    if (selectedSessions.length === 0) {
+      toast.error(isPolish ? 'Najpierw wybierz sesje źródłowe' : 'Select source sessions first');
+      return;
+    }
+    setBasketNameDraft(defaultBasketName());
+    setShowSaveBasket(true);
+  };
 
   const handleContextFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -691,6 +834,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
         }
         await fetchContextDocuments();
+        await fetchBaskets();
       } catch (error) {
         console.error('[InsightCreatorModal] Failed to load data:', error);
         setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
@@ -700,7 +844,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     };
 
     loadData();
-  }, [fetchContextDocuments, isOpen, isPolish]);
+  }, [fetchBaskets, fetchContextDocuments, isOpen, isPolish]);
 
   // Reset on close
   useEffect(() => {
@@ -733,6 +877,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setContextDocuments([]);
       setSelectedContextDocumentIds([]);
       setLoadError(null);
+      setBaskets([]);
+      setActiveBasketId('');
+      setShowSaveBasket(false);
+      setBasketNameDraft('');
+      setIsSavingBasket(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -988,6 +1137,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           selectedContextDocumentIds,
         })
       );
+
+      // Bump usage on the basket this insight was generated from (best-effort).
+      if (activeBasketId) {
+        await Api.post(`/interview/insight-baskets/${activeBasketId}/touch`, {}).catch(() => {});
+      }
 
       toast.dismiss(toastId);
       toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
@@ -1421,8 +1575,95 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     </div>
   );
 
+  const renderSourceBasketControl = () => {
+    const activeBasket = baskets.find((b) => b.id === activeBasketId);
+    return (
+      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-white/[0.08] dark:bg-navy-950/30">
+        <div className="mb-1.5 flex items-center gap-2">
+          <Package size={15} className="text-primary-500" />
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            {isPolish ? 'Koszyk źródeł' : 'Source basket'}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? '— zapisz raz, użyj do wielu insightów'
+              : '— save once, reuse across insights'}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={activeBasketId}
+            onChange={(event) => applyBasket(event.target.value)}
+            className="min-w-[220px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+            aria-label={isPolish ? 'Wybierz koszyk źródeł' : 'Select source basket'}
+          >
+            <option value="">
+              {isPolish ? 'Zbuduj nowy (bez koszyka)' : 'Build new (no basket)'}
+            </option>
+            {baskets.map((basket) => (
+              <option key={basket.id} value={basket.id}>
+                {basket.name} · {basket.sessionIds.length} {isPolish ? 'sesji' : 'sessions'} ·{' '}
+                {isPolish ? `użyto ${basket.usageCount}×` : `used ${basket.usageCount}×`}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={openSaveBasket}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+          >
+            <Save size={14} />
+            {isPolish ? 'Zapisz jako koszyk' : 'Save as basket'}
+          </button>
+          {activeBasket && (
+            <button
+              type="button"
+              onClick={() => handleDeleteBasket(activeBasket.id)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-rose-600 transition-colors hover:bg-rose-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
+              aria-label={isPolish ? 'Usuń koszyk' : 'Delete basket'}
+              title={isPolish ? 'Usuń koszyk' : 'Delete basket'}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+        {showSaveBasket && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-white/[0.08] dark:bg-navy-900/70">
+            <input
+              type="text"
+              value={basketNameDraft}
+              onChange={(event) => setBasketNameDraft(event.target.value)}
+              placeholder={isPolish ? 'Nazwa koszyka' : 'Basket name'}
+              className="min-w-[200px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-500 focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
+            />
+            <button
+              type="button"
+              onClick={handleSaveBasket}
+              disabled={isSavingBasket}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-500 disabled:opacity-50"
+            >
+              {isSavingBasket ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              {isPolish ? 'Zapisz' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSaveBasket(false);
+                setBasketNameDraft('');
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+            >
+              {isPolish ? 'Anuluj' : 'Cancel'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderSourceStep = () => (
     <div className="space-y-3">
+      {renderSourceBasketControl()}
       <div>
         <div className="mb-1.5 flex items-center justify-between">
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400">

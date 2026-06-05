@@ -137,6 +137,7 @@ import intelligenceRoutes from './routes/intelligence.routes.js';
 import discoveryRoutes from './routes/discovery.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
+import insightSourceBasketsRouter from './routes/insightSourceBaskets.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
 import knowledgeGraphRoutes from './routes/knowledge-graph.routes.js';
@@ -933,6 +934,10 @@ export class ApiGateway {
       // reached only via frontend `.catch()` fallbacks and are tracked for a
       // future router split, not a blanket deprecation.
       app.use('/api/interview', interviewRoutes);
+      // Source Baskets — reusable saved source-session selections for the AI
+      // Insight Creator (audit #28c/#28d). Mounted under the same /api/interview
+      // prefix so paths are /api/interview/insight-baskets[...].
+      app.use('/api/interview', insightSourceBasketsRouter);
       // Discovery revive — the Discovery Consultant canvas now has a real
       // backend (persistence + convert-to-project + SPIN extraction).
       app.use('/api/discovery', discoveryRoutes);
