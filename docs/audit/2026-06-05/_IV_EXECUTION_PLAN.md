@@ -45,8 +45,8 @@
 - [x] **#27d** SummaryCard — kompaktowy embeddable blok (title/dot/icon/metrics/body/footer, compact+onClick) w NModeLayout ✅ (agent A2)
 
 ### 1B. Kanon tabel (6 tabel Interview + reszta platformy)
-- [ ] **#18** `<DataTable>` kanon graficzny: monochrome bg, brak zebra/row-tone, hairline dividers, sticky header
-- [~] **#18b** StatusPill SSOT — `shared/StatusPill.tsx` gotowy: 1 komponent, 5 tonów (blue/amber/emerald/rose/slate) + `statusTone()` ✅ (agent C). ⬜ Migracja konsumentów (tabele) — osobno (dotyka InterviewHub).
+- [x] **#18** Kanon tabel — FilterableTable: StatusPill + em-dash puste + monochrome (zebra-free), high-leverage ×N tabel ✅ (agent B1)
+- [x] **#18b** StatusPill SSOT + migracja do FilterableTable (wszystkie tabele konsumenckie) ✅ (agent C + B1)
 - [ ] **#10** Migracja Interview tabel na FilterableTable → filtry per-column automatycznie
 - [x] **#18c** Spec `docs/design-system/TABLES.md` ✅ (agent A3)
 
@@ -140,8 +140,8 @@
 
 ## FAZA 6 — POLISH · ~3-5 dni
 
-- [ ] **#16** Templates kolumny: usage count, AI quality score, last used
-- [ ] **#15** Templates kebab: Archive, Delete-forever, Set/Unset default, View usage
+- [x] **#16** Templates kolumny: Usage (real) + AI quality/Last used („—"+TODO backend) ✅ (agent B2)
+- [x] **#15** Templates kebab: View usage (wired) + Set/Unset default (honest stub); Archive/Delete już były ✅ (agent B2)
 - [ ] Insights Gen-1 export column-sniffing cleanup
 - [ ] Summary AI-vs-keyword honesty
 - [ ] Cross-project scope leaks
