@@ -88,15 +88,15 @@
 ### 3B. Generator Insightów
 - [ ] **#28** Graficzne polish 5 kroków (progress, hover tooltips, drag-drop zone, custom checkboxy)
 - [ ] **#28b** Step 2 „People" — naprawić puste sloty checkbox (bug/placeholder?)
-- [ ] **#28c** ⭐ **Source Basket** — koszyk źródeł reusable (model + UI: Use existing / Build new)
-- [ ] **#28d** ⭐ **Generate variant** — z 1 koszyka → wiele insightów pod różnym kątem (1 klik, zmień tylko output type/analysis)
+- [x] **#28c** ⭐ **Source Basket** — tabela insight_source_baskets + CRUD + UI (Use existing/Build new/Save) w InsightCreatorModal ✅ (agent D)
+- [~] **#28d** Generate variant — Source Basket gotowy (fundament); 1-klik „nowy lens z tego koszyka" do dodania osobno ✅cz. (agent D)
 - [ ] **#28e** Duplicate-detect przed Run (podobny insight istnieje?)
 
 ### 3C. Generator Inicjatyw ⭐⭐⭐
 - [ ] **#29** Konsolidacja 4 wizardów w 1 kanon
 - [ ] **#29b** Step 0 — wybór insightów (1-N, multi-select) [decyzja: 1:N lineage]
 - [ ] **#29c** Capacity check — „zespół ma X aktywnych, dodaj rozsądnie" (AI-suggested liczba)
-- [ ] **#29d** ⭐ Step 2 Kandydaci z **similarity check** (embeddings): flaga NEW/SIMILAR/DUPLICATE/RELATED per kandydat
+- [x] **#29d** ⭐ similarity check (embeddings+Jaccard fallback): endpoint /initiatives/similarity-check + flagi NEW/SIMILAR/DUPLICATE/RELATED per kandydat w wizardzie ✅ (agent E)
 - [ ] **#29e** Merge/Extend/Create-anyway flow przy podobnych
 - [ ] **#29f** Bulk-create [decyzja: 1-3 inicjatywy] w stanie **DRAFT** [decyzja] z governance + lineage
 - [~] **#29g** PL/EN: notatka konsultanta zlokalizowana (PL z diakrytykami + „Najważniejsze insighty") ✅ · Esc anuluje + root-cause isPolish=false do sprawdzenia
@@ -116,7 +116,7 @@
 - [ ] **#12** ⭐ Decyzja: merge Sessions+Assigned w jedną zakładkę „Work" (lub potwierdzić rozdzielenie)
 - [ ] **#7b** Manager flow w menu wiersza: Approve/Send back/Reassign/Change due date (handlery są)
 - [ ] **#8** Bulk actions: Approve/Send back/Remind/Archive zaznaczonych
-- [~] **#8b** Archiwum BACKEND gotowy (agent B): kolumny archived_at/by+trashed_at/by, endpointy archive/restore/trash/untrash/DELETE + /sessions/bulk, lista filtruje `?lifecycle=active|archived|trash|all`. ⬜ Frontend UI (przyciski archive/trash w menu + chip-row) — osobno (dotyka InterviewHub).
+- [x] **#8b** Archiwum — BACKEND (kolumny+endpointy+bulk+?lifecycle, agent B) ✅ + FRONTEND (kebab Archive/Restore/Trash/Delete-forever + chip-row Active|Archive|Trash + bulk, agent F) ✅
 - [ ] **#8c** Chip-row lifecycle: Active / Archive / Trash
 - [ ] **#9** Kolumny Sessions: rozbić DATE na Due/Submitted/Overdue + Assignee + AI Score (opt-in)
 - [ ] **#9b** Eskalacja UI (silnik istnieje): escalation target + manual „Escalate now" + kolumna
