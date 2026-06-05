@@ -14,6 +14,7 @@
 
 import {
   AlertTriangle,
+  Archive,
   ArrowRight,
   BarChart3,
   Bell,
@@ -2093,6 +2094,43 @@ export const InterviewHub: React.FC = () => {
       } catch (error) {
         toast.error(isPolish ? 'Nie udało się usunąć szablonu' : 'Failed to delete template');
         console.error('[InterviewHub] Failed to delete template:', error);
+      }
+    },
+    [isPolish]
+  );
+
+  // V-A S5 — Archive / Restore. The backend routes (POST /templates/:id/archive
+  // and /restore) were fully implemented but completely unwired in the UI —
+  // dead routes, broken lifecycle. Wired here as row actions.
+  const handleArchiveTemplate = useCallback(
+    async (template: InterviewTemplate) => {
+      try {
+        await Api.post(`/interview/templates/${template.id}/archive`, {});
+        toast.success(isPolish ? 'Szablon zarchiwizowany' : 'Template archived');
+        const templatesRes = await Api.get('/interview/templates').catch(() => []);
+        setTemplates(
+          (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
+        );
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się zarchiwizować' : 'Failed to archive template');
+        console.error('[InterviewHub] Failed to archive template:', error);
+      }
+    },
+    [isPolish]
+  );
+
+  const handleRestoreTemplate = useCallback(
+    async (template: InterviewTemplate) => {
+      try {
+        await Api.post(`/interview/templates/${template.id}/restore`, {});
+        toast.success(isPolish ? 'Szablon przywrócony' : 'Template restored');
+        const templatesRes = await Api.get('/interview/templates').catch(() => []);
+        setTemplates(
+          (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
+        );
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się przywrócić' : 'Failed to restore template');
+        console.error('[InterviewHub] Failed to restore template:', error);
       }
     },
     [isPolish]
@@ -4962,6 +5000,29 @@ export const InterviewHub: React.FC = () => {
                                 },
                               ]
                             : []),
+                          // V-A S5 — Archive (active templates) / Restore
+                          // (archived templates) — backend was wired, UI wasn't.
+                          ...(canAssign && !template.isDefault
+                            ? String(template.status || '').toLowerCase() === 'archived'
+                              ? [
+                                  {
+                                    id: 'restore',
+                                    label: isPolish ? 'Przywróć szablon' : 'Restore template',
+                                    icon: RotateCcw,
+                                    onClick: () => handleRestoreTemplate(template),
+                                    divider: true,
+                                  },
+                                ]
+                              : [
+                                  {
+                                    id: 'archive',
+                                    label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
+                                    icon: Archive,
+                                    onClick: () => handleArchiveTemplate(template),
+                                    divider: true,
+                                  },
+                                ]
+                            : []),
                           ...(canAssign && !template.isDefault
                             ? [
                                 {
@@ -4970,7 +5031,6 @@ export const InterviewHub: React.FC = () => {
                                   icon: Trash2,
                                   onClick: () => handleDeleteTemplate(template),
                                   variant: 'danger' as const,
-                                  divider: true,
                                 },
                               ]
                             : []),

@@ -1769,7 +1769,7 @@ export async function loadManagedInterviewSessionsForManager(
     params
   );
 
-  return (rows || []).map((row: any) => ({
+  const managed = (rows || []).map((row: any) => ({
     id: row.id,
     organizationId: row.organization_id,
     projectId: row.project_id || undefined,
@@ -1799,6 +1799,81 @@ export async function loadManagedInterviewSessionsForManager(
     sentBackAt: row.sent_back_at || undefined,
     sentBackReason: row.sent_back_reason || undefined,
   }));
+
+  // V-A — include the caller's own ad-hoc sessions (created via the Sessions-tab
+  // "New session" CTA with no template/assignment). The managed query above
+  // INNER JOINs interview_assignments, so an assignment-less session would
+  // vanish on reload — the user creates a session and it disappears. This
+  // second query appends sessions owned by the caller that have NO assignment
+  // row. The managed query is left untouched (zero regression to its scope
+  // semantics); the two result sets can't overlap (ad-hoc = no assignment).
+  let ownedAdHoc: typeof managed = [];
+  try {
+    const ownedRows = await queryHelpers.queryAll(
+      `SELECT
+         s.id,
+         s.organization_id,
+         s.project_id,
+         s.name,
+         s.owner_id,
+         s.status as session_runtime_status,
+         s.template_id,
+         s.started_at,
+         s.completed_at,
+         s.last_activity_at,
+         s.answered_questions,
+         s.total_questions,
+         t.name as template_name,
+         t.category as template_category,
+         TRIM(COALESCE(owner_u.first_name, '') || ' ' || COALESCE(owner_u.last_name, '')) as respondent_name
+       FROM interview_sessions s
+       LEFT JOIN interview_library_templates t ON t.id = s.template_id
+       LEFT JOIN users owner_u ON owner_u.id = s.owner_id
+       WHERE s.organization_id = ?
+         AND s.owner_id = ?
+         AND NOT EXISTS (SELECT 1 FROM interview_assignments a WHERE a.session_id = s.id)
+       ORDER BY COALESCE(s.last_activity_at, s.started_at) DESC`,
+      [organizationId, userId]
+    );
+    ownedAdHoc = (ownedRows || []).map((row: any) => ({
+      id: row.id,
+      organizationId: row.organization_id,
+      projectId: row.project_id || undefined,
+      name: row.name || 'Discovery Interview',
+      ownerId: row.owner_id,
+      status: String(row.session_runtime_status || 'in_progress'),
+      sessionRuntimeStatus: row.session_runtime_status || undefined,
+      assignmentId: undefined,
+      assignmentStatus: undefined,
+      assignmentPriority: undefined,
+      assignmentCreatedBy: undefined,
+      totalQuestions: row.total_questions || 0,
+      answeredQuestions: row.answered_questions || 0,
+      startedAt: row.started_at,
+      completedAt: row.completed_at || undefined,
+      lastActivityAt: row.last_activity_at || undefined,
+      templateId: row.template_id || undefined,
+      templateName: row.template_name || undefined,
+      templateCategory: row.template_category || undefined,
+      respondentId: row.owner_id || undefined,
+      respondentName: String(row.respondent_name || '').trim() || undefined,
+      assigneeId: undefined,
+      assigneeName: undefined,
+      assigneeEmail: undefined,
+      dueAt: undefined,
+      submittedAt: undefined,
+      sentBackAt: undefined,
+      sentBackReason: undefined,
+    }));
+  } catch {
+    /* ad-hoc augmentation is best-effort; managed list is the floor */
+  }
+
+  // Dedupe defensively (no overlap expected) and surface ad-hoc sessions first
+  // so a just-created one is visible at the top.
+  const seen = new Set(managed.map((m) => m.id));
+  const merged = [...ownedAdHoc.filter((s) => !seen.has(s.id)), ...managed];
+  return merged;
 }
 
 async function evaluateInterviewSessionAnswers(params: {
