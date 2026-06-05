@@ -34,8 +34,8 @@
 ### 1A. NModeLayout — rozwój istniejącego kanonu detail-view (8 widoków)
 - [x] **#27** Metric strip: read-only → label+wartość (NModePropertiesStrip)
 - [ ] **#27b** Metric strip: layout inline z dividerami zamiast sztywnego grid-cols-10 (symetria)
-- [ ] **#27c** ID artefaktu (INS-/INIT-) w NModeHeader: monospace chip + kopiowanie + copy-link
-- [ ] **#21** N/C toggle w NModeHeader — dodać tryb C (ClickUp: sekcje w grid 2-3 kol) do NModeShell (dziś tylko N)
+- [x] **#27c** ID artefaktu (INS-/INIT-) w NModeHeader: monospace chip teraz **kopiowalny kliknięciem** (Copy/Check feedback) + permalink już istniał; ×8 widoków ✅
+- [ ] **#21** N/C toggle w NModeHeader — UWAGA: `PresentationModeSwitcher` + `usePresentationMode` JUŻ ISTNIEJE w headerze; sprawdzić co robi tryb C dziś, dodać/dokończyć grid 2-3 kol
 - [ ] **#21b** Persystencja trybu N/C per user (localStorage)
 - [ ] **#6/§6** AI 3-poziomowy w NModeLayout: poziom „tool" w NModeActionBar
 - [ ] **#23/§6** AI 3-poziomowy: poziom „section" w NModeSectionWrapper (prawy róg nagłówka sekcji)

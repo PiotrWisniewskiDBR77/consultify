@@ -8,8 +8,17 @@
  */
 
 import { motion } from 'framer-motion';
-import { AlertTriangle, CheckCircle2, ChevronLeft, Clock3, Loader2, Save } from 'lucide-react';
-import React from 'react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  Clock3,
+  Copy,
+  Loader2,
+  Save,
+} from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PresentationModeSwitcher } from '@/components/MyWork/shared/PresentationModeSwitcher';
@@ -54,6 +63,21 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const [copiedId, setCopiedId] = useState(false);
+  const artifactCode =
+    artifactId && buildArtifactCode
+      ? buildArtifactCode(artifactType, artifactId)
+      : artifactId || '';
+  const copyArtifactId = useCallback(async () => {
+    if (!artifactCode) return;
+    try {
+      await navigator.clipboard.writeText(artifactCode);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }, [artifactCode]);
   const effectiveSaveState = saveState || (saving ? 'saving' : isDirty ? 'dirty' : 'saved');
   const saveCopy = {
     saved: {
@@ -128,9 +152,19 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           />
           {artifactId && (
             <>
-              <span className="hidden sm:inline-flex px-2 py-1 rounded-md bg-slate-200/60 dark:bg-navy-800/60 text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400">
-                {buildArtifactCode ? buildArtifactCode(artifactType, artifactId) : artifactId}
-              </span>
+              <button
+                type="button"
+                onClick={copyArtifactId}
+                title={isPolish ? 'Kopiuj ID artefaktu' : 'Copy artifact ID'}
+                className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-200/60 dark:bg-navy-800/60 text-[10px] font-mono uppercase text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-300/60 dark:hover:bg-navy-700/60"
+              >
+                {copiedId ? (
+                  <Check size={10} className="text-emerald-500" />
+                ) : (
+                  <Copy size={10} className="opacity-60" />
+                )}
+                {artifactCode}
+              </button>
               <ArtifactPermalinkButton
                 artifactType={artifactType}
                 artifactId={artifactId}
