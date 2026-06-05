@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
+import { StatusPill } from '@/components/shared/StatusPill';
 import { ColumnResizer } from '@/components/ui/ResizableTable';
 
 import { type RowAction, RowActionsMenu } from '../RowActionsMenu';
@@ -60,66 +61,10 @@ interface FilterableTableProps {
   persistKey?: string;
 }
 
-// Status badge component — uses canonical color palette
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const LABELS: Record<string, string> = {
-    DRAFT: 'Draft',
-    PENDING_REVIEW: 'Pending Review',
-    REVIEW: 'In Review',
-    PROMOTED: 'Promoted',
-    PLANNING: 'Planning',
-    APPROVED: 'Approved',
-    SCHEDULED: 'Scheduled',
-    EXECUTING: 'Executing',
-    BLOCKED: 'Blocked',
-    DONE: 'Done',
-    TRACKING: 'Tracking',
-    CANCELLED: 'Cancelled',
-    ARCHIVED: 'Archived',
-    IN_REVIEW: 'In Review',
-    AWAITING_APPROVAL: 'Awaiting Approval',
-    REJECTED: 'Rejected',
-    GENERATING: 'Generating',
-    FINAL: 'Final',
-    PENDING_APPROVAL: 'Pending Approval',
-    UTILIZED: 'Utilized',
-  };
-
-  const style = (() => {
-    const key = status?.toUpperCase().replace(/[\s-]+/g, '_') || 'DRAFT';
-    const alarm = ['BLOCKED', 'REJECTED'];
-    const success = ['DONE', 'COMPLETED', 'APPROVED', 'TRACKING', 'UTILIZED', 'ACTIVE'];
-    const info = ['IN_PROGRESS', 'EXECUTING', 'SCHEDULED', 'GENERATING', 'PROMOTED'];
-    const warning = [
-      'PENDING_REVIEW',
-      'REVIEW',
-      'PLANNING',
-      'PENDING_APPROVAL',
-      'AWAITING_APPROVAL',
-      'IN_REVIEW',
-      'ESCALATED',
-    ];
-
-    if (alarm.includes(key))
-      return { bg: 'bg-rose-500/20', text: 'text-rose-400', dot: 'bg-rose-500' };
-    if (success.includes(key))
-      return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' };
-    if (info.includes(key))
-      return { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-500' };
-    if (warning.includes(key))
-      return { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-500' };
-    return { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' };
-  })();
-
-  const label = LABELS[status] || status || 'Draft';
-
-  return (
-    <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${style.bg}`}>
-      <span className={`w-2 h-2 rounded-full ${style.dot}`} />
-      <span className={`text-xs font-medium ${style.text}`}>{label}</span>
-    </div>
-  );
-};
+// True when a regular cell value should render as an em-dash placeholder
+// (null / undefined / empty-or-whitespace string).
+const isEmptyCell = (value: unknown): boolean =>
+  value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
 
 // Progress bar component
 const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
@@ -536,13 +481,15 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         {column.render ? (
                           column.render(row)
                         ) : column.id === 'status' ? (
-                          <StatusBadge status={row.status} />
+                          <StatusPill status={row.status} />
                         ) : column.id === 'progress' ? (
                           <ProgressBar progress={row.progress} />
                         ) : column.id === 'updatedAt' ? (
                           <span className="text-sm text-slate-500 dark:text-slate-400">
                             {formatRelativeTime(row.updatedAt)}
                           </span>
+                        ) : isEmptyCell(row[column.id]) ? (
+                          <span className="text-sm text-slate-400">—</span>
                         ) : (
                           <div className="min-w-0">
                             <span
