@@ -106,7 +106,7 @@ function stripInlineMarkdown(text: string): string {
 
 const DATE_PATTERNS = [
   // ISO 8601: 2026-06-05 or with time
-  /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?(?:Z|[+\-]\d{2}:?\d{2})?)?$/,
+  /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?)?$/,
   // EU: 05/06/2026 or 05.06.2026 or 05-06-2026
   /^\d{1,2}[./-]\d{1,2}[./-]\d{4}$/,
   // US: 06/05/2026
@@ -145,7 +145,10 @@ function looksLikeNumber(value: string): boolean {
 }
 
 function coerceNumber(value: string): number | string {
-  const cleaned = value.trim().replace(/[\s$€£zł]/gi, '').replace(/,/g, '.');
+  const cleaned = value
+    .trim()
+    .replace(/[\s$€£zł]/gi, '')
+    .replace(/,/g, '.');
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : value;
 }

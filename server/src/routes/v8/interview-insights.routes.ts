@@ -747,9 +747,7 @@ router.post(
 
       try {
         if (targetType === 'decision') {
-          const { default: decisionService } = await import(
-            '../../services/decisionService.js'
-          );
+          const { default: decisionService } = await import('../../services/decisionService.js');
           const decision = await decisionService.createDecision({
             organizationId,
             projectId: validProjectId || undefined,
@@ -789,9 +787,8 @@ router.post(
             url: `/my-work?taskId=${encodeURIComponent(task.id)}`,
           };
         } else {
-          const { default: initiativeService } = await import(
-            '../../services/initiativeService.js'
-          );
+          const { default: initiativeService } =
+            await import('../../services/initiativeService.js');
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const initiative = await initiativeService.createInitiative({
             organization_id: organizationId,
