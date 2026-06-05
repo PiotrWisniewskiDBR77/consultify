@@ -49,6 +49,8 @@ import {
   Send,
   Settings2,
   Sparkles,
+  Star,
+  StarOff,
   Target,
   Trash2,
   UserPlus,
@@ -256,9 +258,13 @@ const INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS: Record<
 };
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
-  name: 430,
+  name: 360,
   category: 170,
   questions: 120,
+  // #16 — Usage count / AI quality score / Last used columns.
+  usage: 120,
+  quality: 130,
+  lastUsed: 140,
   status: 150,
   actions: 56,
 };
@@ -270,6 +276,10 @@ const INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS: Record<
   name: { minWidth: 300, maxWidth: 700 },
   category: { minWidth: 120, maxWidth: 280 },
   questions: { minWidth: 90, maxWidth: 180 },
+  // #16 — new columns
+  usage: { minWidth: 90, maxWidth: 200 },
+  quality: { minWidth: 100, maxWidth: 220 },
+  lastUsed: { minWidth: 110, maxWidth: 220 },
   status: { minWidth: 120, maxWidth: 220 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
@@ -704,7 +714,14 @@ export const InterviewHub: React.FC = () => {
     'all' | 'draft' | 'in_review' | 'approved' | 'archived'
   >('all');
   const [templatesHiddenColumns, setTemplatesHiddenColumns] = useState<string[]>(() =>
-    loadHiddenColumns(INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
+    // #16 — `quality` and `lastUsed` are backend-pending placeholders, so they
+    // start hidden (still toggleable from the column menu). `usage` ships visible
+    // because it is derived from real assignment data.
+    loadHiddenColumns(
+      INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY,
+      ['quality', 'lastUsed'],
+      ['name', 'actions']
+    )
   );
   const [templatesColumnWidths, setTemplatesColumnWidths] = useState<ColumnWidths>(() =>
     loadColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS)
@@ -2255,6 +2272,41 @@ export const InterviewHub: React.FC = () => {
         toast.error(isPolish ? 'Nie udało się przywrócić' : 'Failed to restore template');
         console.error('[InterviewHub] Failed to restore template:', error);
       }
+    },
+    [isPolish]
+  );
+
+  // #16 — Usage count for a template. Derived from real assignment data (the same
+  // source the template preview footer uses), falling back to the backend
+  // `sessionsUsed` counter when assignments aren't loaded. No fabricated numbers.
+  const getTemplateUsageCount = useCallback(
+    (template: InterviewTemplate): number => {
+      const fromAssignments =
+        (myAssignments || []).filter((a) => a.templateId === template.id).length +
+        (managedAssignments || []).filter((a) => a.templateId === template.id).length;
+      if (fromAssignments > 0) return fromAssignments;
+      return typeof template.sessionsUsed === 'number' ? template.sessionsUsed : 0;
+    },
+    [myAssignments, managedAssignments]
+  );
+
+  // #15 — Set / unset a template as the org default. No backend route exists yet
+  // (no POST /interview/templates/:id/default), so this is a clearly-named local
+  // stub that surfaces an honest "not yet available" toast instead of faking a
+  // successful write. The kebab item is wired so the affordance is discoverable.
+  // TODO(#15): wire to backend POST /interview/templates/:id/default (set) and
+  // DELETE/POST .../default (unset) once the route lands; then refresh templates.
+  const handleToggleTemplateDefault = useCallback(
+    (template: InterviewTemplate) => {
+      toast(
+        isPolish
+          ? template.isDefault
+            ? 'Zmiana domyślnego szablonu będzie wkrótce dostępna'
+            : 'Ustawianie domyślnego szablonu będzie wkrótce dostępne'
+          : template.isDefault
+            ? 'Unsetting the default template is not yet available'
+            : 'Setting the default template is not yet available'
+      );
     },
     [isPolish]
   );
@@ -4906,6 +4958,10 @@ export const InterviewHub: React.FC = () => {
       'name',
       ...(!hiddenSet.has('category') ? ['category'] : []),
       ...(!hiddenSet.has('questions') ? ['questions'] : []),
+      // #16 — Usage count / AI quality score / Last used
+      ...(!hiddenSet.has('usage') ? ['usage'] : []),
+      ...(!hiddenSet.has('quality') ? ['quality'] : []),
+      ...(!hiddenSet.has('lastUsed') ? ['lastUsed'] : []),
       ...(!hiddenSet.has('status') ? ['status'] : []),
       'actions',
     ];
@@ -5034,6 +5090,45 @@ export const InterviewHub: React.FC = () => {
                 </th>
               )}
 
+              {/* #16 — Usage count */}
+              {!hiddenSet.has('usage') && (
+                <th
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  style={{ width: templatesColumnWidths.usage }}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>{isPolish ? 'Użycia' : 'Usage'}</span>
+                  </div>
+                  {renderTemplateResizer('usage')}
+                </th>
+              )}
+
+              {/* #16 — AI quality score */}
+              {!hiddenSet.has('quality') && (
+                <th
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  style={{ width: templatesColumnWidths.quality }}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>{isPolish ? 'Jakość AI' : 'AI quality'}</span>
+                  </div>
+                  {renderTemplateResizer('quality')}
+                </th>
+              )}
+
+              {/* #16 — Last used */}
+              {!hiddenSet.has('lastUsed') && (
+                <th
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  style={{ width: templatesColumnWidths.lastUsed }}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>{isPolish ? 'Ostatnio użyty' : 'Last used'}</span>
+                  </div>
+                  {renderTemplateResizer('lastUsed')}
+                </th>
+              )}
+
               {!hiddenSet.has('status') && (
                 <th
                   className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
@@ -5078,6 +5173,10 @@ export const InterviewHub: React.FC = () => {
                             { id: 'name', label: isPolish ? 'Nazwa' : 'Name', alwaysVisible: true },
                             { id: 'category', label: isPolish ? 'Kategoria' : 'Category' },
                             { id: 'questions', label: isPolish ? 'Pytania' : 'Questions' },
+                            // #16 — Usage count / AI quality score / Last used
+                            { id: 'usage', label: isPolish ? 'Użycia' : 'Usage' },
+                            { id: 'quality', label: isPolish ? 'Jakość AI' : 'AI quality' },
+                            { id: 'lastUsed', label: isPolish ? 'Ostatnio użyty' : 'Last used' },
                             { id: 'status', label: isPolish ? 'Status' : 'Status' },
                             {
                               id: 'actions',
@@ -5279,6 +5378,47 @@ export const InterviewHub: React.FC = () => {
                     </td>
                   )}
 
+                  {/* #16 — Usage count (real, derived from assignment data). */}
+                  {!hiddenSet.has('usage') && (
+                    <td
+                      className="px-3 py-3 text-center text-sm text-slate-500 dark:text-slate-400"
+                      style={{ width: templatesColumnWidths.usage }}
+                    >
+                      {(() => {
+                        const usageCount = getTemplateUsageCount(template);
+                        return usageCount > 0 ? (
+                          <span className="tabular-nums">{usageCount}</span>
+                        ) : (
+                          <span className="text-slate-400 dark:text-slate-500">—</span>
+                        );
+                      })()}
+                    </td>
+                  )}
+
+                  {/* #16 — AI quality score. No backend field exists yet, so render
+                      an honest em-dash placeholder instead of a fabricated score.
+                      TODO(#16): backend field ai_quality_score on the template row. */}
+                  {!hiddenSet.has('quality') && (
+                    <td
+                      className="px-3 py-3 text-center text-sm"
+                      style={{ width: templatesColumnWidths.quality }}
+                    >
+                      <span className="text-slate-400 dark:text-slate-500">—</span>
+                    </td>
+                  )}
+
+                  {/* #16 — Last used. No backend field exists yet (updatedAt is
+                      edit time, not last-used), so render an em-dash placeholder.
+                      TODO(#16): backend field last_used_at on the template row. */}
+                  {!hiddenSet.has('lastUsed') && (
+                    <td
+                      className="px-3 py-3 text-center text-sm"
+                      style={{ width: templatesColumnWidths.lastUsed }}
+                    >
+                      <span className="text-slate-400 dark:text-slate-500">—</span>
+                    </td>
+                  )}
+
                   {!hiddenSet.has('status') && (
                     <td
                       className="px-3 py-3 text-center"
@@ -5318,6 +5458,15 @@ export const InterviewHub: React.FC = () => {
                             id: 'open',
                             label: isPolish ? 'Otwórz' : 'Open',
                             icon: ChevronRight,
+                            onClick: () => handleViewTemplate(template),
+                          },
+                          // #15 — View usage. Opens the template preview, whose
+                          // footer surfaces the real usage count + actions.
+                          {
+                            id: 'view-usage',
+                            label: isPolish ? 'Zobacz użycie' : 'View usage',
+                            icon: BarChart3,
+                            rightLabel: String(getTemplateUsageCount(template)),
                             onClick: () => handleViewTemplate(template),
                           },
                           ...(canAssign
@@ -5387,6 +5536,27 @@ export const InterviewHub: React.FC = () => {
                                   label: isPolish ? 'Edytuj szablon' : 'Edit template',
                                   icon: Edit3,
                                   onClick: () => handleEditTemplate(template.id),
+                                },
+                              ]
+                            : []),
+                          // #15 — Set / Unset default. No backend route yet, so the
+                          // handler is an honest "not yet available" stub (see
+                          // handleToggleTemplateDefault). Item stays visible so the
+                          // affordance is discoverable.
+                          ...(canAssign
+                            ? [
+                                {
+                                  id: 'toggle-default',
+                                  label: template.isDefault
+                                    ? isPolish
+                                      ? 'Usuń jako domyślny'
+                                      : 'Unset default'
+                                    : isPolish
+                                      ? 'Ustaw jako domyślny'
+                                      : 'Set as default',
+                                  icon: template.isDefault ? StarOff : Star,
+                                  onClick: () => handleToggleTemplateDefault(template),
+                                  divider: true,
                                 },
                               ]
                             : []),
