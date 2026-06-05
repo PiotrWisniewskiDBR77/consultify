@@ -33,13 +33,18 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   AlertCircle,
+  CalendarDays,
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  CircleDot,
   Copy,
+  Eye,
   FileText,
   GripVertical,
+  Hash,
   HelpCircle,
+  Layers,
   Link2,
   Loader2,
   MessageSquare,
@@ -50,7 +55,9 @@ import {
   Save,
   Send,
   Sparkles,
+  ToggleLeft,
   Trash2,
+  Type,
   Upload,
   X,
 } from 'lucide-react';
@@ -89,6 +96,16 @@ interface TemplateQuestion {
   allowContextNote?: boolean;
   description?: string;
   evidencePrompt?: string;
+  /**
+   * Optional section/group header that this question opens.
+   * UI-only for now: the question-save whitelist on the backend
+   * (interview_library_template_questions) has no section column, so this
+   * value does NOT round-trip through the API yet. It lives in builder state.
+   * TODO(backend): persist section grouping (add `section_title` column to
+   * interview_library_template_questions + plumb through POST/PATCH question
+   * handlers in InterviewController) so sections survive reload.
+   */
+  sectionTitle?: string;
   // UI state
   isNew?: boolean;
   isEditing?: boolean;
@@ -170,6 +187,157 @@ const ANSWER_TYPES: { id: AnswerType; labelPl: string; labelEn: string }[] = [
   { id: 'date', labelPl: 'Data', labelEn: 'Date' },
   { id: 'dropdown', labelPl: 'Lista rozwijana', labelEn: 'Dropdown' },
 ];
+
+// Small visual hint for how each answer type renders to a respondent.
+const ANSWER_TYPE_ICONS: Record<
+  AnswerType,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
+  open: Type,
+  select: CircleDot,
+  scale: Layers,
+  boolean: ToggleLeft,
+  number: Hash,
+  date: CalendarDays,
+  dropdown: ChevronDown,
+};
+
+/**
+ * AnswerTypePreview — a tiny, non-interactive preview of how a given answer
+ * type renders for a respondent. Used as a visual hint next to the type picker.
+ */
+const AnswerTypePreview: React.FC<{
+  answerType: AnswerType;
+  options?: string[];
+  isPolish: boolean;
+}> = ({ answerType, options, isPolish }) => {
+  const sampleOptions =
+    options && options.length > 0
+      ? options.slice(0, 3)
+      : isPolish
+        ? ['Opcja A', 'Opcja B', 'Opcja C']
+        : ['Option A', 'Option B', 'Option C'];
+
+  if (answerType === 'open') {
+    return (
+      <div className="h-12 rounded-md border border-dashed border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 py-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+        {isPolish ? 'Pole tekstowe na odpowiedź…' : 'Free text answer…'}
+      </div>
+    );
+  }
+  if (answerType === 'select') {
+    return (
+      <div className="space-y-1">
+        {sampleOptions.map((opt, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400"
+          >
+            <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-slate-400 dark:border-slate-500">
+              {i === 0 ? <span className="h-1.5 w-1.5 rounded-full bg-primary-500" /> : null}
+            </span>
+            <span className="truncate">{opt}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (answerType === 'dropdown') {
+    return (
+      <div className="flex h-8 items-center justify-between rounded-md border border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 text-[11px] text-slate-500 dark:text-slate-400">
+        <span className="truncate">{sampleOptions[0]}</span>
+        <ChevronDown size={12} className="shrink-0 opacity-60" />
+      </div>
+    );
+  }
+  if (answerType === 'scale') {
+    return (
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <span
+            key={n}
+            className={`flex h-5 w-5 items-center justify-center rounded text-[10px] font-medium ${
+              n === 3
+                ? 'bg-primary-500 text-white'
+                : 'border border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {n}
+          </span>
+        ))}
+      </div>
+    );
+  }
+  if (answerType === 'boolean') {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-primary-500 px-2.5 py-0.5 text-[11px] font-medium text-white">
+          {isPolish ? 'Tak' : 'Yes'}
+        </span>
+        <span className="rounded-full border border-slate-300 dark:border-navy-600 px-2.5 py-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+          {isPolish ? 'Nie' : 'No'}
+        </span>
+      </div>
+    );
+  }
+  if (answerType === 'number') {
+    return (
+      <div className="flex h-8 w-24 items-center rounded-md border border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 text-[11px] text-slate-400 dark:text-slate-500">
+        123
+      </div>
+    );
+  }
+  if (answerType === 'date') {
+    return (
+      <div className="flex h-8 w-32 items-center gap-2 rounded-md border border-slate-300 dark:border-navy-600 bg-white/60 dark:bg-navy-950/40 px-2 text-[11px] text-slate-400 dark:text-slate-500">
+        <CalendarDays size={12} className="opacity-60" />
+        {isPolish ? 'DD.MM.RRRR' : 'MM/DD/YYYY'}
+      </div>
+    );
+  }
+  return null;
+};
+
+/**
+ * RespondentQuestionPreview — read-only render of a question the way a
+ * respondent would experience it (used in the "Preview as respondent" panel).
+ */
+const RespondentQuestionPreview: React.FC<{
+  question: TemplateQuestion;
+  index: number;
+  isPolish: boolean;
+}> = ({ question, index, isPolish }) => {
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 text-xs font-semibold text-slate-400 dark:text-slate-500">
+          {index + 1}.
+        </span>
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
+            {question.questionText || (isPolish ? '(Pytanie bez treści)' : '(Untitled question)')}
+            {question.isRequired ? <span className="ml-1 text-rose-500">*</span> : null}
+          </p>
+          {question.description ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">{question.description}</p>
+          ) : null}
+          <div className="pt-1">
+            <AnswerTypePreview
+              answerType={question.answerType}
+              options={question.answerOptions}
+              isPolish={isPolish}
+            />
+          </div>
+          {question.helpHint ? (
+            <p className="text-[11px] italic text-slate-400 dark:text-slate-500">
+              {question.helpHint}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const RUNTIME_MODE_OPTIONS: { id: RuntimeModeDefault; labelPl: string; labelEn: string }[] = [
   {
@@ -289,6 +457,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const [isAreaTagsMenuOpen, setIsAreaTagsMenuOpen] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showRespondentPreview, setShowRespondentPreview] = useState(false);
   const reviewImportInputRef = useRef<HTMLInputElement | null>(null);
 
   // AI quality gate (V6-B04) — POST /interview/templates/evaluate-quality
@@ -666,6 +835,43 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       }
       return prev.filter((q) => q.id !== id);
     });
+  }, []);
+
+  // Duplicate question — clone with a fresh id, inserted right after the source.
+  const handleDuplicateQuestion = useCallback((id: string) => {
+    setQuestions((prev) => {
+      const ordered = [...prev].sort((a, b) => a.sortOrder - b.sortOrder);
+      const idx = ordered.findIndex((q) => q.id === id);
+      if (idx === -1) return prev;
+
+      const source = ordered[idx];
+      const clone: TemplateQuestion = {
+        ...source,
+        id: `dup_${Date.now()}`,
+        // A duplicate is always a new record on the backend.
+        isNew: true,
+        isEditing: false,
+        // Copy options/modalities by value, drop any section header so it does
+        // not split the group it was duplicated into.
+        answerOptions: [...source.answerOptions],
+        sectionTitle: undefined,
+      };
+
+      // Insert right after the source, then renumber to keep ordering stable.
+      const next = [...ordered.slice(0, idx + 1), clone, ...ordered.slice(idx + 1)];
+      return next.map((q, i) => ({ ...q, sortOrder: (i + 1) * 10 }));
+    });
+  }, []);
+
+  // Toggle / set a section header that this question opens (UI-only state).
+  const handleSetSectionTitle = useCallback((id: string, sectionTitle: string | undefined) => {
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id
+          ? { ...q, sectionTitle: sectionTitle && sectionTitle.trim() ? sectionTitle : undefined }
+          : q
+      )
+    );
   }, []);
 
   // Move question up/down
@@ -1929,6 +2135,20 @@ ${sourceText || '(none)'}`;
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    onClick={() => setShowRespondentPreview(true)}
+                    disabled={orderedQuestions.length === 0}
+                    title={
+                      isPolish
+                        ? 'Zobacz formularz oczami respondenta'
+                        : 'See the form as a respondent would'
+                    }
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    <Eye size={13} />
+                    {isPolish ? 'Podgląd respondenta' : 'Preview as respondent'}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => reviewImportInputRef.current?.click()}
                     disabled={isImportingSource || isApplicationTemplate}
                     className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50 disabled:pointer-events-none"
@@ -2007,22 +2227,37 @@ ${sourceText || '(none)'}`;
                       strategy={verticalListSortingStrategy}
                     >
                       {orderedQuestions.map((question, idx) => (
-                        <SortableQuestionCard
-                          key={question.id}
-                          question={question}
-                          index={idx}
-                          totalCount={orderedQuestions.length}
-                          isPolish={isPolish}
-                          error={
-                            errors[`question_${question.id}`] || errors[`options_${question.id}`]
-                          }
-                          forceExpand={focusedQuestionId === question.id}
-                          readOnly={isApplicationTemplate}
-                          onUpdate={(updates) => handleUpdateQuestion(question.id, updates)}
-                          onDelete={() => handleDeleteQuestion(question.id)}
-                          onMoveUp={() => handleMoveQuestion(question.id, 'up')}
-                          onMoveDown={() => handleMoveQuestion(question.id, 'down')}
-                        />
+                        <React.Fragment key={question.id}>
+                          {question.sectionTitle ? (
+                            <div className="flex items-center gap-2 pt-2 pb-1 first:pt-0">
+                              <Layers
+                                size={13}
+                                className="shrink-0 text-primary-500 dark:text-primary-300"
+                              />
+                              <span className="text-[11px] font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
+                                {question.sectionTitle}
+                              </span>
+                              <span className="h-px flex-1 bg-primary-500/20" />
+                            </div>
+                          ) : null}
+                          <SortableQuestionCard
+                            question={question}
+                            index={idx}
+                            totalCount={orderedQuestions.length}
+                            isPolish={isPolish}
+                            error={
+                              errors[`question_${question.id}`] || errors[`options_${question.id}`]
+                            }
+                            forceExpand={focusedQuestionId === question.id}
+                            readOnly={isApplicationTemplate}
+                            onUpdate={(updates) => handleUpdateQuestion(question.id, updates)}
+                            onDelete={() => handleDeleteQuestion(question.id)}
+                            onDuplicate={() => handleDuplicateQuestion(question.id)}
+                            onSetSection={(title) => handleSetSectionTitle(question.id, title)}
+                            onMoveUp={() => handleMoveQuestion(question.id, 'up')}
+                            onMoveDown={() => handleMoveQuestion(question.id, 'down')}
+                          />
+                        </React.Fragment>
                       ))}
                     </SortableContext>
                   </DndContext>
@@ -2257,6 +2492,81 @@ ${sourceText || '(none)'}`;
           </div>
         ) : null}
 
+        {/* Preview as respondent — read-only, sequential render of the form */}
+        {showRespondentPreview ? (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm p-6">
+            <div className="w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-navy-950 shadow-2xl flex flex-col">
+              <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                    <Eye size={15} className="text-primary-500 dark:text-primary-300" />
+                    {isPolish ? 'Podgląd respondenta' : 'Respondent preview'}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {template.name ||
+                      (isPolish
+                        ? 'Tak respondent widzi ten formularz'
+                        : 'How a respondent sees this form')}
+                    {' · '}
+                    {orderedQuestions.length} {isPolish ? 'pytań' : 'questions'}
+                    {template.estimatedTimeMinutes
+                      ? ` · ~${template.estimatedTimeMinutes} ${isPolish ? 'min' : 'min'}`
+                      : ''}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRespondentPreview(false)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                  aria-label={isPolish ? 'Zamknij' : 'Close'}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-auto px-5 py-4 space-y-3">
+                {template.description ? (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                    {template.description}
+                  </p>
+                ) : null}
+                {orderedQuestions.map((question, idx) => (
+                  <React.Fragment key={question.id}>
+                    {question.sectionTitle ? (
+                      <div className="flex items-center gap-2 pt-3 pb-1 first:pt-0">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
+                          {question.sectionTitle}
+                        </span>
+                        <span className="h-px flex-1 bg-primary-500/20" />
+                      </div>
+                    ) : null}
+                    <RespondentQuestionPreview
+                      question={question}
+                      index={idx}
+                      isPolish={isPolish}
+                    />
+                  </React.Fragment>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Podgląd tylko do odczytu — odpowiedzi nie są zapisywane.'
+                    : 'Read-only preview — answers are not recorded.'}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRespondentPreview(false)}
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                >
+                  {isPolish ? 'Zamknij podgląd' : 'Close preview'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {/* AI quality-gate result panel */}
         {qualityResult ? (
           <div className="mx-4 mb-3 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 shrink-0">
@@ -2407,6 +2717,8 @@ interface QuestionCardProps {
   readOnly?: boolean;
   onUpdate: (updates: Partial<TemplateQuestion>) => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
+  onSetSection?: (title: string | undefined) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
 }
@@ -2461,11 +2773,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   readOnly = false,
   onUpdate,
   onDelete,
+  onDuplicate,
+  onSetSection,
   onMoveUp,
   onMoveDown,
 }) => {
   const [isExpanded, setIsExpanded] = useState(question.isNew || false);
   const [newOption, setNewOption] = useState('');
+  const [showSectionInput, setShowSectionInput] = useState(false);
   const questionTextRef = useRef<HTMLTextAreaElement | null>(null);
   const fieldClassName =
     'w-full h-10 px-3 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all';
@@ -2549,6 +2864,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           >
             <Pencil size={12} />
           </button>
+          {onDuplicate ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (readOnly) return;
+                onDuplicate();
+              }}
+              disabled={readOnly}
+              className="p-1 rounded hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              title={isPolish ? 'Duplikuj pytanie' : 'Duplicate question'}
+            >
+              <Copy size={12} />
+            </button>
+          ) : null}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -2623,6 +2952,21 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   </option>
                 ))}
               </select>
+              {/* Inline preview of how the chosen type renders to a respondent */}
+              <div className="mt-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-950/40 px-3 py-2">
+                <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  {(() => {
+                    const Icon = ANSWER_TYPE_ICONS[question.answerType];
+                    return <Icon size={11} />;
+                  })()}
+                  {isPolish ? 'Podgląd' : 'Preview'}
+                </div>
+                <AnswerTypePreview
+                  answerType={question.answerType}
+                  options={question.answerOptions}
+                  isPolish={isPolish}
+                />
+              </div>
             </div>
 
             {/* Required */}
@@ -2834,6 +3178,57 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               })}
             </div>
           </div>
+
+          {/* Section / group header for this question (UI-only; see TODO on type) */}
+          {onSetSection ? (
+            <div className="border-t border-slate-200 dark:border-navy-700 pt-3">
+              {question.sectionTitle || showSectionInput ? (
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <Layers size={12} />
+                    {isPolish
+                      ? 'Nagłówek sekcji (zaczyna grupę)'
+                      : 'Section header (starts a group)'}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={question.sectionTitle || ''}
+                      onChange={(e) => onSetSection(e.target.value)}
+                      disabled={readOnly}
+                      autoFocus={showSectionInput && !question.sectionTitle}
+                      placeholder={isPolish ? 'np. Strategia i wizja' : 'e.g. Strategy & vision'}
+                      className={`flex-1 ${fieldClassName}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSetSection(undefined);
+                        setShowSectionInput(false);
+                      }}
+                      disabled={readOnly}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-rose-500/20 text-slate-600 hover:text-rose-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      title={isPolish ? 'Usuń nagłówek sekcji' : 'Remove section header'}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowSectionInput(true)}
+                  disabled={readOnly}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-300 hover:text-primary-700 dark:hover:text-primary-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                >
+                  <Plus size={12} />
+                  {isPolish
+                    ? 'Dodaj nagłówek sekcji nad tym pytaniem'
+                    : 'Add section header above this question'}
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
       )}
     </div>
