@@ -923,7 +923,15 @@ export class ApiGateway {
       app.use('/api/studio', studioRoutes);
       app.use('/api/intelligence', intelligenceRoutes);
       app.use('/api/sponsor-reports', sponsorReportsRoutes);
-      app.use('/api/interview', deprecationHeader('/api/v8/interview'), interviewRoutes);
+      // The /api/interview router is NOT fully deprecated: its authoring
+      // surface (sessions / questions / notes / evidence / summary / templates /
+      // ai-assist / transcript) is load-bearing and has NO v8 equivalent. The
+      // deprecation header lied — a client trusting it and migrating to
+      // /api/v8/interview would 404 on every authoring call. Header removed; the
+      // V8-superseded assignment/insight duplicates inside this router are
+      // reached only via frontend `.catch()` fallbacks and are tracked for a
+      // future router split, not a blanket deprecation.
+      app.use('/api/interview', interviewRoutes);
       app.use('/api/interview-v4', interviewEnterpriseRoutes);
       app.use('/api/agents', agentsRoutes);
       app.use('/api/ai-operator', aiOperatorRoutes);
