@@ -99,7 +99,7 @@
 - [ ] **#29d** ⭐ Step 2 Kandydaci z **similarity check** (embeddings): flaga NEW/SIMILAR/DUPLICATE/RELATED per kandydat
 - [ ] **#29e** Merge/Extend/Create-anyway flow przy podobnych
 - [ ] **#29f** Bulk-create [decyzja: 1-3 inicjatywy] w stanie **DRAFT** [decyzja] z governance + lineage
-- [ ] **#29g** PL/EN spójne + Esc anuluje
+- [~] **#29g** PL/EN: notatka konsultanta zlokalizowana (PL z diakrytykami + „Najważniejsze insighty") ✅ · Esc anuluje + root-cause isPolish=false do sprawdzenia
 - [ ] **#29h** Progresywne wypełnianie: wizard wypełnia rdzeń (Problem/Solution/Scope/KPI z insightu), reszta pusta z AI-assist
 
 ### 3D. Generator Ankiet (TemplateBuilder)

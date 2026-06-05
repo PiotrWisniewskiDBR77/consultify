@@ -1735,9 +1735,11 @@ export const InterviewHub: React.FC = () => {
       .join('\n');
     return [
       isPolish
-        ? 'Stworz inicjatywy transformacyjne na podstawie materialu z modulu Wywiad. Zachowaj evidence, confidence, limits i governance proposal -> approval -> execution -> audit.'
+        ? 'Stwórz inicjatywy transformacyjne na podstawie materiału z modułu Wywiad. Zachowaj dowody, pewność, ograniczenia oraz governance: propozycja → akceptacja → realizacja → audyt.'
         : 'Create transformation initiatives from Interview material. Preserve evidence, confidence, limits and proposal -> approval -> execution -> audit governance.',
-      insightLines ? `\nTop insights:\n${insightLines}` : '',
+      insightLines
+        ? `\n${isPolish ? 'Najważniejsze insighty' : 'Top insights'}:\n${insightLines}`
+        : '',
     ]
       .filter(Boolean)
       .join('\n');
