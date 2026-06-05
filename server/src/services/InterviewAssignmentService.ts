@@ -486,7 +486,7 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         (u.first_name || ' ' || u.last_name) as assignee_name,
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
          u.email as assignee_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -763,10 +763,13 @@ class InterviewAssignmentService {
          t.category as template_category,
          s.status as session_status,
          s.answered_questions,
-         s.total_questions
+         s.total_questions,
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
+         u.email as assignee_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN interview_sessions s ON s.id = a.session_id
+       LEFT JOIN users u ON u.id = a.assignee_user_id
        ${where}
        ORDER BY
          CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
@@ -820,7 +823,7 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         (u.first_name || ' ' || u.last_name) as assignee_name,
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
          u.email as assignee_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -868,9 +871,9 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         (u.first_name || ' ' || u.last_name) as assignee_name,
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
          u.email as assignee_email,
-         (creator.first_name || ' ' || creator.last_name) as creator_name,
+         TRIM(COALESCE(creator.first_name, '') || ' ' || COALESCE(creator.last_name, '')) as creator_name,
          creator.email as creator_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -1032,7 +1035,7 @@ class InterviewAssignmentService {
 
     // Get overdue assignments that need escalation
     const assignments = await db.all<any>(
-      `SELECT a.*, t.name as template_name, (u.first_name || ' ' || u.last_name) as assignee_name, 
+      `SELECT a.*, t.name as template_name, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name, 
               escalation_target.id as escalation_user_id,
               escalation_target.email as escalation_email,
               (escalation_target.first_name || ' ' || escalation_target.last_name) as escalation_name
@@ -1419,10 +1422,15 @@ class InterviewAssignmentService {
       };
     }
 
-    if (row.assignee_name) {
+    // V-A S2 — attach the assignee whenever the row carries an assignee_user_id.
+    // Use the trimmed name, falling back to email when the user has no
+    // first/last name (the TRIM(COALESCE(...)) projection yields '' in that
+    // case, which would otherwise drop the assignee and render "Unknown").
+    if (row.assignee_user_id) {
+      const name = (row.assignee_name && String(row.assignee_name).trim()) || row.assignee_email;
       assignment.assignee = {
         id: row.assignee_user_id,
-        name: row.assignee_name,
+        name: name || '',
         email: row.assignee_email,
       };
     }

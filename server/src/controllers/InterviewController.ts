@@ -2192,11 +2192,14 @@ export const InterviewController = {
            t.category as template_category,
            s.status as session_status,
            s.answered_questions as answered_questions,
-           s.total_questions as total_questions
+           s.total_questions as total_questions,
+           TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
+           u.email as assignee_email
          FROM interview_assignments a
          LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
          LEFT JOIN interview_library_templates t ON t.id = a.template_id
          LEFT JOIN interview_sessions s ON s.id = a.session_id
+         LEFT JOIN users u ON u.id = a.assignee_user_id
          ${where}
          ORDER BY
            CASE a.status WHEN 'assigned' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'sent_back' THEN 1 WHEN 'submitted' THEN 2 ELSE 3 END,
@@ -2222,10 +2225,13 @@ export const InterviewController = {
            t.category as template_category,
            s.status as session_status,
            s.answered_questions as answered_questions,
-           s.total_questions as total_questions
+           s.total_questions as total_questions,
+           TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
+           u.email as assignee_email
          FROM interview_assignments a
          LEFT JOIN interview_library_templates t ON t.id = a.template_id
          LEFT JOIN interview_sessions s ON s.id = a.session_id
+         LEFT JOIN users u ON u.id = a.assignee_user_id
          ${fallbackWhere}
          ORDER BY
            CASE a.status WHEN 'assigned' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'sent_back' THEN 1 WHEN 'submitted' THEN 2 ELSE 3 END,
@@ -2274,6 +2280,15 @@ export const InterviewController = {
               completenessPercent: Math.round(completenessRatio * 100),
             }
           : null,
+        // V-A S2 — emit the assignee so the Inbox stops rendering "Unknown".
+        // The legacy REST path previously projected no assignee field at all.
+        assignee: r.assignee_user_id
+          ? {
+              id: r.assignee_user_id,
+              name: (r.assignee_name && String(r.assignee_name).trim()) || r.assignee_email || '',
+              email: r.assignee_email || '',
+            }
+          : undefined,
       };
     });
 
@@ -3431,7 +3446,7 @@ export const InterviewController = {
     let members: any[] = [];
     if (r.is_team_assignment === 1) {
       members = await queryHelpers.queryAll(
-        `SELECT m.*, u.name as user_name, u.email as user_email
+        `SELECT m.*, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name, u.email as user_email
          FROM interview_assignment_members m
          LEFT JOIN users u ON u.id = m.user_id
          WHERE m.assignment_id = ?`,
@@ -3647,7 +3662,7 @@ export const InterviewController = {
     }
 
     const members = await queryHelpers.queryAll(
-      `SELECT m.*, u.name as user_name, u.email as user_email
+      `SELECT m.*, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name, u.email as user_email
        FROM interview_assignment_members m
        LEFT JOIN users u ON u.id = m.user_id
        WHERE m.assignment_id = ?`,
@@ -3716,7 +3731,7 @@ export const InterviewController = {
     );
 
     const member = await queryHelpers.queryOne(
-      `SELECT m.*, u.name as user_name, u.email as user_email
+      `SELECT m.*, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name, u.email as user_email
        FROM interview_assignment_members m
        LEFT JOIN users u ON u.id = m.user_id
        WHERE m.id = ?`,
