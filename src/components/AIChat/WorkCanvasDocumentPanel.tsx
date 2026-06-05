@@ -17,6 +17,7 @@ import {
   RotateCcw,
   Save,
   Share2,
+  Sparkles,
   StickyNote,
   Table2,
   Upload,
@@ -1177,6 +1178,17 @@ export function WorkCanvasDocumentPanel({
       }
       // Materialize a durable artifact via the export route (markdown is always supported).
       await Api.workCanvasExportDraft(draft.draftId, 'markdown');
+      // M-5 — register the Canvas in the canonical Outputs Library so the
+      // aggregate tab can list it. Idempotent — re-clicking updates the
+      // artifact metadata. Non-fatal: a failed register doesn't block the
+      // download or the redirect.
+      try {
+        await Api.workCanvasRegisterInOutputs(draft.draftId);
+      } catch (registerError) {
+        // Surface but don't block — the download already succeeded.
+        // eslint-disable-next-line no-console
+        console.warn('[Canvas] Outputs registration failed', registerError);
+      }
       setStatusFeedback('Saved to Outputs. Opening…');
       // W2-E3 — `/outputs` does not exist in AppRoutes.tsx (the previous
       // assignment 404'd). The Outputs aggregate tab lives inside the
@@ -1195,6 +1207,37 @@ export function WorkCanvasDocumentPanel({
       setCanvasErrorFeedback(error, 'Failed to save Canvas to Outputs.');
     } finally {
       setIsSavingToOutputs(false);
+    }
+  };
+
+  /**
+   * L-1 — send the current Canvas to DocumentStudio. Materializes a
+   * DocumentStudio artifact via the intake → plan → generate pipeline, then
+   * opens it in the documents module. The previous bridge was a manual
+   * .docx download → manual re-upload.
+   */
+  const [isSendingToDocumentStudio, setIsSendingToDocumentStudio] = React.useState(false);
+  const sendToDocumentStudio = async () => {
+    if (isSendingToDocumentStudio) return;
+    setIsSendingToDocumentStudio(true);
+    setStatusFeedback('Sending Canvas to Document Studio…');
+    try {
+      const draft = await ensurePersistedDraft();
+      if (!draft?.draftId) {
+        setAlertFeedback('Document Studio handoff is available once the draft is saved.');
+        return;
+      }
+      const result = await Api.workCanvasSendToDocumentStudio(draft.draftId, {
+        language: 'pl',
+      });
+      const url = result.data.linkedResource.url;
+      setStatusFeedback(
+        `Document created in Document Studio. [Open →](${url})`
+      );
+    } catch (error) {
+      setCanvasErrorFeedback(error, 'Failed to send Canvas to Document Studio.');
+    } finally {
+      setIsSendingToDocumentStudio(false);
     }
   };
 
@@ -2857,6 +2900,24 @@ export function WorkCanvasDocumentPanel({
                   >
                     <Download size={14} />
                     <span>Download PDF</span>
+                  </button>
+                  {/* L-1 — Document Studio bridge. Calls the same
+                      materializeDocumentArtifact pipeline DocumentStudio's own
+                      /generate uses, so the Canvas becomes a real Document
+                      Studio artifact (visible in Outputs hub) rather than a
+                      file the user had to manually re-upload. */}
+                  <button
+                    type="button"
+                    onClick={() => void sendToDocumentStudio()}
+                    disabled={isSendingToDocumentStudio}
+                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 dark:hover:bg-white/10"
+                  >
+                    <Sparkles size={14} />
+                    <span>
+                      {isSendingToDocumentStudio
+                        ? 'Sending to Document Studio…'
+                        : 'Send to Document Studio'}
+                    </span>
                   </button>
                   {/* C4.4 — exposes the existing backend exporters (exportDocxBuffer
                       / exportXlsxBuffer / exportPptxBuffer) for Word/Excel/PowerPoint.

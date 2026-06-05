@@ -5167,6 +5167,62 @@ export const Api = {
     return handleResponse(res, 'Failed to create Canvas output');
   },
 
+  /**
+   * M-5 — register the Canvas in the canonical Outputs Library
+   * (`v8_output_artifacts`). Idempotent — re-registering updates the
+   * artifact's metadata snapshot. The Outputs aggregate tab can now list
+   * real Canvas-origin entries.
+   */
+  workCanvasRegisterInOutputs: async (
+    draftId: string
+  ): Promise<{
+    success: boolean;
+    data: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      draft: any;
+      linkedResource: { type: 'outputs_library'; id: string; title: string; url: string };
+      readBack: Record<string, unknown>;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/register-in-outputs`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to register Canvas in Outputs');
+  },
+
+  /**
+   * L-1 — send a Canvas draft to DocumentStudio. The backend wires the
+   * draft's markdown through `materializeDocumentArtifact` (the same path
+   * the studio's own /generate uses), so the resulting artifact lives in
+   * the Outputs hub and back-links to its source draft.
+   */
+  workCanvasSendToDocumentStudio: async (
+    draftId: string,
+    payload?: { documentType?: string; language?: 'pl' | 'en'; useLlm?: boolean }
+  ): Promise<{
+    success: boolean;
+    data: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      draft: any;
+      linkedResource: { type: 'document_studio'; id: string; title: string; url: string };
+      readBack: Record<string, unknown>;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/send-to-document-studio`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload || {}),
+      }
+    );
+    return handleResponse(res, 'Failed to send Canvas to Document Studio');
+  },
+
   workCanvasFinalizeResearchReport: async (
     draftId: string
   ): Promise<{

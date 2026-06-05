@@ -4002,6 +4002,214 @@ router.post('/drafts/:draftId/research/finalize-report', async (req: AuthRequest
   }
 });
 
+/**
+ * M-5 — Canvas → Outputs Library registration.
+ *
+ * Previously the `saveToOutputs` UI action downloaded a markdown blob and
+ * redirected to /outputs (which didn't exist — see W2-E3) or /presentations
+ * (which existed but had no record of the Canvas). Now this endpoint registers
+ * the Canvas draft inside the canonical Outputs registry
+ * (`v8_output_artifacts`, canonical_home='outputs_library') via
+ * `artifactRegistryService.registerArtifactOrigin` — the same path
+ * DocumentStudio and PresentationStudio use. The Outputs aggregate tab can
+ * now list real Canvas-origin entries.
+ *
+ * Treats the Canvas as an outputType='report' / artifactFamily='work_canvas'
+ * artifact. Registration is idempotent on (organization, origin_runtime,
+ * origin_record_id) — calling twice produces a single artifact and updates
+ * its metadata.
+ */
+router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const { organizationId, userId } = authContext(req);
+  const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas output');
+
+  try {
+    const { registerArtifactOrigin } = await import('../services/v8/artifactRegistryService.js');
+    const artifact = await registerArtifactOrigin({
+      organizationId,
+      outputType: 'report',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      artifactFamily: 'work_canvas' as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      originRuntime: 'work_canvas' as any,
+      originRecordId: draft.id,
+      titleSnapshot: title,
+      ownerUserId: userId,
+      createdBy: userId,
+      visibilityScope: undefined,
+      projectId: draft.projectId || null,
+      originSummary: {
+        sourceType: 'work_canvas',
+        sourceTable: 'work_canvas_drafts',
+        contentMdLength: (draft.contentMd || '').length,
+      },
+    });
+
+    const previousLinks =
+      draft.provenance?.linkedWorkspaceResources &&
+      typeof draft.provenance.linkedWorkspaceResources === 'object'
+        ? (draft.provenance.linkedWorkspaceResources as Record<string, unknown>)
+        : {};
+    const updatedDraft = await updateDraftAfterOperation(draft, {
+      linkedWorkspaceResources: {
+        ...previousLinks,
+        outputs_library: {
+          id: artifact?.artifactId || draft.id,
+          title,
+          url: `/presentations?tab=outputs&artifactId=${encodeURIComponent(
+            String(artifact?.artifactId || draft.id)
+          )}`,
+          linkedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    return res.json(
+      envelope({
+        draft: updatedDraft,
+        linkedResource: {
+          type: 'outputs_library',
+          id: String(artifact?.artifactId || draft.id),
+          title,
+          url: `/presentations?tab=outputs&artifactId=${encodeURIComponent(
+            String(artifact?.artifactId || draft.id)
+          )}`,
+        },
+        readBack: {
+          target: 'outputs_library',
+          artifactId: artifact?.artifactId || null,
+          status: 'registered',
+        },
+      })
+    );
+  } catch (error) {
+    logger.error('[work-canvas] canvas.outputs.register_failed', {
+      draftId: draft.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to register Canvas in Outputs',
+    });
+  }
+});
+
+/**
+ * L-1 — Canvas → DocumentStudio bridge.
+ *
+ * Previously the only path from Canvas to DocumentStudio was: user downloads
+ * .docx, manually uploads to DocumentStudio. The proper intake → plan →
+ * generate pipeline was unreachable from the chat-shell. This endpoint wires
+ * the Canvas draft directly into DocumentStudio's `materializeDocumentArtifact`
+ * so the Canvas's markdown becomes a real DocumentStudio artifact with a back-
+ * link to its source draft.
+ *
+ * The Canvas's markdown is forwarded as the `intake.description` so
+ * DocumentStudio's narrative planner can section it normally; the sectionized
+ * heading list from `markdownSections` is also passed as `sourceHints` so the
+ * planner has structured context. The first-heading or draft title becomes
+ * `intake.title`. The source draft id is recorded in `sourceRefs` so the
+ * resulting artifact knows where it came from.
+ */
+router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const { organizationId, userId } = authContext(req);
+
+  const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas document');
+  const sections = markdownSections(draft.contentMd).slice(0, 12);
+  const language = String(req.body?.language || '').toLowerCase() === 'en' ? 'en' : 'pl';
+  const documentType = String(req.body?.documentType || 'business_brief');
+  const useLlm = req.body?.useLlm === true;
+
+  try {
+    const { materializeDocumentArtifact } = await import(
+      '../services/documentStudio/documentStudioService.js'
+    );
+    // DocumentStudio accepts `description` as the narrative seed. We pass the
+    // full markdown so the planner sees the prose; `sourceHints` carries the
+    // section list as structured context so the planner can preserve the
+    // user's heading topology when it builds the outline.
+    const intake = {
+      title,
+      description: draft.contentMd || title,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      documentType: documentType as any,
+      language,
+      sourceHints: sections.map((section) => ({
+        type: 'inline' as const,
+        title: section.heading,
+        excerpt: section.body.slice(0, 1200),
+      })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    const result = await materializeDocumentArtifact({
+      organizationId,
+      userId,
+      intake,
+      // Pass the source-draft id through sourceRefs so the artifact records
+      // its origin (`work_canvas_drafts/<draftId>`) — visible in the Outputs
+      // hub via artifactRegistryService.registerArtifactOrigin (which the
+      // /generate route already calls).
+      sourceRefs: [
+        {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          type: 'work_canvas' as any,
+          id: draft.id,
+          title,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any,
+      projectId: draft.projectId || null,
+      useLlm,
+    });
+
+    // Record the back-link on the draft so Canvas's UI can show "Open in
+    // DocumentStudio" on subsequent loads.
+    const previousLinks =
+      draft.provenance?.linkedWorkspaceResources &&
+      typeof draft.provenance.linkedWorkspaceResources === 'object'
+        ? (draft.provenance.linkedWorkspaceResources as Record<string, unknown>)
+        : {};
+    const updatedDraft = await updateDraftAfterOperation(draft, {
+      linkedWorkspaceResources: {
+        ...previousLinks,
+        document_studio: {
+          id: result.artifactId,
+          title: String(result.schema?.title || title),
+          url: `/documents/${encodeURIComponent(String(result.artifactId))}`,
+          linkedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    return res.json(
+      envelope({
+        draft: updatedDraft,
+        linkedResource: {
+          type: 'document_studio',
+          id: String(result.artifactId),
+          title: String(result.schema?.title || title),
+          url: `/documents/${encodeURIComponent(String(result.artifactId))}`,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        readBack: { target: 'document_studio', artifactId: result.artifactId, status: 'created' } as any,
+      })
+    );
+  } catch (error) {
+    logger.error('[work-canvas] canvas.document_studio.failed', {
+      draftId: draft.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error:
+        error instanceof Error ? error.message : 'Failed to send Canvas to Document Studio',
+    });
+  }
+});
+
 router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
