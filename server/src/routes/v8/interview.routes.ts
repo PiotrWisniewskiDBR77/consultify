@@ -18,7 +18,7 @@ import {
   loadManagedInterviewSessionsForManager,
 } from '../../controllers/InterviewController.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { requirePermission } from '../../middleware/permission.middleware.js';
+import { requireAnyPermission, requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   getManagedAssignments,
@@ -194,6 +194,9 @@ router.get(
  */
 router.get(
   '/sessions/accepted',
+  // V-A S1 — mirror the legacy gate (interview.routes.ts:64-68). These are
+  // manager-scoped reads; the V8 path had dropped the capability gate.
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const sessions = await loadAcceptedInterviewSessionsForManager(organizationId, userId);
@@ -203,6 +206,7 @@ router.get(
 
 router.get(
   '/sessions/managed',
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId, userRole } = getV8Context(req);
     const scope = await resolveInterviewManagerScope({
@@ -347,22 +351,34 @@ router.get(
   })
 );
 
+// V-A S1 — restore the function-level authorization the legacy /api/interview
+// stack enforces but the V8 production path dropped. Mirror the legacy gates
+// exactly (interview.routes.ts:104-161):
+//   start / submit  → no permission gate; the controller validates the caller
+//                     is the assignee (assignee acts on their own assignment).
+//   remind          → INTERVIEW_REMIND
+//   send-back/approve → INTERVIEW_ASSIGN_MANAGE  (manager-only)
+// Without these, any authenticated org member could approve/send-back any
+// submitted assignment in their org (intra-org privilege escalation).
 router.post('/assignments/:id/start', v8Wrap(InterviewController.startAssignment, interviewMeta));
 
 router.post('/assignments/:id/submit', v8Wrap(InterviewController.submitAssignment, interviewMeta));
 
 router.post(
   '/assignments/:id/remind',
+  requirePermission('INTERVIEW_REMIND'),
   v8Wrap(InterviewController.sendAssignmentReminder, interviewMeta)
 );
 
 router.post(
   '/assignments/:id/send-back',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   v8Wrap(InterviewController.sendBackAssignment, interviewMeta)
 );
 
 router.post(
   '/assignments/:id/approve',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   v8Wrap(InterviewController.approveAssignment, interviewMeta)
 );
 
