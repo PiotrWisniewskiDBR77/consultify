@@ -64,6 +64,7 @@ import auditEventsRoutes from './routes/audit-events.routes.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
 // Route Imports
 import authRoutes from './routes/auth.routes.js';
+import clientErrorRoutes from './routes/client-errors.routes.js';
 import backupRoutes from './routes/backup.routes.js';
 import baselinesRoutes from './routes/baselines.routes.js';
 import benchmarkRoutes from './routes/benchmark.routes.js';
@@ -355,6 +356,8 @@ export class ApiGateway {
       // TypeScript routes (migrated)
       logger.info('[ApiGateway] Mounting /api/auth');
       app.use('/api/auth', authRoutes);
+      // Client crash telemetry sink (#24b) — unauthenticated, best-effort.
+      app.use('/api/errors', clientErrorRoutes);
       logger.info('[ApiGateway] Mounting /api/billing');
       app.use('/api/billing', billingRoutes);
       app.use('/api/superadmin/billing', billingAdminRoutes);

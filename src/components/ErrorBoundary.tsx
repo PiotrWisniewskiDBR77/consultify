@@ -58,10 +58,13 @@ export class ErrorBoundary extends Component<Props, State> {
             message: error.message,
             stack: error.stack,
             componentStack: errorInfo.componentStack,
+            url: window.location?.href,
+            userAgent: window.navigator?.userAgent,
           }),
         })
-        .then(() => {
-          this.setState({ telemetryDelivery: 'sent' });
+        .then((res) => {
+          // fetch resolves on 4xx/5xx too — only a real ack counts as delivered.
+          this.setState({ telemetryDelivery: res.ok ? 'sent' : 'failed' });
         })
         .catch(() => {
           this.setState({ telemetryDelivery: 'failed' });
