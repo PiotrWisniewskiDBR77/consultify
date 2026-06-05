@@ -1761,8 +1761,12 @@ export const InterviewHub: React.FC = () => {
 
     // V-A S5 — filter by the real status enum (draft/in_review/approved/
     // archived). 'approved' also matches legacy 'published'. Default-to-draft
-    // for rows with no status so they remain findable.
-    if (templateStatusFilter !== 'all') {
+    // for rows with no status so they remain findable. "All" excludes
+    // archived (a terminal/hidden state) so archiving actually hides the
+    // template; only the explicit "Archived" chip surfaces them.
+    if (templateStatusFilter === 'all') {
+      result = result.filter((t) => String(t.status || 'draft').toLowerCase() !== 'archived');
+    } else {
       result = result.filter((t) => {
         const s = String(t.status || 'draft').toLowerCase();
         if (templateStatusFilter === 'approved') return s === 'approved' || s === 'published';
@@ -2712,7 +2716,9 @@ export const InterviewHub: React.FC = () => {
         {
           id: 'all',
           label: isPolish ? 'Wszystkie' : 'All',
-          count: templates.length,
+          // "All" excludes archived (matches the filter behavior).
+          count: templates.filter((t) => String(t.status || 'draft').toLowerCase() !== 'archived')
+            .length,
           onClick: () => setTemplateStatusFilter('all'),
         },
         {

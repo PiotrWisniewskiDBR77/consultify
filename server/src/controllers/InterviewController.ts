@@ -2481,6 +2481,28 @@ export const InterviewController = {
     }
     // ==========================================
 
+    // V-A — cross-org assignee IDOR guard. The org-role branch above grants
+    // "assign to anyone in org" but never verified the assignees are actually
+    // IN the caller's org — an admin could assign to a user from a DIFFERENT
+    // org by passing their id. Validate every assignee belongs to this org
+    // (applies to all branches; the project branch already checks membership,
+    // this is the org-level backstop).
+    {
+      const orgMembers = await queryHelpers.queryAll(
+        `SELECT user_id FROM organization_members WHERE organization_id = ?`,
+        [admin.organizationId]
+      );
+      const orgMemberIds = new Set((orgMembers || []).map((m: any) => String(m.user_id)));
+      const foreignAssignees = userIds.filter((id) => !orgMemberIds.has(String(id)));
+      if (foreignAssignees.length > 0) {
+        res.status(403).json({
+          error: 'One or more assignees are not members of your organization.',
+          code: 'ASSIGNEE_NOT_IN_ORG',
+        });
+        return;
+      }
+    }
+
     // Validate template
     const template = await queryHelpers.queryOne(
       `SELECT id, name, version, status FROM interview_library_templates WHERE id = ?`,
