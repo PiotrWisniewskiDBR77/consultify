@@ -61,10 +61,10 @@ import assessmentWorkflowV2Routes from './routes/assessment-workflow-v2.routes.j
 import assessmentEvidenceRoutes from './routes/assessmentEvidence.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import auditEventsRoutes from './routes/audit-events.routes.js';
+import auditProgramsRouter from './routes/audit-programs.routes.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
 // Route Imports
 import authRoutes from './routes/auth.routes.js';
-import clientErrorRoutes from './routes/client-errors.routes.js';
 import backupRoutes from './routes/backup.routes.js';
 import baselinesRoutes from './routes/baselines.routes.js';
 import benchmarkRoutes from './routes/benchmark.routes.js';
@@ -80,6 +80,7 @@ import budgetsRoutes from './routes/budgets.routes.js';
 import capabilityRoutes from './routes/capability.routes.js';
 import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
+import clientErrorRoutes from './routes/client-errors.routes.js';
 import cloudRoutes from './routes/cloud.routes.js';
 import competencyRoutes from './routes/competency.routes.js';
 import complianceRoutes from './routes/compliance.routes.js';
@@ -90,13 +91,13 @@ import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import contextRoutes from './routes/context.routes.js';
 import conversationsRoutes from './routes/conversations.routes.js';
-import shareRoutes from './routes/share.routes.js';
 import coreDocsRoutes from './routes/core-docs.routes.js';
 import cvMatchingRoutes from './routes/cv-matching.routes.js';
 import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataCollectionRoutes from './routes/data-collection.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import demoRoutes from './routes/demo.routes.js';
+import discoveryRoutes from './routes/discovery.routes.js';
 import documentStudioRoutes, {
   documentShareLinkPublicRoutes,
 } from './routes/document-studio.routes.js';
@@ -126,6 +127,7 @@ import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import inboxEnterpriseRoutes from './routes/inbox-enterprise.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
 import initiativeGovernanceRoutes from './routes/initiative-governance.routes.js';
+import insightSourceBasketsRouter from './routes/insightSourceBaskets.routes.js';
 import automationRoutes from './routes/integrations/automation.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
 import connectorRoutes from './routes/integrations/connectors.routes.js';
@@ -135,10 +137,8 @@ import ssoRoutes from './routes/integrations/sso.routes.js';
 import webhookRoutes from './routes/integrations/webhooks.routes.js';
 import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.js';
 import intelligenceRoutes from './routes/intelligence.routes.js';
-import discoveryRoutes from './routes/discovery.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
-import insightSourceBasketsRouter from './routes/insightSourceBaskets.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
 import knowledgeGraphRoutes from './routes/knowledge-graph.routes.js';
@@ -238,6 +238,7 @@ import scheduledReportsRoutes from './routes/scheduled-reports.routes.js';
 import securityRoutes from './routes/security.routes.js';
 import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
+import shareRoutes from './routes/share.routes.js';
 import skillsGapRoutes from './routes/skills-gap.routes.js';
 import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
 import stabilizationRoutes from './routes/stabilization.routes.js';
@@ -941,6 +942,9 @@ export class ApiGateway {
       // Insight Creator (audit #28c/#28d). Mounted under the same /api/interview
       // prefix so paths are /api/interview/insight-baskets[...].
       app.use('/api/interview', insightSourceBasketsRouter);
+      // Audit Orchestrator — org-scoped CRUD for audit programs (owner flagged
+      // direction ⭐⭐⭐, audit #19/#19d/#19e). Paths are /api/audit/programs[...].
+      app.use('/api/audit', auditProgramsRouter);
       // Discovery revive — the Discovery Consultant canvas now has a real
       // backend (persistence + convert-to-project + SPIN extraction).
       app.use('/api/discovery', discoveryRoutes);

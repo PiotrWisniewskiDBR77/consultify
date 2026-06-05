@@ -1,0 +1,160 @@
+/**
+ * audit-programs.routes — CRUD for the Audit Orchestrator (owner flagged
+ * direction ⭐⭐⭐, audit tasks #19 / #19d / #19e).
+ *
+ * An "audit program" is the orchestration record above individual interview
+ * assignments: an objective + a set of templates + a set of assignees, optionally
+ * seeded from a preset (e.g. ISO 27001). See auditProgramService.ts for the full
+ * rationale and the honest MVP boundary (this layer persists the *definition*;
+ * bulk survey generation is a documented next step).
+ *
+ * Mounted at /api/audit (see Gateway.ts), so the effective paths are:
+ *   GET    /api/audit/programs        — list (newest first, org-scoped)
+ *   POST   /api/audit/programs        — create
+ *   GET    /api/audit/programs/:id     — read one
+ *   PATCH  /api/audit/programs/:id     — update
+ *   DELETE /api/audit/programs/:id     — delete
+ *
+ * Same auth/rbac middleware stack as interview.routes.ts + insightSourceBaskets.
+ */
+
+import { Router } from 'express';
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
+import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import {
+  createProgram,
+  deleteProgram,
+  getProgram,
+  listPrograms,
+  updateProgram,
+} from '../services/auditProgramService.js';
+import logger from '../utils/Logger.js';
+
+const router = Router();
+
+router.use(apiAuthRateLimiter);
+router.use(verifyToken);
+router.use(requireOrgAccess());
+router.use(demoContextMiddleware);
+
+// ---------------------------------------------------------------------------
+// Auth context — mirror insightSourceBaskets.routes.ts.
+// ---------------------------------------------------------------------------
+function authContext(req: AuthRequest): { organizationId: string; userId: string } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = (req as any).user || {};
+  return {
+    organizationId: String(req.organizationId || user.organizationId || user.organization_id || ''),
+    userId: String(req.userId || user.id || user.userId || ''),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// GET /programs — list for org (newest first)
+// ---------------------------------------------------------------------------
+router.get('/programs', async (req: AuthRequest, res) => {
+  const { organizationId } = authContext(req);
+  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+  try {
+    const programs = await listPrograms(organizationId);
+    return res.json({ programs });
+  } catch (error) {
+    logger.error('[audit-programs] list failed', { error });
+    return res.status(500).json({ error: 'Failed to list audit programs' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /programs — create
+// ---------------------------------------------------------------------------
+router.post('/programs', async (req: AuthRequest, res) => {
+  const { organizationId, userId } = authContext(req);
+  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = (req.body || {}) as Record<string, any>;
+
+  const name = String(body.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Program name is required' });
+
+  try {
+    const program = await createProgram(organizationId, userId, {
+      name,
+      description: body.description ?? null,
+      objective: body.objective ?? null,
+      status: body.status,
+      preset: body.preset ?? null,
+      config: body.config && typeof body.config === 'object' ? body.config : {},
+    });
+    return res.status(201).json({ program });
+  } catch (error) {
+    logger.error('[audit-programs] create failed', { error });
+    return res.status(500).json({ error: 'Failed to create audit program' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /programs/:id — read one
+// ---------------------------------------------------------------------------
+router.get('/programs/:id', async (req: AuthRequest, res) => {
+  const { organizationId } = authContext(req);
+  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+  try {
+    const program = await getProgram(organizationId, req.params.id);
+    if (!program) return res.status(404).json({ error: 'Audit program not found' });
+    return res.json({ program });
+  } catch (error) {
+    logger.error('[audit-programs] read failed', { error });
+    return res.status(500).json({ error: 'Failed to read audit program' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PATCH /programs/:id — update
+// ---------------------------------------------------------------------------
+router.patch('/programs/:id', async (req: AuthRequest, res) => {
+  const { organizationId } = authContext(req);
+  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body = (req.body || {}) as Record<string, any>;
+
+  if (body.name !== undefined && !String(body.name).trim()) {
+    return res.status(400).json({ error: 'Program name cannot be empty' });
+  }
+
+  try {
+    const program = await updateProgram(organizationId, req.params.id, {
+      name: body.name,
+      description: body.description,
+      objective: body.objective,
+      status: body.status,
+      preset: body.preset,
+      config: body.config,
+    });
+    if (!program) return res.status(404).json({ error: 'Audit program not found' });
+    return res.json({ program });
+  } catch (error) {
+    logger.error('[audit-programs] update failed', { error });
+    return res.status(500).json({ error: 'Failed to update audit program' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// DELETE /programs/:id — delete
+// ---------------------------------------------------------------------------
+router.delete('/programs/:id', async (req: AuthRequest, res) => {
+  const { organizationId } = authContext(req);
+  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+  try {
+    const deleted = await deleteProgram(organizationId, req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Audit program not found' });
+    return res.json({ success: true });
+  } catch (error) {
+    logger.error('[audit-programs] delete failed', { error });
+    return res.status(500).json({ error: 'Failed to delete audit program' });
+  }
+});
+
+export default router;

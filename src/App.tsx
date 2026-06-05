@@ -36,6 +36,8 @@ const SharedConversationView = React.lazy(() => import('./views/SharedConversati
 const SubscriberDashboardPage = React.lazy(
   () => import('./views/subscriber/SubscriberDashboardPage')
 );
+// Audit Orchestrator hub (owner flagged direction ⭐⭐⭐, audit #19 family).
+const AuditsHub = React.lazy(() => import('./components/Audit/AuditsHub'));
 
 type AuthBootState = {
   inflightMeRequest: Promise<User | null> | null;
@@ -459,6 +461,22 @@ function AppContent() {
               }
             >
               <SubscriberDashboardPage />
+            </React.Suspense>
+          }
+        />
+        {/* Audit Orchestrator hub (audit #19 family). Self-contained authed
+            page; sits before the catch-all so /audits resolves here. */}
+        <Route
+          path="/audits"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <AuditsHub />
             </React.Suspense>
           }
         />
