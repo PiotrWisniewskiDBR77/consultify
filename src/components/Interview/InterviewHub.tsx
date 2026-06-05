@@ -30,6 +30,7 @@ import {
   Download,
   Edit3,
   ExternalLink,
+  Eye,
   FilePlus,
   FileText,
   Grid3X3,
@@ -76,6 +77,7 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { StatusPill } from '@/components/shared/StatusPill';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import { LoadingState } from '@/components/ui/primitives';
 import {
@@ -136,6 +138,25 @@ import {
 // Helper function to safely display error messages
 const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) => {
   toast.error(getSafeInterviewErrorMessage(error, defaultMessage));
+};
+
+/**
+ * Strip raw markdown so an insight's row sub-text reads as clean plain text.
+ * Removes leading heading hashes, bold/italic markers, inline-code backticks,
+ * list bullets, and collapses markdown table pipes / whitespace. Used ONLY for
+ * the Insights table row description preview (not for full rendering).
+ */
+const stripInsightMarkdownPreview = (raw: string): string => {
+  if (!raw) return '';
+  return raw
+    .replace(/`+/g, '') // inline code / fences
+    .replace(/^\s*#{1,6}\s*/gm, '') // leading heading hashes
+    .replace(/\*\*/g, '') // bold
+    .replace(/[*_]/g, '') // italics / emphasis
+    .replace(/^\s*[-+>]\s+/gm, '') // list bullets / blockquotes
+    .replace(/\|/g, ' ') // collapse table pipes
+    .replace(/\s+/g, ' ') // collapse whitespace/newlines
+    .trim();
 };
 
 const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-inbox-table-view';
@@ -216,6 +237,7 @@ const INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   type: 150,
   status: 140,
   source: 130,
+  exports: 150,
   date: 140,
   actions: 56,
 };
@@ -228,6 +250,7 @@ const INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS: Record<
   type: { minWidth: 120, maxWidth: 240 },
   status: { minWidth: 120, maxWidth: 220 },
   source: { minWidth: 110, maxWidth: 220 },
+  exports: { minWidth: 120, maxWidth: 240 },
   date: { minWidth: 120, maxWidth: 220 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
@@ -4198,6 +4221,7 @@ export const InterviewHub: React.FC = () => {
       ...(!hiddenSet.has('type') ? ['type'] : []),
       ...(!hiddenSet.has('status') ? ['status'] : []),
       ...(!hiddenSet.has('source') ? ['source'] : []),
+      ...(!hiddenSet.has('exports') ? ['exports'] : []),
       ...(!hiddenSet.has('date') ? ['date'] : []),
       'actions',
     ];
@@ -4390,6 +4414,15 @@ export const InterviewHub: React.FC = () => {
                   {renderInsightResizer('source')}
                 </th>
               )}
+              {!hiddenSet.has('exports') && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: insightColumnWidths.exports }}
+                >
+                  {isPolish ? 'Wyeksportowano' : 'Exported to'}
+                  {renderInsightResizer('exports')}
+                </th>
+              )}
               {!hiddenSet.has('date') && (
                 <th
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
@@ -4430,6 +4463,7 @@ export const InterviewHub: React.FC = () => {
                           { id: 'type', label: isPolish ? 'Typ' : 'Type' },
                           { id: 'status', label: isPolish ? 'Status' : 'Status' },
                           { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
+                          { id: 'exports', label: isPolish ? 'Wyeksportowano' : 'Exported to' },
                           { id: 'date', label: isPolish ? 'Data' : 'Date' },
                         ] as const
                       ).map((column) => {
@@ -4541,21 +4575,18 @@ export const InterviewHub: React.FC = () => {
                 },
               };
               const statusCopy = statusConfig[status] || statusConfig.completed;
-              const statusStyle = getStatusStyle(statusCopy.statusKey);
-              const sourceStyle = getTypeStyle('source');
               const sc = {
                 label: statusCopy.label,
-                bg: `border border-current/20 ${statusStyle.bg}`,
-                text: statusStyle.text,
-                dot: statusStyle.dot,
               };
 
               const isSelected = opts?.selectedId === insight.id;
               const isInsightSelected = selectedInsightIds.has(insight.id);
+              // Only selected/checked rows carry a left accent (primary). Unselected
+              // rows are clean — status now lives in the StatusPill, not a left bar.
               const rowAccentClass =
                 isSelected || isInsightSelected
                   ? 'shadow-[inset_4px_0_0_theme(colors.primary.500)]'
-                  : typeConfig.accentColor;
+                  : '';
               const rowToneClass =
                 isSelected || isInsightSelected
                   ? 'bg-primary-50 dark:bg-primary-500/[0.14]'
@@ -4563,6 +4594,7 @@ export const InterviewHub: React.FC = () => {
               const rowDescription = String(
                 insight.description || insight.content || insight.sourceQuote || ''
               ).trim();
+              const rowDescriptionPreview = stripInsightMarkdownPreview(rowDescription);
               const handleClick = opts?.onRowClick
                 ? () => opts.onRowClick!(insight.id)
                 : () => handleViewInsight(insight);
@@ -4605,10 +4637,6 @@ export const InterviewHub: React.FC = () => {
                   </td>
                   <td className="px-3 py-3" style={{ width: insightColumnWidths.title }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <span
-                        className={`h-8 w-1.5 shrink-0 rounded-full shadow-[0_0_14px] shadow-slate-500/20 ${sc.dot}`}
-                        aria-hidden="true"
-                      />
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${typeConfig.bgColor}`}
                       >
@@ -4621,12 +4649,12 @@ export const InterviewHub: React.FC = () => {
                         >
                           {insight.title}
                         </span>
-                        {showInsightRowDescription && rowDescription ? (
+                        {showInsightRowDescription && rowDescriptionPreview ? (
                           <span
                             className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
-                            title={rowDescription}
+                            title={rowDescriptionPreview}
                           >
-                            {rowDescription}
+                            {rowDescriptionPreview}
                           </span>
                         ) : null}
                         {(crossPerspectiveCount > 0 || divergenceCount > 0) && (
@@ -4665,12 +4693,10 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center align-middle"
                       style={{ width: insightColumnWidths.status }}
                     >
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sc.bg} ${sc.text}`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} aria-hidden="true" />
-                        {isPolish ? sc.label.pl : sc.label.en}
-                      </span>
+                      <StatusPill
+                        status={statusCopy.statusKey}
+                        label={isPolish ? sc.label.pl : sc.label.en}
+                      />
                     </td>
                   )}
                   {!hiddenSet.has('source') && (
@@ -4678,15 +4704,56 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center align-middle"
                       style={{ width: insightColumnWidths.source }}
                     >
-                      <span
-                        className={`inline-flex items-center justify-center rounded-full border border-current/20 px-2.5 py-1 text-xs font-semibold ${sourceStyle.bg} ${sourceStyle.text}`}
-                      >
-                        {insight.sourceSessionCount
-                          ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
+                      {(() => {
+                        const sessionCount = insight.sourceSessionCount
+                          ? insight.sourceSessionCount
                           : insight.sessionId
-                            ? `1 ${isPolish ? 'sesji' : 'session'}`
-                            : '-'}
-                      </span>
+                            ? 1
+                            : 0;
+                        if (sessionCount === 0) {
+                          return (
+                            <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                            <ClipboardList size={11} />
+                            {sessionCount}{' '}
+                            {sessionCount === 1
+                              ? isPolish
+                                ? 'sesja'
+                                : 'session'
+                              : isPolish
+                                ? 'sesji'
+                                : 'sessions'}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  )}
+                  {!hiddenSet.has('exports') && (
+                    <td
+                      className="px-3 py-3 text-center align-middle"
+                      style={{ width: insightColumnWidths.exports }}
+                    >
+                      {insight.exportedToTools || insight.exportedToAssessment ? (
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
+                          {insight.exportedToTools && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                              <Send size={10} />
+                              {isPolish ? 'Narzędzia' : 'Tools'}
+                            </span>
+                          )}
+                          {insight.exportedToAssessment && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                              <FileText size={10} />
+                              {isPolish ? 'Ocena' : 'Assessment'}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                      )}
                     </td>
                   )}
                   {!hiddenSet.has('date') && (
@@ -4707,6 +4774,16 @@ export const InterviewHub: React.FC = () => {
                         iconVariant="vertical"
                         className="opacity-40 transition-opacity group-hover:opacity-100"
                         actions={[
+                          ...(opts?.onRowClick
+                            ? [
+                                {
+                                  id: 'preview',
+                                  label: isPolish ? 'Otwórz w podglądzie' : 'Open in side preview',
+                                  icon: Eye,
+                                  onClick: () => opts.onRowClick!(insight.id),
+                                },
+                              ]
+                            : []),
                           {
                             id: 'open',
                             label: isPolish ? 'Otwórz' : 'Open',
