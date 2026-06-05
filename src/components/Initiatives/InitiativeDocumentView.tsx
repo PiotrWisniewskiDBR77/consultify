@@ -6677,7 +6677,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-500/10 border border-primary-200/60 dark:border-primary-500/20">
                   <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
-                    Coming soon
+                    {isPolish ? 'Wkrótce' : 'Coming soon'}
                   </span>
                 </div>
               </div>
@@ -6727,7 +6727,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20">
                   <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    Coming soon
+                    {isPolish ? 'Wkrótce' : 'Coming soon'}
                   </span>
                 </div>
               </div>
@@ -7922,7 +7922,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     );
   }
 
-  // C-mode uses the compact panel surface in embedded mode.
+  // C-MODE (ClickUp-style): the LIVE C-mode render. Reached when the NModeHeader
+  // presentation-mode toggle (rendered below in the 'n' branch) switches to 'c'.
+  // PresentationMode is strictly 'n' | 'c', so this early return owns all of C-mode;
+  // the InitiativeCompactPanel renders the compact card/scroll surface. (Verified W2-30c.)
+  // NOTE: the "legacy D-mode cards + scroll" block further down (the ternary's else
+  // branch) is dead code — 'c' is fully handled here before that ternary is reached.
   if (presentationMode === 'c') {
     return (
       <InitiativeContext.Provider value={contextValue}>
