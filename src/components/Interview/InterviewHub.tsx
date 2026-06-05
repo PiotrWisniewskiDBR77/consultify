@@ -16,11 +16,14 @@ import {
   AlertTriangle,
   Archive,
   ArrowRight,
+  ArrowUpRight,
   BarChart3,
   Bell,
   Brain,
   Calendar,
+  CalendarClock,
   Check,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   ClipboardList,
@@ -33,6 +36,7 @@ import {
   Eye,
   FilePlus,
   FileText,
+  Gauge,
   Grid3X3,
   Inbox,
   LayoutGrid,
@@ -190,16 +194,25 @@ const INTERVIEW_INSIGHTS_COL_WIDTHS_KEY = 'consultify-interview-insights-col-wid
 const INTERVIEW_TEMPLATES_COL_WIDTHS_KEY = 'consultify-interview-templates-col-widths';
 const INTERVIEW_INITIATIVES_COL_WIDTHS_KEY = 'consultify-interview-initiatives-col-widths';
 
-const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
+// #9/#9b — opt-in columns are hidden by default; users reveal them via the
+// view-settings (hidden-columns) menu. submitted/overdue/aiScore/escalation.
+const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [
+  'submitted',
+  'aiScore',
+  'escalation',
+];
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
-  template: 420,
-  assignee: 190,
+  template: 360,
+  assignee: 180,
   status: 140,
-  progress: 170,
-  due: 170,
+  progress: 150,
+  due: 150,
+  submitted: 150,
+  aiScore: 120,
+  escalation: 160,
   actions: 56,
 };
 const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
@@ -207,11 +220,14 @@ const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
   { minWidth: number; maxWidth: number }
 > = {
   select: { minWidth: 44, maxWidth: 44 },
-  template: { minWidth: 280, maxWidth: 680 },
-  assignee: { minWidth: 150, maxWidth: 280 },
+  template: { minWidth: 240, maxWidth: 680 },
+  assignee: { minWidth: 140, maxWidth: 280 },
   status: { minWidth: 120, maxWidth: 220 },
-  progress: { minWidth: 140, maxWidth: 260 },
-  due: { minWidth: 140, maxWidth: 260 },
+  progress: { minWidth: 130, maxWidth: 260 },
+  due: { minWidth: 130, maxWidth: 260 },
+  submitted: { minWidth: 130, maxWidth: 240 },
+  aiScore: { minWidth: 100, maxWidth: 200 },
+  escalation: { minWidth: 140, maxWidth: 260 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
 const INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
@@ -569,6 +585,28 @@ interface InterviewAssignment {
     totalQuestions: number;
     completenessPercent: number;
   };
+  // Manager AI snapshot (#11b/#9). Populated server-side when the assignment is
+  // submitted/evaluated; absent until then. We read it opportunistically and
+  // degrade gracefully ("AI assessment not available", "—") when missing.
+  aiReview?: {
+    overallScore?: number;
+    overallVerdict?: 'ready_for_approval' | 'needs_improvement' | 'insufficient' | 'empty';
+    recommendations?: string[];
+    weakAnswerMap?: Array<{
+      key: string;
+      label: string;
+      score?: number;
+      verdict?: string;
+      feedback?: string;
+      isRequired?: boolean;
+    }>;
+  } | null;
+  aiReviewedAt?: string;
+  // Escalation metadata (#9b). The backend escalation engine owns these; the UI
+  // only displays them and offers a manual trigger when an endpoint exists.
+  escalatedAt?: string;
+  escalationTarget?: { id?: string; name?: string; email?: string } | null;
+  escalationLevel?: number;
 }
 
 function normalizeInterviewAssignmentStatus(status?: string): InterviewAssignment['status'] {
@@ -767,6 +805,20 @@ export const InterviewHub: React.FC = () => {
   const initiativesViewSettingsRef = useRef<HTMLDivElement | null>(null);
   const [showInterviewInitiativeWizard, setShowInterviewInitiativeWizard] = useState(false);
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
+  // #6 — Inbox (my_assignments) own-work filter. Deliberately scoped to the
+  // logged-in user's own assignments and framed around the worker's workflow
+  // (All / Answered / Approved / Sent back) — NOT the org-wide "Overdue"/"To
+  // approve" manager framing, which lives on the Assigned tab.
+  const [inboxStatusFilter, setInboxStatusFilter] = useState<
+    'all' | 'answered' | 'approved' | 'sent_back'
+  >('all');
+  // #8c — Assigned (managed) lifecycle filter. Mirrors the Sessions lifecycle
+  // chip-row UX. NOTE: the v8 interview API has no assignment-archive endpoint,
+  // so Archive/Trash are surfaced as honest, disabled-with-tooltip affordances
+  // rather than fabricated routes; only "Active" is wired to real data today.
+  const [managedLifecycle, setManagedLifecycle] = useState<'active' | 'archived' | 'trash'>(
+    'active'
+  );
   const [selectedInsightId, setSelectedInsightId] = useState<string | null>(null);
   const [insightPreviewDetailsExpanded, setInsightPreviewDetailsExpanded] = useState(false);
   const [insightPreviewAiActiveId, setInsightPreviewAiActiveId] = useState<string | null>(null);
@@ -870,7 +922,12 @@ export const InterviewHub: React.FC = () => {
     // Assigned should open on the full manager list.
     // Narrow slices like "To approve" and "Overdue" are entered explicitly from Command Row chips.
     if (activeTab !== 'managed') return;
-    if (assignmentStatusFilter === 'submitted' || assignmentStatusFilter === 'overdue') return;
+    if (
+      assignmentStatusFilter === 'submitted' ||
+      assignmentStatusFilter === 'overdue' ||
+      assignmentStatusFilter === 'sent_back'
+    )
+      return;
     if (assignmentStatusFilter !== 'all') {
       setAssignmentStatusFilter('all');
     }
@@ -916,6 +973,12 @@ export const InterviewHub: React.FC = () => {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showSendBackModal, setShowSendBackModal] = useState(false);
   const [showInsightModal, setShowInsightModal] = useState(false);
+  // #11b — Manager approve flow with AI snapshot panel.
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  // #7b — Manager "Change due date" inline modal.
+  const [showDueDateModal, setShowDueDateModal] = useState(false);
+  const [dueDateDraft, setDueDateDraft] = useState<string>('');
+  const [manageAssignmentBusy, setManageAssignmentBusy] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<Set<string>>(new Set());
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
@@ -1339,6 +1402,120 @@ export const InterviewHub: React.FC = () => {
       toast.error(isPolish ? 'Nie udało się wysłać przypomnień' : 'Could not send reminders');
     }
   }, [selectedAssignmentIds, bulkActionBusy, isPolish]);
+
+  // #8 — Bulk approve over the selected managed rows. Only 'submitted' rows are
+  // approvable; others are skipped honestly (reflected in the count). Backed by
+  // the existing per-assignment approve endpoint (no bulk route exists).
+  const handleBulkApproveAssignments = useCallback(async () => {
+    const ids = Array.from(selectedAssignmentIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    const approvable = (managedAssignments || []).filter(
+      (a) => ids.includes(a.id) && a.status === 'submitted'
+    );
+    if (approvable.length === 0) {
+      toast.error(
+        isPolish
+          ? 'Brak przesłanych przydziałów do zatwierdzenia'
+          : 'No submitted assignments to approve'
+      );
+      return;
+    }
+    setBulkActionBusy(true);
+    let done = 0;
+    for (const a of approvable) {
+      try {
+        await V8InterviewApi.approveAssignment(a.id);
+        done += 1;
+      } catch {
+        // per-item failures tolerated; reflected in count
+      }
+    }
+    try {
+      const [myRes, managedRes, overdueRes] = await Promise.all([
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setMyAssignments(myRes);
+      setManagedAssignments(managedRes);
+      setOverdueAssignments(overdueRes);
+    } catch {
+      /* ignore refresh failure */
+    }
+    setBulkActionBusy(false);
+    setSelectedAssignmentIds(new Set());
+    if (done > 0) {
+      toast.success(isPolish ? `Zatwierdzono ${done}` : `${done} approved`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Could not approve');
+    }
+  }, [
+    selectedAssignmentIds,
+    bulkActionBusy,
+    managedAssignments,
+    isPolish,
+    loadMyAssignments,
+    loadManagedAssignments,
+    loadOverdueAssignments,
+  ]);
+
+  // #8 — Bulk send-back over the selected managed rows. Uses a generic reason
+  // (per-item reasons remain available via the single-row Send-back modal).
+  const handleBulkSendBackAssignments = useCallback(async () => {
+    const ids = Array.from(selectedAssignmentIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    const eligible = (managedAssignments || []).filter(
+      (a) => ids.includes(a.id) && a.status === 'submitted'
+    );
+    if (eligible.length === 0) {
+      toast.error(
+        isPolish
+          ? 'Brak przesłanych przydziałów do zwrotu'
+          : 'No submitted assignments to send back'
+      );
+      return;
+    }
+    const reason = isPolish
+      ? 'Zwrócono zbiorczo do poprawy.'
+      : 'Returned for revision (bulk action).';
+    setBulkActionBusy(true);
+    let done = 0;
+    for (const a of eligible) {
+      try {
+        await V8InterviewApi.sendBackAssignment(a.id, { reason });
+        done += 1;
+      } catch {
+        // per-item failures tolerated
+      }
+    }
+    try {
+      const [myRes, managedRes, overdueRes] = await Promise.all([
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setMyAssignments(myRes);
+      setManagedAssignments(managedRes);
+      setOverdueAssignments(overdueRes);
+    } catch {
+      /* ignore refresh failure */
+    }
+    setBulkActionBusy(false);
+    setSelectedAssignmentIds(new Set());
+    if (done > 0) {
+      toast.success(isPolish ? `Zwrócono ${done}` : `${done} sent back`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się zwrócić' : 'Could not send back');
+    }
+  }, [
+    selectedAssignmentIds,
+    bulkActionBusy,
+    managedAssignments,
+    isPolish,
+    loadMyAssignments,
+    loadManagedAssignments,
+    loadOverdueAssignments,
+  ]);
 
   const downloadCsv = useCallback((rows: string[][], filename: string) => {
     const escapeCell = (value: string) => {
@@ -1944,6 +2121,37 @@ export const InterviewHub: React.FC = () => {
     [insights]
   );
 
+  // #6 — Inbox (my_assignments) own-work counts. Scoped strictly to the
+  // logged-in user's own assignments and framed around their workflow, NOT the
+  // org-wide manager framing. "Answered" = the user has submitted; "Sent back"
+  // = returned to them for revision.
+  const inboxStatusCounts = useMemo(() => {
+    const list = myAssignments || [];
+    return {
+      all: list.length,
+      answered: list.filter((a) => a.status === 'submitted').length,
+      approved: list.filter((a) => a.status === 'approved' || a.status === 'completed').length,
+      sent_back: list.filter((a) => a.status === 'sent_back').length,
+    };
+  }, [myAssignments]);
+
+  const filteredMyAssignments = useMemo(() => {
+    const list = myAssignments || [];
+    if (inboxStatusFilter === 'answered') return list.filter((a) => a.status === 'submitted');
+    if (inboxStatusFilter === 'approved')
+      return list.filter((a) => a.status === 'approved' || a.status === 'completed');
+    if (inboxStatusFilter === 'sent_back') return list.filter((a) => a.status === 'sent_back');
+    return list;
+  }, [myAssignments, inboxStatusFilter]);
+
+  // #12 — DECISION: Sessions and Assigned are intentionally SEPARATE tabs and are
+  // NOT merged into a single "Work" tab. They model two different mental models:
+  //   • Sessions  = the sender/owner view of interview sessions THEY created
+  //                 (lifecycle: Active/Archive/Trash, AI insights, exports).
+  //   • Assigned  = the manager view of work assigned to OTHERS
+  //                 (approve / send-back / reassign / due-date / escalate).
+  // Merging them would conflate "my sessions" with "other people's work" and
+  // break the role-scoped chip rows + bulk actions below. Keep them distinct.
   // Manager (PM/ADMIN): wszystkie zakładki
   const tabs = useMemo(() => {
     const baseTabs: Array<{
@@ -2475,6 +2683,106 @@ export const InterviewHub: React.FC = () => {
     ]
   );
 
+  // #11b — Open the manager Approve flow with the AI snapshot panel.
+  const handleOpenApproveModal = useCallback((assignment: InterviewAssignment) => {
+    setSelectedAssignment(assignment);
+    setShowApproveModal(true);
+  }, []);
+
+  // #7b — Open the "Change due date" modal, prefilled from the current due date.
+  const handleOpenDueDateModal = useCallback((assignment: InterviewAssignment) => {
+    setSelectedAssignment(assignment);
+    setDueDateDraft(assignment.dueAt ? assignment.dueAt.slice(0, 10) : '');
+    setShowDueDateModal(true);
+  }, []);
+
+  // #7b — Persist a new due date via the existing manageAssignment endpoint
+  // (mode: 'update' keeps the same assignee/template). Honest error surfacing.
+  const handleChangeDueDate = useCallback(async () => {
+    if (!selectedAssignment || manageAssignmentBusy) return;
+    setManageAssignmentBusy(true);
+    try {
+      await V8InterviewApi.manageAssignment(selectedAssignment.id, {
+        assigneeUserId: selectedAssignment.assigneeUserId,
+        templateId: selectedAssignment.templateId,
+        dueAt: dueDateDraft ? new Date(dueDateDraft).toISOString() : null,
+        priority: selectedAssignment.priority,
+        notes: selectedAssignment.notes ?? null,
+        mode: 'update',
+      });
+      toast.success(isPolish ? 'Termin zaktualizowany' : 'Due date updated');
+      setShowDueDateModal(false);
+      setSelectedAssignment(null);
+      const [myRes, managedRes, overdueRes] = await Promise.all([
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setMyAssignments(myRes);
+      setManagedAssignments(managedRes);
+      setOverdueAssignments(overdueRes);
+    } catch (error: any) {
+      console.error('[InterviewHub] Failed to change due date:', error);
+      safeToastError(
+        error,
+        isPolish ? 'Nie udało się zmienić terminu' : 'Failed to change due date',
+        isPolish
+      );
+    } finally {
+      setManageAssignmentBusy(false);
+    }
+  }, [
+    dueDateDraft,
+    isPolish,
+    loadManagedAssignments,
+    loadMyAssignments,
+    loadOverdueAssignments,
+    manageAssignmentBusy,
+    selectedAssignment,
+  ]);
+
+  // #7b — Reassign: reuse the existing, fully-wired AssignInterviewModal
+  // preselected to this assignment's template. The manager picks a new
+  // assignee there. (No dedicated reassign endpoint is exposed to the client,
+  // so we route through the real assignment-creation flow rather than fabricate
+  // a route.)
+  const handleReassignAssignment = useCallback(
+    (assignment: InterviewAssignment) => {
+      const tpl = templates.find((t) => t.id === assignment.templateId) ?? null;
+      setSelectedTemplateForAssign(tpl);
+      setShowAssignModal(true);
+    },
+    [templates]
+  );
+
+  // #9b — Manual "Escalate now". The backend escalation engine runs
+  // automatically, but no manual-trigger endpoint is exposed to the client yet,
+  // so this is an honest stub (informs the user instead of faking success).
+  const handleEscalateNow = useCallback(
+    (assignment: InterviewAssignment) => {
+      if (assignment.escalatedAt || assignment.escalationTarget) {
+        toast(
+          isPolish
+            ? `Już eskalowano${
+                assignment.escalationTarget?.name ? ` do: ${assignment.escalationTarget.name}` : ''
+              }`
+            : `Already escalated${
+                assignment.escalationTarget?.name ? ` to ${assignment.escalationTarget.name}` : ''
+              }`,
+          { icon: 'ℹ️' }
+        );
+        return;
+      }
+      toast(
+        isPolish
+          ? 'Ręczna eskalacja będzie wkrótce dostępna — silnik eskalacji działa automatycznie.'
+          : 'Manual escalation is coming soon — the escalation engine runs automatically.',
+        { icon: 'ℹ️', duration: 4500 }
+      );
+    },
+    [isPolish]
+  );
+
   const getManagedAssignmentForSession = useCallback(
     (session: InterviewSession) =>
       managedAssignments.find(
@@ -2604,12 +2912,12 @@ export const InterviewHub: React.FC = () => {
 
     // Interview Inbox counters/status chips — Command Row (single line)
     // MUST: Inbox (moja) / Do zatwierdzenia / Zaległe with counters; click sets filter.
-    if (activeTab === 'my_assignments' || activeTab === 'managed') {
-      const myInboxCount = (myAssignments || []).filter(
-        (a) => a.status !== 'approved' && a.status !== 'completed'
-      ).length;
+    // #6 — Inbox (my_assignments): own-work chips ONLY. All / Answered /
+    // Approved / Sent back, derived from the logged-in user's own assignments.
+    // Deliberately NO org-wide "Overdue"/"To approve" framing here — that lives
+    // on the manager Assigned tab below.
+    if (activeTab === 'my_assignments') {
       const selectedCount = selectedAssignmentIds.size;
-
       const chipBase = MENU_3_CHIP_BASE;
       const chipInactive = MENU_3_CHIP_INACTIVE;
       const chipActive = MENU_3_CHIP_ACTIVE;
@@ -2620,66 +2928,157 @@ export const InterviewHub: React.FC = () => {
         'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
-        id: 'all' | 'my' | 'to-approve' | 'overdue';
+        id: 'all' | 'answered' | 'approved' | 'sent_back';
         label: string;
         count: number;
-        disabled?: boolean;
+        icon?: React.ElementType;
         onClick: () => void;
       }> = [
         {
           id: 'all',
-          label: 'ALL',
-          count: myInboxCount,
-          onClick: () => {
-            setActiveTab('my_assignments');
-            setAssignmentStatusFilter('all');
-            setActiveDocumentId(null);
-          },
+          label: isPolish ? 'Wszystkie' : 'All',
+          count: inboxStatusCounts.all,
+          onClick: () => setInboxStatusFilter('all'),
         },
         {
-          id: 'my',
-          label: isPolish ? 'Inbox (moja)' : 'My inbox',
-          count: myInboxCount,
-          onClick: () => {
-            setActiveTab('my_assignments');
-            setAssignmentStatusFilter('all');
-            setActiveDocumentId(null);
-          },
+          id: 'answered',
+          label: isPolish ? 'Odpowiedziane' : 'Answered',
+          count: inboxStatusCounts.answered,
+          icon: Send,
+          onClick: () => setInboxStatusFilter((prev) => (prev === 'answered' ? 'all' : 'answered')),
         },
         {
-          id: 'to-approve' as const,
-          label: isPolish ? 'Do zatwierdzenia' : 'To approve',
-          count: canViewManaged ? (managedAssignmentStatusCounts.submitted ?? 0) : 0,
-          disabled: !canViewManaged,
-          onClick: () => {
-            if (!canViewManaged) return;
-            setActiveTab('managed');
-            setAssignmentStatusFilter('submitted');
-            setActiveDocumentId(null);
-          },
+          id: 'approved',
+          label: isPolish ? 'Zatwierdzone' : 'Approved',
+          count: inboxStatusCounts.approved,
+          icon: CheckCircle2,
+          onClick: () => setInboxStatusFilter((prev) => (prev === 'approved' ? 'all' : 'approved')),
         },
         {
-          id: 'overdue' as const,
-          label: isPolish ? 'Zaległe' : 'Overdue',
-          count: canViewManaged ? overdueAssignments.length : 0,
-          disabled: !canViewManaged,
-          onClick: () => {
-            if (!canViewManaged) return;
-            setActiveTab('managed');
-            setAssignmentStatusFilter('overdue');
-            setActiveDocumentId(null);
-          },
+          id: 'sent_back',
+          label: isPolish ? 'Do poprawy' : 'Sent back',
+          count: inboxStatusCounts.sent_back,
+          icon: RotateCcw,
+          onClick: () =>
+            setInboxStatusFilter((prev) => (prev === 'sent_back' ? 'all' : 'sent_back')),
         },
       ];
 
-      const activeId: 'my' | 'to-approve' | 'overdue' | null =
-        activeTab === 'my_assignments' && assignmentStatusFilter === 'all'
-          ? null
+      if (selectedCount > 0) {
+        return (
+          <div className={MENU_3_ROW_CLASS}>
+            <div className={MENU_3_INNER_CLASS}>
+              <div className={MENU_3_RIGHT_CLASS}>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAssignmentIds(new Set())}
+                  className={bulkGhostPill}
+                >
+                  {isPolish ? 'Odznacz' : 'Clear'}
+                </button>
+              </div>
+              <div className="shrink-0" />
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
+            <div className={MENU_3_LEFT_CLASS}>
+              {buttons.map((b) => {
+                const Icon = b.icon;
+                const isActive = inboxStatusFilter === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={b.onClick}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                  >
+                    {b.id === 'all' ? (
+                      <span className={MENU_3_ALL_DOT_CLASS} />
+                    ) : Icon ? (
+                      <Icon size={14} />
+                    ) : null}
+                    <span>{b.label}</span>
+                    <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
+                      {b.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="shrink-0" />
+          </div>
+        </div>
+      );
+    }
+
+    // #7b/#8/#8c — Assigned (managed): manager chips + lifecycle chip-row +
+    // bulk actions (Approve / Send back / Remind / Archive).
+    if (activeTab === 'managed') {
+      const selectedCount = selectedAssignmentIds.size;
+      const chipBase = MENU_3_CHIP_BASE;
+      const chipInactive = MENU_3_CHIP_INACTIVE;
+      const chipActive = MENU_3_CHIP_ACTIVE;
+      const badgeBase = MENU_3_BADGE_BASE;
+      const badgeInactive = MENU_3_BADGE_INACTIVE;
+      const badgeActive = MENU_3_BADGE_ACTIVE;
+      const bulkGhostPill =
+        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+
+      const buttons: Array<{
+        id: 'all' | 'to-approve' | 'overdue' | 'sent_back';
+        label: string;
+        count: number;
+        icon?: React.ElementType;
+        onClick: () => void;
+      }> = [
+        {
+          id: 'all',
+          label: isPolish ? 'Wszystkie' : 'All',
+          count: managedAssignmentStatusCounts.all,
+          onClick: () => setAssignmentStatusFilter('all'),
+        },
+        {
+          id: 'to-approve',
+          label: isPolish ? 'Do zatwierdzenia' : 'To approve',
+          count: managedAssignmentStatusCounts.submitted ?? 0,
+          icon: Check,
+          onClick: () =>
+            setAssignmentStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
+        },
+        {
+          id: 'overdue',
+          label: isPolish ? 'Zaległe' : 'Overdue',
+          count: overdueAssignments.length,
+          icon: AlertTriangle,
+          onClick: () =>
+            setAssignmentStatusFilter((prev) => (prev === 'overdue' ? 'all' : 'overdue')),
+        },
+        {
+          id: 'sent_back',
+          label: isPolish ? 'Do poprawy' : 'Sent back',
+          count: managedAssignmentStatusCounts.sent_back ?? 0,
+          icon: RotateCcw,
+          onClick: () =>
+            setAssignmentStatusFilter((prev) => (prev === 'sent_back' ? 'all' : 'sent_back')),
+        },
+      ];
+
+      const activeChipId =
+        assignmentStatusFilter === 'submitted'
+          ? 'to-approve'
           : assignmentStatusFilter === 'overdue'
             ? 'overdue'
-            : assignmentStatusFilter === 'submitted'
-              ? 'to-approve'
-              : null;
+            : assignmentStatusFilter === 'sent_back'
+              ? 'sent_back'
+              : 'all';
 
       if (selectedCount > 0) {
         return (
@@ -2700,16 +3099,50 @@ export const InterviewHub: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleBulkRemind}
+                  onClick={handleBulkApproveAssignments}
                   disabled={bulkActionBusy}
                   className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {bulkActionBusy ? (
                     <Loader2 size={14} className="animate-spin" />
                   ) : (
-                    <Bell size={14} />
+                    <Check size={14} />
                   )}
+                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkSendBackAssignments}
+                  disabled={bulkActionBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <RotateCcw size={14} />
+                  {isPolish ? 'Zwróć' : 'Send back'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkRemind}
+                  disabled={bulkActionBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <Bell size={14} />
                   {isPolish ? 'Przypomnij' : 'Remind'}
+                </button>
+                {/* #8 — Archive: the v8 interview API exposes no assignment
+                    archive endpoint, so this is disabled-with-tooltip until one
+                    exists (honest over fake). */}
+                <button
+                  type="button"
+                  disabled
+                  title={
+                    isPolish
+                      ? 'Archiwizacja przydziałów będzie wkrótce dostępna'
+                      : 'Archiving assignments is coming soon'
+                  }
+                  className={`${MENU_3_ACTION_NEUTRAL} opacity-50 cursor-not-allowed`}
+                >
+                  <Archive size={14} />
+                  {isPolish ? 'Archiwizuj' : 'Archive'}
                 </button>
               </div>
             </div>
@@ -2721,32 +3154,70 @@ export const InterviewHub: React.FC = () => {
         <div className={MENU_3_ROW_CLASS}>
           <div className={MENU_3_INNER_CLASS}>
             <div className={MENU_3_LEFT_CLASS}>
-              {buttons.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={b.onClick}
-                  disabled={!!b.disabled}
-                  className={`${chipBase} ${
-                    (b.id === 'all' ? activeId === null : activeId === b.id)
-                      ? chipActive
-                      : chipInactive
-                  } ${b.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
-                >
-                  {b.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
-                  <span>{b.label}</span>
-                  <span
-                    className={`${badgeBase} ${
-                      (b.id === 'all' ? activeId === null : activeId === b.id)
-                        ? badgeActive
-                        : badgeInactive
-                    }`}
+              {buttons.map((b) => {
+                const Icon = b.icon;
+                const isActive = activeChipId === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={b.onClick}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
                   >
-                    {b.count}
-                  </span>
-                </button>
-              ))}
+                    {b.id === 'all' ? (
+                      <span className={MENU_3_ALL_DOT_CLASS} />
+                    ) : Icon ? (
+                      <Icon size={14} />
+                    ) : null}
+                    <span>{b.label}</span>
+                    <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
+                      {b.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <div className="shrink-0" />
+            {/* #8c — Lifecycle filter: Active | Archive | Trash, mirroring the
+                Sessions chip-row. Archive/Trash are disabled-with-tooltip
+                because no assignment-archive endpoint exists yet. */}
+            <div className="flex shrink-0 items-center gap-1.5">
+              {(
+                [
+                  { id: 'active', label: isPolish ? 'Aktywne' : 'Active', icon: List },
+                  { id: 'archived', label: isPolish ? 'Archiwum' : 'Archive', icon: Archive },
+                  { id: 'trash', label: isPolish ? 'Kosz' : 'Trash', icon: Trash2 },
+                ] as const
+              ).map((lc) => {
+                const isActive = managedLifecycle === lc.id;
+                const isDisabled = lc.id !== 'active';
+                const Icon = lc.icon;
+                return (
+                  <button
+                    key={lc.id}
+                    type="button"
+                    disabled={isDisabled}
+                    title={
+                      isDisabled
+                        ? isPolish
+                          ? 'Cykl życia przydziałów będzie wkrótce dostępny'
+                          : 'Assignment lifecycle is coming soon'
+                        : undefined
+                    }
+                    onClick={() => {
+                      if (isDisabled) return;
+                      setManagedLifecycle(lc.id);
+                    }}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive} ${
+                      isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    aria-pressed={isActive}
+                  >
+                    <Icon size={14} />
+                    <span>{lc.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
@@ -6346,6 +6817,12 @@ Return ONLY the answer text (no markdown fences).`;
         return next;
       });
     };
+    // #9 — opt-in columns (submitted / aiScore / escalation) are only offered on
+    // the manager-facing Assigned view (showAssignee). They stay hidden in the
+    // worker Inbox where the data isn't actionable.
+    const showSubmittedColumn = showAssignee && !hiddenSet.has('submitted');
+    const showAiScoreColumn = showAssignee && !hiddenSet.has('aiScore');
+    const showEscalationColumn = showAssignee && !hiddenSet.has('escalation');
     const visibleColumns = [
       'select',
       'template',
@@ -6353,6 +6830,9 @@ Return ONLY the answer text (no markdown fences).`;
       ...(!hiddenSet.has('status') ? ['status'] : []),
       ...(!hiddenSet.has('progress') ? ['progress'] : []),
       ...(!hiddenSet.has('due') ? ['due'] : []),
+      ...(showSubmittedColumn ? ['submitted'] : []),
+      ...(showAiScoreColumn ? ['aiScore'] : []),
+      ...(showEscalationColumn ? ['escalation'] : []),
       'actions',
     ];
     const tableMinWidth = visibleColumns.reduce(
@@ -6725,6 +7205,33 @@ Return ONLY the answer text (no markdown fences).`;
                   {renderAssignmentResizer('due')}
                 </th>
               )}
+              {showSubmittedColumn && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: columnWidths.submitted }}
+                >
+                  {isPolish ? 'Przesłano' : 'Submitted'}
+                  {renderAssignmentResizer('submitted')}
+                </th>
+              )}
+              {showAiScoreColumn && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: columnWidths.aiScore }}
+                >
+                  {isPolish ? 'Ocena AI' : 'AI Score'}
+                  {renderAssignmentResizer('aiScore')}
+                </th>
+              )}
+              {showEscalationColumn && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: columnWidths.escalation }}
+                >
+                  {isPolish ? 'Eskalacja' : 'Escalation'}
+                  {renderAssignmentResizer('escalation')}
+                </th>
+              )}
               <th
                 className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: columnWidths.actions }}
@@ -6769,6 +7276,23 @@ Return ONLY the answer text (no markdown fences).`;
                           { id: 'status', label: isPolish ? 'Status' : 'Status' },
                           { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
                           { id: 'due', label: isPolish ? 'Do terminu' : 'Days to Due' },
+                          // #9/#9b — opt-in columns, only meaningful on the
+                          // manager Assigned view.
+                          {
+                            id: 'submitted',
+                            label: isPolish ? 'Przesłano' : 'Submitted',
+                            disabled: !assignmentsViewSettingsShowAssignee,
+                          },
+                          {
+                            id: 'aiScore',
+                            label: isPolish ? 'Ocena AI' : 'AI Score',
+                            disabled: !assignmentsViewSettingsShowAssignee,
+                          },
+                          {
+                            id: 'escalation',
+                            label: isPolish ? 'Eskalacja' : 'Escalation',
+                            disabled: !assignmentsViewSettingsShowAssignee,
+                          },
                           {
                             id: 'actions',
                             label: isPolish ? 'Akcje' : 'Actions',
@@ -7037,6 +7561,77 @@ Return ONLY the answer text (no markdown fences).`;
                       })()}
                     </td>
                   )}
+                  {showSubmittedColumn && (
+                    <td
+                      className="px-4 py-3 text-center align-middle"
+                      style={{ width: columnWidths.submitted }}
+                    >
+                      {assignment.submittedAt ? (
+                        <span
+                          className="inline-flex items-center gap-1 text-xs text-slate-700 dark:text-slate-200"
+                          title={new Date(assignment.submittedAt).toLocaleString()}
+                        >
+                          <Send size={11} className="text-slate-400" />
+                          {new Date(assignment.submittedAt).toLocaleDateString()}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                  )}
+                  {showAiScoreColumn && (
+                    <td
+                      className="px-4 py-3 text-center align-middle"
+                      style={{ width: columnWidths.aiScore }}
+                    >
+                      {(() => {
+                        const score = assignment.aiReview?.overallScore;
+                        if (typeof score !== 'number') {
+                          return <span className="text-xs text-slate-400">—</span>;
+                        }
+                        const pct = Math.round(score <= 1 ? score * 100 : score);
+                        const tone =
+                          pct >= 75
+                            ? 'text-emerald-600 dark:text-emerald-300'
+                            : pct >= 50
+                              ? 'text-amber-600 dark:text-amber-300'
+                              : 'text-rose-600 dark:text-rose-300';
+                        return (
+                          <span
+                            className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
+                            title={isPolish ? 'Ocena jakości AI' : 'AI quality score'}
+                          >
+                            <Gauge size={12} />
+                            {pct}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  )}
+                  {showEscalationColumn && (
+                    <td
+                      className="px-4 py-3 text-center align-middle"
+                      style={{ width: columnWidths.escalation }}
+                    >
+                      {assignment.escalatedAt || assignment.escalationTarget ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full border border-amber-300/70 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-200"
+                          title={
+                            assignment.escalationTarget?.name ||
+                            assignment.escalationTarget?.email ||
+                            (isPolish ? 'Eskalowano' : 'Escalated')
+                          }
+                        >
+                          <ArrowUpRight size={11} />
+                          {assignment.escalationTarget?.name ||
+                            assignment.escalationTarget?.email ||
+                            (isPolish ? 'Eskalowano' : 'Escalated')}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                  )}
                   <td
                     className="px-3 py-3 text-right"
                     style={{ width: columnWidths.actions }}
@@ -7116,24 +7711,19 @@ Return ONLY the answer text (no markdown fences).`;
                                 },
                               ]
                             : []),
-                          ...(showAssignee &&
-                          canAssign &&
-                          assignment.status !== 'completed' &&
-                          assignment.status !== 'approved'
+                          // #7b — Manager row actions (Assigned tab kebab):
+                          // Approve, Send back, Reassign, Change due date,
+                          // Remind, Escalate now. Wired to existing handlers;
+                          // Escalate is an honest stub (no manual endpoint yet).
+                          ...(showAssignee && canAssign
                             ? [
-                                {
-                                  id: 'remind',
-                                  label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
-                                  icon: Bell,
-                                  onClick: () => handleOpenReminderModal(assignment),
-                                },
                                 ...(assignment.status === 'submitted'
                                   ? [
                                       {
                                         id: 'approve',
                                         label: isPolish ? 'Zatwierdź' : 'Approve',
                                         icon: Check,
-                                        onClick: () => handleApproveAssignment(assignment),
+                                        onClick: () => handleOpenApproveModal(assignment),
                                       },
                                       {
                                         id: 'sendback',
@@ -7141,6 +7731,41 @@ Return ONLY the answer text (no markdown fences).`;
                                         icon: RotateCcw,
                                         onClick: () => handleOpenSendBackModal(assignment),
                                         variant: 'danger' as const,
+                                      },
+                                    ]
+                                  : []),
+                                ...(assignment.status !== 'completed' &&
+                                assignment.status !== 'approved'
+                                  ? [
+                                      {
+                                        id: 'reassign',
+                                        label: isPolish ? 'Przypisz ponownie' : 'Reassign',
+                                        icon: UserPlus,
+                                        onClick: () => handleReassignAssignment(assignment),
+                                      },
+                                      {
+                                        id: 'due-date',
+                                        label: isPolish ? 'Zmień termin' : 'Change due date',
+                                        icon: CalendarClock,
+                                        onClick: () => handleOpenDueDateModal(assignment),
+                                      },
+                                      {
+                                        id: 'remind',
+                                        label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
+                                        icon: Bell,
+                                        onClick: () => handleOpenReminderModal(assignment),
+                                      },
+                                      {
+                                        id: 'escalate',
+                                        label: isPolish ? 'Eskaluj teraz' : 'Escalate now',
+                                        icon: ArrowUpRight,
+                                        disabled:
+                                          Boolean(assignment.escalatedAt) ||
+                                          Boolean(assignment.escalationTarget),
+                                        description: isPolish
+                                          ? 'Ręczna eskalacja będzie wkrótce dostępna'
+                                          : 'Manual escalation coming soon',
+                                        onClick: () => handleEscalateNow(assignment),
                                       },
                                     ]
                                   : []),
@@ -7161,7 +7786,10 @@ Return ONLY the answer text (no markdown fences).`;
                     (hasAssigneeColumn ? 1 : 0) +
                     (!hiddenSet.has('status') ? 1 : 0) +
                     (!hiddenSet.has('progress') ? 1 : 0) +
-                    (!hiddenSet.has('due') ? 1 : 0)
+                    (!hiddenSet.has('due') ? 1 : 0) +
+                    (showSubmittedColumn ? 1 : 0) +
+                    (showAiScoreColumn ? 1 : 0) +
+                    (showEscalationColumn ? 1 : 0)
                   }
                   className="px-4 py-12 text-center"
                 >
@@ -8345,7 +8973,7 @@ Return ONLY the answer text (no markdown fences).`;
     }
 
     if (activeTab === 'my_assignments') {
-      const rows = myAssignments || [];
+      const rows = filteredMyAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
       const selectedItem = selected
         ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & {
@@ -9534,6 +10162,217 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* #11b — Manager Approve flow with AI snapshot. Shows AI score, weak/short
+          answers, and a 1-click "Send back" prefilled from the AI assessment.
+          Degrades gracefully when no AI assessment exists. */}
+      {showApproveModal && selectedAssignment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[88vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Check size={18} className="text-emerald-500" />
+                {isPolish ? 'Zatwierdź wywiad' : 'Approve interview'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowApproveModal(false);
+                  setSelectedAssignment(null);
+                }}
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4 overflow-auto">
+              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
+                <div className="text-sm text-slate-900 dark:text-white font-medium">
+                  {selectedAssignment.template?.name || 'Interview'}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {selectedAssignment.assignee?.name ||
+                    selectedAssignment.assignee?.email ||
+                    (isPolish ? 'Nieznany' : 'Unknown')}
+                </div>
+              </div>
+
+              {/* AI snapshot panel */}
+              {(() => {
+                const ai = selectedAssignment.aiReview;
+                if (!ai || (typeof ai.overallScore !== 'number' && !ai.weakAnswerMap?.length)) {
+                  return (
+                    <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800/60 p-3 mb-4 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                      <Sparkles size={14} className="text-slate-400" />
+                      {isPolish
+                        ? 'Ocena AI niedostępna dla tego wywiadu.'
+                        : 'AI assessment not available for this interview.'}
+                    </div>
+                  );
+                }
+                const pct =
+                  typeof ai.overallScore === 'number'
+                    ? Math.round(ai.overallScore <= 1 ? ai.overallScore * 100 : ai.overallScore)
+                    : null;
+                const weak = (ai.weakAnswerMap || []).filter(
+                  (w) => w.verdict === 'needs_improvement' || w.verdict === 'insufficient'
+                );
+                return (
+                  <div className="rounded-lg border border-primary-200/70 dark:border-primary-400/20 bg-primary-50/60 dark:bg-primary-500/[0.08] p-3 mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300 flex items-center gap-1.5">
+                        <Gauge size={14} />
+                        {isPolish ? 'Ocena AI' : 'AI assessment'}
+                      </span>
+                      {pct !== null ? (
+                        <span
+                          className={`text-sm font-bold ${
+                            pct >= 75
+                              ? 'text-emerald-600 dark:text-emerald-300'
+                              : pct >= 50
+                                ? 'text-amber-600 dark:text-amber-300'
+                                : 'text-rose-600 dark:text-rose-300'
+                          }`}
+                        >
+                          {pct}/100
+                        </span>
+                      ) : null}
+                    </div>
+                    {weak.length > 0 ? (
+                      <div className="mt-2.5">
+                        <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Słabe / krótkie odpowiedzi:' : 'Weak / short answers:'}
+                        </div>
+                        <ul className="space-y-1 max-h-40 overflow-auto">
+                          {weak.slice(0, 8).map((w) => (
+                            <li
+                              key={w.key}
+                              className="text-xs text-slate-700 dark:text-slate-200 flex items-start gap-1.5"
+                            >
+                              <AlertTriangle size={11} className="mt-0.5 shrink-0 text-amber-500" />
+                              <span className="min-w-0">
+                                <span className="font-medium">{w.label}</span>
+                                {w.feedback ? (
+                                  <span className="text-slate-500 dark:text-slate-400">
+                                    {' '}
+                                    — {w.feedback}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">
+                        {isPolish
+                          ? 'Brak słabych odpowiedzi wykrytych przez AI.'
+                          : 'No weak answers flagged by AI.'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // 1-click Send back, prefilled from the AI assessment.
+                    setShowApproveModal(false);
+                    handleOpenSendBackModal(selectedAssignment);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-rose-300 dark:border-rose-400/30 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-medium transition-colors"
+                >
+                  <RotateCcw size={16} className="inline mr-2" />
+                  {isPolish ? 'Zwróć do poprawy' : 'Send back'}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const a = selectedAssignment;
+                    setShowApproveModal(false);
+                    setSelectedAssignment(null);
+                    await handleApproveAssignment(a);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-colors"
+                >
+                  <Check size={16} className="inline mr-2" />
+                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* #7b — Change due date modal (wired to manageAssignment, mode 'update'). */}
+      {showDueDateModal && selectedAssignment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <CalendarClock size={18} className="text-primary-500" />
+                {isPolish ? 'Zmień termin' : 'Change due date'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowDueDateModal(false);
+                  setSelectedAssignment(null);
+                }}
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
+                <div className="text-sm text-slate-900 dark:text-white font-medium">
+                  {selectedAssignment.template?.name || 'Interview'}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {selectedAssignment.assignee?.name ||
+                    selectedAssignment.assignee?.email ||
+                    (isPolish ? 'Nieznany' : 'Unknown')}
+                </div>
+              </div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                {isPolish ? 'Nowy termin' : 'New due date'}
+              </label>
+              <input
+                type="date"
+                value={dueDateDraft}
+                onChange={(e) => setDueDateDraft(e.target.value)}
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDueDateModal(false);
+                    setSelectedAssignment(null);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleChangeDueDate}
+                  disabled={manageAssignmentBusy}
+                  className="flex-1 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {manageAssignmentBusy ? (
+                    <Loader2 size={16} className="inline mr-2 animate-spin" />
+                  ) : (
+                    <CalendarClock size={16} className="inline mr-2" />
+                  )}
+                  {isPolish ? 'Zapisz' : 'Save'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
