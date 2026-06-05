@@ -7,18 +7,22 @@ import {
   AlertTriangle,
   BarChart3,
   Brain,
+  Check,
+  CheckCircle2,
   Compass,
+  ExternalLink,
   FileText,
+  Info,
   Lightbulb,
   Loader2,
   MessageSquare,
   Package,
-  Paperclip,
   Save,
   Sparkles,
   Target,
   Trash2,
   TrendingUp,
+  UploadCloud,
   Users,
   X,
   Zap,
@@ -102,11 +106,91 @@ interface InsightSourceBasket {
   lastUsedAt?: string | null;
 }
 
+/**
+ * #28e — Lightweight client-side duplicate/similarity hit. We compare the new
+ * insight title against insights already loaded in scope (token overlap +
+ * substring). A server-side semantic check (à la POST /initiatives/similarity-check)
+ * does not yet exist for insights — see the TODO in checkSimilarInsights().
+ */
+interface SimilarInsightHit {
+  id: string;
+  title: string;
+  score: number; // 0..1 — fraction of shared significant tokens
+}
+
 interface InsightCreatorModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
+
+// #28 — App-styled checkbox: a custom navy/rounded box replacing the default
+// browser checkbox, consistent with the modal's dark palette. Render it inside a
+// <label> next to the visible content (label handles the click/keyboard).
+const StyledCheck: React.FC<{
+  checked: boolean;
+  disabled?: boolean;
+  className?: string;
+}> = ({ checked, disabled, className = '' }) => (
+  <span
+    aria-hidden="true"
+    className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border transition-all ${
+      checked
+        ? 'border-primary-500 bg-primary-600 text-white shadow-sm shadow-primary-500/30'
+        : 'border-slate-300 bg-white text-transparent dark:border-white/[0.18] dark:bg-navy-900'
+    } ${disabled ? 'opacity-50' : ''} ${className}`}
+  >
+    <Check size={12} strokeWidth={3} className={checked ? 'opacity-100' : 'opacity-0'} />
+  </span>
+);
+
+// #28 — Small info tooltip trigger for controls that need explanation. Uses the
+// native title attribute (no portal dependency) plus a subtle hover ring.
+const InfoHint: React.FC<{ text: string }> = ({ text }) => (
+  <span
+    title={text}
+    className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full text-slate-400 transition-colors hover:text-primary-500"
+    aria-label={text}
+  >
+    <Info size={13} />
+  </span>
+);
+
+// #28e — Normalize a title into significant tokens for the client-side check.
+const STOPWORDS = new Set([
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'of',
+  'for',
+  'to',
+  'in',
+  'on',
+  'with',
+  'analysis',
+  'insight',
+  'report',
+  'i',
+  'oraz',
+  'dla',
+  'na',
+  'w',
+  'z',
+  'do',
+  'analiza',
+  'analizy',
+  'raport',
+  'wnioski',
+  'wniosek',
+]);
+const tokenizeTitle = (value: string): string[] =>
+  value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 2 && !STOPWORDS.has(token));
 
 const MAX_CONTEXT_FILES = 5;
 const MAX_CONTEXT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -529,6 +613,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [selectedContextDocumentIds, setSelectedContextDocumentIds] = useState<string[]>([]);
   const [isLoadingContextDocuments, setIsLoadingContextDocuments] = useState(false);
   const [isUploadingContextDocument, setIsUploadingContextDocument] = useState(false);
+  const [isContextDragActive, setIsContextDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const sessionSelectionTouchedRef = useRef(false);
 
@@ -536,6 +621,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [completedSessions, setCompletedSessions] = useState<CompletedSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // #28e — Existing insights loaded in scope, used for client-side duplicate
+  // detection before Run. Non-fatal if the list cannot be loaded.
+  const [existingInsights, setExistingInsights] = useState<Array<{ id: string; title: string }>>(
+    []
+  );
+  const [similarHits, setSimilarHits] = useState<SimilarInsightHit[]>([]);
+  const [similarDismissed, setSimilarDismissed] = useState(false);
 
   // Source baskets — reusable saved source selections
   const [baskets, setBaskets] = useState<InsightSourceBasket[]>([]);
@@ -578,6 +671,23 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     } catch (error) {
       // Non-fatal: the wizard still works without saved baskets.
       console.error('[InsightCreatorModal] Failed to load source baskets:', error);
+    }
+  }, []);
+
+  // #28e — Load existing insights (titles only) so we can warn about duplicates
+  // before generating. Best-effort: the wizard works without this list.
+  const fetchExistingInsights = useCallback(async () => {
+    try {
+      const res = await V8InterviewApi.listInsights({ limit: 200 });
+      const list = Array.isArray(res?.insights) ? res.insights : [];
+      setExistingInsights(
+        list
+          .filter((insight) => insight?.id && insight?.title)
+          .map((insight) => ({ id: insight.id, title: insight.title }))
+      );
+    } catch (error) {
+      // Non-fatal: duplicate detection is an optional safety net.
+      console.error('[InsightCreatorModal] Failed to load existing insights:', error);
     }
   }, []);
 
@@ -680,8 +790,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     setShowSaveBasket(true);
   };
 
-  const handleContextFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+  const uploadContextFiles = async (fileList: File[]) => {
+    const files = fileList;
     if (files.length === 0) return;
     const remainingSlots = MAX_CONTEXT_FILES;
     const toUpload = files.slice(0, remainingSlots);
@@ -734,8 +844,23 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       );
     } finally {
       setIsUploadingContextDocument(false);
-      event.target.value = '';
     }
+  };
+
+  const handleContextFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    await uploadContextFiles(files);
+    event.target.value = '';
+  };
+
+  // #28 — Drag/drop support for the context-document dropzone.
+  const handleContextDrop = async (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsContextDragActive(false);
+    if (isUploadingContextDocument) return;
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length > 0) await uploadContextFiles(files);
   };
 
   const toggleContextDocument = (doc: V8ContextDocument) => {
@@ -835,6 +960,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         }
         await fetchContextDocuments();
         await fetchBaskets();
+        await fetchExistingInsights();
       } catch (error) {
         console.error('[InsightCreatorModal] Failed to load data:', error);
         setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
@@ -844,7 +970,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     };
 
     loadData();
-  }, [fetchBaskets, fetchContextDocuments, isOpen, isPolish]);
+  }, [fetchBaskets, fetchContextDocuments, fetchExistingInsights, isOpen, isPolish]);
 
   // Reset on close
   useEffect(() => {
@@ -876,7 +1002,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setUseDateFilter(false);
       setContextDocuments([]);
       setSelectedContextDocumentIds([]);
+      setIsContextDragActive(false);
       setLoadError(null);
+      setExistingInsights([]);
+      setSimilarHits([]);
+      setSimilarDismissed(false);
       setBaskets([]);
       setActiveBasketId('');
       setShowSaveBasket(false);
@@ -942,24 +1072,34 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     useTemplateFilter,
   ]);
 
+  // #28b — Build the respondent list for the People step. Previously a session
+  // was dropped whenever respondentName was empty/whitespace, which (combined
+  // with truthy-only filtering) could surface as blank checkbox slots once the
+  // label tried to render an empty string. We now require a real respondentId
+  // and fall back to a clear "Unnamed respondent" label so every row shows text
+  // next to its checkbox rather than an empty slot.
   const respondentOptions = useMemo(() => {
     const respondents = new Map<
       string,
       { id: string; name: string; role?: string; department?: string; sessionCount: number }
     >();
     completedSessions.forEach((session) => {
-      if (!session.respondentId || !session.respondentName) return;
+      if (!session.respondentId) return;
+      const trimmedName = session.respondentName?.trim();
       const existing = respondents.get(session.respondentId);
       respondents.set(session.respondentId, {
         id: session.respondentId,
-        name: session.respondentName,
-        role: existing?.role || session.respondentRole,
-        department: existing?.department || session.department,
+        name:
+          existing?.name ||
+          trimmedName ||
+          (isPolish ? 'Respondent bez nazwy' : 'Unnamed respondent'),
+        role: existing?.role || session.respondentRole?.trim() || undefined,
+        department: existing?.department || session.department?.trim() || undefined,
         sessionCount: (existing?.sessionCount ?? 0) + 1,
       });
     });
     return Array.from(respondents.values());
-  }, [completedSessions]);
+  }, [completedSessions, isPolish]);
 
   const roleOptions = useMemo(
     () =>
@@ -984,6 +1124,42 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       ).sort(),
     [completedSessions]
   );
+
+  // #28e — Recompute the duplicate/similarity warning whenever the title or the
+  // loaded insight list changes. Pure client-side: token overlap + substring.
+  // TODO(server): add a semantic insight similarity endpoint (mirroring
+  // POST /initiatives/similarity-check) and prefer it over this heuristic.
+  useEffect(() => {
+    const trimmed = title.trim();
+    setSimilarDismissed(false);
+    if (trimmed.length < 4 || existingInsights.length === 0) {
+      setSimilarHits([]);
+      return;
+    }
+    const candidateTokens = tokenizeTitle(trimmed);
+    const candidateLower = trimmed.toLowerCase();
+    const hits: SimilarInsightHit[] = [];
+    for (const insight of existingInsights) {
+      const existingLower = insight.title.trim().toLowerCase();
+      if (!existingLower) continue;
+      const existingTokens = tokenizeTitle(insight.title);
+      let score = 0;
+      // Exact / substring containment is a strong signal.
+      if (existingLower === candidateLower) {
+        score = 1;
+      } else if (existingLower.includes(candidateLower) || candidateLower.includes(existingLower)) {
+        score = 0.85;
+      } else if (candidateTokens.length > 0 && existingTokens.length > 0) {
+        const existingSet = new Set(existingTokens);
+        const shared = candidateTokens.filter((token) => existingSet.has(token)).length;
+        const union = new Set([...candidateTokens, ...existingTokens]).size;
+        score = union > 0 ? shared / union : 0;
+      }
+      if (score >= 0.5) hits.push({ id: insight.id, title: insight.title, score });
+    }
+    hits.sort((a, b) => b.score - a.score);
+    setSimilarHits(hits.slice(0, 3));
+  }, [title, existingInsights]);
 
   useEffect(() => {
     const visibleSessionIds = new Set(filteredSessions.map((session) => session.id));
@@ -1353,40 +1529,62 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   };
 
   const renderStepper = () => (
-    <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
+    <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2.5 dark:border-white/[0.08] dark:bg-navy-950/30">
       <div className="grid grid-cols-5 gap-1.5">
         {CREATOR_STEPS.map((step, index) => {
           const isActive = index === currentStep;
           const isComplete = index < currentStep && canCompleteStep(index);
+          const isVisited = index <= currentStep;
           return (
             <button
               key={step.id}
               type="button"
               onClick={() => setCurrentStep(index)}
-              className={`rounded-xl border px-2 py-1.5 text-left transition-all ${
+              title={isPolish ? step.hintPl : step.hintEn}
+              aria-current={isActive ? 'step' : undefined}
+              className={`group relative rounded-xl border px-2 py-1.5 text-left transition-all ${
                 isActive
                   ? 'border-primary-500/40 bg-primary-50 text-primary-700 ring-1 ring-primary-500/20 dark:bg-primary-500/15 dark:text-primary-200'
                   : isComplete
-                    ? 'border-slate-200 bg-white text-slate-600 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
+                    ? 'border-emerald-300/50 bg-white text-slate-600 dark:border-emerald-500/20 dark:bg-navy-900/70 dark:text-slate-300'
                     : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
               } hover:border-primary-500/50`}
             >
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold ${
+                  className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold transition-colors ${
                     isActive
-                      ? 'bg-primary-500 text-white'
+                      ? 'bg-primary-600 text-white shadow-sm shadow-primary-500/30'
                       : isComplete
-                        ? 'bg-slate-200 text-slate-700 dark:bg-navy-700 dark:text-slate-200'
+                        ? 'bg-emerald-500 text-white'
                         : 'bg-slate-200/80 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
                   }`}
                 >
-                  {index + 1}
+                  {isComplete ? <Check size={12} strokeWidth={3} /> : index + 1}
                 </span>
-                <span className="text-xs font-semibold leading-none">
-                  {isPolish ? step.labelPl : step.labelEn}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold leading-tight">
+                    {isPolish ? step.labelPl : step.labelEn}
+                  </span>
+                  <span
+                    className={`mt-0.5 hidden truncate text-[10px] leading-tight sm:block ${
+                      isActive ? 'text-primary-500/80 dark:text-primary-300/70' : 'text-slate-400'
+                    }`}
+                  >
+                    {isPolish ? step.hintPl : step.hintEn}
+                  </span>
                 </span>
               </div>
+              {/* progress fill underline */}
+              <span
+                className={`absolute inset-x-2 bottom-1 h-0.5 rounded-full transition-colors ${
+                  isActive
+                    ? 'bg-primary-500/60'
+                    : isVisited
+                      ? 'bg-emerald-400/40'
+                      : 'bg-transparent'
+                }`}
+              />
             </button>
           );
         })}
@@ -1411,6 +1609,61 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     );
   };
 
+  // #28e — Non-blocking warning chip/banner when a similar insight already
+  // exists. The user can ignore it (Run still works) or open the existing one.
+  const renderSimilarWarning = () => {
+    if (similarDismissed || similarHits.length === 0) return null;
+    const top = similarHits[0];
+    return (
+      <div className="rounded-xl border border-amber-300/70 bg-amber-50 px-3 py-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+        <div className="flex items-start gap-2">
+          <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+              {isPolish
+                ? 'Podobny wniosek może już istnieć:'
+                : 'A similar insight may already exist:'}
+            </p>
+            <ul className="mt-1 space-y-1">
+              {similarHits.map((hit) => (
+                <li key={hit.id} className="flex items-center gap-1.5">
+                  <a
+                    href={`/interview?tab=insights&insightId=${encodeURIComponent(hit.id)}`}
+                    onClick={onClose}
+                    className="inline-flex items-center gap-1 truncate text-xs font-medium text-amber-800 underline decoration-amber-400/60 underline-offset-2 transition-colors hover:text-amber-900 dark:text-amber-200 dark:hover:text-amber-100"
+                    title={isPolish ? 'Otwórz istniejący wniosek' : 'Open the existing insight'}
+                  >
+                    <span className="truncate">{hit.title}</span>
+                    <ExternalLink size={11} className="shrink-0" />
+                  </a>
+                  <span className="shrink-0 text-[10px] text-amber-600/80 dark:text-amber-300/70">
+                    {Math.round(hit.score * 100)}%
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-1.5 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSimilarDismissed(true)}
+                className="text-[11px] font-medium text-amber-700 transition-colors hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100"
+              >
+                {isPolish ? 'Generuj mimo to' : 'Proceed anyway'}
+              </button>
+              <a
+                href={`/interview?tab=insights&insightId=${encodeURIComponent(top.id)}`}
+                onClick={onClose}
+                className="text-[11px] font-medium text-amber-700 underline underline-offset-2 transition-colors hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100"
+              >
+                {isPolish ? 'Otwórz najbliższy' : 'Open closest match'}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderGoalStep = () => (
     <div className="space-y-3">
       <div>
@@ -1428,6 +1681,18 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           }
           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
+        {renderSimilarWarning()}
+        {title.trim().length >= 4 &&
+          existingInsights.length > 0 &&
+          similarHits.length === 0 &&
+          !similarDismissed && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 size={12} />
+              {isPolish
+                ? 'Brak podobnych wniosków o tej nazwie.'
+                : 'No similar insights with this name.'}
+            </p>
+          )}
       </div>
 
       <div>
@@ -1451,8 +1716,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleAnalysisType(type.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                    className="sr-only"
                   />
+                  <StyledCheck checked={isSelected} />
                   <div
                     className={`flex h-7 w-7 items-center justify-center rounded-md ${getColorClasses(
                       type.color,
@@ -1490,8 +1756,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     <div className="space-y-3">
       <div>
         <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
             {isPolish ? 'Wybierz osoby' : 'Select people'}
+            <InfoHint
+              text={
+                isPolish
+                  ? 'Zawęź analizę do odpowiedzi wybranych respondentów. Brak wyboru = wszystkie osoby z wybranego materiału.'
+                  : 'Narrow the analysis to selected respondents. No selection = everyone in the chosen material.'
+              }
+            />
           </label>
           <button
             type="button"
@@ -1505,10 +1778,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         {respondentOptions.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
             <Users size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
               {isPolish
-                ? 'Brak osób w zatwierdzonych wywiadach'
-                : 'No people in approved interviews'}
+                ? 'Nie znaleziono respondentów dla tego materiału'
+                : 'No respondents found for this source'}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {isPolish
+                ? 'Wybrane sesje nie mają przypisanych osób. Analiza obejmie cały wybrany materiał.'
+                : 'The selected sessions have no people attached. The analysis will cover the full selected material.'}
             </p>
           </div>
         ) : (
@@ -1522,12 +1800,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
               }`}
             >
-              <input
-                type="checkbox"
-                checked={selectedRespondents.length === 0}
-                readOnly
-                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
-              />
+              <StyledCheck checked={selectedRespondents.length === 0} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                   {isPolish ? 'Wszystkie osoby' : 'All people'}
@@ -1551,8 +1824,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleRespondent(respondent.id)}
-                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                      className="sr-only"
                     />
+                    <StyledCheck checked={isSelected} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                         {respondent.name}
@@ -1561,6 +1835,16 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                             {[respondent.role, respondent.department].filter(Boolean).join(' • ')}
                           </span>
                         )}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-slate-400">
+                        {respondent.sessionCount}{' '}
+                        {isPolish
+                          ? respondent.sessionCount === 1
+                            ? 'sesja'
+                            : 'sesji'
+                          : respondent.sessionCount === 1
+                            ? 'session'
+                            : 'sessions'}
                       </div>
                     </div>
                   </label>
@@ -1857,8 +2141,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleSession(session.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                    className="sr-only"
                   />
+                  <StyledCheck checked={isSelected} />
                   <div className="flex-1 min-w-0">
                     <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                       {session.name || 'Interview Session'}
@@ -1892,8 +2177,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const renderAnalysisStep = () => (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-slate-500 mb-1">
+        <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
           {isPolish ? 'Tryb analizy' : 'Analysis mode'}
+          <InfoHint
+            text={
+              isPolish
+                ? 'Soczewka promptu — określa, jak AI czyta materiał. Możesz wybrać kilka.'
+                : 'Prompt lens — controls how the AI reads the material. You may pick several.'
+            }
+          />
         </label>
         <div className="max-h-56 space-y-1.5 overflow-auto pr-1">
           {ANALYSIS_MODE_OPTIONS.map((mode) => {
@@ -1911,8 +2203,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleAnalysisMode(mode.id)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                  className="sr-only"
                 />
+                <StyledCheck checked={isSelected} className="mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                     {isPolish ? mode.labelPl : mode.labelEn}
@@ -1983,8 +2276,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <div className="mb-2 text-xs font-medium text-slate-500">
+        <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
           {isPolish ? 'Zakres kontekstu AI' : 'AI context boundary'}
+          <InfoHint
+            text={
+              isPolish
+                ? 'Decyduje, czy AI może sięgnąć poza wybrane wywiady do zaakceptowanej wiedzy organizacji.'
+                : 'Decides whether the AI may reach beyond the selected interviews into approved organization knowledge.'
+            }
+          />
         </div>
         <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {[
@@ -2018,6 +2318,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {isPolish ? option.titlePl : option.titleEn}
                 </div>
+                <p className="mt-0.5 line-clamp-2 text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                  {isPolish ? option.hintPl : option.hintEn}
+                </p>
               </button>
             );
           })}
@@ -2028,6 +2331,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const renderContextStep = () => (
     <div className="space-y-3">
+      {renderSimilarWarning()}
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           {isPolish ? 'Pytanie prowadzące' : 'Leading question'}
@@ -2063,35 +2367,69 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-            <Paperclip size={14} className="text-slate-600" />
-            <span>
-              {isPolish
-                ? 'Dokumenty (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 plików po 10 MB)'
-                : 'Documents (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 files, 10 MB each)'}
-            </span>
-          </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 transition-colors hover:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-200">
-            <Paperclip size={12} />
+        <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+          {isPolish ? 'Dokumenty kontekstowe' : 'Context documents'}
+          <InfoHint
+            text={
+              isPolish
+                ? 'Pliki dodają kontekst organizacji/projektu do analizy. Wybierz gotowe dokumenty poniżej, aby AI je uwzględniła.'
+                : 'Files add organization/project context to the analysis. Tick ready documents below so the AI uses them.'
+            }
+          />
+        </div>
+        {/* #28 — Proper drag-and-drop zone */}
+        <label
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (!isUploadingContextDocument) setIsContextDragActive(true);
+          }}
+          onDragLeave={(event) => {
+            event.preventDefault();
+            setIsContextDragActive(false);
+          }}
+          onDrop={(event) => void handleContextDrop(event)}
+          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all ${
+            isContextDragActive
+              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-500/20 dark:bg-primary-500/10'
+              : 'border-slate-300 bg-white hover:border-primary-500/60 hover:bg-primary-50/40 dark:border-white/[0.15] dark:bg-navy-900/60 dark:hover:border-primary-500/40'
+          } ${isUploadingContextDocument ? 'pointer-events-none opacity-70' : ''}`}
+        >
+          {isUploadingContextDocument ? (
+            <Loader2 size={20} className="animate-spin text-primary-500" />
+          ) : (
+            <UploadCloud
+              size={22}
+              className={isContextDragActive ? 'text-primary-500' : 'text-slate-400'}
+            />
+          )}
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
             {isUploadingContextDocument
               ? isPolish
                 ? 'Wysyłanie...'
                 : 'Uploading...'
-              : isPolish
-                ? 'Dodaj pliki'
-                : 'Add files'}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept={CONTEXT_FILE_ACCEPT}
-              onChange={handleContextFileUpload}
-              className="hidden"
-              disabled={isUploadingContextDocument}
-            />
-          </label>
-        </div>
+              : isContextDragActive
+                ? isPolish
+                  ? 'Upuść pliki tutaj'
+                  : 'Drop files here'
+                : isPolish
+                  ? 'Przeciągnij pliki lub kliknij, aby wybrać'
+                  : 'Drag files here or click to browse'}
+          </span>
+          <span className="text-[11px] text-slate-400">
+            {isPolish
+              ? 'TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT · max 5 plików · 10 MB każdy'
+              : 'TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT · max 5 files · 10 MB each'}
+          </span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={CONTEXT_FILE_ACCEPT}
+            onChange={handleContextFileUpload}
+            className="hidden"
+            disabled={isUploadingContextDocument}
+          />
+        </label>
         {isLoadingContextDocuments ? (
           <div className="mt-3 flex items-center justify-center py-6">
             <Loader2 size={18} className="animate-spin text-slate-600" />
@@ -2122,8 +2460,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     checked={selected}
                     disabled={disabled}
                     onChange={() => toggleContextDocument(doc)}
-                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/[0.18] dark:bg-navy-900"
+                    className="sr-only"
                   />
+                  <StyledCheck checked={selected} disabled={disabled} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-xs font-medium text-slate-900 dark:text-slate-100">
                       {doc.filename}
