@@ -249,4 +249,5 @@ Commit message kończy się: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic
 3 agenty równolegle / falę → wspólna weryfikacja → 3 osobne commity → tick w tym pliku → `git commit` docs. Owner powiedział: „rób bez przerwy, odhaczaj statusy" — wykonywać autonomicznie, nie dopytywać o zgodę na każdy krok.
 
 ## NASTĘPNY PUNKT DO ODHACZENIA
-→ **#24b** (solo P0), potem **Fala A** (AI 3-poziomowy + N/C persist + SummaryCard).
+→ Fala 0 ✅ · Fala A ✅ (AI tool-level, SummaryCard, N/C persist, specy) · Fala B ✅ (FilterableTable kanon, Templates kolumny+kebab).
+→ **Następne: Fala C — Faza 4 workflow managera**: #11 ⭐ AI Quality Gate pre-submit · #7b/#8 row-menu+bulk · #9/#9b kolumny Sessions+eskalacja · #5 redesign formatki · #6 Inbox chipy. Pliki: Inbox/Answer flow vs InterviewHub Sessions — rozdzielić między agentów.
