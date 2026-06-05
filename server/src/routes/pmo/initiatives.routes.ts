@@ -9,6 +9,7 @@ import { type Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
+import { InitiativeStatus } from '../../constants/initiativeStatuses.js';
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
 import { StaffingPlanController } from '../../controllers/StaffingPlanController.js';
@@ -346,6 +347,75 @@ router.post(
     }
   }
 );
+
+/**
+ * GET /api/initiatives/capacity?projectId=...
+ * Audit #29c: lightweight capacity / overload signal for the AI Initiative
+ * Wizard. Counts non-terminal ("active") initiatives in the org (optionally
+ * scoped to a project) and returns a suggested number of NEW initiatives to
+ * create plus an overload band. Read-only, org-scoped, never mutates state.
+ *
+ *   activeCount  — initiatives whose status is NOT CANCELLED/ARCHIVED/DONE
+ *   suggestedCount — 0-2 active → 3-5; 3-5 → 2-3; 6+ → 1-2 (we surface the
+ *                    upper bound so the count field defaults sensibly)
+ *   overload     — 'green' (0-2) | 'amber' (3-5) | 'red' (6+)
+ */
+router.get('/capacity', requireOrgRole('user'), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const projectId =
+      typeof req.query?.projectId === 'string' && req.query.projectId.trim().length > 0
+        ? String(req.query.projectId).trim()
+        : null;
+
+    const excluded = [
+      InitiativeStatus.CANCELLED,
+      InitiativeStatus.ARCHIVED,
+      InitiativeStatus.DONE,
+    ].map((status) => status.toUpperCase());
+
+    const params: unknown[] = [String(orgId), ...excluded];
+    let sql = `SELECT COUNT(*) AS active_count
+                 FROM initiatives
+                WHERE organization_id = ?
+                  AND UPPER(COALESCE(status, '')) NOT IN (${excluded.map(() => '?').join(', ')})`;
+    if (projectId) {
+      sql += ' AND project_id = ?';
+      params.push(projectId);
+    }
+
+    const row = await queryHelpers.queryOne<{ active_count?: number }>(sql, params);
+    const activeCount = Number(row?.active_count ?? 0);
+
+    let suggestedCount: number;
+    let overload: 'green' | 'amber' | 'red';
+    if (activeCount <= 2) {
+      suggestedCount = 3;
+      overload = 'green';
+    } else if (activeCount <= 5) {
+      suggestedCount = 3;
+      overload = 'amber';
+    } else {
+      suggestedCount = 2;
+      overload = 'red';
+    }
+
+    return res.json({ activeCount, suggestedCount, overload });
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json(
+        buildPmoInitiativesFailClosedError(
+          req,
+          500,
+          'PMO_INITIATIVES_CAPACITY_FAILED',
+          'Failed to compute initiative capacity.'
+        )
+      );
+  }
+});
 
 /**
  * GET /api/initiatives/portfolio

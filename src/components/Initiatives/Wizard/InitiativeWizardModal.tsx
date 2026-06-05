@@ -12,12 +12,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
+import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 
 import { InitiativeStatus, type PortfolioInitiative } from '../../../types';
 
-type WizardStep = 'intent' | 'candidates' | 'governance' | 'result';
+type WizardStep = 'insights' | 'intent' | 'candidates' | 'governance' | 'result';
 
 type CandidateStatus =
   | 'new_candidate'
@@ -187,6 +188,85 @@ const SIMILARITY_TOP_MATCH_LABEL: Record<WizardLanguage, string> = {
   en: 'Closest',
 };
 
+// ---- #29c capacity (overload) signal -----------------------------------------
+interface CapacitySignal {
+  activeCount: number;
+  suggestedCount: number;
+  overload: 'green' | 'amber' | 'red';
+}
+
+// ---- Localized copy for the additive steps (#29b, #29c, #29f) ----------------
+const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
+  pl: {
+    stepInsights: 'Wnioski',
+    selectInsightsTitle: 'Wybierz wnioski do analizy',
+    selectInsightsHint:
+      'Zaznacz 1 lub więcej wniosków z wywiadów. Inicjatywy zostaną wygenerowane na ich podstawie, a lineage (źródło → inicjatywa) będzie zapisany.',
+    insightsLoading: 'Ładowanie wniosków…',
+    insightsEmpty: 'Brak dostępnych wniosków z wywiadów.',
+    insightsError: 'Nie udało się pobrać wniosków. Spróbuj ponownie.',
+    findings: 'obserwacji',
+    selectedSummary: 'Wybrano',
+    none: 'Brak wyboru — przejdź dalej, aby skorzystać z hygieny portfolio.',
+    capacityPrefix: 'zespół ma',
+    capacityActive: 'aktywnych inicjatyw',
+    capacitySuggested: 'sugerowane',
+    capacityOverloadAmber: 'Portfolio zaczyna być obciążone — rozważ mniejszą liczbę.',
+    capacityOverloadRed: 'Portfolio jest przeciążone — utwórz tylko 1–2 nowe inicjatywy.',
+    bulkSelectTitle: 'Wybierz inicjatywy do utworzenia',
+    bulkSelectHint: 'Komfortowo twórz 1–3 inicjatywy naraz. Każda to ciężki obiekt.',
+    bulkSoftLimit: 'Tworzysz {n} inicjatyw — rozważ mniej; każda to ciężki obiekt.',
+    bulkProgress: 'Tworzenie inicjatyw…',
+    next: 'Dalej',
+    back: 'Wstecz',
+  },
+  en: {
+    stepInsights: 'Insights',
+    selectInsightsTitle: 'Select insights to analyze',
+    selectInsightsHint:
+      'Pick 1 or more interview insights. Initiatives will be generated from them, and the lineage (source → initiative) will be recorded.',
+    insightsLoading: 'Loading insights…',
+    insightsEmpty: 'No interview insights available.',
+    insightsError: 'Failed to load insights. Try again.',
+    findings: 'findings',
+    selectedSummary: 'Selected',
+    none: 'Nothing selected — continue to use portfolio hygiene instead.',
+    capacityPrefix: 'the team has',
+    capacityActive: 'active initiatives',
+    capacitySuggested: 'suggested',
+    capacityOverloadAmber: 'Portfolio is getting loaded — consider fewer.',
+    capacityOverloadRed: 'Portfolio is overloaded — create only 1–2 new initiatives.',
+    bulkSelectTitle: 'Select initiatives to create',
+    bulkSelectHint: 'Comfortably create 1–3 initiatives at a time. Each is a heavy object.',
+    bulkSoftLimit: 'You are creating {n} initiatives — consider fewer; each is a heavy object.',
+    bulkProgress: 'Creating initiatives…',
+    next: 'Next',
+    back: 'Back',
+  },
+};
+
+function countInsightFindings(insight: V8InterviewInsight): number {
+  const themes = Array.isArray(insight.themes) ? insight.themes.length : 0;
+  const issues = Array.isArray(insight.issues) ? insight.issues.length : 0;
+  const opportunities = Array.isArray(insight.opportunities) ? insight.opportunities.length : 0;
+  return themes + issues + opportunities;
+}
+
+function formatInsightDate(value: string | undefined, language: WizardLanguage): string {
+  if (!value) return '';
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return value;
+  }
+}
+
 interface InitiativeWizardModalProps {
   isOpen: boolean;
   projectId?: string | null;
@@ -287,9 +367,23 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   onClose,
   onCreated,
 }) => {
-  const [step, setStep] = useState<WizardStep>('intent');
+  const [step, setStep] = useState<WizardStep>('insights');
   const [mode, setMode] = useState(initialMode);
   const [targetCount, setTargetCount] = useState(initialTargetCount);
+  // #29b — Step 0: insight selection. The user picks 1-N interview insights the
+  // initiatives are generated from; selection carries into the generation
+  // request and tags created initiatives (1:N lineage).
+  const [insights, setInsights] = useState<V8InterviewInsight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [selectedInsightIds, setSelectedInsightIds] = useState<string[]>([]);
+  // #29c — capacity / overload signal fetched in the Intent step.
+  const [capacity, setCapacity] = useState<CapacitySignal | null>(null);
+  // #29f — which actionable candidates the user wants to actually create.
+  const [selectedCreateIds, setSelectedCreateIds] = useState<string[]>([]);
+  const [createProgress, setCreateProgress] = useState<{ done: number; total: number } | null>(
+    null
+  );
   const [timeHorizon, setTimeHorizon] = useState(initialTimeHorizon);
   const [riskAppetite, setRiskAppetite] = useState(initialRiskAppetite);
   const [businessPriorities, setBusinessPriorities] = useState<string[]>(initialBusinessPriorities);
@@ -309,6 +403,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const [auditError, setAuditError] = useState<string | null>(null);
   const wasOpenRef = useRef(false);
 
+  const t = useMemo(() => WIZARD_COPY[language] ?? WIZARD_COPY.pl, [language]);
+
   const selectedCandidate = useMemo(
     () => candidates.find((candidate) => candidate.id === selectedCandidateId) || candidates[0],
     [candidates, selectedCandidateId]
@@ -317,6 +413,24 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const actionableCandidates = candidates.filter((candidate) =>
     ['accepted_for_shortlist', 'ready_for_charter'].includes(candidate.triageStatus)
   );
+
+  // #29b — aggregate selection summary for Step 0.
+  const selectedInsightSummary = useMemo(() => {
+    const chosen = insights.filter((insight) => selectedInsightIds.includes(insight.id));
+    const findings = chosen.reduce((sum, insight) => sum + countInsightFindings(insight), 0);
+    return { count: chosen.length, findings };
+  }, [insights, selectedInsightIds]);
+
+  // #29f — candidates the user has chosen to materialize (defaults to all
+  // actionable candidates the first time the governance step is reached).
+  const candidatesToCreate = useMemo(
+    () =>
+      actionableCandidates.filter(
+        (candidate) => !candidate.linkedInitiativeId && selectedCreateIds.includes(candidate.id)
+      ),
+    [actionableCandidates, selectedCreateIds]
+  );
+  const overSoftLimit = candidatesToCreate.length > 3;
 
   // Shortlist gate (P0 #7): mirrors backend evaluateShortlistGate so the user
   // sees a clear blocker BEFORE clicking Utworz drafty. Backend remains the
@@ -379,7 +493,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     if (wasOpenRef.current) return;
     wasOpenRef.current = true;
 
-    setStep('intent');
+    setStep('insights');
     setMode(initialMode);
     setTargetCount(initialTargetCount);
     setTimeHorizon(initialTimeHorizon);
@@ -394,6 +508,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     setAuditEvents([]);
     setAuditError(null);
     setAuditLoading(false);
+    setSelectedInsightIds([]);
+    setCapacity(null);
+    setSelectedCreateIds([]);
+    setCreateProgress(null);
   }, [
     initialBusinessPriorities,
     initialManualNotes,
@@ -403,6 +521,98 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     initialTimeHorizon,
     isOpen,
   ]);
+
+  // #29b — load interview insights for Step 0 when the modal opens.
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    const loadInsights = async () => {
+      setInsightsLoading(true);
+      setInsightsError(null);
+      try {
+        const response = await V8InterviewApi.listInsights().catch(() =>
+          Api.get('/interview/insights')
+        );
+        const list = Array.isArray(response?.insights)
+          ? (response.insights as V8InterviewInsight[])
+          : Array.isArray(response)
+            ? (response as V8InterviewInsight[])
+            : [];
+        if (!cancelled) setInsights(list);
+      } catch (error) {
+        console.error('[InitiativeWizardModal] Failed to load insights:', error);
+        if (!cancelled) {
+          setInsights([]);
+          setInsightsError(t.insightsError);
+        }
+      } finally {
+        if (!cancelled) setInsightsLoading(false);
+      }
+    };
+    void loadInsights();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // #29c — fetch the capacity / overload signal when entering the Intent step.
+  // Defaults the count field to the suggested number unless the user has
+  // already touched it (we only apply on the first successful fetch).
+  const capacityFetchedRef = useRef(false);
+  useEffect(() => {
+    if (!isOpen) {
+      capacityFetchedRef.current = false;
+      return;
+    }
+    if (step !== 'intent' || capacityFetchedRef.current) return;
+    capacityFetchedRef.current = true;
+    let cancelled = false;
+    const loadCapacity = async () => {
+      try {
+        const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+        const response = await Api.get(`/initiatives/capacity${query}`);
+        if (cancelled || !response) return;
+        const signal: CapacitySignal = {
+          activeCount: Number(response.activeCount ?? 0),
+          suggestedCount: Number(response.suggestedCount ?? initialTargetCount),
+          overload: (response.overload as CapacitySignal['overload']) ?? 'green',
+        };
+        setCapacity(signal);
+        if (Number.isFinite(signal.suggestedCount) && signal.suggestedCount > 0) {
+          setTargetCount(signal.suggestedCount);
+        }
+      } catch (error) {
+        console.warn('[InitiativeWizardModal] Failed to load capacity signal:', error);
+      }
+    };
+    void loadCapacity();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, step, projectId]);
+
+  // #29f — default the bulk-create selection to every actionable, non-linked
+  // candidate, but keep it in sync as candidates are (re)triaged. We only ever
+  // narrow to currently-actionable ids so stale selections can't leak through.
+  useEffect(() => {
+    const actionableIds = candidates
+      .filter(
+        (candidate) =>
+          ['accepted_for_shortlist', 'ready_for_charter'].includes(candidate.triageStatus) &&
+          !candidate.linkedInitiativeId
+      )
+      .map((candidate) => candidate.id);
+    setSelectedCreateIds((prev) => {
+      const kept = prev.filter((id) => actionableIds.includes(id));
+      // Newly-actionable candidates default to selected.
+      const additions = actionableIds.filter((id) => !prev.includes(id));
+      // If nothing was ever selected, select all actionable by default.
+      if (prev.length === 0) return actionableIds;
+      return [...kept, ...additions];
+    });
+  }, [candidates]);
 
   useEffect(() => {
     if (step !== 'result' || !sessionId) return;
@@ -480,6 +690,22 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const startWizard = async () => {
     setIsWorking(true);
     try {
+      // #29b — selected insights become the evidence sourceBasket so the backend
+      // generates candidates from them (1:N lineage carried through).
+      const insightSources = selectedInsightIds.map((id) => {
+        const insight = insights.find((item) => item.id === id);
+        return {
+          type: 'interview_insight',
+          id,
+          label: insight?.title || 'Interview insight',
+        };
+      });
+      const sourceBasket =
+        insightSources.length > 0
+          ? insightSources
+          : initialSourceBasket.length > 0
+            ? initialSourceBasket
+            : [{ type: 'manual_note', label: 'Consultant wizard input' }];
       const sessionResponse = await Api.post('/initiatives/wizard/sessions', {
         projectId: projectId || undefined,
         mode,
@@ -488,10 +714,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         timeHorizon,
         riskAppetite,
         manualNotes,
-        sourceBasket:
-          initialSourceBasket.length > 0
-            ? initialSourceBasket
-            : [{ type: 'manual_note', label: 'Consultant wizard input' }],
+        sourceBasket,
       });
       const nextSessionId = sessionResponse?.session?.id;
       if (!nextSessionId) throw new Error('Wizard session was not created');
@@ -549,19 +772,33 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       });
       return;
     }
-    const toCreate = actionableCandidates.filter((candidate) => !candidate.linkedInitiativeId);
+    // #29f — only materialize the candidates the user explicitly selected
+    // (soft limit of 1-3 is a warning, never a hard block).
+    const toCreate = candidatesToCreate;
     if (toCreate.length === 0) {
       setStep('result');
       return;
     }
 
     setIsWorking(true);
+    setCreateProgress({ done: 0, total: toCreate.length });
     const created: PortfolioInitiative[] = [];
     try {
       for (const candidate of toCreate) {
         const anchored = extractCandidateAnchoredSource(candidate);
-        const candidateSourceType = anchored?.type || creationSourceType;
-        const candidateSourceId = anchored?.id || creationSourceId || sessionId;
+        // #29b — 1:N insight → initiative lineage: prefer a candidate-anchored
+        // source, then the first selected insight, then the wizard fallbacks.
+        const firstSelectedInsightId = selectedInsightIds[0] || null;
+        const candidateSourceType =
+          anchored?.type || (firstSelectedInsightId ? 'interview_insight' : creationSourceType);
+        const candidateSourceId =
+          anchored?.id || firstSelectedInsightId || creationSourceId || sessionId;
+        // All selected insight ids ride along as evidence refs (1:N), merged
+        // with whatever evidence the candidate already carries.
+        const insightEvidenceRefs = selectedInsightIds.map((id) => `interview_insight:${id}`);
+        const mergedEvidenceRefs = Array.from(
+          new Set([...(candidate.evidenceRefs || []), ...insightEvidenceRefs])
+        );
         const result = await createInitiativeWriteTruth({
           projectId: projectId || undefined,
           title: candidate.title,
@@ -582,6 +819,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             candidateId: candidate.id,
             sourceRefs: candidate.sourceRefs,
             anchoredSource: anchored,
+            selectedInsightIds,
             limits: candidate.limits,
           },
           actionContract: {
@@ -590,7 +828,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             proposalOnly: true,
             approvedCandidateStatus: candidate.triageStatus,
           },
-          evidenceRefs: candidate.evidenceRefs,
+          evidenceRefs: mergedEvidenceRefs,
           tags: ['initiative-wizard', candidate.initiativeLevel],
           successCriteria: candidate.suggestedKpi ? [candidate.suggestedKpi] : [],
           keyRisks: candidate.limits,
@@ -611,6 +849,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             updatedAt: initiative.updatedAt || initiative.updated_at || new Date().toISOString(),
           } as PortfolioInitiative);
         }
+        setCreateProgress((prev) =>
+          prev ? { done: prev.done + 1, total: prev.total } : { done: 1, total: toCreate.length }
+        );
       }
       setCreatedInitiatives(created);
       onCreated(created);
@@ -626,17 +867,155 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         );
       }
       setStep('result');
-      toast.success(`Utworzono drafty inicjatyw: ${created.length}`, { duration: 1800 });
+      const names = created
+        .map((initiative) => initiative.name || initiative.id)
+        .slice(0, 3)
+        .join(', ');
+      const suffix = created.length > 3 ? '…' : '';
+      toast.success(
+        language === 'pl'
+          ? `Utworzono ${created.length} inicjatyw (DRAFT): ${names}${suffix}`
+          : `Created ${created.length} initiatives (DRAFT): ${names}${suffix}`,
+        { duration: 2600 }
+      );
     } catch (error) {
       console.error('[InitiativeWizardModal] Draft creation failed:', error);
       toast.error('Nie udalo sie utworzyc draftow inicjatyw.');
     } finally {
       setIsWorking(false);
+      setCreateProgress(null);
     }
   };
 
+  const toggleInsight = (id: string) => {
+    setSelectedInsightIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // #29b — Step 0: multi-select interview insights the initiatives derive from.
+  const renderInsights = () => (
+    <div className="flex min-h-[440px] flex-col space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t.selectInsightsTitle}
+        </h3>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.selectInsightsHint}</p>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl border border-primary-300/60 bg-primary-50 px-3 py-2 text-xs text-primary-900 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
+        <span className="font-medium">
+          {t.selectedSummary}: {selectedInsightSummary.count} · {selectedInsightSummary.findings}{' '}
+          {t.findings}
+        </span>
+        {selectedInsightSummary.count === 0 && (
+          <span className="text-[11px] text-primary-700/80 dark:text-primary-200/70">{t.none}</span>
+        )}
+      </div>
+
+      <div className="flex-1 space-y-1.5 overflow-auto pr-1">
+        {insightsLoading && (
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t.insightsLoading}
+          </div>
+        )}
+        {!insightsLoading && insightsError && (
+          <div className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100">
+            {insightsError}
+          </div>
+        )}
+        {!insightsLoading && !insightsError && insights.length === 0 && (
+          <div
+            data-testid="initiative-wizard-empty-insights"
+            className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-white/[0.1] dark:bg-navy-900/50"
+          >
+            <Sparkles className="h-8 w-8 text-slate-600" />
+            <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+              {t.insightsEmpty}
+            </p>
+          </div>
+        )}
+        {!insightsLoading &&
+          !insightsError &&
+          insights.map((insight) => {
+            const checked = selectedInsightIds.includes(insight.id);
+            const findings = countInsightFindings(insight);
+            return (
+              <button
+                key={insight.id}
+                type="button"
+                onClick={() => toggleInsight(insight.id)}
+                aria-pressed={checked}
+                className={`flex w-full items-start gap-2.5 rounded-xl border p-2.5 text-left transition-all ${
+                  checked
+                    ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                    : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+                }`}
+              >
+                <span
+                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                    checked
+                      ? 'border-primary-500 bg-primary-500 text-white'
+                      : 'border-slate-300 bg-white dark:border-white/[0.2] dark:bg-navy-900'
+                  }`}
+                >
+                  {checked && <Check className="h-3 w-3" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {insight.title}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 dark:bg-white/[0.08]">
+                      {insight.promptType || insight.analysisMode || 'insight'}
+                    </span>
+                    <span>·</span>
+                    <span>
+                      {findings} {t.findings}
+                    </span>
+                    {insight.createdAt && (
+                      <>
+                        <span>·</span>
+                        <span>{formatInsightDate(insight.createdAt, language)}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+      </div>
+    </div>
+  );
+
   const renderIntent = () => (
     <div className="space-y-3">
+      {/* #29c — capacity / overload signal */}
+      {capacity && (
+        <div
+          data-testid="initiative-wizard-capacity"
+          className={`rounded-xl border px-3 py-2 text-xs ${
+            capacity.overload === 'red'
+              ? 'border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100'
+              : capacity.overload === 'amber'
+                ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-100'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 font-medium">
+            {capacity.overload !== 'green' && <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
+            {t.capacityPrefix} {capacity.activeCount} {t.capacityActive} — {t.capacitySuggested}:{' '}
+            {capacity.suggestedCount}
+          </div>
+          {capacity.overload === 'amber' && (
+            <div className="mt-1 text-[11px]">{t.capacityOverloadAmber}</div>
+          )}
+          {capacity.overload === 'red' && (
+            <div className="mt-1 text-[11px]">{t.capacityOverloadRed}</div>
+          )}
+        </div>
+      )}
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           Decyzja transformacyjna
@@ -957,12 +1336,30 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     </div>
   );
 
+  const toggleCreate = (id: string) => {
+    setSelectedCreateIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   const renderGovernance = () => (
     <div className="space-y-3">
       <div className="rounded-2xl border border-primary-300/60 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
-        Proposal preview: system utworzy drafty tylko dla zaakceptowanych kandydatów bez linku do
-        istniejącej inicjatywy. Odrzucone i „already covered” nie tworzą trwałych obiektów.
+        <div className="font-medium">{t.bulkSelectTitle}</div>
+        <div className="mt-0.5 text-xs text-primary-800/80 dark:text-primary-100/70">
+          {t.bulkSelectHint}
+        </div>
       </div>
+      {/* #29f — soft 1-3 limit (warning only, never a hard block) */}
+      {overSoftLimit && (
+        <div
+          data-testid="initiative-wizard-soft-limit"
+          className="flex items-start gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{t.bulkSoftLimit.replace('{n}', String(candidatesToCreate.length))}</span>
+        </div>
+      )}
       {!shortlistGateOk && (
         <div
           data-testid="initiative-wizard-shortlist-gate-blocked"
@@ -989,6 +1386,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       <div className="space-y-1.5">
         {actionableCandidates.map((candidate) => {
           const blocker = shortlistGateBlockers.find((entry) => entry.candidateId === candidate.id);
+          // #29f — only non-linked, non-blocked candidates are creatable and get
+          // a selection checkbox. Linked / blocked rows stay informational.
+          const creatable = !candidate.linkedInitiativeId && !blocker;
+          const checked = selectedCreateIds.includes(candidate.id);
           return (
             <div
               key={candidate.id}
@@ -999,6 +1400,21 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               }`}
             >
               <div className="flex items-center justify-between gap-3">
+                {creatable && (
+                  <button
+                    type="button"
+                    onClick={() => toggleCreate(candidate.id)}
+                    aria-pressed={checked}
+                    data-testid="initiative-wizard-create-toggle"
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                      checked
+                        ? 'border-primary-500 bg-primary-500 text-white'
+                        : 'border-slate-300 bg-white dark:border-white/[0.2] dark:bg-navy-900'
+                    }`}
+                  >
+                    {checked && <Check className="h-3 w-3" />}
+                  </button>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {candidate.title}
@@ -1008,7 +1424,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                       ? blocker.message
                       : candidate.linkedInitiativeId
                         ? 'Zostanie zlinkowana z istniejącą inicjatywą.'
-                        : 'Zostanie utworzony draft inicjatywy.'}
+                        : checked
+                          ? 'Zostanie utworzony draft inicjatywy (DRAFT).'
+                          : 'Pominięta — nie zostanie utworzona.'}
                   </div>
                 </div>
                 <span
@@ -1130,13 +1548,15 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   );
 
   const STEP_DEFS: Array<{ id: WizardStep; label: string }> = [
-    { id: 'intent', label: 'Intencja' },
-    { id: 'candidates', label: 'Kandydaci' },
+    { id: 'insights', label: t.stepInsights },
+    { id: 'intent', label: language === 'pl' ? 'Intencja' : 'Intent' },
+    { id: 'candidates', label: language === 'pl' ? 'Kandydaci' : 'Candidates' },
     { id: 'governance', label: 'Governance' },
-    { id: 'result', label: 'Wynik' },
+    { id: 'result', label: language === 'pl' ? 'Wynik' : 'Result' },
   ];
   const currentStepIndex = STEP_DEFS.findIndex((entry) => entry.id === step);
   const stepReachable: Record<WizardStep, boolean> = {
+    insights: true,
     intent: true,
     candidates: candidates.length > 0,
     governance: actionableCandidates.length > 0,
@@ -1145,7 +1565,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
 
   const renderStepper = () => (
     <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-5 gap-1.5">
         {STEP_DEFS.map((entry, index) => {
           const isActive = entry.id === step;
           const isComplete = index < currentStepIndex;
@@ -1188,7 +1608,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   );
 
   const goToPreviousStep = () => {
-    if (step === 'candidates') setStep('intent');
+    if (step === 'intent') setStep('insights');
+    else if (step === 'candidates') setStep('intent');
     else if (step === 'governance') setStep('candidates');
   };
 
@@ -1223,6 +1644,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
 
         {/* Content */}
         <div className="flex-1 space-y-4 overflow-auto p-3">
+          {step === 'insights' && renderInsights()}
           {step === 'intent' && renderIntent()}
           {step === 'candidates' && renderCandidates()}
           {step === 'governance' && renderGovernance()}
@@ -1260,14 +1682,27 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               ) : null}
             </div>
 
-            {step !== 'intent' && (
+            {step !== 'insights' && (
               <button
                 type="button"
                 onClick={goToPreviousStep}
                 disabled={isWorking}
                 className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
               >
-                Wstecz
+                {t.back}
+              </button>
+            )}
+
+            {step === 'insights' && (
+              <button
+                type="button"
+                data-testid="initiative-wizard-insights-next"
+                disabled={isWorking}
+                onClick={() => setStep('intent')}
+                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {t.next}
+                <ArrowRight size={16} />
               </button>
             )}
 
@@ -1302,7 +1737,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               <button
                 type="button"
                 data-testid="initiative-wizard-create-drafts"
-                disabled={isWorking || !shortlistGateOk}
+                disabled={isWorking || !shortlistGateOk || candidatesToCreate.length === 0}
                 onClick={createDrafts}
                 title={
                   !shortlistGateOk
@@ -1312,7 +1747,11 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isWorking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                Utwórz drafty
+                {createProgress
+                  ? `${t.bulkProgress} ${createProgress.done}/${createProgress.total}`
+                  : language === 'pl'
+                    ? `Utwórz drafty (${candidatesToCreate.length})`
+                    : `Create drafts (${candidatesToCreate.length})`}
               </button>
             )}
           </div>
