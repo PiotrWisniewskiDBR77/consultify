@@ -167,6 +167,86 @@
 5. AI: copilot na 3 poziomach, nie autopilot
 6. Po każdym punkcie: owner testuje, odhaczamy razem
 
+---
+
+# 🧭 HANDOFF — CIĄGŁOŚĆ MIĘDZY SESJAMI (czytaj to najpierw)
+
+> Ta sekcja jest pisana tak, by **świeża sesja bez pamięci** mogła podjąć pracę. Aktualizowana 2026-06-05 po wave 3.
+
+## Gdzie jesteśmy
+- **29 punktów odhaczonych** (fundament + 3 fale agentów). Zostało **~46 punktów** (lista `- [ ]` powyżej).
+- Branch roboczy: **`feat/wave1-foundations`** (NIE `Londyn` — to default remote). Wszystko commitowane na bieżąco.
+- Serwery dev: FE `:3000`, BE `:3001`. Log dev: `/tmp/consultify-dev.log`.
+
+## Komendy weryfikacji (gate przed każdym commitem)
+```bash
+# FE typecheck (musi być exit 0)
+npx tsc --noEmit -p tsconfig.json
+# BE gate = esbuild ESM (NIE tsc!), exit 0
+cd server && npx esbuild --bundle --platform=node --format=esm '--external:*' --outfile=/dev/null src/index.ts
+# lint autofix
+npx eslint --fix <plik>
+# zdrowie serwerów
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/api/health   # 200
+curl -s -o /dev/null -w '%{http_code}' http://localhost:3000              # 200
+```
+Commit message kończy się: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
+
+## Twarde ograniczenia (NIE łamać)
+1. **DB_MANAGED_SCHEMA off** → nowe kolumny przez **lazy-ensure ALTER** (`getTableColumns()` + `queryHelpers.queryRun('ALTER TABLE ...')`), nigdy migracje.
+2. **Backend gate to esbuild ESM, nie tsc** — tsc na server/ ma szum, ignorować; liczy się esbuild.
+3. **Tani AI stack — ZERO OpenAI.** Aktywne w `llm_providers` (Railway): OpenRouter (default), DeepSeek, ZAI. Voice = `GEMINI_LIVE_API_KEY` z env. Nie włączać `openai`/`google` providerów.
+4. **Sekrety** nie trafiają do czatu ani gita (`.env.staging.local` jest gitignored).
+5. Pliki kończące się ` 2`/` 3` to **duplikaty sync GDrive — ignorować**.
+6. **Agenty: file-disjoint, NIE commitują.** Każdy agent dostaje rozłączny zbiór plików, zostawia zmiany w working tree, sam weryfikuje. JA robię wspólną weryfikację + sekwencyjne commity + tick planu. Backend mount-point (`server/src/Gateway.ts`) trzyma max 1 agent na falę.
+
+## Kanony, których MUSISZ używać (nie dublować)
+- **Detail-view = `src/components/shared/NModeLayout/NModeShell`** (8 widoków). Struktura: `NModeHeader → NModePropertiesStrip → NModeActionBar → NModeLeftNav + NModeCanvas` (N-mode) albo `children` (C-mode, gdy `presentationMode==='c' && children`). Tryb: hook `usePresentationMode` (`'n'|'c'`).
+- **Sekcje:** typ `NModeSection` ma `hasData?`, `alwaysShow?`, `group?` (grupowanie nav). Adaptive sidebar + „Pokaż wszystkie sekcje" już są w `NModeLeftNav`.
+- **Formularze/modale = `src/components/shared/forms/`** (portal: `Select`, `MultiSelect`, `PriorityPicker`, `DatePicker`, `Field`, `usePopoverPosition`) — nigdy nie przycinane.
+- **Statusy = `src/components/shared/StatusPill.tsx`** (`statusTone()`, 5 tonów). Migrować tabele na to.
+- **Popover/dropdown = portal do `document.body`** wg wzorca `TableSettingsPopover.tsx` (fixed pos z `getBoundingClientRect`, auto-flip, viewport-clamp).
+- **Crash isolation = `SectionErrorBoundary`** owija aktywną sekcję w `NModeCanvas` (już wpięte dla 8 widoków).
+
+## Trzy zasady produktowe od ownera (pamiętać przy każdym ficzerze)
+1. **Trzy wizardy** (survey/insight/initiative) mają wyglądać podobnie — wspólny `<WizardModal>` shell, zarządzane kolory (§5).
+2. **AI na 3 poziomach** — tool (cały NModeActionBar) · section (prawy róg nagłówka sekcji) · field (inline przy polu). Copilot, nie autopilot (#6/#23/§6).
+3. **Karta Inicjatywy = wzorzec złoty.** Pozostałe karty (Insight, Task, Decision…) doprowadzić do tego standardu.
+
+## REKOMENDOWANA KOLEJNOŚĆ (leverage-first) + podział na fale agentów
+
+### Najpierw P0 bug (solo, szybki)
+- **#24b** crash telemetria app-level („could not be delivered").
+
+### Fala A — kanon NModeLayout (najwyższy leverage, dotyka 8 widoków)
+- Agent A1: **AI 3-poziomowy** — `#6/§6` poziom „tool" w `NModeActionBar` + typy w `NModeLayout/types.ts` (`aiContextActions` już istnieje — rozszerzyć o section/field hooki). **Owner pliki: `NModeLayout/*` tylko.**
+- Agent A2: **#21b** persystencja trybu N/C per user (localStorage) w `usePresentationMode.ts`. **Disjoint.**
+- Agent A3: **#27d** `SummaryCard` nowy komponent w `NModeLayout/`. **Disjoint (nowy plik).**
+> Uwaga: A1 i A3 oba dotykają `NModeLayout/` — jeśli kolizja, rozbić na 2 fale albo dać A1 tylko `types.ts`+`NModeActionBar`, A3 nowy plik + `index` export.
+
+### Fala B — kanon tabel (1B) — wspólny graficzny styl
+- **#18** `<DataTable>` kanon (monochrome, hairline dividers, sticky header) — nowy plik `src/components/shared/DataTable/`.
+- **#10** migracja tabel Interview na FilterableTable (filtry per-column).
+- **#18b** dociągnąć StatusPill do tabel · **#16/#15** kolumny+kebab Templates.
+- **#18c/#14c** specy `docs/design-system/TABLES.md` + `FORMS.md`.
+
+### Fala C — Faza 4 workflow managera (dużo wartości, infra częściowo istnieje)
+- **#11** ⭐ AI Quality Gate **pre-submit** (modal „odpowiedzi za krótkie" przed Submit) — infra istnieje.
+- **#7b/#8** manager row-menu (Approve/Send back/Reassign/Due) + bulk actions.
+- **#9/#9b** kolumny Sessions (Due/Submitted/Overdue/Assignee/AI Score) + eskalacja UI.
+- **#5** redesign formatki odpowiedzi (Record inline + attachments inline + guidance).
+- **#6** Inbox chipy (All/Answered/Approved/Sent-back, koniec org-wide overdue).
+
+### Potem (większe, wrażliwe — najlepiej z ownerem przy testach)
+- **2A Insight detail** pełny refactor sekcji: `#22` (20 sekcji→5 grup), `#23c` merge sekcji, `#22c`/`#23d` ⭐ nowe sekcje „między wierszami" (Consensus&Divergence, Implicit Assumptions, Silences, Quote Comparison, Sentiment Map, Power Dynamics, Hypothesis Board).
+- **3A §5** wspólny `<WizardModal>` shell → potem `#29` konsolidacja 4 wizardów.
+- **3C** generator inicjatyw reszta (#29e/#29g/#29h), **3B** generator insightów (#28b/#28e).
+- **#25** mądry generator-eksport z preview-pane.
+- **2B #30** Initiative detail szlif (#30b PL/EN, #30c C-mode, #30d backlinks/lineage).
+- **Faza 5 #19** ⭐ Audit Orchestrator (kierunek produktu) — wizard celu + multi-template + multi-assignee + obiekt `audit_programs` + skala 400 ankiet.
+
+## Rytm pracy (sprawdzony w tej sesji)
+3 agenty równolegle / falę → wspólna weryfikacja → 3 osobne commity → tick w tym pliku → `git commit` docs. Owner powiedział: „rób bez przerwy, odhaczaj statusy" — wykonywać autonomicznie, nie dopytywać o zgodę na każdy krok.
+
 ## NASTĘPNY PUNKT DO ODHACZENIA
-→ **Faza 0, #24** (Insight section crash) albo **Faza 1A #27b/#27c** (kontynuacja metric strip + ID).
-Owner decyduje: bugi najpierw, czy kanon dalej?
+→ **#24b** (solo P0), potem **Fala A** (AI 3-poziomowy + N/C persist + SummaryCard).
