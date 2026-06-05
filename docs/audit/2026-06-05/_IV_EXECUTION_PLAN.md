@@ -251,3 +251,26 @@ Commit message kończy się: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic
 ## NASTĘPNY PUNKT DO ODHACZENIA
 → Fala 0 ✅ · Fala A ✅ (AI tool-level, SummaryCard, N/C persist, specy) · Fala B ✅ (FilterableTable kanon, Templates kolumny+kebab).
 → **Następne: Fala C — Faza 4 workflow managera**: #11 ⭐ AI Quality Gate pre-submit · #7b/#8 row-menu+bulk · #9/#9b kolumny Sessions+eskalacja · #5 redesign formatki · #6 Inbox chipy. Pliki: Inbox/Answer flow vs InterviewHub Sessions — rozdzielić między agentów.
+
+---
+
+# ✅ AUDYT ZAKOŃCZONY — 2026-06-05 noc (82/82)
+
+**Stan:** wszystkie 82 punkty odhaczone. FE tsc=0, BE esbuild OK, serwery BE/FE 200. 30 commitów tej nocy.
+
+## Weryfikacja adversarialna (4 agenci audytowi, read-only)
+- **Audit Orchestrator, manager workflow, answer form, quality gate, wizardy, initiative detail, insight sections — NO GAPS.** Wszystko REAL lub uczciwy, widoczny dla usera stub.
+- Wykryte 2 realne usterki → **naprawione**: martwy `case 'full-analysis'` (usunięty) + przesadny opis eksportu tools/assessment (dodana uczciwa nota PL/EN).
+- Najcenniejsze stuby → **dokończone realnym backendem**: Set/Unset default template (lazy `is_default` + `POST /interview/templates/:id/default`, jeden default/org) · server-backed duplicate-detect insightów (`POST /v8/interview/insights/similarity-check`, embeddings+Jaccard).
+
+## Świadome stuby (uczciwe, widoczne, udokumentowane — NIE fałszywe ptaszki)
+Wymagają nowych endpointów/decyzji; każdy ma user-visible „coming soon"/disabled+tooltip:
+1. **Initiative Merge/Extend** (#29e) — Create-anyway działa; merge/extend = toast + link do istniejącej (operacja domenowa, ryzykowna).
+2. **Assignment Archive / Escalate-now** (#8/#9b) — disabled+tooltip; silnik eskalacji działa server-side, brakuje ręcznego triggera + lifecycle assignmentów.
+3. **TemplateBuilder sekcje pytań** (#17b) — UI działa, brak kolumny `section_title` (persist TODO).
+4. **Smart export Tools/Assessment** (#25) — filtr sekcji serwerowo jeszcze ignorowany (nota w UI); Note/Markdown filtrują realnie.
+5. **WizardModal (§5) i FieldAIButton (§6 field)** — kanon zbudowany, additive; adopcja przez 3 wizardy = osobna migracja.
+6. **Audit Orchestrator (#19)** — CRUD+wizard+hub+presety ISO/new-company działają end-to-end; bulk-generacja ankiet, AI-planowanie i paginacja 400-skala = MVP TODO.
+
+## Następne (gdy wrócisz)
+Adopcja kanonów (WizardModal w 3 wizardach, FieldAI w sekcjach), domknięcie stubów 1-3 backendem, rozwój Audit Orchestratora z MVP do pełni.
