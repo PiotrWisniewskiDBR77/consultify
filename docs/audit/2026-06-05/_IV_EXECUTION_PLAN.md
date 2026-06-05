@@ -38,8 +38,8 @@
 - [x] **#21** N/C toggle — framework istniał; ✅ **Insight: zbudowany C-layout** (grid sekcji jako children). ✅ **Initiative: JUŻ MIAŁ własny C-mode** (InitiativeDocumentView:8880 „C-MODE RENDER" — grid kart/scroll). Oba artefakty mają teraz tryb C. (TODO przyszłe: ujednolicić Initiative legacy C-mode na ten sam wzorzec.)
 - [x] **#21b** Persystencja trybu N/C per user — JUŻ w `usePresentationMode` (URL→localStorage→fallback, writeToStorage per entityType) ✅ zweryfikowane
 - [x] **#6/§6** AI 3-poziomowy — poziom „tool": `toolAIActions` always-visible w NModeActionBar (additive, plumbing gotowe) ✅ (agent A1)
-- [ ] **#23/§6** AI 3-poziomowy: poziom „section" w NModeSectionWrapper (prawy róg nagłówka sekcji)
-- [ ] **§6** AI 3-poziomowy: poziom „field" inline przy polach (KPI, Financial)
+- [x] **#23/§6** AI 3-poziomowy: poziom „section" w NModeSectionWrapper (prawy róg nagłówka sekcji)
+- [x] **§6** AI 3-poziomowy: poziom „field" inline przy polach (KPI, Financial)
 - [x] **#22** Adaptive hide-empty w NModeLeftNav (×8 widoków): `hasData`/`alwaysShow` w NModeSection + filtr + toggle „Pokaż wszystkie (N)". Insight wpięty konserwatywnie (ukrywa tylko sekcje z pewnym count=0; core zawsze widoczne) ✅
 - [x] **#22b** Grupowanie sekcji w NModeLeftNav: `group?` w NModeSection + grouped render (agregacja po labelu). Insight: 20 sekcji → 5 grup (Wgląd/Między wierszami/Dowody/Dostarczane/Audyt) ✅
 - [x] **#27d** SummaryCard — kompaktowy embeddable blok (title/dot/icon/metrics/body/footer, compact+onClick) w NModeLayout ✅ (agent A2)
@@ -60,12 +60,12 @@
 ## FAZA 2 — DWA WIELKIE ARTEFAKTY DO STANDARDU · ~7-10 dni
 
 ### 2A. Insight detail (refactor na NModeLayout kanon)
-- [ ] **#23** Wszystkie sekcje na `NModeSectionWrapper` kanon (koniec różnych formatów per sekcja)
+- [x] **#23** Wszystkie sekcje na `NModeSectionWrapper` kanon (koniec różnych formatów per sekcja)
 - [x] **#23b** Strip markdown w sub-tekstach ✅ (agent G: InsightViewer; agent I: Insights tabela)
-- [ ] **#22** Reorganizacja 20 sekcji → 5 grup (INSIGHT / BETWEEN THE LINES / EVIDENCE / DELIVERABLES / AUDIT)
-- [ ] **#23c** Merge sekcji: Material Quality+Truth→Quality&Trust · Source Pack+Sessions→Sources · Candidates+Traceability→Findings&Evidence · usunąć Full Analysis · Activity→header · Comments→drawer
-- [ ] **#22c** ⭐ 3 nowe sekcje „między wierszami": Consensus&Divergence Matrix · Implicit Assumptions · Silences
-- [ ] **#23d** 4 dalsze nowe: Cross-person Quote Comparison · Sentiment/Tone Map · Power Dynamics · Hypothesis Board
+- [x] **#22** Reorganizacja 20 sekcji → 5 grup (INSIGHT / BETWEEN THE LINES / EVIDENCE / DELIVERABLES / AUDIT)
+- [x] **#23c** Merge sekcji: Material Quality+Truth→Quality&Trust · Source Pack+Sessions→Sources · Candidates+Traceability→Findings&Evidence · usunąć Full Analysis · Activity→header · Comments→drawer
+- [x] **#22c** ⭐ 3 nowe sekcje „między wierszami": Consensus&Divergence Matrix · Implicit Assumptions · Silences
+- [x] **#23d** 4 dalsze nowe: Cross-person Quote Comparison · Sentiment/Tone Map · Power Dynamics · Hypothesis Board
 - [x] **#26** Toolbar kanon: 1 primary + Export/AI dropdowny (koniec tęczy) ✅ (agent G)
 - [x] **#26b** ⭐ Submit for Review → **Submit for Information** (bez gate; notyfikacja managerów/ownerów) ✅ (agent G)
 - [x] **#20** Insights tabela: StatusPill + strip markdown + Source „—" + kolumna Exported to + kebab preview ✅ (agent I)
@@ -86,21 +86,21 @@
 - [ ] **§5b** Progress bar + klikalne kroki + jasny komunikat „krok pusty dopóki nie wygenerujesz"
 
 ### 3B. Generator Insightów
-- [ ] **#28** Graficzne polish 5 kroków (progress, hover tooltips, drag-drop zone, custom checkboxy)
-- [ ] **#28b** Step 2 „People" — naprawić puste sloty checkbox (bug/placeholder?)
+- [x] **#28** Graficzne polish 5 kroków (progress, hover tooltips, drag-drop zone, custom checkboxy)
+- [x] **#28b** Step 2 „People" — naprawić puste sloty checkbox (bug/placeholder?)
 - [x] **#28c** ⭐ **Source Basket** — tabela insight_source_baskets + CRUD + UI (Use existing/Build new/Save) w InsightCreatorModal ✅ (agent D)
 - [~] **#28d** Generate variant — Source Basket gotowy (fundament); 1-klik „nowy lens z tego koszyka" do dodania osobno ✅cz. (agent D)
-- [ ] **#28e** Duplicate-detect przed Run (podobny insight istnieje?)
+- [x] **#28e** Duplicate-detect przed Run (podobny insight istnieje?)
 
 ### 3C. Generator Inicjatyw ⭐⭐⭐
-- [ ] **#29** Konsolidacja 4 wizardów w 1 kanon
+- [x] **#29** Konsolidacja 4 wizardów w 1 kanon
 - [x] **#29b** Step 0 — wybór insightów (multi-select, 1:N lineage) ✅ (agent H)
 - [x] **#29c** Capacity check — GET /initiatives/capacity + banner „X aktywnych, sugerowane Y" + default count ✅ (agent H)
 - [x] **#29d** ⭐ similarity check (embeddings+Jaccard fallback): endpoint /initiatives/similarity-check + flagi NEW/SIMILAR/DUPLICATE/RELATED per kandydat w wizardzie ✅ (agent E)
-- [ ] **#29e** Merge/Extend/Create-anyway flow przy podobnych
+- [x] **#29e** Merge/Extend/Create-anyway flow przy podobnych
 - [x] **#29f** Bulk-create 1-3 (soft limit) w stanie DRAFT + source tagging ✅ (agent H)
 - [~] **#29g** PL/EN: notatka konsultanta zlokalizowana (PL z diakrytykami + „Najważniejsze insighty") ✅ · Esc anuluje + root-cause isPolish=false do sprawdzenia
-- [ ] **#29h** Progresywne wypełnianie: wizard wypełnia rdzeń (Problem/Solution/Scope/KPI z insightu), reszta pusta z AI-assist
+- [x] **#29h** Progresywne wypełnianie: wizard wypełnia rdzeń (Problem/Solution/Scope/KPI z insightu), reszta pusta z AI-assist
 
 ### 3D. Generator Ankiet (TemplateBuilder)
 - [x] **#17** Rebranding: „AI" (prawy górny) → „Popraw z AI" + tooltip wyjaśniający różnicę od „Stwórz ankietę z AI" ✅
@@ -113,17 +113,17 @@
 
 ## FAZA 4 — WORKFLOW MANAGERA · ~5-7 dni
 
-- [ ] **#12** ⭐ Decyzja: merge Sessions+Assigned w jedną zakładkę „Work" (lub potwierdzić rozdzielenie)
-- [ ] **#7b** Manager flow w menu wiersza: Approve/Send back/Reassign/Change due date (handlery są)
-- [ ] **#8** Bulk actions: Approve/Send back/Remind/Archive zaznaczonych
+- [x] **#12** ⭐ Decyzja: merge Sessions+Assigned w jedną zakładkę „Work" (lub potwierdzić rozdzielenie)
+- [x] **#7b** Manager flow w menu wiersza: Approve/Send back/Reassign/Change due date (handlery są)
+- [x] **#8** Bulk actions: Approve/Send back/Remind/Archive zaznaczonych
 - [x] **#8b** Archiwum — BACKEND (kolumny+endpointy+bulk+?lifecycle, agent B) ✅ + FRONTEND (kebab Archive/Restore/Trash/Delete-forever + chip-row Active|Archive|Trash + bulk, agent F) ✅
-- [ ] **#8c** Chip-row lifecycle: Active / Archive / Trash
-- [ ] **#9** Kolumny Sessions: rozbić DATE na Due/Submitted/Overdue + Assignee + AI Score (opt-in)
-- [ ] **#9b** Eskalacja UI (silnik istnieje): escalation target + manual „Escalate now" + kolumna
-- [ ] **#11** ⭐ AI Quality Gate **pre-submit** (infrastruktura istnieje): modal przed Submit „odpowiedzi 2,5 za krótkie" + opcja wróć/wyślij-mimo-to
-- [ ] **#11b** Manager AI snapshot panel w Approve (score + weak answers + 1-klik Send back from AI)
-- [ ] **#11c** Per-question instant feedback (odpowiedź <20 znaków → hint)
-- [ ] **#6** Inbox chipy: koniec org-wide Overdue w widoku usera → All/Answered/Approved/Sent-back
+- [x] **#8c** Chip-row lifecycle: Active / Archive / Trash
+- [x] **#9** Kolumny Sessions: rozbić DATE na Due/Submitted/Overdue + Assignee + AI Score (opt-in)
+- [x] **#9b** Eskalacja UI (silnik istnieje): escalation target + manual „Escalate now" + kolumna
+- [x] **#11** ⭐ AI Quality Gate **pre-submit** (infrastruktura istnieje): modal przed Submit „odpowiedzi 2,5 za krótkie" + opcja wróć/wyślij-mimo-to
+- [x] **#11b** Manager AI snapshot panel w Approve (score + weak answers + 1-klik Send back from AI)
+- [x] **#11c** Per-question instant feedback (odpowiedź <20 znaków → hint)
+- [x] **#6** Inbox chipy: koniec org-wide Overdue w widoku usera → All/Answered/Approved/Sent-back
 - [ ] **#5** Formatka odpowiedzi redesign: Record inline (nie osobne okno) + attachments/images inline + guidance (pulsująca ikona + instrukcja+przykład)
 
 ---
