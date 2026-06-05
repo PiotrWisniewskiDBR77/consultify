@@ -245,6 +245,18 @@ Owner: „karty inicjatyw były zrobione najlepiej. Resztę kart musimy doprowad
 - **N (Notion):** sidebar + 1 sekcja na raz, dużo whitespace. Onboarding-friendly.
 - **C (ClickUp):** sidebar→ToC, wszystkie sekcje w grid 2-3 kol. Power-user, duże ekrany. (owner: „nie mamy clickupowej — do zrobienia")
 
+### ⚠️ KLUCZOWE USTALENIE (2026-06-05): kanon JUŻ ISTNIEJE — `NModeLayout`
+Detal-view kanon **nie jest do zbudowania od zera** — istnieje jako `src/components/shared/NModeLayout/NModeShell` i jest wpięty w **8 widoków**: Insight, Initiative (wzorzec), InterviewWorkspace, Task, Decision, Notification, Tools×2.
+- Struktura: `NModeHeader → NModePropertiesStrip → NModeActionBar → NModeLeftNav + NModeCanvas`
+- „10 okien niesymetrycznie" (#27) = `NModePropertiesStrip` renderujący read-only pola jako disabled inputy w `grid-cols-10`. **NAPRAWIONE** (commit `b4a3b9b888`): read-only → czysty label+wartość, jedno miejsce poprawia 8 widoków.
+- **Wniosek dla całej Fazy 1:** NIE budujemy `shared/detailView/` (próbowałem — usunięte jako duplikat). **Rozwijamy `NModeLayout`:**
+  - C-mode (ClickUp) → nowy tryb w `NModeShell` (dziś tylko N-mode)
+  - AI 3-poziomowy → `NModeActionBar` (tool) + `NModeSectionWrapper` (section) + pola (field)
+  - Adaptive hide-empty → `NModeLeftNav`
+  - SummaryCard → nowy komponent w `NModeLayout`
+  - ID artefakt + N/C toggle → `NModeHeader`
+- To jest **lepsza wiadomość** niż się wydawało: kanon istnieje, ma 8 konsumentów, każda poprawa = leverage ×8 (nie tylko Interview, ale Task/Decision/Tools też).
+
 ---
 
 ## 8. SYSTEM KOLORÓW (owner: „tu możemy mieć więcej kolorów, to praktyczne narzędzia")
