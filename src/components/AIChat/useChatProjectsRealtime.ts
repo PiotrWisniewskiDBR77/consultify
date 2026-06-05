@@ -22,8 +22,13 @@ export function useChatProjectsRealtime(
     let disposed = false;
     let socket: Socket | null = null;
     try {
+      // Chat P0-1 — pass the JWT in the socket handshake so the namespace's
+      // auth middleware can verify the connection. Without this the server
+      // now rejects the connect entirely (security regression on purpose).
+      const token =
+        typeof window !== 'undefined' ? window.localStorage.getItem('token') || '' : '';
       socket = io('/chat-projects', {
-        auth: { userId: userId || '' },
+        auth: { token, userId: userId || '' },
         transports: ['websocket'],
       });
       socket.on('connect', () => {

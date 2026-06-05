@@ -19,6 +19,7 @@
 import type { Server as SocketIOServer } from 'socket.io';
 
 import logger from '../utils/Logger.js';
+import { socketAuthMiddleware, validateJoinOrg } from './socketAuth.js';
 
 const NAMESPACE = '/chat-projects';
 
@@ -28,10 +29,20 @@ class ChatProjectsRealtime {
   init(io: SocketIOServer): void {
     this.io = io;
     const ns = io.of(NAMESPACE);
+    // Chat P0-1 — JWT verification at connection time. Without this the
+    // namespace accepted anonymous connections and any client could join any
+    // `org:<id>` room, receiving a real-time activity sidechannel.
+    ns.use(socketAuthMiddleware);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ns.on('connection', (socket: any) => {
-      socket.on('join:org', (organizationId: unknown) => {
+      socket.on('join:org', async (organizationId: unknown) => {
         const orgId = typeof organizationId === 'string' ? organizationId.trim() : '';
-        if (orgId) socket.join(`org:${orgId}`);
+        if (!orgId) return;
+        // Membership gate — the user must belong to the org they're
+        // subscribing to. Silent-on-failure so we don't leak topology.
+        const ok = await validateJoinOrg(socket, orgId);
+        if (!ok) return;
+        socket.join(`org:${orgId}`);
       });
       socket.on('leave:org', (organizationId: unknown) => {
         const orgId = typeof organizationId === 'string' ? organizationId.trim() : '';

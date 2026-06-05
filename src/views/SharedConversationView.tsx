@@ -33,11 +33,28 @@ export const SharedConversationView: React.FC = () => {
   );
   const [password, setPassword] = useState('');
 
+  // Chat P0-2 — password is submitted via POST unlock endpoint (sets an
+  // HttpOnly cookie), then the GET reads it. No password in the URL.
   const load = useCallback(
     async (pw?: string) => {
       setStatus('loading');
       try {
-        const res: any = await Api.getPublicShare(token, pw);
+        if (pw) {
+          try {
+            await Api.unlockPublicShare(token, pw);
+          } catch (unlockErr: any) {
+            const msg = String(unlockErr?.message || '').toLowerCase();
+            if (msg.includes('too many')) {
+              setStatus('error');
+              return;
+            }
+            // Likely an incorrect password — fall through to the password
+            // screen so the user can retry.
+            setStatus('password');
+            return;
+          }
+        }
+        const res: any = await Api.getPublicShare(token);
         setData(res);
         setStatus('ok');
       } catch (err: any) {

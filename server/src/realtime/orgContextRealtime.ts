@@ -18,6 +18,7 @@
 import type { Server as SocketIOServer } from 'socket.io';
 
 import logger from '../utils/Logger.js';
+import { socketAuthMiddleware, validateJoinOrg } from './socketAuth.js';
 
 export interface OrgContextRebuiltPayload {
   organizationId: string;
@@ -37,10 +38,16 @@ class OrgContextRealtime {
     // that omits room helpers like Namespace.to(); cast to any to match the runtime
     // API, mirroring the existing tablePlatform RealtimeService.
     const ns = io.of(NAMESPACE);
+    // Chat P0-1 — same JWT + membership gate as /chat-projects. The org
+    // context rebuild signal previously leaked to anyone hitting the WS
+    // endpoint with any organizationId.
+    ns.use(socketAuthMiddleware);
     ns.on('connection', (socket: any) => {
-      socket.on('join:org', (organizationId: unknown) => {
+      socket.on('join:org', async (organizationId: unknown) => {
         const orgId = typeof organizationId === 'string' ? organizationId.trim() : '';
         if (!orgId) return;
+        const ok = await validateJoinOrg(socket, orgId);
+        if (!ok) return;
         socket.join(`org:${orgId}`);
       });
 

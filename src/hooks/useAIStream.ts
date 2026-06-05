@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
@@ -1314,6 +1314,20 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     }
     return hadPartialContent;
   }, [resetStreamState, setIsBotTyping, streamedContent]);
+
+  // Chat P0-3 — abort any in-flight stream when the active conversation
+  // changes. Without this the SSE for conv A keeps running after the user
+  // clicks conv B, and the streamed content (hook-state, not conv-scoped)
+  // leaks into conv B's view. The event is dispatched from
+  // useConversationStore.setActiveConversation when prev !== id.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onAbortRequest = () => {
+      if (isStreaming) abortStream();
+    };
+    window.addEventListener('chat:abort-stream', onAbortRequest);
+    return () => window.removeEventListener('chat:abort-stream', onAbortRequest);
+  }, [abortStream, isStreaming]);
 
   const retryLastStream = useCallback(async () => {
     if (isStreaming) return;

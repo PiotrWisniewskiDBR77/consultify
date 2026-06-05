@@ -1332,6 +1332,55 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 // crammed into the bubble corner). Matches Claude/Grok/Gemini.
                 <span>{userVisibleContent}</span>
               )}
+              {/* Chat P0-4 — render the attachments the composer captured on
+                  this user message. Previously stored on metadata.attachments
+                  but never displayed; users couldn't tell whether their
+                  attachment had actually been sent. Matches ChatGPT/Claude
+                  pattern of inline chips. */}
+              {Array.isArray((msg as any).metadata?.attachments) &&
+                (msg as any).metadata.attachments.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(msg as any).metadata.attachments
+                      .slice(0, 12)
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      .map((att: any, idx: number) => {
+                        const name = String(att?.name || att?.title || att?.id || 'attachment');
+                        const kind = String(att?.kind || att?.type || 'file').toLowerCase();
+                        const url = typeof att?.url === 'string' ? att.url : null;
+                        const label =
+                          name.length > 40 ? `${name.slice(0, 38)}…` : name;
+                        const icon = kind.startsWith('image')
+                          ? '🖼️'
+                          : kind.startsWith('link') || kind.startsWith('url')
+                            ? '🔗'
+                            : kind === 'voice' || kind === 'audio'
+                              ? '🎤'
+                              : '📎';
+                        return url ? (
+                          <a
+                            key={`${name}-${idx}`}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-full bg-primary-100/70 px-2 py-0.5 text-[11px] font-medium text-primary-800 hover:bg-primary-200/70 dark:bg-primary-800/30 dark:text-primary-100 dark:hover:bg-primary-700/40"
+                            title={name}
+                          >
+                            <span aria-hidden>{icon}</span>
+                            <span>{label}</span>
+                          </a>
+                        ) : (
+                          <span
+                            key={`${name}-${idx}`}
+                            className="inline-flex items-center gap-1 rounded-full bg-primary-100/70 px-2 py-0.5 text-[11px] font-medium text-primary-800 dark:bg-primary-800/30 dark:text-primary-100"
+                            title={name}
+                          >
+                            <span aria-hidden>{icon}</span>
+                            <span>{label}</span>
+                          </span>
+                        );
+                      })}
+                  </div>
+                )}
             </>
           )}
 

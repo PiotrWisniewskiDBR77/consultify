@@ -1283,6 +1283,18 @@ export const useConversationStore = create<ConversationState>()(
           // net, but doing it here avoids a one-frame delay on every click.
           const prev = get().activeConversationId;
           if (prev !== id) {
+            // Chat P0-3 — abort any in-flight stream on the previous
+            // conversation before swapping. Without this the SSE keeps
+            // running and the streamed content (hook-state) leaks into the
+            // new conversation's view. useAIStream listens for this event
+            // and calls abortStream() when in flight.
+            if (typeof window !== 'undefined') {
+              try {
+                window.dispatchEvent(new CustomEvent('chat:abort-stream'));
+              } catch {
+                /* SSR / older WebView — non-fatal */
+              }
+            }
             const cachedMessages = _conversationMessagesCache[id] || [];
             set({
               activeConversationId: id,

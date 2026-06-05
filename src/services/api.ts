@@ -11888,10 +11888,25 @@ export const Api = {
     return handleResponse(res, 'Failed to revoke share');
   },
   /** Public, unauthenticated fetch of a shared conversation by token (F4). */
-  getPublicShare: async (token: string, password?: string) => {
-    const qs = password ? `?password=${encodeURIComponent(password)}` : '';
-    const res = await fetch(`${API_URL}/share/${encodeURIComponent(token)}${qs}`);
+  getPublicShare: async (token: string) => {
+    // Chat P0-2 — never pass passwords in the URL. Unlock-then-fetch flow:
+    // call `unlockPublicShare(token, password)` first, then call this fetch.
+    // The unlock endpoint sets a `share_access_<token>` HttpOnly cookie this
+    // GET reads.
+    const res = await fetch(`${API_URL}/share/${encodeURIComponent(token)}`, {
+      credentials: 'include',
+    });
     return handleResponse(res, 'Failed to load shared conversation');
+  },
+  /** Chat P0-2 — unlock a password-protected share. Sets an HttpOnly cookie. */
+  unlockPublicShare: async (token: string, password: string) => {
+    const res = await fetch(`${API_URL}/share/${encodeURIComponent(token)}/unlock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ password }),
+    });
+    return handleResponse(res, 'Failed to unlock shared conversation');
   },
   /** Fork a conversation from a message into a new conversation (composer #4). */
   branchConversation: async (conversationId: string, forkMessageId: string) => {
