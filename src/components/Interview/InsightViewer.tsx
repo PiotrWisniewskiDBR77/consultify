@@ -12,6 +12,7 @@ import {
   BookOpen,
   Brain,
   CheckCircle2,
+  CheckSquare,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -27,6 +28,7 @@ import {
   Heart,
   History,
   Layers,
+  LayoutGrid,
   Lightbulb,
   Link2,
   Loader2,
@@ -42,6 +44,7 @@ import {
   Send,
   ShieldAlert,
   Sparkles,
+  Square,
   Star,
   Target,
   TrendingUp,
@@ -608,6 +611,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [isExportingTools, setIsExportingTools] = useState(false);
   const [isExportingAssessment, setIsExportingAssessment] = useState(false);
   const [isExportingNotebook, setIsExportingNotebook] = useState(false);
+
+  // #25 — smart export generator (preview-pane dialog with section selection)
+  type ExportTargetId =
+    | 'note'
+    | 'tools'
+    | 'assessment'
+    | 'markdown'
+    | 'report'
+    | 'deck'
+    | 'table'
+    | 'idea'
+    | 'initiative';
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportTarget, setExportTarget] = useState<ExportTargetId>('note');
+  const [exportSelectedIds, setExportSelectedIds] = useState<Set<string>>(new Set());
+  const [exportRunning, setExportRunning] = useState(false);
 
   // #26 toolbar — uniform outline dropdowns (Export ▾ / ✨ AI ▾)
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -1711,6 +1730,42 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
+  // #25 — best-effort section-filtered markdown. Matches selected section
+  // labels (en + pl) against the insight's markdown headings and keeps the
+  // matched heading blocks. If no headings match (content not section-headed),
+  // returns null so callers fall back to the full content.
+  const buildFilteredMarkdown = useCallback(
+    (sectionIds: string[]): string | null => {
+      const content = insight?.content;
+      if (!content) return null;
+      const selected = new Set(sectionIds);
+      const wanted = INSIGHT_SECTIONS.filter((s) => selected.has(s.id)).flatMap((s) =>
+        [s.label.en, s.label.pl].map((l) => l.toLowerCase().trim())
+      );
+      if (wanted.length === 0) return null;
+      const lines = content.split('\n');
+      const blocks: { heading: string; body: string[] }[] = [];
+      let current: { heading: string; body: string[] } | null = null;
+      for (const line of lines) {
+        const headingMatch = /^#{1,6}\s+(.*)$/.exec(line);
+        if (headingMatch) {
+          if (current) blocks.push(current);
+          current = { heading: headingMatch[1].toLowerCase().trim(), body: [line] };
+        } else if (current) {
+          current.body.push(line);
+        }
+      }
+      if (current) blocks.push(current);
+      if (blocks.length === 0) return null;
+      const kept = blocks.filter((b) =>
+        wanted.some((w) => b.heading.includes(w) || w.includes(b.heading))
+      );
+      if (kept.length === 0) return null;
+      return kept.map((b) => b.body.join('\n').trim()).join('\n\n');
+    },
+    [insight?.content]
+  );
+
   const handleCopy = async () => {
     if (!insight?.content) return;
     try {
@@ -1721,9 +1776,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleExportMarkdown = () => {
+  const handleExportMarkdown = (sectionIds?: string[]) => {
     if (!insight?.content) return;
-    const blob = new Blob([insight.content], { type: 'text/markdown' });
+    // #25 — when a section subset is supplied, emit a section-filtered markdown
+    // document (best-effort heading match against the raw content). Falls back
+    // to the full content if the subset can't be resolved.
+    const markdown =
+      sectionIds && sectionIds.length > 0
+        ? buildFilteredMarkdown(sectionIds) || insight.content
+        : insight.content;
+    const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1733,12 +1795,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     toast.success(isPolish ? 'Pobrano plik Markdown' : 'Downloaded Markdown file');
   };
 
-  const handleExportToTools = async () => {
+  const handleExportToTools = async (sectionIds?: string[]) => {
     if (!insight) return;
     setIsExportingTools(true);
     try {
-      const exportRes = await V8InterviewApi.exportInsight(insight.id, { target: 'tools' }).catch(
-        () => Api.post(`/interview/insights/${insight.id}/export`, { target: 'tools' })
+      // TODO(#25 server): /export does not yet accept a `sectionIds` filter —
+      // it is sent for forward-compat and ignored server-side for now.
+      const exportRes = await V8InterviewApi.exportInsight(insight.id, {
+        target: 'tools',
+        ...(sectionIds ? { sectionIds } : {}),
+      } as { target: 'tools' }).catch(() =>
+        Api.post(`/interview/insights/${insight.id}/export`, {
+          target: 'tools',
+          ...(sectionIds ? { sectionIds } : {}),
+        })
       );
       toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
       const activityRes = await V8InterviewApi.getInsightActivity(insightId)
@@ -1754,14 +1824,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleExportToAssessment = async () => {
+  const handleExportToAssessment = async (sectionIds?: string[]) => {
     if (!insight) return;
     setIsExportingAssessment(true);
     try {
+      // TODO(#25 server): `sectionIds` ignored server-side until section-aware
+      // export lands; sent for forward-compat.
       const exportRes = await V8InterviewApi.exportInsight(insight.id, {
         target: 'assessment',
-      }).catch(() =>
-        Api.post(`/interview/insights/${insight.id}/export`, { target: 'assessment' })
+        ...(sectionIds ? { sectionIds } : {}),
+      } as { target: 'assessment' }).catch(() =>
+        Api.post(`/interview/insights/${insight.id}/export`, {
+          target: 'assessment',
+          ...(sectionIds ? { sectionIds } : {}),
+        })
       );
       toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
       const activityRes = await V8InterviewApi.getInsightActivity(insightId)
@@ -1778,15 +1854,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleExportToNotebook = async () => {
+  const handleExportToNotebook = async (sectionIds?: string[]) => {
     if (!insight) return;
     setIsExportingNotebook(true);
     try {
+      // #25 — Note target exports the selected sections as fragments. When a
+      // subset is chosen we send a section-filtered markdown body + the section
+      // id list (consumed as fragments downstream once supported).
+      const content =
+        sectionIds && sectionIds.length > 0
+          ? buildFilteredMarkdown(sectionIds) || insight.content || ''
+          : insight.content || '';
       await Api.post('/my-work/notebook/pages', {
         title: insight.title,
-        content: insight.content || '',
+        content,
         source: 'interview_insight',
-        metadata: { insightId: insight.id },
+        metadata: { insightId: insight.id, ...(sectionIds ? { sectionIds } : {}) },
       });
       toast.success(isPolish ? 'Zapisano w Notatniku' : 'Saved to Notebook');
     } catch {
@@ -6534,6 +6617,170 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     handleWorksheetStatusUpdate,
   ]);
 
+  // #25 — content-bearing sections offered in the export dialog. We exclude the
+  // pure-UI / audit sections (next-actions, comments, activity log) that have no
+  // exportable narrative body.
+  const exportableSections = useMemo(() => {
+    const excluded = new Set(['artifact-actions', 'comments', 'activity-log']);
+    return nModeSectionsWithContent.filter((s) => !excluded.has(s.id));
+  }, [nModeSectionsWithContent]);
+
+  // #25 — target catalogue. `supported` targets feed the existing export
+  // handlers with the chosen section ids; unsupported ones are shown but
+  // disabled-with-tooltip (honest over fake).
+  const exportTargets = useMemo<
+    {
+      id: ExportTargetId;
+      label: { en: string; pl: string };
+      icon: React.FC<{ size?: number; className?: string }>;
+      supported: boolean;
+      hint: { en: string; pl: string };
+    }[]
+  >(
+    () => [
+      {
+        id: 'note',
+        label: { en: 'Note (fragments)', pl: 'Notatka (fragmenty)' },
+        icon: BookOpen,
+        supported: true,
+        hint: {
+          en: 'Selected sections become notebook fragments.',
+          pl: 'Wybrane sekcje stają się fragmentami notatnika.',
+        },
+      },
+      {
+        id: 'tools',
+        label: { en: 'Tools / Idea', pl: 'Narzędzia / Pomysł' },
+        icon: Target,
+        supported: true,
+        hint: {
+          en: 'Hand selected sections to a Discovery tool.',
+          pl: 'Przekaż wybrane sekcje do narzędzia Discovery.',
+        },
+      },
+      {
+        id: 'assessment',
+        label: { en: 'Assessment / Table', pl: 'Ocena / Tabela' },
+        icon: BarChart3,
+        supported: true,
+        hint: {
+          en: 'Map selected sections into an assessment.',
+          pl: 'Zmapuj wybrane sekcje do oceny.',
+        },
+      },
+      {
+        id: 'markdown',
+        label: { en: 'Markdown file', pl: 'Plik Markdown' },
+        icon: Download,
+        supported: true,
+        hint: {
+          en: 'Download the selected sections as a .md file.',
+          pl: 'Pobierz wybrane sekcje jako plik .md.',
+        },
+      },
+      {
+        id: 'report',
+        label: { en: 'Report', pl: 'Raport' },
+        icon: FileText,
+        supported: false,
+        hint: {
+          en: 'Section-aware Report export is not wired yet.',
+          pl: 'Eksport raportu z wyborem sekcji nie jest jeszcze podłączony.',
+        },
+      },
+      {
+        id: 'deck',
+        label: { en: 'Deck', pl: 'Prezentacja' },
+        icon: LayoutGrid,
+        supported: false,
+        hint: {
+          en: 'Deck export is not wired yet.',
+          pl: 'Eksport prezentacji nie jest jeszcze podłączony.',
+        },
+      },
+      {
+        id: 'initiative',
+        label: { en: 'Initiative', pl: 'Inicjatywa' },
+        icon: Rocket,
+        supported: false,
+        hint: {
+          en: 'Use a finding’s "Create initiative" handoff instead.',
+          pl: 'Użyj przekazania "Utwórz inicjatywę" przy wniosku.',
+        },
+      },
+    ],
+    []
+  );
+
+  const openExportDialog = useCallback(() => {
+    // Default: all sections with hasData selected.
+    const defaults = exportableSections.filter((s) => s.hasData !== false).map((s) => s.id);
+    setExportSelectedIds(new Set(defaults));
+    setExportTarget('note');
+    setExportDialogOpen(true);
+  }, [exportableSections]);
+
+  const toggleExportSection = useCallback((id: string) => {
+    setExportSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAllExportSections = useCallback(() => {
+    setExportSelectedIds(new Set(exportableSections.map((s) => s.id)));
+  }, [exportableSections]);
+
+  const clearExportSections = useCallback(() => {
+    setExportSelectedIds(new Set());
+  }, []);
+
+  const runSmartExport = useCallback(async () => {
+    const ids = Array.from(exportSelectedIds);
+    if (ids.length === 0) {
+      toast.error(isPolish ? 'Wybierz co najmniej jedną sekcję' : 'Select at least one section');
+      return;
+    }
+    setExportRunning(true);
+    try {
+      switch (exportTarget) {
+        case 'note':
+          await handleExportToNotebook(ids);
+          break;
+        case 'tools':
+        case 'idea':
+          await handleExportToTools(ids);
+          break;
+        case 'assessment':
+        case 'table':
+          await handleExportToAssessment(ids);
+          break;
+        case 'markdown':
+          handleExportMarkdown(ids);
+          break;
+        default:
+          // unsupported targets are disabled in the UI; guard anyway
+          toast.error(
+            isPolish ? 'Ten cel nie jest jeszcze obsługiwany' : 'This target is not supported yet'
+          );
+          return;
+      }
+      setExportDialogOpen(false);
+    } finally {
+      setExportRunning(false);
+    }
+  }, [
+    exportSelectedIds,
+    exportTarget,
+    isPolish,
+    handleExportToNotebook,
+    handleExportToTools,
+    handleExportToAssessment,
+    handleExportMarkdown,
+  ]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (isLoading) {
@@ -6608,6 +6855,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             </button>
             {exportMenuOpen && (
               <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    openExportDialog();
+                  }}
+                  disabled={insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <Sparkles size={14} />
+                  {isPolish ? 'Inteligentny eksport…' : 'Smart export…'}
+                </button>
+                <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
                 <button
                   onClick={() => {
                     setExportMenuOpen(false);
@@ -6854,6 +7113,211 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 )}
                 {isPolish ? 'Utwórz nową inicjatywę' : 'Create new initiative'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* #25 — Smart export generator: preview-pane dialog. Left = section
+          checkbox table; right = target picker + live preview of selection. */}
+      {exportDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !exportRunning && setExportDialogOpen(false)}
+          />
+          <div className="relative w-full max-w-3xl mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+              <div className="flex items-center gap-2">
+                <Sparkles size={18} className="text-blue-500" />
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  {isPolish ? 'Inteligentny eksport' : 'Smart export'}
+                </h3>
+              </div>
+              <button
+                onClick={() => !exportRunning && setExportDialogOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Target picker */}
+            <div className="px-6 pt-4">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                {isPolish ? 'Cel eksportu' : 'Export target'}
+              </label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {exportTargets.map((t) => {
+                  const Icon = t.icon;
+                  const active = exportTarget === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => t.supported && setExportTarget(t.id)}
+                      disabled={!t.supported}
+                      title={(isPolish ? t.hint.pl : t.hint.en) || undefined}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                        active
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                          : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                      } ${!t.supported ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    >
+                      <Icon size={14} />
+                      {isPolish ? t.label.pl : t.label.en}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+                {isPolish
+                  ? exportTargets.find((t) => t.id === exportTarget)?.hint.pl
+                  : exportTargets.find((t) => t.id === exportTarget)?.hint.en}
+              </p>
+            </div>
+
+            {/* Body: left = section table, right = preview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0 mt-3 border-t border-slate-200 dark:border-navy-700">
+              {/* Left: section checkbox table */}
+              <div className="flex flex-col min-h-0 border-r border-slate-200 dark:border-navy-700">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Sekcje' : 'Sections'} ({exportSelectedIds.size}/
+                    {exportableSections.length})
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={selectAllExportSections}
+                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {isPolish ? 'Wszystkie' : 'All'}
+                    </button>
+                    <span className="text-slate-300 dark:text-navy-600">·</span>
+                    <button
+                      onClick={clearExportSections}
+                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {isPolish ? 'Żadne' : 'None'}
+                    </button>
+                  </div>
+                </div>
+                <div className="overflow-y-auto px-2 py-2 max-h-[42vh]">
+                  {exportableSections.map((s) => {
+                    const checked = exportSelectedIds.has(s.id);
+                    const empty = s.hasData === false;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => toggleExportSection(s.id)}
+                        className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-navy-800"
+                      >
+                        {checked ? (
+                          <CheckSquare size={15} className="shrink-0 text-blue-500" />
+                        ) : (
+                          <Square
+                            size={15}
+                            className="shrink-0 text-slate-300 dark:text-navy-600"
+                          />
+                        )}
+                        <span
+                          className={`flex-1 text-xs ${
+                            empty
+                              ? 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-700 dark:text-slate-200'
+                          }`}
+                        >
+                          {isPolish ? s.label.pl : s.label.en}
+                        </span>
+                        {typeof s.badge === 'number' && s.badge > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                            {s.badge}
+                          </span>
+                        )}
+                        {empty && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                            {isPolish ? 'pusta' : 'empty'}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {exportableSections.length === 0 && (
+                    <p className="px-2 py-4 text-xs text-slate-400">
+                      {isPolish ? 'Brak sekcji do eksportu.' : 'No exportable sections.'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: live preview */}
+              <div className="flex flex-col min-h-0">
+                <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Podgląd' : 'Preview'}
+                  </span>
+                </div>
+                <div className="overflow-y-auto px-4 py-3 max-h-[42vh] text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                  {exportSelectedIds.size === 0 ? (
+                    <p className="text-slate-400 dark:text-slate-500 italic">
+                      {isPolish
+                        ? 'Wybierz sekcje, aby zobaczyć podgląd.'
+                        : 'Select sections to preview.'}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                        {isPolish
+                          ? `${exportSelectedIds.size} sekcji zostanie wyeksportowanych do: ${
+                              exportTargets.find((t) => t.id === exportTarget)?.label.pl
+                            }`
+                          : `${exportSelectedIds.size} section(s) will be exported to: ${
+                              exportTargets.find((t) => t.id === exportTarget)?.label.en
+                            }`}
+                      </p>
+                      <ul className="space-y-1">
+                        {exportableSections
+                          .filter((s) => exportSelectedIds.has(s.id))
+                          .map((s) => (
+                            <li key={s.id} className="flex items-center gap-2">
+                              <CheckCircle2 size={13} className="shrink-0 text-emerald-500" />
+                              <span className="flex-1">{isPolish ? s.label.pl : s.label.en}</span>
+                              <span className="text-[10px] text-slate-400">{s.group}</span>
+                            </li>
+                          ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                {isPolish
+                  ? 'Filtrowanie sekcji odbywa się po stronie klienta (serwerowy filtr — TODO).'
+                  : 'Section filtering is applied client-side (server-side filter — TODO).'}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => !exportRunning && setExportDialogOpen(false)}
+                  className="px-4 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  onClick={runSmartExport}
+                  disabled={exportRunning || exportSelectedIds.size === 0}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+                >
+                  {exportRunning ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={14} />
+                  )}
+                  {isPolish ? 'Eksportuj' : 'Export'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
