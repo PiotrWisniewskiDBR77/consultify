@@ -36,24 +36,24 @@
 - [x] **#27b** Metric strip symetria: `propertiesMaxColumns` pass-through w NModeShell; Insight ustawia 5 → 10 metryk renderuje się jako symetryczne 5×2 (koniec 6+4) ✅
 - [x] **#27c** ID artefaktu (INS-/INIT-) w NModeHeader: monospace chip teraz **kopiowalny kliknięciem** (Copy/Check feedback) + permalink już istniał; ×8 widoków ✅
 - [x] **#21** N/C toggle — framework istniał; ✅ **Insight: zbudowany C-layout** (grid sekcji jako children). ✅ **Initiative: JUŻ MIAŁ własny C-mode** (InitiativeDocumentView:8880 „C-MODE RENDER" — grid kart/scroll). Oba artefakty mają teraz tryb C. (TODO przyszłe: ujednolicić Initiative legacy C-mode na ten sam wzorzec.)
-- [ ] **#21b** Persystencja trybu N/C per user (localStorage)
-- [ ] **#6/§6** AI 3-poziomowy w NModeLayout: poziom „tool" w NModeActionBar
+- [x] **#21b** Persystencja trybu N/C per user — JUŻ w `usePresentationMode` (URL→localStorage→fallback, writeToStorage per entityType) ✅ zweryfikowane
+- [x] **#6/§6** AI 3-poziomowy — poziom „tool": `toolAIActions` always-visible w NModeActionBar (additive, plumbing gotowe) ✅ (agent A1)
 - [ ] **#23/§6** AI 3-poziomowy: poziom „section" w NModeSectionWrapper (prawy róg nagłówka sekcji)
 - [ ] **§6** AI 3-poziomowy: poziom „field" inline przy polach (KPI, Financial)
 - [x] **#22** Adaptive hide-empty w NModeLeftNav (×8 widoków): `hasData`/`alwaysShow` w NModeSection + filtr + toggle „Pokaż wszystkie (N)". Insight wpięty konserwatywnie (ukrywa tylko sekcje z pewnym count=0; core zawsze widoczne) ✅
 - [x] **#22b** Grupowanie sekcji w NModeLeftNav: `group?` w NModeSection + grouped render (agregacja po labelu). Insight: 20 sekcji → 5 grup (Wgląd/Między wierszami/Dowody/Dostarczane/Audyt) ✅
-- [ ] **#27d** SummaryCard — nowy komponent w NModeLayout (kompakt + embed w Reports/Decks)
+- [x] **#27d** SummaryCard — kompaktowy embeddable blok (title/dot/icon/metrics/body/footer, compact+onClick) w NModeLayout ✅ (agent A2)
 
 ### 1B. Kanon tabel (6 tabel Interview + reszta platformy)
 - [ ] **#18** `<DataTable>` kanon graficzny: monochrome bg, brak zebra/row-tone, hairline dividers, sticky header
 - [~] **#18b** StatusPill SSOT — `shared/StatusPill.tsx` gotowy: 1 komponent, 5 tonów (blue/amber/emerald/rose/slate) + `statusTone()` ✅ (agent C). ⬜ Migracja konsumentów (tabele) — osobno (dotyka InterviewHub).
 - [ ] **#10** Migracja Interview tabel na FilterableTable → filtry per-column automatycznie
-- [ ] **#18c** Spec `docs/design-system/TABLES.md` (standard dla całej platformy)
+- [x] **#18c** Spec `docs/design-system/TABLES.md` ✅ (agent A3)
 
 ### 1C. Kanon modali formularzy (3 wizardy + reszta)
 - [x] **#14** `shared/forms/` kanon: portal Select/MultiSelect (nie zasłaniają), Field wrappers, usePopoverPosition — adoptowane w AssignInterviewModal ✅ (agent A)
 - [x] **#14b** PriorityPicker (chip-row 1-klik zamiast `<select>`) + DatePicker custom (kalendarz + skróty, cross-browser) ✅ (agent A)
-- [ ] **#14c** Spec `docs/design-system/FORMS.md` (do dopisania) + migracja innych modali na kanon
+- [x] **#14c** Spec `docs/design-system/FORMS.md` ✅ (agent A3) + migracja innych modali — osobno
 
 ---
 
