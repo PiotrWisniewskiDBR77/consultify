@@ -35,7 +35,7 @@
 - [x] **#27** Metric strip: read-only → label+wartość (NModePropertiesStrip)
 - [ ] **#27b** Metric strip: layout inline z dividerami zamiast sztywnego grid-cols-10 (symetria)
 - [x] **#27c** ID artefaktu (INS-/INIT-) w NModeHeader: monospace chip teraz **kopiowalny kliknięciem** (Copy/Check feedback) + permalink już istniał; ×8 widoków ✅
-- [ ] **#21** N/C toggle w NModeHeader — UWAGA: `PresentationModeSwitcher` + `usePresentationMode` JUŻ ISTNIEJE w headerze; sprawdzić co robi tryb C dziś, dodać/dokończyć grid 2-3 kol
+- [~] **#21** N/C toggle — framework istniał (toggle + usePresentationMode + NModeShell `mode==='c' && children`), ale konsumenci nie dawali `children` → C renderowało pusto („nie mamy clickupowej"). ✅ **Insight: zbudowany C-layout** (gęsty grid wszystkich sekcji jako children, N-mode nietknięty). ⬜ Initiative C-layout do dorobienia analogicznie.
 - [ ] **#21b** Persystencja trybu N/C per user (localStorage)
 - [ ] **#6/§6** AI 3-poziomowy w NModeLayout: poziom „tool" w NModeActionBar
 - [ ] **#23/§6** AI 3-poziomowy: poziom „section" w NModeSectionWrapper (prawy róg nagłówka sekcji)
