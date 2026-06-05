@@ -636,6 +636,38 @@ async function ensureInterviewSessionV6Columns(): Promise<void> {
   }
 }
 
+/**
+ * Lazy-ensure lifecycle columns on interview_sessions (archive + trash).
+ * DB_MANAGED_SCHEMA is off in dev, so we ADD COLUMN only when missing.
+ */
+async function ensureInterviewSessionLifecycleColumns(): Promise<void> {
+  const cols = await getTableColumns('interview_sessions');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'archived_at',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN archived_at TIMESTAMP`,
+    },
+    {
+      name: 'archived_by',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN archived_by TEXT`,
+    },
+    {
+      name: 'trashed_at',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN trashed_at TIMESTAMP`,
+    },
+    {
+      name: 'trashed_by',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN trashed_by TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      await queryHelpers.queryRun(column.sql);
+    }
+  }
+}
+
 async function ensureInterviewQuestionTemplatesTable(): Promise<void> {
   await queryHelpers.queryRun(
     `CREATE TABLE IF NOT EXISTS interview_question_templates (
@@ -1670,10 +1702,50 @@ export async function loadAcceptedInterviewSessionsForManager(
   }));
 }
 
+export type InterviewSessionLifecycle = 'active' | 'archived' | 'trash' | 'all';
+
+/**
+ * Build a SQL fragment (with leading AND) that filters interview_sessions rows by
+ * their archive/trash lifecycle. `sessionAlias` is the table alias used in the query.
+ * - active   → not archived AND not trashed (default list)
+ * - archived → archived AND not trashed
+ * - trash    → trashed (regardless of archived)
+ * - all      → no filter
+ */
+function buildSessionLifecycleClause(
+  lifecycle: InterviewSessionLifecycle | undefined,
+  sessionAlias: string
+): string {
+  const a = sessionAlias;
+  switch (lifecycle) {
+    case 'archived':
+      return ` AND ${a}.archived_at IS NOT NULL AND ${a}.trashed_at IS NULL`;
+    case 'trash':
+      return ` AND ${a}.trashed_at IS NOT NULL`;
+    case 'all':
+      return '';
+    case 'active':
+    default:
+      return ` AND ${a}.archived_at IS NULL AND ${a}.trashed_at IS NULL`;
+  }
+}
+
+function normalizeSessionLifecycleParam(raw: unknown): InterviewSessionLifecycle {
+  const value = String(raw ?? '').toLowerCase();
+  if (value === 'archived' || value === 'trash' || value === 'all' || value === 'active') {
+    return value;
+  }
+  return 'active';
+}
+
 export async function loadManagedInterviewSessionsForManager(
   organizationId: string,
   userId: string,
-  options?: { elevated?: boolean; scope?: InterviewManagerScope }
+  options?: {
+    elevated?: boolean;
+    scope?: InterviewManagerScope;
+    lifecycle?: InterviewSessionLifecycle;
+  }
 ): Promise<
   Array<{
     id: string;
@@ -1706,6 +1778,12 @@ export async function loadManagedInterviewSessionsForManager(
     sentBackReason?: string;
   }>
 > {
+  // Ensure lifecycle columns exist before filtering on them (lazy ALTER, dev schema).
+  await ensureInterviewSessionLifecycleColumns();
+
+  const lifecycle = options?.lifecycle || 'active';
+  const lifecycleClause = buildSessionLifecycleClause(lifecycle, 's');
+
   const scope =
     options?.scope ||
     (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: userId });
@@ -1756,6 +1834,7 @@ export async function loadManagedInterviewSessionsForManager(
          p.organization_id = ?
          OR (s.project_id IS NULL AND s.organization_id = ?)
        )
+       ${lifecycleClause}
      ORDER BY
        CASE a.status
          WHEN 'submitted' THEN 0
@@ -1832,6 +1911,7 @@ export async function loadManagedInterviewSessionsForManager(
        WHERE s.organization_id = ?
          AND s.owner_id = ?
          AND NOT EXISTS (SELECT 1 FROM interview_assignments a WHERE a.session_id = s.id)
+         ${lifecycleClause}
        ORDER BY COALESCE(s.last_activity_at, s.started_at) DESC`,
       [organizationId, userId]
     );
@@ -1988,6 +2068,81 @@ ${questionsForPrompt}`;
 
   return buildInterviewAiReviewSnapshot(evaluation, questions);
 }
+
+/**
+ * Fetch an interview session scoped to the caller's organization (project-scoped
+ * OR org-scoped). Returns null when not found / cross-org (IDOR-safe). Includes
+ * lifecycle columns so callers can branch on archive/trash state.
+ */
+async function loadOrgScopedSessionForLifecycle(
+  sessionId: string,
+  organizationId: string
+): Promise<{
+  id: string;
+  archived_at: string | null;
+  archived_by: string | null;
+  trashed_at: string | null;
+  trashed_by: string | null;
+} | null> {
+  await ensureInterviewSessionLifecycleColumns();
+  const row = await queryHelpers.queryOne<any>(
+    `SELECT s.id, s.archived_at, s.archived_by, s.trashed_at, s.trashed_by
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+    [sessionId, organizationId, organizationId]
+  );
+  return (row as any) || null;
+}
+
+/**
+ * Apply a single lifecycle action to an org-scoped session. Returns a result code
+ * so both the single-id handlers and the bulk handler can share the logic.
+ */
+async function applySessionLifecycleAction(params: {
+  sessionId: string;
+  organizationId: string;
+  userId: string;
+  action: 'archive' | 'restore' | 'trash' | 'untrash';
+}): Promise<'ok' | 'not_found'> {
+  const { sessionId, organizationId, userId, action } = params;
+  const session = await loadOrgScopedSessionForLifecycle(sessionId, organizationId);
+  if (!session) return 'not_found';
+
+  const now = new Date().toISOString();
+  switch (action) {
+    case 'archive':
+      await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET archived_at = ?, archived_by = ? WHERE id = ?`,
+        [now, userId, sessionId]
+      );
+      break;
+    case 'restore':
+      await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET archived_at = NULL, archived_by = NULL WHERE id = ?`,
+        [sessionId]
+      );
+      break;
+    case 'trash':
+      await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET trashed_at = ?, trashed_by = ? WHERE id = ?`,
+        [now, userId, sessionId]
+      );
+      break;
+    case 'untrash':
+      await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET trashed_at = NULL, trashed_by = NULL WHERE id = ?`,
+        [sessionId]
+      );
+      break;
+  }
+  return 'ok';
+}
+
 export const InterviewController = {
   // ==========================================
   // SESSIONS
@@ -2023,8 +2178,10 @@ export const InterviewController = {
       organizationId: user.organizationId,
       role: user.role,
     });
+    const lifecycle = normalizeSessionLifecycleParam(req.query.lifecycle);
     const sessions = await loadManagedInterviewSessionsForManager(user.organizationId, user.id, {
       scope,
+      lifecycle,
     });
     res.json(sessions);
   }),
@@ -2241,6 +2398,153 @@ export const InterviewController = {
       id,
     ]);
     res.json(buildSessionResponse(updated));
+  }),
+
+  // ==========================================
+  // SESSION LIFECYCLE (Archive / Trash)
+  // ==========================================
+
+  archiveSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const result = await applySessionLifecycleAction({
+      sessionId: id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'archive',
+    });
+    if (result === 'not_found') {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true, id, archived: true });
+  }),
+
+  restoreSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const result = await applySessionLifecycleAction({
+      sessionId: id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'restore',
+    });
+    if (result === 'not_found') {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true, id, archived: false });
+  }),
+
+  trashSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const result = await applySessionLifecycleAction({
+      sessionId: id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'trash',
+    });
+    if (result === 'not_found') {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true, id, trashed: true });
+  }),
+
+  untrashSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const result = await applySessionLifecycleAction({
+      sessionId: id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'untrash',
+    });
+    if (result === 'not_found') {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true, id, trashed: false });
+  }),
+
+  /**
+   * Permanently delete a session. Only allowed once the session has been trashed
+   * (trashed_at IS NOT NULL). Cascade-deletes the session's direct child rows
+   * (questions, notes, evidence, assignments) then the session row itself.
+   */
+  deleteSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const session = await loadOrgScopedSessionForLifecycle(id, user.organizationId);
+    if (!session) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    if (!session.trashed_at) {
+      res
+        .status(409)
+        .json({ error: 'Session must be trashed before it can be permanently deleted' });
+      return;
+    }
+
+    // Cascade-delete known session-scoped child rows, then the session row.
+    // Best-effort per table so a missing/legacy table never blocks the delete.
+    for (const sql of [
+      `DELETE FROM interview_questions WHERE session_id = ?`,
+      `DELETE FROM interview_notes WHERE session_id = ?`,
+      `DELETE FROM interview_evidence WHERE session_id = ?`,
+      `DELETE FROM interview_assignments WHERE session_id = ?`,
+    ]) {
+      try {
+        await queryHelpers.queryRun(sql, [id]);
+      } catch {
+        /* best-effort cascade — ignore tables that don't exist or lack session_id */
+      }
+    }
+
+    await queryHelpers.queryRun(`DELETE FROM interview_sessions WHERE id = ?`, [id]);
+
+    res.json({ success: true, deletedId: id });
+  }),
+
+  /**
+   * Bulk lifecycle action over a set of session ids (org-scoped). Applies the
+   * given action to each id in a loop; ids outside the caller's org are skipped.
+   */
+  bulkSessionLifecycle: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { ids, action } = req.body || {};
+
+    const allowedActions = new Set(['archive', 'restore', 'trash', 'untrash']);
+    if (!allowedActions.has(action)) {
+      res.status(400).json({ error: 'Invalid action' });
+      return;
+    }
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({ error: 'ids must be a non-empty array' });
+      return;
+    }
+
+    const updatedIds: string[] = [];
+    const notFoundIds: string[] = [];
+    for (const rawId of ids) {
+      const sessionId = String(rawId);
+      const result = await applySessionLifecycleAction({
+        sessionId,
+        organizationId: user.organizationId,
+        userId: user.id,
+        action,
+      });
+      if (result === 'ok') {
+        updatedIds.push(sessionId);
+      } else {
+        notFoundIds.push(sessionId);
+      }
+    }
+
+    res.json({ success: true, action, updatedIds, notFoundIds });
   }),
 
   // ==========================================

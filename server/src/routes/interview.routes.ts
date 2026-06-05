@@ -77,6 +77,28 @@ router.post('/sessions', InterviewController.createSession);
 router.patch('/sessions/:id', InterviewController.updateSession);
 
 // ==========================================
+// SESSION LIFECYCLE (Archive / Trash)
+// ==========================================
+
+/** POST /interview/sessions/bulk - Bulk archive/restore/trash/untrash (must precede /:id) */
+router.post('/sessions/bulk', InterviewController.bulkSessionLifecycle);
+
+/** POST /interview/sessions/:id/archive - Archive a session */
+router.post('/sessions/:id/archive', InterviewController.archiveSession);
+
+/** POST /interview/sessions/:id/restore - Un-archive a session */
+router.post('/sessions/:id/restore', InterviewController.restoreSession);
+
+/** POST /interview/sessions/:id/trash - Move a session to trash */
+router.post('/sessions/:id/trash', InterviewController.trashSession);
+
+/** POST /interview/sessions/:id/untrash - Restore a session from trash */
+router.post('/sessions/:id/untrash', InterviewController.untrashSession);
+
+/** DELETE /interview/sessions/:id - Permanently delete a trashed session */
+router.delete('/sessions/:id', InterviewController.deleteSession);
+
+// ==========================================
 // ASSIGNMENTS ROUTES (Workflow)
 // ==========================================
 
