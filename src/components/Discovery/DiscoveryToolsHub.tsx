@@ -2049,7 +2049,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       }
 
       try {
-        const initiative = await Api.get(`/api/initiatives/${id}`);
+        // Fix: API_URL is already '/api'; the `/api/` prefix here produced a
+        // doubled `/api/api/initiatives/...` 404. Siblings (1229, 2777) use
+        // the bare `/initiatives/...` path. Aligned.
+        const initiative = await Api.get(`/initiatives/${id}`);
         const row = initiative?.data;
         if (row?.id) {
           handleOpenDocument({
