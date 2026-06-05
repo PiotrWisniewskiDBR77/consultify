@@ -54,6 +54,7 @@ import { ArtifactActionPanel } from '@/components/shared/artifact-actions/Artifa
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
 import type { NModePropertyField, NModeSection } from '@/components/shared/NModeLayout/types';
 import {
   ActivityLogCanvas,
@@ -5644,7 +5645,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
       return {
         ...section,
-        component,
+        component: (
+          <SectionErrorBoundary
+            sectionLabel={isPolish ? section.label.pl : section.label.en}
+            isPolish={isPolish}
+          >
+            {component}
+          </SectionErrorBoundary>
+        ),
         badge: badgeMap[section.id],
       } as NModeSection;
     });

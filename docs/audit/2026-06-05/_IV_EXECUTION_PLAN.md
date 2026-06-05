@@ -22,8 +22,8 @@
 
 ## FAZA 0 — P0 BUGI (przed nowymi ficzerami) · ~2-3 dni
 
-- [ ] 🔴 **#24** Insight section crash — powtórzyć (sekcja Signals?), znaleźć root cause, naprawić
-- [ ] 🔴 **#24b** Crash diagnostics nie wysyłane („could not be delivered") — naprawić telemetrię
+- [x] 🔴 **#24** Insight section crash — per-section ErrorBoundary izoluje crash sekcji (koniec pełnoekranowego „Coś poszło nie tak"); reusable w NModeLayout dla 8 widoków ✅
+- [ ] 🔴 **#24b** Crash diagnostics nie wysyłane („could not be delivered") — app-level telemetria (osobny od #24; per-section boundary omija app-level dla crashy sekcji)
 - [x] 🔴 **#4** Voice „3 osoby" — bufor akumulacyjny w `useTeresaVoice` + flush na `turnComplete` (jedna tura = jedna wiadomość) ✅ `commit`
 - [ ] **#1** Popover „Visible columns" przycinany do tabeli — portal/overflow (wspólny komponent, dotyczy wszystkich tabel)
 
