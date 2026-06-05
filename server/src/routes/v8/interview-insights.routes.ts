@@ -644,7 +644,20 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { insightId, findingId } = req.params as { insightId: string; findingId: string };
-    const { target_initiative_id } = req.body as { target_initiative_id?: string };
+    const {
+      target_initiative_id,
+      target_type: rawTargetType,
+      project_id: bodyProjectId,
+    } = req.body as {
+      target_initiative_id?: string;
+      target_type?: string;
+      project_id?: string;
+    };
+    // D5 — when no existing target is linked, create a REAL canonical entity
+    // (initiative | decision | task) from the finding instead of minting an
+    // orphan `handoff_req_<uuid>` placeholder that nothing materialized.
+    const targetType: 'initiative' | 'decision' | 'task' =
+      rawTargetType === 'decision' || rawTargetType === 'task' ? rawTargetType : 'initiative';
 
     const insight = await getInsightById(insightId);
     if (!insight || insight.organizationId !== organizationId) {
@@ -689,7 +702,12 @@ router.post(
     }
 
     const payload = handoffResult.payload;
-    let initiativeRef: { id: string; type: 'linked' | 'handoff_request' };
+    let initiativeRef: {
+      id: string;
+      type: 'linked' | 'created';
+      targetType?: 'initiative' | 'decision' | 'task';
+      url?: string;
+    };
 
     if (target_initiative_id) {
       const existing = await queryHelpers.queryOne(
@@ -702,16 +720,113 @@ router.post(
           code: 'P10_TARGET_INITIATIVE_NOT_FOUND',
         });
       }
-      initiativeRef = { id: target_initiative_id, type: 'linked' };
+      initiativeRef = { id: target_initiative_id, type: 'linked', targetType: 'initiative' };
     } else {
-      initiativeRef = { id: `handoff_req_${uuidv4()}`, type: 'handoff_request' };
+      // D5 — materialize a real canonical entity from the finding. Title =
+      // finding statement; body = limits + next action + evidence summary.
+      const title = String(finding.finding_statement || 'Interview finding').slice(0, 200);
+      const activeEvidence = finding.evidence_pointers.filter((p) => !p.isTombstone);
+      const summary = [
+        finding.finding_statement,
+        finding.limits ? `\n\nLimits: ${finding.limits}` : '',
+        finding.next_action ? `\n\nRecommended next action: ${finding.next_action}` : '',
+        activeEvidence.length
+          ? `\n\nEvidence (${activeEvidence.length}):\n${activeEvidence
+              .slice(0, 8)
+              .map((p) => `- ${String(p.excerpt || p.source_id || '').slice(0, 240)}`)
+              .join('\n')}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('');
+      const validProjectId =
+        bodyProjectId &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bodyProjectId)
+          ? bodyProjectId
+          : null;
+
+      try {
+        if (targetType === 'decision') {
+          const { default: decisionService } = await import(
+            '../../services/decisionService.js'
+          );
+          const decision = await decisionService.createDecision({
+            organizationId,
+            projectId: validProjectId || undefined,
+            title,
+            description: summary,
+            type: 'APPROVAL',
+            decisionMakerId: userId,
+            createdBy: userId,
+          });
+          initiativeRef = {
+            id: decision.id,
+            type: 'created',
+            targetType: 'decision',
+            url: `/my-work/decisions/${decision.id}`,
+          };
+        } else if (targetType === 'task') {
+          const { TaskService } = await import('../../services/TaskService.js');
+          const { getDatabase } = await import('../../database/index.js');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const taskService = new TaskService(getDatabase() as any);
+          const task = await taskService.createTask(
+            {
+              projectId: validProjectId,
+              title,
+              description: summary,
+              status: 'todo',
+              priority: 'medium',
+              tags: ['interview', 'finding'],
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+            userId
+          );
+          initiativeRef = {
+            id: task.id,
+            type: 'created',
+            targetType: 'task',
+            url: `/my-work?taskId=${encodeURIComponent(task.id)}`,
+          };
+        } else {
+          const { default: initiativeService } = await import(
+            '../../services/initiativeService.js'
+          );
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const initiative = await initiativeService.createInitiative({
+            organization_id: organizationId,
+            project_id: validProjectId || undefined,
+            title,
+            summary,
+            status: 'DRAFT',
+            owner_id: userId,
+            market_context: `Created from interview finding ${findingId}`,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any);
+          initiativeRef = {
+            id: initiative.id,
+            type: 'created',
+            targetType: 'initiative',
+            url: `/my-work?initiativeId=${encodeURIComponent(initiative.id)}`,
+          };
+        }
+      } catch (createErr) {
+        logger.error('[InsightHandoff] entity creation failed', createErr);
+        return res.status(500).json({
+          error: 'Failed to create target entity from finding',
+          code: 'P10_HANDOFF_CREATE_FAILED',
+        });
+      }
     }
 
-    await recordHandoff(insightId, findingId, payload, target_initiative_id, {
+    // D5 — record the real target (linked existing OR newly created entity),
+    // not an orphan placeholder. The handoff is now 'linked' in both branches
+    // because a real row always exists downstream.
+    await recordHandoff(insightId, findingId, payload, initiativeRef.id, {
       organizationId,
       actorUserId: userId,
-      targetRefType: target_initiative_id ? 'linked' : 'handoff_request',
-      status: target_initiative_id ? 'linked' : 'pending',
+      targetRefType: 'linked',
+      status: 'linked',
     });
 
     organizationContextService
@@ -729,8 +844,9 @@ router.post(
           confidenceLevel: finding.confidence_level,
           limits: finding.limits,
           nextAction: finding.next_action,
-          targetInitiativeId: target_initiative_id || null,
+          targetInitiativeId: target_initiative_id || initiativeRef.id,
           initiativeRefType: initiativeRef.type,
+          targetEntityType: initiativeRef.targetType || 'initiative',
         },
         isExplicit: true,
         claims: [

@@ -894,11 +894,24 @@ export const V8InterviewApi = {
   handoffFinding: (
     insightId: string,
     findingId: string,
-    payload?: { target_initiative_id?: string }
+    // D5 — when no target_initiative_id is given the backend now CREATES a
+    // real canonical entity (initiative | decision | task) from the finding
+    // instead of an orphan placeholder. target_type selects which; project_id
+    // optionally scopes it.
+    payload?: {
+      target_initiative_id?: string;
+      target_type?: 'initiative' | 'decision' | 'task';
+      project_id?: string;
+    }
   ) =>
     v8Post<{
       handoff_payload: Record<string, unknown>;
-      initiative: { id: string; type: 'linked' | 'handoff_request' };
+      initiative: {
+        id: string;
+        type: 'linked' | 'created';
+        targetType?: 'initiative' | 'decision' | 'task';
+        url?: string;
+      };
       findingId: string;
       insightId: string;
     }>(
