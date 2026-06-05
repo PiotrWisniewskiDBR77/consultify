@@ -134,6 +134,7 @@ import ssoRoutes from './routes/integrations/sso.routes.js';
 import webhookRoutes from './routes/integrations/webhooks.routes.js';
 import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.js';
 import intelligenceRoutes from './routes/intelligence.routes.js';
+import discoveryRoutes from './routes/discovery.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
 import interviewEnterpriseRoutes from './routes/interview-enterprise.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
@@ -932,6 +933,9 @@ export class ApiGateway {
       // reached only via frontend `.catch()` fallbacks and are tracked for a
       // future router split, not a blanket deprecation.
       app.use('/api/interview', interviewRoutes);
+      // Discovery revive — the Discovery Consultant canvas now has a real
+      // backend (persistence + convert-to-project + SPIN extraction).
+      app.use('/api/discovery', discoveryRoutes);
       app.use('/api/interview-v4', interviewEnterpriseRoutes);
       app.use('/api/agents', agentsRoutes);
       app.use('/api/ai-operator', aiOperatorRoutes);
