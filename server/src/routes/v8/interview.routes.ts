@@ -1340,6 +1340,10 @@ router.post(
         },
         boundedInsightPayload,
         organizationContext: orgContext,
+        // D2 — ToolInitiativeService reads `context.org`. Mirror the org context
+        // under that key so the downstream generator actually sees it (the
+        // `organizationContext` key it was written under was never read).
+        org: orgContext,
       };
 
       await queryHelpers.queryRun(
@@ -1418,6 +1422,10 @@ router.post(
       },
       boundedInsightPayload,
       organizationContext: orgContext,
+      // D1 — assessmentInitiativeService reads `contextSnapshot.org`. Mirror
+      // the org context under that key so the DRD assessment generator sees it
+      // (the `organizationContext` key it was written under was never read).
+      org: orgContext,
     };
 
     await queryHelpers.queryRun(
