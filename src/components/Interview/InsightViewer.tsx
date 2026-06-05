@@ -55,9 +55,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
-import remarkGfm from 'remark-gfm';
 
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
@@ -2549,7 +2547,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       'truth-review-summary',
       'source-sessions',
       'traceability',
-      'full-analysis',
     ];
 
     const componentById: Record<string, React.ReactNode> = {};
@@ -5708,91 +5705,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           break;
         }
 
-        case 'full-analysis':
-          component = (
-            <div className="space-y-4">
-              <Callout
-                variant="warning"
-                title={isPolish ? 'Raw AI narrative' : 'Raw AI narrative'}
-                compact
-              >
-                {isPolish
-                  ? 'Ta sekcja pokazuje pełny output AI w markdownzie. Traktuj ją jako warstwę roboczą pod consulting readout.'
-                  : 'This section shows the full AI markdown output. Treat it as the working layer behind the consulting readout.'}
-              </Callout>
-              {insight?.status === 'generating' ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Sparkles size={48} className="text-amber-400 animate-pulse mb-6" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    {isPolish ? 'AI generuje wnioski...' : 'AI is generating insights...'}
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
-                    {isPolish
-                      ? 'Analizujemy wybrane sesje wywiadów i przygotowujemy kompleksową analizę.'
-                      : 'We are analyzing selected interview sessions and preparing a comprehensive analysis.'}
-                  </p>
-                </div>
-              ) : insight?.content ? (
-                <div className="prose prose-slate dark:prose-invert prose-sm max-w-none">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-200 dark:border-navy-700">
-                          {children}
-                        </h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="text-xl font-semibold text-slate-800 dark:text-white mt-6 mb-3">
-                          {children}
-                        </h2>
-                      ),
-                      h3: ({ children }) => (
-                        <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200 mt-4 mb-2">
-                          {children}
-                        </h3>
-                      ),
-                      p: ({ children }) => (
-                        <p className="text-slate-600 dark:text-slate-300 mb-3 leading-relaxed">
-                          {children}
-                        </p>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="list-disc list-inside space-y-1 mb-4">{children}</ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="list-decimal list-inside space-y-1 mb-4">{children}</ol>
-                      ),
-                      li: ({ children }) => (
-                        <li className="text-slate-600 dark:text-slate-300">{children}</li>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-semibold text-slate-800 dark:text-white">
-                          {children}
-                        </strong>
-                      ),
-                      blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-primary-500 pl-4 py-2 my-4 bg-slate-50 dark:bg-navy-800/50 rounded-r-lg">
-                          {children}
-                        </blockquote>
-                      ),
-                    }}
-                  >
-                    {insight.content}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <FileText size={48} className="text-slate-600 dark:text-slate-400 mb-4" />
-                  <p className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak treści' : 'No content'}
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-          break;
-
         case 'source-sessions':
           component = (
             <div className="space-y-2">
@@ -7174,6 +7086,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   ? exportTargets.find((t) => t.id === exportTarget)?.hint.pl
                   : exportTargets.find((t) => t.id === exportTarget)?.hint.en}
               </p>
+              {(exportTarget === 'tools' || exportTarget === 'assessment') && (
+                <p className="mt-1 flex items-start gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                  <AlertCircle size={12} className="mt-0.5 shrink-0" />
+                  <span>
+                    {isPolish
+                      ? 'Wybór sekcji dotyczy Notatki/Markdown; Narzędzia/Ocena eksportują na razie cały wniosek.'
+                      : 'Section selection applies to Note/Markdown; Tools/Assessment export the full insight for now.'}
+                  </span>
+                </p>
+              )}
             </div>
 
             {/* Body: left = section table, right = preview */}
