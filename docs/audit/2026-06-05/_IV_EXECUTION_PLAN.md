@@ -46,14 +46,14 @@
 
 ### 1B. Kanon tabel (6 tabel Interview + reszta platformy)
 - [ ] **#18** `<DataTable>` kanon graficzny: monochrome bg, brak zebra/row-tone, hairline dividers, sticky header
-- [ ] **#18b** StatusPill SSOT — jeden komponent, 5 semantycznych kolorów (zabija 4 rozjechane systemy)
+- [~] **#18b** StatusPill SSOT — `shared/StatusPill.tsx` gotowy: 1 komponent, 5 tonów (blue/amber/emerald/rose/slate) + `statusTone()` ✅ (agent C). ⬜ Migracja konsumentów (tabele) — osobno (dotyka InterviewHub).
 - [ ] **#10** Migracja Interview tabel na FilterableTable → filtry per-column automatycznie
 - [ ] **#18c** Spec `docs/design-system/TABLES.md` (standard dla całej platformy)
 
 ### 1C. Kanon modali formularzy (3 wizardy + reszta)
-- [ ] **#14** `<FormModal>` kanon: portal dropdowny (nie zasłaniają), chip-pickery zamiast natywnych selectów, h-10 rounded-xl
-- [ ] **#14b** PriorityPicker (chip-row zamiast `<select>`), DatePicker custom (zamiast natywnego)
-- [ ] **#14c** Spec `docs/design-system/FORMS.md`
+- [x] **#14** `shared/forms/` kanon: portal Select/MultiSelect (nie zasłaniają), Field wrappers, usePopoverPosition — adoptowane w AssignInterviewModal ✅ (agent A)
+- [x] **#14b** PriorityPicker (chip-row 1-klik zamiast `<select>`) + DatePicker custom (kalendarz + skróty, cross-browser) ✅ (agent A)
+- [ ] **#14c** Spec `docs/design-system/FORMS.md` (do dopisania) + migracja innych modali na kanon
 
 ---
 
@@ -116,7 +116,7 @@
 - [ ] **#12** ⭐ Decyzja: merge Sessions+Assigned w jedną zakładkę „Work" (lub potwierdzić rozdzielenie)
 - [ ] **#7b** Manager flow w menu wiersza: Approve/Send back/Reassign/Change due date (handlery są)
 - [ ] **#8** Bulk actions: Approve/Send back/Remind/Archive zaznaczonych
-- [ ] **#8b** Archiwum: kolumny `archived_at`/`trashed_at` + akcje Archive/Restore/Trash/Delete-forever
+- [~] **#8b** Archiwum BACKEND gotowy (agent B): kolumny archived_at/by+trashed_at/by, endpointy archive/restore/trash/untrash/DELETE + /sessions/bulk, lista filtruje `?lifecycle=active|archived|trash|all`. ⬜ Frontend UI (przyciski archive/trash w menu + chip-row) — osobno (dotyka InterviewHub).
 - [ ] **#8c** Chip-row lifecycle: Active / Archive / Trash
 - [ ] **#9** Kolumny Sessions: rozbić DATE na Due/Submitted/Overdue + Assignee + AI Score (opt-in)
 - [ ] **#9b** Eskalacja UI (silnik istnieje): escalation target + manual „Escalate now" + kolumna
