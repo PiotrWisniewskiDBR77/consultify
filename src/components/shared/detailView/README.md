@@ -46,7 +46,7 @@ level respects backend capabilities (`canUseAi`) and versions its output.
 | `ActionToolbar`  | ⬜ next | primary action + Export/Convert/AI dropdowns (#26)        |
 | `SectionSidebar` | ⬜ next | grouped sections + numbers + drag + adaptive hide-empty   |
 | `SectionCard`    | ⬜ next | one section card kanon + AI slot in header (#23)          |
-| `AIAssist`       | ⬜ next | 3-level AI slot (tool / section / field)                  |
+| `AIAssist`       | ✅ done | 3-level AI slot (tool / section / field) + canUseAi gate   |
 | `SummaryCard`    | ⬜ next | reusable compact artifact (C-mode + embed in Reports)     |
 
 ## House style

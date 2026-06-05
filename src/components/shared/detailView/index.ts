@@ -10,6 +10,8 @@
  * SectionCard, AIAssist, SummaryCard follow.
  */
 
+export type { AIAction, AIAssistProps } from './AIAssist';
+export { AIAssist } from './AIAssist';
 export type { MetricStripProps } from './MetricStrip';
 export { MetricStrip, default as MetricStripDefault } from './MetricStrip';
 export type { AIAssistLevel, DetailViewMode, MetricItem, MetricTone } from './types';
