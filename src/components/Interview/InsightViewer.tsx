@@ -20,8 +20,11 @@ import {
   Download,
   ExternalLink,
   Eye,
+  EyeOff,
   FileText,
   Flame,
+  GitCompare,
+  Heart,
   History,
   Layers,
   Lightbulb,
@@ -29,10 +32,13 @@ import {
   Loader2,
   Map as MapIcon,
   MessageSquare,
+  Network,
   Plus,
+  Quote,
   Radio,
   RefreshCw,
   Rocket,
+  Scale,
   Send,
   ShieldAlert,
   Sparkles,
@@ -53,6 +59,7 @@ import remarkGfm from 'remark-gfm';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
+import { NModeSectionWrapper } from '@/components/shared/NModeLayout';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
 import type { NModePropertyField, NModeSection } from '@/components/shared/NModeLayout/types';
@@ -452,36 +459,27 @@ const STATUS_CONFIG: Record<
 
 // ── N-mode section definitions (without component — assigned later) ──────────
 
+// Section nav model (#22 / #23c).
+//
+// MERGES — content is preserved by composing the removed sections' rendered
+// JSX into the surviving section's component (see `composedComponentById`
+// inside `nModeSectionsWithContent`). Only the NAV entries are consolidated:
+//   • material-quality  ← absorbs truth-review-summary  → "Quality & Trust"
+//   • source-pack       ← absorbs source-sessions       → "Sources"
+//   • candidate-triage  ← absorbs traceability          → "Findings & Evidence"
+//   • full-analysis     — removed (covered by Consulting Readout / raw markdown
+//                          stays reachable via Report Pack export)
+//
+// NEW analytical "between the lines" sections (#22c / #23d) derive purely from
+// data already in scope (no new backend calls); each shows an informative
+// empty-state until the underlying multi-respondent data exists.
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'artifact-actions', icon: Rocket, label: { en: 'Next Actions', pl: 'Dalsze akcje' } },
-  {
-    id: 'truth-review-summary',
-    icon: ShieldAlert,
-    label: { en: 'Truth & Review', pl: 'Prawda i review' },
-  },
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
   {
     id: 'consulting-readout',
     icon: Sparkles,
     label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' },
-  },
-  {
-    id: 'material-quality',
-    icon: AlertCircle,
-    label: { en: 'Material Quality', pl: 'Jakość materiału' },
-  },
-  { id: 'report-pack', icon: FileText, label: { en: 'Report Pack', pl: 'Pakiet raportu' } },
-  { id: 'candidate-triage', icon: Eye, label: { en: 'Candidate Triage', pl: 'Triage kandydatów' } },
-  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
-  {
-    id: 'source-pack',
-    icon: Link2,
-    label: { en: 'Source Pack', pl: 'Pakiet źródeł' },
-  },
-  {
-    id: 'analysis-matrix',
-    icon: BarChart3,
-    label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' },
   },
   { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
   {
@@ -490,15 +488,68 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' },
   },
   { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
+
+  // ── Między wierszami / Between the lines ──────────────────────────────────
+  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
   { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
-  { id: 'evidence-map', icon: MapIcon, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
-  { id: 'traceability', icon: Target, label: { en: 'Traceability', pl: 'Traceability' } },
-  { id: 'full-analysis', icon: FileText, label: { en: 'Full Analysis', pl: 'Pełna Analiza' } },
   {
-    id: 'source-sessions',
-    icon: MessageSquare,
-    label: { en: 'Source Sessions', pl: 'Sesje Źródłowe' },
+    id: 'analysis-matrix',
+    icon: BarChart3,
+    label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' },
   },
+  {
+    id: 'consensus-divergence',
+    icon: GitCompare,
+    label: { en: 'Consensus & Divergence', pl: 'Zgoda i rozbieżności' },
+  },
+  {
+    id: 'implicit-assumptions',
+    icon: Brain,
+    label: { en: 'Implicit Assumptions', pl: 'Ukryte założenia' },
+  },
+  { id: 'silences', icon: EyeOff, label: { en: 'Silences', pl: 'Przemilczenia' } },
+  {
+    id: 'quote-comparison',
+    icon: Quote,
+    label: { en: 'Quote Comparison', pl: 'Porównanie cytatów' },
+  },
+  {
+    id: 'sentiment-tone',
+    icon: Heart,
+    label: { en: 'Sentiment & Tone', pl: 'Sentyment i ton' },
+  },
+  { id: 'power-dynamics', icon: Scale, label: { en: 'Power Dynamics', pl: 'Dynamika władzy' } },
+  {
+    id: 'hypothesis-board',
+    icon: Network,
+    label: { en: 'Hypothesis Board', pl: 'Tablica hipotez' },
+  },
+
+  // ── Dowody / Evidence ─────────────────────────────────────────────────────
+  { id: 'evidence-map', icon: MapIcon, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
+  {
+    id: 'candidate-triage',
+    icon: Eye,
+    label: { en: 'Findings & Evidence', pl: 'Wnioski i dowody' },
+  },
+  {
+    id: 'source-pack',
+    icon: Link2,
+    label: { en: 'Sources', pl: 'Źródła' },
+  },
+
+  // ── Dostarczane / Deliverables ────────────────────────────────────────────
+  { id: 'report-pack', icon: FileText, label: { en: 'Report Pack', pl: 'Pakiet raportu' } },
+
+  // ── Audyt / Audit ─────────────────────────────────────────────────────────
+  {
+    id: 'material-quality',
+    icon: AlertCircle,
+    label: { en: 'Quality & Trust', pl: 'Jakość i zaufanie' },
+  },
+  // TODO(#23c): move Comments into a drawer / secondary affordance and Activity
+  // into the header meta line; kept as Audit sections for now to avoid losing
+  // the existing CommentsCanvas / ActivityLogCanvas wiring.
   { id: 'comments', icon: MessageSquare, label: { en: 'Comments', pl: 'Komentarze' } },
   { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' } },
 ];
@@ -2406,7 +2457,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // ── Section content assignment ─────────────────────────────────────────────
 
   const nModeSectionsWithContent = useMemo<NModeSection[]>(() => {
-    return INSIGHT_SECTIONS.map((section) => {
+    // Build a component for every id we render — including the ids whose nav
+    // entry was merged away (#23c). Their JSX is still produced here and then
+    // composed into the surviving section below, so no content is lost.
+    const renderIds: string[] = [
+      ...INSIGHT_SECTIONS.map((s) => s.id),
+      // merged-away ids (content folded into a surviving section)
+      'truth-review-summary',
+      'source-sessions',
+      'traceability',
+      'full-analysis',
+    ];
+
+    const componentById: Record<string, React.ReactNode> = {};
+
+    for (const sectionId of renderIds) {
+      const section = { id: sectionId } as { id: string };
       let component: React.ReactNode = null;
 
       switch (section.id) {
@@ -5720,81 +5786,685 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             />
           );
           break;
+
+        // ── #22c — Consensus & Divergence Matrix ──────────────────────────────
+        case 'consensus-divergence': {
+          const hasMatrix =
+            consensusTopics.length > 0 ||
+            localOnlyTopics.length > 0 ||
+            contradictedTopics.length > 0;
+          const distinctVoices = analysis?.scope.distinctStakeholderCount ?? 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Consensus & Divergence Matrix', pl: 'Macierz zgody i rozbieżności' }}
+              isEmpty={!hasMatrix}
+              emptyState={{
+                icon: GitCompare,
+                message: {
+                  pl: 'Ta sekcja pokazuje, gdzie respondenci się zgadzają, a gdzie się różnią. Pojawi się, gdy insight łączy wiele perspektyw (≥2 respondentów lub sesji) i AI wykryje wspólne, lokalne lub sprzeczne tematy.',
+                  en: 'This section maps where respondents agree vs. disagree. It populates once the insight spans multiple perspectives (≥2 respondents or sessions) and the AI detects shared, local, or contradicted topics.',
+                },
+              }}
+            >
+              <Callout
+                variant="info"
+                title={isPolish ? 'Czytaj zgodę i rozbieżności' : 'Read agreement and divergence'}
+              >
+                {isPolish
+                  ? `Zbudowane z ${distinctVoices} odrębnych perspektyw. Wspólne tematy to twardy konsensus; lokalne to pojedyncze głosy; sprzeczne wymagają rozstrzygnięcia operatora.`
+                  : `Derived from ${distinctVoices} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication.`}
+              </Callout>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {(
+                  [
+                    {
+                      key: 'consensus',
+                      topics: consensusTopics,
+                      title: isPolish ? 'Konsensus' : 'Consensus',
+                      tone: 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
+                      empty: isPolish ? 'Brak wspólnych tematów' : 'No shared topics yet',
+                    },
+                    {
+                      key: 'local',
+                      topics: localOnlyTopics,
+                      title: isPolish ? 'Lokalne / pojedyncze głosy' : 'Local / single voice',
+                      tone: 'border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300',
+                      empty: isPolish ? 'Brak lokalnych tematów' : 'No local-only topics',
+                    },
+                    {
+                      key: 'divergence',
+                      topics: contradictedTopics,
+                      title: isPolish
+                        ? 'Rozbieżności / sprzeczności'
+                        : 'Divergence / contradiction',
+                      tone: 'border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300',
+                      empty: isPolish ? 'Brak sprzeczności' : 'No contradictions',
+                    },
+                  ] as const
+                ).map((col) => (
+                  <div
+                    key={col.key}
+                    className={`rounded-2xl border px-4 py-4 space-y-3 ${col.tone}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                        {col.title}
+                      </div>
+                      <span className="text-xs font-semibold opacity-70">{col.topics.length}</span>
+                    </div>
+                    {col.topics.length > 0 ? (
+                      <ul className="space-y-2">
+                        {col.topics.slice(0, 8).map((topic) => (
+                          <li
+                            key={topic.id}
+                            className="rounded-xl bg-white/70 dark:bg-navy-900/40 px-3 py-2"
+                          >
+                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                              {topic.label}
+                            </div>
+                            {topic.divergenceNote && (
+                              <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                                {topic.divergenceNote}
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="text-xs text-slate-600 dark:text-slate-400">{col.empty}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #22c — Implicit Assumptions ───────────────────────────────────────
+        case 'implicit-assumptions': {
+          // Derive from existing AI signals/narrative: low-confidence or
+          // single-voice topics carry implicit, unvalidated assumptions, plus
+          // any "between the lines" narrative observations already parsed.
+          const assumptionTopics = (analysis?.topics || []).filter(
+            (topic) =>
+              topic.confidenceLevel === 'low' ||
+              topic.confidenceLevel === 'insufficient' ||
+              (topic.supportingSessionIds.length <= 1 && !topic.isContradicted)
+          );
+          const assumptionNarrative = hiddenSignals;
+          const hasAssumptions = assumptionTopics.length > 0 || assumptionNarrative.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Implicit Assumptions', pl: 'Ukryte założenia' }}
+              isEmpty={!hasAssumptions}
+              emptyState={{
+                icon: Brain,
+                message: {
+                  pl: 'Tu pojawią się niewypowiedziane założenia — twierdzenia oparte na jednym głosie, niskiej pewności lub przyjęte bez dowodu. Populuje się z analizy AI i tematów o słabym pokryciu.',
+                  en: 'Unstated assumptions surface here — claims resting on a single voice, low confidence, or taken as given without evidence. Populates from AI analysis and weakly-covered topics.',
+                },
+              }}
+            >
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Założenia do zweryfikowania' : 'Assumptions to validate'}
+                compact
+              >
+                {isPolish
+                  ? 'To, co zespół traktuje jako oczywiste, ale nie zostało potwierdzone wieloma źródłami. Każda pozycja to kandydat do walidacji w kolejnej sesji.'
+                  : 'What the team treats as given but multiple sources have not confirmed. Each item is a candidate to validate in a follow-up session.'}
+              </Callout>
+              {assumptionTopics.length > 0 && (
+                <div className="space-y-2">
+                  {assumptionTopics.slice(0, 8).map((topic) => (
+                    <div
+                      key={topic.id}
+                      className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                          {topic.label}
+                        </div>
+                        <span className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                          {topic.confidenceLevel}
+                        </span>
+                      </div>
+                      {topic.description && (
+                        <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                          {topic.description}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {assumptionNarrative.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    {isPolish ? 'Z narracji AI' : 'From AI narrative'}
+                  </div>
+                  <ul className="list-disc list-inside space-y-1">
+                    {assumptionNarrative.slice(0, 6).map((line, i) => (
+                      <li key={i} className="text-sm text-slate-700 dark:text-slate-300">
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #22c — Silences (what was NOT said) ───────────────────────────────
+        case 'silences': {
+          const coverageGaps = analysis?.synthesis.coverageGaps || [];
+          const silences = uniqueNonEmpty([...coverageGaps, ...v6MissingData]);
+          const hasSilences = silences.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Silences & Gaps', pl: 'Przemilczenia i luki' }}
+              isEmpty={!hasSilences}
+              emptyState={{
+                icon: EyeOff,
+                message: {
+                  pl: 'Tu pojawi się to, czego NIE powiedziano — tematy oczekiwane, lecz nieporuszone, pytania bez odpowiedzi i luki w pokryciu. Populuje się z luk pokrycia AI i brakujących danych insightu.',
+                  en: 'What was notably NOT said appears here — expected-but-absent topics, unanswered questions, and coverage gaps. Populates from AI coverage gaps and the insight’s missing-data list.',
+                },
+              }}
+            >
+              <Callout
+                variant="info"
+                title={isPolish ? 'Cisza też jest sygnałem' : 'Silence is also a signal'}
+                compact
+              >
+                {isPolish
+                  ? 'Nieobecność tematu bywa równie istotna jak jego obecność — może wskazywać unikanie, ślepą plamę albo lukę w scenariuszu wywiadu.'
+                  : 'The absence of a topic can matter as much as its presence — it may signal avoidance, a blind spot, or a gap in the interview guide.'}
+              </Callout>
+              <ul className="space-y-2">
+                {silences.slice(0, 12).map((item, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 bg-slate-50/60 dark:bg-navy-900/30 px-3 py-2.5"
+                  >
+                    <EyeOff
+                      size={14}
+                      className="mt-0.5 flex-shrink-0 text-slate-400 dark:text-slate-500"
+                    />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #23d — Cross-person Quote Comparison ───────────────────────────────
+        case 'quote-comparison': {
+          const lensesWithVoice = visiblePeopleLenses.filter(
+            (lens) => lens.localSummary || lens.supportedTopicIds.length > 0
+          );
+          const hasComparison = lensesWithVoice.length >= 2 || evidenceQuotes.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Cross-person Quote Comparison', pl: 'Porównanie cytatów osób' }}
+              isEmpty={!hasComparison}
+              emptyState={{
+                icon: Quote,
+                message: {
+                  pl: 'Tu zestawimy obok siebie, jak różne osoby mówią o tym samym. Populuje się, gdy insight ma ≥2 perspektywy z lokalnym podsumowaniem lub gdy w treści są cytaty źródłowe.',
+                  en: 'Side-by-side of how different people talk about the same thing. Populates when the insight has ≥2 perspectives with a local summary, or when source quotes exist in the content.',
+                },
+              }}
+            >
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Te same tematy, różne głosy' : 'Same topics, different voices'}
+                compact
+              >
+                {isPolish
+                  ? 'Porównaj sformułowania osób, aby zobaczyć niuanse, nacisk i rozbieżności, które giną w syntezie.'
+                  : 'Compare how each person frames things to surface nuance, emphasis, and divergence that a synthesis flattens.'}
+              </Callout>
+              {lensesWithVoice.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {lensesWithVoice.slice(0, 6).map((lens) => (
+                    <div
+                      key={lens.id}
+                      className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-3"
+                    >
+                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {lens.label}
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {[lens.role, lens.department].filter(Boolean).join(' · ') ||
+                          (isPolish ? 'Perspektywa' : 'Perspective')}
+                      </div>
+                      <blockquote className="mt-2 border-l-2 border-primary-400 pl-3 text-sm italic text-slate-700 dark:text-slate-300">
+                        {lens.localSummary ||
+                          (isPolish
+                            ? 'Brak lokalnego podsumowania dla tej osoby.'
+                            : 'No local summary for this person.')}
+                      </blockquote>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {evidenceQuotes.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    {isPolish ? 'Cytaty z treści' : 'Quotes from content'}
+                  </div>
+                  {evidenceQuotes.map((quote, i) => (
+                    <blockquote
+                      key={i}
+                      className="border-l-2 border-slate-300 dark:border-navy-600 pl-3 text-sm italic text-slate-700 dark:text-slate-300"
+                    >
+                      &ldquo;{quote}&rdquo;
+                    </blockquote>
+                  ))}
+                </div>
+              )}
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #23d — Sentiment / Tone Map ────────────────────────────────────────
+        case 'sentiment-tone': {
+          // Proxy tone from confidence + contradiction state of existing topics.
+          const toneTopics = analysis?.topics || [];
+          const toneBuckets = {
+            positive: toneTopics.filter((t) => t.kind === 'opportunity' && !t.isContradicted),
+            tense: toneTopics.filter((t) => t.isContradicted),
+            concern: toneTopics.filter((t) => t.kind === 'issue' && !t.isContradicted),
+          };
+          const hasTone = toneTopics.length > 0 || v6Signals.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Sentiment & Tone Map', pl: 'Mapa sentymentu i tonu' }}
+              isEmpty={!hasTone}
+              emptyState={{
+                icon: Heart,
+                message: {
+                  pl: 'Tu zmapujemy emocjonalny ton wokół tematów — entuzjazm, napięcie, obawy. Populuje się z tematów AI (szanse vs. problemy vs. sprzeczności) i wykrytych sygnałów.',
+                  en: 'The emotional tone around topics is mapped here — enthusiasm, tension, concern. Populates from AI topics (opportunities vs. issues vs. contradictions) and detected signals.',
+                },
+              }}
+            >
+              <Callout
+                variant="info"
+                title={isPolish ? 'Ton jako proxy' : 'Tone as a proxy'}
+                compact
+              >
+                {isPolish
+                  ? 'Ton jest przybliżony ze stanu tematów (szansa, problem, sprzeczność). To wskazówka kierunku, nie pomiar afektu.'
+                  : 'Tone is approximated from topic state (opportunity, issue, contradiction). Treat it as directional, not a literal affect measurement.'}
+              </Callout>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(
+                  [
+                    {
+                      key: 'positive',
+                      topics: toneBuckets.positive,
+                      title: isPolish ? 'Pozytywny / energia' : 'Positive / energy',
+                      tone: 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
+                    },
+                    {
+                      key: 'concern',
+                      topics: toneBuckets.concern,
+                      title: isPolish ? 'Obawa / problem' : 'Concern / problem',
+                      tone: 'border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300',
+                    },
+                    {
+                      key: 'tense',
+                      topics: toneBuckets.tense,
+                      title: isPolish ? 'Napięcie / sprzeczność' : 'Tension / contradiction',
+                      tone: 'border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300',
+                    },
+                  ] as const
+                ).map((col) => (
+                  <div
+                    key={col.key}
+                    className={`rounded-2xl border px-4 py-4 space-y-2 ${col.tone}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                        {col.title}
+                      </div>
+                      <span className="text-xs font-semibold opacity-70">{col.topics.length}</span>
+                    </div>
+                    {col.topics.slice(0, 6).map((topic) => (
+                      <div key={topic.id} className="text-sm text-slate-700 dark:text-slate-200">
+                        {topic.label}
+                      </div>
+                    ))}
+                    {col.topics.length === 0 && (
+                      <div className="text-xs opacity-70">
+                        {isPolish ? 'Brak tematów' : 'No topics'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #23d — Power Dynamics ──────────────────────────────────────────────
+        case 'power-dynamics': {
+          const roleGroups = new Map<string, typeof visiblePeopleLenses>();
+          for (const lens of visiblePeopleLenses) {
+            const key = lens.role || (isPolish ? 'Nieokreślona rola' : 'Unspecified role');
+            const arr = roleGroups.get(key) || [];
+            arr.push(lens);
+            roleGroups.set(key, arr);
+          }
+          const hasPower = roleGroups.size > 0 && visiblePeopleLenses.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Power Dynamics', pl: 'Dynamika władzy' }}
+              isEmpty={!hasPower}
+              emptyState={{
+                icon: Scale,
+                message: {
+                  pl: 'Tu pokażemy, czyj głos dominuje — wpływ ról i działów na insight. Populuje się, gdy respondenci mają przypisane role/działy w analizie perspektyw.',
+                  en: 'Whose voice dominates — the weight of roles and departments behind the insight — appears here. Populates when respondents carry role/department metadata in the perspective analysis.',
+                },
+              }}
+            >
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Czyj głos waży najwięcej' : 'Whose voice carries weight'}
+                compact
+              >
+                {isPolish
+                  ? 'Insight zbudowany głównie z jednej roli lub działu może odzwierciedlać ich interes, a nie obraz całości. Sprawdź balans przed publikacją.'
+                  : 'An insight built mostly from one role or department may reflect their interest, not the whole picture. Check the balance before publishing.'}
+              </Callout>
+              <div className="space-y-2">
+                {Array.from(roleGroups.entries())
+                  .sort((a, b) => b[1].length - a[1].length)
+                  .map(([role, lenses]) => {
+                    const share = Math.round(
+                      (lenses.length / Math.max(visiblePeopleLenses.length, 1)) * 100
+                    );
+                    return (
+                      <div
+                        key={role}
+                        className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                            {role}
+                          </div>
+                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            {lenses.length} · {share}%
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-navy-700/60">
+                          <div
+                            className="h-full rounded-full bg-primary-500"
+                            style={{ width: `${share}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #23d — Hypothesis Board ────────────────────────────────────────────
+        case 'hypothesis-board': {
+          // Treat triage candidates as working hypotheses, bucketed by status.
+          const openHyp = candidates.filter(
+            (c) =>
+              c.triage_status === 'candidate' ||
+              c.triage_status === 'needs_evidence' ||
+              c.triage_status === 'needs_split'
+          );
+          const testingHyp = candidates.filter((c) => c.triage_status === 'ready_for_review');
+          const resolvedHyp = candidates.filter(
+            (c) => c.triage_status === 'promoted' || c.triage_status === 'rejected'
+          );
+          const hasHyp = candidates.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Hypothesis Board', pl: 'Tablica hipotez' }}
+              isEmpty={!hasHyp}
+              emptyState={{
+                icon: Network,
+                message: {
+                  pl: 'Tu kandydaci stają się hipotezami roboczymi w kolumnach: otwarte → w teście → rozstrzygnięte. Populuje się z triage kandydatów tego insightu.',
+                  en: 'Candidates become working hypotheses across columns: open → testing → resolved. Populates from this insight’s candidate triage.',
+                },
+              }}
+            >
+              <Callout
+                variant="info"
+                title={isPolish ? 'Od hipotezy do findingu' : 'From hypothesis to finding'}
+                compact
+              >
+                {isPolish
+                  ? 'Każda hipoteza przesuwa się w prawo, gdy zbiera dowody — aż do promocji w finding P10 lub odrzucenia.'
+                  : 'Each hypothesis moves right as it gathers evidence — until it is promoted into a P10 finding or rejected.'}
+              </Callout>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {(
+                  [
+                    {
+                      key: 'open',
+                      items: openHyp,
+                      title: isPolish ? 'Otwarte' : 'Open',
+                      tone: 'border-slate-200/70 dark:border-navy-700/60',
+                    },
+                    {
+                      key: 'testing',
+                      items: testingHyp,
+                      title: isPolish ? 'W teście' : 'Testing',
+                      tone: 'border-amber-500/20',
+                    },
+                    {
+                      key: 'resolved',
+                      items: resolvedHyp,
+                      title: isPolish ? 'Rozstrzygnięte' : 'Resolved',
+                      tone: 'border-emerald-500/20',
+                    },
+                  ] as const
+                ).map((col) => (
+                  <div
+                    key={col.key}
+                    className={`rounded-2xl border bg-white/40 dark:bg-navy-900/20 px-3 py-3 space-y-2 ${col.tone}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                        {col.title}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        {col.items.length}
+                      </span>
+                    </div>
+                    {col.items.slice(0, 8).map((c) => (
+                      <div
+                        key={c.id}
+                        className="rounded-xl bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/50 px-3 py-2"
+                      >
+                        <div className="text-sm text-slate-800 dark:text-slate-100">
+                          {c.candidate_statement}
+                        </div>
+                        <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {c.confidence_hint}
+                        </div>
+                      </div>
+                    ))}
+                    {col.items.length === 0 && (
+                      <div className="text-xs text-slate-500 dark:text-slate-500">
+                        {isPolish ? 'Pusto' : 'Empty'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
       }
 
-      const badgeMap: Record<string, number | undefined> = {
-        'truth-review-summary': truthReviewSummary.publishBlockers.length || undefined,
-        'report-pack': reportPack?.degraded
-          ? reportPack.degradedReasons.length || 1
-          : reportPack?.worksheets.length,
-        'candidate-triage': candidates.length || undefined,
-        comments: nComments.length,
-        'source-sessions': sourceSessions.length,
-        'activity-log': activityEntries.length,
-        themes: v6Themes.length || undefined,
-        'issues-risks': v6Issues.length || undefined,
-        opportunities: v6Opportunities.length || undefined,
-        signals: v6Signals.length || undefined,
-        'evidence-map': v6EvidenceMap.length || undefined,
-      };
+      componentById[section.id] = component;
+    }
 
-      // Adaptive sidebar (#22): only sections with a definite zero count are
-      // treated as empty (conservative — never hide a section that might have
-      // content). Core sections always show.
-      const definiteCounts: Record<string, number> = {
-        'candidate-triage': candidates.length,
-        comments: nComments.length,
-        themes: v6Themes.length,
-        'issues-risks': v6Issues.length,
-        opportunities: v6Opportunities.length,
-        signals: v6Signals.length,
-        'evidence-map': v6EvidenceMap.length,
-        'source-sessions': sourceSessions.length,
-        'activity-log': activityEntries.length,
-      };
-      const alwaysShowSet = new Set(['artifact-actions', 'executive-summary']);
+    // #23c — compose merged content under a single surviving section. Each
+    // merged sub-block is preserved verbatim; only the nav entry is shared.
+    const mergedDivider = (title: { en: string; pl: string }) => (
+      <div className="flex items-center gap-3 pt-2">
+        <div className="h-px flex-1 bg-slate-200/70 dark:bg-navy-700/60" />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-500">
+          {isPolish ? title.pl : title.en}
+        </span>
+        <div className="h-px flex-1 bg-slate-200/70 dark:bg-navy-700/60" />
+      </div>
+    );
 
-      // Sidebar grouping (#22b): 5 themed groups instead of 20 flat items.
-      const groupLabels = isPolish
-        ? ['Wgląd', 'Między wierszami', 'Dowody', 'Dostarczane', 'Audyt']
-        : ['Insight', 'Between the lines', 'Evidence', 'Deliverables', 'Audit'];
-      const groupIndexById: Record<string, number> = {
-        'executive-summary': 0,
-        themes: 0,
-        'issues-risks': 0,
-        opportunities: 0,
-        people: 1,
-        signals: 1,
-        'analysis-matrix': 1,
-        'evidence-map': 2,
-        traceability: 2,
-        'source-sessions': 2,
-        'source-pack': 2,
-        'artifact-actions': 3,
-        'consulting-readout': 3,
-        'report-pack': 3,
-        'candidate-triage': 3,
-        'truth-review-summary': 4,
-        'material-quality': 4,
-        'full-analysis': 4,
-        comments: 4,
-        'activity-log': 4,
-      };
+    const composedComponentById: Record<string, React.ReactNode> = { ...componentById };
 
+    // Quality & Trust = Material Quality + Truth & Review
+    composedComponentById['material-quality'] = (
+      <div className="space-y-6">
+        {componentById['material-quality']}
+        {mergedDivider({ en: 'Truth & Review', pl: 'Prawda i review' })}
+        {componentById['truth-review-summary']}
+      </div>
+    );
+    // Sources = Source Pack + Source Sessions
+    composedComponentById['source-pack'] = (
+      <div className="space-y-6">
+        {componentById['source-pack']}
+        {mergedDivider({ en: 'Source Sessions', pl: 'Sesje źródłowe' })}
+        {componentById['source-sessions']}
+      </div>
+    );
+    // Findings & Evidence = Candidate Triage + Traceability
+    composedComponentById['candidate-triage'] = (
+      <div className="space-y-6">
+        {componentById['candidate-triage']}
+        {mergedDivider({ en: 'Traceability', pl: 'Traceability' })}
+        {componentById['traceability']}
+      </div>
+    );
+
+    const badgeMap: Record<string, number | undefined> = {
+      'report-pack': reportPack?.degraded
+        ? reportPack.degradedReasons.length || 1
+        : reportPack?.worksheets.length,
+      'candidate-triage': candidates.length || undefined,
+      comments: nComments.length,
+      'material-quality': truthReviewSummary.publishBlockers.length || undefined,
+      'source-pack': sourceSessions.length || undefined,
+      'activity-log': activityEntries.length,
+      themes: v6Themes.length || undefined,
+      'issues-risks': v6Issues.length || undefined,
+      opportunities: v6Opportunities.length || undefined,
+      signals: v6Signals.length || undefined,
+      'evidence-map': v6EvidenceMap.length || undefined,
+      'hypothesis-board': candidates.length || undefined,
+    };
+
+    // Adaptive sidebar (#22): only sections with a definite zero count are
+    // treated as empty (conservative — never hide a section that might have
+    // content). Core sections always show. The new "between the lines"
+    // analytical sections (#22c/#23d) self-render an informative empty-state,
+    // so they are hidden from the nav until their derived data exists, except
+    // the one or two flagged alwaysShow.
+    const definiteCounts: Record<string, number> = {
+      'candidate-triage': candidates.length,
+      comments: nComments.length,
+      themes: v6Themes.length,
+      'issues-risks': v6Issues.length,
+      opportunities: v6Opportunities.length,
+      signals: v6Signals.length,
+      'evidence-map': v6EvidenceMap.length,
+      'activity-log': activityEntries.length,
+      // derived analytical sections — hidden until their data exists
+      'consensus-divergence':
+        consensusTopics.length + localOnlyTopics.length + contradictedTopics.length,
+      'implicit-assumptions':
+        (analysis?.topics || []).filter(
+          (t) =>
+            t.confidenceLevel === 'low' ||
+            t.confidenceLevel === 'insufficient' ||
+            (t.supportingSessionIds.length <= 1 && !t.isContradicted)
+        ).length + hiddenSignals.length,
+      silences: (analysis?.synthesis.coverageGaps || []).length + v6MissingData.length,
+      'quote-comparison':
+        visiblePeopleLenses.filter((l) => l.localSummary || l.supportedTopicIds.length > 0).length +
+        evidenceQuotes.length,
+      'sentiment-tone': (analysis?.topics || []).length + v6Signals.length,
+      'power-dynamics': visiblePeopleLenses.length,
+      'hypothesis-board': candidates.length,
+    };
+    // alwaysShow: the two most important differentiators stay visible even empty.
+    const alwaysShowSet = new Set([
+      'artifact-actions',
+      'executive-summary',
+      'consensus-divergence',
+      'silences',
+    ]);
+
+    // Sidebar grouping (#22b/#22): 5 themed groups.
+    const groupLabels = isPolish
+      ? ['Wgląd', 'Między wierszami', 'Dowody', 'Dostarczane', 'Audyt']
+      : ['Insight', 'Between the lines', 'Evidence', 'Deliverables', 'Audit'];
+    const groupIndexById: Record<string, number> = {
+      // 0 — Wgląd / Insight
+      'executive-summary': 0,
+      'consulting-readout': 0,
+      'artifact-actions': 0,
+      themes: 0,
+      'issues-risks': 0,
+      opportunities: 0,
+      // 1 — Między wierszami / Between the lines
+      people: 1,
+      signals: 1,
+      'analysis-matrix': 1,
+      'consensus-divergence': 1,
+      'implicit-assumptions': 1,
+      silences: 1,
+      'quote-comparison': 1,
+      'sentiment-tone': 1,
+      'power-dynamics': 1,
+      'hypothesis-board': 1,
+      // 2 — Dowody / Evidence
+      'evidence-map': 2,
+      'candidate-triage': 2,
+      'source-pack': 2,
+      // 3 — Dostarczane / Deliverables
+      'report-pack': 3,
+      // 4 — Audyt / Audit
+      'material-quality': 4,
+      comments: 4,
+      'activity-log': 4,
+    };
+
+    const order = groupLabels;
+    return INSIGHT_SECTIONS.map((section) => {
       return {
         ...section,
-        component,
+        component: composedComponentById[section.id] ?? null,
         badge: badgeMap[section.id],
         hasData: section.id in definiteCounts ? definiteCounts[section.id] > 0 : undefined,
         alwaysShow: alwaysShowSet.has(section.id),
         group: groupLabels[groupIndexById[section.id] ?? 4],
       } as NModeSection;
-    }).sort((a, b) => {
-      const order = isPolish
-        ? ['Wgląd', 'Między wierszami', 'Dowody', 'Dostarczane', 'Audyt']
-        : ['Insight', 'Between the lines', 'Evidence', 'Deliverables', 'Audit'];
-      return order.indexOf(a.group ?? '') - order.indexOf(b.group ?? '');
-    });
+    }).sort((a, b) => order.indexOf(a.group ?? '') - order.indexOf(b.group ?? ''));
   }, [
     executiveSummary,
     insight,
@@ -5825,6 +6495,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     candidates,
     candidateSummary,
     candidateActionLoadingId,
+    consensusTopics,
+    localOnlyTopics,
+    contradictedTopics,
+    visiblePeopleLenses,
     nComments,
     commentDraft,
     commentDateFilter,
