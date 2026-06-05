@@ -1,11 +1,34 @@
+/**
+ * InitiativeWizardModal — the CANONICAL initiative-creation surface (#29).
+ *
+ * This modal consolidates the four prior, divergent entry points for creating
+ * initiatives (ad-hoc "+ New initiative" buttons, the assessment → initiative
+ * generator, the portfolio-hygiene generator, and the standalone evidence
+ * importer) into a single, governed flow:
+ *
+ *   Insights → Intent → Candidates (triage + similarity) → Governance → Result
+ *
+ * All new initiative creation should route through here so the lineage
+ * (source → initiative), capacity signal, similarity/duplicate gate, and
+ * shortlist evidence gate are applied uniformly.
+ *
+ * NOTE: a shared <WizardModal> shell (header / stepper / footer extracted for
+ * reuse across modules) is a SEPARATE future task (§5) and is intentionally NOT
+ * built here. This file keeps its header / stepper / footer structure clean and
+ * self-contained so that extraction stays mechanical when §5 happens.
+ */
 import {
   AlertTriangle,
   ArrowRight,
   Check,
   CheckCircle2,
+  ExternalLink,
+  GitMerge,
   Link2,
   Loader2,
+  Plus,
   Sparkles,
+  Wand2,
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -156,6 +179,38 @@ interface SimilarityCheckResponse {
 
 type WizardLanguage = 'pl' | 'en';
 
+// ---- #29e similar-candidate resolution choice -------------------------------
+// When a candidate is flagged SIMILAR / DUPLICATE against an existing
+// initiative, the user picks how to resolve the overlap. "create_anyway" wires
+// to the existing create path; "merge" / "extend" are honest stubs (no backend
+// endpoint exists yet) that surface a "coming soon" toast and still allow
+// create-anyway.
+type SimilarResolution = 'merge' | 'extend' | 'create_anyway';
+
+// ---- #29h progressive fill: the four CORE fields (rdzeń) ---------------------
+// Pre-filled from the selected insight; the rest is left to AI-assist / manual.
+// sectionKey maps to a server-side initiative section type with a configured AI
+// prompt (migrations 529/530), so "Fill with AI" hits POST
+// /initiatives/generate-section honestly (degrades when AI is unconfigured).
+type CoreFieldKey = 'problem' | 'solution' | 'scope' | 'kpi';
+
+const CORE_FIELD_DEFS: Array<{
+  key: CoreFieldKey;
+  labelKey: string;
+  sectionKey: string;
+  rows: number;
+}> = [
+  { key: 'problem', labelKey: 'fieldProblem', sectionKey: 'problem_definition', rows: 3 },
+  { key: 'solution', labelKey: 'fieldSolution', sectionKey: 'target_state', rows: 3 },
+  { key: 'scope', labelKey: 'fieldScope', sectionKey: 'scope', rows: 3 },
+  { key: 'kpi', labelKey: 'fieldKpi', sectionKey: 'kpis', rows: 2 },
+];
+
+type CoreFields = Record<CoreFieldKey, string>;
+type CorePrefilled = Record<CoreFieldKey, boolean>;
+
+const EMPTY_CORE: CoreFields = { problem: '', solution: '', scope: '', kpi: '' };
+
 const SIMILARITY_CHIP_CONFIG: Record<
   Exclude<SimilarityVerdict, 'new'> | 'new',
   { className: string; label: Record<WizardLanguage, string> }
@@ -219,6 +274,31 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     bulkProgress: 'Tworzenie inicjatyw…',
     next: 'Dalej',
     back: 'Wstecz',
+    // #29e — merge / extend / create-anyway for similar candidates
+    similarChoiceTitle: 'Ten kandydat przypomina istniejącą inicjatywę',
+    similarChoiceHint: 'Wybierz, jak rozwiązać podobieństwo przed utworzeniem draftu.',
+    mergeOption: 'Scal z istniejącą',
+    extendOption: 'Rozszerz istniejącą (dodaj zakres)',
+    createAnywayOption: 'Utwórz mimo to',
+    openExisting: 'Otwórz istniejącą',
+    mergeSoon: 'Scalanie będzie dostępne wkrótce — na razie możesz utworzyć osobną inicjatywę.',
+    extendSoon:
+      'Rozszerzanie zakresu istniejącej inicjatywy będzie dostępne wkrótce — na razie możesz utworzyć osobną inicjatywę.',
+    createAnywayPicked: 'Utworzysz osobną inicjatywę mimo podobieństwa.',
+    // #29h — progressive fill / AI assist
+    coreTitle: 'Rdzeń inicjatywy (auto-uzupełniony z wniosku)',
+    coreHint:
+      'Pola rdzenia uzupełniliśmy z wybranego wniosku. Przejrzyj je, a puste sekcje uzupełnij z pomocą AI.',
+    fieldProblem: 'Problem',
+    fieldSolution: 'Rozwiązanie',
+    fieldScope: 'Zakres',
+    fieldKpi: 'KPI',
+    fillWithAi: 'Uzupełnij z AI',
+    aiFilling: 'AI uzupełnia…',
+    aiFilled: 'Uzupełniono z AI.',
+    aiUnavailable: 'Asystent AI nie jest skonfigurowany dla tej sekcji.',
+    aiFailed: 'Nie udało się uzupełnić sekcji z AI.',
+    prefilledFromInsight: 'z wniosku',
   },
   en: {
     stepInsights: 'Insights',
@@ -242,8 +322,92 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     bulkProgress: 'Creating initiatives…',
     next: 'Next',
     back: 'Back',
+    // #29e — merge / extend / create-anyway for similar candidates
+    similarChoiceTitle: 'This candidate resembles an existing initiative',
+    similarChoiceHint: 'Choose how to resolve the overlap before creating a draft.',
+    mergeOption: 'Merge into existing',
+    extendOption: 'Extend existing (add scope)',
+    createAnywayOption: 'Create anyway',
+    openExisting: 'Open existing',
+    mergeSoon: 'Merge will be available soon — for now you can create a separate initiative.',
+    extendSoon:
+      'Extending the scope of an existing initiative will be available soon — for now you can create a separate initiative.',
+    createAnywayPicked: 'You will create a separate initiative despite the overlap.',
+    // #29h — progressive fill / AI assist
+    coreTitle: 'Initiative core (auto-filled from the insight)',
+    coreHint:
+      'We pre-filled the core fields from the selected insight. Review them and use AI to fill the empty sections.',
+    fieldProblem: 'Problem',
+    fieldSolution: 'Solution',
+    fieldScope: 'Scope',
+    fieldKpi: 'KPI',
+    fillWithAi: 'Fill with AI',
+    aiFilling: 'AI filling…',
+    aiFilled: 'Filled with AI.',
+    aiUnavailable: 'AI assist is not configured for this section.',
+    aiFailed: 'Failed to fill the section with AI.',
+    prefilledFromInsight: 'from insight',
   },
 };
+
+// #29h — derive the CORE fields (Problem / Solution / Scope / KPI) from an
+// interview insight already loaded in the wizard (Step 0). Best-effort: only
+// fills what the insight actually carries, leaving the rest empty for AI-assist.
+function deriveCoreFromInsight(insight: V8InterviewInsight | undefined): {
+  fields: CoreFields;
+  prefilled: CorePrefilled;
+} {
+  const fields: CoreFields = { ...EMPTY_CORE };
+  const prefilled: CorePrefilled = {
+    problem: false,
+    solution: false,
+    scope: false,
+    kpi: false,
+  };
+  if (!insight) return { fields, prefilled };
+
+  const joinItems = (
+    items: Array<{ title?: string; description?: string }> | undefined,
+    max: number
+  ): string =>
+    (Array.isArray(items) ? items : [])
+      .slice(0, max)
+      .map((item) => {
+        const title = (item?.title || '').trim();
+        const description = (item?.description || '').trim();
+        if (title && description) return `${title} — ${description}`;
+        return title || description;
+      })
+      .filter(Boolean)
+      .join('\n');
+
+  // Problem ← issues (or executive summary as a fallback).
+  const problem = joinItems(insight.issues, 3) || (insight.executiveSummary || '').trim();
+  if (problem) {
+    fields.problem = problem;
+    prefilled.problem = true;
+  }
+
+  // Solution ← opportunities.
+  const solution = joinItems(insight.opportunities, 3);
+  if (solution) {
+    fields.solution = solution;
+    prefilled.solution = true;
+  }
+
+  // Scope ← themes + topic focus.
+  const themeScope = joinItems(insight.themes, 3);
+  const topicScope = Array.isArray(insight.topicFocus) ? insight.topicFocus.join(', ') : '';
+  const scope = [themeScope, topicScope ? `Focus: ${topicScope}` : ''].filter(Boolean).join('\n');
+  if (scope) {
+    fields.scope = scope;
+    prefilled.scope = true;
+  }
+
+  // KPI is intentionally left empty — insights rarely carry a measurable KPI,
+  // so this is the canonical "AI-assist fills the rest" affordance.
+  return { fields, prefilled };
+}
 
 function countInsightFindings(insight: V8InterviewInsight): number {
   const themes = Array.isArray(insight.themes) ? insight.themes.length : 0;
@@ -397,6 +561,21 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     Record<string, SimilarityCandidateResult>
   >({});
   const [createdInitiatives, setCreatedInitiatives] = useState<PortfolioInitiative[]>([]);
+  // #29h — progressive-fill CORE fields (rdzeń) auto-derived from the selected
+  // insight; user reviews + AI fills the empty sections.
+  const [coreFields, setCoreFields] = useState<CoreFields>({ ...EMPTY_CORE });
+  const [corePrefilled, setCorePrefilled] = useState<CorePrefilled>({
+    problem: false,
+    solution: false,
+    scope: false,
+    kpi: false,
+  });
+  const [coreTouched, setCoreTouched] = useState(false);
+  const [aiFillingField, setAiFillingField] = useState<CoreFieldKey | null>(null);
+  // #29e — per-candidate resolution choice for SIMILAR / DUPLICATE candidates.
+  const [similarResolutions, setSimilarResolutions] = useState<Record<string, SimilarResolution>>(
+    {}
+  );
   const [isWorking, setIsWorking] = useState(false);
   const [auditEvents, setAuditEvents] = useState<WizardAuditEvent[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
@@ -512,6 +691,11 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     setCapacity(null);
     setSelectedCreateIds([]);
     setCreateProgress(null);
+    setCoreFields({ ...EMPTY_CORE });
+    setCorePrefilled({ problem: false, solution: false, scope: false, kpi: false });
+    setCoreTouched(false);
+    setAiFillingField(null);
+    setSimilarResolutions({});
   }, [
     initialBusinessPriorities,
     initialManualNotes,
@@ -613,6 +797,20 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       return [...kept, ...additions];
     });
   }, [candidates]);
+
+  // #29h — progressively fill the CORE fields from the first selected insight.
+  // We only auto-fill until the user manually edits a field (coreTouched), so we
+  // never clobber human edits. Re-runs as the insight selection changes.
+  const firstSelectedInsight = useMemo(
+    () => insights.find((insight) => insight.id === selectedInsightIds[0]),
+    [insights, selectedInsightIds]
+  );
+  useEffect(() => {
+    if (coreTouched) return;
+    const { fields, prefilled } = deriveCoreFromInsight(firstSelectedInsight);
+    setCoreFields(fields);
+    setCorePrefilled(prefilled);
+  }, [firstSelectedInsight, coreTouched]);
 
   useEffect(() => {
     if (step !== 'result' || !sessionId) return;
@@ -783,8 +981,23 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     setIsWorking(true);
     setCreateProgress({ done: 0, total: toCreate.length });
     const created: PortfolioInitiative[] = [];
+    // #29h — the reviewed CORE fields (rdzeń) represent the user's edited /
+    // AI-assisted core for the initiative built from the first selected insight.
+    // Apply them to the candidate anchored to that insight, or — when a single
+    // candidate is being created — to that candidate. Other candidates keep
+    // their own generated fields.
+    const firstInsightId = selectedInsightIds[0] || null;
+    const coreTargetId =
+      toCreate.find((candidate) => extractCandidateAnchoredSource(candidate)?.id === firstInsightId)
+        ?.id || (toCreate.length === 1 ? toCreate[0]?.id : null);
+    const hasCoreOverrides =
+      coreFields.problem.trim() !== '' ||
+      coreFields.solution.trim() !== '' ||
+      coreFields.scope.trim() !== '' ||
+      coreFields.kpi.trim() !== '';
     try {
       for (const candidate of toCreate) {
+        const applyCore = hasCoreOverrides && candidate.id === coreTargetId;
         const anchored = extractCandidateAnchoredSource(candidate);
         // #29b — 1:N insight → initiative lineage: prefer a candidate-anchored
         // source, then the first selected insight, then the wizard fallbacks.
@@ -802,9 +1015,20 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         const result = await createInitiativeWriteTruth({
           projectId: projectId || undefined,
           title: candidate.title,
-          summary: candidate.opportunityStatement,
-          description: candidate.rationale,
-          problemStatement: candidate.problemStatement,
+          summary:
+            applyCore && coreFields.solution.trim()
+              ? coreFields.solution.trim()
+              : candidate.opportunityStatement,
+          description:
+            applyCore && coreFields.scope.trim()
+              ? [candidate.rationale, `Scope: ${coreFields.scope.trim()}`]
+                  .filter(Boolean)
+                  .join('\n\n')
+              : candidate.rationale,
+          problemStatement:
+            applyCore && coreFields.problem.trim()
+              ? coreFields.problem.trim()
+              : candidate.problemStatement,
           axis: 'transformational',
           status: 'DRAFT',
           priority:
@@ -830,7 +1054,12 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           },
           evidenceRefs: mergedEvidenceRefs,
           tags: ['initiative-wizard', candidate.initiativeLevel],
-          successCriteria: candidate.suggestedKpi ? [candidate.suggestedKpi] : [],
+          successCriteria:
+            applyCore && coreFields.kpi.trim()
+              ? [coreFields.kpi.trim()]
+              : candidate.suggestedKpi
+                ? [candidate.suggestedKpi]
+                : [],
           keyRisks: candidate.limits,
         });
         const initiative = result.truth?.initiative || result.created?.initiative || result.created;
@@ -891,6 +1120,99 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     setSelectedInsightIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
+  };
+
+  // #29h — manual edit of a CORE field. Marks the section as user-authored so
+  // the auto-fill effect stops overwriting it.
+  const setCoreField = (key: CoreFieldKey, value: string) => {
+    setCoreTouched(true);
+    setCoreFields((prev) => ({ ...prev, [key]: value }));
+    setCorePrefilled((prev) => ({ ...prev, [key]: false }));
+  };
+
+  // #29h — "Fill with AI" for a single CORE section. Wires the existing
+  // POST /initiatives/generate-section endpoint (initiativeId optional, so it
+  // works pre-creation). Honest degrade: a 503 / FEATURE_UNAVAILABLE surfaces an
+  // "AI not configured" toast and leaves the field untouched.
+  const fillFieldWithAi = async (key: CoreFieldKey) => {
+    const def = CORE_FIELD_DEFS.find((entry) => entry.key === key);
+    if (!def || aiFillingField) return;
+    setAiFillingField(key);
+    try {
+      const initiativeName =
+        coreFields.problem.split('\n')[0]?.slice(0, 120) ||
+        firstSelectedInsight?.title ||
+        manualNotes.slice(0, 120) ||
+        'Initiative';
+      const response = await Api.post('/initiatives/generate-section', {
+        sectionKey: def.sectionKey,
+        initiativeName,
+        summary: coreFields.solution || firstSelectedInsight?.executiveSummary || manualNotes,
+        problemStatement: coreFields.problem,
+        scope: coreFields.scope,
+        kpis: coreFields.kpi,
+        language,
+      });
+      const content =
+        typeof response?.content === 'string'
+          ? response.content.trim()
+          : typeof response?.parsedContent === 'string'
+            ? String(response.parsedContent).trim()
+            : '';
+      // The backend returns a clearly-marked placeholder string when the LLM is
+      // not configured — treat that as "unavailable" instead of pasting it.
+      const isPlaceholder = /placeholder/i.test(content) || content.length === 0;
+      if (isPlaceholder) {
+        toast(t.aiUnavailable, { duration: 3200, icon: 'ℹ️' });
+        return;
+      }
+      setCoreFields((prev) => ({ ...prev, [key]: content }));
+      setCorePrefilled((prev) => ({ ...prev, [key]: false }));
+      setCoreTouched(true);
+      toast.success(t.aiFilled, { duration: 1600 });
+    } catch (error) {
+      const status = Number(
+        (error as { status?: number; statusCode?: number })?.status ??
+          (error as { statusCode?: number })?.statusCode ??
+          0
+      );
+      if (status === 503) {
+        toast(t.aiUnavailable, { duration: 3200, icon: 'ℹ️' });
+      } else {
+        console.error('[InitiativeWizardModal] Fill-with-AI failed:', error);
+        toast.error(t.aiFailed);
+      }
+    } finally {
+      setAiFillingField(null);
+    }
+  };
+
+  // #29e — record the user's resolution choice for a SIMILAR / DUPLICATE
+  // candidate. merge / extend have no backend yet → honest "coming soon" toast,
+  // but the choice still falls back to create-anyway so the flow never dead-ends.
+  const setSimilarResolution = (candidateId: string, resolution: SimilarResolution) => {
+    setSimilarResolutions((prev) => ({ ...prev, [candidateId]: resolution }));
+    if (resolution === 'merge') {
+      toast(t.mergeSoon, { duration: 3600, icon: '🛠️' });
+    } else if (resolution === 'extend') {
+      toast(t.extendSoon, { duration: 3600, icon: '🛠️' });
+    } else {
+      toast(t.createAnywayPicked, { duration: 1800 });
+    }
+  };
+
+  // #29e — the existing top match (in the live portfolio) for a candidate, used
+  // to surface a deep link to the existing initiative.
+  const similarTopMatch = (candidate: WizardCandidate): SimilarityMatch | null => {
+    const similarity = similarityByCandidate[candidate.id];
+    if (
+      similarity &&
+      (similarity.verdict === 'similar' || similarity.verdict === 'duplicate') &&
+      similarity.matches[0]
+    ) {
+      return similarity.matches[0];
+    }
+    return null;
   };
 
   // #29b — Step 0: multi-select interview insights the initiatives derive from.
@@ -989,8 +1311,78 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     </div>
   );
 
+  // #29h — progressive-fill CORE panel. Shown in the Intent step once at least
+  // one insight is selected, so the user reviews the auto-filled rdzeń and can
+  // fill empty sections with AI before generating candidates.
+  const renderCorePanel = () => {
+    if (selectedInsightIds.length === 0) return null;
+    return (
+      <div
+        data-testid="initiative-wizard-core-panel"
+        className="rounded-2xl border border-primary-300/60 bg-primary-50/60 p-3 dark:border-primary-400/20 dark:bg-primary-500/10"
+      >
+        <div className="flex items-start gap-2">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-300" />
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-primary-900 dark:text-primary-100">
+              {t.coreTitle}
+            </div>
+            <p className="mt-0.5 text-xs text-primary-800/80 dark:text-primary-100/70">
+              {t.coreHint}
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          {CORE_FIELD_DEFS.map((def) => {
+            const value = coreFields[def.key];
+            const isEmpty = value.trim().length === 0;
+            const isPrefilled = corePrefilled[def.key];
+            const isFilling = aiFillingField === def.key;
+            return (
+              <div key={def.key} className="flex flex-col">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {t[def.labelKey]}
+                    {isPrefilled && (
+                      <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                        {t.prefilledFromInsight}
+                      </span>
+                    )}
+                  </label>
+                  <button
+                    type="button"
+                    data-testid={`initiative-wizard-ai-fill-${def.key}`}
+                    onClick={() => void fillFieldWithAi(def.key)}
+                    disabled={aiFillingField !== null}
+                    title={t.fillWithAi}
+                    className="inline-flex items-center gap-1 rounded-lg border border-primary-300 bg-white px-1.5 py-0.5 text-[10px] font-medium text-primary-700 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-400/30 dark:bg-navy-900/60 dark:text-primary-200 dark:hover:bg-primary-500/10"
+                  >
+                    {isFilling ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3 w-3" />
+                    )}
+                    {isFilling ? t.aiFilling : t.fillWithAi}
+                  </button>
+                </div>
+                <textarea
+                  value={value}
+                  onChange={(event) => setCoreField(def.key, event.target.value)}
+                  rows={def.rows}
+                  placeholder={isEmpty ? `${t[def.labelKey]}…` : undefined}
+                  className="w-full resize-none rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const renderIntent = () => (
     <div className="space-y-3">
+      {renderCorePanel()}
       {/* #29c — capacity / overload signal */}
       {capacity && (
         <div
@@ -1138,6 +1530,85 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               {topMatch.status ? ` (${topMatch.status})` : ''}
             </span>
           </div>
+        )}
+      </div>
+    );
+  };
+
+  // #29e — Merge / Extend / Create-anyway choice for a SIMILAR / DUPLICATE
+  // candidate. Surfaces a deep link to the existing initiative so the user can
+  // open it. merge / extend are honest stubs (no backend yet); create-anyway
+  // wires to the existing create path (the candidate stays in the shortlist).
+  const renderSimilarResolution = (candidate: WizardCandidate) => {
+    const topMatch = similarTopMatch(candidate);
+    if (!topMatch) return null;
+    const chosen = similarResolutions[candidate.id];
+    const options: Array<{ value: SimilarResolution; label: string; icon: typeof GitMerge }> = [
+      { value: 'merge', label: t.mergeOption, icon: GitMerge },
+      { value: 'extend', label: t.extendOption, icon: Plus },
+      { value: 'create_anyway', label: t.createAnywayOption, icon: Check },
+    ];
+    return (
+      <div
+        data-testid="initiative-wizard-similar-resolution"
+        className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-2.5 dark:border-amber-400/30 dark:bg-amber-500/10"
+      >
+        <div className="flex items-start gap-1.5">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-amber-900 dark:text-amber-100">
+              {t.similarChoiceTitle}
+            </div>
+            <p className="mt-0.5 text-[11px] text-amber-800/80 dark:text-amber-100/70">
+              {t.similarChoiceHint}
+            </p>
+          </div>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-900 dark:text-amber-100">
+          <span className="truncate font-medium">{topMatch.title}</span>
+          {topMatch.status ? (
+            <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] dark:bg-amber-500/20">
+              {topMatch.status}
+            </span>
+          ) : null}
+          <a
+            href={`/initiatives/${topMatch.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="initiative-wizard-open-existing"
+            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-400 bg-white px-1.5 py-0.5 text-[10px] font-medium text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-400/40 dark:bg-navy-900/60 dark:text-amber-200 dark:hover:bg-amber-500/10"
+          >
+            <ExternalLink className="h-3 w-3" />
+            {t.openExisting}
+          </a>
+        </div>
+        <div className="mt-2 grid grid-cols-1 gap-1.5">
+          {options.map((option) => {
+            const Icon = option.icon;
+            const active = chosen === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                data-testid={`initiative-wizard-resolution-${option.value}`}
+                onClick={() => setSimilarResolution(candidate.id, option.value)}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  active
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400/40 dark:bg-primary-500/15 dark:text-primary-200'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400/50 dark:border-white/[0.12] dark:bg-navy-900/60 dark:text-slate-200'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        {(chosen === 'merge' || chosen === 'extend') && (
+          <p className="mt-1.5 text-[10px] text-amber-700 dark:text-amber-200/80">
+            {chosen === 'merge' ? t.mergeSoon : t.extendSoon}
+          </p>
         )}
       </div>
     );
@@ -1331,6 +1802,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               Powiąż jako już pokryty
             </button>
           )}
+
+          {/* #29e — merge / extend / create-anyway for SIMILAR / DUPLICATE */}
+          {renderSimilarResolution(selectedCandidate)}
         </div>
       )}
     </div>
@@ -1428,6 +1902,30 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                           ? 'Zostanie utworzony draft inicjatywy (DRAFT).'
                           : 'Pominięta — nie zostanie utworzona.'}
                   </div>
+                  {/* #29e — show the chosen similar-resolution for context */}
+                  {similarTopMatch(candidate) && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
+                      {similarResolutions[candidate.id] === 'create_anyway' ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-1.5 py-0.5 font-medium text-primary-700 dark:bg-primary-500/15 dark:text-primary-200">
+                          <Check className="h-2.5 w-2.5" />
+                          {t.createAnywayOption}
+                        </span>
+                      ) : similarResolutions[candidate.id] === 'merge' ||
+                        similarResolutions[candidate.id] === 'extend' ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                          <GitMerge className="h-2.5 w-2.5" />
+                          {similarResolutions[candidate.id] === 'merge'
+                            ? t.mergeOption
+                            : t.extendOption}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          {t.similarChoiceTitle}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <span
                   className={`rounded-full px-2 py-0.5 text-[11px] ${
