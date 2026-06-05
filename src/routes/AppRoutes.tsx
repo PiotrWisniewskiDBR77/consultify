@@ -1369,6 +1369,22 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
+        {/* Discovery revive — the canvas-based Discovery Consultant now has a
+            real backend (persistence + convert-to-project + SPIN extraction).
+            Mounted on a dedicated path so it's reachable for evaluation
+            without disturbing the deliberate DISCOVERY_CONSULTANT → InterviewHub
+            redirect above. */}
+        <Route
+          path="/discovery/canvas"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Discovery']} noPadding>
+              <RouteErrorBoundary>
+                <DiscoveryConsultantView />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
         {/* Dashboard - DEPRECATED: Redirect to Chat */}
         <Route
           path="/dashboard"
