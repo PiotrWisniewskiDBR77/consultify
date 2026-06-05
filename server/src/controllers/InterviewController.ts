@@ -1329,9 +1329,13 @@ const isLockedSessionStatus = (status?: string): boolean => {
 };
 
 const normalizeAssignmentStatusForClient = (status?: string): string => {
-  const normalized = String(status || '').toLowerCase();
-  if (normalized === 'sent_back') return 'in_progress';
-  return normalized;
+  // V-A S5 — pass `sent_back` through. It was previously remapped to
+  // `in_progress`, which hid send-back round-trips entirely: the rose
+  // "Sent back" chip never rendered and the sent_back count/filter was
+  // permanently 0, so a manager couldn't see which submissions they'd
+  // bounced back. The frontend AssignmentStatus union already includes
+  // 'sent_back' and has a chip for it.
+  return String(status || '').toLowerCase();
 };
 
 const toDbFlag = (value: unknown, fallback = 0): number => {

@@ -549,6 +549,40 @@ const INTERVIEW_PROGRESS_TRACK_CLASS =
   'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-700';
 const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-primary-500 transition-all';
 
+// V-A S5 — canonical template-status chip. The real status enum is
+// draft / in_review / approved / archived; the table cell previously showed a
+// fabricated Default|Active badge that ignored `template.status` entirely, and
+// the cards branch only modeled a binary approved/draft. One helper, used in
+// both, so a draft never reads as "Active" again.
+function getTemplateStatusChip(
+  status: string | undefined,
+  isPolish: boolean
+): { label: string; className: string } {
+  const s = String(status || 'draft').toLowerCase();
+  if (s === 'approved' || s === 'published') {
+    return {
+      label: isPolish ? 'Opublikowany' : 'Published',
+      className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100`,
+    };
+  }
+  if (s === 'in_review') {
+    return {
+      label: isPolish ? 'W recenzji' : 'In review',
+      className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100`,
+    };
+  }
+  if (s === 'archived') {
+    return {
+      label: isPolish ? 'Zarchiwizowany' : 'Archived',
+      className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-slate-300/80 bg-slate-100 text-slate-600 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-300`,
+    };
+  }
+  return {
+    label: isPolish ? 'Wersja robocza' : 'Draft',
+    className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100`,
+  };
+}
+
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -600,9 +634,11 @@ export const InterviewHub: React.FC = () => {
   const [templateSourceFilter, setTemplateSourceFilter] = useState<TemplateSourceFilter>('all');
   const [templateAreaTagFilter, setTemplateAreaTagFilter] = useState<string[]>([]);
   const [isTemplateAreaFilterOpen, setIsTemplateAreaFilterOpen] = useState(false);
-  const [templateStatusFilter, setTemplateStatusFilter] = useState<'all' | 'default' | 'active'>(
-    'all'
-  );
+  // V-A S5 — filter by the real status enum, not isDefault. Was 'all'|'default'|
+  // 'active' (which keyed off isDefault, so drafts/archived were unreachable).
+  const [templateStatusFilter, setTemplateStatusFilter] = useState<
+    'all' | 'draft' | 'in_review' | 'approved' | 'archived'
+  >('all');
   const [templatesHiddenColumns, setTemplatesHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
   );
@@ -1679,12 +1715,15 @@ export const InterviewHub: React.FC = () => {
   const filteredTemplates = useMemo(() => {
     let result = templates;
 
-    // Filter by status-like chips (All / Default / Active)
+    // V-A S5 — filter by the real status enum (draft/in_review/approved/
+    // archived). 'approved' also matches legacy 'published'. Default-to-draft
+    // for rows with no status so they remain findable.
     if (templateStatusFilter !== 'all') {
-      result =
-        templateStatusFilter === 'default'
-          ? result.filter((t) => t.isDefault)
-          : result.filter((t) => !t.isDefault);
+      result = result.filter((t) => {
+        const s = String(t.status || 'draft').toLowerCase();
+        if (templateStatusFilter === 'approved') return s === 'approved' || s === 'published';
+        return s === templateStatusFilter;
+      });
     }
 
     if (templateSourceFilter !== 'all') {
@@ -2584,7 +2623,7 @@ export const InterviewHub: React.FC = () => {
         'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
-        id: 'all' | 'default' | 'active';
+        id: 'all' | 'draft' | 'in_review' | 'approved' | 'archived';
         label: string;
         count: number;
         onClick: () => void;
@@ -2596,16 +2635,32 @@ export const InterviewHub: React.FC = () => {
           onClick: () => setTemplateStatusFilter('all'),
         },
         {
-          id: 'default',
-          label: isPolish ? 'Domyślne' : 'Default',
-          count: templates.filter((t) => t.isDefault).length,
-          onClick: () => setTemplateStatusFilter('default'),
+          id: 'draft',
+          label: isPolish ? 'Robocze' : 'Draft',
+          count: templates.filter((t) => !t.status || String(t.status).toLowerCase() === 'draft')
+            .length,
+          onClick: () => setTemplateStatusFilter('draft'),
         },
         {
-          id: 'active',
-          label: isPolish ? 'Aktywne' : 'Active',
-          count: templates.filter((t) => !t.isDefault).length,
-          onClick: () => setTemplateStatusFilter('active'),
+          id: 'in_review',
+          label: isPolish ? 'W recenzji' : 'In review',
+          count: templates.filter((t) => String(t.status).toLowerCase() === 'in_review').length,
+          onClick: () => setTemplateStatusFilter('in_review'),
+        },
+        {
+          id: 'approved',
+          label: isPolish ? 'Opublikowane' : 'Published',
+          count: templates.filter((t) => {
+            const s = String(t.status).toLowerCase();
+            return s === 'approved' || s === 'published';
+          }).length,
+          onClick: () => setTemplateStatusFilter('approved'),
+        },
+        {
+          id: 'archived',
+          label: isPolish ? 'Zarchiwizowane' : 'Archived',
+          count: templates.filter((t) => String(t.status).toLowerCase() === 'archived').length,
+          onClick: () => setTemplateStatusFilter('archived'),
         },
       ];
 
@@ -4801,19 +4856,23 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center"
                       style={{ width: templatesColumnWidths.status }}
                     >
-                      {template.isDefault ? (
-                        <span
-                          className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100`}
-                        >
-                          {isPolish ? 'Domyślny' : 'Default'}
-                        </span>
-                      ) : (
-                        <span
-                          className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100`}
-                        >
-                          {isPolish ? 'Aktywny' : 'Active'}
-                        </span>
-                      )}
+                      {/* V-A S5 — real status chip (draft/in_review/approved/
+                          archived), not the old fabricated Default|Active. The
+                          "Default" template flag is now a small separate marker. */}
+                      <div className="inline-flex items-center gap-1.5">
+                        {(() => {
+                          const chip = getTemplateStatusChip(template.status, isPolish);
+                          return <span className={chip.className}>{chip.label}</span>;
+                        })()}
+                        {template.isDefault && (
+                          <span
+                            className="inline-flex items-center rounded-full border border-blue-300/70 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:border-blue-300/[0.22] dark:bg-blue-300/[0.10] dark:text-blue-100"
+                            title={isPolish ? 'Domyślny szablon' : 'Default template'}
+                          >
+                            {isPolish ? 'Domyślny' : 'Default'}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   )}
 
