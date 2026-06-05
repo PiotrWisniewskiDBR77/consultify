@@ -837,6 +837,17 @@ export const InterviewHub: React.FC = () => {
   }, [activeTab, assignmentStatusFilter]);
 
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
+  // #8b — Sessions archive/trash lifecycle. The managed-sessions list is filtered
+  // server-side via ?lifecycle=active|archived|trash; the active filter also drives
+  // which kebab/bulk actions a row exposes (rows in the "Archive" view are archived,
+  // rows in the "Trash" view are trashed, etc.).
+  const [sessionLifecycle, setSessionLifecycle] = useState<'active' | 'archived' | 'trash'>(
+    'active'
+  );
+  // Type-to-confirm permanent-delete dialog (only reachable from the Trash view).
+  const [sessionDeleteTarget, setSessionDeleteTarget] = useState<InterviewSession | null>(null);
+  const [sessionDeleteConfirmText, setSessionDeleteConfirmText] = useState('');
+  const [sessionLifecycleBusy, setSessionLifecycleBusy] = useState(false);
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
   const [interviewInitiatives, setInterviewInitiatives] = useState<InterviewInitiativeDraft[]>([]);
   const [selectedInterviewInitiativeId, setSelectedInterviewInitiativeId] = useState<string | null>(
@@ -946,15 +957,41 @@ export const InterviewHub: React.FC = () => {
     return [];
   }, []);
 
-  const loadManagedSessions = useCallback(async (): Promise<InterviewSession[]> => {
-    const sessionsRes = await V8InterviewApi.getManagedSessions()
-      .then((res) => res.sessions)
-      .catch(() => Api.get('/interview/sessions/managed'))
-      .catch(() => []);
-    return Array.isArray(sessionsRes)
-      ? (sessionsRes as InterviewSession[]).map(normalizeInterviewSessionRecord)
-      : [];
-  }, []);
+  const loadManagedSessions = useCallback(
+    async (lifecycle: 'active' | 'archived' | 'trash' = 'active'): Promise<InterviewSession[]> => {
+      // The v8 managed-sessions endpoint ignores lifecycle, so only the default
+      // "active" view can use the v8 fast path. Archive/Trash views must go through
+      // the legacy /interview/sessions/managed?lifecycle= endpoint (#8b backend).
+      const sessionsRes =
+        lifecycle === 'active'
+          ? await V8InterviewApi.getManagedSessions()
+              .then((res) => res.sessions)
+              .catch(() => Api.get('/interview/sessions/managed'))
+              .catch(() => [])
+          : await Api.get(
+              `/interview/sessions/managed?lifecycle=${encodeURIComponent(lifecycle)}`
+            ).catch(() => []);
+      return Array.isArray(sessionsRes)
+        ? (sessionsRes as InterviewSession[]).map(normalizeInterviewSessionRecord)
+        : [];
+    },
+    []
+  );
+
+  // #8b — Re-fetch only the sessions list (used after lifecycle actions and when
+  // the user switches the Active | Archive | Trash filter). Keeps selection in sync.
+  const refreshSessions = useCallback(
+    async (lifecycle: 'active' | 'archived' | 'trash' = sessionLifecycle) => {
+      try {
+        const next = await loadManagedSessions(lifecycle);
+        setSessions(next);
+        setSessionsLoadError(null);
+      } catch (error) {
+        console.error('[InterviewHub] Failed to refresh sessions:', error);
+      }
+    },
+    [loadManagedSessions, sessionLifecycle]
+  );
 
   const loadMyAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
     const assignmentsRes = await V8InterviewApi.getMyAssignments()
@@ -1178,6 +1215,20 @@ export const InterviewHub: React.FC = () => {
 
     loadData();
   }, [isPolish, loadManagedSessions, normalizeTemplateRecord, unwrapApiList]);
+
+  // #8b — Re-fetch the sessions list when the Active | Archive | Trash filter
+  // changes. The first run is skipped (the main load effect already fetched the
+  // default "active" list) to avoid a redundant double fetch on mount.
+  const sessionLifecycleHydrated = useRef(false);
+  useEffect(() => {
+    if (!sessionLifecycleHydrated.current) {
+      sessionLifecycleHydrated.current = true;
+      return;
+    }
+    setSelectedSessionIds(new Set());
+    void refreshSessions(sessionLifecycle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionLifecycle]);
 
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
@@ -2185,6 +2236,80 @@ export const InterviewHub: React.FC = () => {
     [isPolish]
   );
 
+  // #8b — Session archive/trash lifecycle actions. Endpoints live on the legacy
+  // /interview router (POST /sessions/:id/{archive,restore,trash,untrash}, DELETE
+  // /sessions/:id, POST /sessions/bulk). After each action we re-fetch the list
+  // for the currently-active lifecycle filter so the affected row drops out.
+  const handleSessionLifecycleAction = useCallback(
+    async (session: InterviewSession, action: 'archive' | 'restore' | 'trash' | 'untrash') => {
+      if (sessionLifecycleBusy) return;
+      setSessionLifecycleBusy(true);
+      const successMsg: Record<typeof action, { pl: string; en: string }> = {
+        archive: { pl: 'Sesja zarchiwizowana', en: 'Session archived' },
+        restore: { pl: 'Sesja przywrócona', en: 'Session restored' },
+        trash: { pl: 'Przeniesiono do kosza', en: 'Moved to trash' },
+        untrash: { pl: 'Sesja przywrócona', en: 'Session restored' },
+      };
+      try {
+        await Api.post(`/interview/sessions/${session.id}/${action}`, {});
+        toast.success(isPolish ? successMsg[action].pl : successMsg[action].en);
+        await refreshSessions();
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        console.error(`[InterviewHub] Session ${action} failed:`, error);
+      } finally {
+        setSessionLifecycleBusy(false);
+      }
+    },
+    [isPolish, refreshSessions, sessionLifecycleBusy]
+  );
+
+  // Permanent delete — only valid once a session is trashed (server returns 409
+  // otherwise). Gated behind a type-to-confirm dialog.
+  const handleConfirmDeleteSession = useCallback(async () => {
+    if (!sessionDeleteTarget || sessionLifecycleBusy) return;
+    setSessionLifecycleBusy(true);
+    try {
+      await Api.delete(`/interview/sessions/${sessionDeleteTarget.id}`);
+      toast.success(isPolish ? 'Sesja usunięta na stałe' : 'Session permanently deleted');
+      setSessionDeleteTarget(null);
+      setSessionDeleteConfirmText('');
+      await refreshSessions();
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się usunąć sesji' : 'Could not delete session');
+      console.error('[InterviewHub] Permanent delete failed:', error);
+    } finally {
+      setSessionLifecycleBusy(false);
+    }
+  }, [isPolish, refreshSessions, sessionDeleteTarget, sessionLifecycleBusy]);
+
+  // Bulk archive/trash over the current selection (POST /sessions/bulk).
+  const handleBulkSessionLifecycle = useCallback(
+    async (action: 'archive' | 'restore' | 'trash' | 'untrash') => {
+      const ids = Array.from(selectedSessionIds);
+      if (ids.length === 0 || sessionLifecycleBusy) return;
+      setSessionLifecycleBusy(true);
+      try {
+        await Api.post('/interview/sessions/bulk', { ids, action });
+        const doneMsg: Record<typeof action, { pl: string; en: string }> = {
+          archive: { pl: 'Zarchiwizowano sesje', en: 'Sessions archived' },
+          restore: { pl: 'Przywrócono sesje', en: 'Sessions restored' },
+          trash: { pl: 'Przeniesiono do kosza', en: 'Sessions moved to trash' },
+          untrash: { pl: 'Przywrócono sesje', en: 'Sessions restored' },
+        };
+        toast.success(`${isPolish ? doneMsg[action].pl : doneMsg[action].en} (${ids.length})`);
+        setSelectedSessionIds(new Set());
+        await refreshSessions();
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        console.error(`[InterviewHub] Bulk ${action} failed:`, error);
+      } finally {
+        setSessionLifecycleBusy(false);
+      }
+    },
+    [isPolish, refreshSessions, selectedSessionIds, sessionLifecycleBusy]
+  );
+
   // Assignment management actions
   const handleOpenReminderModal = useCallback((assignment: InterviewAssignment) => {
     setSelectedAssignment(assignment);
@@ -2658,6 +2783,62 @@ export const InterviewHub: React.FC = () => {
                   <Download size={14} />
                   {isPolish ? 'Eksport CSV' : 'Export CSV'}
                 </button>
+                {/* #8b — Bulk lifecycle actions (scoped to the active filter). */}
+                {sessionLifecycle === 'active' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSessionLifecycle('archive')}
+                      disabled={sessionLifecycleBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <Archive size={14} />
+                      {isPolish ? 'Archiwizuj' : 'Archive'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSessionLifecycle('trash')}
+                      disabled={sessionLifecycleBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <Trash2 size={14} />
+                      {isPolish ? 'Do kosza' : 'Trash'}
+                    </button>
+                  </>
+                ) : null}
+                {sessionLifecycle === 'archived' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSessionLifecycle('restore')}
+                      disabled={sessionLifecycleBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <RotateCcw size={14} />
+                      {isPolish ? 'Przywróć' : 'Restore'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSessionLifecycle('trash')}
+                      disabled={sessionLifecycleBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <Trash2 size={14} />
+                      {isPolish ? 'Do kosza' : 'Trash'}
+                    </button>
+                  </>
+                ) : null}
+                {sessionLifecycle === 'trash' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkSessionLifecycle('untrash')}
+                    disabled={sessionLifecycleBusy}
+                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <RotateCcw size={14} />
+                    {isPolish ? 'Przywróć' : 'Restore'}
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>
@@ -2691,7 +2872,32 @@ export const InterviewHub: React.FC = () => {
                 );
               })}
             </div>
-            <div className="shrink-0" />
+            {/* #8b — Lifecycle filter: Active | Archive | Trash. Sets the
+                ?lifecycle= param on the managed-sessions fetch and refetches. */}
+            <div className="flex shrink-0 items-center gap-1.5">
+              {(
+                [
+                  { id: 'active', label: isPolish ? 'Aktywne' : 'Active', icon: List },
+                  { id: 'archived', label: isPolish ? 'Archiwum' : 'Archive', icon: Archive },
+                  { id: 'trash', label: isPolish ? 'Kosz' : 'Trash', icon: Trash2 },
+                ] as const
+              ).map((lc) => {
+                const Icon = lc.icon;
+                const isActive = sessionLifecycle === lc.id;
+                return (
+                  <button
+                    key={lc.id}
+                    type="button"
+                    onClick={() => setSessionLifecycle(lc.id)}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                    aria-pressed={isActive}
+                  >
+                    <Icon size={14} />
+                    <span>{lc.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
@@ -3522,6 +3728,62 @@ export const InterviewHub: React.FC = () => {
                                   label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
                                   icon: Lightbulb,
                                   onClick: () => handleGenerateInsight(session, 'summary'),
+                                },
+                              ]
+                            : []),
+                          // #8b — Lifecycle actions, scoped to the active filter.
+                          ...(sessionLifecycle === 'active'
+                            ? [
+                                {
+                                  id: 'archive',
+                                  label: isPolish ? 'Archiwizuj' : 'Archive',
+                                  icon: Archive,
+                                  divider: true,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => handleSessionLifecycleAction(session, 'archive'),
+                                },
+                              ]
+                            : []),
+                          ...(sessionLifecycle === 'archived'
+                            ? [
+                                {
+                                  id: 'restore',
+                                  label: isPolish ? 'Przywróć' : 'Restore',
+                                  icon: RotateCcw,
+                                  divider: true,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => handleSessionLifecycleAction(session, 'restore'),
+                                },
+                                {
+                                  id: 'trash',
+                                  label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                                  icon: Trash2,
+                                  variant: 'danger' as const,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => handleSessionLifecycleAction(session, 'trash'),
+                                },
+                              ]
+                            : []),
+                          ...(sessionLifecycle === 'trash'
+                            ? [
+                                {
+                                  id: 'untrash',
+                                  label: isPolish ? 'Przywróć' : 'Restore',
+                                  icon: RotateCcw,
+                                  divider: true,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => handleSessionLifecycleAction(session, 'untrash'),
+                                },
+                                {
+                                  id: 'delete-forever',
+                                  label: isPolish ? 'Usuń na stałe' : 'Delete forever',
+                                  icon: Trash2,
+                                  variant: 'danger' as const,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => {
+                                    setSessionDeleteConfirmText('');
+                                    setSessionDeleteTarget(session);
+                                  },
                                 },
                               ]
                             : []),
@@ -8877,6 +9139,86 @@ Return ONLY the answer text (no markdown fences).`;
                 >
                   <Bell size={16} className="inline mr-2" />
                   {isPolish ? 'Wyślij' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* #8b — Permanent delete confirmation (type-to-confirm). Only reachable
+          from the Trash view; the backend rejects deletes on non-trashed sessions. */}
+      {sessionDeleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Usuń sesję na stałe' : 'Delete session forever'}
+              </h2>
+              <button
+                onClick={() => {
+                  setSessionDeleteTarget(null);
+                  setSessionDeleteConfirmText('');
+                }}
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                {isPolish
+                  ? 'Tej operacji nie można cofnąć. Sesja oraz jej pytania, notatki i dowody zostaną trwale usunięte.'
+                  : 'This cannot be undone. The session and its questions, notes and evidence will be permanently removed.'}
+              </p>
+              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
+                <div className="text-sm text-slate-900 dark:text-white font-medium truncate">
+                  {sessionDeleteTarget.name || 'Discovery Interview'}
+                </div>
+              </div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                {isPolish ? (
+                  <>
+                    Wpisz{' '}
+                    <span className="font-semibold text-rose-600 dark:text-rose-400">DELETE</span>,
+                    aby potwierdzić
+                  </>
+                ) : (
+                  <>
+                    Type{' '}
+                    <span className="font-semibold text-rose-600 dark:text-rose-400">DELETE</span>{' '}
+                    to confirm
+                  </>
+                )}
+              </label>
+              <input
+                type="text"
+                value={sessionDeleteConfirmText}
+                onChange={(e) => setSessionDeleteConfirmText(e.target.value)}
+                autoFocus
+                placeholder="DELETE"
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/40"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setSessionDeleteTarget(null);
+                    setSessionDeleteConfirmText('');
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleConfirmDeleteSession}
+                  disabled={
+                    sessionDeleteConfirmText.trim().toUpperCase() !== 'DELETE' ||
+                    sessionLifecycleBusy
+                  }
+                  className="flex-1 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 size={16} className="inline mr-2" />
+                  {isPolish ? 'Usuń na stałe' : 'Delete forever'}
                 </button>
               </div>
             </div>
