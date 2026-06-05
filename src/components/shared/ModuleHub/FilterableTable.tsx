@@ -51,6 +51,13 @@ interface FilterableTableProps {
   density?: 'comfortable' | 'compact';
   /** Show the table header settings (columns) button. */
   enableColumnSettings?: boolean;
+  /**
+   * Opt-in localStorage persistence of column widths + visibility/order. When
+   * set, resizing / hiding / reordering columns survives reload. Default off,
+   * so existing callers are unaffected. (V-B — the canonical fix for the
+   * module-wide "resize lost on reload" bug; one place instead of per-table.)
+   */
+  persistKey?: string;
 }
 
 // Status badge component — uses canonical color palette
@@ -231,10 +238,28 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   canvasClassName = 'p-4',
   density = 'comfortable',
   enableColumnSettings = true,
+  persistKey,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const cellPadding = density === 'compact' ? 'px-4 py-2' : 'px-4 py-3';
+
+  // V-B — persisted column layout (widths + visibility/order). Read on mount,
+  // written on change. Keyed by `persistKey`; no-op when unset.
+  const storageKey = persistKey ? `filterableTable.cols.${persistKey}` : null;
+  const readPersisted = useCallback((): {
+    widths?: Record<string, number>;
+    visibility?: Record<string, boolean>;
+    order?: Record<string, number>;
+  } | null => {
+    if (!storageKey || typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, [storageKey]);
 
   const parsePx = useCallback((value?: string, fallback = 140) => {
     if (!value) return fallback;
@@ -257,22 +282,61 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     }));
   }, [columns, parsePx]);
 
-  const [columnConfigs, setColumnConfigs] = useState<ColumnConfig[]>(defaultColumnConfigs);
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
-    const widths: Record<string, number> = {};
-    for (const c of defaultColumnConfigs) widths[c.id] = c.width ?? 140;
-    return widths;
-  });
-
-  // Keep column settings in sync when columns change (e.g., tab switch).
-  useEffect(() => {
-    setColumnConfigs(defaultColumnConfigs);
-    setColumnWidths(() => {
+  // Merge persisted layout onto the column defaults (V-B).
+  const mergePersisted = useCallback(
+    (configs: ColumnConfig[]): { configs: ColumnConfig[]; widths: Record<string, number> } => {
+      const persisted = readPersisted();
       const widths: Record<string, number> = {};
-      for (const c of defaultColumnConfigs) widths[c.id] = c.width ?? 140;
-      return widths;
-    });
-  }, [defaultColumnConfigs]);
+      const merged = configs.map((c) => {
+        const w = persisted?.widths?.[c.id];
+        const vis = persisted?.visibility?.[c.id];
+        const ord = persisted?.order?.[c.id];
+        const width = typeof w === 'number' && w > 0 ? w : (c.width ?? 140);
+        widths[c.id] = width;
+        return {
+          ...c,
+          width,
+          visible: typeof vis === 'boolean' ? vis : c.visible,
+          order: typeof ord === 'number' ? ord : c.order,
+        };
+      });
+      return { configs: merged, widths };
+    },
+    [readPersisted]
+  );
+
+  const [columnConfigs, setColumnConfigs] = useState<ColumnConfig[]>(
+    () => mergePersisted(defaultColumnConfigs).configs
+  );
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
+    () => mergePersisted(defaultColumnConfigs).widths
+  );
+
+  // Keep column settings in sync when columns change (e.g., tab switch),
+  // re-applying any persisted layout.
+  useEffect(() => {
+    const { configs, widths } = mergePersisted(defaultColumnConfigs);
+    setColumnConfigs(configs);
+    setColumnWidths(widths);
+  }, [defaultColumnConfigs, mergePersisted]);
+
+  // Persist layout whenever it changes (V-B).
+  useEffect(() => {
+    if (!storageKey || typeof window === 'undefined') return;
+    try {
+      const widths: Record<string, number> = {};
+      const visibility: Record<string, boolean> = {};
+      const order: Record<string, number> = {};
+      for (const c of columnConfigs) {
+        widths[c.id] = columnWidths[c.id] ?? c.width ?? 140;
+        visibility[c.id] = c.visible !== false;
+        order[c.id] = c.order ?? 0;
+      }
+      window.localStorage.setItem(storageKey, JSON.stringify({ widths, visibility, order }));
+    } catch {
+      /* quota / SSR — non-fatal */
+    }
+  }, [columnConfigs, columnWidths, storageKey]);
 
   const visibleColumns = useMemo(() => {
     const byId = new Map(columnConfigs.map((c) => [c.id, c]));
