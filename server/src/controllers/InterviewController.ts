@@ -2785,7 +2785,7 @@ export const InterviewController = {
           body: `An interview assignment has been submitted and is awaiting your review.`,
           entityType: 'interview_assignment',
           entityId: id,
-          actionUrl: `/discovery?assignmentId=${id}&scope=managed`,
+          actionUrl: `/interview?assignmentId=${id}&scope=managed`,
           priority: 'high',
           actorId: user.id,
         });
@@ -2987,7 +2987,7 @@ export const InterviewController = {
           body: `${normalizedReason} (${normalizedMissingItems.length} missing item(s))`,
           entityType: 'interview_assignment',
           entityId: id,
-          actionUrl: `/discovery?assignmentId=${id}`,
+          actionUrl: `/interview?assignmentId=${id}`,
           priority: 'high',
           actorId: admin.id,
         });
@@ -3128,7 +3128,7 @@ export const InterviewController = {
           body: 'Your interview submission has been approved.',
           entityType: 'interview_assignment',
           entityId: id,
-          actionUrl: `/discovery?assignmentId=${id}`,
+          actionUrl: `/interview?assignmentId=${id}`,
           priority: 'normal',
           actorId: reviewer.id,
         });
@@ -4671,7 +4671,7 @@ export const InterviewController = {
     });
 
     const systemPrompt = `
-You are a senior manufacturing transformation consultant helping fill a structured interview.
+You are a senior management consultant helping fill a structured interview.
 Goal: Draft a concise, factual answer to the question based on provided context and prior answers.
 Rules:
 - Facts only. No recommendations or action plans.
@@ -4860,21 +4860,26 @@ Answer type: ${(question as any).answer_type || 'open'}`;
     const { sessionId } = req.params;
     const { language } = req.body || {};
 
+    // P1-7 — null-safe org predicate so project-less (ad-hoc) sessions can be
+    // evaluated/parsed. The previous inner JOIN on projects excluded them
+    // entirely. Mirror getSummary/createInsight org match.
     let session: any = null;
     try {
       session = await queryHelpers.queryOne(
         `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
-         JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ? AND p.organization_id = ?`,
-        [sessionId, user.organizationId]
+         LEFT JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ?
+           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
+        [sessionId, user.organizationId, user.organizationId]
       );
     } catch {
       // Backward compatibility for environments still using legacy user_id.
       session = await queryHelpers.queryOne(
         `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-         JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ? AND p.organization_id = ?`,
-        [sessionId, user.organizationId]
+         LEFT JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ?
+           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
+        [sessionId, user.organizationId, user.organizationId]
       );
     }
     if (!session) {
@@ -4949,21 +4954,26 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       return;
     }
 
+    // P1-7 — null-safe org predicate so project-less (ad-hoc) sessions can be
+    // evaluated/parsed. The previous inner JOIN on projects excluded them
+    // entirely. Mirror getSummary/createInsight org match.
     let session: any = null;
     try {
       session = await queryHelpers.queryOne(
         `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
-         JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ? AND p.organization_id = ?`,
-        [sessionId, user.organizationId]
+         LEFT JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ?
+           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
+        [sessionId, user.organizationId, user.organizationId]
       );
     } catch {
       // Backward compatibility for environments still using legacy user_id.
       session = await queryHelpers.queryOne(
         `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-         JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ? AND p.organization_id = ?`,
-        [sessionId, user.organizationId]
+         LEFT JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ?
+           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
+        [sessionId, user.organizationId, user.organizationId]
       );
     }
     if (!session) {

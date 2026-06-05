@@ -1062,7 +1062,7 @@ class InterviewAssignmentService {
             body: `The interview "${row.template_name}" assigned to ${row.assignee_name} is overdue by ${overdueDays} day(s).`,
             entityType: 'interview_assignment',
             entityId: row.id,
-            actionUrl: `/discovery?assignmentId=${row.id}`,
+            actionUrl: `/interview?assignmentId=${row.id}`,
             priority: 'high',
           });
 
@@ -1134,7 +1134,7 @@ class InterviewAssignmentService {
           body: `You have been assigned the interview: ${assignment.template.name}`,
           entityType: 'interview_assignment',
           entityId: assignmentId,
-          actionUrl: `/discovery?assignmentId=${assignmentId}`,
+          actionUrl: `/interview?assignmentId=${assignmentId}`,
           priority: assignment.priority === 'urgent' ? 'urgent' : 'normal',
         });
       } catch (err) {
@@ -1181,7 +1181,7 @@ class InterviewAssignmentService {
           body: bodyMap[reminderType] || `Please complete your interview: ${templateName}`,
           entityType: 'interview_assignment',
           entityId: assignment.id,
-          actionUrl: `/discovery?assignmentId=${assignment.id}`,
+          actionUrl: `/interview?assignmentId=${assignment.id}`,
           priority: reminderType === 'reminder_2h' ? 'urgent' : 'high',
           actorId: senderId,
         });
@@ -1267,7 +1267,7 @@ class InterviewAssignmentService {
         <p>Hi ${data.userName},</p>
         <p>This is a reminder that your interview <strong>"${data.templateName}"</strong> is due on <strong>${dueDate}</strong>.</p>
         <p>Please complete it as soon as possible.</p>
-        <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/discovery?assignmentId=${data.assignmentId}">Click here to continue the interview</a></p>
+        <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/interview?assignmentId=${data.assignmentId}">Click here to continue the interview</a></p>
         <p>Best regards,<br>The Consultify Team</p>
       `,
     });
@@ -1289,7 +1289,7 @@ class InterviewAssignmentService {
         <h2>Interview Assignment Overdue</h2>
         <p>The interview <strong>"${data.templateName}"</strong> assigned to <strong>${data.assigneeName}</strong> is overdue by <strong>${data.overdueDays} day(s)</strong>.</p>
         <p>Please follow up with the assignee or reassign the task.</p>
-        <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/discovery?assignmentId=${data.assignmentId}&scope=managed">View Assignment</a></p>
+        <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/interview?assignmentId=${data.assignmentId}&scope=managed">View Assignment</a></p>
         <p>Best regards,<br>The Consultify Team</p>
       `,
     });

@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 
 import { TeresaMark } from '@/components/shared/TeresaMark';
 
+import { getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 const API_BASE = '/api/interview';
@@ -76,7 +77,12 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
   const fetchMessages = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/sessions/${sessionId}/transcript`);
+      // I3 — include auth + org headers. The legacy interview router requires
+      // verifyToken + requireOrgAccess; a bare fetch only succeeded when an
+      // access_token cookie happened to be set, and never sent the org header.
+      const res = await fetch(`${API_BASE}/sessions/${sessionId}/transcript`, {
+        headers: getHeaders(),
+      });
       if (!res.ok) return;
       const data = await res.json();
       setMessages(data.messages || []);
@@ -110,7 +116,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
       setLoading(true);
       const res = await fetch(`${API_BASE}/sessions/${sessionId}/transcript`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ role: 'user', content: text }),
       });
       if (!res.ok) throw new Error('Failed to send message');
@@ -146,7 +152,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
       const res = await fetch(`${API_BASE}/sessions/${sessionId}/ai-parse`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ text: transcript }),
       });
 
