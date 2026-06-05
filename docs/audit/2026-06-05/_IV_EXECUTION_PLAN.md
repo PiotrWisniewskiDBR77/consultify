@@ -22,7 +22,7 @@
 
 ## FAZA 0 — P0 BUGI (przed nowymi ficzerami) · ~2-3 dni
 
-- [x] 🔴 **#24** Insight section crash — per-section ErrorBoundary izoluje crash sekcji (koniec pełnoekranowego „Coś poszło nie tak"); reusable w NModeLayout dla 8 widoków ✅
+- [x] 🔴 **#24** Insight section crash — per-section ErrorBoundary w **NModeCanvas** izoluje crash sekcji we WSZYSTKICH 8 widokach NModeShell automatycznie (koniec pełnoekranowego „Coś poszło nie tak") ✅
 - [ ] 🔴 **#24b** Crash diagnostics nie wysyłane („could not be delivered") — app-level telemetria (osobny od #24; per-section boundary omija app-level dla crashy sekcji)
 - [x] 🔴 **#4** Voice „3 osoby" — bufor akumulacyjny w `useTeresaVoice` + flush na `turnComplete` (jedna tura = jedna wiadomość) ✅ `commit`
 - [x] **#1** Popover „Visible columns" przycinany do tabeli — `TableSettingsPopover` portalowany do body (fixed + auto-flip + viewport clamp), nigdy nie przycinany; dotyczy wszystkich tabel ✅
