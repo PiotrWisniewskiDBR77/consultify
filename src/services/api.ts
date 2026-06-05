@@ -5168,6 +5168,35 @@ export const Api = {
   },
 
   /**
+   * L-2 — send a `kind='table'` Canvas draft into Table Studio. Creates a
+   * `tp_bases`/`tp_tables`/`tp_fields`/`tp_records` set with field types
+   * inferred from the markdown table's cells (date / number / text).
+   * Returns 400 with code='CANVAS_NOT_TABLE_KIND' when called on a non-table
+   * draft, and 400 with code='CANVAS_TABLE_EMPTY' when no markdown table is
+   * present.
+   */
+  workCanvasSendToTableStudio: async (
+    draftId: string
+  ): Promise<{
+    success: boolean;
+    data: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      draft: any;
+      linkedResource: { type: 'table_studio'; id: string; title: string; url: string };
+      readBack: Record<string, unknown>;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/send-to-table-studio`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to send Canvas to Table Studio');
+  },
+
+  /**
    * M-5 — register the Canvas in the canonical Outputs Library
    * (`v8_output_artifacts`). Idempotent — re-registering updates the
    * artifact's metadata snapshot. The Outputs aggregate tab can now list

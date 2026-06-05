@@ -1211,6 +1211,33 @@ export function WorkCanvasDocumentPanel({
   };
 
   /**
+   * L-2 — send the current Canvas (kind='table') to Table Studio. Creates
+   * a real tp_tables entry with typed fields inferred from the markdown
+   * table. Disabled for non-table drafts.
+   */
+  const [isSendingToTableStudio, setIsSendingToTableStudio] = React.useState(false);
+  const sendToTableStudio = async () => {
+    if (isSendingToTableStudio) return;
+    setIsSendingToTableStudio(true);
+    setStatusFeedback('Sending Canvas to Table Studio…');
+    try {
+      const draft = await ensurePersistedDraft();
+      if (!draft?.draftId) {
+        setAlertFeedback('Table Studio handoff is available once the draft is saved.');
+        return;
+      }
+      const result = await Api.workCanvasSendToTableStudio(draft.draftId);
+      setStatusFeedback(
+        `Table created in Table Studio. [Open →](${result.data.linkedResource.url})`
+      );
+    } catch (error) {
+      setCanvasErrorFeedback(error, 'Failed to send Canvas to Table Studio.');
+    } finally {
+      setIsSendingToTableStudio(false);
+    }
+  };
+
+  /**
    * L-1 — send the current Canvas to DocumentStudio. Materializes a
    * DocumentStudio artifact via the intake → plan → generate pipeline, then
    * opens it in the documents module. The previous bridge was a manual
@@ -2917,6 +2944,29 @@ export function WorkCanvasDocumentPanel({
                       {isSendingToDocumentStudio
                         ? 'Sending to Document Studio…'
                         : 'Send to Document Studio'}
+                    </span>
+                  </button>
+                  {/* L-2 — Table Studio bridge. Disabled for non-table drafts
+                      (narrative drafts have no column schema; naïve inference
+                      would land all-text Tables — the audit's L-2 rationale). */}
+                  <button
+                    type="button"
+                    onClick={() => void sendToTableStudio()}
+                    disabled={
+                      isSendingToTableStudio || documentState.kind !== 'table'
+                    }
+                    title={
+                      documentState.kind === 'table'
+                        ? 'Send the current table to Table Studio'
+                        : 'Table Studio handoff requires a Canvas with kind=table.'
+                    }
+                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/10"
+                  >
+                    <Table2 size={14} />
+                    <span>
+                      {isSendingToTableStudio
+                        ? 'Sending to Table Studio…'
+                        : 'Send to Table Studio'}
                     </span>
                   </button>
                   {/* C4.4 — exposes the existing backend exporters (exportDocxBuffer

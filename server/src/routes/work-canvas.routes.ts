@@ -4003,6 +4003,153 @@ router.post('/drafts/:draftId/research/finalize-report', async (req: AuthRequest
 });
 
 /**
+ * L-2 — Canvas → Table Studio bridge (for `kind='table'` drafts).
+ *
+ * Previously a `kind='table'` Canvas produced a sibling `work_canvas_drafts`
+ * row containing the markdown table; Table Studio never saw it. This endpoint
+ * promotes the table into a real Table Studio entry: `tp_bases` (auto-bootstrap
+ * "Canvas Workspace" if needed), `tp_tables` (one per Canvas table), `tp_fields`
+ * (typed via canvasTableSeed.buildCanvasTableSeed inference — date / number /
+ * single_line_text / long_text), `tp_records` (one per markdown table row, with
+ * cell values coerced to the inferred type).
+ *
+ * Only enabled for `kind='table'`. Narrative drafts get a 400 with a hint —
+ * the audit's L-2 rationale (naïve column inference would make Table Studio
+ * worse, not better) still applies for non-table kinds.
+ */
+router.post('/drafts/:draftId/send-to-table-studio', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  if (draft.kind !== 'table') {
+    return res.status(400).json({
+      error: 'Table Studio handoff requires a Canvas with kind=table',
+      code: 'CANVAS_NOT_TABLE_KIND',
+    });
+  }
+  const { organizationId, userId } = authContext(req);
+  const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas table');
+
+  try {
+    const { buildCanvasTableSeed } = await import('../services/canvasTableSeed.js');
+    const seed = buildCanvasTableSeed(draft.contentMd);
+    if (!seed || seed.fields.length === 0) {
+      return res.status(400).json({
+        error: 'No markdown table found in the Canvas draft',
+        code: 'CANVAS_TABLE_EMPTY',
+      });
+    }
+
+    const metadataService = (await import('../services/tablePlatform/MetadataService.js')).default;
+    const recordsService = (await import('../services/tablePlatform/RecordsService.js')).default;
+
+    // Find or auto-create the org-scoped "Canvas Workspace" base. Uses the
+    // same workspaceId=orgId fallback pattern as v8/artifactRegistryService.
+    const workspaceTarget = organizationId;
+    const existingBase = await dbGet<{ id: string }>(
+      `SELECT id FROM tp_bases
+        WHERE organization_id = ? AND workspace_id = ? AND name = ?
+        ORDER BY created_at DESC LIMIT 1`,
+      [organizationId, workspaceTarget, 'Canvas Workspace'],
+      { fallback: true }
+    );
+    let baseId = existingBase?.id || '';
+    if (!baseId) {
+      const newBase = await metadataService.createBase(
+        workspaceTarget,
+        organizationId,
+        'Canvas Workspace',
+        userId
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      baseId = (newBase as any)?.id;
+    }
+    if (!baseId) throw new Error('Failed to bootstrap Canvas Workspace base');
+
+    // Create the table. createTable seeds a default 'Name' field as the
+    // primary; we then add the inferred fields. Default field stays as the
+    // human-readable row identifier (first column of the canvas table is
+    // copied into it via the records loop below).
+    const newTable = await metadataService.createTable(baseId, title, undefined, userId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableId: string = (newTable as any)?.id || '';
+    if (!tableId) throw new Error('Failed to create Table Studio table');
+
+    // Add inferred fields (skip the auto-created 'Name' field name to avoid
+    // collision — buildCanvasTableSeed wouldn't produce 'Name' unless the
+    // user explicitly used it, in which case we let it merge by skipping).
+    const existingNameSet = new Set(['name']);
+    for (const field of seed.fields) {
+      if (existingNameSet.has(field.name.toLowerCase())) continue;
+      await metadataService.createField(
+        tableId,
+        field.name,
+        field.fieldType,
+        field.options || {},
+        userId
+      );
+      existingNameSet.add(field.name.toLowerCase());
+    }
+
+    // Insert records. Take the first column as the Name field's value so
+    // the row identifier is informative.
+    const primaryFieldName = seed.fields[0]?.name;
+    for (const record of seed.records) {
+      const payload: Record<string, unknown> = { ...record };
+      if (primaryFieldName && record[primaryFieldName] !== undefined) {
+        payload.Name = String(record[primaryFieldName]);
+      }
+      await recordsService.createRecord(tableId, payload, userId);
+    }
+
+    // Back-link on the Canvas draft.
+    const previousLinks =
+      draft.provenance?.linkedWorkspaceResources &&
+      typeof draft.provenance.linkedWorkspaceResources === 'object'
+        ? (draft.provenance.linkedWorkspaceResources as Record<string, unknown>)
+        : {};
+    const updatedDraft = await updateDraftAfterOperation(draft, {
+      linkedWorkspaceResources: {
+        ...previousLinks,
+        table_studio: {
+          id: tableId,
+          title,
+          url: `/table-studio?baseId=${encodeURIComponent(baseId)}&tableId=${encodeURIComponent(tableId)}`,
+          linkedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    return res.json(
+      envelope({
+        draft: updatedDraft,
+        linkedResource: {
+          type: 'table_studio',
+          id: tableId,
+          title,
+          url: `/table-studio?baseId=${encodeURIComponent(baseId)}&tableId=${encodeURIComponent(tableId)}`,
+        },
+        readBack: {
+          target: 'table_studio',
+          baseId,
+          tableId,
+          fieldCount: seed.fields.length,
+          recordCount: seed.records.length,
+          status: 'created',
+        },
+      })
+    );
+  } catch (error) {
+    logger.error('[work-canvas] canvas.table_studio.failed', {
+      draftId: draft.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to send Canvas to Table Studio',
+    });
+  }
+});
+
+/**
  * M-5 — Canvas → Outputs Library registration.
  *
  * Previously the `saveToOutputs` UI action downloaded a markdown blob and
