@@ -137,10 +137,31 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
       return;
     }
 
-    setPosition({
-      top: rect.top - 48,
-      left: rect.left + rect.width / 2,
-    });
+    // P1 — viewport-clamp. The menu is ~300px wide and 48px tall; if the
+    // selection is near a viewport edge, the unclamped position made it spill
+    // off-screen (especially on iPad / narrow laptop). Clamp horizontally
+    // with margin and flip below the selection when the top edge is too high.
+    const MENU_HALF_W = 160; // approx half the toolbar width
+    const MENU_H = 48;
+    const MARGIN = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const idealLeft = rect.left + rect.width / 2;
+    const clampedLeft = Math.min(
+      Math.max(MENU_HALF_W + MARGIN, idealLeft),
+      vw - MENU_HALF_W - MARGIN
+    );
+
+    const idealTop = rect.top - MENU_H;
+    // Flip the menu below the selection if it would overlap the top of the
+    // viewport (e.g. user selects text in the first visible line).
+    const clampedTop =
+      idealTop < MARGIN
+        ? Math.min(rect.bottom + 8, vh - MENU_H - MARGIN)
+        : Math.min(idealTop, vh - MENU_H - MARGIN);
+
+    setPosition({ top: clampedTop, left: clampedLeft });
   }, [selection, editor]);
 
   useEffect(() => {

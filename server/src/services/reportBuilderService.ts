@@ -26,7 +26,13 @@ export type ReportSourceType =
   | 'UPLOAD_BUNDLE'
   | 'FINANCIAL_ANALYSIS'
   | 'VALUATION'
-  | 'RESULTS_KPI_REPORT';
+  | 'RESULTS_KPI_REPORT'
+  // P1-3 — Canvas-promoted reports get their own discriminant so report-list
+  // filters can distinguish "narrative drafts promoted from Canvas" from
+  // "actual upload bundles" (the W2-E4 fix used UPLOAD_BUNDLE as the least-
+  // wrong existing value; this closes the audit's "right discriminant but
+  // wrong sub-semantic" finding).
+  | 'WORK_CANVAS';
 export type ReportStatus =
   | 'DRAFT'
   | 'CONFIGURING'
@@ -505,7 +511,11 @@ export async function getTemplateForSource(
   organizationId?: string
 ): Promise<{ id: string; sections: unknown[] } | null> {
   const reportType = framework ? `${sourceType}_${framework}` : sourceType;
-  const fallbackSourceType = sourceType === 'UPLOAD_BUNDLE' ? 'INTERVIEW' : sourceType;
+  // P1-3 — WORK_CANVAS has no dedicated template yet; fall back to INTERVIEW
+  // (same fallback UPLOAD_BUNDLE uses) so Canvas-promoted reports render with
+  // a sensible default section set until a Canvas-specific template lands.
+  const fallbackSourceType =
+    sourceType === 'UPLOAD_BUNDLE' || sourceType === 'WORK_CANVAS' ? 'INTERVIEW' : sourceType;
 
   let row: { id: string; sections_json: string } | null = null;
   try {

@@ -170,6 +170,37 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
     };
   }, []);
 
+  // P1 — Esc handler. While Teresa is streaming, Esc stops the stream
+  // (consultants reach for Esc reflexively when AI starts producing the wrong
+  // thing). While a pending diff is unresolved, Esc rejects it. Only one of
+  // the two states is ever active so there's no precedence conflict.
+  useEffect(() => {
+    if (!isStreaming && !hasPendingDiff) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (isStreaming && onStopStream) {
+        e.preventDefault();
+        onStopStream();
+      } else if (hasPendingDiff) {
+        e.preventDefault();
+        // Mirror handleRejectDiff inline — using the callback directly here
+        // avoids a useCallback identity churn in deps.
+        if (!editor) return;
+        rejectAiDiff(editor);
+        const rejectScope = effectiveProvenanceScope ?? fallbackScopeRef.current;
+        if (rejectScope) {
+          recordProvenanceEvent(rejectScope, { kind: 'reject', at: Date.now() });
+        }
+        setHasPendingDiff(false);
+        setSelection(null);
+        const md = htmlToMarkdown(editor.getHTML());
+        onContentChangeRef.current(md);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isStreaming, hasPendingDiff, onStopStream, editor, effectiveProvenanceScope]);
+
   // AI request handler: send selected text + prompt, get replacement
   const handleAIRequest = useCallback(
     async (prompt: string, selectedText: string): Promise<string | null> => {

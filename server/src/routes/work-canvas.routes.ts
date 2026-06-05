@@ -2421,7 +2421,10 @@ async function createOutputResource(
           reportId,
           organizationId,
           draft.projectId || null,
-          'UPLOAD_BUNDLE',
+          // P1-3 — own discriminant so report-list filters can distinguish
+          // narrative Canvas drafts from real upload bundles. Falls back to
+          // INTERVIEW template via reportBuilderService.getTemplateForSource.
+          'WORK_CANVAS',
           draft.id,
           `Canvas: ${title}`,
           'work_canvas',
