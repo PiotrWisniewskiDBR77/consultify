@@ -103,7 +103,7 @@
 - [ ] **#29h** Progresywne wypełnianie: wizard wypełnia rdzeń (Problem/Solution/Scope/KPI z insightu), reszta pusta z AI-assist
 
 ### 3D. Generator Ankiet (TemplateBuilder)
-- [ ] **#17** Rebranding: „AI" (prawy górny) → „Improve"/„Review" + tooltip (koniec mylenia z „Create survey with AI")
+- [x] **#17** Rebranding: „AI" (prawy górny) → „Popraw z AI" + tooltip wyjaśniający różnicę od „Stwórz ankietę z AI" ✅
 - [ ] **#17b** Brakujące ficzery: sekcje pytań · preview-as-user · duplicate question · question-type preview
 
 ### 3E. Handoff end-to-end

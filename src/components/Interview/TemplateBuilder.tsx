@@ -1952,6 +1952,11 @@ ${sourceText || '(none)'}`;
                     type="button"
                     onClick={() => void proposeQuestionImprovementsWithAI()}
                     disabled={isAiGenerating || isApplicationTemplate}
+                    title={
+                      isPolish
+                        ? 'Użyj AI, aby przejrzeć i poprawić istniejące pytania (to NIE tworzy ankiety od zera — od tego jest „Stwórz ankietę z AI")'
+                        : 'Use AI to review & improve the existing questions (this does NOT create a survey from scratch — use "Create survey with AI" for that)'
+                    }
                     className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-primary-500/25 dark:border-primary-500/20 bg-white/70 dark:bg-white/[0.04] text-primary-500 dark:text-primary-300 hover:bg-primary-500/5 dark:hover:bg-primary-400/10 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                   >
                     {isAiGenerating ? (
@@ -1959,7 +1964,7 @@ ${sourceText || '(none)'}`;
                     ) : (
                       <Sparkles size={13} />
                     )}
-                    {isPolish ? 'AI' : 'AI'}
+                    {isPolish ? 'Popraw z AI' : 'Improve with AI'}
                   </button>
                 </div>
               </div>
