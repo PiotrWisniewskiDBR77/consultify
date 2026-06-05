@@ -33,7 +33,7 @@
 
 ### 1A. NModeLayout — rozwój istniejącego kanonu detail-view (8 widoków)
 - [x] **#27** Metric strip: read-only → label+wartość (NModePropertiesStrip)
-- [ ] **#27b** Metric strip: layout inline z dividerami zamiast sztywnego grid-cols-10 (symetria)
+- [x] **#27b** Metric strip symetria: `propertiesMaxColumns` pass-through w NModeShell; Insight ustawia 5 → 10 metryk renderuje się jako symetryczne 5×2 (koniec 6+4) ✅
 - [x] **#27c** ID artefaktu (INS-/INIT-) w NModeHeader: monospace chip teraz **kopiowalny kliknięciem** (Copy/Check feedback) + permalink już istniał; ×8 widoków ✅
 - [x] **#21** N/C toggle — framework istniał; ✅ **Insight: zbudowany C-layout** (grid sekcji jako children). ✅ **Initiative: JUŻ MIAŁ własny C-mode** (InitiativeDocumentView:8880 „C-MODE RENDER" — grid kart/scroll). Oba artefakty mają teraz tryb C. (TODO przyszłe: ujednolicić Initiative legacy C-mode na ten sam wzorzec.)
 - [ ] **#21b** Persystencja trybu N/C per user (localStorage)

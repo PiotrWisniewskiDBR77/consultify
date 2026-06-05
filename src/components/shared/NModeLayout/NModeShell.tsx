@@ -45,6 +45,9 @@ interface NModeShellExtraProps extends NModeShellProps {
   showModeSwitcher?: boolean;
   /** Build artifact code string from type + id */
   buildArtifactCode?: (type: string, id: string) => string;
+  /** Max columns for the properties strip (default 6). Use to balance a long
+   *  metric strip — e.g. 5 for 10 metrics → a symmetric 5×2 (#27b). */
+  propertiesMaxColumns?: number;
   /** Show loading state */
   loading?: boolean;
 }
@@ -65,6 +68,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   onPresentationModeChange,
   showModeSwitcher = true,
   buildArtifactCode,
+  propertiesMaxColumns,
   loading = false,
   children,
 }) => {
@@ -93,7 +97,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
           {presentationMode === 'n' && (
             <div className="col-span-full space-y-0 mt-4">
               {/* Properties Strip */}
-              <NModePropertiesStrip fields={properties} />
+              <NModePropertiesStrip fields={properties} maxColumns={propertiesMaxColumns} />
 
               {/* Action Bar — custom slot or standard NModeActionBar */}
               {renderActionBar ? (

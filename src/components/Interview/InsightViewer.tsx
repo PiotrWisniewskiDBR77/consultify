@@ -5766,6 +5766,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         statusDotColor: statusConfig.color,
       }}
       properties={propertyFields}
+      propertiesMaxColumns={5}
       sections={nModeSectionsWithContent}
       activeSection={activeNSection}
       onSectionChange={setActiveNSection}
