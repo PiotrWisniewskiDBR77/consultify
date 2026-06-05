@@ -568,7 +568,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             .then((res) => res.session)
             .catch(() => Api.get(`/interview/sessions/${initialSessionId}`))
             .catch(() => null);
-          if (!sessionRes && applyDemoSession(initialSessionId)) return;
+          // Trust guard — only fall back to demo data when the id is genuinely
+          // a demo id. Previously a failed REAL session load could surface demo
+          // scaffolding under the real session name.
+          if (!sessionRes && isInterviewDemoId(initialSessionId) && applyDemoSession(initialSessionId))
+            return;
           currentSession = sessionRes as InterviewSession | null;
         } else {
           const sessionsRes = await V8InterviewApi.getSessions('active')
@@ -580,11 +584,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           if (sessions.length > 0) {
             currentSession = sessions[0] as InterviewSession;
           } else {
-            const firstDemoSession = Object.values(interviewDemoData.sessionDetailsById)[0];
-            if (firstDemoSession) {
-              applyDemoSession(firstDemoSession.session.id);
-              return;
-            }
+            // Trust guard — when a real project has no active sessions, create a
+            // real one. Never silently inject demo scaffolding under a real
+            // project (a consultant must never mistake demo data for their own).
             const newSession = await Api.post('/interview/sessions', { projectId });
             currentSession = newSession as InterviewSession;
           }
