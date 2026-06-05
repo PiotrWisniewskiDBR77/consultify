@@ -2870,10 +2870,20 @@ export function WorkCanvasDocumentPanel({
                     <Download size={14} />
                     <span>Download Word (.docx)</span>
                   </button>
+                  {/* M-4 — XLSX only makes sense when the Canvas has a typed table
+                      (kind='table'); for narrative drafts the spreadsheet would
+                      be a single-cell dump. Button is rendered but disabled with
+                      a tooltip so users see the affordance + the constraint. */}
                   <button
                     type="button"
                     onClick={() => void exportDocument('xlsx')}
-                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
+                    disabled={documentState.kind !== 'table'}
+                    title={
+                      documentState.kind === 'table'
+                        ? 'Download as Excel spreadsheet'
+                        : 'Excel export is available only for Canvas tables (kind=table).'
+                    }
+                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-200 dark:hover:bg-white/10 dark:disabled:hover:bg-transparent"
                   >
                     <Download size={14} />
                     <span>Download Excel (.xlsx)</span>
