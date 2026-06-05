@@ -69,6 +69,13 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const nextPlayTimeRef = useRef(0);
   const attemptRef = useRef(0);
 
+  // Per-turn accumulation buffers. Gemini Live streams a turn as many small
+  // fragments; emitting each fragment as its own chat message produced the
+  // "rozmawiam z trzema osobami" bug (#4). We accumulate fragments and flush
+  // ONE message per turn on turnComplete.
+  const modelTurnTextRef = useRef('');
+  const inputTranscriptRef = useRef('');
+
   const onTranscriptRef = useRef(onTranscriptUpdate);
   onTranscriptRef.current = onTranscriptUpdate;
   const onModelAudioTextRef = useRef(onModelAudioText);
@@ -247,18 +254,39 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               });
               activeSourcesRef.current = [];
               nextPlayTimeRef.current = audioContext.currentTime;
+              // Discard the interrupted (incomplete) model turn so its partial
+              // fragments don't bleed into the next message.
+              modelTurnTextRef.current = '';
             }
 
             const sc = message.serverContent as Record<string, unknown> | undefined;
+
+            // Accumulate the user's input transcript across the turn instead of
+            // emitting each streamed fragment as a separate message (#4).
             const transcriptValue = sc?.inputTranscript ?? sc?.outputTranscript;
             const userTranscript = typeof transcriptValue === 'string' ? transcriptValue : '';
-            if (userTranscript && onTranscriptRef.current) {
-              onTranscriptRef.current(userTranscript);
+            if (userTranscript) {
+              inputTranscriptRef.current += userTranscript;
             }
 
+            // Accumulate the model's spoken text fragments for this turn.
             const textPart = message.serverContent?.modelTurn?.parts?.find((p) => p.text);
-            if (textPart?.text && onModelAudioTextRef.current) {
-              onModelAudioTextRef.current(textPart.text);
+            if (textPart?.text) {
+              modelTurnTextRef.current += textPart.text;
+            }
+
+            // On turn boundary, flush ONE user message + ONE assistant message.
+            if (sc?.turnComplete || sc?.generationComplete) {
+              const finalUser = inputTranscriptRef.current.trim();
+              const finalModel = modelTurnTextRef.current.trim();
+              inputTranscriptRef.current = '';
+              modelTurnTextRef.current = '';
+              if (finalUser && onTranscriptRef.current) {
+                onTranscriptRef.current(finalUser);
+              }
+              if (finalModel && onModelAudioTextRef.current) {
+                onModelAudioTextRef.current(finalModel);
+              }
             }
 
             const base64Audio = message.serverContent?.modelTurn?.parts?.find((p) => p.inlineData)

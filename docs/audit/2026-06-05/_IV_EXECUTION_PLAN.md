@@ -24,7 +24,7 @@
 
 - [ ] 🔴 **#24** Insight section crash — powtórzyć (sekcja Signals?), znaleźć root cause, naprawić
 - [ ] 🔴 **#24b** Crash diagnostics nie wysyłane („could not be delivered") — naprawić telemetrię
-- [ ] 🔴 **#4** Voice „3 osoby" — bufor akumulacyjny w `TeresaVoiceContext` + flush na `turnComplete` (jedna tura = jedna wiadomość)
+- [x] 🔴 **#4** Voice „3 osoby" — bufor akumulacyjny w `useTeresaVoice` + flush na `turnComplete` (jedna tura = jedna wiadomość) ✅ `commit`
 - [ ] **#1** Popover „Visible columns" przycinany do tabeli — portal/overflow (wspólny komponent, dotyczy wszystkich tabel)
 
 ---
