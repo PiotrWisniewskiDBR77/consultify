@@ -39,6 +39,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../types';
 import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
+import { ChatCodeBlock } from './ChatCodeBlock';
 import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
@@ -959,10 +960,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                   </code>
                                 );
                               }
+                              // Chat P1-2 — production-grade fenced code block:
+                              // language label, hover-revealed Copy button,
+                              // Mermaid render via the shared lazy renderer.
                               return (
-                                <pre className="bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-slate-100 p-2 rounded-lg overflow-x-auto text-xs my-2">
-                                  <code className={codeClassName}>{children}</code>
-                                </pre>
+                                <ChatCodeBlock className={codeClassName}>{children}</ChatCodeBlock>
                               );
                             },
                             a: ({ href, children }: any) => (

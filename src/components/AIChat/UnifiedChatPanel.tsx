@@ -1690,10 +1690,30 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   }, [activeConversationId]);
 
   // ========================================================================
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages (P1-1, P1-10)
   // ========================================================================
 
+  // Track whether the user is pinned to the bottom of the scroller. The
+  // ChatGPT / Claude pattern: only auto-scroll when the user is already
+  // scrolled to (or very near) the bottom. The instant they scroll up to
+  // re-read earlier content, auto-scroll pauses so the view doesn't yank
+  // back to the latest token every render. Threshold of 80px tolerates
+  // small mouse-wheel jitter without snapping back unexpectedly.
+  const isAtBottomRef = useRef(true);
   useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const threshold = 80;
+      isAtBottomRef.current =
+        el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!isAtBottomRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [displayMessages, isStreaming]);
 
@@ -4459,8 +4479,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {/* Organization Memory panel removed — unused / WIP feature */}
 
         {/* Messages Area */}
+        {/* Chat P1-6 — a11y: role=log + aria-live=polite so screen readers
+            announce streaming AI responses as they arrive. aria-relevant
+            additions keeps the announcement to new content rather than
+            re-reading the whole thread on every update. */}
         <div
           ref={messagesContainerRef}
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions text"
+          aria-label="Conversation"
           className={`flex-1 ${showWorkPanelEmptyState ? 'overflow-hidden' : 'overflow-y-auto'} ${
             isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'
           }`}

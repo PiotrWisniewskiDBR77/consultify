@@ -613,7 +613,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     } catch (e) {
       console.error('[Voice] Failed to start dictation:', e);
     }
-  }, [isVoiceConversation]);
+    // Chat P1-9 — keep chatLanguage + uiLang in the deps so a mid-conversation
+    // language change re-derives `effectiveLang`. Without this the recognition
+    // instance kept the language captured on first start.
+  }, [isVoiceConversation, chatLanguage, uiLang]);
 
   const stopDictation = useCallback(() => {
     if (!isDictatingRef.current) return;
@@ -745,6 +748,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     onVoiceConversationStart,
     startVAD,
     stopVAD,
+    // Chat P1-9 — track the active conversation language so a mid-conversation
+    // language switch isn't masked by a stale closure (was: Polish transcript
+    // of English audio when the user toggled language after voice started).
+    chatLanguage,
+    uiLang,
   ]);
 
   const stopVoiceConversation = useCallback(() => {
@@ -858,7 +866,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       }
 
       // 5) Plain Enter sends.
-      if (e.key === 'Enter' && !e.shiftKey) {
+      // Chat P1-5 — guard on IME composition so IME users (Japanese / Chinese /
+      // Korean, Polish diacritic IMEs) don't submit the half-finished message
+      // when accepting an IME candidate.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (e.key === 'Enter' && !e.shiftKey && !(e.nativeEvent as any)?.isComposing) {
         e.preventDefault();
         if (isStreaming) return;
         handleSend();
@@ -1111,6 +1123,51 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           onSelect={syncCaretFromTextarea}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          onPaste={(e) => {
+            // Chat P1-3 — paste handler. Files (screenshots / docs) hand off
+            // to handleFileSelect; plain-text URLs route through handleUrlAdd
+            // so they become attachment chips instead of inline text.
+            const cd = e.clipboardData;
+            if (!cd) return;
+            const files: File[] = [];
+            for (let i = 0; i < cd.files.length; i++) {
+              const f = cd.files.item(i);
+              if (f) files.push(f);
+            }
+            if (files.length > 0) {
+              e.preventDefault();
+              handleFileSelect(files);
+              return;
+            }
+            const text = cd.getData('text/plain');
+            if (text && /^https?:\/\//i.test(text.trim()) && text.length < 2000) {
+              // Only auto-chip when the entire paste is a URL — don't steal
+              // pastes inside a larger paragraph.
+              if (text.trim() === text) {
+                e.preventDefault();
+                handleUrlAdd(text.trim());
+              }
+            }
+          }}
+          onDragOver={(e) => {
+            // Chat P1-4 — drag-drop. Show the cursor as a drop target when
+            // files are being dragged in.
+            if (e.dataTransfer?.types?.includes('Files')) {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'copy';
+            }
+          }}
+          onDrop={(e) => {
+            const dt = e.dataTransfer;
+            if (!dt?.files || dt.files.length === 0) return;
+            e.preventDefault();
+            const files: File[] = [];
+            for (let i = 0; i < dt.files.length; i++) {
+              const f = dt.files.item(i);
+              if (f) files.push(f);
+            }
+            if (files.length > 0) handleFileSelect(files);
+          }}
           placeholder={placeholderText}
           disabled={isInputDisabled}
           rows={variant === 'compact' ? 3 : 2}
@@ -1253,6 +1310,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 disabled={isDisabled}
                 className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-500/25"
                 title={t('aiChat.stopGenerating', 'Stop generating')}
+                aria-label={t('aiChat.stopGenerating', 'Stop generating') as string}
               >
                 <Square size={18} className="fill-current" />
               </button>
@@ -1262,6 +1320,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 disabled={isDisabled}
                 className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25"
                 title={t('aiChat.send', 'Send')}
+                aria-label={t('aiChat.send', 'Send') as string}
               >
                 <ArrowUp size={18} />
               </button>

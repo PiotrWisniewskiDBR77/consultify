@@ -250,6 +250,34 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
+    // Chat P1-8 — enforce the F2 team RBAC. The conversation is reachable
+    // via the org-membership join above; that alone doesn't authorize the
+    // act of publishing it. `create_share_link` is admin-only by default
+    // (chatPermissionService canChat); contributors/viewers cannot expose
+    // a team conversation publicly.
+    if (conversation.organization_id && userId) {
+      try {
+        const { checkChatPermission } = await import(
+          '../services/chatPermissionService.js'
+        );
+        const check = await checkChatPermission(
+          userId,
+          conversation.organization_id,
+          'create_share_link',
+          { conversationOwnerId: conversation.user_id }
+        );
+        if (!check.allowed) {
+          return res.status(403).json({
+            error: check.reason || 'Only admins can publish team conversations',
+            code: 'SHARE_PERMISSION_DENIED',
+          });
+        }
+      } catch (permErr) {
+        logger.warn('[Share] RBAC check failed; falling open is unsafe — denying.', permErr);
+        return res.status(500).json({ error: 'Failed to check share permission' });
+      }
+    }
+
     const existingShare = await db.get(
       'SELECT * FROM conversation_shares WHERE conversation_id = ? AND is_active = 1',
       [conversationId]
