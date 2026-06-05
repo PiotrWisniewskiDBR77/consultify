@@ -26,10 +26,13 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { NModeSection } from './types';
+
+const isSectionVisible = (s: NModeSection, showAll: boolean) =>
+  showAll || s.alwaysShow || s.hasData !== false;
 
 const N_MODE_LEFT_NAV_WIDTH_CLASS = 'w-[242px]';
 
@@ -118,6 +121,19 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const [showAll, setShowAll] = useState(false);
+
+  // Adaptive sidebar (#22): hide sections explicitly marked empty unless the
+  // user opts to see them all. Consumers that don't set `hasData` are unaffected.
+  const visibleSections = useMemo(
+    () => sections.filter((s) => isSectionVisible(s, showAll)),
+    [sections, showAll]
+  );
+  const hiddenCount = useMemo(
+    () => sections.filter((s) => !isSectionVisible(s, false)).length,
+    [sections]
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
@@ -144,7 +160,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
     <nav className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-4`}>
       <div className="sticky top-28 pt-1 space-y-1">
         {!onSectionReorder ? (
-          sections.map((section) => {
+          visibleSections.map((section) => {
             const isActive = activeSection === section.id;
             const Icon = section.icon;
 
@@ -186,10 +202,10 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={sections.map((s) => s.id)}
+              items={visibleSections.map((s) => s.id)}
               strategy={verticalListSortingStrategy}
             >
-              {sections.map((section) => (
+              {visibleSections.map((section) => (
                 <SortableNavItem
                   key={section.id}
                   section={section}
@@ -200,6 +216,22 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
               ))}
             </SortableContext>
           </DndContext>
+        )}
+
+        {(hiddenCount > 0 || showAll) && (
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="mt-1 w-full px-3 py-1.5 text-left text-[11px] text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+          >
+            {showAll
+              ? isPolish
+                ? 'Ukryj puste sekcje'
+                : 'Hide empty sections'
+              : isPolish
+                ? `Pokaż wszystkie sekcje (${hiddenCount})`
+                : `Show all sections (${hiddenCount})`}
+          </button>
         )}
       </div>
     </nav>

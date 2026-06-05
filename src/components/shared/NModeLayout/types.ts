@@ -33,6 +33,14 @@ export interface NModeSection {
   label: { en: string; pl: string };
   /** Optional badge count (e.g. number of comments) */
   badge?: number;
+  /**
+   * Adaptive sidebar (#22): when explicitly `false`, the section is treated as
+   * empty and hidden from the nav unless `alwaysShow` is set or the user flips
+   * "Show all sections". Leave undefined to always show (back-compat default).
+   */
+  hasData?: boolean;
+  /** Always render in the nav even when `hasData === false` (e.g. Summary). */
+  alwaysShow?: boolean;
   /** The section canvas content (rendered when active) */
   component: React.ReactNode;
 }

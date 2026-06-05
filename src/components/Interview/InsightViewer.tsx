@@ -5643,10 +5643,28 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         'evidence-map': v6EvidenceMap.length || undefined,
       };
 
+      // Adaptive sidebar (#22): only sections with a definite zero count are
+      // treated as empty (conservative — never hide a section that might have
+      // content). Core sections always show.
+      const definiteCounts: Record<string, number> = {
+        'candidate-triage': candidates.length,
+        comments: nComments.length,
+        themes: v6Themes.length,
+        'issues-risks': v6Issues.length,
+        opportunities: v6Opportunities.length,
+        signals: v6Signals.length,
+        'evidence-map': v6EvidenceMap.length,
+        'source-sessions': sourceSessions.length,
+        'activity-log': activityEntries.length,
+      };
+      const alwaysShowSet = new Set(['artifact-actions', 'executive-summary']);
+
       return {
         ...section,
         component,
         badge: badgeMap[section.id],
+        hasData: section.id in definiteCounts ? definiteCounts[section.id] > 0 : undefined,
+        alwaysShow: alwaysShowSet.has(section.id),
       } as NModeSection;
     });
   }, [
