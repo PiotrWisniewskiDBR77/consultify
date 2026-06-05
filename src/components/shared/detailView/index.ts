@@ -12,8 +12,12 @@
 
 export type { AIAction, AIAssistProps } from './AIAssist';
 export { AIAssist } from './AIAssist';
+export type { DetailHeaderProps } from './DetailHeader';
+export { DetailHeader } from './DetailHeader';
 export type { MetricStripProps } from './MetricStrip';
 export { MetricStrip, default as MetricStripDefault } from './MetricStrip';
+export type { SectionCardProps } from './SectionCard';
+export { SectionCard } from './SectionCard';
 export type { AIAssistLevel, DetailViewMode, MetricItem, MetricTone } from './types';
 export type { ViewModeToggleProps } from './ViewModeToggle';
 export { loadDetailViewMode, saveDetailViewMode, ViewModeToggle } from './ViewModeToggle';

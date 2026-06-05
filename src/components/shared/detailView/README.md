@@ -42,11 +42,11 @@ level respects backend capabilities (`canUseAi`) and versions its output.
 | ---------------- | ------- | --------------------------------------------------------- |
 | `MetricStrip`    | ✅ done | Inline metric row w/ dividers (kills the "10 boxes" #27)  |
 | `ViewModeToggle` | ✅ done | N / C switch + per-user persistence                       |
-| `DetailHeader`   | ⬜ next | back + title + artifact ID + copy-link + saved + N/C      |
+| `DetailHeader`   | ✅ done | back + title + artifact ID (copyable) + copy-link + N/C    |
+| `SectionCard`    | ✅ done | one section card kanon + AI slot in header (#23)          |
+| `AIAssist`       | ✅ done | 3-level AI slot (tool / section / field) + canUseAi gate   |
 | `ActionToolbar`  | ⬜ next | primary action + Export/Convert/AI dropdowns (#26)        |
 | `SectionSidebar` | ⬜ next | grouped sections + numbers + drag + adaptive hide-empty   |
-| `SectionCard`    | ⬜ next | one section card kanon + AI slot in header (#23)          |
-| `AIAssist`       | ✅ done | 3-level AI slot (tool / section / field) + canUseAi gate   |
 | `SummaryCard`    | ⬜ next | reusable compact artifact (C-mode + embed in Reports)     |
 
 ## House style
