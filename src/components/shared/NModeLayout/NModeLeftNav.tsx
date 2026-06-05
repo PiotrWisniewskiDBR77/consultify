@@ -134,6 +134,59 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
     [sections]
   );
 
+  // Group sections under their `group` label. Sections sharing a label collect
+  // under one header (in first-appearance order), so the consumer controls group
+  // order by ordering its sections. (#22b)
+  const groups = useMemo(() => {
+    const order: Array<string | null> = [];
+    const map = new Map<string | null, NModeSection[]>();
+    for (const s of visibleSections) {
+      const label = s.group ?? null;
+      if (!map.has(label)) {
+        map.set(label, []);
+        order.push(label);
+      }
+      map.get(label)!.push(s);
+    }
+    return order.map((label) => ({ label, items: map.get(label) as NModeSection[] }));
+  }, [visibleSections]);
+  const hasGroups = useMemo(() => visibleSections.some((s) => s.group), [visibleSections]);
+
+  const renderItem = (section: NModeSection) => {
+    const isActive = activeSection === section.id;
+    const Icon = section.icon;
+    return (
+      <button
+        key={section.id}
+        onClick={() => onSectionChange(section.id)}
+        className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
+          isActive
+            ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <Icon
+            size={14}
+            className={
+              isActive
+                ? 'text-primary-500 dark:text-primary-400'
+                : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
+            }
+          />
+          <span className="whitespace-nowrap">
+            {isPolish ? section.label.pl : section.label.en}
+          </span>
+          {section.badge !== undefined && section.badge > 0 && (
+            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
+              {section.badge}
+            </span>
+          )}
+        </span>
+      </button>
+    );
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
@@ -160,41 +213,20 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
     <nav className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-4`}>
       <div className="sticky top-28 pt-1 space-y-1">
         {!onSectionReorder ? (
-          visibleSections.map((section) => {
-            const isActive = activeSection === section.id;
-            const Icon = section.icon;
-
-            return (
-              <button
-                key={section.id}
-                onClick={() => onSectionChange(section.id)}
-                className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                  isActive
-                    ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 border-l-2 border-primary-500'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-navy-800/60 border-l-2 border-transparent'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Icon
-                    size={14}
-                    className={
-                      isActive
-                        ? 'text-primary-500 dark:text-primary-400'
-                        : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
-                    }
-                  />
-                  <span className="whitespace-nowrap">
-                    {isPolish ? section.label.pl : section.label.en}
-                  </span>
-                  {section.badge !== undefined && section.badge > 0 && (
-                    <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
-                      {section.badge}
-                    </span>
-                  )}
-                </span>
-              </button>
-            );
-          })
+          hasGroups ? (
+            groups.map((g, gi) => (
+              <div key={g.label ?? `__ungrouped_${gi}`} className={gi > 0 ? 'pt-3' : ''}>
+                {g.label && (
+                  <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-600">
+                    {g.label}
+                  </div>
+                )}
+                <div className="space-y-1">{g.items.map(renderItem)}</div>
+              </div>
+            ))
+          ) : (
+            visibleSections.map(renderItem)
+          )
         ) : (
           <DndContext
             sensors={sensors}

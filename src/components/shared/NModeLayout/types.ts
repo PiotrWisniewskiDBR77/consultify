@@ -41,6 +41,12 @@ export interface NModeSection {
   hasData?: boolean;
   /** Always render in the nav even when `hasData === false` (e.g. Summary). */
   alwaysShow?: boolean;
+  /**
+   * Optional group label for the sidebar (#22b). When any section sets a group,
+   * the (non-reorderable) nav renders grouped headers instead of a flat list —
+   * e.g. INSIGHT / BETWEEN THE LINES / EVIDENCE / DELIVERABLES / AUDIT.
+   */
+  group?: string;
   /** The section canvas content (rendered when active) */
   component: React.ReactNode;
 }

@@ -41,7 +41,7 @@
 - [ ] **#23/§6** AI 3-poziomowy: poziom „section" w NModeSectionWrapper (prawy róg nagłówka sekcji)
 - [ ] **§6** AI 3-poziomowy: poziom „field" inline przy polach (KPI, Financial)
 - [x] **#22** Adaptive hide-empty w NModeLeftNav (×8 widoków): `hasData`/`alwaysShow` w NModeSection + filtr + toggle „Pokaż wszystkie (N)". Insight wpięty konserwatywnie (ukrywa tylko sekcje z pewnym count=0; core zawsze widoczne) ✅
-- [ ] **#22b** Grupowanie sekcji w NModeLeftNav (np. 5 grup zamiast płaskiej listy)
+- [x] **#22b** Grupowanie sekcji w NModeLeftNav: `group?` w NModeSection + grouped render (agregacja po labelu). Insight: 20 sekcji → 5 grup (Wgląd/Między wierszami/Dowody/Dostarczane/Audyt) ✅
 - [ ] **#27d** SummaryCard — nowy komponent w NModeLayout (kompakt + embed w Reports/Decks)
 
 ### 1B. Kanon tabel (6 tabel Interview + reszta platformy)

@@ -5659,13 +5659,46 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       };
       const alwaysShowSet = new Set(['artifact-actions', 'executive-summary']);
 
+      // Sidebar grouping (#22b): 5 themed groups instead of 20 flat items.
+      const groupLabels = isPolish
+        ? ['Wgląd', 'Między wierszami', 'Dowody', 'Dostarczane', 'Audyt']
+        : ['Insight', 'Between the lines', 'Evidence', 'Deliverables', 'Audit'];
+      const groupIndexById: Record<string, number> = {
+        'executive-summary': 0,
+        themes: 0,
+        'issues-risks': 0,
+        opportunities: 0,
+        people: 1,
+        signals: 1,
+        'analysis-matrix': 1,
+        'evidence-map': 2,
+        traceability: 2,
+        'source-sessions': 2,
+        'source-pack': 2,
+        'artifact-actions': 3,
+        'consulting-readout': 3,
+        'report-pack': 3,
+        'candidate-triage': 3,
+        'truth-review-summary': 4,
+        'material-quality': 4,
+        'full-analysis': 4,
+        comments: 4,
+        'activity-log': 4,
+      };
+
       return {
         ...section,
         component,
         badge: badgeMap[section.id],
         hasData: section.id in definiteCounts ? definiteCounts[section.id] > 0 : undefined,
         alwaysShow: alwaysShowSet.has(section.id),
+        group: groupLabels[groupIndexById[section.id] ?? 4],
       } as NModeSection;
+    }).sort((a, b) => {
+      const order = isPolish
+        ? ['Wgląd', 'Między wierszami', 'Dowody', 'Dostarczane', 'Audyt']
+        : ['Insight', 'Between the lines', 'Evidence', 'Deliverables', 'Audit'];
+      return order.indexOf(a.group ?? '') - order.indexOf(b.group ?? '');
     });
   }, [
     executiveSummary,
