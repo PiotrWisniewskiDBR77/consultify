@@ -43,6 +43,9 @@ Test in this order — start with the highest-visibility, highest-confidence fix
 8. **Create a session and reload.** Sessions tab → "New session" (the ad-hoc one, no template). Previously the new session **vanished on reload** (it had no assignment row and the list excluded it). → Create one, then refresh the page → it should still be in the Sessions list (surfaced near the top).
    - ⚠️ **Risk:** this is a new second query. Verify (a) the new session appears, (b) it doesn't duplicate, (c) the rest of the managed list still loads in the right order.
 
+8b. **No demo data under a real project (TRUST fix).** Open the interview *workspace* for a real project that has **no sessions yet**. Previously it would silently load a fully-populated **demo interview** (fake transcript/insights) under your real project — easy to mistake for real data. → It should now open an **empty, real, newly-created session** (no fake transcript). Demo data only appears for explicit demo ids.
+   - ⚠️ **Risk:** if you open a real empty project and still see a pre-filled fake interview, tell me — means a demo id is leaking into the real path.
+
 ---
 
 ## E. Initiatives — handoff traceability
