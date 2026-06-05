@@ -59,6 +59,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   actions = [],
   actionsVisible = false,
   aiContextActions = [],
+  toolAIActions = [],
   renderActionBar,
   activeSection,
   onSectionChange,
@@ -105,12 +106,12 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
                   {renderActionBar()}
                 </div>
               ) : (
-                actionsVisible &&
-                actions.length > 0 && (
+                ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
                   <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
                     <NModeActionBar
-                      actions={actions}
+                      actions={actionsVisible ? actions : []}
                       aiContextActions={aiContextActions}
+                      toolAIActions={toolAIActions}
                       activeSection={activeSection}
                     />
                   </div>

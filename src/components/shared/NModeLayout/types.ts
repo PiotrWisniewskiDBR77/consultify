@@ -168,6 +168,12 @@ export interface NModeShellProps {
   /** AI context actions — shown in action bar based on active section */
   aiContextActions?: NModeAIContextAction[];
   /**
+   * Tool-level AI actions — whole-artifact AI, always visible in the action bar
+   * regardless of active section (vs. aiContextActions which are section-scoped).
+   * Part of the 3-level AI model: tool / section / field.
+   */
+  toolAIActions?: NModeAction[];
+  /**
    * Custom action bar renderer. When provided, replaces the standard
    * NModeActionBar with arbitrary content inside the same styled container.
    */
