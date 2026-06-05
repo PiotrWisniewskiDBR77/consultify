@@ -13,7 +13,6 @@ export {
   type CommandPaletteProviderProps,
   useCommandPalette,
 } from './CommandPalette';
-export { type Column, DataTable, type DataTableProps, type SortDirection } from './DataTable';
 export {
   EmptyState,
   type EmptyStateAction,

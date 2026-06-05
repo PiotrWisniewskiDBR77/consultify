@@ -27,7 +27,6 @@ declare module '@/components/ui/primitives' {
 }
 
 declare module '@/components/ui/composed' {
-  export * from '@/components/ui/composed/DataTable';
   export * from '@/components/ui/composed/EmptyState';
   export * from '@/components/ui/composed/MetricCard';
   export * from '@/components/ui/composed/SearchInput';
