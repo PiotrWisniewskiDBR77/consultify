@@ -47,7 +47,7 @@
 ### 1B. Kanon tabel (6 tabel Interview + reszta platformy)
 - [x] **#18** Kanon tabel — FilterableTable: StatusPill + em-dash puste + monochrome (zebra-free), high-leverage ×N tabel ✅ (agent B1)
 - [x] **#18b** StatusPill SSOT + migracja do FilterableTable (wszystkie tabele konsumenckie) ✅ (agent C + B1)
-- [ ] **#10** Migracja Interview tabel na FilterableTable → filtry per-column automatycznie
+- [x] **#10** Migracja Interview tabel na FilterableTable → filtry per-column automatycznie
 - [x] **#18c** Spec `docs/design-system/TABLES.md` ✅ (agent A3)
 
 ### 1C. Kanon modali formularzy (3 wizardy + reszta)
@@ -69,21 +69,21 @@
 - [x] **#26** Toolbar kanon: 1 primary + Export/AI dropdowny (koniec tęczy) ✅ (agent G)
 - [x] **#26b** ⭐ Submit for Review → **Submit for Information** (bez gate; notyfikacja managerów/ownerów) ✅ (agent G)
 - [x] **#20** Insights tabela: StatusPill + strip markdown + Source „—" + kolumna Exported to + kebab preview ✅ (agent I)
-- [ ] **#25** Mądry generator z preview-pane: tabela wyboru sekcji przy eksporcie (Report/Deck/Table/Idea/Note=fragmenty/Initiative)
+- [x] **#25** Mądry generator z preview-pane: tabela wyboru sekcji przy eksporcie (Report/Deck/Table/Idea/Note=fragmenty/Initiative)
 
 ### 2B. Initiative detail (szlif do kanonu — owner: „mały")
-- [ ] **#30** Initiative card: dociągnąć do NModeLayout kanonu (top strip, per-section AI) — już blisko
-- [ ] **#30b** PL/EN spójne (notatka kontekstowa po angielsku → naprawić)
-- [ ] **#30c** C-mode dla inicjatywy (gdy NModeLayout dostanie C-mode w 1A)
-- [ ] **#30d** „Used in (backlinks)" + lineage „Source insights" (dwukierunkowo z insightem)
+- [x] **#30** Initiative card: dociągnąć do NModeLayout kanonu (top strip, per-section AI) — już blisko
+- [x] **#30b** PL/EN spójne (notatka kontekstowa po angielsku → naprawić)
+- [x] **#30c** C-mode dla inicjatywy (gdy NModeLayout dostanie C-mode w 1A)
+- [x] **#30d** „Used in (backlinks)" + lineage „Source insights" (dwukierunkowo z insightem)
 
 ---
 
 ## FAZA 3 — TRZY GENERATORY (rdzeń wartości) · ~7-10 dni
 
 ### 3A. Wspólny shell
-- [ ] **§5** `<WizardModal>` kanon: jeden header/progress-bar/footer/inputy dla 3 wizardów (na `<FormModal>` z 1C)
-- [ ] **§5b** Progress bar + klikalne kroki + jasny komunikat „krok pusty dopóki nie wygenerujesz"
+- [x] **§5** `<WizardModal>` kanon: jeden header/progress-bar/footer/inputy dla 3 wizardów (na `<FormModal>` z 1C)
+- [x] **§5b** Progress bar + klikalne kroki + jasny komunikat „krok pusty dopóki nie wygenerujesz"
 
 ### 3B. Generator Insightów
 - [x] **#28** Graficzne polish 5 kroków (progress, hover tooltips, drag-drop zone, custom checkboxy)
@@ -104,10 +104,10 @@
 
 ### 3D. Generator Ankiet (TemplateBuilder)
 - [x] **#17** Rebranding: „AI" (prawy górny) → „Popraw z AI" + tooltip wyjaśniający różnicę od „Stwórz ankietę z AI" ✅
-- [ ] **#17b** Brakujące ficzery: sekcje pytań · preview-as-user · duplicate question · question-type preview
+- [x] **#17b** Brakujące ficzery: sekcje pytań · preview-as-user · duplicate question · question-type preview
 
 ### 3E. Handoff end-to-end
-- [ ] **#W5** Interview→Initiative flow realnie działa (handoff finding→initiative taguje source_type, widoczne w tab)
+- [x] **#W5** Interview→Initiative flow realnie działa (handoff finding→initiative taguje source_type, widoczne w tab)
 
 ---
 
@@ -124,17 +124,17 @@
 - [x] **#11b** Manager AI snapshot panel w Approve (score + weak answers + 1-klik Send back from AI)
 - [x] **#11c** Per-question instant feedback (odpowiedź <20 znaków → hint)
 - [x] **#6** Inbox chipy: koniec org-wide Overdue w widoku usera → All/Answered/Approved/Sent-back
-- [ ] **#5** Formatka odpowiedzi redesign: Record inline (nie osobne okno) + attachments/images inline + guidance (pulsująca ikona + instrukcja+przykład)
+- [x] **#5** Formatka odpowiedzi redesign: Record inline (nie osobne okno) + attachments/images inline + guidance (pulsująca ikona + instrukcja+przykład)
 
 ---
 
 ## FAZA 5 — AUDIT ORCHESTRATOR (kierunek produktu) ⭐⭐⭐ · ~5-7 dni
 
-- [ ] **#19** Audit Wizard (MVP): cel + multi-template + multi-assignee → bulk-create wszystkich ankiet
-- [ ] **#19b** Wariant 1: nowa firma (z org context AI proponuje plan: kto co wypełnia)
-- [ ] **#19c** Wariant 2: ISO 27001 preset (14 sekcji → AI mapuje na role)
-- [ ] **#19d** Obiekt `audit_programs` + zakładka „Audits" + dashboard programu
-- [ ] **#19e** Skala 400 ankiet: saved views, grouping, server-side pagination, batch AI insights
+- [x] **#19** Audit Wizard (MVP): cel + multi-template + multi-assignee → bulk-create wszystkich ankiet
+- [x] **#19b** Wariant 1: nowa firma (z org context AI proponuje plan: kto co wypełnia)
+- [x] **#19c** Wariant 2: ISO 27001 preset (14 sekcji → AI mapuje na role)
+- [x] **#19d** Obiekt `audit_programs` + zakładka „Audits" + dashboard programu
+- [x] **#19e** Skala 400 ankiet: saved views, grouping, server-side pagination, batch AI insights
 
 ---
 
@@ -142,10 +142,10 @@
 
 - [x] **#16** Templates kolumny: Usage (real) + AI quality/Last used („—"+TODO backend) ✅ (agent B2)
 - [x] **#15** Templates kebab: View usage (wired) + Set/Unset default (honest stub); Archive/Delete już były ✅ (agent B2)
-- [ ] Insights Gen-1 export column-sniffing cleanup
-- [ ] Summary AI-vs-keyword honesty
-- [ ] Cross-project scope leaks
-- [ ] Pozostałe drobne UX
+- [x] Insights Gen-1 export column-sniffing cleanup ✅ (union-of-keys + formula-injection guard)
+- [x] Summary AI-vs-keyword honesty ✅ (method: deterministic flag + footer)
+- [x] Cross-project scope leaks ✅ (defense-in-depth org scoping na 4 zapytaniach)
+- [x] Pozostałe drobne UX ✅ (obsłużone w falach 1-2)
 
 ---
 
