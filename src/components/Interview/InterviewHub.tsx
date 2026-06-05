@@ -828,6 +828,21 @@ export const InterviewHub: React.FC = () => {
   );
   const [openInsightFilterId, setOpenInsightFilterId] = useState<string | null>(null);
 
+  // #10 — per-column header filters for the Sessions table (status / assignee /
+  // template). Non-destructive: layered on top of the existing custom table
+  // (search + lifecycle + bulk + hidden columns + widths all keep working).
+  const [sessionsTableFilters, setSessionsTableFilters] = useState<TableFilters>({});
+  const [openSessionFilterId, setOpenSessionFilterId] = useState<string | null>(null);
+
+  // #10 — per-column header filters for the Assigned / Inbox tables (status /
+  // assignee / template). Keyed by view ('managed' = Assigned, 'inbox') so the
+  // two shared renderings don't clobber each other's filters.
+  const [assignmentsTableFilters, setAssignmentsTableFilters] = useState<{
+    managed: TableFilters;
+    inbox: TableFilters;
+  }>({ managed: {}, inbox: {} });
+  const [openAssignmentFilterId, setOpenAssignmentFilterId] = useState<string | null>(null);
+
   // Reset preview expansion state when changing selection (KANON v3: stabilny panel)
   useEffect(() => {
     setInsightPreviewDetailsExpanded(false);
@@ -1835,8 +1850,56 @@ export const InterviewHub: React.FC = () => {
       );
     }
 
+    // #10 — per-column header filters (AND across columns, OR within a column).
+    const statusF = sessionsTableFilters.status as string[] | undefined;
+    if (statusF?.length) {
+      result = result.filter((s) => statusF.includes(getSessionWorkflowStatus(s)));
+    }
+    const assigneeF = sessionsTableFilters.assignee as string[] | undefined;
+    if (assigneeF?.length) {
+      result = result.filter((s) => assigneeF.includes(s.assigneeName || s.respondentName || '—'));
+    }
+    const templateF = sessionsTableFilters.template as string[] | undefined;
+    if (templateF?.length) {
+      result = result.filter((s) =>
+        templateF.includes(s.templateName || s.templateCategory || '—')
+      );
+    }
+
     return result;
-  }, [getSessionWorkflowStatus, searchQuery, sessionStatusFilter, sessions]);
+  }, [getSessionWorkflowStatus, searchQuery, sessionStatusFilter, sessions, sessionsTableFilters]);
+
+  // #10 — filter-option lists for the Sessions header dropdowns, derived from the
+  // current session data (no extra fetch). Status uses the fixed workflow set.
+  const sessionFilterOptions = useMemo(() => {
+    const statusValues = new Set<string>();
+    const assignees = new Set<string>();
+    const templatesSet = new Set<string>();
+    for (const s of sessions) {
+      statusValues.add(getSessionWorkflowStatus(s));
+      assignees.add(s.assigneeName || s.respondentName || '—');
+      templatesSet.add(s.templateName || s.templateCategory || '—');
+    }
+    const statusLabels: Record<string, { pl: string; en: string }> = {
+      assigned: { pl: 'Przydzielony', en: 'Assigned' },
+      in_progress: { pl: 'W trakcie', en: 'In Progress' },
+      submitted: { pl: 'Wysłany', en: 'Submitted' },
+      approved: { pl: 'Zatwierdzony', en: 'Approved' },
+      completed: { pl: 'Zakończony', en: 'Completed' },
+    };
+    const statusOrder = ['assigned', 'in_progress', 'submitted', 'approved', 'completed'];
+    return {
+      status: statusOrder
+        .filter((v) => statusValues.has(v))
+        .map((v) => ({ value: v, label: statusLabels[v]?.[isPolish ? 'pl' : 'en'] || v })),
+      assignee: Array.from(assignees)
+        .sort()
+        .map((v) => ({ value: v, label: v })),
+      template: Array.from(templatesSet)
+        .sort()
+        .map((v) => ({ value: v, label: v })),
+    };
+  }, [sessions, getSessionWorkflowStatus, isPolish]);
 
   // Filter insights
   const filteredInsights = useMemo(() => {
@@ -3940,8 +4003,86 @@ export const InterviewHub: React.FC = () => {
       );
     };
 
+    // #10 — column defs for the header filter dropdowns (status / assignee /
+    // template). Options derive from the live data via `sessionFilterOptions`.
+    const sessionStatusFilterCol: ColumnDef = {
+      id: 'status',
+      label: isPolish ? 'Status' : 'Status',
+      width: sessionsColumnWidths.status ?? 120,
+      minWidth: 80,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: sessionFilterOptions.status,
+    };
+    const sessionAssigneeFilterCol: ColumnDef = {
+      id: 'assignee',
+      label: isPolish ? 'Przydzielony' : 'Assignee',
+      width: 160,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: sessionFilterOptions.assignee,
+    };
+    const sessionTemplateFilterCol: ColumnDef = {
+      id: 'template',
+      label: isPolish ? 'Szablon' : 'Template',
+      width: 160,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: sessionFilterOptions.template,
+    };
+    const activeSessionFilterChips = (
+      [
+        { col: sessionStatusFilterCol, key: 'status' as const },
+        { col: sessionAssigneeFilterCol, key: 'assignee' as const },
+        { col: sessionTemplateFilterCol, key: 'template' as const },
+      ] as const
+    ).flatMap(({ col, key }) => {
+      const values = (sessionsTableFilters[key] as string[] | undefined) ?? [];
+      return values.map((v) => {
+        const opt = col.filterOptions?.find((o) => o.value === v);
+        return { key, value: v, label: `${col.label}: ${opt?.label ?? v}` };
+      });
+    });
+
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
+        {activeSessionFilterChips.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.06]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Filtry' : 'Filters'}
+            </span>
+            {activeSessionFilterChips.map((chip) => (
+              <button
+                key={`${chip.key}-${chip.value}`}
+                type="button"
+                onClick={() =>
+                  setSessionsTableFilters((prev) => ({
+                    ...prev,
+                    [chip.key]: ((prev[chip.key] as string[] | undefined) ?? []).filter(
+                      (v) => v !== chip.value
+                    ),
+                  }))
+                }
+                className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-600 transition-colors hover:bg-primary-500/20 dark:text-primary-300"
+              >
+                <span className="max-w-[200px] truncate">{chip.label}</span>
+                <X size={11} />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSessionsTableFilters({})}
+              className="ml-1 text-[11px] font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              {isPolish ? 'Wyczyść wszystkie' : 'Clear all'}
+            </button>
+          </div>
+        ) : null}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead>
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
@@ -3971,7 +4112,35 @@ export const InterviewHub: React.FC = () => {
                 className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: sessionsColumnWidths.name }}
               >
-                {isPolish ? 'Nazwa' : 'Name'}
+                {/* #10 — assignee + template filters live on the Name header since
+                    they are shown as row meta rather than standalone columns. */}
+                <div className="flex items-center gap-1">
+                  <span>{isPolish ? 'Nazwa' : 'Name'}</span>
+                  <FilterDropdown
+                    column={sessionAssigneeFilterCol}
+                    value={sessionsTableFilters.assignee as string[] | undefined}
+                    onChange={(v) =>
+                      setSessionsTableFilters((f) => ({ ...f, assignee: v as string[] }))
+                    }
+                    isOpen={openSessionFilterId === 'assignee'}
+                    onToggle={() =>
+                      setOpenSessionFilterId((id) => (id === 'assignee' ? null : 'assignee'))
+                    }
+                    onClose={() => setOpenSessionFilterId(null)}
+                  />
+                  <FilterDropdown
+                    column={sessionTemplateFilterCol}
+                    value={sessionsTableFilters.template as string[] | undefined}
+                    onChange={(v) =>
+                      setSessionsTableFilters((f) => ({ ...f, template: v as string[] }))
+                    }
+                    isOpen={openSessionFilterId === 'template'}
+                    onToggle={() =>
+                      setOpenSessionFilterId((id) => (id === 'template' ? null : 'template'))
+                    }
+                    onClose={() => setOpenSessionFilterId(null)}
+                  />
+                </div>
                 {renderSessionResizer('name')}
               </th>
               {!hiddenSet.has('status') && (
@@ -3979,7 +4148,29 @@ export const InterviewHub: React.FC = () => {
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.status }}
                 >
-                  {isPolish ? 'Status' : 'Status'}
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className={
+                        (sessionsTableFilters.status as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {isPolish ? 'Status' : 'Status'}
+                    </span>
+                    <FilterDropdown
+                      column={sessionStatusFilterCol}
+                      value={sessionsTableFilters.status as string[] | undefined}
+                      onChange={(v) =>
+                        setSessionsTableFilters((f) => ({ ...f, status: v as string[] }))
+                      }
+                      isOpen={openSessionFilterId === 'status'}
+                      onToggle={() =>
+                        setOpenSessionFilterId((id) => (id === 'status' ? null : 'status'))
+                      }
+                      onClose={() => setOpenSessionFilterId(null)}
+                    />
+                  </div>
                   {renderSessionResizer('status')}
                 </th>
               )}
@@ -6788,10 +6979,36 @@ Return ONLY the answer text (no markdown fences).`;
     const setColumnWidths = showAssignee
       ? setManagedAssignmentColumnWidths
       : setInboxAssignmentColumnWidths;
+
+    // #10 — per-column header filters for this table view. Keyed by view so the
+    // Assigned (managed) and Inbox renderings keep independent filter state.
+    const filterViewKey: 'managed' | 'inbox' = showAssignee ? 'managed' : 'inbox';
+    const tableFilters = assignmentsTableFilters[filterViewKey];
+    const setTableFilters = (updater: (prev: TableFilters) => TableFilters) =>
+      setAssignmentsTableFilters((prev) => ({
+        ...prev,
+        [filterViewKey]: updater(prev[filterViewKey]),
+      }));
+    const getAssignmentTemplateValue = (a: InterviewAssignment) =>
+      a.template?.name || (isPolish ? 'Wywiad' : 'Interview');
+    const getAssignmentAssigneeValue = (a: InterviewAssignment) =>
+      a.assignee?.name || a.assignee?.email || (isPolish ? 'Nieznany' : 'Unknown');
+
+    // #10 — apply per-column header filters (AND across columns, OR within a
+    // column) up front so selection / bulk / row rendering all share one list.
+    const columnFilteredAssignments = assignments.filter((a) => {
+      const statusF = tableFilters.status as string[] | undefined;
+      if (statusF?.length && !statusF.includes(a.status)) return false;
+      const assigneeF = tableFilters.assignee as string[] | undefined;
+      if (assigneeF?.length && !assigneeF.includes(getAssignmentAssigneeValue(a))) return false;
+      const templateF = tableFilters.template as string[] | undefined;
+      if (templateF?.length && !templateF.includes(getAssignmentTemplateValue(a))) return false;
+      return true;
+    });
     const showRowDescription = showAssignee
       ? showManagedAssignmentRowDescription
       : showInboxAssignmentRowDescription;
-    const visibleAssignmentIds = assignments.map((assignment) => assignment.id);
+    const visibleAssignmentIds = columnFilteredAssignments.map((assignment) => assignment.id);
     const selectedVisibleCount = visibleAssignmentIds.filter((id) =>
       selectedAssignmentIds.has(id)
     ).length;
@@ -7039,7 +7256,7 @@ Return ONLY the answer text (no markdown fences).`;
     };
 
     // Sort assignments based on current sort field
-    const sortedAssignments = [...assignments].sort((a, b) => {
+    const sortedAssignments = [...columnFilteredAssignments].sort((a, b) => {
       if (!assignmentSortField) return 0;
       const dir = assignmentSortAsc ? 1 : -1;
       if (assignmentSortField === 'dueAt') {
@@ -7114,8 +7331,105 @@ Return ONLY the answer text (no markdown fences).`;
       }
     };
 
+    // #10 — column defs + options for the header filter dropdowns. Options are
+    // derived from the (unfiltered) assignments so a value stays selectable even
+    // after it's filtered out.
+    const assignmentStatusOptionOrder = [
+      'assigned',
+      'in_progress',
+      'submitted',
+      'sent_back',
+      'review',
+      'approved',
+      'completed',
+      'rejected',
+      'accepted',
+    ];
+    const assignmentStatusValues = new Set<string>(assignments.map((a) => a.status));
+    const assignmentStatusFilterCol: ColumnDef = {
+      id: 'status',
+      label: isPolish ? 'Status' : 'Status',
+      width: columnWidths.status ?? 120,
+      minWidth: 80,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: assignmentStatusOptionOrder
+        .filter((v) => assignmentStatusValues.has(v))
+        .map((v) => ({ value: v, label: getStatusLabel(v) })),
+    };
+    const assignmentTemplateFilterCol: ColumnDef = {
+      id: 'template',
+      label: isPolish ? 'Szablon' : 'Template',
+      width: columnWidths.template ?? 200,
+      minWidth: 120,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(new Set(assignments.map(getAssignmentTemplateValue)))
+        .sort()
+        .map((v) => ({ value: v, label: v })),
+    };
+    const assignmentAssigneeFilterCol: ColumnDef = {
+      id: 'assignee',
+      label: isPolish ? 'Przydzielony do' : 'Assignee',
+      width: columnWidths.assignee ?? 160,
+      minWidth: 100,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(new Set(assignments.map(getAssignmentAssigneeValue)))
+        .sort()
+        .map((v) => ({ value: v, label: v })),
+    };
+    const activeAssignmentFilterChips = (
+      [
+        { col: assignmentTemplateFilterCol, key: 'template' as const },
+        { col: assignmentAssigneeFilterCol, key: 'assignee' as const },
+        { col: assignmentStatusFilterCol, key: 'status' as const },
+      ] as const
+    ).flatMap(({ col, key }) => {
+      const values = (tableFilters[key] as string[] | undefined) ?? [];
+      return values.map((v) => {
+        const opt = col.filterOptions?.find((o) => o.value === v);
+        return { key, value: v, label: `${col.label}: ${opt?.label ?? v}` };
+      });
+    });
+
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.08] rounded-xl backdrop-blur overflow-hidden">
+        {activeAssignmentFilterChips.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.08]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Filtry' : 'Filters'}
+            </span>
+            {activeAssignmentFilterChips.map((chip) => (
+              <button
+                key={`${chip.key}-${chip.value}`}
+                type="button"
+                onClick={() =>
+                  setTableFilters((prev) => ({
+                    ...prev,
+                    [chip.key]: ((prev[chip.key] as string[] | undefined) ?? []).filter(
+                      (v) => v !== chip.value
+                    ),
+                  }))
+                }
+                className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-600 transition-colors hover:bg-primary-500/20 dark:text-primary-300"
+              >
+                <span className="max-w-[200px] truncate">{chip.label}</span>
+                <X size={11} />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setTableFilters(() => ({}))}
+              className="ml-1 text-[11px] font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              {isPolish ? 'Wyczyść wszystkie' : 'Clear all'}
+            </button>
+          </div>
+        ) : null}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead>
             <tr className="border-b border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-navy-900/40">
@@ -7145,7 +7459,29 @@ Return ONLY the answer text (no markdown fences).`;
                 className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: columnWidths.template }}
               >
-                {isPolish ? 'Szablon' : 'Template'}
+                <div className="flex items-center gap-1">
+                  <span
+                    className={
+                      (tableFilters.template as string[] | undefined)?.length
+                        ? 'text-primary-500'
+                        : ''
+                    }
+                  >
+                    {isPolish ? 'Szablon' : 'Template'}
+                  </span>
+                  <FilterDropdown
+                    column={assignmentTemplateFilterCol}
+                    value={tableFilters.template as string[] | undefined}
+                    onChange={(v) => setTableFilters((f) => ({ ...f, template: v as string[] }))}
+                    isOpen={openAssignmentFilterId === `${filterViewKey}:template`}
+                    onToggle={() =>
+                      setOpenAssignmentFilterId((id) =>
+                        id === `${filterViewKey}:template` ? null : `${filterViewKey}:template`
+                      )
+                    }
+                    onClose={() => setOpenAssignmentFilterId(null)}
+                  />
+                </div>
                 {renderAssignmentResizer('template')}
               </th>
               {hasAssigneeColumn && (
@@ -7153,23 +7489,68 @@ Return ONLY the answer text (no markdown fences).`;
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.assignee }}
                 >
-                  {isPolish ? 'Przydzielony do' : 'Assignee'}
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className={
+                        (tableFilters.assignee as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {isPolish ? 'Przydzielony do' : 'Assignee'}
+                    </span>
+                    <FilterDropdown
+                      column={assignmentAssigneeFilterCol}
+                      value={tableFilters.assignee as string[] | undefined}
+                      onChange={(v) => setTableFilters((f) => ({ ...f, assignee: v as string[] }))}
+                      isOpen={openAssignmentFilterId === `${filterViewKey}:assignee`}
+                      onToggle={() =>
+                        setOpenAssignmentFilterId((id) =>
+                          id === `${filterViewKey}:assignee` ? null : `${filterViewKey}:assignee`
+                        )
+                      }
+                      onClose={() => setOpenAssignmentFilterId(null)}
+                    />
+                  </div>
                   {renderAssignmentResizer('assignee')}
                 </th>
               )}
               {!hiddenSet.has('status') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.status }}
-                  onClick={() => toggleAssignmentSort('status')}
                 >
-                  {isPolish ? 'Status' : 'Status'}
-                  {assignmentSortField === 'status' && (
-                    <ChevronDown
-                      size={12}
-                      className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className={[
+                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        (tableFilters.status as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : '',
+                      ].join(' ')}
+                      onClick={() => toggleAssignmentSort('status')}
+                    >
+                      {isPolish ? 'Status' : 'Status'}
+                      {assignmentSortField === 'status' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
+                    </span>
+                    <FilterDropdown
+                      column={assignmentStatusFilterCol}
+                      value={tableFilters.status as string[] | undefined}
+                      onChange={(v) => setTableFilters((f) => ({ ...f, status: v as string[] }))}
+                      isOpen={openAssignmentFilterId === `${filterViewKey}:status`}
+                      onToggle={() =>
+                        setOpenAssignmentFilterId((id) =>
+                          id === `${filterViewKey}:status` ? null : `${filterViewKey}:status`
+                        )
+                      }
+                      onClose={() => setOpenAssignmentFilterId(null)}
                     />
-                  )}
+                  </div>
                   {renderAssignmentResizer('status')}
                 </th>
               )}
