@@ -281,9 +281,13 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     extendOption: 'Rozszerz istniejącą (dodaj zakres)',
     createAnywayOption: 'Utwórz mimo to',
     openExisting: 'Otwórz istniejącą',
-    mergeSoon: 'Scalanie będzie dostępne wkrótce — na razie możesz utworzyć osobną inicjatywę.',
-    extendSoon:
-      'Rozszerzanie zakresu istniejącej inicjatywy będzie dostępne wkrótce — na razie możesz utworzyć osobną inicjatywę.',
+    mergeWorking: 'Scalanie z istniejącą inicjatywą…',
+    extendWorking: 'Rozszerzanie zakresu istniejącej inicjatywy…',
+    mergeDone: 'Scalono z istniejącą inicjatywą (lineage + notatka zapisane).',
+    extendDone: 'Rozszerzono zakres istniejącej inicjatywy (lineage + notatka zapisane).',
+    mergeExtendFailed: 'Nie udało się scalić/rozszerzyć istniejącej inicjatywy.',
+    mergedBadge: 'Scalono z istniejącą',
+    extendedBadge: 'Rozszerzono istniejącą',
     createAnywayPicked: 'Utworzysz osobną inicjatywę mimo podobieństwa.',
     // #29h — progressive fill / AI assist
     coreTitle: 'Rdzeń inicjatywy (auto-uzupełniony z wniosku)',
@@ -329,9 +333,13 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     extendOption: 'Extend existing (add scope)',
     createAnywayOption: 'Create anyway',
     openExisting: 'Open existing',
-    mergeSoon: 'Merge will be available soon — for now you can create a separate initiative.',
-    extendSoon:
-      'Extending the scope of an existing initiative will be available soon — for now you can create a separate initiative.',
+    mergeWorking: 'Merging into the existing initiative…',
+    extendWorking: 'Extending the scope of the existing initiative…',
+    mergeDone: 'Merged into the existing initiative (lineage + note recorded).',
+    extendDone: 'Extended the existing initiative scope (lineage + note recorded).',
+    mergeExtendFailed: 'Failed to merge/extend the existing initiative.',
+    mergedBadge: 'Merged into existing',
+    extendedBadge: 'Extended existing',
     createAnywayPicked: 'You will create a separate initiative despite the overlap.',
     // #29h — progressive fill / AI assist
     coreTitle: 'Initiative core (auto-filled from the insight)',
@@ -576,6 +584,13 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const [similarResolutions, setSimilarResolutions] = useState<Record<string, SimilarResolution>>(
     {}
   );
+  // #29e — candidates that have been REALLY merged/extended into an existing
+  // initiative (not newly created). Keyed by candidate id; drives the success
+  // badge, the "open existing" link, and removal from the create-shortlist.
+  const [resolvedExisting, setResolvedExisting] = useState<
+    Record<string, { mode: 'merge' | 'extend'; initiativeId: string; title: string }>
+  >({});
+  const [resolvingCandidateId, setResolvingCandidateId] = useState<string | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [auditEvents, setAuditEvents] = useState<WizardAuditEvent[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
@@ -605,9 +620,12 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const candidatesToCreate = useMemo(
     () =>
       actionableCandidates.filter(
-        (candidate) => !candidate.linkedInitiativeId && selectedCreateIds.includes(candidate.id)
+        (candidate) =>
+          !candidate.linkedInitiativeId &&
+          !resolvedExisting[candidate.id] &&
+          selectedCreateIds.includes(candidate.id)
       ),
-    [actionableCandidates, selectedCreateIds]
+    [actionableCandidates, selectedCreateIds, resolvedExisting]
   );
   const overSoftLimit = candidatesToCreate.length > 3;
 
@@ -696,6 +714,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     setCoreTouched(false);
     setAiFillingField(null);
     setSimilarResolutions({});
+    setResolvedExisting({});
+    setResolvingCandidateId(null);
   }, [
     initialBusinessPriorities,
     initialManualNotes,
@@ -1187,17 +1207,90 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     }
   };
 
+  // #29e — collect the source insight ids that should be attached to the
+  // existing initiative when merging/extending. Prefer the candidate's anchored
+  // interview insight; fall back to the insights selected in Step 0.
+  const collectCandidateInsightIds = (candidate: WizardCandidate): string[] => {
+    const ids: string[] = [];
+    const anchored = extractCandidateAnchoredSource(candidate);
+    if (anchored && anchored.type === 'interview_insight' && anchored.id) {
+      ids.push(anchored.id);
+    }
+    for (const id of selectedInsightIds) {
+      if (id) ids.push(id);
+    }
+    return Array.from(new Set(ids));
+  };
+
   // #29e — record the user's resolution choice for a SIMILAR / DUPLICATE
-  // candidate. merge / extend have no backend yet → honest "coming soon" toast,
-  // but the choice still falls back to create-anyway so the flow never dead-ends.
-  const setSimilarResolution = (candidateId: string, resolution: SimilarResolution) => {
+  // candidate. "create_anyway" keeps the candidate in the create-shortlist;
+  // "merge" / "extend" call the REAL backend endpoint to additively fold the
+  // candidate's insight(s) + scope into the existing top-matched initiative,
+  // then drop the candidate from the shortlist (it is no longer newly created).
+  const setSimilarResolution = async (
+    candidateId: string,
+    resolution: SimilarResolution
+  ): Promise<void> => {
     setSimilarResolutions((prev) => ({ ...prev, [candidateId]: resolution }));
-    if (resolution === 'merge') {
-      toast(t.mergeSoon, { duration: 3600, icon: '🛠️' });
-    } else if (resolution === 'extend') {
-      toast(t.extendSoon, { duration: 3600, icon: '🛠️' });
-    } else {
+
+    if (resolution === 'create_anyway') {
       toast(t.createAnywayPicked, { duration: 1800 });
+      return;
+    }
+
+    const candidate = candidates.find((item) => item.id === candidateId);
+    const topMatch = candidate ? similarTopMatch(candidate) : null;
+    if (!candidate || !topMatch) {
+      toast.error(t.mergeExtendFailed, { duration: 3200 });
+      return;
+    }
+
+    const insightIds = collectCandidateInsightIds(candidate);
+    const summary = [
+      candidate.problemStatement,
+      candidate.opportunityStatement,
+      candidate.rationale,
+    ]
+      .map((part) => (part || '').trim())
+      .filter(Boolean)
+      .join('\n');
+    const scopeText =
+      resolution === 'extend'
+        ? [candidate.opportunityStatement, candidate.rationale]
+            .map((part) => (part || '').trim())
+            .filter(Boolean)
+            .join('\n')
+        : undefined;
+
+    const endpoint =
+      resolution === 'merge'
+        ? `/initiatives/${topMatch.id}/merge-from-insight`
+        : `/initiatives/${topMatch.id}/extend-from-insight`;
+
+    setResolvingCandidateId(candidateId);
+    const loadingId = toast.loading(resolution === 'merge' ? t.mergeWorking : t.extendWorking);
+    try {
+      await Api.post(endpoint, {
+        mode: resolution,
+        sourceInsightIds: insightIds,
+        summary: summary || candidate.title,
+        scopeText,
+      });
+      toast.dismiss(loadingId);
+      toast.success(resolution === 'merge' ? t.mergeDone : t.extendDone, { duration: 2600 });
+      setResolvedExisting((prev) => ({
+        ...prev,
+        [candidateId]: { mode: resolution, initiativeId: topMatch.id, title: topMatch.title },
+      }));
+      // Drop the candidate from the create-shortlist — it has been folded into
+      // an existing initiative, not newly created.
+      setSelectedCreateIds((prev) => prev.filter((id) => id !== candidateId));
+    } catch (error) {
+      toast.dismiss(loadingId);
+      console.error('[InitiativeWizardModal] merge/extend failed:', error);
+      toast.error(t.mergeExtendFailed, { duration: 3200 });
+    } finally {
+      setResolvingCandidateId(null);
     }
   };
 
@@ -1537,12 +1630,15 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
 
   // #29e — Merge / Extend / Create-anyway choice for a SIMILAR / DUPLICATE
   // candidate. Surfaces a deep link to the existing initiative so the user can
-  // open it. merge / extend are honest stubs (no backend yet); create-anyway
+  // open it. merge / extend call the real backend endpoints (additive, non-
+  // destructive) and drop the candidate from the create-shortlist; create-anyway
   // wires to the existing create path (the candidate stays in the shortlist).
   const renderSimilarResolution = (candidate: WizardCandidate) => {
     const topMatch = similarTopMatch(candidate);
     if (!topMatch) return null;
     const chosen = similarResolutions[candidate.id];
+    const resolved = resolvedExisting[candidate.id];
+    const resolving = resolvingCandidateId === candidate.id;
     const options: Array<{ value: SimilarResolution; label: string; icon: typeof GitMerge }> = [
       { value: 'merge', label: t.mergeOption, icon: GitMerge },
       { value: 'extend', label: t.extendOption, icon: Plus },
@@ -1586,29 +1682,53 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           {options.map((option) => {
             const Icon = option.icon;
             const active = chosen === option.value;
+            const disabled = resolving || Boolean(resolved);
             return (
               <button
                 key={option.value}
                 type="button"
+                disabled={disabled}
                 data-testid={`initiative-wizard-resolution-${option.value}`}
-                onClick={() => setSimilarResolution(candidate.id, option.value)}
+                onClick={() => {
+                  void setSimilarResolution(candidate.id, option.value);
+                }}
                 aria-pressed={active}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                   active
                     ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400/40 dark:bg-primary-500/15 dark:text-primary-200'
                     : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400/50 dark:border-white/[0.12] dark:bg-navy-900/60 dark:text-slate-200'
                 }`}
               >
-                <Icon className="h-3.5 w-3.5 shrink-0" />
+                {resolving && active ? (
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                )}
                 {option.label}
               </button>
             );
           })}
         </div>
-        {(chosen === 'merge' || chosen === 'extend') && (
-          <p className="mt-1.5 text-[10px] text-amber-700 dark:text-amber-200/80">
-            {chosen === 'merge' ? t.mergeSoon : t.extendSoon}
-          </p>
+        {resolved && (
+          <div
+            data-testid="initiative-wizard-resolution-success"
+            className="mt-2 flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-[11px] font-medium text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200"
+          >
+            <Check className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">
+              {resolved.mode === 'merge' ? t.mergedBadge : t.extendedBadge}: {resolved.title}
+            </span>
+            <a
+              href={`/initiatives/${resolved.initiativeId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="initiative-wizard-open-resolved"
+              className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-lg border border-emerald-400 bg-white px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-400/40 dark:bg-navy-900/60 dark:text-emerald-200 dark:hover:bg-emerald-500/10"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {t.openExisting}
+            </a>
+          </div>
         )}
       </div>
     );
@@ -1860,9 +1980,11 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       <div className="space-y-1.5">
         {actionableCandidates.map((candidate) => {
           const blocker = shortlistGateBlockers.find((entry) => entry.candidateId === candidate.id);
-          // #29f — only non-linked, non-blocked candidates are creatable and get
-          // a selection checkbox. Linked / blocked rows stay informational.
-          const creatable = !candidate.linkedInitiativeId && !blocker;
+          const resolved = resolvedExisting[candidate.id];
+          // #29f — only non-linked, non-blocked, non-merged/extended candidates are
+          // creatable and get a selection checkbox. Linked / blocked / resolved
+          // rows stay informational.
+          const creatable = !candidate.linkedInitiativeId && !blocker && !resolved;
           const checked = selectedCreateIds.includes(candidate.id);
           return (
             <div
@@ -1896,14 +2018,36 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {blocker
                       ? blocker.message
-                      : candidate.linkedInitiativeId
-                        ? 'Zostanie zlinkowana z istniejącą inicjatywą.'
-                        : checked
-                          ? 'Zostanie utworzony draft inicjatywy (DRAFT).'
-                          : 'Pominięta — nie zostanie utworzona.'}
+                      : resolved
+                        ? resolved.mode === 'merge'
+                          ? t.mergeDone
+                          : t.extendDone
+                        : candidate.linkedInitiativeId
+                          ? 'Zostanie zlinkowana z istniejącą inicjatywą.'
+                          : checked
+                            ? 'Zostanie utworzony draft inicjatywy (DRAFT).'
+                            : 'Pominięta — nie zostanie utworzona.'}
                   </div>
+                  {/* #29e — surface a resolved (merged/extended) badge with deep link */}
+                  {resolved && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
+                        <Check className="h-2.5 w-2.5" />
+                        {resolved.mode === 'merge' ? t.mergedBadge : t.extendedBadge}
+                      </span>
+                      <a
+                        href={`/initiatives/${resolved.initiativeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full border border-emerald-300 px-1.5 py-0.5 font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-400/30 dark:text-emerald-200"
+                      >
+                        <ExternalLink className="h-2.5 w-2.5" />
+                        {t.openExisting}
+                      </a>
+                    </div>
+                  )}
                   {/* #29e — show the chosen similar-resolution for context */}
-                  {similarTopMatch(candidate) && (
+                  {!resolved && similarTopMatch(candidate) && (
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
                       {similarResolutions[candidate.id] === 'create_anyway' ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-1.5 py-0.5 font-medium text-primary-700 dark:bg-primary-500/15 dark:text-primary-200">

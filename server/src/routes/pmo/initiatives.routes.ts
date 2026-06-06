@@ -18,6 +18,7 @@ import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js'
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import auditEventsService from '../../services/AuditEventsService.js';
 import blueprintService from '../../services/blueprintService.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
 import {
@@ -346,6 +347,243 @@ router.post(
         );
     }
   }
+);
+
+// ==========================================
+// MERGE / EXTEND FROM INSIGHT (AI Wizard #29e)
+// ==========================================
+
+const MergeExtendFromInsightSchema = z
+  .object({
+    // `mode` is derived from the route (merge-from-insight / extend-from-insight);
+    // accepted in the body too for callers that prefer a single endpoint shape.
+    mode: z.enum(['merge', 'extend']).optional(),
+    sourceInsightId: z.string().min(1).max(255).optional().nullable(),
+    sourceInsightIds: z.array(z.string().min(1).max(255)).max(50).optional(),
+    summary: z.string().min(1).max(20000),
+    scopeText: z.string().max(20000).optional().nullable(),
+  })
+  .refine((data) => Boolean(data.sourceInsightId) || (data.sourceInsightIds?.length ?? 0) > 0, {
+    message: 'sourceInsightId or sourceInsightIds is required',
+    path: ['sourceInsightId'],
+  });
+
+function parseJsonArraySafe(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string' || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * POST /api/initiatives/:id/merge-from-insight  (mode 'merge')
+ * POST /api/initiatives/:id/extend-from-insight (mode 'extend')
+ *
+ * Audit #29e: convert the wizard "Merge / Extend" choice into a REAL,
+ * ADDITIVE + NON-DESTRUCTIVE operation against an existing initiative. We never
+ * create a duplicate initiative and never blank the target's core fields.
+ *
+ *   merge  — attach the candidate's source insight(s) to the existing
+ *            initiative as lineage links (evidence_refs_json) and append the
+ *            candidate's problem/context as a recorded "Merged from insight"
+ *            note on the description (hypothesis) / summary.
+ *   extend — like merge, but the candidate is recorded as ADDITIONAL SCOPE:
+ *            its scope/objective text is appended to scope_in (when present)
+ *            and to the description as a "Extended scope from insight" note.
+ *
+ * Read-modify-write only (never overwrite). Org-scoped + 'user' role.
+ * 404 if the initiative is missing or not in the caller's org.
+ */
+async function handleMergeOrExtendFromInsight(req: any, res: any, mode: 'merge' | 'extend') {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const initiativeId = String(req.params.id || '');
+    if (!initiativeId) return res.status(400).json({ error: 'Initiative id is required' });
+
+    // Org-scoped read of the existing initiative (defensive 404).
+    const existing = (await queryHelpers.queryOne(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, String(orgId)]
+    )) as any;
+    if (!existing) return res.status(404).json({ error: 'Initiative not found' });
+
+    const summary = String(req.body?.summary || '').trim();
+    const scopeText = req.body?.scopeText != null ? String(req.body.scopeText).trim() : '';
+    const insightIds = Array.from(
+      new Set(
+        [
+          ...(req.body?.sourceInsightId ? [String(req.body.sourceInsightId)] : []),
+          ...(Array.isArray(req.body?.sourceInsightIds)
+            ? req.body.sourceInsightIds.map((id: unknown) => String(id))
+            : []),
+        ].filter(Boolean)
+      )
+    );
+
+    // Discover the actual columns so we only touch fields that exist (SQLite +
+    // Postgres environments differ; mirrors the duplicate route's approach).
+    let cols: Set<string> = new Set();
+    try {
+      const info = (await queryHelpers.queryAll(`PRAGMA table_info(initiatives)`)) as Array<{
+        name?: string;
+      }>;
+      cols = new Set((info || []).map((r) => String(r.name || '')).filter(Boolean));
+    } catch {
+      cols = new Set();
+    }
+    if (cols.size === 0) {
+      try {
+        const colRows = (await queryHelpers.queryAll(
+          `SELECT LOWER(column_name) as column_name FROM information_schema.columns WHERE table_name = 'initiatives'`
+        )) as Array<{ column_name?: string }>;
+        cols = new Set((colRows || []).map((r) => String(r.column_name || '')).filter(Boolean));
+      } catch {
+        cols = new Set();
+      }
+    }
+
+    const now = new Date().toISOString();
+    const noteHeader =
+      mode === 'merge'
+        ? `Merged from insight${insightIds.length > 1 ? 's' : ''} ${insightIds.join(', ') || '(n/a)'}`
+        : `Extended scope from insight${insightIds.length > 1 ? 's' : ''} ${insightIds.join(', ') || '(n/a)'}`;
+    const noteBody = [summary, mode === 'extend' && scopeText ? `Scope: ${scopeText}` : '']
+      .filter(Boolean)
+      .join('\n');
+    const note = `[${now}] ${noteHeader}: ${noteBody}`;
+
+    const setClauses: string[] = [];
+    const setVals: any[] = [];
+
+    // (1) Append the recorded note to the description/scope — read-modify-write,
+    // never blank. Prefer `hypothesis` (the create flow's description home),
+    // else `summary`, else `problem_statement`.
+    const descCol = cols.has('hypothesis')
+      ? 'hypothesis'
+      : cols.has('summary')
+        ? 'summary'
+        : cols.has('problem_statement')
+          ? 'problem_statement'
+          : null;
+    if (descCol) {
+      const prevDesc = existing[descCol] != null ? String(existing[descCol]) : '';
+      setClauses.push(`${descCol} = ?`);
+      setVals.push([prevDesc, note].filter(Boolean).join('\n\n'));
+    }
+
+    // For EXTEND: also append the additional scope to scope_in (JSON array).
+    if (mode === 'extend' && cols.has('scope_in')) {
+      const prevScope = parseJsonArraySafe(existing.scope_in);
+      const scopeAddition = scopeText || summary;
+      if (scopeAddition) {
+        const nextScope = Array.from(new Set([...prevScope, scopeAddition]));
+        setClauses.push(`scope_in = ?`);
+        setVals.push(JSON.stringify(nextScope));
+      }
+    }
+
+    // (2) Lineage: append source-insight links to evidence_refs_json — the same
+    // 1:N evidence container the create flow tags initiatives with.
+    if (cols.has('evidence_refs_json') && insightIds.length > 0) {
+      const prevRefs = parseJsonArraySafe(existing.evidence_refs_json).map((r) => String(r));
+      const newRefs = insightIds.map((id) => `interview_insight:${id}`);
+      const mergedRefs = Array.from(new Set([...prevRefs, ...newRefs]));
+      setClauses.push(`evidence_refs_json = ?`);
+      setVals.push(JSON.stringify(mergedRefs));
+    }
+
+    if (cols.has('updated_at')) {
+      setClauses.push(`updated_at = ?`);
+      setVals.push(now);
+    }
+    if (cols.has('updated_by')) {
+      setClauses.push(`updated_by = ?`);
+      setVals.push(String(req.user?.id || existing.updated_by || 'system'));
+    }
+
+    if (setClauses.length > 0) {
+      setVals.push(initiativeId, String(orgId));
+      await queryHelpers.queryRun(
+        `UPDATE initiatives SET ${setClauses.join(', ')} WHERE id = ? AND organization_id = ?`,
+        setVals
+      );
+    }
+
+    // (3) Record an audit / decision note for traceability.
+    try {
+      await auditEventsService.log({
+        actorId: req.user?.id,
+        actorType: 'USER',
+        action:
+          mode === 'merge' ? 'initiative.merged_from_insight' : 'initiative.extended_from_insight',
+        resourceType: 'initiative',
+        resourceId: initiativeId,
+        before: { id: initiativeId },
+        after: {
+          id: initiativeId,
+          mode,
+          sourceInsightIds: insightIds,
+          note,
+        },
+        organizationId: String(orgId),
+        ip: (req as any).ip,
+        userAgent: (req as any).get?.('user-agent'),
+      });
+    } catch {
+      // Audit is best-effort — never fail the mutation on a logging error.
+    }
+
+    const updated = (await queryHelpers.queryOne(
+      `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, String(orgId)]
+    )) as any;
+
+    return res.json({
+      ok: true,
+      mode,
+      sourceInsightIds: insightIds,
+      initiative: {
+        id: updated?.id ?? initiativeId,
+        title: updated?.title ?? updated?.name ?? existing.title ?? existing.name ?? null,
+        status: updated?.status ?? existing.status ?? null,
+        summary: updated?.summary ?? null,
+        evidenceRefs: parseJsonArraySafe(updated?.evidence_refs_json),
+        scopeIn: parseJsonArraySafe(updated?.scope_in),
+        updatedAt: updated?.updated_at ?? now,
+      },
+    });
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json(
+        buildPmoInitiativesFailClosedError(
+          req,
+          500,
+          'PMO_INITIATIVES_MERGE_EXTEND_FAILED',
+          'Failed to merge/extend initiative from insight.'
+        )
+      );
+  }
+}
+
+router.post(
+  '/:id/merge-from-insight',
+  requireOrgRole('user'),
+  validateBody(MergeExtendFromInsightSchema),
+  async (req: any, res: any) => handleMergeOrExtendFromInsight(req, res, 'merge')
+);
+
+router.post(
+  '/:id/extend-from-insight',
+  requireOrgRole('user'),
+  validateBody(MergeExtendFromInsightSchema),
+  async (req: any, res: any) => handleMergeOrExtendFromInsight(req, res, 'extend')
 );
 
 /**
