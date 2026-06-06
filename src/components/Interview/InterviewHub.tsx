@@ -201,6 +201,10 @@ const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [
   'aiScore',
   'escalation',
 ];
+// #9 — Sessions DATE column was a single illegible blob ("Due X + Submitted Y").
+// Split into Due / Submitted / Overdue. Submitted is opt-in (hidden by default);
+// Due + Overdue ship visible. Assignee is a first-class default-visible column.
+const INTERVIEW_SESSIONS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = ['submitted'];
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
@@ -232,10 +236,13 @@ const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
 };
 const INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
-  name: 430,
+  name: 360,
+  assignee: 180,
   status: 150,
   progress: 170,
-  date: 210,
+  due: 140,
+  submitted: 140,
+  overdue: 140,
   actions: 56,
 };
 const INTERVIEW_SESSIONS_TABLE_RESIZE_BOUNDS: Record<
@@ -243,10 +250,13 @@ const INTERVIEW_SESSIONS_TABLE_RESIZE_BOUNDS: Record<
   { minWidth: number; maxWidth: number }
 > = {
   select: { minWidth: 44, maxWidth: 44 },
-  name: { minWidth: 300, maxWidth: 680 },
+  name: { minWidth: 260, maxWidth: 680 },
+  assignee: { minWidth: 140, maxWidth: 280 },
   status: { minWidth: 120, maxWidth: 220 },
   progress: { minWidth: 140, maxWidth: 260 },
-  date: { minWidth: 170, maxWidth: 320 },
+  due: { minWidth: 120, maxWidth: 240 },
+  submitted: { minWidth: 120, maxWidth: 240 },
+  overdue: { minWidth: 120, maxWidth: 220 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
 const INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
@@ -733,7 +743,11 @@ export const InterviewHub: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [sessionStatusFilter, setSessionStatusFilter] = useState<string>('all');
   const [sessionsHiddenColumns, setSessionsHiddenColumns] = useState<string[]>(() =>
-    loadHiddenColumns(INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
+    loadHiddenColumns(
+      INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY,
+      INTERVIEW_SESSIONS_TABLE_DEFAULT_HIDDEN_COLUMNS,
+      ['name', 'actions']
+    )
   );
   const [sessionsColumnWidths, setSessionsColumnWidths] = useState<ColumnWidths>(() =>
     loadColumnWidths(INTERVIEW_SESSIONS_COL_WIDTHS_KEY, INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS)
@@ -4124,9 +4138,12 @@ export const InterviewHub: React.FC = () => {
     const visibleColumns = [
       'select',
       'name',
+      ...(!hiddenSet.has('assignee') ? ['assignee'] : []),
       ...(!hiddenSet.has('status') ? ['status'] : []),
       ...(!hiddenSet.has('progress') ? ['progress'] : []),
-      ...(!hiddenSet.has('date') ? ['date'] : []),
+      ...(!hiddenSet.has('due') ? ['due'] : []),
+      ...(!hiddenSet.has('submitted') ? ['submitted'] : []),
+      ...(!hiddenSet.has('overdue') ? ['overdue'] : []),
       'actions',
     ];
     const tableMinWidth = visibleColumns.reduce(
@@ -4189,6 +4206,19 @@ export const InterviewHub: React.FC = () => {
           onResize={handleSessionColumnResize}
         />
       );
+    };
+
+    // #9 — Overdue computation, mirrors the Assignments-table `getDaysToDue`
+    // logic. A session is overdue when it has a due date in the past AND has not
+    // yet been submitted/approved. Returns the whole-day delta (negative = past).
+    const getSessionDaysOverdue = (session: InterviewSession): number | null => {
+      if (!session.dueAt) return null;
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const due = new Date(session.dueAt);
+      due.setHours(0, 0, 0, 0);
+      const diffMs = due.getTime() - now.getTime();
+      return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     };
 
     // #10 — column defs for the header filter dropdowns (status / assignee /
@@ -4300,22 +4330,10 @@ export const InterviewHub: React.FC = () => {
                 className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: sessionsColumnWidths.name }}
               >
-                {/* #10 — assignee + template filters live on the Name header since
-                    they are shown as row meta rather than standalone columns. */}
+                {/* #10 — template filter lives on the Name header; assignee now
+                    has its own dedicated column (below). */}
                 <div className="flex items-center gap-1">
                   <span>{isPolish ? 'Nazwa' : 'Name'}</span>
-                  <FilterDropdown
-                    column={sessionAssigneeFilterCol}
-                    value={sessionsTableFilters.assignee as string[] | undefined}
-                    onChange={(v) =>
-                      setSessionsTableFilters((f) => ({ ...f, assignee: v as string[] }))
-                    }
-                    isOpen={openSessionFilterId === 'assignee'}
-                    onToggle={() =>
-                      setOpenSessionFilterId((id) => (id === 'assignee' ? null : 'assignee'))
-                    }
-                    onClose={() => setOpenSessionFilterId(null)}
-                  />
                   <FilterDropdown
                     column={sessionTemplateFilterCol}
                     value={sessionsTableFilters.template as string[] | undefined}
@@ -4331,6 +4349,39 @@ export const InterviewHub: React.FC = () => {
                 </div>
                 {renderSessionResizer('name')}
               </th>
+              {!hiddenSet.has('assignee') && (
+                <th
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: sessionsColumnWidths.assignee }}
+                >
+                  {/* #9 — Assignee promoted from row sub-text to a first-class,
+                      filterable column. Reuses the existing assignee filter. */}
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={
+                        (sessionsTableFilters.assignee as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {isPolish ? 'Przydzielony' : 'Assignee'}
+                    </span>
+                    <FilterDropdown
+                      column={sessionAssigneeFilterCol}
+                      value={sessionsTableFilters.assignee as string[] | undefined}
+                      onChange={(v) =>
+                        setSessionsTableFilters((f) => ({ ...f, assignee: v as string[] }))
+                      }
+                      isOpen={openSessionFilterId === 'assignee'}
+                      onToggle={() =>
+                        setOpenSessionFilterId((id) => (id === 'assignee' ? null : 'assignee'))
+                      }
+                      onClose={() => setOpenSessionFilterId(null)}
+                    />
+                  </div>
+                  {renderSessionResizer('assignee')}
+                </th>
+              )}
               {!hiddenSet.has('status') && (
                 <th
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
@@ -4371,13 +4422,31 @@ export const InterviewHub: React.FC = () => {
                   {renderSessionResizer('progress')}
                 </th>
               )}
-              {!hiddenSet.has('date') && (
+              {!hiddenSet.has('due') && (
                 <th
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
-                  style={{ width: sessionsColumnWidths.date }}
+                  style={{ width: sessionsColumnWidths.due }}
                 >
-                  {isPolish ? 'Data' : 'Date'}
-                  {renderSessionResizer('date')}
+                  {isPolish ? 'Termin' : 'Due'}
+                  {renderSessionResizer('due')}
+                </th>
+              )}
+              {!hiddenSet.has('submitted') && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: sessionsColumnWidths.submitted }}
+                >
+                  {isPolish ? 'Wysłano' : 'Submitted'}
+                  {renderSessionResizer('submitted')}
+                </th>
+              )}
+              {!hiddenSet.has('overdue') && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: sessionsColumnWidths.overdue }}
+                >
+                  {isPolish ? 'Po terminie' : 'Overdue'}
+                  {renderSessionResizer('overdue')}
                 </th>
               )}
               <th
@@ -4408,9 +4477,12 @@ export const InterviewHub: React.FC = () => {
                       </div>
                       {(
                         [
+                          { id: 'assignee', label: isPolish ? 'Przydzielony' : 'Assignee' },
                           { id: 'status', label: isPolish ? 'Status' : 'Status' },
                           { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
-                          { id: 'date', label: isPolish ? 'Data' : 'Date' },
+                          { id: 'due', label: isPolish ? 'Termin' : 'Due' },
+                          { id: 'submitted', label: isPolish ? 'Wysłano' : 'Submitted' },
+                          { id: 'overdue', label: isPolish ? 'Po terminie' : 'Overdue' },
                         ] as const
                       ).map((col) => {
                         const checked = !hiddenSet.has(col.id);
@@ -4538,14 +4610,23 @@ export const InterviewHub: React.FC = () => {
                         </span>
                         {showSessionRowDescription ? (
                           <span className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
-                            {isPolish ? 'Assignee' : 'Assignee'}: {primaryMeta}
-                            {' · '}
-                            {isPolish ? 'Template' : 'Template'}: {secondaryMeta}
+                            {isPolish ? 'Szablon' : 'Template'}: {secondaryMeta}
                           </span>
                         ) : null}
                       </div>
                     </div>
                   </td>
+
+                  {!hiddenSet.has('assignee') && (
+                    <td
+                      className="px-3 py-3 align-middle"
+                      style={{ width: sessionsColumnWidths.assignee }}
+                    >
+                      <span className="block truncate text-sm text-slate-700 dark:text-slate-200">
+                        {primaryMeta}
+                      </span>
+                    </td>
+                  )}
 
                   {!hiddenSet.has('status') && (
                     <td
@@ -4581,23 +4662,71 @@ export const InterviewHub: React.FC = () => {
                     </td>
                   )}
 
-                  {!hiddenSet.has('date') && (
+                  {!hiddenSet.has('due') && (
                     <td
                       className="px-3 py-3 text-center align-middle"
-                      style={{ width: sessionsColumnWidths.date }}
+                      style={{ width: sessionsColumnWidths.due }}
                     >
-                      <div className="flex items-center justify-center gap-1 text-xs text-slate-600 dark:text-slate-400">
-                        <Calendar size={12} />
-                        {session.dueAt
-                          ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
-                          : new Date(session.startedAt).toLocaleDateString()}
-                      </div>
-                      {session.submittedAt && (
-                        <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Submitted' : 'Submitted'}{' '}
-                          {new Date(session.submittedAt).toLocaleDateString()}
+                      {session.dueAt ? (
+                        <div className="flex items-center justify-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+                          <Calendar size={12} />
+                          {new Date(session.dueAt).toLocaleDateString()}
                         </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                       )}
+                    </td>
+                  )}
+
+                  {!hiddenSet.has('submitted') && (
+                    <td
+                      className="px-3 py-3 text-center align-middle"
+                      style={{ width: sessionsColumnWidths.submitted }}
+                    >
+                      {session.submittedAt ? (
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
+                          {new Date(session.submittedAt).toLocaleDateString()}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                      )}
+                    </td>
+                  )}
+
+                  {!hiddenSet.has('overdue') && (
+                    <td
+                      className="px-3 py-3 text-center align-middle"
+                      style={{ width: sessionsColumnWidths.overdue }}
+                    >
+                      {(() => {
+                        // #9 — Overdue chip: red "Xd overdue" only when the due
+                        // date is in the past AND the session is not yet
+                        // submitted/approved. Otherwise show a check (on time)
+                        // or an em-dash (no due date).
+                        const daysToDue = getSessionDaysOverdue(session);
+                        const isResolved = isSubmitted || isApproved;
+                        if (daysToDue != null && daysToDue < 0 && !isResolved) {
+                          const absDays = Math.abs(daysToDue);
+                          return (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-300/80 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100">
+                              <AlertTriangle size={11} />
+                              {isPolish
+                                ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
+                                : `${absDays}d overdue`}
+                            </span>
+                          );
+                        }
+                        if (daysToDue == null) {
+                          return (
+                            <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center justify-center text-emerald-500 dark:text-emerald-400">
+                            <Check size={14} strokeWidth={2.5} />
+                          </span>
+                        );
+                      })()}
                     </td>
                   )}
 
