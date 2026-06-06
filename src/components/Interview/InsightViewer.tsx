@@ -1797,8 +1797,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsExportingTools(true);
     try {
-      // TODO(#25 server): /export does not yet accept a `sectionIds` filter —
-      // it is sent for forward-compat and ignored server-side for now.
+      // #25: server honors `sectionIds` for the tools target — only the
+      // selected sections are exported when provided.
       const exportRes = await V8InterviewApi.exportInsight(insight.id, {
         target: 'tools',
         ...(sectionIds ? { sectionIds } : {}),
@@ -1826,8 +1826,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsExportingAssessment(true);
     try {
-      // TODO(#25 server): `sectionIds` ignored server-side until section-aware
-      // export lands; sent for forward-compat.
+      // #25: server honors `sectionIds` for the assessment target — only the
+      // selected sections are exported when provided.
       const exportRes = await V8InterviewApi.exportInsight(insight.id, {
         target: 'assessment',
         ...(sectionIds ? { sectionIds } : {}),
@@ -7087,12 +7087,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   : exportTargets.find((t) => t.id === exportTarget)?.hint.en}
               </p>
               {(exportTarget === 'tools' || exportTarget === 'assessment') && (
-                <p className="mt-1 flex items-start gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
-                  <AlertCircle size={12} className="mt-0.5 shrink-0" />
+                <p className="mt-1 flex items-start gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
                   <span>
                     {isPolish
-                      ? 'Wybór sekcji dotyczy Notatki/Markdown; Narzędzia/Ocena eksportują na razie cały wniosek.'
-                      : 'Section selection applies to Note/Markdown; Tools/Assessment export the full insight for now.'}
+                      ? 'Wybór sekcji dotyczy również tego celu — wyeksportowane zostaną tylko zaznaczone sekcje.'
+                      : 'Section selection applies to this target too — only the selected sections are exported.'}
                   </span>
                 </p>
               )}
