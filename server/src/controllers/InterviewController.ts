@@ -583,6 +583,14 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
       name: 'context_note_knowledge_doc_id',
       sql: `ALTER TABLE interview_questions ADD COLUMN context_note_knowledge_doc_id TEXT`,
     },
+    {
+      name: 'guidance',
+      sql: `ALTER TABLE interview_questions ADD COLUMN guidance TEXT`,
+    },
+    {
+      name: 'example_answer',
+      sql: `ALTER TABLE interview_questions ADD COLUMN example_answer TEXT`,
+    },
   ];
 
   for (const column of missingColumns) {
@@ -1042,6 +1050,8 @@ const buildQuestionResponse = (row: any) => {
     allowFileUpload: row.allow_file_upload === 1,
     allowUrl: row.allow_url === 1,
     allowContextNote: row.allow_context_note !== 0,
+    guidance: row.guidance || '',
+    exampleAnswer: row.example_answer || '',
     answerKnowledgeDocId: row.answer_knowledge_doc_id || undefined,
     contextNoteKnowledgeDocId: row.context_note_knowledge_doc_id || undefined,
     status: row.status,
@@ -1417,8 +1427,8 @@ async function createSessionFromTemplate(params: {
     const allowContextNoteFlag = toDbFlag(tq.allow_context_note, 1);
     await queryHelpers.queryRun(
       `INSERT INTO interview_questions
-       (id, session_id, organization_id, category, question_text, description, evidence_prompt, status, sort_order, is_template, is_required, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, session_id, organization_id, category, question_text, description, evidence_prompt, status, sort_order, is_template, is_required, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, guidance, example_answer, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         questionId,
         id,
@@ -1439,6 +1449,8 @@ async function createSessionFromTemplate(params: {
         allowUrlFlag,
         allowContextNoteFlag,
         tq.id,
+        tq.guidance || null,
+        tq.example_answer || null,
         now,
         now,
       ]
