@@ -95,21 +95,15 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
     const loadData = async () => {
       setIsLoading(true);
-      console.log('[AssignInterviewModal] Starting to load data...');
 
       try {
-        console.log('[AssignInterviewModal] Loading templates and users...');
-
         // Load templates separately to see which one fails
         let templatesRes: any[] = [];
         let usersRes: any[] = [];
 
         try {
-          console.log('[AssignInterviewModal] Fetching templates from /interview/templates...');
           const templatesData = await Api.get('/interview/templates');
-          console.log('[AssignInterviewModal] Templates raw response:', templatesData);
           templatesRes = Array.isArray(templatesData) ? templatesData : [];
-          console.log('[AssignInterviewModal] Templates parsed:', templatesRes);
         } catch (err: any) {
           console.error('[AssignInterviewModal] Failed to load templates:', err);
           console.error('[AssignInterviewModal] Error details:', {
@@ -138,16 +132,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         }
 
         try {
-          console.log('[AssignInterviewModal] Fetching users from /users...');
           const usersData = await Api.get('/users');
-          console.log('[AssignInterviewModal] Users raw response:', usersData);
           // API returns { users, total }, extract users array
           usersRes = Array.isArray(usersData?.users)
             ? usersData.users
             : Array.isArray(usersData)
               ? usersData
               : [];
-          console.log('[AssignInterviewModal] Users parsed:', usersRes);
         } catch (err: any) {
           console.error('[AssignInterviewModal] Failed to load users:', err);
           console.error('[AssignInterviewModal] Error details:', {
@@ -175,11 +166,6 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           usersRes = [];
         }
 
-        console.log('[AssignInterviewModal] Final data:', {
-          templatesCount: templatesRes.length,
-          usersCount: usersRes.length,
-        });
-
         setTemplates(
           templatesRes.map((template) => ({
             ...template,
@@ -197,7 +183,6 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           projectRole: u.projectRole || u.project_role,
         }));
 
-        console.log('[AssignInterviewModal] Mapped users:', allUsers);
         setUsers(allUsers);
 
         if (templatesRes.length === 0) {
@@ -230,7 +215,6 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         toast.error(msg);
       } finally {
         setIsLoading(false);
-        console.log('[AssignInterviewModal] Loading completed');
       }
     };
 
@@ -373,19 +357,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
     }
   };
 
-  // Debug: log when modal should be visible
-  useEffect(() => {
-    console.log('[AssignInterviewModal] Modal state:', {
-      isOpen,
-      templatesCount: templates.length,
-      usersCount: users.length,
-      isLoading,
-    });
-  }, [isOpen, templates.length, users.length, isLoading]);
-
   if (!isOpen) return null;
-
-  console.log('[AssignInterviewModal] Rendering modal...');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">

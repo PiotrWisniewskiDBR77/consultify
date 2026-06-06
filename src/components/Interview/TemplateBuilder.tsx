@@ -3178,7 +3178,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </div>
           </div>
 
-          {/* Section / group header for this question (UI-only; see TODO on type) */}
+          {/* Section / group header for this question (persisted via the `section_title` column, round-tripped through create/update/get) */}
           {onSetSection ? (
             <div className="border-t border-slate-200 dark:border-navy-700 pt-3">
               {question.sectionTitle || showSectionInput ? (

@@ -211,9 +211,9 @@ type WizardLanguage = 'pl' | 'en';
 // ---- #29e similar-candidate resolution choice -------------------------------
 // When a candidate is flagged SIMILAR / DUPLICATE against an existing
 // initiative, the user picks how to resolve the overlap. "create_anyway" wires
-// to the existing create path; "merge" / "extend" are honest stubs (no backend
-// endpoint exists yet) that surface a "coming soon" toast and still allow
-// create-anyway.
+// to the existing create path; "merge" / "extend" are real and POST to the
+// backend endpoints `/initiatives/:id/merge-from-insight` and
+// `/initiatives/:id/extend-from-insight` respectively.
 type SimilarResolution = 'merge' | 'extend' | 'create_anyway';
 
 // ---- #29h progressive fill: the four CORE fields (rdzeń) ---------------------
