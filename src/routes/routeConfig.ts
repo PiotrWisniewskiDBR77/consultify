@@ -301,7 +301,11 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.ASSESSMENT_LEAN_EXTERNAL]: ROUTES.ASSESSMENT.LEAN,
   [AppView.ASSESSMENT_OVERVIEW]: ROUTES.ASSESSMENT.OVERVIEW,
   [AppView.ASSESSMENT_SUMMARY]: ROUTES.ASSESSMENT.SUMMARY,
-  [AppView.ASSESSMENT_AUDITS]: ROUTES.ASSESSMENT.AUDITS,
+  // Repointed to the real, registered Audit Orchestrator hub (/audit-programs).
+  // The old ROUTES.ASSESSMENT.AUDITS ('/assessment/audits') was never registered
+  // in AppRoutes, so the "Audits" sidebar item + reverse-lookup breadcrumb now
+  // resolve to the working hub.
+  [AppView.ASSESSMENT_AUDITS]: '/audit-programs',
   [AppView.ASSESSMENT_DIGITAL_EXTERNAL]: ROUTES.ASSESSMENT.DRD,
   [AppView.ASSESSMENT_OTHER]: ROUTES.ASSESSMENT.ROOT,
   [AppView.MY_ASSESSMENTS]: ROUTES.ASSESSMENT.ROOT,

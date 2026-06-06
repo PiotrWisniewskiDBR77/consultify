@@ -15,6 +15,7 @@ import {
   Briefcase,
   Calculator,
   CheckCircle2,
+  ClipboardCheck,
   ClipboardList,
   CreditCard,
   Database,
@@ -86,6 +87,15 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
           viewId: AppView.ASSESSMENT_OVERVIEW,
         },
       ],
+    },
+    // 4.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
+    // The functional hub lives at /audit-programs (AppRoutes), reached via the
+    // canonical audits AppView so it inherits the authenticated app shell.
+    {
+      id: 'MODULE_AUDITS',
+      label: t('sidebar.audits', 'Audits'),
+      icon: React.createElement(ClipboardCheck, { size: 20 }),
+      viewId: AppView.ASSESSMENT_AUDITS,
     },
     // 5. Inicjatywy - zarządzanie inicjatywami
     {

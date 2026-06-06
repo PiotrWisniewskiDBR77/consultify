@@ -229,6 +229,16 @@ export const AuditsShowcasePage: React.FC = () => {
     navigate(ROUTES.LOGIN);
   };
 
+  // Authenticated users land directly in the real Audit Orchestrator hub
+  // (/audit-programs); everyone else is routed to login first.
+  const handleOpenAuditHub = () => {
+    if (currentUser?.isAuthenticated) {
+      navigate('/audit-programs');
+    } else {
+      navigate(ROUTES.LOGIN);
+    }
+  };
+
   const handleToolsHubClick = () => {
     navigate('/tools');
   };
@@ -289,7 +299,7 @@ export const AuditsShowcasePage: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={handleStartAssessment}
+              onClick={handleOpenAuditHub}
               className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-navy-950 dark:bg-white text-white dark:text-navy-950 font-black rounded-2xl hover:scale-[1.02] transition-all shadow-2xl text-xl uppercase tracking-wider"
             >
               {t('showcase.common.execute')}
@@ -334,7 +344,7 @@ export const AuditsShowcasePage: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <button
-              onClick={handleStartAssessment}
+              onClick={handleOpenAuditHub}
               className="px-12 py-6 bg-white text-navy-950 font-black rounded-2xl hover:bg-slate-100 transition-all text-xl uppercase tracking-widest shadow-xl"
             >
               {t('showcase.common.execute')}
