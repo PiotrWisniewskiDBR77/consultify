@@ -89,6 +89,12 @@ verify_all_apis.cjs
 *.bak.broken
 *_converted.*
 * 2.*
+# Google Drive sync pollution (see docs/GDRIVE_SYNC.md)
+* 3.*
+* 4.*
+*.driveupload
+*.driveupload/
+
 *_trash*
 
 # Test output files
