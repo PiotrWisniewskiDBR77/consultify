@@ -24,20 +24,28 @@ export function getSourceDisplayLabel(sourceType: string, isPolish = false): str
   return sourceType || '';
 }
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 interface InitiativeSourceLinkProps {
   sourceType?: string | null;
   sourceId?: string | null;
+  /**
+   * Optional explicit language override. When omitted the component
+   * self-localizes from the active i18n language, so callers no longer
+   * need to pass this to get the correct PL/EN labels.
+   */
   isPolish?: boolean;
 }
 
 export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
   sourceType,
   sourceId,
-  isPolish = false,
+  isPolish: isPolishProp,
 }) => {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const isPolish = isPolishProp ?? i18n.language === 'pl';
 
   if (!sourceType || !sourceId) {
     return null;
