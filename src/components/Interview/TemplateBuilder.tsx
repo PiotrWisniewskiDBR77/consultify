@@ -97,6 +97,10 @@ interface TemplateQuestion {
   allowContextNote?: boolean;
   description?: string;
   evidencePrompt?: string;
+  /** Static, author-written instruction shown to the respondent in the answer form (Step 2 / R3). */
+  guidance?: string;
+  /** Static example answer shown to the respondent in the answer form (Step 2 / R3). */
+  exampleAnswer?: string;
   /**
    * Optional section/group header that this question opens.
    * Persisted: the `section_title` column on
@@ -131,6 +135,14 @@ interface Template {
 }
 
 type QuestionCategory = 'strategy' | 'operations' | 'digital' | 'people' | 'finance';
+const QUESTION_CATEGORIES: ReadonlyArray<{ id: QuestionCategory; labelEn: string; labelPl: string }> =
+  [
+    { id: 'strategy', labelEn: 'Strategy', labelPl: 'Strategia' },
+    { id: 'operations', labelEn: 'Operations', labelPl: 'Operacje' },
+    { id: 'digital', labelEn: 'Digital', labelPl: 'Cyfryzacja' },
+    { id: 'people', labelEn: 'People', labelPl: 'Ludzie' },
+    { id: 'finance', labelEn: 'Finance', labelPl: 'Finanse' },
+  ];
 type AnswerType = 'open' | 'select' | 'scale' | 'boolean' | 'number' | 'date' | 'dropdown';
 type TemplateCategory =
   | 'DIGITAL'
@@ -601,6 +613,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               : true,
           description: q.description || '',
           evidencePrompt: q.evidencePrompt || q.evidence_prompt || '',
+          guidance: q.guidance || '',
+          exampleAnswer: q.exampleAnswer || q.example_answer || '',
           sectionTitle: q.sectionTitle || q.section_title || undefined,
         }))
       );
@@ -805,6 +819,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       allowContextNote: true,
       description: '',
       evidencePrompt: '',
+      guidance: '',
+      exampleAnswer: '',
       isNew: true,
       isEditing: true,
     };
@@ -1010,6 +1026,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               allowContextNote: question.allowContextNote !== false,
               description: question.description || '',
               evidencePrompt: question.evidencePrompt || '',
+              guidance: question.guidance || '',
+              exampleAnswer: question.exampleAnswer || '',
               sectionTitle: question.sectionTitle || '',
             };
 
@@ -2932,6 +2950,23 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             />
           </div>
 
+          {/* Category */}
+          <div>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              {isPolish ? 'Kategoria' : 'Category'}
+            </label>
+            <Select
+              value={question.category}
+              onChange={(value) => onUpdate({ category: value as QuestionCategory })}
+              disabled={readOnly}
+              aria-label={isPolish ? 'Kategoria pytania' : 'Question category'}
+              options={QUESTION_CATEGORIES.map((c) => ({
+                value: c.id,
+                label: isPolish ? c.labelPl : c.labelEn,
+              }))}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             {/* Answer Type */}
             <div>
@@ -3063,6 +3098,48 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               }
               className={fieldClassName}
             />
+          </div>
+
+          {/* Guidance + example — static, author-written, shown to the respondent in the answer form (Step 2 / R3) */}
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised/50 p-3 space-y-3">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-c-text-muted">
+              <HelpCircle size={11} />
+              {isPolish ? 'Wskazówka dla respondenta' : 'Guidance for respondent'}
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Instrukcja — jak odpowiadać' : 'Instruction — how to answer'}
+              </label>
+              <textarea
+                value={question.guidance || ''}
+                onChange={(e) => onUpdate({ guidance: e.target.value })}
+                disabled={readOnly}
+                rows={2}
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+                placeholder={
+                  isPolish
+                    ? 'Statyczna instrukcja widoczna przy pytaniu w formularzu odpowiedzi...'
+                    : 'Static instruction shown next to the question in the answer form...'
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Przykładowa odpowiedź' : 'Example answer'}
+              </label>
+              <textarea
+                value={question.exampleAnswer || ''}
+                onChange={(e) => onUpdate({ exampleAnswer: e.target.value })}
+                disabled={readOnly}
+                rows={2}
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+                placeholder={
+                  isPolish
+                    ? 'np. „W 2023 OEE wyniosło 72%, głównie przez przestoje linii 3."'
+                    : 'e.g. "In 2023 OEE was 72%, mainly due to Line 3 downtime."'
+                }
+              />
+            </div>
           </div>
 
           {/* Description / helper text */}
