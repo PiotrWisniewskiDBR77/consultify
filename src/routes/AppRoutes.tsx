@@ -419,6 +419,8 @@ const PublicJwtFormPage = lazyWithRetry(() =>
 
 // Public Shared View (Table Platform)
 const PublicViewPage = lazyWithRetry(() => import('@/components/MyWork/table/PublicViewPage'));
+// Audit Orchestrator hub (audit #19 family) — authenticated module route.
+const AuditProgramsHub = lazyWithRetry(() => import('@/components/Audit/AuditsHub'));
 
 // Public Mini Assessment (T015)
 const PublicMiniAssessmentView = lazyWithRetry(() =>
@@ -1189,6 +1191,24 @@ export const AppRoutes: React.FC = () => {
           element={<MyWorkSheetsDeepLinkRedirect />}
         />
         <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
+
+        {/* Audit Orchestrator (audit #19 family) — authenticated, inside the
+            app shell so it gets nav + bearer token. /audits stays the public
+            showcase; the functional hub lives at /audit-programs. */}
+        <Route
+          path="/audit-programs"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                    <AuditProgramsHub />
+                  </Suspense>
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
 
         {/* AI Chat - Full Screen Chat View */}
         <Route
