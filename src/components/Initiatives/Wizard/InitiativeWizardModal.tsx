@@ -92,13 +92,28 @@ interface WizardAuditEvent {
 
 const AUDIT_EVENT_LABELS: Record<
   string,
-  { label: string; tone: 'info' | 'success' | 'warn' | 'block' }
+  { label: Record<WizardLanguage, string>; tone: 'info' | 'success' | 'warn' | 'block' }
 > = {
-  wizard_session_created: { label: 'Sesja kreatora utworzona', tone: 'info' },
-  wizard_candidates_generated: { label: 'Wygenerowano kandydatow', tone: 'info' },
-  wizard_candidate_triaged: { label: 'Decyzja triage', tone: 'info' },
-  wizard_shortlist_gate_blocked: { label: 'Shortlist gate zablokowal promote', tone: 'block' },
-  wizard_drafts_created: { label: 'Utworzono drafty inicjatyw', tone: 'success' },
+  wizard_session_created: {
+    label: { pl: 'Sesja kreatora utworzona', en: 'Wizard session created' },
+    tone: 'info',
+  },
+  wizard_candidates_generated: {
+    label: { pl: 'Wygenerowano kandydatow', en: 'Candidates generated' },
+    tone: 'info',
+  },
+  wizard_candidate_triaged: {
+    label: { pl: 'Decyzja triage', en: 'Triage decision' },
+    tone: 'info',
+  },
+  wizard_shortlist_gate_blocked: {
+    label: { pl: 'Shortlist gate zablokowal promote', en: 'Shortlist gate blocked promote' },
+    tone: 'block',
+  },
+  wizard_drafts_created: {
+    label: { pl: 'Utworzono drafty inicjatyw', en: 'Initiative drafts created' },
+    tone: 'success',
+  },
 };
 
 function formatAuditTimestamp(value: string): string {
@@ -117,34 +132,44 @@ function formatAuditTimestamp(value: string): string {
   }
 }
 
-function describeAuditEvent(event: WizardAuditEvent): string {
+function describeAuditEvent(event: WizardAuditEvent, language: WizardLanguage): string {
   const payload = event.eventPayload || {};
+  const pl = language === 'pl';
   switch (event.eventType) {
     case 'wizard_candidates_generated': {
       const total = Number(payload.candidateCount ?? 0);
       const evidence = Number(payload.evidenceCount ?? 0);
       const hygiene = Number(payload.hygieneCount ?? 0);
       const mode = String(payload.generationMode ?? 'unknown');
-      return `Lacznie ${total} kandydatow (${evidence} z evidence, ${hygiene} hygieny). Tryb: ${mode}.`;
+      return pl
+        ? `Lacznie ${total} kandydatow (${evidence} z evidence, ${hygiene} hygieny). Tryb: ${mode}.`
+        : `${total} candidates total (${evidence} from evidence, ${hygiene} hygiene). Mode: ${mode}.`;
     }
     case 'wizard_candidate_triaged': {
       const status = String(payload.triageStatus ?? '');
       const reason = String(payload.triageReason ?? '');
-      return reason ? `Status: ${status}. Powod: ${reason}` : `Status: ${status}.`;
+      if (pl) return reason ? `Status: ${status}. Powod: ${reason}` : `Status: ${status}.`;
+      return reason ? `Status: ${status}. Reason: ${reason}` : `Status: ${status}.`;
     }
     case 'wizard_shortlist_gate_blocked': {
       const blocked = Number(payload.blockedCount ?? 0);
       const total = Number(payload.shortlistCount ?? 0);
-      return `Blokada: ${blocked} z ${total} kandydatow nie przeszlo gate evidence.`;
+      return pl
+        ? `Blokada: ${blocked} z ${total} kandydatow nie przeszlo gate evidence.`
+        : `Blocked: ${blocked} of ${total} candidates did not pass the evidence gate.`;
     }
     case 'wizard_drafts_created': {
       const drafts = Number(payload.draftCount ?? 0);
-      return `Utworzono ${drafts} draftow inicjatyw na podstawie zaakceptowanych kandydatow.`;
+      return pl
+        ? `Utworzono ${drafts} draftow inicjatyw na podstawie zaakceptowanych kandydatow.`
+        : `Created ${drafts} initiative drafts from the accepted candidates.`;
     }
     case 'wizard_session_created': {
       const mode = String(payload.mode ?? '');
       const sources = Number(payload.sourceCount ?? 0);
-      return `Tryb: ${mode}. Zrodel w basket: ${sources}.`;
+      return pl
+        ? `Tryb: ${mode}. Zrodel w basket: ${sources}.`
+        : `Mode: ${mode}. Sources in basket: ${sources}.`;
     }
     default:
       return JSON.stringify(payload);
@@ -307,6 +332,59 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     aiUnavailable: 'Asystent AI nie jest skonfigurowany dla tej sekcji.',
     aiFailed: 'Nie udało się uzupełnić sekcji z AI.',
     prefilledFromInsight: 'z wniosku',
+    // footer
+    cancel: 'Anuluj',
+    setIntentHint: 'Ustaw intencję i wygeneruj kandydatów.',
+    shortlistGateOk: 'Shortlist gate OK',
+    generateCandidates: 'Wygeneruj kandydatów',
+    governancePreview: 'Governance preview',
+    shortlistGateTitle:
+      'Shortlist gate: rozstrzygnij contradicted / uzupełnij evidence przed Utwórz drafty.',
+    // intent step
+    transformDecision: 'Decyzja transformacyjna',
+    modeCreateFirstPortfolio: 'Stwórz pierwsze portfolio',
+    modeGenerateFromEvidence: 'Wygeneruj z wybranych evidence',
+    modePrioritizeByGoal: 'Priorytetyzuj wg celu biznesowego',
+    modeMatchExisting: 'Dopasuj do istniejących inicjatyw',
+    modeRefreshPortfolio: 'Odśwież portfolio nowymi evidence',
+    modeBuildWaves: 'Buduj fale (sekwencja w roadmapę)',
+    modeImprovePortfolio: 'Popraw istniejące portfolio (gap closure)',
+    businessPriorities: 'Priorytety biznesowe',
+    countLabel: 'Liczba',
+    horizonLabel: 'Horyzont',
+    horizon30Days: '30 dni',
+    horizon90Days: '90 dni',
+    horizon6Months: '6 miesięcy',
+    horizon12Months: '12 miesięcy',
+    riskLabel: 'Ryzyko',
+    riskConservative: 'Szybkie i pewne',
+    riskBalanced: 'Mieszany portfel',
+    riskBold: 'Strategic bets',
+    consultantNote: 'Notatka konsultanta / kontekst',
+    consultantNotePlaceholder:
+      'Np. po assessment chcemy wybrać 3 inicjatywy o największym efekcie na marżę, terminowość i jakość danych...',
+    // candidates step
+    noCandidatesTitle: 'Brak kandydatów do triage',
+    noCandidatesHint:
+      'Wróć do kroku Intencja i wygeneruj kandydatów. Jeżeli sourceBasket jest pusty, system zaproponuje kandydatów z portfolio hygieny (oznaczonych niższym confidence).',
+    similarInitiative: 'Podobna inicjatywa',
+    candidateDetails: 'Szczegóły kandydata',
+    needsEvidence: 'Brak evidence',
+    ready: 'Gotowy',
+    linkAlreadyCovered: 'Powiąż jako już pokryty',
+    // governance step
+    shortlistGateBlockedTitle: 'Shortlist gate zablokował „Utwórz drafty”',
+    shortlistGateBlockedBody:
+      'Zgodnie z kanonem (FINAL_IMPLEMENTATION_PLAN_10) kandydaci z confidence „contradicted”, statusem „needs_evidence” lub bez evidenceRefs nie mogą zostać promowani do draftu.',
+    willLinkExisting: 'Zostanie zlinkowana z istniejącą inicjatywą.',
+    willCreateDraft: 'Zostanie utworzony draft inicjatywy (DRAFT).',
+    willBeSkipped: 'Pominięta — nie zostanie utworzona.',
+    // result step
+    wizardDone: 'Kreator zakończył pracę',
+    newDraftsLabel: 'Nowe drafty inicjatyw',
+    auditTimelineLabel: 'Audyt sesji – proposal → approval → execution → audit',
+    noAuditEvents: 'Brak zdarzeń audytu dla tej sesji.',
+    close: 'Zamknij',
   },
   en: {
     stepInsights: 'Insights',
@@ -359,6 +437,58 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     aiUnavailable: 'AI assist is not configured for this section.',
     aiFailed: 'Failed to fill the section with AI.',
     prefilledFromInsight: 'from insight',
+    // footer
+    cancel: 'Cancel',
+    setIntentHint: 'Set the intent and generate candidates.',
+    shortlistGateOk: 'Shortlist gate OK',
+    generateCandidates: 'Generate candidates',
+    governancePreview: 'Governance preview',
+    shortlistGateTitle: 'Shortlist gate: resolve contradicted / add evidence before Create drafts.',
+    // intent step
+    transformDecision: 'Transformation decision',
+    modeCreateFirstPortfolio: 'Create the first portfolio',
+    modeGenerateFromEvidence: 'Generate from selected evidence',
+    modePrioritizeByGoal: 'Prioritize by business goal',
+    modeMatchExisting: 'Match to existing initiatives',
+    modeRefreshPortfolio: 'Refresh portfolio with new evidence',
+    modeBuildWaves: 'Build waves (sequence into a roadmap)',
+    modeImprovePortfolio: 'Improve existing portfolio (gap closure)',
+    businessPriorities: 'Business priorities',
+    countLabel: 'Count',
+    horizonLabel: 'Horizon',
+    horizon30Days: '30 days',
+    horizon90Days: '90 days',
+    horizon6Months: '6 months',
+    horizon12Months: '12 months',
+    riskLabel: 'Risk',
+    riskConservative: 'Fast and safe',
+    riskBalanced: 'Balanced portfolio',
+    riskBold: 'Strategic bets',
+    consultantNote: 'Consultant note / context',
+    consultantNotePlaceholder:
+      'E.g. after the assessment we want to pick 3 initiatives with the biggest impact on margin, on-time delivery and data quality...',
+    // candidates step
+    noCandidatesTitle: 'No candidates to triage',
+    noCandidatesHint:
+      'Go back to the Intent step and generate candidates. If the sourceBasket is empty, the system will propose candidates from portfolio hygiene (flagged with lower confidence).',
+    similarInitiative: 'Similar initiative',
+    candidateDetails: 'Candidate details',
+    needsEvidence: 'Needs evidence',
+    ready: 'Ready',
+    linkAlreadyCovered: 'Link as already covered',
+    // governance step
+    shortlistGateBlockedTitle: 'Shortlist gate blocked “Create drafts”',
+    shortlistGateBlockedBody:
+      'Per canon (FINAL_IMPLEMENTATION_PLAN_10) candidates with “contradicted” confidence, “needs_evidence” status or without evidenceRefs cannot be promoted to a draft.',
+    willLinkExisting: 'Will be linked to an existing initiative.',
+    willCreateDraft: 'An initiative draft (DRAFT) will be created.',
+    willBeSkipped: 'Skipped — will not be created.',
+    // result step
+    wizardDone: 'The wizard has finished',
+    newDraftsLabel: 'New initiative drafts',
+    auditTimelineLabel: 'Session audit – proposal → approval → execution → audit',
+    noAuditEvents: 'No audit events for this session.',
+    close: 'Close',
   },
 };
 
@@ -461,25 +591,25 @@ interface InitiativeWizardModalProps {
   onCreated: (created: PortfolioInitiative[]) => void;
 }
 
-const BUSINESS_PRIORITIES = [
-  { id: 'margin', label: 'Marza / EBITDA' },
-  { id: 'quality', label: 'Jakosc' },
-  { id: 'speed', label: 'Terminowosc' },
-  { id: 'automation', label: 'Automatyzacja' },
-  { id: 'governance', label: 'Governance' },
-  { id: 'risk', label: 'Redukcja ryzyka' },
+const BUSINESS_PRIORITIES: Array<{ id: string; label: Record<WizardLanguage, string> }> = [
+  { id: 'margin', label: { pl: 'Marza / EBITDA', en: 'Margin / EBITDA' } },
+  { id: 'quality', label: { pl: 'Jakosc', en: 'Quality' } },
+  { id: 'speed', label: { pl: 'Terminowosc', en: 'On-time delivery' } },
+  { id: 'automation', label: { pl: 'Automatyzacja', en: 'Automation' } },
+  { id: 'governance', label: { pl: 'Governance', en: 'Governance' } },
+  { id: 'risk', label: { pl: 'Redukcja ryzyka', en: 'Risk reduction' } },
 ];
 
-const STATUS_LABELS: Record<CandidateStatus, string> = {
-  new_candidate: 'Nowy',
-  accepted_for_shortlist: 'Zaakceptowany',
-  rejected: 'Odrzucony',
-  needs_evidence: 'Brak evidence',
-  needs_split: 'Do podzialu',
-  needs_merge: 'Do scalenia',
-  needs_rewrite: 'Do przepisania',
-  already_covered: 'Juz pokryty',
-  ready_for_charter: 'Gotowy do charteru',
+const STATUS_LABELS: Record<CandidateStatus, Record<WizardLanguage, string>> = {
+  new_candidate: { pl: 'Nowy', en: 'New' },
+  accepted_for_shortlist: { pl: 'Zaakceptowany', en: 'Accepted' },
+  rejected: { pl: 'Odrzucony', en: 'Rejected' },
+  needs_evidence: { pl: 'Brak evidence', en: 'Needs evidence' },
+  needs_split: { pl: 'Do podzialu', en: 'Needs split' },
+  needs_merge: { pl: 'Do scalenia', en: 'Needs merge' },
+  needs_rewrite: { pl: 'Do przepisania', en: 'Needs rewrite' },
+  already_covered: { pl: 'Juz pokryty', en: 'Already covered' },
+  ready_for_charter: { pl: 'Gotowy do charteru', en: 'Ready for charter' },
 };
 
 function findExistingMatch(candidate: WizardCandidate, existing: ExistingInitiativeMatch[]) {
@@ -655,7 +785,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           title: candidate.title,
           reason: 'contradicted_confidence',
           message:
-            'Confidence ze zrodla "contradicted" - rozstrzygnij sprzeczne obserwacje przed promote.',
+            language === 'pl'
+              ? 'Confidence ze zrodla "contradicted" - rozstrzygnij sprzeczne obserwacje przed promote.'
+              : 'Source confidence is "contradicted" - resolve conflicting findings before promote.',
         });
         continue;
       }
@@ -665,7 +797,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           title: candidate.title,
           reason: 'needs_evidence_status',
           message:
-            'Kandydat oznaczony jako "Brak evidence" - uzupelnij evidence przed utworzeniem draftu.',
+            language === 'pl'
+              ? 'Kandydat oznaczony jako "Brak evidence" - uzupelnij evidence przed utworzeniem draftu.'
+              : 'Candidate flagged "Needs evidence" - add evidence before creating a draft.',
         });
         continue;
       }
@@ -677,12 +811,15 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           candidateId: candidate.id,
           title: candidate.title,
           reason: 'missing_evidence',
-          message: 'Kandydat ma sourceRefs ale brak evidenceRefs - zlamana lineage do zrodla.',
+          message:
+            language === 'pl'
+              ? 'Kandydat ma sourceRefs ale brak evidenceRefs - zlamana lineage do zrodla.'
+              : 'Candidate has sourceRefs but no evidenceRefs - broken lineage to the source.',
         });
       }
     }
     return blockers;
-  }, [actionableCandidates]);
+  }, [actionableCandidates, language]);
 
   const shortlistGateOk = shortlistGateBlockers.length === 0;
 
@@ -854,7 +991,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         console.error('[InitiativeWizardModal] Failed to load audit timeline:', error);
         if (!cancelled) {
           setAuditError(
-            'Nie udalo sie pobrac sladu audytu sesji. Inicjatywy zostaly utworzone, ale timeline jest niedostepny.'
+            language === 'pl'
+              ? 'Nie udalo sie pobrac sladu audytu sesji. Inicjatywy zostaly utworzone, ale timeline jest niedostepny.'
+              : 'Failed to load the session audit trail. The initiatives were created, but the timeline is unavailable.'
           );
         }
       } finally {
@@ -867,7 +1006,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [step, sessionId]);
+  }, [step, sessionId, language]);
 
   if (!isOpen) return null;
 
@@ -950,11 +1089,20 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       setCandidates(nextCandidates);
       setSelectedCandidateId(nextCandidates[0]?.id || null);
       setStep('candidates');
-      toast.success('Kandydaci inicjatyw sa gotowi do triage.', { duration: 1800 });
+      toast.success(
+        language === 'pl'
+          ? 'Kandydaci inicjatyw sa gotowi do triage.'
+          : 'Initiative candidates are ready to triage.',
+        { duration: 1800 }
+      );
       void runSimilarityCheck(nextCandidates);
     } catch (error) {
       console.error('[InitiativeWizardModal] Failed to start wizard:', error);
-      toast.error('Nie udalo sie uruchomic kreatora inicjatyw.');
+      toast.error(
+        language === 'pl'
+          ? 'Nie udalo sie uruchomic kreatora inicjatyw.'
+          : 'Failed to start the initiative wizard.'
+      );
     } finally {
       setIsWorking(false);
     }
@@ -975,11 +1123,18 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       if (!updated) throw new Error('Candidate was not updated');
       setCandidates((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       setSelectedCandidateId(updated.id);
-      const label = STATUS_LABELS[triageStatus] || triageStatus;
-      toast.success(`Decyzja zapisana: ${label}.`, { duration: 1500 });
+      const label = STATUS_LABELS[triageStatus]?.[language] || triageStatus;
+      toast.success(
+        language === 'pl' ? `Decyzja zapisana: ${label}.` : `Decision saved: ${label}.`,
+        { duration: 1500 }
+      );
     } catch (error) {
       console.error('[InitiativeWizardModal] Candidate triage failed:', error);
-      toast.error('Nie udalo sie zapisac decyzji dla kandydata.');
+      toast.error(
+        language === 'pl'
+          ? 'Nie udalo sie zapisac decyzji dla kandydata.'
+          : 'Failed to save the candidate decision.'
+      );
     } finally {
       setIsWorking(false);
     }
@@ -989,9 +1144,12 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     if (!sessionId) return;
     if (!shortlistGateOk) {
       const firstBlocker = shortlistGateBlockers[0];
-      toast.error(`Nie mozna utworzyc draftow: ${firstBlocker?.message || 'wymagane evidence'}.`, {
-        duration: 4000,
-      });
+      toast.error(
+        language === 'pl'
+          ? `Nie mozna utworzyc draftow: ${firstBlocker?.message || 'wymagane evidence'}.`
+          : `Cannot create drafts: ${firstBlocker?.message || 'evidence required'}.`,
+        { duration: 4000 }
+      );
       return;
     }
     // #29f — only materialize the candidates the user explicitly selected
@@ -1133,7 +1291,11 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       );
     } catch (error) {
       console.error('[InitiativeWizardModal] Draft creation failed:', error);
-      toast.error('Nie udalo sie utworzyc draftow inicjatyw.');
+      toast.error(
+        language === 'pl'
+          ? 'Nie udalo sie utworzyc draftow inicjatyw.'
+          : 'Failed to create the initiative drafts.'
+      );
     } finally {
       setIsWorking(false);
       setCreateProgress(null);
@@ -1507,26 +1669,26 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       )}
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          Decyzja transformacyjna
+          {t.transformDecision}
         </label>
         <select
           value={mode}
           onChange={(event) => setMode(event.target.value)}
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         >
-          <option value="create_first_portfolio">Stwórz pierwsze portfolio</option>
-          <option value="generate_from_evidence">Wygeneruj z wybranych evidence</option>
-          <option value="prioritize_by_goal">Priorytetyzuj wg celu biznesowego</option>
-          <option value="match_existing">Dopasuj do istniejących inicjatyw</option>
-          <option value="refresh_portfolio">Odśwież portfolio nowymi evidence</option>
-          <option value="build_waves">Buduj fale (sekwencja w roadmapę)</option>
-          <option value="improve_portfolio">Popraw istniejące portfolio (gap closure)</option>
+          <option value="create_first_portfolio">{t.modeCreateFirstPortfolio}</option>
+          <option value="generate_from_evidence">{t.modeGenerateFromEvidence}</option>
+          <option value="prioritize_by_goal">{t.modePrioritizeByGoal}</option>
+          <option value="match_existing">{t.modeMatchExisting}</option>
+          <option value="refresh_portfolio">{t.modeRefreshPortfolio}</option>
+          <option value="build_waves">{t.modeBuildWaves}</option>
+          <option value="improve_portfolio">{t.modeImprovePortfolio}</option>
         </select>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          Priorytety biznesowe
+          {t.businessPriorities}
         </label>
         <div className="flex flex-wrap gap-1.5">
           {BUSINESS_PRIORITIES.map((priority) => {
@@ -1542,7 +1704,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                     : 'border-slate-200 bg-white text-slate-600 hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
                 }`}
               >
-                {priority.label}
+                {priority.label[language]}
               </button>
             );
           })}
@@ -1551,7 +1713,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
 
       <div className="grid grid-cols-3 gap-2">
         <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          Liczba
+          {t.countLabel}
           <input
             type="number"
             min={1}
@@ -1562,41 +1724,41 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           />
         </label>
         <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          Horyzont
+          {t.horizonLabel}
           <select
             value={timeHorizon}
             onChange={(event) => setTimeHorizon(event.target.value)}
             className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
           >
-            <option value="30_days">30 dni</option>
-            <option value="90_days">90 dni</option>
-            <option value="6_months">6 miesięcy</option>
-            <option value="12_months">12 miesięcy</option>
+            <option value="30_days">{t.horizon30Days}</option>
+            <option value="90_days">{t.horizon90Days}</option>
+            <option value="6_months">{t.horizon6Months}</option>
+            <option value="12_months">{t.horizon12Months}</option>
           </select>
         </label>
         <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          Ryzyko
+          {t.riskLabel}
           <select
             value={riskAppetite}
             onChange={(event) => setRiskAppetite(event.target.value)}
             className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
           >
-            <option value="conservative">Szybkie i pewne</option>
-            <option value="balanced">Mieszany portfel</option>
-            <option value="bold">Strategic bets</option>
+            <option value="conservative">{t.riskConservative}</option>
+            <option value="balanced">{t.riskBalanced}</option>
+            <option value="bold">{t.riskBold}</option>
           </select>
         </label>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          Notatka konsultanta / kontekst
+          {t.consultantNote}
         </label>
         <textarea
           value={manualNotes}
           onChange={(event) => setManualNotes(event.target.value)}
           rows={4}
-          placeholder="Np. po assessment chcemy wybrać 3 inicjatywy o największym efekcie na marżę, terminowość i jakość danych..."
+          placeholder={t.consultantNotePlaceholder}
           className="w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
       </div>
@@ -1748,12 +1910,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           >
             <Sparkles className="h-8 w-8 text-slate-600" />
             <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-              Brak kandydatów do triage
+              {t.noCandidatesTitle}
             </p>
-            <p className="mt-1 max-w-md text-xs text-slate-500">
-              Wróć do kroku Intencja i wygeneruj kandydatów. Jeżeli sourceBasket jest pusty, system
-              zaproponuje kandydatów z portfolio hygieny (oznaczonych niższym confidence).
-            </p>
+            <p className="mt-1 max-w-md text-xs text-slate-500">{t.noCandidatesHint}</p>
           </div>
         )}
         {candidates.map((candidate) => {
@@ -1780,14 +1939,14 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.08] dark:text-slate-300">
-                  {STATUS_LABELS[candidate.triageStatus]}
+                  {STATUS_LABELS[candidate.triageStatus]?.[language] ?? candidate.triageStatus}
                 </span>
               </div>
               {renderSimilarityChip(candidate)}
               {!similarityByCandidate[candidate.id] && match && (
                 <div className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-300">
                   <AlertTriangle className="h-3 w-3" />
-                  Podobna inicjatywa: {match.name || match.title}
+                  {t.similarInitiative}: {match.name || match.title}
                 </div>
               )}
             </button>
@@ -1798,7 +1957,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       {selectedCandidate && (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
           <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-            Szczegóły kandydata
+            {t.candidateDetails}
           </div>
           <h3 className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
             {selectedCandidate.title}
@@ -1923,7 +2082,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               className="mt-1.5 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-primary-300 bg-white px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-50 dark:border-primary-400/30 dark:bg-navy-900/50 dark:text-primary-200 dark:hover:bg-primary-500/10"
             >
               <Link2 className="h-3 w-3" />
-              Powiąż jako już pokryty
+              {t.linkAlreadyCovered}
             </button>
           )}
 
@@ -1965,11 +2124,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         >
           <div className="flex items-center gap-2 font-semibold">
             <AlertTriangle className="h-4 w-4" />
-            Shortlist gate zablokował „Utwórz drafty”
+            {t.shortlistGateBlockedTitle}
           </div>
           <p className="mt-1 text-xs text-rose-800 dark:text-rose-100/80">
-            Zgodnie z kanonem (FINAL_IMPLEMENTATION_PLAN_10) kandydaci z confidence „contradicted”,
-            statusem „needs_evidence” lub bez evidenceRefs nie mogą zostać promowani do draftu.
+            {t.shortlistGateBlockedBody}
           </p>
           <ul className="mt-2 space-y-1 text-xs">
             {shortlistGateBlockers.map((blocker) => (
@@ -2027,10 +2185,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                           ? t.mergeDone
                           : t.extendDone
                         : candidate.linkedInitiativeId
-                          ? 'Zostanie zlinkowana z istniejącą inicjatywą.'
+                          ? t.willLinkExisting
                           : checked
-                            ? 'Zostanie utworzony draft inicjatywy (DRAFT).'
-                            : 'Pominięta — nie zostanie utworzona.'}
+                            ? t.willCreateDraft
+                            : t.willBeSkipped}
                   </div>
                   {/* #29e — surface a resolved (merged/extended) badge with deep link */}
                   {resolved && (
@@ -2097,18 +2255,19 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       <div className="flex flex-col items-center text-center">
         <CheckCircle2 className="h-12 w-12 text-emerald-500" />
         <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-100">
-          Kreator zakończył pracę
+          {t.wizardDone}
         </h3>
         <p className="mt-1.5 max-w-xl text-sm text-slate-500 dark:text-slate-400">
-          Utworzone drafty: {createdInitiatives.length}. Kandydaci odrzuceni lub oznaczeni jako
-          pokryci nie zostali utworzeni jako nowe inicjatywy.
+          {language === 'pl'
+            ? `Utworzone drafty: ${createdInitiatives.length}. Kandydaci odrzuceni lub oznaczeni jako pokryci nie zostali utworzeni jako nowe inicjatywy.`
+            : `Drafts created: ${createdInitiatives.length}. Rejected or already-covered candidates were not created as new initiatives.`}
         </p>
       </div>
 
       {createdInitiatives.length > 0 && (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-100">
           <div className="text-[10px] font-semibold uppercase tracking-wide">
-            Nowe drafty inicjatyw
+            {t.newDraftsLabel}
           </div>
           <ul className="mt-2 space-y-1">
             {createdInitiatives.map((initiative) => (
@@ -2132,7 +2291,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       >
         <div className="flex items-center justify-between">
           <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-            Audyt sesji – proposal → approval → execution → audit
+            {t.auditTimelineLabel}
           </div>
           {auditLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-600" />}
         </div>
@@ -2142,13 +2301,13 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           </div>
         )}
         {!auditLoading && !auditError && auditEvents.length === 0 && (
-          <div className="mt-2 text-xs text-slate-500">Brak zdarzeń audytu dla tej sesji.</div>
+          <div className="mt-2 text-xs text-slate-500">{t.noAuditEvents}</div>
         )}
         {auditEvents.length > 0 && (
           <ol className="mt-3 space-y-1.5">
             {auditEvents.map((event) => {
               const meta = AUDIT_EVENT_LABELS[event.eventType] || {
-                label: event.eventType,
+                label: { pl: event.eventType, en: event.eventType },
                 tone: 'info' as const,
               };
               const toneClasses =
@@ -2166,13 +2325,13 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   data-event-type={event.eventType}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold">{meta.label}</span>
+                    <span className="font-semibold">{meta.label[language] ?? event.eventType}</span>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400">
                       {formatAuditTimestamp(event.createdAt)}
                     </span>
                   </div>
                   <div className="mt-1 text-[11px] text-slate-700 dark:text-slate-300">
-                    {describeAuditEvent(event)}
+                    {describeAuditEvent(event, language)}
                   </div>
                 </li>
               );
@@ -2185,9 +2344,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="min-w-[180px] rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-500"
+          className="min-w-[180px] rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-500"
         >
-          Zamknij
+          {t.close}
         </button>
       </div>
     </div>
@@ -2336,13 +2495,15 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               disabled={isWorking}
               className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
             >
-              Anuluj
+              {t.cancel}
             </button>
 
             <div className="flex flex-1 items-center justify-center text-xs text-slate-500">
               {candidates.length > 0
-                ? `${actionableCandidates.length} kandydatów w shortlist / ${candidates.length} łącznie`
-                : 'Ustaw intencję i wygeneruj kandydatów.'}
+                ? language === 'pl'
+                  ? `${actionableCandidates.length} kandydatów w shortlist / ${candidates.length} łącznie`
+                  : `${actionableCandidates.length} shortlisted / ${candidates.length} total`
+                : t.setIntentHint}
               {step === 'governance' && actionableCandidates.length > 0 ? (
                 <span
                   className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -2352,8 +2513,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   }`}
                 >
                   {shortlistGateOk
-                    ? 'Shortlist gate OK'
-                    : `Shortlist gate blokuje (${shortlistGateBlockers.length})`}
+                    ? t.shortlistGateOk
+                    : language === 'pl'
+                      ? `Shortlist gate blokuje (${shortlistGateBlockers.length})`
+                      : `Shortlist gate blocks (${shortlistGateBlockers.length})`}
                 </span>
               ) : null}
             </div>
@@ -2375,7 +2538,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 data-testid="initiative-wizard-insights-next"
                 disabled={isWorking}
                 onClick={() => setStep('intent')}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t.next}
                 <ArrowRight size={16} />
@@ -2387,14 +2550,14 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 type="button"
                 disabled={isWorking}
                 onClick={startWizard}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isWorking ? (
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
                   <Sparkles size={16} />
                 )}
-                Wygeneruj kandydatów
+                {t.generateCandidates}
               </button>
             )}
             {step === 'candidates' && (
@@ -2403,9 +2566,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 data-testid="initiative-wizard-governance-preview"
                 disabled={actionableCandidates.length === 0}
                 onClick={() => setStep('governance')}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Governance preview
+                {t.governancePreview}
                 <ArrowRight size={16} />
               </button>
             )}
@@ -2415,12 +2578,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                 data-testid="initiative-wizard-create-drafts"
                 disabled={isWorking || !shortlistGateOk || candidatesToCreate.length === 0}
                 onClick={createDrafts}
-                title={
-                  !shortlistGateOk
-                    ? 'Shortlist gate: rozstrzygnij contradicted / uzupełnij evidence przed Utwórz drafty.'
-                    : undefined
-                }
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+                title={!shortlistGateOk ? t.shortlistGateTitle : undefined}
+                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isWorking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 {createProgress

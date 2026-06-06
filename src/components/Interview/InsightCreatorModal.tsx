@@ -2639,7 +2639,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </form>
 
         {/* Footer */}
-        <div className="flex shrink-0 gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08]">
+        <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08]">
           <button
             type="button"
             onClick={onClose}
@@ -2664,7 +2664,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="button"
               onClick={goToNextStep}
               disabled={isGenerating}
-              className="min-w-[150px] rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPolish ? 'Dalej' : 'Next'}
             </button>
@@ -2674,7 +2674,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="button"
               onClick={submitInsight}
               disabled={!canGenerate}
-              className="flex min-w-[150px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isGenerating ? (
                 <>

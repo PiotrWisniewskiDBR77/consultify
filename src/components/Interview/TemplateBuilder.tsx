@@ -1795,8 +1795,8 @@ ${sourceText || '(none)'}`;
       <div
         className={
           isDocumentMode
-            ? 'relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl w-full h-full overflow-hidden flex flex-col'
-            : 'relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-[1080px] mx-4 max-h-[90vh] overflow-hidden flex flex-col'
+            ? 'relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl w-full h-full overflow-hidden flex flex-col'
+            : 'relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl w-full max-w-[1080px] mx-4 max-h-[90vh] overflow-hidden flex flex-col'
         }
       >
         {/* Header */}
@@ -1817,9 +1817,9 @@ ${sourceText || '(none)'}`;
           </div>
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center h-6 w-6 rounded-sm text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-slate-500 dark:text-slate-300 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
           >
-            <X size={12} />
+            <X size={14} />
           </button>
         </div>
 
