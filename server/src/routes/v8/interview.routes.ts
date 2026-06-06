@@ -382,6 +382,12 @@ router.post(
   v8Wrap(InterviewController.approveAssignment, interviewMeta)
 );
 
+router.patch(
+  '/assignments/:id/manage',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  v8Wrap(InterviewController.updateAssignment, interviewMeta)
+);
+
 router.post(
   '/sessions/:sessionId/evaluate-answers',
   v8Wrap(InterviewController.evaluateSessionAnswers, interviewMeta)
