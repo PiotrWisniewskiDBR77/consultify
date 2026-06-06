@@ -813,12 +813,10 @@ export const InterviewHub: React.FC = () => {
     'all' | 'answered' | 'approved' | 'sent_back'
   >('all');
   // #8c — Assigned (managed) lifecycle filter. Mirrors the Sessions lifecycle
-  // chip-row UX. NOTE: the v8 interview API has no assignment-archive endpoint,
-  // so Archive/Trash are surfaced as honest, disabled-with-tooltip affordances
-  // rather than fabricated routes; only "Active" is wired to real data today.
-  const [managedLifecycle, setManagedLifecycle] = useState<'active' | 'archived' | 'trash'>(
-    'active'
-  );
+  // chip-row UX. Assignments have an archive lifecycle (no trash), filtered
+  // server-side via ?lifecycle=active|archived|all. Default = active.
+  const [managedLifecycle, setManagedLifecycle] = useState<'active' | 'archived'>('active');
+  const [managedLifecycleBusy, setManagedLifecycleBusy] = useState(false);
   const [selectedInsightId, setSelectedInsightId] = useState<string | null>(null);
   const [insightPreviewDetailsExpanded, setInsightPreviewDetailsExpanded] = useState(false);
   const [insightPreviewAiActiveId, setInsightPreviewAiActiveId] = useState<string | null>(null);
@@ -1121,15 +1119,27 @@ export const InterviewHub: React.FC = () => {
       : [];
   }, []);
 
-  const loadManagedAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
-    const assignmentsRes = await V8InterviewApi.getManagedAssignments()
-      .then((res) => res.assignments)
-      .catch(() => Api.get('/interview/assignments/managed'))
-      .catch(() => []);
-    return Array.isArray(assignmentsRes)
-      ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
-      : [];
-  }, []);
+  // #8c — Managed assignments list is filtered server-side via
+  // ?lifecycle=active|archived|all (active = default, excludes archived).
+  // The v8 fast path returns only active rows, so non-active views go through
+  // the /interview/assignments/managed?lifecycle= endpoint.
+  const loadManagedAssignments = useCallback(
+    async (lifecycle: 'active' | 'archived' | 'all' = 'active'): Promise<InterviewAssignment[]> => {
+      const assignmentsRes =
+        lifecycle === 'active'
+          ? await V8InterviewApi.getManagedAssignments()
+              .then((res) => res.assignments)
+              .catch(() => Api.get('/interview/assignments/managed'))
+              .catch(() => [])
+          : await Api.get(
+              `/interview/assignments/managed?lifecycle=${encodeURIComponent(lifecycle)}`
+            ).catch(() => []);
+      return Array.isArray(assignmentsRes)
+        ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
+        : [];
+    },
+    []
+  );
 
   const loadOverdueAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
     const assignmentsRes = await V8InterviewApi.getOverdueAssignments()
@@ -1140,6 +1150,21 @@ export const InterviewHub: React.FC = () => {
       ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
       : [];
   }, []);
+
+  // #8c — Re-fetch only the managed-assignments list (used after archive/restore
+  // actions and when the user switches the Active | Archive filter). Mirrors the
+  // Sessions refreshSessions pattern.
+  const refreshManagedAssignments = useCallback(
+    async (lifecycle: 'active' | 'archived' = managedLifecycle) => {
+      try {
+        const next = await loadManagedAssignments(lifecycle);
+        setManagedAssignments(next);
+      } catch (error) {
+        console.error('[InterviewHub] Failed to refresh managed assignments:', error);
+      }
+    },
+    [loadManagedAssignments, managedLifecycle]
+  );
 
   // V3-A02: Dynamic documents state with sessionStorage persistence (shared hook)
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
@@ -1348,6 +1373,20 @@ export const InterviewHub: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionLifecycle]);
 
+  // #8c — Re-fetch the managed-assignments list when the Active | Archive filter
+  // changes. First run skipped (main load effect already fetched the default
+  // "active" list) to avoid a redundant double fetch on mount.
+  const managedLifecycleHydrated = useRef(false);
+  useEffect(() => {
+    if (!managedLifecycleHydrated.current) {
+      managedLifecycleHydrated.current = true;
+      return;
+    }
+    setSelectedAssignmentIds(new Set());
+    void refreshManagedAssignments(managedLifecycle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managedLifecycle]);
+
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
@@ -1531,6 +1570,72 @@ export const InterviewHub: React.FC = () => {
     loadManagedAssignments,
     loadOverdueAssignments,
   ]);
+
+  // #8 / #8c — Assignment archive lifecycle. Per-row archive/restore backed by
+  // POST /interview/assignments/:id/{archive,restore}. After each action we
+  // re-fetch the list for the current lifecycle filter so the affected row drops
+  // out of view.
+  const handleAssignmentLifecycleAction = useCallback(
+    async (assignment: InterviewAssignment, action: 'archive' | 'restore') => {
+      if (managedLifecycleBusy) return;
+      setManagedLifecycleBusy(true);
+      try {
+        await Api.post(`/interview/assignments/${assignment.id}/${action}`, {});
+        toast.success(
+          action === 'archive'
+            ? isPolish
+              ? 'Przydział zarchiwizowany'
+              : 'Assignment archived'
+            : isPolish
+              ? 'Przydział przywrócony'
+              : 'Assignment restored'
+        );
+        await refreshManagedAssignments();
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        console.error(`[InterviewHub] Assignment ${action} failed:`, error);
+      } finally {
+        setManagedLifecycleBusy(false);
+      }
+    },
+    [isPolish, managedLifecycleBusy, refreshManagedAssignments]
+  );
+
+  // #8 — Bulk archive/restore over the current selection. No bulk route exists,
+  // so we fan out per-assignment archive/restore calls.
+  const handleBulkAssignmentLifecycle = useCallback(
+    async (action: 'archive' | 'restore') => {
+      const ids = Array.from(selectedAssignmentIds);
+      if (ids.length === 0 || managedLifecycleBusy) return;
+      setManagedLifecycleBusy(true);
+      let done = 0;
+      for (const id of ids) {
+        try {
+          await Api.post(`/interview/assignments/${id}/${action}`, {});
+          done += 1;
+        } catch {
+          // per-item failures tolerated; reflected in the count
+        }
+      }
+      await refreshManagedAssignments();
+      setManagedLifecycleBusy(false);
+      setSelectedAssignmentIds(new Set());
+      if (done > 0) {
+        toast.success(
+          action === 'archive'
+            ? isPolish
+              ? `Zarchiwizowano ${done}`
+              : `${done} archived`
+            : isPolish
+              ? `Przywrócono ${done}`
+              : `${done} restored`
+        );
+      } else {
+        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+      }
+    },
+    [isPolish, managedLifecycleBusy, refreshManagedAssignments, selectedAssignmentIds]
+  );
 
   const downloadCsv = useCallback((rows: string[][], filename: string) => {
     const escapeCell = (value: string) => {
@@ -2837,11 +2942,13 @@ export const InterviewHub: React.FC = () => {
     [templates]
   );
 
-  // #9b — Manual "Escalate now". The backend escalation engine runs
-  // automatically, but no manual-trigger endpoint is exposed to the client yet,
-  // so this is an honest stub (informs the user instead of faking success).
+  // #9b — Manual "Escalate now". Triggers the backend escalation engine for a
+  // single assignment via POST /interview/assignments/:id/escalate. On success
+  // we refresh the managed list so the escalation columns update.
+  const [escalateBusyId, setEscalateBusyId] = useState<string | null>(null);
   const handleEscalateNow = useCallback(
-    (assignment: InterviewAssignment) => {
+    async (assignment: InterviewAssignment) => {
+      if (escalateBusyId) return;
       if (assignment.escalatedAt || assignment.escalationTarget) {
         toast(
           isPolish
@@ -2855,14 +2962,19 @@ export const InterviewHub: React.FC = () => {
         );
         return;
       }
-      toast(
-        isPolish
-          ? 'Ręczna eskalacja będzie wkrótce dostępna — silnik eskalacji działa automatycznie.'
-          : 'Manual escalation is coming soon — the escalation engine runs automatically.',
-        { icon: 'ℹ️', duration: 4500 }
-      );
+      setEscalateBusyId(assignment.id);
+      try {
+        await Api.post(`/interview/assignments/${assignment.id}/escalate`, {});
+        toast.success(isPolish ? 'Eskalowano' : 'Escalated');
+        await refreshManagedAssignments();
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się eskalować' : 'Could not escalate');
+        console.error('[InterviewHub] Escalate now failed:', error);
+      } finally {
+        setEscalateBusyId(null);
+      }
     },
-    [isPolish]
+    [escalateBusyId, isPolish, refreshManagedAssignments]
   );
 
   const getManagedAssignmentForSession = useCallback(
@@ -3210,22 +3322,37 @@ export const InterviewHub: React.FC = () => {
                   <Bell size={14} />
                   {isPolish ? 'Przypomnij' : 'Remind'}
                 </button>
-                {/* #8 — Archive: the v8 interview API exposes no assignment
-                    archive endpoint, so this is disabled-with-tooltip until one
-                    exists (honest over fake). */}
-                <button
-                  type="button"
-                  disabled
-                  title={
-                    isPolish
-                      ? 'Archiwizacja przydziałów będzie wkrótce dostępna'
-                      : 'Archiving assignments is coming soon'
-                  }
-                  className={`${MENU_3_ACTION_NEUTRAL} opacity-50 cursor-not-allowed`}
-                >
-                  <Archive size={14} />
-                  {isPolish ? 'Archiwizuj' : 'Archive'}
-                </button>
+                {/* #8 — Bulk Archive (active view) / Restore (archive view),
+                    backed by POST /interview/assignments/:id/{archive,restore}. */}
+                {managedLifecycle === 'archived' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkAssignmentLifecycle('restore')}
+                    disabled={managedLifecycleBusy}
+                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {managedLifecycleBusy ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <RotateCcw size={14} />
+                    )}
+                    {isPolish ? 'Przywróć' : 'Restore'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkAssignmentLifecycle('archive')}
+                    disabled={managedLifecycleBusy}
+                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {managedLifecycleBusy ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Archive size={14} />
+                    )}
+                    {isPolish ? 'Archiwizuj' : 'Archive'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -3259,38 +3386,26 @@ export const InterviewHub: React.FC = () => {
                 );
               })}
             </div>
-            {/* #8c — Lifecycle filter: Active | Archive | Trash, mirroring the
-                Sessions chip-row. Archive/Trash are disabled-with-tooltip
-                because no assignment-archive endpoint exists yet. */}
+            {/* #8c — Lifecycle filter: Active | Archive, mirroring the Sessions
+                chip-row. Passes ?lifecycle= to the managed-assignments fetch
+                (assignments have no trash). */}
             <div className="flex shrink-0 items-center gap-1.5">
               {(
                 [
                   { id: 'active', label: isPolish ? 'Aktywne' : 'Active', icon: List },
                   { id: 'archived', label: isPolish ? 'Archiwum' : 'Archive', icon: Archive },
-                  { id: 'trash', label: isPolish ? 'Kosz' : 'Trash', icon: Trash2 },
                 ] as const
               ).map((lc) => {
                 const isActive = managedLifecycle === lc.id;
-                const isDisabled = lc.id !== 'active';
                 const Icon = lc.icon;
                 return (
                   <button
                     key={lc.id}
                     type="button"
-                    disabled={isDisabled}
-                    title={
-                      isDisabled
-                        ? isPolish
-                          ? 'Cykl życia przydziałów będzie wkrótce dostępny'
-                          : 'Assignment lifecycle is coming soon'
-                        : undefined
-                    }
-                    onClick={() => {
-                      if (isDisabled) return;
-                      setManagedLifecycle(lc.id);
-                    }}
+                    disabled={managedLifecycleBusy}
+                    onClick={() => setManagedLifecycle(lc.id)}
                     className={`${chipBase} ${isActive ? chipActive : chipInactive} ${
-                      isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                      managedLifecycleBusy ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     aria-pressed={isActive}
                   >
@@ -8112,8 +8227,8 @@ Return ONLY the answer text (no markdown fences).`;
                             : []),
                           // #7b — Manager row actions (Assigned tab kebab):
                           // Approve, Send back, Reassign, Change due date,
-                          // Remind, Escalate now. Wired to existing handlers;
-                          // Escalate is an honest stub (no manual endpoint yet).
+                          // Remind, Escalate now, Archive/Restore. All wired to
+                          // real endpoints.
                           ...(showAssignee && canAssign
                             ? [
                                 ...(assignment.status === 'submitted'
@@ -8161,13 +8276,28 @@ Return ONLY the answer text (no markdown fences).`;
                                         disabled:
                                           Boolean(assignment.escalatedAt) ||
                                           Boolean(assignment.escalationTarget),
-                                        description: isPolish
-                                          ? 'Ręczna eskalacja będzie wkrótce dostępna'
-                                          : 'Manual escalation coming soon',
                                         onClick: () => handleEscalateNow(assignment),
                                       },
                                     ]
                                   : []),
+                                // #8 — Per-row Archive / Restore.
+                                managedLifecycle === 'archived'
+                                  ? {
+                                      id: 'restore',
+                                      label: isPolish ? 'Przywróć' : 'Restore',
+                                      icon: RotateCcw,
+                                      disabled: managedLifecycleBusy,
+                                      onClick: () =>
+                                        handleAssignmentLifecycleAction(assignment, 'restore'),
+                                    }
+                                  : {
+                                      id: 'archive',
+                                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                                      icon: Archive,
+                                      disabled: managedLifecycleBusy,
+                                      onClick: () =>
+                                        handleAssignmentLifecycleAction(assignment, 'archive'),
+                                    },
                               ]
                             : []),
                         ]}
