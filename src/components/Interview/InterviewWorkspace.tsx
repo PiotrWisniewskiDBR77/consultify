@@ -58,6 +58,7 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
+import { StatusPill } from '@/components/shared/StatusPill';
 import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
@@ -441,6 +442,39 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return decisions.length > 0 ? decisions[decisions.length - 1] : null;
   }, [assignmentInfo]);
   const statusConfig = STATUS_MAP[currentStatus] || STATUS_MAP.in_progress;
+
+  // #3 — True lifecycle status for the read-back pill. Unlike `currentStatus`
+  // (which collapses sent_back → in_progress so the respondent can resume
+  // editing), this preserves `sent_back` so the header pill clearly shows a
+  // session was returned for revision.
+  const lifecycleStatus = useMemo(() => {
+    const raw = String(assignmentStatus || session?.status || 'in_progress').toLowerCase();
+    if (raw === 'active') return 'in_progress';
+    if (raw === 'archived') return 'completed';
+    if (
+      ['assigned', 'in_progress', 'submitted', 'sent_back', 'approved', 'completed'].includes(raw)
+    ) {
+      return raw;
+    }
+    return 'in_progress';
+  }, [assignmentStatus, session?.status]);
+  const lifecycleConfig = STATUS_MAP[lifecycleStatus] || STATUS_MAP.in_progress;
+
+  // #7 — Approve pre-condition messaging. The backend rejects Approve unless
+  // completeness >= 50% (returns 409). Surface that threshold to the reviewer
+  // BEFORE they click, using the answered/total ratio as the client-side proxy
+  // for backend completeness so the disabled-state + hint stay in sync.
+  const APPROVE_MIN_COMPLETENESS = 50;
+  const completionPercent = useMemo(() => {
+    const total = questions.length;
+    if (total === 0) return 0;
+    const answered = questions.filter((q) => q.status === 'answered').length;
+    return Math.round((answered / total) * 100);
+  }, [questions]);
+  const canApprove = completionPercent >= APPROVE_MIN_COMPLETENESS;
+  const approveBlockedHint = isPolish
+    ? `Zatwierdzenie odblokowuje się przy ${APPROVE_MIN_COMPLETENESS}% kompletności — obecnie ${completionPercent}%.`
+    : `Approve unlocks at ${APPROVE_MIN_COMPLETENESS}% completeness — currently ${completionPercent}%.`;
 
   // #11c — Live (non-blocking) per-answer guidance. Pure local heuristic, no
   // network: flags answers that are too short or required-but-empty so the
@@ -1795,7 +1829,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         icon: ThumbsUp,
         variant: 'success',
         onClick: handleApprove,
-        disabled: isApproving || isSendingBack,
+        disabled: isApproving || isSendingBack || !canApprove,
+        title: !canApprove ? { en: approveBlockedHint, pl: approveBlockedHint } : undefined,
       });
       out.push({
         id: 'send-back',
@@ -1850,11 +1885,30 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const sections: NModeSection[] = (() => {
     const overview = (
       <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
+        {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
+            sent_back / approved / completed) via the canonical StatusPill. */}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Status:' : 'Status:'}
+          </span>
+          <StatusPill
+            status={lifecycleStatus}
+            label={isPolish ? lifecycleConfig.label.pl : lifecycleConfig.label.en}
+          />
+          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+            {completionPercent}% {isPolish ? 'ukończone' : 'complete'}
+          </span>
+        </div>
         {isReviewerMode && (
           <Callout variant="warning" title={isPolish ? 'Tryb recenzenta' : 'Reviewer mode'} compact>
-            {isPolish
-              ? 'Przeglądasz odpowiedzi do zatwierdzenia. Użyj przycisków "Zatwierdź" lub "Odeślij" w pasku akcji.'
-              : 'You are reviewing answers for approval. Use "Approve" or "Send back" in the action bar.'}
+            <div className="space-y-1">
+              <p>
+                {isPolish
+                  ? 'Przeglądasz odpowiedzi do zatwierdzenia. Użyj przycisków "Zatwierdź" lub "Odeślij" w pasku akcji.'
+                  : 'You are reviewing answers for approval. Use "Approve" or "Send back" in the action bar.'}
+              </p>
+              {!canApprove && <p className="font-medium">{approveBlockedHint}</p>}
+            </div>
           </Callout>
         )}
         {!isReviewerMode && reviewFeedback && (
@@ -2257,7 +2311,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     );
 
     const evidenceSection = (
-      <NModeSectionWrapper heading={{ en: 'Evidence', pl: 'Dowody' }}>
+      <NModeSectionWrapper heading={{ en: 'Files & links', pl: 'Pliki i linki' }}>
         <EvidencePanel
           evidence={evidence}
           activeCategory={activeCategory}
@@ -2465,7 +2519,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       {
         id: 'evidence',
         icon: Paperclip,
-        label: { en: 'Evidence', pl: 'Dowody' },
+        label: { en: 'Files & links', pl: 'Pliki i linki' },
         badge: evidence.length,
         component: evidenceSection,
       },
@@ -2651,7 +2705,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[300px]">
               {sessionName || (isPolish ? 'Sesja wywiadu' : 'Interview session')}
             </span>
-            <span className={`ml-1 inline-flex h-2 w-2 rounded-full ${statusConfig.color}`} />
+            <StatusPill
+              status={lifecycleStatus}
+              label={isPolish ? lifecycleConfig.label.pl : lifecycleConfig.label.en}
+            />
             <div className="flex-1" />
             <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
               {answeredCount}/{totalCount}
@@ -2675,8 +2732,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 <button
                   type="button"
                   onClick={handleApprove}
-                  disabled={isApproving}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition-colors disabled:opacity-50"
+                  disabled={isApproving || !canApprove}
+                  title={!canApprove ? approveBlockedHint : undefined}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isApproving ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -2716,6 +2774,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               {isPolish ? 'Lista' : 'List'}
             </button>
           </div>
+
+          {/* #7 — Approve pre-condition hint (immersive reviewer mode) */}
+          {isReviewerMode && !canApprove && (
+            <div className="shrink-0 flex items-center gap-2 px-4 py-1.5 border-b border-amber-500/20 bg-amber-500/[0.06] text-[11px] font-medium text-amber-600 dark:text-amber-300">
+              <AlertTriangle size={12} />
+              {approveBlockedHint}
+            </div>
+          )}
 
           {/* Send-back form (immersive mode) */}
           {showSendBackForm && isReviewerMode && (
