@@ -31,6 +31,7 @@ import type { PresentationMode } from '@/hooks/usePresentationMode';
 
 import NModeActionBar from './NModeActionBar';
 import NModeCanvas from './NModeCanvas';
+import { NModeCBoard } from './NModeCBoard';
 import NModeHeader from './NModeHeader';
 import NModeLeftNav from './NModeLeftNav';
 import NModePropertiesStrip from './NModePropertiesStrip';
@@ -135,8 +136,35 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
             </div>
           )}
 
-          {/* ── C Mode Content (rendered by consumer via children) ── */}
-          {presentationMode === 'c' && children}
+          {/* ── C Mode Content (Standard C — ClickUp-style dense board) ──── */}
+          {presentationMode === 'c' && (
+            <div className="col-span-full space-y-0 mt-4">
+              {/* Same inline metric strip as N-mode */}
+              <NModePropertiesStrip fields={properties} maxColumns={propertiesMaxColumns} />
+
+              {/* Same primary/secondary actions as N-mode */}
+              {renderActionBar ? (
+                <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
+                  {renderActionBar()}
+                </div>
+              ) : (
+                ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
+                  <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
+                    <NModeActionBar
+                      actions={actionsVisible ? actions : []}
+                      aiContextActions={aiContextActions}
+                      toolAIActions={toolAIActions}
+                      activeSection={activeSection}
+                    />
+                  </div>
+                )
+              )}
+
+              {/* Top group-tabs + fixed 3-column dense grid. Consumers may still
+                  override with custom `children` (legacy bespoke C-mode). */}
+              {children ?? <NModeCBoard sections={sections} />}
+            </div>
+          )}
         </div>
       </div>
     </div>

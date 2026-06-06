@@ -29,6 +29,7 @@
 // ── Layout Components ───────────────────────────────────────────────────────
 export { NModeActionBar } from './NModeActionBar';
 export { NModeCanvas } from './NModeCanvas';
+export { NModeCBoard } from './NModeCBoard';
 export { NModeHeader } from './NModeHeader';
 export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';

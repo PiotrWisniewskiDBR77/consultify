@@ -7245,34 +7245,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         </div>
       )}
 
-      {/* C-mode (ClickUp): every section at once in a dense grid. Renders only
-          when presentationMode === 'c' (NModeShell gates children), so N-mode is
-          untouched. Each section keeps its own crash boundary. (#21) */}
-      <div className="grid grid-cols-1 gap-5 pb-6 2xl:grid-cols-2">
-        {nModeSectionsWithContent
-          .filter((s) => s.alwaysShow || s.hasData !== false)
-          .map((s) => (
-            <section
-              key={s.id}
-              className="rounded-2xl border border-slate-200/60 bg-white/40 p-4 dark:border-white/[0.06] dark:bg-white/[0.02]"
-            >
-              <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-500">
-                {isPolish ? s.label.pl : s.label.en}
-                {typeof s.badge === 'number' && s.badge > 0 ? (
-                  <span className="rounded-full bg-slate-100 px-1.5 text-[10px] text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
-                    {s.badge}
-                  </span>
-                ) : null}
-              </div>
-              <SectionErrorBoundary
-                sectionLabel={isPolish ? s.label.pl : s.label.en}
-                isPolish={isPolish}
-              >
-                {s.component}
-              </SectionErrorBoundary>
-            </section>
-          ))}
-      </div>
+      {/* C-mode (Standard C / ClickUp) is now rendered by NModeShell itself via
+          the canonical NModeCBoard (top group-tabs + dense 3-col grid), driven
+          by the same `sections`. No custom children needed. (#21) */}
     </NModeShell>
   );
 };
