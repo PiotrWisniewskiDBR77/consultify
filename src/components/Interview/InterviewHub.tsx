@@ -3054,6 +3054,138 @@ export const InterviewHub: React.FC = () => {
     [managedAssignments]
   );
 
+  // #8 — Bulk Approve over the selected sessions. Sessions don't carry their own
+  // approve route; each maps to its managed assignment (getManagedAssignmentForSession)
+  // and we reuse the SAME per-id handler the Assigned bulk toolbar uses
+  // (V8InterviewApi.approveAssignment) in a loop. Only 'submitted' sessions are
+  // approvable, mirroring handleBulkApproveAssignments.
+  const handleBulkApproveSessions = useCallback(async () => {
+    const ids = Array.from(selectedSessionIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    const targets = sessions
+      .filter((s) => ids.includes(s.id) && getSessionWorkflowStatus(s) === 'submitted')
+      .map((s) => getManagedAssignmentForSession(s))
+      .filter((a): a is InterviewAssignment => Boolean(a));
+    if (targets.length === 0) {
+      toast.error(
+        isPolish ? 'Brak wysłanych sesji do zatwierdzenia' : 'No submitted sessions to approve'
+      );
+      return;
+    }
+    setBulkActionBusy(true);
+    let done = 0;
+    for (const a of targets) {
+      try {
+        await V8InterviewApi.approveAssignment(a.id);
+        done += 1;
+      } catch {
+        // per-item failures tolerated; reflected in the count
+      }
+    }
+    try {
+      const [myRes, managedRes, overdueRes] = await Promise.all([
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setMyAssignments(myRes);
+      setManagedAssignments(managedRes);
+      setOverdueAssignments(overdueRes);
+    } catch {
+      /* ignore refresh failure */
+    }
+    await refreshSessions(sessionLifecycle);
+    setBulkActionBusy(false);
+    setSelectedSessionIds(new Set());
+    if (done > 0) {
+      toast.success(isPolish ? `Zatwierdzono ${done}` : `${done} approved`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Could not approve');
+    }
+  }, [
+    selectedSessionIds,
+    bulkActionBusy,
+    sessions,
+    getSessionWorkflowStatus,
+    getManagedAssignmentForSession,
+    isPolish,
+    loadMyAssignments,
+    loadManagedAssignments,
+    loadOverdueAssignments,
+    refreshSessions,
+    sessionLifecycle,
+  ]);
+
+  // #8 — Bulk Send back over the selected sessions. Same mapping to managed
+  // assignments + reuse of V8InterviewApi.sendBackAssignment. Reuses the existing
+  // reason-prompt pattern (one shared reason for the batch; per-item reasons stay
+  // available from the single-session Send-back modal).
+  const handleBulkSendBackSessions = useCallback(async () => {
+    const ids = Array.from(selectedSessionIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    const targets = sessions
+      .filter((s) => ids.includes(s.id) && getSessionWorkflowStatus(s) === 'submitted')
+      .map((s) => getManagedAssignmentForSession(s))
+      .filter((a): a is InterviewAssignment => Boolean(a));
+    if (targets.length === 0) {
+      toast.error(
+        isPolish ? 'Brak wysłanych sesji do zwrotu' : 'No submitted sessions to send back'
+      );
+      return;
+    }
+    const reason = (
+      window.prompt(
+        isPolish
+          ? 'Powód zwrotu do poprawy (wspólny dla zaznaczonych):'
+          : 'Reason for sending back (shared for the selection):',
+        isPolish ? 'Zwrócono zbiorczo do poprawy.' : 'Returned for revision (bulk action).'
+      ) || ''
+    ).trim();
+    if (!reason) return;
+    setBulkActionBusy(true);
+    let done = 0;
+    for (const a of targets) {
+      try {
+        await V8InterviewApi.sendBackAssignment(a.id, { reason });
+        done += 1;
+      } catch {
+        // per-item failures tolerated
+      }
+    }
+    try {
+      const [myRes, managedRes, overdueRes] = await Promise.all([
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setMyAssignments(myRes);
+      setManagedAssignments(managedRes);
+      setOverdueAssignments(overdueRes);
+    } catch {
+      /* ignore refresh failure */
+    }
+    await refreshSessions(sessionLifecycle);
+    setBulkActionBusy(false);
+    setSelectedSessionIds(new Set());
+    if (done > 0) {
+      toast.success(isPolish ? `Zwrócono ${done}` : `${done} sent back`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się zwrócić' : 'Could not send back');
+    }
+  }, [
+    selectedSessionIds,
+    bulkActionBusy,
+    sessions,
+    getSessionWorkflowStatus,
+    getManagedAssignmentForSession,
+    isPolish,
+    loadMyAssignments,
+    loadManagedAssignments,
+    loadOverdueAssignments,
+    refreshSessions,
+    sessionLifecycle,
+  ]);
+
   // Export intentionally not available in this view (KANON v3).
 
   const copyToClipboard = useCallback(
@@ -3574,6 +3706,35 @@ export const InterviewHub: React.FC = () => {
                 </button>
               </div>
               <div className="flex items-center gap-2">
+                {/* #8 — Bulk Approve / Send back, mapping selected sessions to
+                    their managed assignments and reusing the per-id approve /
+                    send-back handlers (manager scope). */}
+                {canViewManaged ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleBulkApproveSessions}
+                      disabled={bulkActionBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {bulkActionBusy ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Check size={14} />
+                      )}
+                      {isPolish ? 'Zatwierdź' : 'Approve'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBulkSendBackSessions}
+                      disabled={bulkActionBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <RotateCcw size={14} />
+                      {isPolish ? 'Zwróć' : 'Send back'}
+                    </button>
+                  </>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => {
