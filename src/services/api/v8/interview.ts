@@ -774,7 +774,10 @@ export const V8InterviewApi = {
     }
   ) => v8Patch<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}`, payload),
 
-  exportInsight: (id: string, payload: { target: 'tools' | 'assessment' }) =>
+  exportInsight: (
+    id: string,
+    payload: { target: 'tools' | 'assessment'; sectionIds?: string[] }
+  ) =>
     v8Post<{ success: boolean; target: string; targetId: string; assessmentType?: string }>(
       `/interview/insights/${encodeURIComponent(id)}/export`,
       payload

@@ -274,3 +274,23 @@ Wymagają nowych endpointów/decyzji; każdy ma user-visible „coming soon"/dis
 
 ## Następne (gdy wrócisz)
 Adopcja kanonów (WizardModal w 3 wizardach, FieldAI w sekcjach), domknięcie stubów 1-3 backendem, rozwój Audit Orchestratora z MVP do pełni.
+
+---
+
+# 🟢 SZEŚĆ STUBÓW ZAMKNIĘTYCH — 2026-06-06
+
+Wszystkie świadome stuby z audytu domknięte realnym kodem (każdy zweryfikowany, FE tsc=0, BE esbuild OK, serwery 200):
+
+1. **Initiative Merge/Extend** (#29e) → REAL — `POST /initiatives/:id/merge-from-insight` + `/extend-from-insight` (non-destructive append do description/scope + lineage insightów + audit event); wizard usuwa scalonego kandydata z listy create + „Open existing".
+2. **Assignment Escalate-now + Archive** (#8/#9b) → REAL — `POST /assignments/:id/escalate` (reuse InterviewAssignmentService) + `/archive` `/restore` + `?lifecycle=active|archived|all`; InterviewHub: kebab Escalate, Archive/Restore, chip-row Active|Archive.
+3. **Template sekcje pytań persist** (#17b) → REAL — kolumna `section_title` (lazy-ensure) + plumbing create/update/get + payload w TemplateBuilder; nagłówki sekcji round-trip.
+4. **Smart export Tools/Assessment serwerowo** (#25) → REAL — `/insights/:id/export` honoruje `sectionIds` (filtr serwerowy); nota w UI zmieniona na potwierdzenie; typ klienta poszerzony.
+5. **Adopcja WizardModal** (§5) → DONE — oba stepped-wizardy (insight=niebieski, initiative=fioletowy) na wspólnym `WizardStepper` z zarządzanym akcentem; TemplateBuilder to free-form builder (świadome N/A).
+6. **Audit Orchestrator** (#19) → REAL — bulk survey-gen (reuse InterviewAssignmentService.create, tag `audit_program:<id>`, partial-failure safe), completion rollup (`GET /completion`), paginacja (`?limit&offset` + Load-more).
+
+## Pozostałe additive-canon (nie stuby — kanon zbudowany, adopcja opcjonalna)
+- **FieldAIButton** (§6 field-level) — wyeksportowany, gotowy; konsumenci podpinają per pole wg potrzeby.
+- **WizardModal full shell** — używamy steppera; pełny re-parent niepotrzebny (ryzyko > zysk).
+
+## ⚠️ Temat procesowy (do uwagi właściciela)
+**Sync GDrive zanieczyszcza working tree** — w trakcie tej sesji 4 pliki dostały markery konfliktu (`<<<<<<<`) + 8 plików zdublowane importy, wszystkie spoza modułu, psuły build. Naprawa: `git checkout HEAD -- <pliki>` (HEAD był czysty). Rekomendacja: wykluczyć repo z syncu GDrive albo trzymać je poza katalogiem synchronizowanym — inaczej będzie wracać.
