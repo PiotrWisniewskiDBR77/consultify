@@ -294,3 +294,55 @@ Wszystkie świadome stuby z audytu domknięte realnym kodem (każdy zweryfikowan
 
 ## ⚠️ Temat procesowy (do uwagi właściciela)
 **Sync GDrive zanieczyszcza working tree** — w trakcie tej sesji 4 pliki dostały markery konfliktu (`<<<<<<<`) + 8 plików zdublowane importy, wszystkie spoza modułu, psuły build. Naprawa: `git checkout HEAD -- <pliki>` (HEAD był czysty). Rekomendacja: wykluczyć repo z syncu GDrive albo trzymać je poza katalogiem synchronizowanym — inaczej będzie wracać.
+
+---
+
+# 🚀 WYKOŃCZENIE DO 100% — 2026-06-06 (4 fale agentów + Standard C)
+
+**Branch:** `Londyn` · **Weryfikacja każdej fali:** FE `tsc=0`, BE `esbuild=0` (ESM), wszystko commitowane na bieżąco.
+**Kanony dotknięte:** `NModeCBoard` (nowy shared Standard-C board), `StatusPill`, `WizardStepper` (shared clickable stepper), `FilterDropdown` (per-column filters).
+**Pełny standalone raport:** `_IV_WAVE_FINISH_2026-06-06.md`.
+
+## Fala 0 (solo) — Standard C (ClickUp dense board)
+- [x] Zbudowany shared **`NModeCBoard`**: górny filtr group-tabs + stały grid 3-kolumnowy + `cSpan` + `cHidden`.
+- [x] Wpięty w **NModeShell** C-mode (kanon dla wszystkich konsumentów C).
+- [x] 🔴 Naprawiony bug pustego C w Insight — dzieci renderują się bezwarunkowo.
+- [x] 🔴 Naprawiony „[object Object]" — `toTextList` koercja faktów/luk/ograniczeń/pain-points z session-summary.
+- [x] Initiative C-mode ujednolicony na `NModeCBoard` (zastąpił legacy `InitiativeCompactPanel`) + pogrupowane sekcje Initiative.
+- [x] Densyfikacja: ukrywanie pustych sekcji (C-only).
+
+## Fala 1 (4 agenty) — tabele + i18n wizardów + formatka
+- [x] **Templates** — filtry per-column + spójność `StatusPill`/em-dash w 5 tabelach Interview.
+- [x] **3 wizardy i18n** — `InitiativeWizardModal` pełne PL/EN + spójność stopki.
+- [x] **Formatka odpowiedzi** — sprzątanie seed-chipów + naprawa echa głosowego (voice-echo).
+- [x] **Initiative section groups** — parytet grupowania dla C-board.
+
+## Fala 2 (4 agenty) — kolumny Sessions + Discovery + Audit + per-question hint
+- [x] **Sessions** — kolumna DATE rozbita na Due/Submitted/Overdue + kolumna Assignee (#9/#10).
+- [x] **Discovery Tools** — widoki detalu dostały `group`/`cSpan` (parytet Standard-C).
+- [x] **Audit Orchestrator** — dociągnięty do kanonu (`StatusPill` + shared clickable `WizardStepper`).
+- [x] **Per-question hint** — short-answer hint #11c (pre-submit gate #11 + manager AI snapshot #11b zweryfikowane jako już wpięte).
+
+## Fala 3 (4 agenty, w tym verifier) — bulk Sessions + approval messaging + Insight density
+- [x] **Sessions** — bulk Approve/Send-back (#8).
+- [x] **Approval** — komunikat pre-condition + `StatusPill` w workspace (#7).
+- [x] **Insight C-board density** — ukrywanie pustych sekcji People/Analysis-Matrix.
+- [x] **Adversarialny verifier** — potwierdził **P0 = brak**.
+
+## Fala 4 (4 agenty) — discoverability Audit + lineage + higiena + Assigned row-menu
+- [x] **Audit Orchestrator discoverable** — pozycja „Audits" w sidebarze + repoint route `ASSESSMENT_AUDITS → /audit-programs` + CTA w showcase.
+- [x] **Finding → Decision/Task lineage** — tagowanie source lineage (backend, mirror initiative).
+- [x] **Higiena** — usunięte 13 debug `console.log` w `AssignInterviewModal`; naprawione 2 nieaktualne komentarze „stub" (`InitiativeWizardModal` + `TemplateBuilder`).
+- [x] **Assigned row-menu** — Change-due-date + Reassign (#9/#13).
+
+## Pozostałe / do potwierdzenia wizualnie (przeglądarka offline w tej sesji)
+> Cały kod skompilowany (FE tsc=0, BE esbuild=0) i scommitowany; poniższe wymaga oczu na żywym koncie:
+- [ ] Standard-C board (Insight/Initiative/Discovery) — wizualna gęstość, group-tabs, span/hide na realnych danych.
+- [ ] Sessions — nowe kolumny Due/Submitted/Overdue + Assignee + bulk Approve/Send-back na żywej liście.
+- [ ] Audit Orchestrator — pozycja „Audits" w sidebarze + route `/audit-programs` + CTA showcase.
+- [ ] Assigned row-menu — Change-due-date + Reassign end-to-end.
+- [ ] Formatka odpowiedzi — voice-echo fix + sprzątnięte seed-chipy w realnym przepływie głosowym.
+
+## Opcjonalne follow-upy (przyszłe, nie blokują)
+- [ ] Read-back wywiad-źródłowych decyzji/tasków w hubie — gdy list-endpointy wesprą `?source` (lineage już tagowany po stronie backendu).
+- [ ] **Teresa Voice w trybie ankiety** (#5 część-2) — feature na przyszłość.
