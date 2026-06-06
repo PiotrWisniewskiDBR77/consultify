@@ -8659,8 +8659,10 @@ Return ONLY the answer text (no markdown fences).`;
                                       },
                                     ]
                                   : []),
-                                ...(assignment.status !== 'completed' &&
-                                assignment.status !== 'approved'
+                                // Reassign — only for active assignments
+                                // (assigned / in_progress), per audit #13.
+                                ...(assignment.status === 'assigned' ||
+                                assignment.status === 'in_progress'
                                   ? [
                                       {
                                         id: 'reassign',
@@ -8668,6 +8670,11 @@ Return ONLY the answer text (no markdown fences).`;
                                         icon: UserPlus,
                                         onClick: () => handleReassignAssignment(assignment),
                                       },
+                                    ]
+                                  : []),
+                                ...(assignment.status !== 'completed' &&
+                                assignment.status !== 'approved'
+                                  ? [
                                       {
                                         id: 'due-date',
                                         label: isPolish ? 'Zmień termin' : 'Change due date',
