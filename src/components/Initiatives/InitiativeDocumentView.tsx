@@ -4603,12 +4603,49 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       },
     ];
 
+    // Group tabs (mirrors InsightViewer's bilingual groupLabels + groupIndexById).
+    const groupLabels = isPolish
+      ? ['Zakres i plan', 'Decyzje i ryzyko', 'Rezultaty', 'Ludzie', 'Zapisy']
+      : ['Scope & Plan', 'Decisions & Risk', 'Outcomes', 'People', 'Records'];
+    const groupIndexById: Record<string, number> = {
+      // 0 — Zakres i plan / Scope & Plan
+      'initiative-definition': 0,
+      tasks: 0,
+      timeline: 0,
+      dependencies: 0,
+      // 1 — Decyzje i ryzyko / Decisions & Risk
+      decisions: 1,
+      'risk-raid': 1,
+      gates: 1,
+      // 2 — Rezultaty / Outcomes
+      'target-state-scope': 2,
+      kpi: 2,
+      'financial-analysis': 2,
+      'financial-impact': 2,
+      // 3 — Ludzie / People
+      team: 3,
+      raci: 3,
+      // 4 — Zapisy / Records
+      resources: 4,
+      'attachments-links': 4,
+      'used-in': 4,
+      comments: 4,
+      'activity-log': 4,
+    };
+
+    const withGroup = (sections: NModeSection[]): NModeSection[] =>
+      sections.map((section) => ({
+        ...section,
+        group: groupLabels[groupIndexById[section.id] ?? 4],
+      }));
+
     if (!enabledNModeSectionIds || enabledNModeSectionIds.size === 0) {
-      return allSections;
+      return withGroup(allSections);
     }
 
-    return allSections.filter((section) => enabledNModeSectionIds.has(section.id));
+    return withGroup(allSections.filter((section) => enabledNModeSectionIds.has(section.id)));
   }, [
+    isPolish,
     tasks.length,
     milestones.length,
     dependencies.length,
