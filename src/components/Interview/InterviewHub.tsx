@@ -503,6 +503,22 @@ interface InterviewInitiativeDraft {
   updatedAt?: string;
 }
 
+// Lineage read-back: decisions/tasks created from interview findings are tagged
+// source_type='interview_insight' on the backend. We fetch them via the my-work
+// list endpoints with ?source=interview_insight to close the write-only gap and
+// surface the lineage in the Initiatives tab. Honest empty state when none.
+interface InterviewLineageItem {
+  id: string;
+  title?: string;
+  name?: string;
+  status?: string;
+  priority?: string;
+  sourceType?: string;
+  sourceId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 interface InterviewTemplate {
   id: string;
   organizationId?: string;
@@ -981,6 +997,9 @@ export const InterviewHub: React.FC = () => {
   const [sessionLifecycleBusy, setSessionLifecycleBusy] = useState(false);
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
   const [interviewInitiatives, setInterviewInitiatives] = useState<InterviewInitiativeDraft[]>([]);
+  // Lineage read-back for decisions/tasks created from interview findings.
+  const [interviewDecisions, setInterviewDecisions] = useState<InterviewLineageItem[]>([]);
+  const [interviewTasks, setInterviewTasks] = useState<InterviewLineageItem[]>([]);
   const [selectedInterviewInitiativeId, setSelectedInterviewInitiativeId] = useState<string | null>(
     null
   );
@@ -1308,14 +1327,18 @@ export const InterviewHub: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      const [sessionsRes, insightsRes, initiativesRes, templatesRes] = await Promise.allSettled([
-        loadManagedSessions(),
-        V8InterviewApi.listInsights()
-          .then((r) => r.insights)
-          .catch(() => Api.get('/interview/insights')),
-        Api.get('/initiatives?source=interview_insight'),
-        Api.get('/interview/templates'),
-      ]);
+      const [sessionsRes, insightsRes, initiativesRes, templatesRes, decisionsRes, tasksRes] =
+        await Promise.allSettled([
+          loadManagedSessions(),
+          V8InterviewApi.listInsights()
+            .then((r) => r.insights)
+            .catch(() => Api.get('/interview/insights')),
+          Api.get('/initiatives?source=interview_insight'),
+          Api.get('/interview/templates'),
+          // Lineage read-back — decisions/tasks tagged source_type='interview_insight'.
+          Api.get('/my-work/decisions?source=interview_insight'),
+          Api.get('/my-work/tasks?source=interview_insight'),
+        ]);
 
       setIsUsingDemoData(false);
 
@@ -1363,6 +1386,22 @@ export const InterviewHub: React.FC = () => {
       } else {
         console.error('[InterviewHub] Failed to load templates:', templatesRes.reason);
         setTemplates([]);
+      }
+
+      // Lineage read-back — degrade gracefully to an honest empty state on
+      // failure or if the source filter isn't honored yet (no fake data).
+      if (decisionsRes.status === 'fulfilled') {
+        setInterviewDecisions(unwrapApiList(decisionsRes.value, 'decisions'));
+      } else {
+        console.error('[InterviewHub] Failed to load interview decisions:', decisionsRes.reason);
+        setInterviewDecisions([]);
+      }
+
+      if (tasksRes.status === 'fulfilled') {
+        setInterviewTasks(unwrapApiList(tasksRes.value, 'tasks'));
+      } else {
+        console.error('[InterviewHub] Failed to load interview tasks:', tasksRes.reason);
+        setInterviewTasks([]);
       }
 
       const allFailed =
@@ -1442,6 +1481,26 @@ export const InterviewHub: React.FC = () => {
       );
     }
   }, [isPolish, unwrapApiList]);
+
+  // Lineage read-back refresh for decisions/tasks created from interview findings.
+  const loadInterviewLineage = useCallback(async () => {
+    const [decisionsRes, tasksRes] = await Promise.allSettled([
+      Api.get('/my-work/decisions?source=interview_insight'),
+      Api.get('/my-work/tasks?source=interview_insight'),
+    ]);
+    if (decisionsRes.status === 'fulfilled') {
+      setInterviewDecisions(unwrapApiList(decisionsRes.value, 'decisions'));
+    } else {
+      console.error('[InterviewHub] Failed to load interview decisions:', decisionsRes.reason);
+      setInterviewDecisions([]);
+    }
+    if (tasksRes.status === 'fulfilled') {
+      setInterviewTasks(unwrapApiList(tasksRes.value, 'tasks'));
+    } else {
+      console.error('[InterviewHub] Failed to load interview tasks:', tasksRes.reason);
+      setInterviewTasks([]);
+    }
+  }, [unwrapApiList]);
 
   const loadTemplates = useCallback(async () => {
     try {
@@ -3278,6 +3337,8 @@ export const InterviewHub: React.FC = () => {
       try {
         await Api.patch(`/initiatives/${initiativeId}/status`, { status });
         await loadInterviewInitiatives();
+        // Moving an initiative forward can spawn lineage work; refresh the strip.
+        void loadInterviewLineage();
         if (status === 'PENDING_REVIEW') {
           toast.success(isPolish ? 'Inicjatywa wysłana do przeglądu' : 'Initiative sent to review');
         } else if (status === 'REVIEW') {
@@ -3297,7 +3358,7 @@ export const InterviewHub: React.FC = () => {
         toast.error(isPolish ? 'Nie udało się zmienić statusu' : 'Failed to update status');
       }
     },
-    [isPolish, loadInterviewInitiatives, navigate]
+    [isPolish, loadInterviewInitiatives, loadInterviewLineage, navigate]
   );
 
   const renderCommandRow = () => {
@@ -9305,9 +9366,95 @@ Return ONLY the answer text (no markdown fences).`;
         );
       };
 
+      // Lineage read-back — decisions/tasks created from interview findings
+      // (source_type='interview_insight'). Compact count + list, honest empty
+      // state, real data only (driven by the my-work list endpoints).
+      const lineageDecisionCount = interviewDecisions.length;
+      const lineageTaskCount = interviewTasks.length;
+      const renderLineageColumn = (kind: 'decisions' | 'tasks', items: InterviewLineageItem[]) => {
+        const isDecisions = kind === 'decisions';
+        const Icon = isDecisions ? Target : ClipboardList;
+        const heading = isDecisions
+          ? isPolish
+            ? 'Decyzje z wywiadu'
+            : 'Decisions from interviews'
+          : isPolish
+            ? 'Zadania z wywiadu'
+            : 'Tasks from interviews';
+        const basePath = isDecisions ? '/my-work/decisions' : '/my-work/tasks';
+        return (
+          <div className="flex-1 rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-white/[0.06] dark:bg-navy-900/50">
+            <div className="mb-2 flex items-center gap-2">
+              <Icon size={14} className="text-slate-500 dark:text-slate-400" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {heading}
+              </span>
+              <span className="ml-auto inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-semibold text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                {items.length}
+              </span>
+            </div>
+            {items.length === 0 ? (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {isDecisions
+                  ? isPolish
+                    ? 'Brak decyzji przekazanych z wniosków wywiadu.'
+                    : 'No decisions handed off from interview findings yet.'
+                  : isPolish
+                    ? 'Brak zadań przekazanych z wniosków wywiadu.'
+                    : 'No tasks handed off from interview findings yet.'}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-1">
+                {items.slice(0, 6).map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`${basePath}/${encodeURIComponent(item.id)}`)}
+                      className="group flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[12px] text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.05]"
+                    >
+                      <span className="truncate">
+                        {item.title || item.name || (isPolish ? '(bez tytułu)' : '(untitled)')}
+                      </span>
+                      <ExternalLink
+                        size={11}
+                        className="ml-auto shrink-0 text-slate-400 opacity-0 transition group-hover:opacity-100"
+                      />
+                    </button>
+                  </li>
+                ))}
+                {items.length > 6 ? (
+                  <li className="px-1.5 pt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+                    {isPolish ? `+${items.length - 6} więcej` : `+${items.length - 6} more`}
+                  </li>
+                ) : null}
+              </ul>
+            )}
+          </div>
+        );
+      };
+
       return (
         <div className="h-full overflow-auto p-4">
           {renderDegradedBanner()}
+          {lineageDecisionCount > 0 || lineageTaskCount > 0 ? (
+            <div className="mb-4 rounded-xl border border-slate-200/70 bg-white/50 p-3 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/50">
+              <div className="mb-2 flex items-center gap-2">
+                <Send size={13} className="text-crimson-500" />
+                <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">
+                  {isPolish ? 'Przekazane z wywiadu' : 'Handed off from interviews'}
+                </span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                  {isPolish
+                    ? 'Decyzje i zadania stworzone z wniosków'
+                    : 'Decisions and tasks created from findings'}
+                </span>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                {renderLineageColumn('decisions', interviewDecisions)}
+                {renderLineageColumn('tasks', interviewTasks)}
+              </div>
+            </div>
+          ) : null}
           <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
             <table className="w-full table-fixed rounded-xl" style={{ minWidth: tableMinWidth }}>
               <thead>
